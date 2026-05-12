@@ -95,6 +95,20 @@ python scripts/train.py subjects/chemistry_instructor.json \
     --dry-run
 ```
 
+### Validate Effective Config (Phase 2)
+
+Validate the resolved config and canonical path conventions before training:
+
+```bash
+./ucore validate-config --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/notebooklm/train.jsonl --strict
+```
+
+Direct script mode:
+
+```bash
+python scripts/validate_config.py --spec subjects/chemistry_instructor.json --preset fast-3b --strict
+```
+
 ### Direct CLI Mode (No Config File)
 
 Train by specifying everything on the command line:
@@ -157,18 +171,22 @@ python scripts/train.py subjects/chemistry_instructor.json \
 
 ## 5. Output Structure
 
-Training produces the following directory layout:
+Training produces the following run-oriented directory layout:
 
 ```
 outputs/{npc_key}/
-├── adapter_model.safetensors    # Trained LoRA weights
-├── adapter_config.json           # LoRA configuration
-├── tokenizer.json                # Tokenizer files
-├── tokenizer_config.json
-├── runs/                         # TensorBoard event files
-│   └── {run_id}/
-│       └── events.out.tfevents.*
-└── config.yaml                   # Resolved config snapshot
+├── latest -> runs/{run_id}       # Symlink to latest run
+└── runs/
+    └── {run_id}/
+        ├── adapter_model.safetensors
+        ├── adapter_config.json
+        ├── tokenizer.json
+        ├── tokenizer_config.json
+        ├── config.yaml           # Frozen resolved config
+        ├── metrics.json          # Core training metrics
+        ├── run_manifest.json     # Reproducibility metadata (dataset hash, git commit, paths)
+        └── runs/                 # TensorBoard event files
+            └── events.out.tfevents.*
 ```
 
 ### Viewing Training Curves

@@ -54,6 +54,7 @@ Use `./ucore` as the main entrypoint:
 ./ucore train subjects/chemistry_instructor.json --from-spec --preset fast-3b
 ./ucore smoke exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf --spec subjects/chemistry_instructor.json
 ./ucore dashboard --port 8000
+./ucore validate-config --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/notebooklm/train.jsonl --strict
 ```
 
 ## Direct scripts (advanced)
@@ -76,10 +77,15 @@ Base config:
 
 Common presets:
 - `smoke`
+- `llama-1b-fast` (recommended for quick iteration)
+- `llama-3b-fast` (recommended default)
+- `llama-3b-quality` (recommended for higher quality)
 - `fast-1.7b`
 - `fast-3b`
 - `quality-1.7b`
 - `safe-any`
+
+Note: legacy Qwen-oriented presets remain for backward compatibility, but the Unity dialogue workflow is Llama-first.
 
 ## Naming conventions
 
@@ -146,6 +152,8 @@ python scripts/compare_runs.py outputs/chemistry_instructor/runs/*
 - `docs/NOTEBOOKLM_WORKFLOW.md`
 - `docs/OLLAMA_WORKFLOW.md`
 - `docs/TRAINING_WORKFLOW.md`
+- `docs/CONFIG_VALIDATION_WORKFLOW.md`
+- `docs/LLAMA_UNITY_PROFILE.md`
 - `docs/EXPORT_WORKFLOW.md`
 - `docs/EVALUATION_WORKFLOW.md`
 - `docs/PROJECT_REFACTOR_PLAN_FOR_UNITY_SUPABASE.md`

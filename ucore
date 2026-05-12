@@ -58,6 +58,18 @@ def main():
     dash_p = subparsers.add_parser("dashboard", help="Start the monitoring dashboard")
     dash_p.add_argument("--port", type=int, default=8000, help="Port")
 
+    # Validate config
+    val_p = subparsers.add_parser("validate-config", help="Resolve and validate effective training config")
+    val_p.add_argument("--spec", help="Path to subject spec JSON")
+    val_p.add_argument("--config", help="Path to YAML config")
+    val_p.add_argument("--preset", help="Training preset")
+    val_p.add_argument("--data", help="Training data path")
+    val_p.add_argument("--model", help="Model ID override")
+    val_p.add_argument("--output", help="Output dir override")
+    val_p.add_argument("--npc-key", help="npc_key when using --config")
+    val_p.add_argument("--format", default="yaml", choices=["yaml", "json"], help="Output format")
+    val_p.add_argument("--strict", action="store_true", help="Treat warnings as errors")
+
     # Pipeline (Generate + Sanitize + Train)
     pipe_p = subparsers.add_parser("pipeline", help="Run full generation-to-training pipeline")
     pipe_p.add_argument("spec", help="Path to subject spec JSON")
@@ -96,6 +108,28 @@ def main():
 
     elif args.command == "dashboard":
         cmd = [PYTHON, str(SCRIPTS_DIR / "dashboard.py"), "--port", str(args.port)]
+        run_cmd(cmd)
+
+    elif args.command == "validate-config":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "validate_config.py")]
+        if args.spec:
+            cmd.extend(["--spec", args.spec])
+        if args.config:
+            cmd.extend(["--config", args.config])
+        if args.preset:
+            cmd.extend(["--preset", args.preset])
+        if args.data:
+            cmd.extend(["--data", args.data])
+        if args.model:
+            cmd.extend(["--model", args.model])
+        if args.output:
+            cmd.extend(["--output", args.output])
+        if args.npc_key:
+            cmd.extend(["--npc-key", args.npc_key])
+        if args.format:
+            cmd.extend(["--format", args.format])
+        if args.strict:
+            cmd.append("--strict")
         run_cmd(cmd)
 
     elif args.command == "pipeline":
