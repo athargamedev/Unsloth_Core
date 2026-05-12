@@ -50,11 +50,12 @@ Use `./ucore` as the main entrypoint:
 
 ```bash
 ./ucore generate subjects/chemistry_instructor.json --technique notebooklm
-./ucore sanitize datasets/chemistry_instructor/notebooklm/train.jsonl
+./ucore sanitize datasets/chemistry_instructor/notebooklm/train.jsonl --strict-canonical
 ./ucore train subjects/chemistry_instructor.json --from-spec --preset fast-3b
 ./ucore smoke exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf --spec subjects/chemistry_instructor.json
 ./ucore dashboard --port 8000
-./ucore validate-config --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/notebooklm/train.jsonl --strict
+./ucore validate-config --spec subjects/chemistry_instructor.json --preset llama-3b-fast --data datasets/chemistry_instructor/notebooklm/train.jsonl --require-canonical --strict
+./ucore migrate-datasets
 ```
 
 ## Direct scripts (advanced)
@@ -154,6 +155,7 @@ python scripts/compare_runs.py outputs/chemistry_instructor/runs/*
 - `docs/TRAINING_WORKFLOW.md`
 - `docs/CONFIG_VALIDATION_WORKFLOW.md`
 - `docs/LLAMA_UNITY_PROFILE.md`
+- `docs/DATASET_CONTRACT_WORKFLOW.md`
 - `docs/EXPORT_WORKFLOW.md`
 - `docs/EVALUATION_WORKFLOW.md`
 - `docs/PROJECT_REFACTOR_PLAN_FOR_UNITY_SUPABASE.md`

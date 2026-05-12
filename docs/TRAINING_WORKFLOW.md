@@ -100,7 +100,7 @@ python scripts/train.py subjects/chemistry_instructor.json \
 Validate the resolved config and canonical path conventions before training:
 
 ```bash
-./ucore validate-config --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/notebooklm/train.jsonl --strict
+./ucore validate-config --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/notebooklm/train.jsonl --require-canonical --strict
 ```
 
 Direct script mode:

@@ -26,7 +26,7 @@ Use unified CLI:
 Strict mode (warnings fail the command):
 
 ```bash
-./ucore validate-config --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/notebooklm/train.jsonl --strict
+./ucore validate-config --spec subjects/chemistry_instructor.json --preset llama-3b-fast --data datasets/chemistry_instructor/notebooklm/train.jsonl --require-canonical --strict
 ```
 
 ## Direct script usage
@@ -68,3 +68,4 @@ Before starting any new run:
 - Validator is non-destructive.
 - It resolves and prints the effective config exactly as training would consume it.
 - It supports both `--spec` and direct `--config` modes.
+- For legacy flat datasets, run `./ucore migrate-datasets` first.
