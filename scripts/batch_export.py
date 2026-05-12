@@ -30,11 +30,12 @@ def _export_one(model, tokenizer, npc_key, model_id, quant, skip_f16=False):
 
     Returns True on success, False on failure.
     """
-    output_dir = paths.output_dir(npc_key)
-    adapter_config = output_dir / "adapter_config.json"
-    if not adapter_config.exists():
-        print(f"  \u26a0  Skipping '{npc_key}': No adapter found at {output_dir}")
+    try:
+        _, output_dir = paths.resolve_adapter_dir(npc_key)
+    except FileNotFoundError:
+        print(f"  \u26a0  Skipping '{npc_key}': No adapter found")
         return False
+    adapter_config = output_dir / "adapter_config.json"
 
     print(f"\n{'=' * 60}")
     print(f"  Exporting: {npc_key}")
@@ -111,11 +112,13 @@ def find_trained_npcs():
     if not outputs_dir.exists():
         return npcs
     for entry in sorted(outputs_dir.iterdir()):
-        if entry.is_dir() and (entry / "adapter_config.json").exists():
-            # Skip colab/ directory
-            if entry.name == "colab":
-                continue
+        if not entry.is_dir() or entry.name == "colab":
+            continue
+        try:
+            paths.resolve_adapter_dir(entry.name)
             npcs.append(entry.name)
+        except FileNotFoundError:
+            continue
     return npcs
 
 
@@ -151,7 +154,7 @@ def main():
     model_id = args.model
     if model_id is None:
         # Try auto-detecting from first NPC's adapter config
-        first_output = paths.output_dir(npc_keys[0])
+        _, first_output = paths.resolve_adapter_dir(npc_keys[0])
         adapter_config = first_output / "adapter_config.json"
         if adapter_config.exists():
             with open(adapter_config) as f:

@@ -52,7 +52,7 @@ def model_short_name(model_id: str) -> str:
 
 # ── Datasets ─────────────────────────────────────────────────────────────────
 
-DATASET_TECHNIQUES = ("template", "ollama", "notebooklm")
+DATASET_TECHNIQUES = ("notebooklm", "ollama", "openai", "anthropic", "template")
 
 
 def dataset_root() -> Path:
@@ -78,9 +78,9 @@ def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
     """Auto-detect the best available dataset technique for an NPC.
 
     Returns (technique, train_path, val_path) or None if none found.
-    Preference order: ollama > notebooklm > template.
+    Preference order: notebooklm > ollama > API-generated > template.
     """
-    for technique in ("ollama", "notebooklm", "template"):
+    for technique in DATASET_TECHNIQUES:
         train = dataset_train_path(npc_key, technique)
         val = dataset_val_path(npc_key, technique)
         if train.exists() and val.exists():
@@ -89,6 +89,38 @@ def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
         if train.exists():
             return technique, train, val
     return None
+
+
+def is_canonical_train_path(path: str | Path) -> bool:
+    """Return True if path matches datasets/{npc_key}/{technique}/train.jsonl."""
+    p = Path(path)
+    if not p.is_absolute():
+        p = (PROJECT_ROOT / p).resolve()
+    try:
+        rel = p.relative_to(dataset_root().resolve())
+    except Exception:
+        return False
+    parts = rel.parts
+    return len(parts) == 3 and parts[1] in DATASET_TECHNIQUES and parts[2] == "train.jsonl"
+
+
+def infer_validation_path(train_path: str | Path) -> Path:
+    """Infer validation path from a train path.
+
+    Canonical: datasets/{npc_key}/{technique}/train.jsonl -> validation.jsonl
+    Legacy fallback: datasets/{npc_key}.jsonl -> datasets/{npc_key}_validation.jsonl
+    """
+    p = Path(train_path)
+    if not p.is_absolute():
+        p = (PROJECT_ROOT / p).resolve()
+
+    if is_canonical_train_path(p):
+        return p.parent / "validation.jsonl"
+
+    if p.suffix == ".jsonl":
+        return p.with_name(f"{p.stem}_validation.jsonl")
+
+    return p.parent / "validation.jsonl"
 
 
 # ── Outputs (LoRA adapters + checkpoints, NO GGUF) ──────────────────────────
@@ -222,3 +254,32 @@ def latest_run_dir(npc_key: str) -> Path | None:
         if target.exists():
             return target
     return None
+
+
+def resolve_adapter_dir(npc_key_or_dir: str | Path) -> tuple[str, Path]:
+    """Resolve an NPC key, output dir, latest symlink, or run dir to an adapter dir.
+
+    Returns (npc_key, adapter_dir). Raises FileNotFoundError with a setup-oriented
+    message when no PEFT adapter is present.
+    """
+    candidate = Path(npc_key_or_dir)
+    if candidate.exists():
+        adapter_dir = candidate.resolve()
+        if adapter_dir.name == "latest":
+            adapter_dir = adapter_dir.resolve()
+        if adapter_dir.parent.name == "runs":
+            npc_key = adapter_dir.parent.parent.name
+        else:
+            npc_key = adapter_dir.name
+    else:
+        npc_key = str(npc_key_or_dir)
+        latest = latest_run_dir(npc_key)
+        adapter_dir = latest or output_dir(npc_key)
+
+    if (adapter_dir / "adapter_config.json").exists():
+        return npc_key, adapter_dir
+
+    raise FileNotFoundError(
+        f"No PEFT adapter found at {adapter_dir}. Expected adapter_config.json. "
+        f"Train first, or pass outputs/<npc_key>/latest or outputs/<npc_key>/runs/<run_id>."
+    )

@@ -79,7 +79,7 @@ def write_manifest(npc_key: str, model_id: str, quantizations: list[str],
     }
 
     # Try to get npc_name from subject spec
-    subjects_dir = output_dir.parent.parent / "subjects"
+    subjects_dir = PROJECT_ROOT / "subjects"
     spec_path = subjects_dir / f"{npc_key}.json"
     if spec_path.exists():
         try:
@@ -140,29 +140,15 @@ def main():
     )
     args = parser.parse_args()
 
-    # ── Determine output directory ──────────────────────────────────────────
-    input_path = Path(args.npc_key_or_dir)
-
-    if args.output_dir:
-        output_dir = Path(args.output_dir)
-    elif input_path.exists() and input_path.is_dir() and not input_path.name.startswith("outputs"):
-        # Direct path to a training output (legacy mode)
-        output_dir = input_path
-    else:
-        # NPC key mode
-        npc_key = args.npc_key_or_dir
-        output_dir = paths.output_dir(npc_key)
-        if not output_dir.exists():
-            print(f"Error: Output directory not found: {output_dir}")
-            print(f"Train the NPC first with: python scripts/train.py subjects/{npc_key}.json --from-spec --preset fast-3b")
-            sys.exit(1)
-
-    if not output_dir.exists():
-        print(f"Error: Output directory not found: {output_dir}")
+    # ── Determine adapter directory ─────────────────────────────────────────
+    try:
+        if args.output_dir:
+            npc_key, output_dir = paths.resolve_adapter_dir(args.output_dir)
+        else:
+            npc_key, output_dir = paths.resolve_adapter_dir(args.npc_key_or_dir)
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}")
         sys.exit(1)
-
-    # ── Derive metadata ─────────────────────────────────────────────────────
-    npc_key = output_dir.name
 
     # Auto-detect model ID from adapter_config if not provided
     model_id = args.model

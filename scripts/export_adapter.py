@@ -25,6 +25,8 @@ import tempfile
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+from _config import paths
 CONVERTER = Path.home() / ".unsloth" / "llama.cpp" / "convert_lora_to_gguf.py"
 
 # Locations to search for the llama.cpp converter script
@@ -158,9 +160,10 @@ def convert_adapter(adapter_path, outtype="f16", output_path=None, clean_config_
     Returns:
         Path to the output GGUF file.
     """
-    adapter_path = Path(adapter_path)
-    if not adapter_path.exists():
-        print(f"Error: {adapter_path} does not exist")
+    try:
+        npc_key, adapter_path = paths.resolve_adapter_dir(adapter_path)
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}")
         sys.exit(1)
 
     # Sanity check
@@ -171,7 +174,6 @@ def convert_adapter(adapter_path, outtype="f16", output_path=None, clean_config_
 
     # Determine output path
     if output_path is None:
-        npc_key = adapter_path.name
         output_path = str(adapter_path / f"{npc_key}-lora.{outtype}.gguf")
     else:
         output_path = str(Path(output_path))
@@ -245,8 +247,13 @@ def find_all_adapters():
 
     adapters = []
     for entry in sorted(outputs_dir.iterdir()):
-        if entry.is_dir() and (entry / "adapter_config.json").exists():
-            adapters.append(entry)
+        if not entry.is_dir() or entry.name == "colab":
+            continue
+        try:
+            _, adapter_dir = paths.resolve_adapter_dir(entry.name)
+            adapters.append(adapter_dir)
+        except FileNotFoundError:
+            continue
     return adapters
 
 

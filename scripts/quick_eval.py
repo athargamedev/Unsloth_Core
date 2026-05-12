@@ -23,6 +23,8 @@ from pathlib import Path
 from collections import Counter
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+from _config import paths
 
 
 def load_validation_set(val_path, limit=None):
@@ -48,6 +50,16 @@ def extract_qa(example):
         elif msg["role"] == "assistant":
             assistant_msg = msg["content"]
     return user_msg, assistant_msg
+
+
+def build_chatml_prompt(user_message, system_prompt=None):
+    """Build a ChatML prompt matching training format."""
+    messages = []
+    if system_prompt:
+        messages.append(f"<|im_start|>system\n{system_prompt}<|im_end|>")
+    messages.append(f"<|im_start|>user\n{user_message}<|im_end|>")
+    messages.append("<|im_start|>assistant\n")
+    return "\n".join(messages)
 
 
 def diversity_score(text):
@@ -132,7 +144,8 @@ def evaluate_model_local(model_path, val_set, spec=None, max_samples=10):
 
         try:
             # Build prompt
-            prompt = f"User: {user_q}\nAssistant:"
+            system_prompt = spec.get("system_prompt") if spec else None
+            prompt = build_chatml_prompt(user_q, system_prompt)
             
             # Generate response
             start = time.time()
@@ -234,13 +247,13 @@ def main():
     if args.val_data:
         val_path = args.val_data
     else:
-        # Try to auto-detect
-        npc_key = adapter_path.name
-        val_candidates = [
-            PROJECT_ROOT / "datasets" / npc_key / "notebooklm" / "validation.jsonl",
-            PROJECT_ROOT / "datasets" / npc_key / "ollama" / "validation.jsonl",
-            PROJECT_ROOT / "datasets" / "chemistry_instructor" / "notebooklm" / "validation.jsonl",
-        ]
+        npc_key = adapter_path.parent.parent.name if adapter_path.parent.name == "runs" else adapter_path.name
+        detected = paths.autodetect_dataset(npc_key)
+        val_candidates = []
+        if detected:
+            _, _, detected_val = detected
+            val_candidates.append(detected_val)
+        val_candidates.append(PROJECT_ROOT / "datasets" / f"{npc_key}_validation.jsonl")
         for vc in val_candidates:
             if vc.exists():
                 val_path = str(vc)
@@ -248,7 +261,8 @@ def main():
     
     if not val_path or not Path(val_path).exists():
         print(f"Error: Validation set not found. Tried:")
-        print(f"  - {val_candidates[0]}")
+        for candidate in val_candidates:
+            print(f"  - {candidate}")
         print(f"Use --val-data to specify manually")
         sys.exit(1)
     

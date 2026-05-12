@@ -103,9 +103,11 @@ def validate(args):
         warnings.append("No training data path provided and could not auto-detect from npc_key.")
     else:
         if not _is_canonical_dataset_path(data_path):
-            warnings.append(
-                f"Non-canonical data path: {data_path} (expected datasets/{{npc_key}}/{{technique}}/train.jsonl)"
-            )
+            msg = f"Non-canonical data path: {data_path} (expected datasets/{{npc_key}}/{{technique}}/train.jsonl)"
+            if args.require_canonical:
+                errors.append(msg)
+            else:
+                warnings.append(msg)
         d_npc, d_technique, d_file = _extract_dataset_info(data_path)
         if d_npc and npc_key and d_npc != npc_key:
             warnings.append(f"Dataset npc_key '{d_npc}' differs from target npc_key '{npc_key}'.")
@@ -152,6 +154,7 @@ def main():
     parser.add_argument("--npc-key", help="npc_key when using --config directly")
     parser.add_argument("--format", choices=["yaml", "json"], default="yaml", help="Output format")
     parser.add_argument("--strict", action="store_true", help="Treat warnings as errors")
+    parser.add_argument("--require-canonical", action="store_true", help="Require canonical dataset train path")
 
     args = parser.parse_args()
 

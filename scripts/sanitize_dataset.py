@@ -12,6 +12,8 @@ import os
 import re
 from pathlib import Path
 
+from _config import paths
+
 # Common AI artifacts to filter out
 AI_ARTIFACT_PATTERNS = [
     r"as an AI",
@@ -81,12 +83,20 @@ def main():
     parser.add_argument("--min-length", type=int, default=10, help="Min chars for assistant response")
     parser.add_argument("--max-sentences", type=int, default=5, help="Max sentences for assistant response")
     parser.add_argument("--verbose", "-v", action="store_true", help="Print discarded examples")
+    parser.add_argument("--strict-canonical", action="store_true",
+                        help="Fail unless input path is canonical datasets/{npc_key}/{technique}/train.jsonl")
     
     args = parser.parse_args()
     
     input_path = Path(args.input)
     if not input_path.exists():
         print(f"Error: Input file {input_path} not found")
+        return
+
+    if args.strict_canonical and not paths.is_canonical_train_path(input_path):
+        print("Error: Non-canonical dataset path.")
+        print("Expected: datasets/{npc_key}/{technique}/train.jsonl")
+        print(f"Got:      {input_path}")
         return
 
     output_path = Path(args.output) if args.output else input_path.parent / f"{input_path.stem}_clean.jsonl"

@@ -27,6 +27,9 @@ import requests
 from datetime import datetime
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
 from _config import paths
 
 # ── Category templates ──────────────────────────────────────────────────────
@@ -139,6 +142,97 @@ def load_subject_spec(path):
         spec = json.load(f)
     spec["_path"] = Path(path).stem
     return spec
+
+
+def _coerce_notebooklm_record(record, spec):
+    """Parse one NotebookLM-exported record into ChatML or fail loudly."""
+    system_prompt = spec["system_prompt"]
+    if isinstance(record, dict) and isinstance(record.get("messages"), list):
+        messages = record["messages"]
+        roles = {m.get("role") for m in messages if isinstance(m, dict)}
+        if {"user", "assistant"}.issubset(roles):
+            if "system" not in roles:
+                messages = [{"role": "system", "content": system_prompt}] + messages
+            return {"messages": messages, "metadata": {**record.get("metadata", {}), "source": "notebooklm"}}
+
+    if not isinstance(record, dict):
+        raise ValueError("NotebookLM records must be JSON objects")
+
+    user_message = record.get("user") or record.get("question") or record.get("prompt")
+    assistant_response = record.get("assistant") or record.get("answer") or record.get("response")
+    if not user_message or not assistant_response:
+        raise ValueError("NotebookLM record must contain messages or user/question plus assistant/answer")
+
+    return {
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": str(user_message)},
+            {"role": "assistant", "content": str(assistant_response)},
+        ],
+        "metadata": {"npc_key": spec["npc_key"], "source": "notebooklm"},
+    }
+
+
+def load_notebooklm_examples(input_path, spec):
+    """Load NotebookLM CLI/import output from JSONL or JSON into ChatML examples."""
+    input_path = Path(input_path)
+    if not input_path.exists():
+        raise FileNotFoundError(f"NotebookLM input not found: {input_path}")
+
+    raw_text = input_path.read_text().strip()
+    if not raw_text:
+        raise ValueError(f"NotebookLM input is empty: {input_path}")
+
+    if input_path.suffix.lower() == ".jsonl":
+        records = [json.loads(line) for line in raw_text.splitlines() if line.strip()]
+    else:
+        parsed = json.loads(raw_text)
+        records = parsed.get("examples") or parsed.get("items") or parsed if isinstance(parsed, dict) else parsed
+
+    if not isinstance(records, list):
+        raise ValueError("NotebookLM JSON import must be a list or contain an examples/items list")
+
+    examples = [_coerce_notebooklm_record(record, spec) for record in records]
+    if not examples:
+        raise ValueError("NotebookLM import produced zero examples")
+    return examples
+
+
+def write_examples_with_validation(examples, output_path, seed=42, include_validation=True, val_split=0.12):
+    """Write imported examples to train/validation JSONL using the standard layout."""
+    random.seed(seed)
+    shuffled = list(examples)
+    random.shuffle(shuffled)
+    if include_validation and len(shuffled) > 5:
+        split = max(1, int(len(shuffled) * val_split))
+        val_examples = shuffled[:split]
+        train_examples = shuffled[split:]
+    else:
+        train_examples = shuffled
+        val_examples = []
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        for ex in train_examples:
+            f.write(json.dumps(ex) + "\n")
+
+    val_path = None
+    if val_examples:
+        val_path = output_path.parent / "validation.jsonl"
+        with open(val_path, "w") as f:
+            for ex in val_examples:
+                f.write(json.dumps(ex) + "\n")
+
+    return {
+        "spec": examples[0].get("metadata", {}).get("npc_key", "unknown"),
+        "total": len(examples),
+        "train": len(train_examples),
+        "validation": len(val_examples),
+        "categories": {"notebooklm_import": len(examples)},
+        "train_path": str(output_path),
+        "val_path": str(val_path) if val_path else None,
+    }
 
 
 def generate_identity_response(spec):
@@ -622,13 +716,18 @@ def main():
     parser.add_argument("--technique", default="notebooklm",
                         choices=["template", "ollama", "notebooklm", "openai", "anthropic"],
                         help="Generation technique subdirectory (default: notebooklm)")
+    parser.add_argument("--notebooklm-input", default=os.environ.get("NOTEBOOKLM_INPUT"),
+                        help="NotebookLM export JSON/JSONL to import (or NOTEBOOKLM_INPUT env var)")
     args = parser.parse_args()
 
     # Import re for JSON extraction
     import re
 
-    generator = None
     if args.ollama:
+        args.technique = "ollama"
+
+    generator = None
+    if args.technique == "ollama":
         print(f"Initializing Ollama generator ({args.model})...")
         generator = OllamaGenerator(model=args.model, url=args.url)
     elif args.technique == "openai":
@@ -650,16 +749,34 @@ def main():
     print(f"  Subject: {spec['subject']}")
     print()
 
-    result = generate_dataset(
-        spec,
-        output_path,
-        seed=args.seed,
-        include_validation=not args.no_validation,
-        val_split=args.val_split,
-        generator=generator,
-        multi_turn_ratio=args.multi_turn_ratio,
-        temperature=args.temperature
-    )
+    if args.technique == "notebooklm":
+        if not args.notebooklm_input:
+            print("Error: --technique notebooklm requires --notebooklm-input or NOTEBOOKLM_INPUT.")
+            print("       Export NotebookLM Q&A as JSONL/JSON with messages or question/answer fields.")
+            sys.exit(2)
+        try:
+            examples = load_notebooklm_examples(args.notebooklm_input, spec)
+            result = write_examples_with_validation(
+                examples,
+                output_path,
+                seed=args.seed,
+                include_validation=not args.no_validation,
+                val_split=args.val_split,
+            )
+        except Exception as exc:
+            print(f"Error: NotebookLM import failed: {exc}")
+            sys.exit(2)
+    else:
+        result = generate_dataset(
+            spec,
+            output_path,
+            seed=args.seed,
+            include_validation=not args.no_validation,
+            val_split=args.val_split,
+            generator=generator,
+            multi_turn_ratio=args.multi_turn_ratio,
+            temperature=args.temperature
+        )
 
     print(f"  Total examples:  {result['total']}")
     print(f"  Training:        {result['train']}")

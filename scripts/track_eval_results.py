@@ -14,12 +14,13 @@ Usage:
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
 def track_result(npc_key, model_path, win_rate=None, avg_quality=None, 
-                 notes="", val_loss=None, test_loss=None, metrics=None, metadata=None):
+                 notes="", val_loss=None, test_loss=None, metrics=None, metadata=None,
+                 results_file=None):
     """Store summary evaluation result in Supabase."""
     
     import os
@@ -28,7 +29,8 @@ def track_result(npc_key, model_path, win_rate=None, avg_quality=None,
     
     if not url or not key:
         print("⚠️  Supabase credentials not configured. Saving locally.")
-        save_local_result(npc_key, model_path, win_rate, avg_quality, notes, val_loss, test_loss)
+        save_local_result(npc_key, model_path, win_rate, avg_quality, notes, val_loss, test_loss,
+                          results_file=results_file, metrics=metrics, metadata=metadata)
         return False
     
     try:
@@ -39,6 +41,8 @@ def track_result(npc_key, model_path, win_rate=None, avg_quality=None,
             "npc_id": npc_key,
             "test_name": f"Eval Run {datetime.now().strftime('%Y%m%d_%H%M')}",
             "test_type": "summary",
+            "prompt_text": "summary",
+            "response_text": notes or "summary",
             "score": win_rate or avg_quality or 0.0,
             "metrics": {
                 "win_rate": win_rate,
@@ -52,7 +56,7 @@ def track_result(npc_key, model_path, win_rate=None, avg_quality=None,
                 "notes": notes,
                 **(metadata or {})
             },
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
         
         client.table("test_results").insert(result).execute()
@@ -60,7 +64,8 @@ def track_result(npc_key, model_path, win_rate=None, avg_quality=None,
         return True
     except Exception as e:
         print(f"Error saving to Supabase: {e}")
-        save_local_result(npc_key, model_path, win_rate, avg_quality, notes, val_loss, test_loss)
+        save_local_result(npc_key, model_path, win_rate, avg_quality, notes, val_loss, test_loss,
+                          results_file=results_file, metrics=metrics, metadata=metadata)
         return False
 
 
@@ -87,7 +92,7 @@ def track_per_example_result(npc_key, test_name, prompt, response, expected=None
             "score": score,
             "metrics": metrics or {},
             "metadata": metadata or {},
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
         
         client.table("test_results").insert(result).execute()
@@ -98,7 +103,8 @@ def track_per_example_result(npc_key, test_name, prompt, response, expected=None
 
 
 def save_local_result(npc_key, model_path, win_rate=None, avg_quality=None, 
-                      notes="", val_loss=None, test_loss=None, results_file=None):
+                      notes="", val_loss=None, test_loss=None, results_file=None,
+                      metrics=None, metadata=None):
     """Save evaluation result locally."""
     if results_file is None:
         from _config import paths
@@ -109,12 +115,14 @@ def save_local_result(npc_key, model_path, win_rate=None, avg_quality=None,
     result = {
         "npc_key": npc_key,
         "model_path": str(model_path),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "win_rate": win_rate,
         "avg_quality": avg_quality,
         "val_loss": val_loss,
         "test_loss": test_loss,
         "notes": notes,
+        "metrics": metrics or {},
+        "metadata": metadata or {},
     }
     
     with open(results_file, "a") as f:

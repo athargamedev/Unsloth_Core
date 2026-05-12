@@ -39,9 +39,10 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
-from _config import paths
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from _config import paths
 
 # ── Constraint checking ─────────────────────────────────────────────────────
 
@@ -314,6 +315,35 @@ def extract_questions_from_spec(spec, val_path=None):
     if val_path and os.path.exists(val_path):
         return load_validation_set(val_path)
     return []
+
+
+def autodetect_validation_path(npc_key):
+    """Find the preferred validation file for an NPC without subject-specific fallbacks."""
+    detected = paths.autodetect_dataset(npc_key)
+    if detected:
+        _, _, val_path = detected
+        if val_path.exists():
+            return val_path
+
+    legacy_path = PROJECT_ROOT / "datasets" / f"{npc_key}_validation.jsonl"
+    if legacy_path.exists():
+        return legacy_path
+    return None
+
+
+def generic_eval_questions(spec=None):
+    """Build generic fallback questions from the spec subject instead of chemistry defaults."""
+    subject = spec.get("subject", "your subject") if spec else "your subject"
+    return [
+        {"question": "Who are you?"},
+        {"question": "What is your name?"},
+        {"question": f"What are the basics of {subject}?"},
+        {"question": f"Why is {subject} important?"},
+        {"question": f"Give me a simple example from {subject}."},
+        {"question": f"What is a common mistake when learning {subject}?"},
+        {"question": f"Can you quiz me about {subject}?"},
+        {"question": "What should I study next?"},
+    ]
 
 
 def evaluate_model(server, questions, spec=None):
@@ -942,15 +972,9 @@ def main():
 
     if args.spec:
         spec = load_subject_spec(args.spec)
-        # Try to find validation set
-        project_root = PROJECT_ROOT
         npc_key = spec['npc_key']
-        # Try new structure: datasets/{npc_key}/{technique}/validation.jsonl
-        val_path = project_root / "datasets" / npc_key / "notebooklm" / "validation.jsonl"
-        if not val_path.exists():
-            # Fall back to legacy: datasets/{npc_key}_validation.jsonl
-            val_path = project_root / "datasets" / f"{npc_key}_validation.jsonl"
-        questions = extract_questions_from_spec(spec, val_path=str(val_path))
+        val_path = autodetect_validation_path(npc_key)
+        questions = extract_questions_from_spec(spec, val_path=str(val_path) if val_path else None)
         print(f"Loaded {len(questions)} eval questions from spec validation set")
 
         # Default report path to eval/reports/{npc_key}/ if not specified
@@ -967,12 +991,7 @@ def main():
     if not questions:
         # Fall back to generic questions
         print("No validation set found. Using generic evaluation questions.")
-        questions = [
-            {"question": f"What is {p}?"}
-            for p in ["chemistry", "an atom", "a molecule", "the periodic table",
-                      "a chemical reaction", "stoichiometry", "an acid", "a base",
-                      "Avogadro's number", "oxidation"]
-        ]
+        questions = generic_eval_questions(spec)
 
     # Limit questions
     questions = questions[:args.num_questions]

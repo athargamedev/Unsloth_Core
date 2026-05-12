@@ -35,11 +35,13 @@ def main():
     gen_p.add_argument("spec", help="Path to subject spec JSON")
     gen_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
     gen_p.add_argument("--technique", default="notebooklm", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
+    gen_p.add_argument("--notebooklm-input", help="NotebookLM export JSON/JSONL path")
 
     # Sanitize
     san_p = subparsers.add_parser("sanitize", help="Sanitize a dataset")
     san_p.add_argument("input", help="Path to input JSONL")
     san_p.add_argument("--output", "-o", help="Path to output JSONL")
+    san_p.add_argument("--strict-canonical", action="store_true", help="Require canonical dataset path")
 
     # Train
     train_p = subparsers.add_parser("train", help="Train a model")
@@ -69,6 +71,12 @@ def main():
     val_p.add_argument("--npc-key", help="npc_key when using --config")
     val_p.add_argument("--format", default="yaml", choices=["yaml", "json"], help="Output format")
     val_p.add_argument("--strict", action="store_true", help="Treat warnings as errors")
+    val_p.add_argument("--require-canonical", action="store_true", help="Require canonical dataset train path")
+
+    # Migrate datasets
+    mig_p = subparsers.add_parser("migrate-datasets", help="Migrate legacy flat datasets to canonical structure")
+    mig_p.add_argument("--apply", action="store_true", help="Apply migration (default dry-run)")
+    mig_p.add_argument("--move", action="store_true", help="Move files instead of copy")
 
     # Pipeline (Generate + Sanitize + Train)
     pipe_p = subparsers.add_parser("pipeline", help="Run full generation-to-training pipeline")
@@ -76,6 +84,7 @@ def main():
     pipe_p.add_argument("--preset", default="fast-3b", help="Training preset")
     pipe_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
     pipe_p.add_argument("--technique", default="notebooklm", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
+    pipe_p.add_argument("--notebooklm-input", help="NotebookLM export JSON/JSONL path")
     pipe_p.add_argument("--track", action="store_true", help="Track results in Supabase")
 
     args = parser.parse_args()
@@ -86,11 +95,14 @@ def main():
         cmd.extend(["--technique", technique])
         if technique == "ollama":
             cmd.append("--ollama")
+        if args.notebooklm_input:
+            cmd.extend(["--notebooklm-input", args.notebooklm_input])
         run_cmd(cmd)
 
     elif args.command == "sanitize":
         cmd = [PYTHON, str(SCRIPTS_DIR / "sanitize_dataset.py"), args.input]
         if args.output: cmd.extend(["--output", args.output])
+        if args.strict_canonical: cmd.append("--strict-canonical")
         run_cmd(cmd)
 
     elif args.command == "train":
@@ -130,6 +142,16 @@ def main():
             cmd.extend(["--format", args.format])
         if args.strict:
             cmd.append("--strict")
+        if args.require_canonical:
+            cmd.append("--require-canonical")
+        run_cmd(cmd)
+
+    elif args.command == "migrate-datasets":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "migrate_datasets.py")]
+        if args.apply:
+            cmd.append("--apply")
+        if args.move:
+            cmd.append("--move")
         run_cmd(cmd)
 
     elif args.command == "pipeline":
@@ -139,6 +161,8 @@ def main():
         gen_cmd.extend(["--technique", technique])
         if technique == "ollama":
             gen_cmd.append("--ollama")
+        if args.notebooklm_input:
+            gen_cmd.extend(["--notebooklm-input", args.notebooklm_input])
         run_cmd(gen_cmd)
         
         # Determine paths
@@ -147,12 +171,12 @@ def main():
         
         print(f"\n--- Phase 2: Sanitizing Dataset ---")
         san_path = dataset_path.replace("train.jsonl", "train_clean.jsonl")
-        san_cmd = [PYTHON, str(SCRIPTS_DIR / "sanitize_dataset.py"), dataset_path, "--output", san_path]
+        san_cmd = [PYTHON, str(SCRIPTS_DIR / "sanitize_dataset.py"), dataset_path, "--output", san_path, "--strict-canonical"]
         run_cmd(san_cmd)
         
         print(f"\n--- Phase 3: Training Model ---")
         # Note: train.py --export-gguf will eventually produce a .gguf in exports/{npc_key}/
-        train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--data", san_path, "--preset", args.preset, "--export-gguf"]
+        train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--from-spec", "--data", san_path, "--preset", args.preset, "--export-gguf"]
         run_cmd(train_cmd)
         
         if args.track:

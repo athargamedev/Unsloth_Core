@@ -11,6 +11,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
@@ -71,6 +72,8 @@ def main():
     parser = argparse.ArgumentParser(description="Smoke test a GGUF model")
     parser.add_argument("model", help="Path to GGUF model")
     parser.add_argument("--spec", help="Path to subject spec JSON")
+    parser.add_argument("--prompt", dest="prompts", action="append",
+                        help="Custom prompt to test; may be provided multiple times")
     parser.add_argument("--track", action="store_true", help="Track results in Supabase")
     
     args = parser.parse_args()

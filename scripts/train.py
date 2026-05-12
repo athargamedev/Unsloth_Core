@@ -231,15 +231,7 @@ def prepare_dataset(data_path, tokenizer, config):
     print(f"[dataset] Text sample: {dataset[0]['text'][:120]}...")
 
     # Check for validation split
-    # Try new structure first: {technique}/validation.jsonl
-    val_path = None
-    data_parent = Path(data_path).parent
-    if data_parent.name in paths.DATASET_TECHNIQUES:
-        # data_path is datasets/{npc_key}/{technique}/train.jsonl
-        val_path = str(data_parent / "validation.jsonl")
-    else:
-        # Legacy: datasets/{npc_key}.jsonl → datasets/{npc_key}_validation.jsonl
-        val_path = data_path.replace(".jsonl", "_validation.jsonl")
+    val_path = str(paths.infer_validation_path(data_path))
     eval_dataset = None
     if val_path and os.path.exists(val_path):
         print(f"[dataset] Found validation set: {val_path}")
@@ -374,11 +366,15 @@ def export_to_gguf(model, tokenizer, output_dir, quantization="q4_k_m"):
     """
     import json
 
-    # Derive npc_key from output directory name
-    npc_key = Path(output_dir).name
+    # Resolve run output dirs back to their owning NPC key.
+    try:
+        npc_key, adapter_dir = paths.resolve_adapter_dir(output_dir)
+    except FileNotFoundError:
+        adapter_dir = Path(output_dir)
+        npc_key = adapter_dir.parent.parent.name if adapter_dir.parent.name == "runs" else adapter_dir.name
     # Model ID — try to read from adapter_config, fall back to default
     model_id = "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
-    adapter_config = Path(output_dir) / "adapter_config.json"
+    adapter_config = adapter_dir / "adapter_config.json"
     if adapter_config.exists():
         try:
             with open(adapter_config) as f:
@@ -421,25 +417,12 @@ def export_to_gguf(model, tokenizer, output_dir, quantization="q4_k_m"):
 
 
 def generate_dataset_from_spec(spec_path, output_path=None):
-    """Generate dataset from a subject spec, then return the output path."""
-    project_root = Path(__file__).resolve().parent.parent
-    sys.path.insert(0, str(project_root / "scripts"))
-
-    from generate_dataset import load_subject_spec, generate_dataset
-
-    spec = load_subject_spec(spec_path)
-
-    if output_path is None:
-        # Default to datasets/{npc_key}/notebooklm/train.jsonl
-        output_path = paths.dataset_train_path(spec['npc_key'], "notebooklm")
-
-    result = generate_dataset(spec, output_path)
-    print(f"\n[spec] Generated dataset from spec: {spec['npc_key']}")
-    print(f"       Train: {result['train_path']}")
-    if result["val_path"]:
-        print(f"       Val:   {result['val_path']}")
-
-    return result["train_path"]
+    """Refuse implicit template generation when no dataset exists."""
+    raise RuntimeError(
+        "No existing dataset found. Generate one explicitly with "
+        "scripts/generate_dataset.py --technique notebooklm --notebooklm-input <export.jsonl>, "
+        "--technique ollama, or --technique template."
+    )
 
 
 def main():
@@ -535,7 +518,11 @@ def main():
                 data_path = str(train_path)
                 print(f"[auto] Using existing dataset technique '{technique}': {data_path}")
             else:
-                data_path = generate_dataset_from_spec(args.config_or_spec)
+                try:
+                    data_path = generate_dataset_from_spec(args.config_or_spec)
+                except RuntimeError as exc:
+                    print(f"Error: {exc}")
+                    sys.exit(2)
         else:
             data_path = args.data
         config_path = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"
@@ -748,7 +735,7 @@ def main():
 
     val_data_path = None
     try:
-        val_data_path = infer_validation_path(str(data_path), args.from_spec)
+        val_data_path = paths.infer_validation_path(str(data_path))
     except Exception:
         val_data_path = None
 
