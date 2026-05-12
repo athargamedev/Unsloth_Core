@@ -35,31 +35,51 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from _config import paths
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_UNITY_PATH = PROJECT_ROOT.parent / "Setup Guide In-Editor Tutorial"
 STREAMING_ASSETS_MODELS = "Assets/StreamingAssets/Models"
 MANIFEST_FILENAME = "npc_deployment_manifest.json"
+
+
+def _file_sha256(path: Path) -> str:
+    """Compute SHA256 hash of a file."""
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(64 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def find_unity_project(project_path: Path | None) -> Path | None:
     """Resolve the Unity project path. Auto-detect relative to Unsloth_Core if not specified."""
     if project_path is not None:
         target = Path(project_path).resolve()
-        if (target / "Assets").is_dir():
+        if (target / "Assets").is_dir() and (target / "ProjectSettings").is_dir():
             return target
         print(f"[deploy] Warning: Specified path doesn't look like a Unity project: {target}")
         return None
 
-    # Try default sibling path
-    sibling = DEFAULT_UNITY_PATH.resolve()
-    if (sibling / "Assets").is_dir():
-        print(f"[deploy] Auto-detected Unity project: {sibling}")
-        return sibling
+    # Auto-detect: find sibling directories with Assets/ + ProjectSettings/
+    parent = PROJECT_ROOT.parent
+    candidates = []
+    for entry in sorted(parent.iterdir()):
+        if entry.is_dir() and entry.resolve() != PROJECT_ROOT.resolve():
+            if (entry / "Assets").is_dir() and (entry / "ProjectSettings").is_dir():
+                candidates.append(entry)
 
-    print("[deploy] Could not auto-detect Unity project. Use --unity-project to specify.")
+    if len(candidates) == 1:
+        print(f"[deploy] Auto-detected Unity project: {candidates[0]}")
+        return candidates[0]
+    elif len(candidates) > 1:
+        print(f"[deploy] Multiple sibling Unity projects found: {[c.name for c in candidates]}")
+        print(f"[deploy] Use --unity-project to specify.")
+    else:
+        print("[deploy] Could not auto-detect Unity project. Use --unity-project to specify.")
     return None
 
 
@@ -167,6 +187,17 @@ def deploy(entries: list[dict], unity_project: Path, dry_run: bool = False, expo
                 shutil.copy2(gguf_path, dest_path)
                 size_mb = dest_path.stat().st_size / (1024 * 1024)
                 print(f"[deploy]  ✓  {npc_key}: Copied {gguf_filename} ({size_mb:.1f} MB) → {STREAMING_ASSETS_MODELS}/")
+
+                # Verify checksum
+                src_sha = _file_sha256(Path(gguf_path))
+                dst_sha = _file_sha256(dest_path)
+                if src_sha != dst_sha:
+                    print(f"[deploy]  ✗  CHECKSUM MISMATCH for {gguf_filename}")
+                    print(f"[deploy]     Source: {src_sha}")
+                    print(f"[deploy]     Dest:   {dst_sha}")
+                    dest_path.unlink(missing_ok=True)
+                    continue
+                print(f"[deploy]     Checksum: {src_sha[:16]}...")
             except Exception as e:
                 print(f"[deploy]  ✗  {npc_key}: Copy failed: {e}")
                 continue

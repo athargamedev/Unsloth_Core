@@ -115,8 +115,8 @@ def find_trained_npcs():
         if not entry.is_dir() or entry.name == "colab":
             continue
         try:
-            paths.resolve_adapter_dir(entry.name)
-            npcs.append(entry.name)
+            _, adapter_dir = paths.resolve_adapter_dir(str(entry))
+            npcs.append(adapter_dir)
         except FileNotFoundError:
             continue
     return npcs

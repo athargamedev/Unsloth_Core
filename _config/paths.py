@@ -256,6 +256,16 @@ def latest_run_dir(npc_key: str) -> Path | None:
     return None
 
 
+def best_run_dir(npc_key: str) -> Path | None:
+    """Resolve the 'best' symlink (lowest training loss) for an NPC."""
+    link = output_dir(npc_key) / "best"
+    if link.exists() and link.is_symlink():
+        target = link.resolve()
+        if target.exists():
+            return target
+    return None
+
+
 def resolve_adapter_dir(npc_key_or_dir: str | Path) -> tuple[str, Path]:
     """Resolve an NPC key, output dir, latest symlink, or run dir to an adapter dir.
 
@@ -263,18 +273,22 @@ def resolve_adapter_dir(npc_key_or_dir: str | Path) -> tuple[str, Path]:
     message when no PEFT adapter is present.
     """
     candidate = Path(npc_key_or_dir)
-    if candidate.exists():
-        adapter_dir = candidate.resolve()
+    if not candidate.exists():
+        # Not an existing path — treat as NPC key
+        npc_key = str(npc_key_or_dir)
+        latest = latest_run_dir(npc_key)
+        adapter_dir = latest or output_dir(npc_key)
+    else:
+        # Check name BEFORE following symlinks
+        adapter_dir = candidate
         if adapter_dir.name == "latest":
             adapter_dir = adapter_dir.resolve()
+        elif adapter_dir.is_symlink() or adapter_dir.exists():
+            adapter_dir = candidate.resolve()
         if adapter_dir.parent.name == "runs":
             npc_key = adapter_dir.parent.parent.name
         else:
             npc_key = adapter_dir.name
-    else:
-        npc_key = str(npc_key_or_dir)
-        latest = latest_run_dir(npc_key)
-        adapter_dir = latest or output_dir(npc_key)
 
     if (adapter_dir / "adapter_config.json").exists():
         return npc_key, adapter_dir

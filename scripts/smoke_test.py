@@ -68,6 +68,31 @@ def run_llama_cli(model_path, prompt, system_prompt=None, max_tokens=128):
     except Exception as e:
         return f"[ERROR] Inference failed: {e}"
 
+def check_gguf_integrity(model_path: Path) -> bool:
+    """Quick integrity check: verify GGUF magic bytes and read header fields.
+    
+    Returns True if valid, False otherwise.
+    """
+    import struct
+    try:
+        with open(model_path, "rb") as f:
+            magic = f.read(4)
+            if magic != b"GGUF":
+                print(f"  ✗  Invalid GGUF magic bytes: {magic.hex()!r}")
+                return False
+            version = struct.unpack("<I", f.read(4))[0]
+            tensor_count = struct.unpack("<Q", f.read(8))[0]
+            metadata_len = struct.unpack("<Q", f.read(8))[0]
+            file_size = model_path.stat().st_size
+            print(f"  ✓  Valid GGUF v{version}")
+            print(f"     Tensors: {tensor_count}, Metadata header: {metadata_len} bytes")
+            print(f"     File size: {file_size / 1e9:.2f} GB")
+        return True
+    except Exception as e:
+        print(f"  ✗  Integrity check failed: {e}")
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Smoke test a GGUF model")
     parser.add_argument("model", help="Path to GGUF model")
@@ -75,6 +100,8 @@ def main():
     parser.add_argument("--prompt", dest="prompts", action="append",
                         help="Custom prompt to test; may be provided multiple times")
     parser.add_argument("--track", action="store_true", help="Track results in Supabase")
+    parser.add_argument("--check-integrity", action="store_true",
+                        help="Validate GGUF file structure (no inference required)")
     
     args = parser.parse_args()
     
@@ -82,6 +109,10 @@ def main():
     if not model_path.exists():
         print(f"Error: Model {model_path} not found")
         return
+
+    if args.check_integrity:
+        valid = check_gguf_integrity(model_path)
+        sys.exit(0 if valid else 1)
 
     npc_key = "unknown"
     system_prompt = None

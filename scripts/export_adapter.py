@@ -250,8 +250,8 @@ def find_all_adapters():
         if not entry.is_dir() or entry.name == "colab":
             continue
         try:
-            _, adapter_dir = paths.resolve_adapter_dir(entry.name)
-            adapters.append(adapter_dir)
+            _, adapter_dir = paths.resolve_adapter_dir(str(entry))
+            adapters.append(str(adapter_dir))
         except FileNotFoundError:
             continue
     return adapters

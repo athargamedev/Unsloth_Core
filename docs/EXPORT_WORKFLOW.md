@@ -2,6 +2,15 @@
 
 This document covers two export paths for trained LoRA adapters — full model merging via `scripts/export.py` and lightweight LoRA-only adapter export via `scripts/export_adapter.py` — plus deployment to Unity via `scripts/deploy_to_unity.py`.
 
+All three are accessible via the unified CLI:
+
+| CLI Command | Script | Purpose |
+|-------------|--------|---------|
+| `./ucore export` | `scripts/export.py` | Full GGUF merge (base + LoRA) |
+| `./ucore export-adapter` | `scripts/export_adapter.py` | LoRA-only GGUF (for LLMUnity) |
+| `./ucore deploy` | `scripts/deploy_to_unity.py` | Deploy to Unity project |
+| `./ucore smoke --check-integrity` | `scripts/smoke_test.py` | Validate GGUF file structure |
+
 ## 1. Overview
 
 After training a LoRA adapter, you need to export it for inference. There are two approaches:
@@ -36,6 +45,9 @@ The `export.py` script merges the trained LoRA adapter with its base model and e
 # Recommended: NPC key + model ID
 python scripts/export.py chemistry_instructor \
     --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit
+
+# Via ucore (same thing)
+./ucore export chemistry_instructor --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit
 
 # Legacy: point to training output directory
 python scripts/export.py outputs/chemistry_instructor/ \
@@ -124,14 +136,20 @@ The `deploy_to_unity.py` script automates the full deployment pipeline: scanning
 # Auto-detect Unity project (sibling directory)
 python scripts/deploy_to_unity.py
 
+# Via ucore (same thing)
+./ucore deploy
+
 # Specify Unity project path explicitly
 python scripts/deploy_to_unity.py --unity-project /path/to/UnityProject
+./ucore deploy --unity-project /path/to/UnityProject
 
 # Dry run (show what would happen)
 python scripts/deploy_to_unity.py --dry-run
+./ucore deploy --dry-run
 
 # Export GGUF only (no Unity copy)
 python scripts/deploy_to_unity.py --export-only
+./ucore deploy --export-only
 
 # Skip export step (only copy already-exported files)
 python scripts/deploy_to_unity.py --skip-export
@@ -147,15 +165,19 @@ The script does three things:
 
 ### Manifest Format
 
+The deployment pipeline writes an `npc_deployment_manifest.json` consumed by Unity Editor's NPCDeploymentImporter:
+
 ```json
 {
   "version": 1,
   "generated_at": "2026-05-12T10:30:00+00:00",
   "source": "Unsloth_Core",
+  "unsloth_core_path": "/home/user/Projects/Unsloth_Core",
   "npcs": [
     {
       "npc_key": "chemistry_instructor",
       "lora_gguf": "Models/chemistry_instructor-llama3.2-3b-q4_k_m.gguf",
+      "gguf_full_path": "/home/user/UnityProject/Assets/StreamingAssets/Models/chemistry_instructor-llama3.2-3b-q4_k_m.gguf",
       "npc_name": "ChemistryInstructor",
       "system_prompt": "You are ChemistryInstructor...",
       "subject": "General chemistry"
@@ -164,6 +186,38 @@ The script does three things:
 }
 ```
 
+### Export Manifest
+
+Each `exports/{npc_key}/manifest.json` contains provenance metadata:
+
+```json
+{
+  "npc_key": "chemistry_instructor",
+  "model_id": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+  "model_short": "llama3.2-3b",
+  "quantizations": ["q4_k_m", "f16"],
+  "gguf_files": ["chemistry_instructor-llama3.2-3b-q4_k_m.gguf", "chemistry_instructor-llama3.2-3b-f16.gguf"],
+  "exported_at": "2026-05-12T10:30:00+00:00",
+  "npc_name": "ChemistryInstructor",
+  "run_id": "20260512_llama-3b-fast_001",
+  "training_loss": 0.4231,
+  "eval_perplexity": 1.53,
+  "provenance": {
+    "run_id": "20260512_llama-3b-fast_001",
+    "git_commit": "a1b2c3d4e5f6...",
+    "preset": "llama-3b-fast",
+    "dataset_technique": "notebooklm",
+    "dataset_sha256": "abc123def456...",
+    "training_loss": 0.4231,
+    "duration_minutes": 12.5,
+    "trained_at": "2026-05-12T10:15:00"
+  },
+  "checksums": {
+    "chemistry_instructor-llama3.2-3b-q4_k_m.gguf": "sha256:def789...",
+    "chemistry_instructor-llama3.2-3b-f16.gguf": "sha256:abc123..."
+  }
+}
+```
 ## 5. Output Structure Summary
 
 ```
@@ -173,7 +227,28 @@ exports/{npc_key}/
 └── manifest.json                             # Export metadata
 ```
 
-## 6. Troubleshooting
+## 6. GGUF Integrity Validation
+
+After export, validate the GGUF file structure without running inference:
+
+```bash
+# Via smoke_test.py
+python scripts/smoke_test.py exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-f16.gguf --check-integrity
+
+# Via ucore
+./ucore smoke exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-f16.gguf --check-integrity
+```
+
+This reads and validates:
+- **Magic bytes** — confirms the file is a valid GGUF (`GGUF` header at offset 0)
+- **GGUF version** — reports the format version number
+- **Tensor count** — number of tensors stored in the file
+- **Metadata header size** — size of the metadata section
+- **File size** — total file size in GB
+
+Exits with code 0 on success, 1 on failure.
+
+## 7. Troubleshooting
 
 ### Converter Not Found
 
@@ -216,8 +291,9 @@ If the merged GGUF file is unexpectedly small or missing:
 [deploy] Warning: Specified path doesn't look like a Unity project
 ```
 
-The auto-detect looks for a sibling directory named `Setup Guide In-Editor Tutorial` with an `Assets/` subdirectory. Provide an explicit path:
+The auto-detect scans sibling directories for those containing both `Assets/` and `ProjectSettings/` (standard Unity project markers). If no sibling project is found or multiple exist, provide an explicit path:
 
 ```bash
 python scripts/deploy_to_unity.py --unity-project /absolute/path/to/UnityProject
+./ucore deploy --unity-project /absolute/path/to/UnityProject
 ```

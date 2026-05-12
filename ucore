@@ -54,6 +54,8 @@ def main():
     smoke_p = subparsers.add_parser("smoke", help="Smoke test a GGUF model")
     smoke_p.add_argument("model", help="Path to GGUF model")
     smoke_p.add_argument("--spec", help="Path to subject spec for context")
+    smoke_p.add_argument("--check-integrity", action="store_true",
+                         help="Validate GGUF file structure (no inference)")
     smoke_p.add_argument("--track", action="store_true", help="Track results in Supabase")
 
     # Dashboard
@@ -77,6 +79,28 @@ def main():
     mig_p = subparsers.add_parser("migrate-datasets", help="Migrate legacy flat datasets to canonical structure")
     mig_p.add_argument("--apply", action="store_true", help="Apply migration (default dry-run)")
     mig_p.add_argument("--move", action="store_true", help="Move files instead of copy")
+
+    # Export
+    export_p = subparsers.add_parser("export", help="Export trained LoRA adapter to GGUF")
+    export_p.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
+    export_p.add_argument("--model", "-m", help="Base model ID (auto-detected if omitted)")
+    export_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization (default: q4_k_m)")
+    export_p.add_argument("--skip-f16", action="store_true", help="Skip exporting f16 variant")
+
+    # Export adapter (LoRA-only for LLMUnity)
+    ea_p = subparsers.add_parser("export-adapter", help="Export LoRA adapter as GGUF (for LLMUnity)")
+    ea_p.add_argument("adapter_path", nargs="?", help="Path to PEFT adapter directory")
+    ea_p.add_argument("--all", "-a", action="store_true", help="Convert all adapters in outputs/")
+    ea_p.add_argument("--outtype", default="f16", choices=["f32", "f16", "bf16", "q8_0", "auto"],
+                      help="Output format (default: f16)")
+    ea_p.add_argument("--outfile", help="Explicit output file path")
+
+    # Deploy
+    deploy_p = subparsers.add_parser("deploy", help="Deploy exports to Unity project")
+    deploy_p.add_argument("--unity-project", "-u", help="Path to Unity project (auto-detected if omitted)")
+    deploy_p.add_argument("--dry-run", action="store_true", help="Show what would be done without copying")
+    deploy_p.add_argument("--skip-export", action="store_true", help="Skip GGUF export step")
+    deploy_p.add_argument("--export-only", action="store_true", help="Only export, skip Unity copy")
 
     # Pipeline (Generate + Sanitize + Train)
     pipe_p = subparsers.add_parser("pipeline", help="Run full generation-to-training pipeline")
@@ -115,6 +139,7 @@ def main():
     elif args.command == "smoke":
         cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), args.model]
         if args.spec: cmd.extend(["--spec", args.spec])
+        if args.check_integrity: cmd.append("--check-integrity")
         if args.track: cmd.append("--track")
         run_cmd(cmd)
 
@@ -152,6 +177,34 @@ def main():
             cmd.append("--apply")
         if args.move:
             cmd.append("--move")
+        run_cmd(cmd)
+
+    elif args.command == "export":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "export.py"), args.npc_key]
+        if args.model: cmd.extend(["--model", args.model])
+        if args.quantization: cmd.extend(["--quantization", args.quantization])
+        if args.skip_f16: cmd.append("--skip-f16")
+        run_cmd(cmd)
+
+    elif args.command == "export-adapter":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "export_adapter.py")]
+        if args.all:
+            cmd.append("--all")
+        elif args.adapter_path:
+            cmd.append(args.adapter_path)
+        else:
+            print("Error: Provide adapter_path or --all")
+            sys.exit(1)
+        cmd.extend(["--outtype", args.outtype])
+        if args.outfile: cmd.extend(["--outfile", args.outfile])
+        run_cmd(cmd)
+
+    elif args.command == "deploy":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "deploy_to_unity.py")]
+        if args.unity_project: cmd.extend(["--unity-project", args.unity_project])
+        if args.dry_run: cmd.append("--dry-run")
+        if args.skip_export: cmd.append("--skip-export")
+        if args.export_only: cmd.append("--export-only")
         run_cmd(cmd)
 
     elif args.command == "pipeline":

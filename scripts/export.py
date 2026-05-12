@@ -61,6 +61,17 @@ def _export_gguf_file(model, tokenizer, model_id, quantization, output_path):
     print(f"  → {output_path} ({file_size:.2f} GB)")
 
 
+
+def _file_sha256(path: Path) -> str:
+    """Compute SHA256 hash of a file."""
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(64 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 def write_manifest(npc_key: str, model_id: str, quantizations: list[str],
                    gguf_files: list[Path], output_dir: Path) -> dict:
     """Write manifest.json to the export directory with provenance metadata."""
@@ -91,21 +102,51 @@ def write_manifest(npc_key: str, model_id: str, quantizations: list[str],
     else:
         manifest["npc_name"] = npc_key
 
-    # Try to get training provenance from latest run
+    # Try to get training provenance from latest run's run_manifest.json (preferred)
+    # Fall back to legacy metrics.json
     try:
         latest = paths.latest_run_dir(npc_key)
-        if latest and (latest / "metrics.json").exists():
-            with open(latest / "metrics.json") as f:
-                metrics = json.load(f)
-            manifest["run_id"] = metrics.get("run_id")
-            manifest["trained_at"] = metrics.get("timestamp")
-            train_loss = metrics.get("training_loss")
-            if train_loss is not None:
-                import math
-                manifest["training_loss"] = round(train_loss, 4)
-                manifest["eval_perplexity"] = round(math.exp(train_loss) if train_loss > 0 else 999, 2)
+        if latest:
+            # Prefer run_manifest.json (richer)
+            rm_path = latest / "run_manifest.json"
+            if rm_path.exists():
+                with open(rm_path) as f:
+                    rm = json.load(f)
+                manifest["provenance"] = {
+                    "run_id": rm.get("run_id"),
+                    "git_commit": rm.get("git_commit"),
+                    "preset": rm.get("preset"),
+                    "dataset_technique": rm.get("dataset", {}).get("technique"),
+                    "dataset_sha256": rm.get("dataset", {}).get("train_sha256"),
+                    "training_loss": rm.get("results", {}).get("training_loss"),
+                    "duration_minutes": rm.get("results", {}).get("duration_minutes"),
+                    "trained_at": rm.get("created_at"),
+                }
+                manifest["run_id"] = rm.get("run_id")
+                train_loss = rm.get("results", {}).get("training_loss")
+                if train_loss is not None:
+                    manifest["training_loss"] = round(train_loss, 4)
+                    manifest["eval_perplexity"] = round(math.exp(train_loss) if train_loss > 0 else 999, 2)
+            else:
+                # Fallback to legacy metrics.json
+                metrics_path = latest / "metrics.json"
+                if metrics_path.exists():
+                    with open(metrics_path) as f:
+                        metrics = json.load(f)
+                    manifest["run_id"] = metrics.get("run_id")
+                    manifest["trained_at"] = metrics.get("timestamp")
+                    train_loss = metrics.get("training_loss")
+                    if train_loss is not None:
+                        manifest["training_loss"] = round(train_loss, 4)
+                        manifest["eval_perplexity"] = round(math.exp(train_loss) if train_loss > 0 else 999, 2)
     except Exception:
         pass
+
+    # Compute checksums for each GGUF file
+    manifest["checksums"] = {}
+    for gf in gguf_files:
+        if gf.exists():
+            manifest["checksums"][gf.name] = f"sha256:{_file_sha256(gf)}"
 
     # Write manifest
     with open(manifest_path, "w") as f:

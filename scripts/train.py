@@ -767,6 +767,26 @@ def main():
     with open(run_manifest_path, "w") as f:
         json.dump(run_manifest, f, indent=2)
 
+    # Update "best" symlink (lowest training loss wins)
+    current_loss = trainer_stats.training_loss
+    best_loss = current_loss
+    best_run = run_id
+    for manifest_file in sorted(paths.run_dir(npc_key, "").parent.glob("*/run_manifest.json")):
+        try:
+            with open(manifest_file) as f:
+                m = json.load(f)
+            loss = m.get("results", {}).get("training_loss")
+            if loss is not None and loss < best_loss:
+                best_loss = loss
+                best_run = m["run_id"]
+        except Exception:
+            pass
+    best_link = paths.output_dir(npc_key) / "best"
+    if best_link.exists() or best_link.is_symlink():
+        best_link.unlink()
+    os.symlink(f"runs/{best_run}", str(best_link), target_is_directory=True)
+    print(f"  Best run:   {best_run} (loss={best_loss:.4f})")
+
     print(f"\n{'=' * 60}")
     print(f"  TRAINING COMPLETE")
     print(f"  Duration: {elapsed / 60:.1f} minutes")
