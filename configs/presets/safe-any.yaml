@@ -1,0 +1,9 @@
+# Safest preset for any model size on limited VRAM
+training:
+  batch_size: 1
+  gradient_accumulation_steps: 8
+  max_seq_length: 1024
+  warmup_steps: 5
+lora:
+  lora_r: 8
+  lora_alpha: 16

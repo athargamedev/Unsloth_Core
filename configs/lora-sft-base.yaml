@@ -1,0 +1,27 @@
+# Base LoRA SFT config for RTX 3060 6GB
+# model-size-aware presets override specific fields via scripts/train.py
+# output_dir is relative to PROJECT_ROOT; resolved at runtime by train.py
+model: unsloth/Llama-3.2-3B-Instruct-bnb-4bit
+data:
+  format_type: chatml
+training:
+  training_type: lora
+  max_seq_length: 2048
+  load_in_4bit: true
+  num_epochs: 3
+  learning_rate: 0.0002
+  batch_size: 1
+  gradient_accumulation_steps: 8
+  warmup_steps: 10
+  save_steps: 50
+  eval_steps: 50
+  weight_decay: 0.01
+  packing: true
+  train_on_responses_only: true
+lora:
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.0
+  target_modules: "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj"
+logging:
+  enable_tensorboard: true

@@ -1,0 +1,11 @@
+# Quality preset for 1.7B models, higher rank, longer training
+model: unsloth/Qwen3-1.7B-bnb-4bit
+training:
+  num_epochs: 5
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  warmup_steps: 20
+lora:
+  lora_r: 32
+  lora_alpha: 64
+  lora_dropout: 0.05

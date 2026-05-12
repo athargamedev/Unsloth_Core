@@ -1,0 +1,8 @@
+# Fast preset for 1.7B models on 6GB VRAM
+model: unsloth/Qwen3-1.7B-bnb-4bit
+training:
+  batch_size: 8
+  gradient_accumulation_steps: 2
+lora:
+  lora_r: 32
+  lora_alpha: 64

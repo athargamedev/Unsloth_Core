@@ -1,0 +1,12 @@
+# Quick smoke test (10 steps, tiny batch)
+training:
+  max_steps: 10
+  num_epochs: 1
+  batch_size: 1
+  gradient_accumulation_steps: 2
+  max_seq_length: 512
+  save_steps: 5
+  eval_steps: 5
+lora:
+  lora_r: 8
+  lora_alpha: 16

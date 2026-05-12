@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""
+ucore — Unified Unsloth_Core CLI.
+
+Simplifies the NPC training pipeline:
+  generate -> sanitize -> train -> smoke-test
+"""
+
+import argparse
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+SCRIPTS_DIR = PROJECT_ROOT / "scripts"
+VENV_PYTHON = PROJECT_ROOT / "unsloth_env" / "bin" / "python"
+PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
+
+def run_cmd(cmd, cwd=PROJECT_ROOT):
+    """Run a shell command and print its output."""
+    print(f"Running: {' '.join(cmd)}")
+    try:
+        subprocess.run(cmd, cwd=str(cwd), check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: Command failed with return code {e.returncode}")
+        sys.exit(e.returncode)
+
+def main():
+    parser = argparse.ArgumentParser(description="Unsloth_Core Unified CLI")
+    subparsers = parser.add_subparsers(dest="command", help="Command to run")
+
+    # Generate
+    gen_p = subparsers.add_parser("generate", help="Generate dataset from spec")
+    gen_p.add_argument("spec", help="Path to subject spec JSON")
+    gen_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
+    gen_p.add_argument("--technique", default="notebooklm", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
+
+    # Sanitize
+    san_p = subparsers.add_parser("sanitize", help="Sanitize a dataset")
+    san_p.add_argument("input", help="Path to input JSONL")
+    san_p.add_argument("--output", "-o", help="Path to output JSONL")
+
+    # Train
+    train_p = subparsers.add_parser("train", help="Train a model")
+    train_p.add_argument("config_or_spec", help="Path to config YAML or subject spec")
+    train_p.add_argument("--from-spec", action="store_true", help="Train directly from spec")
+    train_p.add_argument("--preset", help="Training preset")
+    train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training")
+
+    # Smoke Test
+    smoke_p = subparsers.add_parser("smoke", help="Smoke test a GGUF model")
+    smoke_p.add_argument("model", help="Path to GGUF model")
+    smoke_p.add_argument("--spec", help="Path to subject spec for context")
+    smoke_p.add_argument("--track", action="store_true", help="Track results in Supabase")
+
+    # Dashboard
+    dash_p = subparsers.add_parser("dashboard", help="Start the monitoring dashboard")
+    dash_p.add_argument("--port", type=int, default=8000, help="Port")
+
+    # Pipeline (Generate + Sanitize + Train)
+    pipe_p = subparsers.add_parser("pipeline", help="Run full generation-to-training pipeline")
+    pipe_p.add_argument("spec", help="Path to subject spec JSON")
+    pipe_p.add_argument("--preset", default="fast-3b", help="Training preset")
+    pipe_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
+    pipe_p.add_argument("--technique", default="notebooklm", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
+    pipe_p.add_argument("--track", action="store_true", help="Track results in Supabase")
+
+    args = parser.parse_args()
+
+    if args.command == "generate":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "generate_dataset.py"), args.spec]
+        technique = "ollama" if args.ollama else args.technique
+        cmd.extend(["--technique", technique])
+        if technique == "ollama":
+            cmd.append("--ollama")
+        run_cmd(cmd)
+
+    elif args.command == "sanitize":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "sanitize_dataset.py"), args.input]
+        if args.output: cmd.extend(["--output", args.output])
+        run_cmd(cmd)
+
+    elif args.command == "train":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.config_or_spec]
+        if args.from_spec: cmd.append("--from-spec")
+        if args.preset: cmd.extend(["--preset", args.preset])
+        if args.export_gguf: cmd.append("--export-gguf")
+        run_cmd(cmd)
+
+    elif args.command == "smoke":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), args.model]
+        if args.spec: cmd.extend(["--spec", args.spec])
+        if args.track: cmd.append("--track")
+        run_cmd(cmd)
+
+    elif args.command == "dashboard":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "dashboard.py"), "--port", str(args.port)]
+        run_cmd(cmd)
+
+    elif args.command == "pipeline":
+        print(f"--- Phase 1: Generating Dataset ---")
+        gen_cmd = [PYTHON, str(SCRIPTS_DIR / "generate_dataset.py"), args.spec]
+        technique = "ollama" if args.ollama else args.technique
+        gen_cmd.extend(["--technique", technique])
+        if technique == "ollama":
+            gen_cmd.append("--ollama")
+        run_cmd(gen_cmd)
+        
+        # Determine paths
+        npc_key = Path(args.spec).stem
+        dataset_path = f"datasets/{npc_key}/{technique}/train.jsonl"
+        
+        print(f"\n--- Phase 2: Sanitizing Dataset ---")
+        san_path = dataset_path.replace("train.jsonl", "train_clean.jsonl")
+        san_cmd = [PYTHON, str(SCRIPTS_DIR / "sanitize_dataset.py"), dataset_path, "--output", san_path]
+        run_cmd(san_cmd)
+        
+        print(f"\n--- Phase 3: Training Model ---")
+        # Note: train.py --export-gguf will eventually produce a .gguf in exports/{npc_key}/
+        train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--data", san_path, "--preset", args.preset, "--export-gguf"]
+        run_cmd(train_cmd)
+        
+        if args.track:
+            print(f"\n--- Phase 4: Smoke Testing & Tracking ---")
+            # Find the generated GGUF
+            export_dir = PROJECT_ROOT / "exports" / npc_key
+            ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
+            if ggufs:
+                smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec, "--track"]
+                run_cmd(smoke_cmd)
+            else:
+                print("Warning: No GGUF found for smoke testing")
+        
+        print(f"\n--- Pipeline Complete! ---")
+
+    else:
+        parser.print_help()
+
+if __name__ == "__main__":
+    main()

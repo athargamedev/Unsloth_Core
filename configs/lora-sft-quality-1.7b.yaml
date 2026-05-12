@@ -1,0 +1,26 @@
+# Quality preset for 1.7B models, higher rank, longer training
+# output_dir is relative to PROJECT_ROOT; resolved at runtime by train.py
+model: unsloth/Qwen3-1.7B-bnb-4bit
+data:
+  format_type: chatml
+training:
+  training_type: lora
+  max_seq_length: 2048
+  load_in_4bit: true
+  num_epochs: 5
+  learning_rate: 0.0002
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  warmup_steps: 20
+  save_steps: 50
+  eval_steps: 50
+  weight_decay: 0.01
+  packing: true
+  train_on_responses_only: true
+lora:
+  lora_r: 32
+  lora_alpha: 64
+  lora_dropout: 0.05
+  target_modules: "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj"
+logging:
+  enable_tensorboard: true

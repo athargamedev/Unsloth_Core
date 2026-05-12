@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Virtual environment
+unsloth_env/
+.venv/
+
+# Local tool state
+.hermes/
+.opencode/
+skills-lock.json
+
+# Generated data (regenerable)
+datasets/
+outputs/
+exports/
+eval/
+runs/
+*.gguf
+
+# Heavy local/vendor caches
+notebooklm-py/
+unsloth_compiled_cache/
+_unsloth_sentencepiece_temp/
+.kaggle-outputs/
+
+# Backups and archives
+*.bak
+*.backup
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.token

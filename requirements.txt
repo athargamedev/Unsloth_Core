@@ -1,0 +1,27 @@
+# Core dependencies (already in unsloth_env venv)
+unsloth>=2026.4
+torch>=2.4.0
+transformers>=4.45.0
+datasets>=2.20.0
+trl>=0.10.0
+peft>=0.12.0
+accelerate>=0.34.0
+
+# Monitoring dashboard
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+jinja2>=3.1.0
+gputil>=1.4.0
+psutil>=5.9.0
+
+# GGUF export (via unsloth)
+bitsandbytes>=0.43.0
+
+# Metrics visualization
+tensorboard>=2.16.0
+
+# HF Hub dataset upload (for Colab notebook generation)
+huggingface_hub>=0.20.0
+
+# Data generation (optional, for --from-spec mode)
+openai>=1.0.0  # skip if using local generation only

@@ -1,0 +1,240 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "header"
+   },
+   "source": [
+    "# {{ npc_name | json_inside }} \u2014 Unsloth Fine-Tune (Colab)\n",
+    "\n",
+    "**NPC:** {{ npc_name | json_inside }}  \n",
+    "**Subject:** {{ subject | json_inside }}  \n",
+    "**Model:** {{ model_name | json_inside }}  \n",
+    "**Key:** {{ npc_key | json_inside }}\n",
+    "\n",
+    "---\n",
+    "### Setup\n",
+    "1. **Runtime -> Change runtime type** -> **T4 GPU**\n",
+    "2. **Runtime -> Run all**\n",
+    "\n",
+    "This notebook will:\n",
+    "1. Install Unsloth\n",
+    "2. Load {{ model_name | json_inside }} in 4-bit\n",
+    "3. Apply LoRA adapters\n",
+    "4. Mount Google Drive and load the training dataset\n",
+    "5. Run SFT training\n",
+    "6. Export LoRA adapter to GGUF format (small file for Unity runtime loading)\n",
+    "7. Save GGUF LoRA back to Google Drive for download"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "install"
+   },
+   "outputs": [],
+   "source": [
+    "%%capture\nimport sys\n\nIN_COLAB = \"google.colab\" in sys.modules\n\nif IN_COLAB:\n    !pip install unsloth\n    !pip install huggingface_hub datasets trl\n    !pip install gguf  # required by convert_lora_to_gguf.py\nelse:\n    print(\"Not running in Colab; skipping install.\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "model_header"
+   },
+   "source": [
+    "## Unsloth\n",
+    "Load the base model with 4-bit quantization."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "load_model"
+   },
+   "outputs": [],
+   "source": [
+    "from unsloth import FastLanguageModel\nimport torch\n\nmax_seq_length = {{ max_seq_length | tojson }}\ndtype = None\nload_in_4bit = True\n\nmodel, tokenizer = FastLanguageModel.from_pretrained(\n    model_name = \"{{ model_name | json_inside }}\",\n    max_seq_length = max_seq_length,\n    dtype = dtype,\n    load_in_4bit = load_in_4bit,\n)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "lora_config"
+   },
+   "outputs": [],
+   "source": [
+    "model = FastLanguageModel.get_peft_model(\n    model,\n    r = {{ lora_r | tojson }},\n    lora_alpha = {{ lora_alpha | tojson }},\n    lora_dropout = {{ lora_dropout | tojson }},\n    target_modules = [\"q_proj\", \"k_proj\", \"v_proj\", \"o_proj\",\n                      \"gate_proj\", \"up_proj\", \"down_proj\"],\n    use_gradient_checkpointing = \"{{ use_gradient_checkpointing | json_inside }}\",\n    random_state = {{ seed | tojson }},\n    max_seq_length = max_seq_length,\n)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "data_header"
+   },
+   "source": [
+    "## Data Preparation\n",
+    "Apply ChatML template and load the training dataset."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "load_data"
+   },
+   "outputs": [],
+   "source": [
+    "{{ data_loading_code | json_inside }}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "train_header"
+   },
+   "source": [
+    "## Training\n",
+    "Configure and run SFT training with Unsloth."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "train_config"
+   },
+   "outputs": [],
+   "source": [
+    "import torch\n\nper_device_train_batch_size = {{ per_device_train_batch_size | tojson }}\ngradient_accumulation_steps = {{ gradient_accumulation_steps | tojson }}\nmax_steps = {{ max_steps | tojson }}\nnum_train_epochs = {{ num_train_epochs | tojson }}\nlearning_rate = {{ learning_rate | tojson }}\nwarmup_steps = {{ warmup_steps | tojson }}\nweight_decay = {{ weight_decay | tojson }}\noptim = \"{{ optim | json_inside }}\"\nlr_scheduler_type = \"{{ lr_scheduler_type | json_inside }}\"\nseed = {{ seed | tojson }}\npacking = {{ 'True' if packing else 'False' }}\noutput_dir = \"{{ output_dir | json_inside }}\"\n\ngpu_stats = torch.cuda.get_device_properties(0)\nstart_gpu_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)\nmax_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)\nprint(f\"GPU = {gpu_stats.name}. Max memory = {max_memory} GB.\")\nprint(f\"{start_gpu_memory} GB of memory reserved.\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "sft_trainer"
+   },
+   "outputs": [],
+   "source": [
+    "{{ sft_trainer_code | json_inside }}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "train_on_responses"
+   },
+   "outputs": [],
+   "source": [
+    "from unsloth.chat_templates import train_on_responses_only\n\ntrainer = train_on_responses_only(\n    trainer,\n    instruction_part = \"<|im_start|>user\\n\",\n    response_part = \"<|im_start|>assistant\\n\",\n    tokenizer = tokenizer,\n)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "verify_masking"
+   },
+   "outputs": [],
+   "source": [
+    "# Verify label masking works (check what % of tokens contribute to loss)\n# This manually masks instruction tokens to avoid depending on internal APIs.\nfor i, example in enumerate(dataset.select(range(2))):\n    tokenized = tokenizer(example[\"text\"], truncation=True, max_length=max_seq_length, return_tensors=\"pt\")\n    input_ids = tokenized.input_ids[0].clone()\n    labels = input_ids.clone()\n    # Mask everything before \"assistant\" (the instruction/user part)\n    text = example[\"text\"]\n    marker = \"<|im_start|>assistant\"\n    if marker in text:\n        pre = tokenizer(text[:text.index(marker)], truncation=True, max_length=max_seq_length)\n        labels[:len(pre.input_ids)] = -100\n    non_zero = (labels != -100).sum().item()\n    total = labels.numel()\n    print(f\"Example {i}: {non_zero}/{total} tokens contribute to loss ({100 * non_zero / total:.1f}%)\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "train"
+   },
+   "outputs": [],
+   "source": [
+    "import time\ntrain_start = time.time()\n\ntrainer_stats = trainer.train()\n\ntrain_elapsed = time.time() - train_start\nprint(f\"\\nTraining completed in {train_elapsed / 60:.1f} minutes\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "train_stats"
+   },
+   "outputs": [],
+   "source": [
+    "used_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)\nused_memory_for_lora = round(used_memory - start_gpu_memory, 3)\nused_percentage = round(used_memory / max_memory * 1024, 3)\nlora_percentage = round(used_memory_for_lora / max_memory * 100, 3)\n\nprint(f\"Peak reserved memory = {used_memory} GB\")\nprint(f\"Peak reserved memory for training = {used_memory_for_lora} GB\")\nprint(f\"Peak reserved memory % of max = {used_percentage} %\")\nprint(f\"Peak reserved memory for training % of max = {lora_percentage} %\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "export_header"
+   },
+   "source": [
+    "## LoRA Adapter Export to GGUF\n",
+    "Save the trained LoRA adapter and convert to GGUF format for Unity runtime loading.\n",
+    "This produces a **small** file (~10-30 MB) — not a full model merge."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "export_gguf"
+   },
+   "outputs": [],
+   "source": [
+    "{{ lora_export_code | json_inside }}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "id": "save_gguf"
+   },
+   "outputs": [],
+   "source": [
+    "{{ gguf_save_code | json_inside }}"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "id": "footer"
+   },
+   "source": [
+    "---\n",
+    "### Done!\n",
+    "\n",
+    "The LoRA GGUF file is a small adapter that loads at runtime in Unity.\n",
+    "Place it in your Unity project's `Assets/StreamingAssets/` directory.\n",
+    "In LLMUnity, load it via the LLM GameObject's `SetLoraWeight` method.\n",
+    "\n",
+    "**Resources:**\n",
+    "- [Unsloth GitHub](https://github.com/unslothai/unsloth)\n",
+    "- [Unsloth Discord](https://discord.gg/unsloth)\n",
+    "- [Project Repo]({{ project_url | json_inside }})"
+   ]
+  }
+ ],
+ "metadata": {
+  "accelerator": "GPU",
+  "colab": {
+   "provenance": []
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python",
+   "version": "3.10.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
