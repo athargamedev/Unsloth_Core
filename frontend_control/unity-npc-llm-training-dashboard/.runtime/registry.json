@@ -2,24 +2,28 @@
   "executionMode": "local",
   "jobs": [
     {
-      "id": "job_1778700966532_63b3x",
-      "name": "Generate Dataset",
+      "id": "ext_dataset_workflow_assistant_ollama",
+      "name": "External Dataset Generate (workflow_assistant/ollama)",
       "type": "Dataset",
       "commandId": "dataset-generate",
-      "status": "stopped",
-      "progress": 13,
+      "npcKey": "workflow_assistant",
+      "status": "completed",
+      "progress": 100,
       "loss": null,
-      "createdAt": "2026-05-13T19:36:06.532Z",
-      "startedAt": "2026-05-13T19:36:06.532Z",
+      "createdAt": "2026-05-13T19:50:20.656Z",
+      "startedAt": "2026-05-13T19:50:20.656Z",
+      "finishedAt": "2026-05-13T19:50:20.656Z",
       "command": [
         "./ucore",
         "generate",
-        "subjects/nonexistent_integration_spec_2.json"
+        "subjects/workflow_assistant.json",
+        "--technique",
+        "ollama"
       ],
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "stopped",
+          "status": "completed",
           "logs": []
         },
         {
@@ -38,56 +42,11 @@
           "logs": []
         }
       ],
-      "logs": [],
-      "stopRequested": true,
-      "exitCode": -1,
-      "finishedAt": "2026-05-13T19:36:06.542Z",
-      "terminalReason": "user_requested_stop"
-    },
-    {
-      "id": "job_1778700964699_vc93h",
-      "name": "Generate Dataset",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "status": "failed",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-13T19:36:04.699Z",
-      "startedAt": "2026-05-13T19:36:04.699Z",
-      "command": [
-        "./ucore",
-        "generate",
-        "subjects/nonexistent_integration_spec.json"
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/workflow_assistant/ollama/train.jsonl"
       ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "running",
-          "logs": [
-            "[SYSTEM] Marked failed: server restarted before completion."
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [],
-      "stopRequested": true,
-      "terminalReason": "server_restarted",
-      "finishedAt": "2026-05-13T19:36:06.093Z",
-      "exitCode": -1
+      "exitCode": 0,
+      "terminalReason": "external_import"
     },
     {
       "id": "ext_proc_1132940",
@@ -3541,10 +3500,7 @@
     }
   ],
   "logs": [
-    "[2026-05-13T19:36:06.542Z] [SYSTEM] job job_1778700966532_63b3x stopped (exit null)",
-    "[2026-05-13T19:36:06.539Z] [SYSTEM] stop requested job_1778700966532_63b3x",
-    "[2026-05-13T19:36:06.532Z] [SYSTEM] starting job_1778700966532_63b3x: ./ucore generate subjects/nonexistent_integration_spec_2.json",
-    "[2026-05-13T19:36:06.093Z] [SYSTEM] reconciled job_1778700964699_vc93h to failed (server_restarted)"
+    "[2026-05-13T19:50:20.961Z] [SYNC] imported external job ext_dataset_workflow_assistant_ollama"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

@@ -1,28 +1,22 @@
 #!/usr/bin/env python3
 """
-generate_workflow_dataset.py — Generate training data for the Workflow Assistant.
+generate_workflow_dataset.py — Fast programmatic dataset generator.
 
-Reads all project documentation markdown files, chunks them into sections,
-and uses a local Ollama model to generate high-quality Q&A pairs in ChatML format.
+Reads all project markdown docs, extracts sections, and generates Q&A pairs
+by using section headings as question templates and content as answers.
+No LLM calls needed — runs in seconds.
 
 Usage:
     python scripts/generate_workflow_dataset.py
-    python scripts/generate_workflow_dataset.py --model llama3.1 --output datasets/workflow_assistant/ollama/train.jsonl
-    python scripts/generate_workflow_dataset.py --dry-run  # preview without generating
+    python scripts/generate_workflow_dataset.py --output datasets/workflow_assistant/ollama/train.jsonl
 """
 
 import argparse
 import json
-import os
 import re
-import sys
-import time
 from pathlib import Path
 
-import requests  # noqa: E402 (needed in generate_qa_batch below)
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
 
 # Docs to include (relative to PROJECT_ROOT) — ordered by importance
 DOC_PATHS = [
@@ -45,20 +39,93 @@ DOC_PATHS = [
     "frontend_control/DOCUMENTATION.md",
 ]
 
-# ── QA Generation Prompt ─────────────────────────────────────────────────────
+WORKFLOW_SYSTEM_PROMPT = """You are the Unsloth_Core Workflow Assistant — a specialist in the NPC fine-tuning pipeline for Unity games. You know the 4-stage pipeline (Generation → Sanitization → Training → Export), all CLI flags and presets, and the frontend dashboard operations. Keep answers concise and actionable. Suggest exact ./ucore commands when applicable."""
 
-QA_SYSTEM_PROMPT = """You are generating training data for a Workflow Assistant AI that helps users with the Unsloth_Core project (an NPC fine-tuning pipeline for Unity games).
 
-For each document section provided, generate 3-5 question-answer pairs that:
-1. Cover the most important concepts in that section
-2. Include practical "how to" questions where applicable
-3. Reference exact file paths, CLI flags, and commands when relevant
-4. Answers should be 2-6 sentences, concise and actionable
+# ── Question templates mapped to section heading patterns ────────────────────
 
-Output format: a JSON array of objects with "question" and "answer" fields.
-Only output the JSON array, nothing else."""
+QUESTION_TEMPLATES = {
+    "overview": [
+        "What is covered in {heading}?",
+        "Give me an overview of {heading}.",
+        "What do I need to know about {heading}?",
+    ],
+    "cli": [
+        "What does the `{heading}` command do?",
+        "How do I use `{heading}`?",
+        "What are the flags for `{heading}`?",
+    ],
+    "pipeline": [
+        "How does the {heading} stage work?",
+        "What happens during {heading}?",
+        "What are the inputs and outputs of {heading}?",
+    ],
+    "config": [
+        "How do I configure {heading}?",
+        "What settings are available for {heading}?",
+        "Explain the {heading} configuration.",
+    ],
+    "workflow": [
+        "Walk me through the {heading} workflow.",
+        "How do I run {heading}?",
+        "What are the steps for {heading}?",
+    ],
+    "troubleshooting": [
+        "How do I fix {heading}?",
+        "What causes {heading} and how do I resolve it?",
+        "Troubleshoot {heading}.",
+    ],
+    "reference": [
+        "What is the format for {heading}?",
+        "Explain the {heading} structure.",
+        "What fields are in {heading}?",
+    ],
+    "integration": [
+        "How does {heading} work?",
+        "Explain the {heading} architecture.",
+        "What are the key components of {heading}?",
+    ],
+    "default": [
+        "Tell me about {heading}.",
+        "What should I know about {heading}?",
+        "Explain {heading} in detail.",
+    ],
+}
 
-# ── Section Chunking ─────────────────────────────────────────────────────────
+
+def classify_heading(heading: str) -> str:
+    """Classify a heading into a template category."""
+    hl = heading.lower()
+    if any(w in hl for w in ["overview", "introduction", "summary"]):
+        return "overview"
+    if any(w in hl for w in ["cli", "command", "flag", "./ucore", "`"]):
+        return "cli"
+    if any(w in hl for w in ["pipeline", "stage", "generation", "sanitization", "training", "export", "evaluat"]):
+        return "pipeline"
+    if any(w in hl for w in ["config", "setting", "parameter", "hyperparameter"]):
+        return "config"
+    if any(w in hl for w in ["workflow", "how to", "step", "guide", "usage"]):
+        return "workflow"
+    if any(w in hl for w in ["troubleshoot", "fix", "error", "issue", "problem", "fail"]):
+        return "troubleshooting"
+    if any(w in hl for w in ["format", "schema", "structure", "field", "type", "object", "interface"]):
+        return "reference"
+    if any(w in hl for w in ["architecture", "integration", "component", "endpoint"]):
+        return "integration"
+    return "default"
+
+
+def extract_key_sentences(text: str, max_sentences: int = 6) -> str:
+    """Extract the most important sentences from a block of text."""
+    # Remove markdown formatting
+    cleaned = re.sub(r"[#*`_~]", "", text)
+    # Split into sentences
+    sentences = re.split(r"(?<=[.!?])\s+", cleaned)
+    # Filter out code blocks, urls, empty lines
+    good = [s.strip() for s in sentences if len(s.strip()) > 20 and not s.strip().startswith("```")]
+    # Take first few meaningful sentences
+    return " ".join(good[:max_sentences])
+
 
 def chunk_markdown(text: str) -> list[tuple[str, str]]:
     """Split a markdown file into (heading, content) sections."""
@@ -87,6 +154,43 @@ def chunk_markdown(text: str) -> list[tuple[str, str]]:
     return sections
 
 
+# ── Answer generators ───────────────────────────────────────────────────────
+
+def generate_answers(heading: str, content: str) -> list[tuple[str, str]]:
+    """Generate (question, answer) pairs from a section's heading and content."""
+    category = classify_heading(heading)
+    templates = QUESTION_TEMPLATES[category]
+
+    # Extract key info from content
+    summary = extract_key_sentences(content, max_sentences=8)
+
+    # Find code blocks for commands
+    code_blocks = re.findall(r"```(?:\w+)?\n(.*?)```", content, re.DOTALL)
+    commands = []
+    for cb in code_blocks:
+        for line in cb.split("\n"):
+            line = line.strip()
+            if line.startswith("./ucore") or line.startswith("python ") or line.startswith("npm "):
+                commands.append(line)
+
+    # Build answers
+    pairs = []
+    for i, template in enumerate(templates[:3]):  # max 3 per section
+        question = template.replace("{heading}", heading)
+
+        # Craft answer from content
+        answer_parts = [summary]
+
+        if commands:
+            cmd = commands[i % len(commands)]
+            answer_parts.append(f"\n\nExample command:\n```\n{cmd}\n```")
+
+        answer = " ".join(answer_parts)
+        pairs.append((question, answer))
+
+    return pairs
+
+
 def read_all_docs(root: Path) -> list[tuple[str, str, str]]:
     """Read all docs and return list of (filename, heading, content)."""
     chunks: list[tuple[str, str, str]] = []
@@ -106,154 +210,61 @@ def read_all_docs(root: Path) -> list[tuple[str, str, str]]:
     return chunks
 
 
-# ── QA Generation via Ollama ──────────────────────────────────────────────────
-
-def generate_qa_batch(
-    chunk: tuple[str, str, str],
-    model: str,
-    max_retries: int = 3,
-) -> list[dict]:
-    """Send a doc section to Ollama and get back Q&A pairs."""
-    filename, heading, content = chunk
-
-    # Build the prompt with context
-    prompt = f"""Document: {filename}
-Section: {heading}
-
-Content:
-{content[:3000]}
-
----
-
-Generate 3-5 question-answer pairs that teach a Workflow Assistant about Unsloth_Core based on the section above."""
-
-    for attempt in range(max_retries):
-        try:
-            resp = requests.post(
-                OLLAMA_URL,
-                json={
-                    "model": model,
-                    "system": QA_SYSTEM_PROMPT,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.4, "num_predict": 4096},
-                },
-                timeout=120,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            raw = data.get("response", "").strip()
-
-            # Try to extract JSON array from the response
-            # The model might wrap it in markdown code blocks
-            json_match = re.search(r"\[[\s\S]*\]", raw)
-            if json_match:
-                candidates = json.loads(json_match.group())
-            else:
-                candidates = json.loads(raw)
-
-            if not isinstance(candidates, list):
-                print(f"    ⚠ Non-array response for {filename} › {heading[:40]}")
-                return []
-
-            # Validate shape
-            for c in candidates:
-                if not isinstance(c, dict) or "question" not in c or "answer" not in c:
-                    print(f"    ⚠ Malformed Q&A in {filename} › {heading[:40]}")
-                    return []
-
-            print(f"    ✓ {len(candidates)} Q&A pairs")
-            return candidates
-
-        except (json.JSONDecodeError, KeyError, requests.RequestException) as e:
-            if attempt < max_retries - 1:
-                wait = 2 ** attempt
-                print(f"    ⚠ Attempt {attempt + 1} failed: {e}. Retrying in {wait}s...")
-                time.sleep(wait)
-            else:
-                print(f"    ✗ Failed after {max_retries} attempts: {e}")
-                return []
-
-
-# ── ChatML Output ────────────────────────────────────────────────────────────
-
-def to_chatml(system_prompt: str, qa_pairs: list[dict]) -> list[dict]:
+def to_chatml(qa_pairs: list[tuple[str, str]]) -> list[dict]:
     """Convert Q&A pairs to ChatML format rows."""
     rows = []
-    for qa in qa_pairs:
+    for question, answer in qa_pairs:
         rows.append({
             "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": qa["question"]},
-                {"role": "assistant", "content": qa["answer"]},
+                {"role": "system", "content": WORKFLOW_SYSTEM_PROMPT},
+                {"role": "user", "content": question},
+                {"role": "assistant", "content": answer},
             ]
         })
     return rows
 
 
-WORKFLOW_SYSTEM_PROMPT = """You are the Unsloth_Core Workflow Assistant — a specialist in the NPC fine-tuning pipeline for Unity games. You know the 4-stage pipeline (Generation → Sanitization → Training → Export), all CLI flags and presets, and the frontend dashboard operations. Keep answers concise and actionable. Suggest exact ./ucore commands when applicable."""
-
-
-# ── Main ─────────────────────────────────────────────────────────────────────
-
 def main():
     parser = argparse.ArgumentParser(description="Generate Workflow Assistant training dataset")
-    parser.add_argument("--model", default="gemma4:e2b", help="Ollama model to use for generation")
     parser.add_argument("--output", default=str(PROJECT_ROOT / "datasets" / "workflow_assistant" / "ollama" / "train.jsonl"))
-    parser.add_argument("--dry-run", action="store_true", help="Only list sections, don't generate")
-    parser.add_argument("--max-chunks", type=int, default=0, help="Max chunks to process (0 = all)")
-    parser.add_argument("--delay", type=float, default=1.0, help="Delay between Ollama calls (seconds)")
+    parser.add_argument("--dry-run", action="store_true", help="Only list counts, don't write")
     args = parser.parse_args()
 
-    # Process chunks
-    print(f" Workflow Assistant Dataset Generator")
-    print(f" Model: {args.model}")
+    print(f"\n{'='*60}")
+    print(f" Workflow Assistant Dataset Generator (programmatic)")
     print(f" Output: {args.output}")
     print(f"{'='*60}\n")
 
-    # Read docs
     print("Reading documentation...")
     chunks = read_all_docs(PROJECT_ROOT)
     print(f"\nTotal: {len(chunks)} sections across {len(DOC_PATHS)} files\n")
 
+    # Generate Q&A pairs
+    all_rows: list[dict] = []
+    for file, heading, content in chunks:
+        qa_pairs = generate_answers(heading, content)
+        rows = to_chatml(qa_pairs)
+        all_rows.extend(rows)
+
     if args.dry_run:
-        print("DRY RUN — sections found:")
-        for i, (file, heading, content) in enumerate(chunks):
-            preview = content[:80].replace("\n", " ")
-            print(f"  {i+1:3d}. [{file}] {heading}")
-            print(f"       {preview}...")
+        print(f"Would generate {len(all_rows)} training rows from {len(chunks)} sections")
+        print(f"\nSample rows:")
+        for row in all_rows[:3]:
+            q = row["messages"][1]["content"]
+            a = row["messages"][2]["content"][:80]
+            print(f"  Q: {q}")
+            print(f"  A: {a}...\n")
         return
-
-    # Process chunks
-    if args.max_chunks > 0:
-        chunks = chunks[:args.max_chunks]
-
-    all_pairs: list[dict] = []
-    total_rows = 0
-
-    print("Generating Q&A pairs...")
-    for i, chunk in enumerate(chunks):
-        file, heading, content = chunk
-        print(f"\n[{i+1}/{len(chunks)}] {file} › {heading[:60]}")
-        
-        qa_pairs = generate_qa_batch(chunk, args.model)
-        rows = to_chatml(WORKFLOW_SYSTEM_PROMPT, qa_pairs)
-
-        all_pairs.extend(rows)
-        total_rows += len(rows)
-
-        if args.delay > 0:
-            time.sleep(args.delay)
 
     # Write output
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
-        for row in all_pairs:
+        for row in all_rows:
             f.write(json.dumps(row) + "\n")
 
     print(f"\n{'='*60}")
-    print(f" Done! {total_rows} training rows written to:")
+    print(f" Done! {len(all_rows)} training rows written to:")
     print(f"   {output_path}")
     print(f"{'='*60}")
 
