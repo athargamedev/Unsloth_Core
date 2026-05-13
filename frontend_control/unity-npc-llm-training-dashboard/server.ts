@@ -946,14 +946,18 @@ const syncExternalArtifactsToRegistry = (registry: Registry) => {
   const outputsRoot = path.join(repoRoot, "outputs");
   if (fs.existsSync(outputsRoot)) {
     for (const npcKey of fs.readdirSync(outputsRoot)) {
-      const runsDir = path.join(outputsRoot, npcKey, "runs");
-      if (!fs.existsSync(runsDir) || !fs.statSync(runsDir).isDirectory()) continue;
+      const npcPath = path.join(outputsRoot, npcKey);
+      if (!fs.statSync(npcPath).isDirectory()) continue;
 
-      for (const runId of fs.readdirSync(runsDir)) {
-        const runDir = path.join(runsDir, runId);
-        if (!fs.statSync(runDir).isDirectory()) continue;
-        const manifestPath = path.join(runDir, "run_manifest.json");
-        if (!fs.existsSync(manifestPath)) continue;
+      for (const { runId, runDir, layout } of listNpcRunDirs(npcKey)) {
+        const manifestCandidates = [
+          path.join(runDir, "run_manifest.json"),
+          path.join(runDir, "training_metrics.json"),
+          path.join(runDir, "config_snapshot.yaml"),
+          path.join(runDir, "adapter_config.json"),
+        ];
+        const manifestPath = manifestCandidates.find((candidate) => fs.existsSync(candidate));
+        if (!manifestPath) continue;
 
         let createdAt = fileIso(manifestPath);
         let preset = "";
@@ -961,19 +965,20 @@ const syncExternalArtifactsToRegistry = (registry: Registry) => {
         let loss: number | null = null;
 
         try {
-          const raw = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as {
+          const raw = manifestPath.endsWith(".json") ? JSON.parse(fs.readFileSync(manifestPath, "utf8")) as {
             created_at?: string;
             preset?: string;
             model_id?: string;
             results?: { training_loss?: number };
-          };
+            train_loss?: number;
+          } : {};
           if (raw.created_at) {
             const normalized = new Date(raw.created_at);
             if (!Number.isNaN(normalized.getTime())) createdAt = normalized.toISOString();
           }
           preset = raw.preset || "";
           modelId = raw.model_id || "";
-          loss = typeof raw.results?.training_loss === "number" ? raw.results.training_loss : null;
+          loss = typeof raw.results?.training_loss === "number" ? raw.results.training_loss : typeof raw.train_loss === "number" ? raw.train_loss : null;
         } catch {
           // ignore malformed manifests and still import by file mtime
         }
@@ -989,7 +994,8 @@ const syncExternalArtifactsToRegistry = (registry: Registry) => {
           command: ["./ucore", "train", `subjects/${npcKey}.json`, "--from-spec", ...(preset ? ["--preset", preset] : [])],
           loss,
           logs: [
-            `[EXTERNAL] run manifest detected: outputs/${npcKey}/runs/${runId}/run_manifest.json`,
+            `[EXTERNAL] run artifact detected: ${path.relative(repoRoot, manifestPath)}`,
+            `[EXTERNAL] run layout=${layout}`,
             ...(modelId ? [`[EXTERNAL] model=${modelId}`] : []),
           ],
         }) || changed;
@@ -1255,12 +1261,23 @@ async function startServer() {
   const listRuns = () => {
     const outputsRoot = path.join(repoRoot, "outputs");
     if (!fs.existsSync(outputsRoot)) return [];
-    return fs.readdirSync(outputsRoot)
-      .filter((d) => fs.statSync(path.join(outputsRoot, d)).isDirectory())
-      .map((d) => {
-        const stat = fs.statSync(path.join(outputsRoot, d));
-        return { id: d, npcKey: d, updatedAt: stat.mtime.toISOString() };
-      });
+    const entries: Array<{ id: string; npcKey: string; runId: string; path: string; updatedAt: string; layout: string }> = [];
+    for (const npcKey of fs.readdirSync(outputsRoot)) {
+      const npcPath = path.join(outputsRoot, npcKey);
+      if (!fs.statSync(npcPath).isDirectory()) continue;
+      for (const run of listNpcRunDirs(npcKey)) {
+        const stat = fs.statSync(run.runDir);
+        entries.push({
+          id: `${npcKey}/${run.runId}`,
+          npcKey,
+          runId: run.runId,
+          path: path.relative(repoRoot, run.runDir),
+          updatedAt: stat.mtime.toISOString(),
+          layout: run.layout,
+        });
+      }
+    }
+    return entries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   };
 
   const listExports = () => {
