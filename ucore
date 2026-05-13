@@ -49,6 +49,8 @@ def main():
     train_p.add_argument("--from-spec", action="store_true", help="Train directly from spec")
     train_p.add_argument("--preset", help="Training preset")
     train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training")
+    train_p.add_argument("--wandb", action="store_true", default=None,
+                         help="Enable W&B logging (overrides config)")
 
     # Smoke Test
     smoke_p = subparsers.add_parser("smoke", help="Smoke test a GGUF model")
@@ -123,6 +125,8 @@ def main():
     eval_p.add_argument("--judge", action="store_true", help="Use local Ollama judge")
     eval_p.add_argument("--judge-model", default="llama3.1:latest", help="Judge model")
     eval_p.add_argument("--track", action="store_true", help="Track results in eval/results/")
+    eval_p.add_argument("--wandb", action="store_true", help="Enable W&B evaluation tracking")
+    eval_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
     eval_p.add_argument("--interactive", "-i", action="store_true", help="Interactive chat mode")
     eval_p.add_argument("--port", type=int, default=8888, help="llama-server port")
 
@@ -190,6 +194,7 @@ def main():
         if args.from_spec: cmd.append("--from-spec")
         if args.preset: cmd.extend(["--preset", args.preset])
         if args.export_gguf: cmd.append("--export-gguf")
+        if args.wandb: cmd.append("--wandb")
         run_cmd(cmd)
 
     elif args.command == "smoke":
@@ -283,6 +288,8 @@ def main():
         if args.judge: cmd.append("--judge")
         if args.judge_model: cmd.extend(["--judge-model", args.judge_model])
         if args.track: cmd.append("--track")
+        if args.wandb: cmd.append("--wandb")
+        if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
         if args.interactive: cmd.append("--interactive")
         if args.port: cmd.extend(["--port", str(args.port)])
         run_cmd(cmd)

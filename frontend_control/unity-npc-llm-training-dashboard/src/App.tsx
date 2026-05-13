@@ -113,6 +113,10 @@ export default function App() {
     onTelemetry: (data) => setTelemetry(data),
     onJobUpdate: () => fetchJobs(),
     onFallbackPolling: () => { /* polling already runs every 5s */ },
+    onResync: () => {
+      fetchJobs();
+      fetchStatus();
+    },
   });
 
   // --- Data Fetching ---

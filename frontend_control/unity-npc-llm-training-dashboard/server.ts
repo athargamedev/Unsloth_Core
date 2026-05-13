@@ -1,4 +1,4 @@
-
+import "dotenv/config";
 import express from "express";
 import fs from "fs";
 import os from "os";
@@ -616,6 +616,305 @@ const reconcileOrphanedJobs = (registry: Registry) => {
   if (changed) persistRegistry(registry);
 };
 
+const fileIso = (filePath: string): string => {
+  try {
+    return fs.statSync(filePath).mtime.toISOString();
+  } catch {
+    return isoNow();
+  }
+};
+
+const ensureExternalJob = (
+  registry: Registry,
+  key: string,
+  base: {
+    name: string;
+    type: string;
+    commandId: string;
+    npcKey?: string;
+    createdAt: string;
+    finishedAt: string;
+    command: string[];
+    loss?: number | null;
+    progress?: number;
+    logs?: string[];
+  },
+) => {
+  const existing = registry.jobs.find((job) => job.id === key);
+  if (existing) return false;
+
+  const job: Job = {
+    id: key,
+    name: base.name,
+    type: base.type,
+    commandId: base.commandId,
+    npcKey: base.npcKey,
+    status: "completed",
+    progress: base.progress ?? 100,
+    loss: base.loss ?? null,
+    createdAt: base.createdAt,
+    startedAt: base.createdAt,
+    finishedAt: base.finishedAt,
+    command: base.command,
+    stages: defaultStages(),
+    logs: base.logs ?? ["[EXTERNAL] Imported from filesystem artifacts"],
+    exitCode: 0,
+    terminalReason: "external_import",
+  };
+
+  updateStagesFromTruth(job);
+  registry.jobs.unshift(job);
+  globalLog(registry, `[SYNC] imported external job ${job.id}`);
+  return true;
+};
+
+const syncExternalArtifactsToRegistry = (registry: Registry) => {
+  let changed = false;
+
+  const datasetsRoot = path.join(repoRoot, "datasets");
+  if (fs.existsSync(datasetsRoot)) {
+    for (const npcKey of fs.readdirSync(datasetsRoot)) {
+      const npcDir = path.join(datasetsRoot, npcKey);
+      if (!fs.statSync(npcDir).isDirectory()) continue;
+
+      for (const technique of fs.readdirSync(npcDir)) {
+        const techniqueDir = path.join(npcDir, technique);
+        if (!fs.statSync(techniqueDir).isDirectory()) continue;
+
+        const trainPath = path.join(techniqueDir, "train.jsonl");
+        if (!fs.existsSync(trainPath)) continue;
+
+        const key = `ext_dataset_${npcKey}_${technique}`;
+        changed = ensureExternalJob(registry, key, {
+          name: `External Dataset Generate (${npcKey}/${technique})`,
+          type: "Dataset",
+          commandId: "dataset-generate",
+          npcKey,
+          createdAt: fileIso(trainPath),
+          finishedAt: fileIso(trainPath),
+          command: ["./ucore", "generate", `subjects/${npcKey}.json`, "--technique", technique],
+          logs: [`[EXTERNAL] dataset artifact detected: datasets/${npcKey}/${technique}/train.jsonl`],
+        }) || changed;
+
+        const cleanPath = path.join(techniqueDir, "train_clean.jsonl");
+        if (fs.existsSync(cleanPath)) {
+          const cleanKey = `ext_sanitize_${npcKey}_${technique}`;
+          changed = ensureExternalJob(registry, cleanKey, {
+            name: `External Dataset Sanitize (${npcKey}/${technique})`,
+            type: "Dataset",
+            commandId: "dataset-sanitize",
+            npcKey,
+            createdAt: fileIso(cleanPath),
+            finishedAt: fileIso(cleanPath),
+            command: ["./ucore", "sanitize", `datasets/${npcKey}/${technique}/train.jsonl`],
+            logs: [`[EXTERNAL] sanitized dataset artifact detected: datasets/${npcKey}/${technique}/train_clean.jsonl`],
+          }) || changed;
+        }
+      }
+    }
+  }
+
+  const outputsRoot = path.join(repoRoot, "outputs");
+  if (fs.existsSync(outputsRoot)) {
+    for (const npcKey of fs.readdirSync(outputsRoot)) {
+      const runsDir = path.join(outputsRoot, npcKey, "runs");
+      if (!fs.existsSync(runsDir) || !fs.statSync(runsDir).isDirectory()) continue;
+
+      for (const runId of fs.readdirSync(runsDir)) {
+        const runDir = path.join(runsDir, runId);
+        if (!fs.statSync(runDir).isDirectory()) continue;
+        const manifestPath = path.join(runDir, "run_manifest.json");
+        if (!fs.existsSync(manifestPath)) continue;
+
+        let createdAt = fileIso(manifestPath);
+        let preset = "";
+        let modelId = "";
+        let loss: number | null = null;
+
+        try {
+          const raw = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as {
+            created_at?: string;
+            preset?: string;
+            model_id?: string;
+            results?: { training_loss?: number };
+          };
+          if (raw.created_at) {
+            const normalized = new Date(raw.created_at);
+            if (!Number.isNaN(normalized.getTime())) createdAt = normalized.toISOString();
+          }
+          preset = raw.preset || "";
+          modelId = raw.model_id || "";
+          loss = typeof raw.results?.training_loss === "number" ? raw.results.training_loss : null;
+        } catch {
+          // ignore malformed manifests and still import by file mtime
+        }
+
+        const key = `ext_train_${npcKey}_${runId}`;
+        changed = ensureExternalJob(registry, key, {
+          name: `External Train (${npcKey}/${runId})`,
+          type: "Training",
+          commandId: "train",
+          npcKey,
+          createdAt,
+          finishedAt: fileIso(manifestPath),
+          command: ["./ucore", "train", `subjects/${npcKey}.json`, "--from-spec", ...(preset ? ["--preset", preset] : [])],
+          loss,
+          logs: [
+            `[EXTERNAL] run manifest detected: outputs/${npcKey}/runs/${runId}/run_manifest.json`,
+            ...(modelId ? [`[EXTERNAL] model=${modelId}`] : []),
+          ],
+        }) || changed;
+      }
+    }
+  }
+
+  const exportsRoot = path.join(repoRoot, "exports");
+  if (fs.existsSync(exportsRoot)) {
+    for (const npcKey of fs.readdirSync(exportsRoot)) {
+      const npcDir = path.join(exportsRoot, npcKey);
+      if (!fs.statSync(npcDir).isDirectory()) continue;
+      for (const file of fs.readdirSync(npcDir)) {
+        if (!file.endsWith(".gguf")) continue;
+        const artifact = path.join(npcDir, file);
+        const key = `ext_export_${npcKey}_${file}`;
+        changed = ensureExternalJob(registry, key, {
+          name: `External Export (${npcKey}/${file})`,
+          type: "Export",
+          commandId: "export",
+          npcKey,
+          createdAt: fileIso(artifact),
+          finishedAt: fileIso(artifact),
+          command: ["./ucore", "export", npcKey],
+          logs: [`[EXTERNAL] GGUF artifact detected: exports/${npcKey}/${file}`],
+        }) || changed;
+      }
+    }
+  }
+
+  if (changed) persistRegistry(registry);
+  return changed;
+};
+
+const discoverActiveExternalProcesses = (registry: Registry) => {
+  let changed = false;
+  const now = isoNow();
+
+  const trackedRunningPids = new Set<number>();
+  for (const child of runningProcesses.values()) {
+    if (typeof child.pid === "number" && Number.isFinite(child.pid)) trackedRunningPids.add(child.pid);
+  }
+
+  const discoveredPids = new Set<number>();
+  let psOutput = "";
+  try {
+    psOutput = execSync("ps -eo pid=,args=", { cwd: repoRoot, encoding: "utf8", timeout: 5000 });
+  } catch {
+    return { changed, discovered: 0 };
+  }
+
+  const lines = psOutput.split("\n").map((line) => line.trim()).filter(Boolean);
+  for (const line of lines) {
+    const match = line.match(/^(\d+)\s+(.+)$/);
+    if (!match) continue;
+
+    const pid = Number(match[1]);
+    const args = match[2];
+    if (!Number.isFinite(pid) || pid <= 0 || pid === process.pid) continue;
+    if (trackedRunningPids.has(pid)) continue;
+
+    const isRelevant =
+      args.includes("./ucore ") ||
+      args.includes("/ucore ") ||
+      args.includes("scripts/train.py") ||
+      args.includes("scripts/generate_dataset.py") ||
+      args.includes("scripts/sanitize_dataset.py") ||
+      args.includes("scripts/export.py") ||
+      args.includes("scripts/evaluate.py") ||
+      args.includes("scripts/smoke_test.py");
+    if (!isRelevant) continue;
+
+    if (args.includes("server.ts") || args.includes("vite") || args.includes("npm run dev")) continue;
+
+    discoveredPids.add(pid);
+    const id = `ext_proc_${pid}`;
+    const existing = registry.jobs.find((job) => job.id === id);
+    if (existing) {
+      if (existing.status !== "running") {
+        existing.status = "running";
+        existing.finishedAt = undefined;
+        existing.exitCode = undefined;
+        existing.terminalReason = "external_detected";
+        appendStageLog(existing, `[EXTERNAL][PID ${pid}] Process still running`);
+        changed = true;
+      }
+      continue;
+    }
+
+    let commandId = "pipeline";
+    let type = "Pipeline";
+    if (args.includes(" generate ") || args.includes("generate_dataset.py")) {
+      commandId = "dataset-generate";
+      type = "Dataset";
+    } else if (args.includes(" sanitize ") || args.includes("sanitize_dataset.py")) {
+      commandId = "dataset-sanitize";
+      type = "Dataset";
+    } else if (args.includes(" train ") || args.includes("train.py")) {
+      commandId = "train";
+      type = "Training";
+    } else if (args.includes(" export ") || args.includes("export.py")) {
+      commandId = "export";
+      type = "Export";
+    } else if (args.includes(" evaluate ") || args.includes("smoke") || args.includes("evaluate.py") || args.includes("smoke_test.py")) {
+      commandId = "evaluate";
+      type = "Evaluation";
+    }
+
+    const npcMatch = args.match(/subjects\/([a-zA-Z0-9_\-]+)\.json/);
+    const npcKey = npcMatch ? npcMatch[1] : undefined;
+
+    const job: Job = {
+      id,
+      name: `External Process (${pid})${npcKey ? ` ${npcKey}` : ""}`,
+      type,
+      commandId,
+      npcKey,
+      status: "running",
+      progress: 10,
+      loss: null,
+      createdAt: now,
+      startedAt: now,
+      command: ["external", args],
+      stages: defaultStages(),
+      logs: [`[EXTERNAL][PID ${pid}] discovered active process`, args],
+      terminalReason: "external_detected",
+    };
+
+    updateStagesFromTruth(job);
+    registry.jobs.unshift(job);
+    globalLog(registry, `[SYNC] discovered running external process pid=${pid}`);
+    changed = true;
+  }
+
+  for (const job of registry.jobs) {
+    if (!job.id.startsWith("ext_proc_")) continue;
+    if (job.status !== "running") continue;
+
+    const pid = Number(job.id.replace("ext_proc_", ""));
+    if (!Number.isFinite(pid) || discoveredPids.has(pid)) continue;
+
+    job.status = "stopped";
+    job.finishedAt = now;
+    job.exitCode = -15;
+    job.terminalReason = "external_process_not_found";
+    appendStageLog(job, `[EXTERNAL][PID ${pid}] Process no longer detected`);
+    updateStagesFromTruth(job);
+    changed = true;
+  }
+
+  if (changed) persistRegistry(registry);
+  return { changed, discovered: discoveredPids.size };
+};
+
 const validateRequiredFields = (payload: StartCommandPayload, requiredFields: string[]) => {
   for (const requiredField of requiredFields) {
     const [root, key] = requiredField.split(".");
@@ -639,8 +938,22 @@ async function startServer() {
   const PORT = Number(process.env.PORT || "3100");
   const registry = loadRegistry();
   reconcileOrphanedJobs(registry);
+  syncExternalArtifactsToRegistry(registry);
+  discoverActiveExternalProcesses(registry);
 
   app.use(express.json());
+
+  // ── Security middleware: block path traversal ──
+  app.use((req, res, next) => {
+    // Use originalUrl (preserved by Express) to detect traversal in raw request.
+    // req.path is parsed/normalized by Express which may resolve '..' sequences.
+    const url = req.originalUrl ?? req.url;
+    if (url.includes('..') || url.toLowerCase().includes('%2e')) {
+      res.status(400).json({ error: 'Invalid path' });
+      return;
+    }
+    next();
+  });
 
   const listDatasets = () => {
     const datasetsRoot = path.join(repoRoot, "datasets");
@@ -701,7 +1014,11 @@ async function startServer() {
   };
 
   // API Routes
-  app.get("/api/jobs", (_req, res) => res.json(registry.jobs));
+  app.get("/api/jobs", (_req, res) => {
+    syncExternalArtifactsToRegistry(registry);
+    discoverActiveExternalProcesses(registry);
+    res.json(registry.jobs);
+  });
   app.get("/api/logs", (_req, res) => res.json(registry.logs));
 
   app.get("/api/analytics", (req, res) => {
@@ -1000,7 +1317,7 @@ async function startServer() {
       const timeout = setTimeout(() => controller.abort(), 5000);
       let response;
       try {
-        response = await fetch(`${supabaseUrl}/rest/v1/health`, {
+        response = await fetch(`${supabaseUrl}/rest/v1/npc_profiles?select=npc_id&limit=1`, {
           headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` },
           signal: controller.signal,
         });
@@ -1021,16 +1338,23 @@ async function startServer() {
     }
     try {
       // Fetch top test results ordered by score
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/test_results?select=*,npc_profiles!inner(npc_name,display_name)&order=score.desc&limit=20`,
-        { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` } }
-      );
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      let response;
+      try {
+        response = await fetch(
+          `${supabaseUrl}/rest/v1/test_results?select=*&order=score.desc&limit=20`,
+          { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` }, signal: controller.signal }
+        );
+      } finally {
+        clearTimeout(timeout);
+      }
       if (!response.ok) throw new Error(`Supabase query failed: ${response.status}`);
       const data = await response.json();
       const entries = data.map((row: any, i: number) => ({
         rank: i + 1,
         npc_id: row.npc_id,
-        npc_name: row.npc_profiles?.npc_name || row.npc_id,
+        npc_name: row.npc_id,
         test_name: row.test_name,
         score: row.score,
         metrics: row.metrics || {},
@@ -1569,6 +1893,38 @@ async function startServer() {
     return res.json({ status: "stop_requested", id });
   });
 
+  app.post("/api/jobs/sync", (_req, res) => {
+    const changedArtifacts = syncExternalArtifactsToRegistry(registry);
+    const proc = discoverActiveExternalProcesses(registry);
+    return res.json({
+      synced: true,
+      changed: changedArtifacts || proc.changed,
+      changedArtifacts,
+      changedProcesses: proc.changed,
+      discoveredProcesses: proc.discovered,
+      jobs: registry.jobs.length,
+    });
+  });
+
+  app.get("/api/processes/discover", (_req, res) => {
+    const proc = discoverActiveExternalProcesses(registry);
+    return res.json({
+      discoveredProcesses: proc.discovered,
+      changed: proc.changed,
+      jobs: registry.jobs.length,
+    });
+  });
+
+  app.get("/api/events", (req, res) => {
+    const since = Number(req.query.since || 0);
+    const events = wsEventHistory.filter((evt) => evt.eventId > (Number.isFinite(since) ? since : 0));
+    res.json({
+      lastEventId: wsEventSeq,
+      events,
+      count: events.length,
+    });
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -1591,23 +1947,35 @@ async function startServer() {
   // ---- WebSocket server ----
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
   const clients = new Set<WebSocketClient>();
+  let wsEventSeq = 0;
+  const wsEventHistory: Array<{ eventId: number; type: string; payload: unknown; timestamp: string }> = [];
+  const WS_EVENT_HISTORY_LIMIT = 2000;
 
-  wss.on("connection", (ws) => {
-    clients.add(ws);
-    ws.send(
-      JSON.stringify({
-        type: "status",
-        payload: { executionMode: registry.executionMode, jobsCount: registry.jobs.length },
-        timestamp: isoNow(),
-      }),
-    );
-
-    ws.on("close", () => clients.delete(ws));
-    ws.on("error", () => clients.delete(ws));
+  const makeWsEnvelope = (type: string, payload: unknown) => ({
+    eventId: ++wsEventSeq,
+    type,
+    payload,
+    timestamp: isoNow(),
   });
 
+  const sendReplay = (ws: WebSocketClient, sinceEventId: number) => {
+    const since = Number.isFinite(sinceEventId) ? sinceEventId : 0;
+    const replay = wsEventHistory.filter((evt) => evt.eventId > since);
+    ws.send(JSON.stringify({
+      type: "replay",
+      payload: { sinceEventId: since, events: replay },
+      timestamp: isoNow(),
+    }));
+  };
+
   const broadcast = (type: string, payload: unknown) => {
-    const message = JSON.stringify({ type, payload, timestamp: isoNow() });
+    const envelope = makeWsEnvelope(type, payload);
+    wsEventHistory.push(envelope);
+    if (wsEventHistory.length > WS_EVENT_HISTORY_LIMIT) {
+      wsEventHistory.splice(0, wsEventHistory.length - WS_EVENT_HISTORY_LIMIT);
+    }
+
+    const message = JSON.stringify(envelope);
     for (const client of clients) {
       if (client.readyState === WebSocketClient.OPEN) {
         client.send(message);
@@ -1615,11 +1983,64 @@ async function startServer() {
     }
   };
 
+  wss.on("connection", (ws) => {
+    clients.add(ws);
+    ws.send(
+      JSON.stringify({
+        type: "status",
+        payload: {
+          executionMode: registry.executionMode,
+          jobsCount: registry.jobs.length,
+          lastEventId: wsEventSeq,
+        },
+        timestamp: isoNow(),
+      }),
+    );
+
+    ws.on("message", (raw) => {
+      try {
+        const msg = JSON.parse(raw.toString()) as { type?: string; sinceEventId?: number };
+        if (msg.type === "ping") {
+          ws.send(JSON.stringify({ type: "pong", payload: { now: isoNow() }, timestamp: isoNow() }));
+          return;
+        }
+        if (msg.type === "request_replay") {
+          sendReplay(ws, Number(msg.sinceEventId || 0));
+        }
+      } catch {
+        // ignore malformed client control messages
+      }
+    });
+
+    ws.on("close", () => clients.delete(ws));
+    ws.on("error", () => clients.delete(ws));
+  });
+
+  app.get("/api/events", (req, res) => {
+    const since = Number(req.query.since || 0);
+    const events = wsEventHistory.filter((evt) => evt.eventId > (Number.isFinite(since) ? since : 0));
+    res.json({
+      lastEventId: wsEventSeq,
+      events,
+      count: events.length,
+    });
+  });
+
   // Telemetry broadcast every 2 seconds
   setInterval(() => {
     if (clients.size === 0) return;
     broadcast("telemetry", buildTelemetryPayload(registry.nodeId));
   }, 2000);
+
+  // Heartbeat ping every 10 seconds to detect half-open connections.
+  setInterval(() => {
+    if (clients.size === 0) return;
+    for (const client of clients) {
+      if (client.readyState === WebSocketClient.OPEN) {
+        client.send(JSON.stringify({ type: "ping", payload: { now: isoNow() }, timestamp: isoNow() }));
+      }
+    }
+  }, 10000);
 }
 
 startServer();

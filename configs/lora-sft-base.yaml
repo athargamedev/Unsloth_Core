@@ -23,5 +23,10 @@ lora:
   lora_alpha: 32
   lora_dropout: 0.0
   target_modules: "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj"
+wandb:
+  enabled: false
+  project: unsloth-core
+  entity: andreabenathar-twl-games
+  tags: []
 logging:
   enable_tensorboard: true

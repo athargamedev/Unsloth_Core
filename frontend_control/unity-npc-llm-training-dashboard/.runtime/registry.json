@@ -1,7 +1,392 @@
 {
   "executionMode": "local",
-  "jobs": [],
-  "logs": [],
+  "jobs": [
+    {
+      "id": "ext_proc_1427406",
+      "name": "External Process (1427406)",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "status": "stopped",
+      "progress": 70,
+      "loss": null,
+      "createdAt": "2026-05-13T16:36:22.917Z",
+      "startedAt": "2026-05-13T16:36:22.917Z",
+      "command": [
+        "external",
+        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && python scripts/evaluate.py --help 2>&1 | grep -i wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1427406] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1427406] discovered active process",
+        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && python scripts/evaluate.py --help 2>&1 | grep -i wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T16:36:23.200Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1421535",
+      "name": "External Process (1421535) chemistry_instructor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 70,
+      "loss": null,
+      "createdAt": "2026-05-13T16:36:08.446Z",
+      "startedAt": "2026-05-13T16:36:08.446Z",
+      "command": [
+        "external",
+        "python3 ./ucore validate-config --spec subjects/chemistry_instructor.json --preset smoke --format yaml"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1421535] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1421535] discovered active process",
+        "python3 ./ucore validate-config --spec subjects/chemistry_instructor.json --preset smoke --format yaml"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T16:36:08.761Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1421528",
+      "name": "External Process (1421528) chemistry_instructor",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 90,
+      "loss": null,
+      "createdAt": "2026-05-13T16:36:08.446Z",
+      "startedAt": "2026-05-13T16:36:08.446Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6e111c075622.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && ./ucore validate-config --spec subjects/chemistry_instructor.json --preset smoke --format yaml 2>&1 | head -60' __hermes_ec=$? export -p > /tmp/hermes-snap-6e111c075622.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6e111c075622.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6e111c075622__%s__HERMES_CWD_6e111c075622__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1421528] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1421528] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6e111c075622.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && ./ucore validate-config --spec subjects/chemistry_instructor.json --preset smoke --format yaml 2>&1 | head -60' __hermes_ec=$? export -p > /tmp/hermes-snap-6e111c075622.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6e111c075622.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6e111c075622__%s__HERMES_CWD_6e111c075622__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T16:36:08.761Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1186079",
+      "name": "External Process (1186079) chemistry_instructor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-13T16:26:32.303Z",
+      "startedAt": "2026-05-13T16:26:32.303Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique ollama --ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1186079] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1186079] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique ollama --ollama"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T16:27:12.749Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1185585",
+      "name": "External Process (1185585) chemistry_instructor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-13T16:26:31.963Z",
+      "startedAt": "2026-05-13T16:26:31.963Z",
+      "command": [
+        "external",
+        "/usr/bin/env bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore generate subjects/chemistry_instructor.json --technique ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1185585] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1185585] discovered active process",
+        "/usr/bin/env bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore generate subjects/chemistry_instructor.json --technique ollama"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T16:27:12.749Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chemistry_instructor_local_20260513_llama-1b-fast_002",
+      "name": "External Train (chemistry_instructor_local/20260513_llama-1b-fast_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor_local",
+      "status": "completed",
+      "progress": 100,
+      "loss": 1.6050539016723633,
+      "createdAt": "2026-05-13T15:53:11.700Z",
+      "startedAt": "2026-05-13T15:53:11.700Z",
+      "finishedAt": "2026-05-13T15:53:11.698Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chemistry_instructor_local.json",
+        "--from-spec",
+        "--preset",
+        "llama-1b-fast"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run manifest detected: outputs/chemistry_instructor_local/runs/20260513_llama-1b-fast_002/run_manifest.json",
+        "[EXTERNAL] model=unsloth/Llama-3.2-1B-Instruct-bnb-4bit"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_chemistry_instructor_local_ollama",
+      "name": "External Dataset Sanitize (chemistry_instructor_local/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "chemistry_instructor_local",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-13T15:50:58.224Z",
+      "startedAt": "2026-05-13T15:50:58.224Z",
+      "finishedAt": "2026-05-13T15:50:58.224Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "datasets/chemistry_instructor_local/ollama/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: datasets/chemistry_instructor_local/ollama/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_chemistry_instructor_local_ollama",
+      "name": "External Dataset Generate (chemistry_instructor_local/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor_local",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-13T15:50:51.038Z",
+      "startedAt": "2026-05-13T15:50:51.038Z",
+      "finishedAt": "2026-05-13T15:50:51.038Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/chemistry_instructor_local.json",
+        "--technique",
+        "ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/chemistry_instructor_local/ollama/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    }
+  ],
+  "logs": [
+    "[2026-05-13T16:36:22.951Z] [SYNC] discovered running external process pid=1427406",
+    "[2026-05-13T16:36:08.473Z] [SYNC] discovered running external process pid=1421535",
+    "[2026-05-13T16:36:08.473Z] [SYNC] discovered running external process pid=1421528",
+    "[2026-05-13T16:26:32.341Z] [SYNC] discovered running external process pid=1186079",
+    "[2026-05-13T16:26:31.992Z] [SYNC] discovered running external process pid=1185585",
+    "[2026-05-13T16:15:00.274Z] [SYNC] imported external job ext_train_chemistry_instructor_local_20260513_llama-1b-fast_002",
+    "[2026-05-13T16:15:00.274Z] [SYNC] imported external job ext_sanitize_chemistry_instructor_local_ollama",
+    "[2026-05-13T16:15:00.273Z] [SYNC] imported external job ext_dataset_chemistry_instructor_local_ollama"
+  ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []
 }

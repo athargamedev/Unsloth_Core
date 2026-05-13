@@ -916,6 +916,11 @@ def main():
     parser.add_argument("--judge", action="store_true", help="Use local Ollama judge")
     parser.add_argument("--judge-model", default="llama3.1:latest", help="Judge model")
 
+    # W&B
+    parser.add_argument("--wandb", action="store_true", help="Enable W&B evaluation tracking")
+    parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
+
     args = parser.parse_args()
 
     # Training metrics mode
@@ -1076,7 +1081,7 @@ def main():
                 test_name=test_run_name,
                 prompt=comp["question"],
                 response=comp["candidate"],
-                expected=None, # In side-by-side, we compare to baseline, not necessarily "expected"
+                expected=None,
                 score=1.0 if comp["winner"] == "candidate" else (0.5 if comp["winner"] == "tie" else 0.0),
                 metrics=comp["candidate_metrics"],
                 metadata={
@@ -1085,6 +1090,68 @@ def main():
                     "reasoning": comp.get("reasoning")
                 }
             )
+
+    # ── W&B Evaluation Tracking ─────────────────────────────────────────
+    if args.wandb and spec:
+        import wandb
+        npc_key = spec.get("npc_key", "unknown")
+        cw = comparison["candidate_wins"]
+        bw = comparison["baseline_wins"]
+        total = comparison["total"]
+        ties = comparison["ties"]
+        win_rate = cw / total if total > 0 else 0
+
+        wandb.init(
+            project=args.wandb_project or "unsloth-core",
+            entity=args.wandb_entity,
+            config={
+                "npc_key": npc_key,
+                "baseline": baseline_name,
+                "candidate": candidate_name,
+                "num_questions": total,
+                "judge": args.judge,
+                "judge_model": args.judge_model,
+            },
+            name=f"eval-{npc_key}-{baseline_name}-vs-{candidate_name}",
+            tags=["eval"],
+        )
+        # Log comparison summary
+        wandb.log({
+            "eval/baseline_wins": bw,
+            "eval/candidate_wins": cw,
+            "eval/ties": ties,
+            "eval/total": total,
+            "eval/win_rate": win_rate,
+        })
+        # Log per-question quality scores
+        for i, comp in enumerate(comparison.get("comparisons", [])):
+            wandb.log({
+                f"q/{i}/question": comp["question"],
+                f"q/{i}/winner": comp["winner"],
+                f"q/{i}/baseline_quality": comp["baseline_metrics"].get("quality", 0),
+                f"q/{i}/candidate_quality": comp["candidate_metrics"].get("quality", 0),
+                f"q/{i}/baseline_words": comp["baseline_metrics"].get("length", 0),
+                f"q/{i}/candidate_words": comp["candidate_metrics"].get("length", 0),
+            }, step=i)
+        # Log report as artifact
+        if args.output and os.path.exists(args.output):
+            try:
+                report_artifact = wandb.Artifact(
+                    name=f"eval-report-{npc_key}",
+                    type="eval-report",
+                    description=f"Evaluation report for {npc_key}: {baseline_name} vs {candidate_name}",
+                    metadata={
+                        "baseline": baseline_name,
+                        "candidate": candidate_name,
+                        "win_rate": win_rate,
+                        "total_questions": total,
+                    },
+                )
+                report_artifact.add_file(args.output)
+                wandb.log_artifact(report_artifact)
+            except Exception as e:
+                print(f"  [wandb] Report artifact failed: {e}")
+        wandb.finish()
 
 
 if __name__ == "__main__":

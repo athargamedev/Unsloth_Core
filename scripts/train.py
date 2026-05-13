@@ -170,6 +170,12 @@ def load_config(config_path, preset=None, overrides=None):
     lora.setdefault("target_modules",
                      "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj")
 
+    config.setdefault("wandb", {})
+    config["wandb"].setdefault("enabled", False)
+    config["wandb"].setdefault("project", "unsloth-core")
+    config["wandb"].setdefault("entity", None)
+    config["wandb"].setdefault("tags", [])
+
     config.setdefault("logging", {})
     config["logging"].setdefault("enable_tensorboard", True)
 
@@ -208,6 +214,8 @@ def print_config(config, preset_name=None):
     print(f"  LoRA alpha:  {lora.get('lora_alpha', 32)}")
     print(f"  LoRA drop:   {lora.get('lora_dropout', 0.0)}")
     print(f"  Targets:     {lora.get('target_modules', 'all')}")
+    wb = config.get("wandb", {})
+    print(f"  W&B:         {'enabled' if wb.get('enabled', False) else 'disabled'}{' → ' + wb.get('project', 'unsloth-core') if wb.get('enabled', False) else ''}")
     print("=" * 60)
 
 
@@ -311,6 +319,14 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
     effective_batch = training.get("batch_size", 1) * training.get("gradient_accumulation_steps", 8)
     print(f"\n[train] Effective batch size: {effective_batch}")
 
+    # Build report_to list
+    report_targets = []
+    if config.get("logging", {}).get("enable_tensorboard", True):
+        report_targets.append("tensorboard")
+    if config.get("wandb", {}).get("enabled", False):
+        report_targets.append("wandb")
+    report_to = ",".join(report_targets) if report_targets else "none"
+
     args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=training.get("num_epochs", 3),
@@ -327,7 +343,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
         eval_strategy="steps" if eval_dataset else "no",
         save_total_limit=3,
         load_best_model_at_end=True if eval_dataset else False,
-        report_to="tensorboard" if config.get("logging", {}).get("enable_tensorboard", True) else "none",
+        report_to=report_to,
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),
         optim="adamw_8bit",
@@ -494,6 +510,10 @@ def main():
                         help="Train on responses only (True/False)")
     parser.add_argument("--no-tensorboard", action="store_true",
                         help="Disable TensorBoard logging")
+    parser.add_argument("--wandb", action="store_true", default=None,
+                        help="Enable W&B logging (overrides config)")
+    parser.add_argument("--no-wandb", action="store_true", default=None,
+                        dest="disable_wandb", help="Disable W&B logging (overrides config)")
 
     # Export
     parser.add_argument("--export-gguf", action="store_true",
@@ -588,6 +608,12 @@ def main():
     if args.no_tensorboard:
         config["logging"]["enable_tensorboard"] = False
 
+    # CLI wandb override
+    if args.wandb is not None:
+        config["wandb"]["enabled"] = args.wandb
+    if args.disable_wandb is not None:
+        config["wandb"]["enabled"] = not args.disable_wandb
+
     # ── Run ID experiment tracking ──────────────────────────────────────
     # Determine NPC key from output path or data path
     if args.output:
@@ -624,6 +650,38 @@ def main():
     if latest_link.exists() or latest_link.is_symlink():
         latest_link.unlink()
     os.symlink(f"runs/{run_id}", str(latest_link), target_is_directory=True)
+
+    # ── W&B Initialization ──────────────────────────────────────────────
+    if config.get("wandb", {}).get("enabled", False):
+        import wandb
+        wb_config = config["wandb"]
+        _train_cfg = config.get("training", {})
+        _lora_cfg = config.get("lora", {})
+        wandb.init(
+            project=wb_config.get("project", "unsloth-core"),
+            entity=wb_config.get("entity", None),
+            config={
+                "model": config.get("model"),
+                "npc_key": npc_key,
+                "run_id": run_id,
+                "preset": args.preset,
+                "model_id": config.get("model"),
+                "num_epochs": _train_cfg.get("num_epochs", 3),
+                "learning_rate": _train_cfg.get("learning_rate", 2e-4),
+                "batch_size": _train_cfg.get("batch_size", 1),
+                "gradient_accumulation_steps": _train_cfg.get("gradient_accumulation_steps", 8),
+                "max_seq_length": _train_cfg.get("max_seq_length", 2048),
+                "lora_r": _lora_cfg.get("lora_r", 16),
+                "lora_alpha": _lora_cfg.get("lora_alpha", 32),
+                "lora_dropout": _lora_cfg.get("lora_dropout", 0.0),
+                "packing": _train_cfg.get("packing", True),
+                "train_on_responses_only": _train_cfg.get("train_on_responses_only", True),
+                "weight_decay": _train_cfg.get("weight_decay", 0.01),
+                "warmup_steps": _train_cfg.get("warmup_steps", 10),
+            },
+            tags=wb_config.get("tags", []) + ([args.preset] if args.preset else []),
+            name=f"{npc_key}-{run_id}",
+        )
 
     # ── Remote mode: generate Colab notebook instead of training ────────
     if args.remote == "colab" or args.drive_data_path:
@@ -785,6 +843,48 @@ def main():
     with open(run_manifest_path, "w") as f:
         json.dump(run_manifest, f, indent=2)
 
+    # ── W&B Artifact & Metric Logging ────────────────────────────────────
+    if config.get("wandb", {}).get("enabled", False):
+        import wandb
+        # Log training metrics
+        wandb.log({
+            "train/loss": trainer_stats.training_loss,
+            "train/duration_minutes": round(elapsed / 60, 1),
+            "train/num_examples": len(dataset) if dataset is not None else 0,
+        })
+        # Log dataset as artifact
+        try:
+            technique = Path(data_path).parent.name
+            ds_artifact = wandb.Artifact(
+                name=f"dataset-{npc_key}",
+                type="dataset",
+                description=f"Training dataset for {npc_key} ({technique})",
+                metadata={
+                    "technique": technique,
+                    "rows": len(dataset) if dataset is not None else 0,
+                    "sha256": dataset_sha256,
+                    "npc_key": npc_key,
+                },
+            )
+            ds_artifact.add_file(str(data_path))
+            wandb.log_artifact(ds_artifact)
+        except Exception as e:
+            print(f"  [wandb] Dataset artifact failed: {e}")
+        # Log LoRA adapter as model artifact
+        try:
+            model_artifact = wandb.Artifact(
+                name=f"lora-{npc_key}",
+                type="model",
+                description=f"LoRA adapter for {npc_key}",
+                metadata=metrics,
+            )
+            model_artifact.add_dir(str(output_dir))
+            wandb.log_artifact(model_artifact)
+        except Exception as e:
+            print(f"  [wandb] Model artifact failed: {e}")
+        # Save frozen config as a wandb file
+        wandb.save(str(frozen_config_path), base_path=str(frozen_config_path.parent))
+
     # Update "best" symlink (lowest training loss wins), gated by promotion rules
     current_loss = trainer_stats.training_loss
     num_train = len(dataset) if dataset is not None else 0
@@ -822,7 +922,21 @@ def main():
 
     # Export to GGUF
     if args.export_gguf:
-        export_to_gguf(model, tokenizer, output_dir, quantization=args.quantization)
+        gguf_path = export_to_gguf(model, tokenizer, output_dir, quantization=args.quantization)
+        # Log GGUF as W&B artifact
+        if config.get("wandb", {}).get("enabled", False) and gguf_path:
+            try:
+                import wandb
+                gguf_artifact = wandb.Artifact(
+                    name=f"gguf-{npc_key}",
+                    type="model",
+                    description=f"GGUF export for {npc_key} ({args.quantization})",
+                    metadata={"quantization": args.quantization, "npc_key": npc_key, "run_id": run_id},
+                )
+                gguf_artifact.add_file(gguf_path)
+                wandb.log_artifact(gguf_artifact)
+            except Exception as e:
+                print(f"  [wandb] GGUF artifact failed: {e}")
 
     # Export LoRA adapter as GGUF (for LLMUnity runtime loading)
     if args.export_lora:
@@ -830,6 +944,11 @@ def main():
         print(f"\n[export] Exporting LoRA adapter to GGUF (for LLMUnity)...")
         lora_out = convert_adapter(output_dir, outtype="f16")
         print(f"[export] LoRA adapter GGUF: {lora_out}")
+
+    # ── W&B Finish ──────────────────────────────────────────────────────
+    if config.get("wandb", {}).get("enabled", False):
+        import wandb
+        wandb.finish()
 
     print("\nDone!")
 

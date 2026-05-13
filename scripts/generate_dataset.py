@@ -186,11 +186,16 @@ def load_notebooklm_examples(input_path, spec):
         records = [json.loads(line) for line in raw_text.splitlines() if line.strip()]
     else:
         parsed = json.loads(raw_text)
-        records = parsed.get("examples")
-        if records is None:
-            records = parsed.get("items")
-        if records is None and isinstance(parsed, dict):
+        if isinstance(parsed, list):
             records = parsed
+        elif isinstance(parsed, dict):
+            records = parsed.get("examples")
+            if records is None:
+                records = parsed.get("items")
+            if records is None:
+                records = parsed
+        else:
+            records = None
 
     if not isinstance(records, list):
         raise ValueError("NotebookLM JSON import must be a list or contain an examples/items list")
