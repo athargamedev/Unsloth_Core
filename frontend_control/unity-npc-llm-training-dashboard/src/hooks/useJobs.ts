@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { fetchJson, type Job } from '../api';
 
-const DEFAULT_TYPE_FILTERS = ['Training', 'Dataset'];
+const DEFAULT_TYPE_FILTERS = ['Training', 'Dataset', 'Export', 'Evaluation'];
 
 export function useJobs() {
   const [jobs, setJobs] = useState<Job[]>([]);

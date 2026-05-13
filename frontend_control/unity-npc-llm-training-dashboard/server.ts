@@ -1543,6 +1543,24 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     return res.json({ reports, comparisons });
   });
 
+  app.get("/api/eval-reports/file", (req, res) => {
+    const requestedPath = String(req.query.path || "");
+    if (!requestedPath.startsWith("eval/reports/") || requestedPath.includes("..")) {
+      return res.status(400).json({ error: "Invalid report path." });
+    }
+
+    const reportsRoot = path.resolve(repoRoot, "eval", "reports");
+    const absolutePath = path.resolve(repoRoot, requestedPath);
+    if (!absolutePath.startsWith(`${reportsRoot}${path.sep}`)) {
+      return res.status(400).json({ error: "Report path is outside eval/reports." });
+    }
+    if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+      return res.status(404).json({ error: "Report file not found." });
+    }
+
+    return res.sendFile(absolutePath);
+  });
+
   app.get("/api/run/:npcKey/:runId", (req, res) => {
     const { npcKey, runId } = req.params;
 

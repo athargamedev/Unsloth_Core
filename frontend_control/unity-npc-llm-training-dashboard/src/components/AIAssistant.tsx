@@ -37,11 +37,12 @@ How can I help with your workflow today?`,
     }
   }, [messages]);
 
-  const askAI = async (e?: React.FormEvent) => {
+  const askAI = async (e?: React.FormEvent, promptOverride?: string) => {
     e?.preventDefault();
-    if (!query.trim() || loading) return;
+    const intendedPrompt = promptOverride ?? query;
+    if (!intendedPrompt.trim() || loading) return;
 
-    const userMsg = query;
+    const userMsg = intendedPrompt;
     setQuery('');
     setMessages((prev) => [...prev, { role: 'user', content: userMsg }]);
     setLoading(true);
@@ -74,13 +75,13 @@ How can I help with your workflow today?`,
   const handleUnloadModel = async () => {
     try {
       await fetch('/api/assistant/unload', { method: 'POST' });
-      setMessages((prev) => [...prev, { role: 'assistant', content: '_Model unloaded from GPU._' }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: '_Requested Ollama assistant model unload (gemma4:e2b) to free GPU memory._' }]);
     } catch {}
   };
 
   const handleLoadModel = async () => {
     try {
-      setMessages((prev) => [...prev, { role: 'assistant', content: '_Loading model into GPU..._' }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: '_Requesting Ollama assistant model load (gemma4:e2b)..._' }]);
       await fetch('/api/assistant/load', { method: 'POST' });
     } catch {}
   };
@@ -94,10 +95,10 @@ How can I help with your workflow today?`,
           <h2 className="text-[11px] font-bold text-ink-bright uppercase tracking-widest">Workflow Assistant</h2>
         </div>
         <div className="flex gap-2">
-          <button onClick={handleLoadModel} title="Load Model into GPU" className="p-1 hover:bg-white/10 rounded text-accent">
+          <button onClick={handleLoadModel} title="Load the Ollama assistant model (gemma4:e2b), not an NPC GGUF model" className="p-1 hover:bg-white/10 rounded text-accent">
             <Power className="w-3 h-3" />
           </button>
-          <button onClick={handleUnloadModel} title="Unload Model from GPU" className="p-1 hover:bg-white/10 rounded text-danger">
+          <button onClick={handleUnloadModel} title="Unload the Ollama assistant model (gemma4:e2b) only" className="p-1 hover:bg-white/10 rounded text-danger">
             <PowerOff className="w-3 h-3" />
           </button>
         </div>
@@ -188,13 +189,13 @@ How can I help with your workflow today?`,
             <div className="text-[9px] font-bold text-ink/30 uppercase tracking-widest mb-1">Quick Actions</div>
             <div className="flex flex-wrap gap-2">
               <button 
-                onClick={() => { setQuery('How do I run a smoke test?'); askAI(); }}
+                onClick={() => askAI(undefined, 'How do I run a smoke test?')}
                 className="text-[10px] bg-bg border border-line px-2 py-1 rounded hover:border-accent transition-colors"
               >
                 Smoke Test Help
               </button>
               <button 
-                onClick={() => { setQuery('Explain the 4-stage pipeline'); askAI(); }}
+                onClick={() => askAI(undefined, 'Explain the 4-stage pipeline')}
                 className="text-[10px] bg-bg border border-line px-2 py-1 rounded hover:border-accent transition-colors"
               >
                 Pipeline Overview

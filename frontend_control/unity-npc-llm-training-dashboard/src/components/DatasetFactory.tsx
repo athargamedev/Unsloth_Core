@@ -11,6 +11,7 @@ interface DatasetFactoryProps {
   trainingConfig: TrainingConfig;
   onGenerateDataset: () => Promise<void>;
   onSelectDataset?: (npcKey: string, technique: string) => void;
+  onPrepareTraining?: (npcKey: string, technique: string) => void;
 }
 
 export const DatasetFactory = ({
@@ -20,6 +21,7 @@ export const DatasetFactory = ({
   trainingConfig,
   onGenerateDataset,
   onSelectDataset,
+  onPrepareTraining,
 }: DatasetFactoryProps) => {
   // Compute real analytics from datasets
   const totalEntries = datasets.reduce((sum, ds) =>
@@ -85,9 +87,7 @@ export const DatasetFactory = ({
                           </button>
                           <button
                             onClick={() => {
-                              window.dispatchEvent(
-                                new CustomEvent('navigate-tab', { detail: { tab: 'overview' } })
-                              );
+                              onPrepareTraining?.(ds.id, v.tag);
                             }}
                             className="text-ink/20 hover:text-ink/60 uppercase text-[8px] font-bold"
                           >
@@ -112,14 +112,10 @@ export const DatasetFactory = ({
                     {ds.versions.length >= 2 ? `Compare ${ds.versions[0].tag} vs ${ds.versions[1].tag}` : 'Need 2+ versions'}
                   </button>
                   <button
-                    onClick={() => {
-                      const path = datasets.find(d => d.id === ds.id)?.versions[0]?.tag
-                        ? `datasets/${ds.id}/`
-                        : null;
-                      if (path) window.open(`/${path}`, '_blank');
-                    }}
+                    onClick={() => onSelectDataset?.(ds.id, ds.versions[0]?.tag || trainingConfig.technique)}
+                    disabled={ds.versions.length === 0}
                     className="p-1.5 bg-line/20 border border-line/30 rounded hover:bg-line/40 transition-colors"
-                    title="Open dataset directory"
+                    title="Open this dataset in the built-in viewer"
                   >
                     <ExternalLink className="w-3 h-3 text-ink/40" />
                   </button>

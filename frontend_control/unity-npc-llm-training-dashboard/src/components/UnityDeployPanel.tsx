@@ -138,7 +138,7 @@ export function UnityDeployPanel() {
             onClick={() => handleDeploy(false)}
             disabled={isDeploying || !status?.deployScript}
             className="flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold bg-accent text-bg rounded hover:bg-accent/80 transition-colors disabled:opacity-40"
-            title={!status?.deployScript ? 'No deploy script found. Create frontend_control/deploy.sh' : 'Deploy all exported models'}
+            title={!status?.deployScript ? 'No Unity deploy entrypoint found. Use scripts/deploy_to_unity.py or ./ucore deploy.' : 'Deploy all exported models'}
           >
             <Upload className="w-3 h-3" />
             Deploy All
@@ -152,8 +152,8 @@ export function UnityDeployPanel() {
         {status && !status.deployScript && (
           <div className="p-3 bg-warning/10 border border-warning/30 rounded text-[10px] text-warning/90 leading-relaxed">
             <p className="font-bold uppercase tracking-wider text-warning mb-1">Deploy script not configured</p>
-            <p>Create <code className="bg-black/30 px-1 rounded font-mono">frontend_control/deploy.sh</code> to enable One-Click Deploy.</p>
-            <p className="text-warning/70 mt-1">The script receives the list of GGUF file paths to deploy (e.g., rsync/cp to your Unity project's <code className="bg-black/30 px-1 rounded font-mono">Assets/StreamingAssets/Models/</code>).</p>
+            <p>Use <code className="bg-black/30 px-1 rounded font-mono">scripts/deploy_to_unity.py</code> or <code className="bg-black/30 px-1 rounded font-mono">./ucore deploy</code> to copy GGUF files into Unity.</p>
+            <p className="text-warning/70 mt-1">Keep deployments pointed at your Unity project's <code className="bg-black/30 px-1 rounded font-mono">Assets/StreamingAssets/Models/</code> directory.</p>
           </div>
         )}
 

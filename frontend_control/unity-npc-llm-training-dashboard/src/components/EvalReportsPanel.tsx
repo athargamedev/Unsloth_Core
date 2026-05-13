@@ -74,7 +74,7 @@ export const EvalReportsPanel = () => {
               >
                 <span className="font-mono text-ink/80 flex-1 truncate">{file.name}</span>
                 <a
-                  href={`/${file.path}`}
+                  href={`/api/eval-reports/file?path=${encodeURIComponent(file.path)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-accent underline shrink-0"
@@ -94,9 +94,7 @@ export const EvalReportsPanel = () => {
             {data.comparisons.map((comp) => (
               <div key={comp.name} className="flex items-center gap-3 px-3 py-2 bg-surface border border-line rounded text-[10px]">
                 <span className="font-mono text-ink/80 flex-1 truncate">{comp.name}</span>
-                <a href={`/${comp.path}`} target="_blank" rel="noopener noreferrer" className="text-accent underline shrink-0">
-                  View
-                </a>
+                <span className="text-ink/35 shrink-0" title="Only eval/reports files are served by the safe report viewer.">Not served</span>
               </div>
             ))}
           </div>

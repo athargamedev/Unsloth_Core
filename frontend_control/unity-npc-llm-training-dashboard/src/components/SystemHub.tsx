@@ -55,13 +55,13 @@ export const SystemHub = ({ availableCommands, onTriggerCommand }: SystemHubProp
       ))}
     </div>
 
-    <Card title="Quick Terminal Access" subtitle="SH_ROOT@NPC_CORE">
+    <Card title="Quick Terminal Reference" subtitle="LOCAL_COMMAND_HINTS">
       <div className="bg-black/60 rounded p-4 font-mono text-[11px] text-accent/80 space-y-2 h-48 overflow-y-auto custom-scrollbar">
         <div className="flex gap-2">
           <span className="text-success">$</span>
-          <span>ssh-agent auth --key=/mnt/vram/core_v4</span>
+          <span>./ucore --help</span>
         </div>
-        <div className="text-ink/40">[AUTH] RSA_TOKEN_VALIDATED (A100_NODE_X2)</div>
+        <div className="text-ink/40">[INFO] Reference panel only — commands are launched through the cards above.</div>
         <div className="flex gap-2">
           <span className="text-success">$</span>
           <span className="animate-pulse">_</span>

@@ -68,6 +68,7 @@ export const OperationsMatrix = ({
           </div>
           <div className="flex gap-2">
             <div className="flex gap-1 items-center">
+              <span className="text-[9px] text-ink/35 font-bold uppercase tracking-wider mr-1">Types shown</span>
               {['Training', 'Dataset', 'Export', 'Evaluation'].map((t) => (
                 <button
                   key={t}
@@ -92,7 +93,7 @@ export const OperationsMatrix = ({
                   : "bg-panel border border-line text-ink/60 hover:bg-white/5",
               )}
             >
-              Filter: {activeFilter === 'all' ? 'Active' : 'All'}
+              {activeFilter === 'all' ? 'Showing All Jobs' : 'Showing Running Only'}
             </button>
             <button
               onClick={onExportCsv}
@@ -199,7 +200,7 @@ export const OperationsMatrix = ({
                             onClick={(e) => { e.stopPropagation(); onManageJob(job.id); }}
                             className="text-accent hover:text-accent/80 transition-colors uppercase text-[9px] font-bold tracking-tighter"
                           >
-                            Manage
+                            Compare
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); onDeleteJob(job.id); }}

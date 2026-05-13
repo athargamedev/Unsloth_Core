@@ -2,11 +2,13 @@ import { motion } from 'motion/react';
 import { Layers, XCircle, FileText } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Card } from './Card';
-import type { Job } from '../api';
+import type { ExportArtifact, Job, RunArtifact } from '../api';
 
 interface ModelComparisonProps {
   selectedJobIds: string[];
   jobs: Job[];
+  runs: RunArtifact[];
+  exportArtifacts: ExportArtifact[];
   onToggleJobSelection: (e: React.MouseEvent, id: string) => void;
   onClearSelection: () => void;
   onNavigateTo: (tab: 'overview' | 'training' | 'datasets' | 'compare' | 'analytics' | 'commands') => void;
@@ -15,19 +17,23 @@ interface ModelComparisonProps {
 export const ModelComparison = ({
   selectedJobIds,
   jobs,
+  runs,
+  exportArtifacts,
   onToggleJobSelection,
   onClearSelection,
   onNavigateTo,
 }: ModelComparisonProps) => {
-  const handleGenerateReport = () => {
-    // Build a report URL from the selected jobs
-    const ids = selectedJobIds.join(',');
-    window.open(`/api/eval-reports?jobs=${encodeURIComponent(ids)}`, '_blank');
+  const handleViewReports = () => {
+    onNavigateTo('commands');
   };
 
+  const getJobNpcKey = (job: Job) => job.npcKey || job.name.match(/\(([^)]+)\)/)?.[1] || '';
+
   const handleViewArtifacts = (job: Job) => {
-    // Navigate to the outputs overview tab
-    onNavigateTo('overview');
+    const npcKey = getJobNpcKey(job);
+    if (!npcKey) return;
+    onNavigateTo('datasets');
+    window.dispatchEvent(new CustomEvent('navigate-tab', { detail: { tab: 'datasets', npcKey } }));
   };
 
   return (
@@ -48,11 +54,11 @@ export const ModelComparison = ({
             Clear Selection
           </button>
           <button
-            onClick={handleGenerateReport}
+            onClick={handleViewReports}
             disabled={selectedJobIds.length === 0}
             className="px-3 py-1 bg-accent text-bg text-[10px] font-bold rounded uppercase disabled:opacity-40 hover:brightness-110 transition-all"
           >
-            Generate Report
+            View Reports
           </button>
         </div>
       </div>
@@ -69,6 +75,10 @@ export const ModelComparison = ({
             {selectedJobIds.map((id) => {
               const job = jobs.find((j) => j.id === id);
               if (!job) return null;
+              const npcKey = getJobNpcKey(job);
+              const jobRuns = npcKey ? runs.filter((run) => run.npcKey === npcKey) : [];
+              const jobExports = npcKey ? exportArtifacts.filter((artifact) => artifact.npcKey === npcKey) : [];
+              const hasArtifactMetadata = jobRuns.length > 0 || jobExports.length > 0;
               return (
                 <div key={job.id} className="w-[320px] bg-surface border border-line rounded-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4">
                   <div className="p-4 bg-header border-b border-line flex justify-between items-center">
@@ -104,8 +114,8 @@ export const ModelComparison = ({
                           <span className="text-ink-bright font-mono">{job.type}</span>
                         </div>
                         <div className="flex justify-between py-1 border-b border-line/10">
-                          <span className="text-ink/40">Compute Node</span>
-                          <span className="text-ink-bright font-mono">A100_NODE_X2</span>
+                          <span className="text-ink/40">Runner</span>
+                          <span className="text-ink-bright font-mono">{job.status === 'running' ? 'Active local process' : 'Recorded job'}</span>
                         </div>
                         <div className="flex justify-between py-1 border-b border-line/10">
                           <span className="text-ink/40">Created At</span>
@@ -136,13 +146,28 @@ export const ModelComparison = ({
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-line/20">
+                    <div className="pt-4 border-t border-line/20 space-y-2">
+                      <span className="text-[9px] uppercase font-bold text-ink/30 tracking-widest block">Artifacts</span>
+                      {hasArtifactMetadata ? (
+                        <div className="space-y-1 text-[10px] font-mono">
+                          {jobRuns.slice(0, 2).map((run) => (
+                            <div key={run.id} className="truncate text-ink/60">Run: {run.id}</div>
+                          ))}
+                          {jobExports.slice(0, 2).map((artifact) => (
+                            <div key={artifact.file} className="truncate text-ink/60">GGUF: {artifact.file}</div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-ink/35">No run/export artifact metadata recorded for this job.</div>
+                      )}
                       <button
                         onClick={() => handleViewArtifacts(job)}
-                        className="w-full flex items-center justify-center gap-2 py-2 bg-accent/10 border border-accent/20 text-accent text-[10px] font-bold rounded uppercase hover:bg-accent/20 transition-colors"
+                        disabled={!hasArtifactMetadata}
+                        title={hasArtifactMetadata ? 'Open artifact summary in Dataset Factory' : 'No artifact metadata is available for this job'}
+                        className="w-full flex items-center justify-center gap-2 py-2 bg-accent/10 border border-accent/20 text-accent text-[10px] font-bold rounded uppercase hover:bg-accent/20 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
                       >
                         <FileText className="w-3 h-3" />
-                        View Artifacts
+                        {hasArtifactMetadata ? 'Open Artifacts Summary' : 'No Artifacts Recorded'}
                       </button>
                     </div>
                   </div>

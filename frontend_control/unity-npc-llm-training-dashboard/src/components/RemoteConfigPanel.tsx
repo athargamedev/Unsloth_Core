@@ -51,6 +51,11 @@ export function RemoteConfigPanel() {
         </div>
 
         {/* Instructions */}
+        <div className="p-2 bg-warning/10 border border-warning/30 rounded text-[10px] text-warning/90 space-y-1">
+          <p className="font-bold uppercase tracking-wider">Remote runner not implemented</p>
+          <p>Remote mode can be configured for future use, but command starts currently return 501. Use Local mode for runnable commands.</p>
+        </div>
+
         <div className="p-2 bg-panel border border-line rounded text-[10px] text-ink/60 space-y-1">
           <p className="font-bold text-ink/80">To enable remote mode:</p>
           <p>1. Set environment variables:</p>
@@ -59,7 +64,7 @@ export function RemoteConfigPanel() {
             REMOTE_API_KEY=your-api-key
           </code>
           <p className="mt-2">2. Restart the server</p>
-          <p className="mt-2">3. Toggle to Remote mode in the System Hub</p>
+          <p className="mt-2">3. Use the Execution Mode toggle in the right sidebar when the remote runner is implemented</p>
         </div>
 
         {/* Current settings */}

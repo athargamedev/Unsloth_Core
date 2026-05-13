@@ -69,7 +69,7 @@ export const DatasetViewer = ({ npcKey, technique }: DatasetViewerProps) => {
           {error}
           <div className="mt-2">
             <span className="text-ink/60">Run </span>
-            <code className="bg-bg px-1 py-0.5 rounded text-accent">./ucore generate {npcKey}</code>
+            <code className="bg-bg px-1 py-0.5 rounded text-accent">./ucore generate subjects/{npcKey}.json --technique &lt;technique&gt;</code>
             <span className="text-ink/60"> first to create a dataset.</span>
           </div>
         </div>
