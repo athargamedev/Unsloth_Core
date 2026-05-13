@@ -69,6 +69,7 @@ export default function App() {
     rank: 16,
     alpha: 32,
     baseModel: 'mistralai/Mistral-7B-Instruct-v0.2',
+    wandb: false,
   });
 
   const {
@@ -300,6 +301,7 @@ export default function App() {
         spec: trainingConfig.spec,
         preset: trainingConfig.preset,
         options: {
+          wandb: trainingConfig.wandb ? 'true' : 'false',
           learningRate: trainingConfig.learningRate,
           batchSize: trainingConfig.batchSize,
           epochs: trainingConfig.epochs,
@@ -362,6 +364,7 @@ export default function App() {
         preset: trainingConfig.preset,
         options: {
           model: trainingConfig.baseModel,
+          wandb: trainingConfig.wandb ? 'true' : 'false',
           learningRate: trainingConfig.learningRate,
           batchSize: trainingConfig.batchSize,
           epochs: trainingConfig.epochs,

@@ -3,7 +3,7 @@ import type { Telemetry } from '../api';
 
 interface UseWebSocketOptions {
   onTelemetry?: (data: Telemetry) => void;
-  onJobUpdate?: (data: { id: string; status: string; loss: number | null; progress: number }) => void;
+  onJobUpdate?: (data: { id: string; status: string; loss: number | null; progress: number; wandbUrl?: string }) => void;
   onFallbackPolling?: () => void;
   onResync?: () => void;
 }

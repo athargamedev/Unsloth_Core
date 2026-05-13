@@ -20,6 +20,7 @@ export interface Job {
   finishedAt?: string;
   logs?: string[];
   npcKey?: string;
+  wandbUrl?: string | null;
 }
 
 export interface DatasetVersion {
@@ -107,6 +108,7 @@ export interface TrainingConfig {
   epochs: number;
   rank: number;
   alpha: number;
+  wandb?: boolean;
 }
 
 export interface CommandPayload {

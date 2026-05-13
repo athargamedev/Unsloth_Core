@@ -132,12 +132,21 @@ export const TrainingSuite = ({
     </div>
 
     <div className="mt-auto p-4 bg-accent/5 border border-accent/10 rounded-sm flex justify-between items-center">
-      <div className="space-y-1">
+      <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Shield className="w-3 h-3 text-success" />
           <span className="text-[10px] font-bold text-success uppercase tracking-tighter">Config Validation Passed</span>
         </div>
         <p className="text-[10px] text-ink/40">Estimated VRAM requirement: 14.8GB (Optimized for 24GB+ cards)</p>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={trainingConfig.wandb ?? false}
+            onChange={(e) => onUpdateTrainingConfig({ wandb: e.target.checked })}
+            className="w-3 h-3 accent-accent rounded"
+          />
+          <span className="text-[10px] font-bold text-accent uppercase tracking-tighter">Enable W&B Tracking</span>
+        </label>
       </div>
       <button
         onClick={onLaunchTraining}

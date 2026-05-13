@@ -37,6 +37,7 @@ interface Job {
   exitCode?: number;
   stopRequested?: boolean;
   terminalReason?: string;
+  wandbUrl?: string | null;
 }
 
 interface Registry {
@@ -79,11 +80,15 @@ const repoRoot = path.resolve(dashboardRoot, "../..");
 const runtimeDir = path.join(dashboardRoot, ".runtime");
 const registryPath = path.join(runtimeDir, "registry.json");
 
-const MAX_LOG_LINES = 600;
+const MAX_LOG_LINES = 2000;
+const MAX_GLOBAL_LOG_LINES = 600;
+const PERSIST_DEBOUNCE_MS = 500;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
 const globalLog = (registry: Registry, line: string) => {
   const timestampedLine = `[${isoNow()}] ${line}`;
   registry.logs.unshift(timestampedLine);
-  registry.logs = registry.logs.slice(0, MAX_LOG_LINES);
+  registry.logs = registry.logs.slice(0, MAX_GLOBAL_LOG_LINES);
 };
 
 const defaultStages = (): Stage[] => [
@@ -106,17 +111,30 @@ const loadRegistry = (): Registry => {
     const registry = JSON.parse(fs.readFileSync(registryPath, "utf8")) as Registry;
     if (!registry.nodeId) {
       registry.nodeId = crypto.randomUUID();
-      persistRegistry(registry);
+      flushPersist(registry);
     }
     return registry;
   } catch {
     const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID(), workflows: [] };
-    persistRegistry(registry);
+    flushPersist(registry);
     return registry;
   }
 };
 
 const persistRegistry = (registry: Registry) => {
+  ensureRuntime();
+  if (persistTimer) clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2), "utf8");
+    persistTimer = null;
+  }, PERSIST_DEBOUNCE_MS);
+};
+
+const flushPersist = (registry: Registry) => {
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
   ensureRuntime();
   fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2), "utf8");
 };
@@ -390,6 +408,7 @@ const commandDefinitions: CommandDefinition[] = [
       if (preset) args.push("--preset", sanitizeToken(preset, "preset"));
       // Hyperparams from options
       const opts = payload.options || {};
+      if (opts.wandb === true || opts.wandb === "true") args.push("--wandb");
       if (opts.learningRate) args.push("--lr", String(opts.learningRate));
       if (opts.batchSize) args.push("--batch-size", String(opts.batchSize));
       if (opts.epochs) args.push("--epochs", String(opts.epochs));
@@ -410,10 +429,12 @@ const commandDefinitions: CommandDefinition[] = [
       const technique = String(optionValue(payload, "technique") || "").trim();
       const notebooklmInput = String(optionValue(payload, "notebooklmInput") || "").trim();
       const track = String(optionValue(payload, "track") || "").trim().toLowerCase();
+      const wandb = String(optionValue(payload, "wandb") || "").trim().toLowerCase();
       if (preset) cmd.push("--preset", sanitizeToken(preset, "preset"));
       if (technique) cmd.push("--technique", sanitizeToken(technique, "technique"));
       if (notebooklmInput) cmd.push("--notebooklm-input", normalizeRelativePath(notebooklmInput, "notebooklmInput"));
       if (track === "true" || track === "1") cmd.push("--track");
+      if (wandb === "true" || wandb === "1") cmd.push("--wandb");
       return cmd;
     },
   },
@@ -613,7 +634,7 @@ const reconcileOrphanedJobs = (registry: Registry) => {
     globalLog(registry, `[SYSTEM] reconciled ${job.id} to failed (server_restarted)`);
     changed = true;
   }
-  if (changed) persistRegistry(registry);
+  if (changed) flushPersist(registry);
 };
 
 const fileIso = (filePath: string): string => {
@@ -791,7 +812,7 @@ const syncExternalArtifactsToRegistry = (registry: Registry) => {
     }
   }
 
-  if (changed) persistRegistry(registry);
+  if (changed) flushPersist(registry);
   return changed;
 };
 
@@ -911,7 +932,7 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
     changed = true;
   }
 
-  if (changed) persistRegistry(registry);
+  if (changed) flushPersist(registry);
   return { changed, discovered: discoveredPids.size };
 };
 
@@ -1228,7 +1249,7 @@ async function startServer() {
     if (mode !== "local" && mode !== "remote") return res.status(400).json({ error: "Invalid mode." });
     registry.executionMode = mode;
     persistRegistry(registry);
-    res.json({ mode });
+    return res.json({ mode });
   });
   app.get("/api/system/status", (_req, res) => {
     res.json({
@@ -1516,7 +1537,7 @@ async function startServer() {
       };
 
       registry.workflows.unshift(workflow);
-      persistRegistry(registry);
+      flushPersist(registry);
 
       // Start the first step
       const firstStep = steps[0];
@@ -1610,7 +1631,7 @@ async function startServer() {
 
         updateStagesFromTruth(job);
         globalLog(registry, `[SYSTEM] ${job.id} ${job.status} (exit ${code})`);
-        persistRegistry(registry);
+        flushPersist(registry);
         broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
 
         // Chain to next step
@@ -1710,14 +1731,14 @@ async function startServer() {
 
                 updateStagesFromTruth(nextJob);
                 globalLog(registry, `[SYSTEM] ${nextJob.id} ${nextJob.status} (exit ${nextCode})`);
-                persistRegistry(registry);
+                flushPersist(registry);
                 broadcast("job_update", { id: nextJob.id, status: nextJob.status, loss: nextJob.loss, progress: nextJob.progress });
               });
             } catch (chainErr) {
               globalLog(registry, `[WORKFLOW] chaining failed: ${chainErr instanceof Error ? chainErr.message : String(chainErr)}`);
               workflow.overallStatus = "failed";
               workflow.finishedAt = isoNow();
-              persistRegistry(registry);
+              flushPersist(registry);
             }
           }
         }
@@ -1807,6 +1828,17 @@ async function startServer() {
           appendStageLog(job, prefixed);
           globalLog(registry, prefixed);
 
+          // Extract W&B run URL from wandb output
+          const wandbMatch = line.match(/https:\/\/wandb\.ai\/[-a-zA-Z0-9./_?=&#%~]+\/runs\/([a-z0-9]+)/i);
+          if (wandbMatch) {
+            const wandbUrl = wandbMatch[0];
+            if (!job.wandbUrl) {
+              job.wandbUrl = wandbUrl;
+              globalLog(registry, `[WANDB] captured run URL: ${wandbUrl}`);
+              broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress, wandbUrl });
+            }
+          }
+
           const parsedLoss = parseLoss(line);
           if (parsedLoss !== null) {
             job.loss = parsedLoss;
@@ -1844,7 +1876,7 @@ async function startServer() {
         }
         updateStagesFromTruth(job);
         globalLog(registry, `[SYSTEM] job ${job.id} ${job.status} (exit ${code})`);
-        persistRegistry(registry);
+        flushPersist(registry);
         broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
       });
 
@@ -1881,7 +1913,7 @@ async function startServer() {
           return;
         }
         globalLog(registry, `[SYSTEM] escalating stop for ${id} to SIGKILL after ${STOP_ESCALATION_MS}ms`);
-        persistRegistry(registry);
+        flushPersist(registry);
         try { process.kill(-activeProcess.pid, "SIGKILL"); } catch { activeProcess.kill("SIGKILL"); }
         stopEscalationTimers.delete(id);
       }, STOP_ESCALATION_MS);
@@ -1889,7 +1921,7 @@ async function startServer() {
     }
 
     globalLog(registry, `[SYSTEM] stop requested ${id}`);
-    persistRegistry(registry);
+    flushPersist(registry);
     return res.json({ status: "stop_requested", id });
   });
 

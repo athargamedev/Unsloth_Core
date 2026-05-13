@@ -92,6 +92,7 @@ export const OperationsMatrix = ({
                   <th className="p-3 border-b border-line font-bold tracking-wider text-right">Prog</th>
                   <th className="p-3 border-b border-line font-bold tracking-wider">Source</th>
                   <th className="p-3 border-b border-line font-bold tracking-wider">Status</th>
+                  <th className="p-3 border-b border-line font-bold tracking-wider">W&B</th>
                   <th className="p-3 border-b border-line font-bold tracking-wider text-right">Action</th>
                 </tr>
               </thead>
@@ -106,7 +107,7 @@ export const OperationsMatrix = ({
                 {filteredJobs.length === 0 ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-shimmer opacity-20">
-                      <td colSpan={7} className="p-4 h-12 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                      <td colSpan={8} className="p-4 h-12 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
                     </tr>
                   ))
                 ) : filteredJobs.map((job) => (
@@ -153,6 +154,22 @@ export const OperationsMatrix = ({
                         {job.status}
                       </Badge>
                     </td>
+                    <td className="p-3">
+                      {job.wandbUrl ? (
+                        <a
+                          href={job.wandbUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-accent hover:text-accent/80 underline text-[10px] font-bold tracking-tight flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M20.87 3.91l-4.49 1.7c-.42.16-.7.48-.7.91v11.27c0 .38.22.72.58.87l4.39 1.78c.63.25 1.22-.2 1.22-.87V4.78c0-.67-.59-1.12-1.22-.87zM3.13 3.91l4.49 1.7c.42.16.7.48.7.91v11.27c0 .38-.22.72-.58.87L3.35 20.44c-.63.25-1.22-.2-1.22-.87V4.78c0-.67.59-1.12 1.22-.87z"/></svg>
+                          W&B
+                        </a>
+                      ) : (
+                        <span className="text-ink/20 text-[9px]">--</span>
+                      )}
+                    </td>
                     <td className="p-3 text-right">
                       {job.status === 'running' ? (
                         <button onClick={(e) => { e.stopPropagation(); onStopJob(job.id); }} className="text-danger hover:text-danger/80 transition-colors uppercase text-[9px] font-bold tracking-tighter">Stop</button>
@@ -183,6 +200,22 @@ export const OperationsMatrix = ({
             className="mx-4 mb-4"
           >
             <Card title={`Workflow Tracker: ${selectedJob.name}`} subtitle="PIPELINE_INSIGHTS">
+              {selectedJob.wandbUrl && (
+                <div className="mb-3 p-3 bg-accent/5 border border-accent/20 rounded-sm flex items-center gap-3">
+                  <svg className="w-4 h-4 text-accent shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M21.12 3.9l-4.67 1.77c-.33.12-.55.37-.55.7v11.26c0 .29.17.55.45.66l4.56 1.86c.66.26 1.27-.2 1.27-.9V4.8c0-.7-.61-1.16-1.27-.9zM3.37 4.8v14.2c0 .7.61 1.16 1.27.9l4.56-1.86c.28-.11.45-.37.45-.66V6.37c0-.33-.22-.58-.55-.7L4.43 3.9c-.66-.26-1.27.2-1.27.9zm7.43.07v14.26c0 .37.28.66.65.66.37 0 .65-.29.65-.66V4.87c0-.37-.28-.66-.65-.66-.37 0-.65.29-.65.66z"/></svg>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] font-bold text-ink-bright uppercase tracking-wider">W&B Run Active</span>
+                    <a
+                      href={selectedJob.wandbUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-[11px] text-accent hover:text-accent/80 underline truncate mt-0.5 font-mono"
+                    >
+                      {selectedJob.wandbUrl}
+                    </a>
+                  </div>
+                </div>
+              )}
               <WorkflowVisualizer stages={selectedJob.stages} />
               <div className="flex gap-4 mt-2">
                 {selectedJob.stages.find(s => s.status === 'running' || s.status === 'completed' && s.logs.length > 0) && (
