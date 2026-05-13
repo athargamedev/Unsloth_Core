@@ -864,7 +864,7 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
     } else if (args.includes(" export ") || args.includes("export.py")) {
       commandId = "export";
       type = "Export";
-    } else if (args.includes(" evaluate ") || args.includes("smoke") || args.includes("evaluate.py") || args.includes("smoke_test.py")) {
+    } else if (args.includes(" evaluate ") || args.includes("smoke_test") || args.includes("evaluate.py") || args.includes("smoke_test.py")) {
       commandId = "evaluate";
       type = "Evaluation";
     }
@@ -889,12 +889,25 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
     const id = `ext_proc_${pid}`;
     const existing = registry.jobs.find((job) => job.id === id);
     if (existing) {
+      let needsUpdate = false;
       if (existing.status !== "running") {
         existing.status = "running";
         existing.finishedAt = undefined;
         existing.exitCode = undefined;
         existing.terminalReason = "external_detected";
-        appendStageLog(existing, `[EXTERNAL][PID ${pid}] Process still running`);
+        needsUpdate = true;
+      }
+      // Re-classify existing entry if commandId/type changed (e.g. after server restart)
+      if (existing.commandId !== commandId) {
+        existing.commandId = commandId;
+        needsUpdate = true;
+      }
+      if (existing.type !== type) {
+        existing.type = type;
+        needsUpdate = true;
+      }
+      if (needsUpdate) {
+        appendStageLog(existing, `[EXTERNAL][PID ${pid}] Process still running (re-classified as ${type})`);
         changed = true;
       }
       continue;

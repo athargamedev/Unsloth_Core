@@ -2,6 +2,238 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2258364",
+      "name": "External Process (2258364) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "running",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:54:29.806Z",
+      "startedAt": "2026-05-13T19:54:29.806Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "running",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 2258364] Process still running"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2258364] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_2258349",
+      "name": "External Process (2258349)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T19:54:29.411Z",
+      "startedAt": "2026-05-13T19:54:29.411Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/sanitize_dataset.py datasets/chemistry_instructor/template/train.jsonl --output datasets/chemistry_instructor/template/train_clean.jsonl --strict-canonical"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2258349] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2258349] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/sanitize_dataset.py datasets/chemistry_instructor/template/train.jsonl --output datasets/chemistry_instructor/template/train_clean.jsonl --strict-canonical"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:54:29.806Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2258286",
+      "name": "External Process (2258286) chemistry_instructor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T19:54:29.325Z",
+      "startedAt": "2026-05-13T19:54:29.325Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique template"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2258286] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2258286] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique template"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:54:29.411Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2257783",
+      "name": "External Process (2257783) chemistry_instructor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chemistry_instructor",
+      "status": "running",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-13T19:54:29.229Z",
+      "startedAt": "2026-05-13T19:54:29.229Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "running",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 2257783] Process still running"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2257783] discovered active process",
+        "/usr/bin/bash -lic set +m; cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template 2>&1"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_2257765",
+      "name": "External Process (2257765) chemistry_instructor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-13T19:54:28.871Z",
+      "startedAt": "2026-05-13T19:54:28.871Z",
+      "command": [
+        "external",
+        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2257765] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2257765] discovered active process",
+        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:54:28.945Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_dataset_workflow_assistant_ollama",
       "name": "External Dataset Generate (workflow_assistant/ollama)",
       "type": "Dataset",
@@ -3500,7 +3732,8 @@
     }
   ],
   "logs": [
-    "[2026-05-13T19:50:20.961Z] [SYNC] imported external job ext_dataset_workflow_assistant_ollama"
+    "[2026-05-13T19:55:41.095Z] [SYSTEM] reconciled ext_proc_2257783 to failed (server_restarted)",
+    "[2026-05-13T19:55:41.095Z] [SYSTEM] reconciled ext_proc_2258364 to failed (server_restarted)"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []
