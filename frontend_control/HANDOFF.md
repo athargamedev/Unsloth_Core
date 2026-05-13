@@ -111,7 +111,7 @@ All commands below are run from:
 npm install
 npm run dev
 ```
-Server starts at `http://localhost:3000` (Express + Vite middleware).
+Server starts at `http://localhost:3100` (Express + Vite middleware + WebSocket).
 
 ### Build for production
 ```bash

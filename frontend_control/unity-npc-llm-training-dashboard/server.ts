@@ -6,6 +6,7 @@ import path from "path";
 import crypto from "crypto";
 import { execSync, spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import { createServer as createViteServer } from "vite";
+import { WebSocketServer, WebSocket as WebSocketClient } from "ws";
 
 type ExecutionMode = "local" | "remote";
 type JobStatus = "pending" | "running" | "completed" | "failed" | "stopped";
@@ -606,7 +607,7 @@ const validateRequiredFields = (payload: StartCommandPayload, requiredFields: st
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT || "3000");
+  const PORT = Number(process.env.PORT || "3100");
   const registry = loadRegistry();
   reconcileOrphanedJobs(registry);
 
@@ -859,6 +860,7 @@ async function startServer() {
       registry.jobs.unshift(job);
       globalLog(registry, `[SYSTEM] starting ${job.id}: ${command.join(" ")}`);
       persistRegistry(registry);
+      broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
 
       const child = spawn(command[0], command.slice(1), { cwd: repoRoot, shell: false, detached: true });
       runningProcesses.set(job.id, child);
@@ -874,7 +876,10 @@ async function startServer() {
           globalLog(registry, prefixed);
 
           const parsedLoss = parseLoss(line);
-          if (parsedLoss !== null) job.loss = parsedLoss;
+          if (parsedLoss !== null) {
+            job.loss = parsedLoss;
+            broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+          }
           updateStagesFromTruth(job);
         }
         persistRegistry(registry);
@@ -908,6 +913,7 @@ async function startServer() {
         updateStagesFromTruth(job);
         globalLog(registry, `[SYSTEM] job ${job.id} ${job.status} (exit ${code})`);
         persistRegistry(registry);
+        broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
       });
 
       res.json(job);
@@ -970,9 +976,42 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const httpServer = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
+
+  // ---- WebSocket server ----
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+  const clients = new Set<WebSocketClient>();
+
+  wss.on("connection", (ws) => {
+    clients.add(ws);
+    ws.send(
+      JSON.stringify({
+        type: "status",
+        payload: { executionMode: registry.executionMode, jobsCount: registry.jobs.length },
+        timestamp: isoNow(),
+      }),
+    );
+
+    ws.on("close", () => clients.delete(ws));
+    ws.on("error", () => clients.delete(ws));
+  });
+
+  const broadcast = (type: string, payload: unknown) => {
+    const message = JSON.stringify({ type, payload, timestamp: isoNow() });
+    for (const client of clients) {
+      if (client.readyState === WebSocketClient.OPEN) {
+        client.send(message);
+      }
+    }
+  };
+
+  // Telemetry broadcast every 2 seconds
+  setInterval(() => {
+    if (clients.size === 0) return;
+    broadcast("telemetry", buildTelemetryPayload(registry.nodeId));
+  }, 2000);
 }
 
 startServer();
