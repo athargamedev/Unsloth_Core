@@ -8,7 +8,7 @@ import { execSync, spawn, type ChildProcessWithoutNullStreams } from "child_proc
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket as WebSocketClient } from "ws";
 import { computeProgressFromStages, deriveStageStatuses } from "./progressTruth";
-import { CodeInterpreter } from "@e2b/code-interpreter";
+import type CodeInterpreter from "@e2b/code-interpreter";
 
 type ExecutionMode = "local" | "remote";
 type JobStatus = "pending" | "running" | "completed" | "failed" | "stopped";

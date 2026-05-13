@@ -7,7 +7,7 @@
       "type": "Training",
       "commandId": "train",
       "npcKey": "chemistry_instructor",
-      "status": "running",
+      "status": "failed",
       "progress": 38,
       "loss": null,
       "createdAt": "2026-05-13T19:54:29.806Z",
@@ -27,7 +27,8 @@
           "status": "running",
           "logs": [
             "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 2258364] Process still running"
+            "[EXTERNAL][PID 2258364] Process still running",
+            "[SYSTEM] Marked failed: server restarted before completion."
           ]
         },
         {
@@ -45,7 +46,9 @@
         "[EXTERNAL][PID 2258364] discovered active process",
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "server_restarted",
+      "finishedAt": "2026-05-13T20:26:44.348Z",
+      "exitCode": -1
     },
     {
       "id": "ext_proc_2258349",
@@ -146,7 +149,7 @@
       "type": "Evaluation",
       "commandId": "evaluate",
       "npcKey": "chemistry_instructor",
-      "status": "running",
+      "status": "failed",
       "progress": 63,
       "loss": null,
       "createdAt": "2026-05-13T19:54:29.229Z",
@@ -171,7 +174,8 @@
           "status": "running",
           "logs": [
             "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 2257783] Process still running"
+            "[EXTERNAL][PID 2257783] Process still running",
+            "[SYSTEM] Marked failed: server restarted before completion."
           ]
         },
         {
@@ -184,7 +188,9 @@
         "[EXTERNAL][PID 2257783] discovered active process",
         "/usr/bin/bash -lic set +m; cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template 2>&1"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "server_restarted",
+      "finishedAt": "2026-05-13T20:26:44.348Z",
+      "exitCode": -1
     },
     {
       "id": "ext_proc_2257765",
@@ -3732,8 +3738,8 @@
     }
   ],
   "logs": [
-    "[2026-05-13T19:55:41.095Z] [SYSTEM] reconciled ext_proc_2257783 to failed (server_restarted)",
-    "[2026-05-13T19:55:41.095Z] [SYSTEM] reconciled ext_proc_2258364 to failed (server_restarted)"
+    "[2026-05-13T20:26:44.349Z] [SYSTEM] reconciled ext_proc_2257783 to failed (server_restarted)",
+    "[2026-05-13T20:26:44.348Z] [SYSTEM] reconciled ext_proc_2258364 to failed (server_restarted)"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

@@ -110,12 +110,13 @@ How can I help with your workflow today?`,
               {msg.role === 'assistant' ? (
                 <ReactMarkdown 
                   components={{
-                    code({ node, inline, className, children, ...props }) {
+                    code({ className, children, ...props }) {
                       const match = /language-(\w+)/.exec(className || '');
                       const content = String(children).replace(/\n$/, '');
+                      const isInline = !content.includes('\n');
                       const isCommand = content.includes('./ucore');
                       
-                      if (!inline && isCommand) {
+                      if (!isInline && isCommand) {
                         return (
                           <div className="my-2 border border-accent/30 rounded bg-black/40 overflow-hidden">
                             <div className="flex items-center justify-between px-2 py-1 bg-accent/10 border-b border-accent/20">
