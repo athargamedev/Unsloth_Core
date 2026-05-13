@@ -1,8 +1,10 @@
 
 import express from "express";
 import fs from "fs";
+import os from "os";
 import path from "path";
-import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
+import crypto from "crypto";
+import { execSync, spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import { createServer as createViteServer } from "vite";
 
 type ExecutionMode = "local" | "remote";
@@ -36,6 +38,7 @@ interface Registry {
   executionMode: ExecutionMode;
   jobs: Job[];
   logs: string[];
+  nodeId: string;
 }
 
 interface StartCommandPayload {
@@ -54,7 +57,8 @@ const registryPath = path.join(runtimeDir, "registry.json");
 
 const MAX_LOG_LINES = 600;
 const globalLog = (registry: Registry, line: string) => {
-  registry.logs.unshift(line);
+  const timestampedLine = `[${isoNow()}] ${line}`;
+  registry.logs.unshift(timestampedLine);
   registry.logs = registry.logs.slice(0, MAX_LOG_LINES);
 };
 
@@ -69,13 +73,22 @@ const ensureRuntime = () => fs.mkdirSync(runtimeDir, { recursive: true });
 const loadRegistry = (): Registry => {
   ensureRuntime();
   if (!fs.existsSync(registryPath)) {
-    return { executionMode: "local", jobs: [], logs: [] };
+    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID() };
+    persistRegistry(registry);
+    return registry;
   }
 
   try {
-    return JSON.parse(fs.readFileSync(registryPath, "utf8")) as Registry;
+    const registry = JSON.parse(fs.readFileSync(registryPath, "utf8")) as Registry;
+    if (!registry.nodeId) {
+      registry.nodeId = crypto.randomUUID();
+      persistRegistry(registry);
+    }
+    return registry;
   } catch {
-    return { executionMode: "local", jobs: [], logs: [] };
+    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID() };
+    persistRegistry(registry);
+    return registry;
   }
 };
 
@@ -165,6 +178,102 @@ const resolvePathWithinRoots = (
 
   const canonicalRepoRoot = canonicalizeExistingPath(repoRoot);
   return path.relative(canonicalRepoRoot, canonicalCandidate);
+};
+
+const readNetworkTotals = () => {
+  try {
+    const procNet = fs.readFileSync('/proc/net/dev', 'utf8');
+    return procNet
+      .split('\n')
+      .slice(2)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .reduce(
+        (acc, line) => {
+          const parts = line.split(/\s+/);
+          if (parts.length < 17) return acc;
+          const iface = parts[0].replace(':', '');
+          if (iface === 'lo') return acc;
+          acc.rx += Number(parts[1]) || 0;
+          acc.tx += Number(parts[9]) || 0;
+          return acc;
+        },
+        { rx: 0, tx: 0 },
+      );
+  } catch {
+    return { rx: 0, tx: 0 };
+  }
+};
+
+let previousNetworkSample = {
+  rx: 0,
+  tx: 0,
+  timestamp: 0,
+};
+
+const parseNvidiaSmiTelemetry = () => {
+  try {
+    const output = execSync(
+      'nvidia-smi --query-gpu=name,utilization.gpu,memory.total,memory.used,temperature.gpu --format=csv,noheader,nounits',
+      { encoding: 'utf8', timeout: 5000 },
+    ).trim();
+
+    if (!output) return null;
+    const firstLine = output.split('\n')[0].trim();
+    const [name, util, memoryTotal, memoryUsed, temperature] = firstLine.split(',').map((value) => value.trim());
+
+    return {
+      gpuName: name || 'GPU',
+      gpuLoad: Number(util) || 0,
+      gpuMemoryTotalGB: Math.round((Number(memoryTotal) / 1024) * 10) / 10,
+      gpuMemoryUsedGB: Math.round((Number(memoryUsed) / 1024) * 10) / 10,
+      gpuTemperature: Number(temperature) || 0,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const buildTelemetryPayload = (nodeId: string) => {
+  const gpuTelemetry = parseNvidiaSmiTelemetry();
+  const totalMemory = os.totalmem();
+  const freeMemory = os.freemem();
+  const usedMemoryBytes = totalMemory - freeMemory;
+  const cpuCount = Math.max(os.cpus().length, 1);
+  const cpuLoad = Math.round((os.loadavg()[0] / cpuCount) * 100);
+  const networkTotals = readNetworkTotals();
+  const now = Date.now();
+  let rxMBps = 0;
+  let txMBps = 0;
+
+  if (previousNetworkSample.timestamp > 0) {
+    const elapsedSeconds = Math.max((now - previousNetworkSample.timestamp) / 1000, 0.5);
+    rxMBps = Math.max(0, (networkTotals.rx - previousNetworkSample.rx) / elapsedSeconds / 1024 / 1024);
+    txMBps = Math.max(0, (networkTotals.tx - previousNetworkSample.tx) / elapsedSeconds / 1024 / 1024);
+  }
+
+  previousNetworkSample = {
+    rx: networkTotals.rx,
+    tx: networkTotals.tx,
+    timestamp: now,
+  };
+
+  return {
+    gpuLoad: gpuTelemetry?.gpuLoad ?? 0,
+    gpuTemperature: gpuTelemetry?.gpuTemperature ?? 0,
+    gpuMemoryUsedGB: gpuTelemetry?.gpuMemoryUsedGB ?? 0,
+    gpuMemoryTotalGB: gpuTelemetry?.gpuMemoryTotalGB ?? 0,
+    gpuName: gpuTelemetry?.gpuName ?? 'GPU',
+    cpuLoad: Math.max(0, Math.min(cpuLoad, 999)),
+    memoryUsedGB: Math.round((usedMemoryBytes / 1024 / 1024 / 1024) * 10) / 10,
+    memoryTotalGB: Math.round((totalMemory / 1024 / 1024 / 1024) * 10) / 10,
+    platform: os.platform(),
+    nodeVersion: process.version,
+    nodeId: registry.nodeId,
+    timestamp: isoNow(),
+    networkRxMBps: Math.round(rxMBps * 10) / 10,
+    networkTxMBps: Math.round(txMBps * 10) / 10,
+  };
 };
 
 const requireString = (value: unknown, fieldName: string): string => {
@@ -593,9 +702,39 @@ async function startServer() {
     });
   });
 
-  app.get("/api/logs", (_req, res) => res.json(registry.logs));
+  app.get("/api/telemetry", (_req, res) => {
+    res.json(buildTelemetryPayload(registry.nodeId));
+  });
 
-  app.post("/api/commands/start", (req, res) => {
+  app.get("/api/suggestions", (_req, res) => {
+    const suggestions = [
+      "Check Rank size for QuestGiver LoRA if loss plateau persists.",
+      "Ensure dataset entries have consistent dialogue format.",
+      "Verify Unity NPC protocol v4 compatibility in exports.",
+      "Monitor GPU memory usage during training phases.",
+      "Adjust temperature to 0.4 for better dialogue coherence.",
+    ];
+    res.json({ suggestions });
+  });
+
+  app.get("/api/command-schemas", (_req, res) => {
+    const schemas: Record<string, { fields: Record<string, { type: string; required: boolean; default?: string }> }> = {};
+    for (const [id, def] of commandMap.entries()) {
+      schemas[id] = {
+        fields: def.requiredFields.reduce((acc, field) => {
+          acc[field] = { type: 'string', required: true };
+          return acc;
+        }, {} as Record<string, { type: string; required: boolean }>),
+      };
+      // Add common fields
+      schemas[id].fields['spec'] = { type: 'string', required: false, default: 'subjects/chemistry_instructor.json' };
+      schemas[id].fields['preset'] = { type: 'string', required: false, default: 'fast-3b' };
+      schemas[id].fields['options.model'] = { type: 'string', required: false, default: 'mistralai/Mistral-7B-Instruct-v0.2' };
+    }
+    res.json(schemas);
+  });
+
+  if (process.env.NODE_ENV === "development") {
     try {
       const payload = req.body as StartCommandPayload;
       const commandDef = commandMap.get(payload.commandId || "");

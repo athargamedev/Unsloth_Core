@@ -95,6 +95,43 @@ interface SystemStatus {
   timestamp: string;
 }
 
+interface HealthCheck {
+  ok: boolean;
+  checks: Record<string, boolean>;
+  executionMode: 'local' | 'remote';
+  runningJobs: number;
+  timestamp: string;
+}
+
+interface Telemetry {
+  gpuName: string;
+  gpuLoad: number;
+  gpuTemperature: number;
+  gpuMemoryUsedGB: number;
+  gpuMemoryTotalGB: number;
+  cpuLoad: number;
+  memoryUsedGB: number;
+  memoryTotalGB: number;
+  networkRxMBps: number;
+  networkTxMBps: number;
+  platform: string;
+  nodeVersion: string;
+  nodeId: string;
+  timestamp: string;
+}
+
+interface RunArtifact {
+  id: string;
+  npcKey: string;
+  updatedAt: string;
+}
+
+interface ExportArtifact {
+  npcKey: string;
+  file: string;
+  updatedAt: string;
+}
+
 // --- Components ---
 
 const WorkflowVisualizer = ({ stages }: { stages: Stage[] }) => (
@@ -179,9 +216,16 @@ const AIAssistant = () => {
   const [messages, setMessages] = useState<AssistantMessage[]>([
     { 
       role: 'assistant', 
-      content: `Detected LoRA mismatch in dialogue JSON. Unity expects 'intent' key in root for v3 compatibility.`
+      content: `Welcome to Unity NPC Core Assistant. How can I help with your workflow?`
     }
   ]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchOptionalJson<string[]>('/api/suggestions').then((data) => {
+      if (data) setSuggestions(data);
+    });
+  }, []);
 
   const askAI = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,11 +276,7 @@ const AIAssistant = () => {
             Live Suggestions
           </span>
           <div className="p-2 border border-accent/20 rounded bg-accent/5 text-[10px] text-accent/80 italic leading-snug">
-            {messages[messages.length-1].role === 'assistant' ? (
-              <span>"{messages[messages.length-1].content.slice(0, 80)}..."</span>
-            ) : (
-              <span>System suggests checking Rank size for QuestGiver LoRA if loss plateau persists.</span>
-            )}
+            {suggestions.length > 0 ? suggestions[Math.floor(Math.random() * suggestions.length)] : "System suggests checking Rank size for QuestGiver LoRA if loss plateau persists."}
           </div>
         </div>
 
@@ -279,9 +319,13 @@ export default function App() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [status, setStatus] = useState<SystemStatus | null>(null);
+  const [health, setHealth] = useState<HealthCheck | null>(null);
+  const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
+  const [runs, setRuns] = useState<RunArtifact[]>([]);
+  const [exportArtifacts, setExportArtifacts] = useState<ExportArtifact[]>([]);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'running'>('all');
   const [uiError, setUiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [stats] = useState({ GPU: 85, Thermal: 62, Memory: 12.4 });
 
   const [trainingConfig, setTrainingConfig] = useState({
     spec: 'subjects/chemistry_instructor.json',
@@ -303,6 +347,87 @@ export default function App() {
     return response.json() as Promise<T>;
   };
 
+  const fetchOptionalJson = async <T,>(url: string): Promise<T | null> => {
+    try {
+      return await fetchJson<T>(url);
+    } catch {
+      return null;
+    }
+  };
+
+  const downloadCsv = (rows: string[][], fileName: string) => {
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportJobsCsv = () => {
+    const rows = [
+      ['id', 'name', 'type', 'status', 'progress', 'loss', 'createdAt', 'startedAt', 'finishedAt'],
+      ...jobs.map((job) => [
+        job.id,
+        job.name,
+        job.type,
+        job.status,
+        job.progress,
+        job.loss ?? '',
+        job.createdAt,
+        job.startedAt ?? '',
+        job.finishedAt ?? '',
+      ]),
+    ];
+    downloadCsv(rows, 'ucore_jobs.csv');
+  };
+
+  const stopAllJobs = async () => {
+    const runningJobs = jobs.filter((job) => job.status === 'running');
+    if (runningJobs.length === 0) {
+      setUiError('No running jobs to stop.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await Promise.all(runningJobs.map((job) => fetch('/api/commands/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: job.id }),
+      })));
+      await fetchData();
+    } catch (error) {
+      setUiError(error instanceof Error ? error.message : 'Failed to stop running jobs');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleExecutionMode = async () => {
+    if (!status) return;
+    const nextMode = status.executionMode === 'local' ? 'remote' : 'local';
+    try {
+      const response = await fetch('/api/execution-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: nextMode }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to toggle execution mode');
+      }
+      const result = await response.json();
+      setStatus((prev) => prev ? { ...prev, executionMode: result.mode } : prev);
+      setUiError(null);
+    } catch (error) {
+      setUiError(error instanceof Error ? error.message : 'Failed to toggle execution mode');
+    }
+  };
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -314,12 +439,22 @@ export default function App() {
         fetchJson<Subject[]>('/api/subjects'),
         fetchJson<SystemStatus>('/api/system/status'),
       ]);
+      const [healthData, runsData, exportsData, telemetryData] = await Promise.all([
+        fetchOptionalJson<HealthCheck>('/api/health'),
+        fetchOptionalJson<RunArtifact[]>('/api/runs'),
+        fetchOptionalJson<ExportArtifact[]>('/api/exports'),
+        fetchOptionalJson<Telemetry>('/api/telemetry'),
+      ]);
       setJobs(jobsData);
       setLogs(logsData);
       setDatasets(datasetsData);
       setAvailableCommands(commandsData);
       setSubjects(subjectsData);
       setStatus(statusData);
+      setHealth(healthData);
+      setTelemetry(telemetryData);
+      setRuns(runsData ?? []);
+      setExportArtifacts(exportsData ?? []);
       setUiError(null);
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Failed to fetch data');
@@ -345,6 +480,8 @@ export default function App() {
       .then(setAnalyticsData)
       .catch(() => setAnalyticsData([]));
   }, [selectedJobId, jobs]);
+
+  const filteredJobs = activeFilter === 'running' ? jobs.filter((job) => job.status === 'running') : jobs;
 
   const toggleJobSelection = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -451,24 +588,24 @@ export default function App() {
           <div className="h-4 w-px bg-line"></div>
           <div className="flex gap-4">
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase opacity-50 font-bold tracking-tighter">GPU 01 (A100)</span>
-              <span className={cn("text-xs font-mono font-bold", stats.GPU > 90 ? "text-danger" : "text-success")}>
-                {stats.GPU}% LOAD
+              <span className="text-[9px] uppercase opacity-50 font-bold tracking-tighter">{telemetry?.gpuName ?? 'GPU'}</span>
+              <span className={cn("text-xs font-mono font-bold", telemetry && telemetry.gpuLoad > 90 ? "text-danger" : "text-success")}>
+                {telemetry ? `${telemetry.gpuLoad}% LOAD` : 'N/A'}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase opacity-50 font-bold tracking-tighter">API LATENCY</span>
-               <span className="text-xs font-mono text-accent font-bold">{status?.executionMode === 'remote' ? 'REMOTE' : 'LOCAL'}</span>
+              <span className="text-[9px] uppercase opacity-50 font-bold tracking-tighter">CPU LOAD</span>
+               <span className={cn("text-xs font-mono text-accent font-bold", telemetry && telemetry.cpuLoad > 75 ? "text-danger" : "text-success")}>{telemetry ? `${telemetry.cpuLoad}%` : 'N/A'}</span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex flex-col text-right">
-             <span className="text-[9px] uppercase opacity-50 font-bold tracking-tighter">PROJECT_SYNC</span>
-             <span className="text-[10px] font-bold text-success">ENCRYPTED_STREAM</span>
+             <span className="text-[9px] uppercase opacity-50 font-bold tracking-tighter">SYSTEM HEALTH</span>
+             <span className={cn("text-[10px] font-bold", health?.ok ? "text-success" : "text-warning")}>{health?.ok ? 'HEALTHY' : 'DEGRADED'}</span>
           </div>
           <div className="h-8 w-px bg-line" />
-          <button className="px-3 py-1 bg-danger/20 text-danger border border-danger/40 text-[10px] font-bold rounded-sm uppercase tracking-tighter hover:bg-danger/40 transition-colors active:scale-95">
+          <button onClick={stopAllJobs} className="px-3 py-1 bg-danger/20 text-danger border border-danger/40 text-[10px] font-bold rounded-sm uppercase tracking-tighter hover:bg-danger/40 transition-colors active:scale-95">
             Emergency Kill
           </button>
         </div>
@@ -567,8 +704,23 @@ export default function App() {
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <button className="px-2 py-1 bg-panel border border-line text-[10px] text-ink/60 rounded hover:bg-white/5 transition-colors">Filter: Active</button>
-                      <button className="px-2 py-1 bg-panel border border-line text-[10px] text-ink/60 rounded hover:bg-white/5 transition-colors">Export CSV</button>
+                      <button
+                        onClick={() => setActiveFilter((prev) => (prev === 'all' ? 'running' : 'all'))}
+                        className={cn(
+                          "px-2 py-1 rounded text-[10px] font-bold transition-all",
+                          activeFilter === 'running'
+                            ? "bg-accent text-bg border border-accent"
+                            : "bg-panel border border-line text-ink/60 hover:bg-white/5"
+                        )}
+                      >
+                        Filter: {activeFilter === 'all' ? 'Active' : 'All'}
+                      </button>
+                      <button
+                        onClick={exportJobsCsv}
+                        className="px-2 py-1 bg-panel border border-line text-[10px] text-ink/60 rounded hover:bg-white/5 transition-colors"
+                      >
+                        Export CSV
+                      </button>
                     </div>
                   </div>
                   
@@ -589,7 +741,7 @@ export default function App() {
                           </tr>
                         </thead>
                         <tbody className="text-[11px] font-mono divide-y divide-line/30">
-                          {jobs.map((job) => (
+                          {filteredJobs.map((job) => (
                             <tr 
                               key={job.id} 
                               onClick={() => setSelectedJobId(job.id)}
@@ -626,7 +778,12 @@ export default function App() {
                                  {job.status === 'running' ? (
                                    <button onClick={(e) => { e.stopPropagation(); stopJob(job.id); }} className="text-danger hover:underline uppercase text-[9px] font-bold">Stop</button>
                                  ) : (
-                                   <button className="text-accent hover:underline uppercase text-[9px] font-bold">Manage</button>
+                                   <button
+                                     onClick={(e) => { e.stopPropagation(); setSelectedJobId(job.id); setActiveTab('compare'); }}
+                                     className="text-accent hover:underline uppercase text-[9px] font-bold"
+                                   >
+                                     Manage
+                                   </button>
                                  )}
                               </td>
                             </tr>
@@ -1168,6 +1325,46 @@ export default function App() {
                       </div>
                     </div>
                   </Card>
+
+                  <Card title="Recent Runs & Exports" subtitle="ARTIFACTS">
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[10px] uppercase font-bold text-ink/40 tracking-widest">Runs</span>
+                          <span className="text-[10px] font-mono text-ink/50">{runs.length}</span>
+                        </div>
+                        <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                          {runs.length > 0 ? runs.map((run) => (
+                            <div key={run.id} className="p-2 bg-bg/70 border border-line/20 rounded-sm text-[10px]">
+                              <div className="flex justify-between gap-2">
+                                <span className="font-bold truncate">{run.npcKey}</span>
+                                <span className="text-ink/40">{new Date(run.updatedAt).toLocaleDateString()}</span>
+                              </div>
+                              <div className="text-ink/60 text-[9px]">{run.id}</div>
+                            </div>
+                          )) : <div className="text-[10px] text-ink/40">No active runs found.</div>}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[10px] uppercase font-bold text-ink/40 tracking-widest">Exports</span>
+                          <span className="text-[10px] font-mono text-ink/50">{exportArtifacts.length}</span>
+                        </div>
+                        <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                          {exportArtifacts.length > 0 ? exportArtifacts.map((artifact) => (
+                            <div key={`${artifact.npcKey}-${artifact.file}`} className="p-2 bg-bg/70 border border-line/20 rounded-sm text-[10px]">
+                              <div className="flex justify-between gap-2">
+                                <span className="font-bold truncate">{artifact.npcKey}</span>
+                                <span className="text-ink/40">{new Date(artifact.updatedAt).toLocaleDateString()}</span>
+                              </div>
+                              <div className="text-ink/60 text-[9px] truncate">{artifact.file}</div>
+                            </div>
+                          )) : <div className="text-[10px] text-ink/40">No export artifacts found.</div>}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
                 </div>
               </motion.div>
             )}
@@ -1223,7 +1420,20 @@ export default function App() {
                 <button 
                   onClick={async () => {
                     try {
-                      await triggerCommand({ commandId: 'train', type: 'Training', spec: trainingConfig.spec, preset: trainingConfig.preset });
+                      await triggerCommand({
+                        commandId: 'train',
+                        type: 'Training',
+                        spec: trainingConfig.spec,
+                        preset: trainingConfig.preset,
+                        options: {
+                          model: trainingConfig.baseModel,
+                          learningRate: trainingConfig.learningRate,
+                          batchSize: trainingConfig.batchSize,
+                          epochs: trainingConfig.epochs,
+                          rank: trainingConfig.rank,
+                          alpha: trainingConfig.alpha,
+                        },
+                      });
                     } catch (error) {
                       setUiError(error instanceof Error ? error.message : 'Training start failed');
                     }
@@ -1291,16 +1501,38 @@ export default function App() {
                       <span className="font-bold">{status ? `${status.runningJobs} / ${status.totalJobs}` : '--'}</span>
                     </div>
                     <div className="h-1 w-full bg-line rounded-full overflow-hidden">
-                       <div className="h-full bg-accent" style={{ width: '75%' }} />
+                       <div className="h-full bg-accent" style={{ width: status && status.totalJobs ? `${Math.round((status.runningJobs / status.totalJobs) * 100)}%` : '0%' }} />
                     </div>
+                  </div>
+                  <div className="flex justify-between items-center gap-2">
+                    <div>
+                      <div className="text-[10px] uppercase opacity-70">Execution Mode</div>
+                      <div className="text-[11px] font-bold">{status?.executionMode?.toUpperCase() || 'LOCAL'}</div>
+                    </div>
+                    <button
+                      onClick={toggleExecutionMode}
+                      className="px-2 py-1 bg-panel border border-line text-[10px] rounded-sm hover:border-accent transition-colors"
+                    >
+                      Switch to {status?.executionMode === 'local' ? 'Remote' : 'Local'}
+                    </button>
                   </div>
                   <div>
                     <div className="flex justify-between items-center text-[10px] mb-1.5">
-                      <span className="mono-label">Sync Entropy</span>
-                      <span className="font-bold text-warning">0.024</span>
+                      <span className="mono-label">Health</span>
+                      <span className={cn(
+                        "font-bold",
+                        health?.ok ? 'text-success' : 'text-danger'
+                      )}>
+                        {health ? (health.ok ? 'OK' : 'DEGRADED') : 'UNKNOWN'}
+                      </span>
                     </div>
-                    <div className="h-1 w-full bg-line rounded-full overflow-hidden">
-                       <div className="h-full bg-warning" style={{ width: '24%' }} />
+                    <div className="space-y-2 text-[10px] text-ink/50">
+                      {health ? Object.entries(health.checks).map(([key, value]) => (
+                        <div key={key} className="flex justify-between">
+                          <span>{key}</span>
+                          <span className={value ? 'text-success' : 'text-danger'}>{value ? 'PASS' : 'FAIL'}</span>
+                        </div>
+                      )) : <div>Health status unavailable.</div>}
                     </div>
                   </div>
                 </div>
@@ -1325,16 +1557,16 @@ export default function App() {
       {/* Footer Status Bar */}
       <footer className="h-6 bg-header border-t border-line px-4 flex items-center justify-between text-[9px] font-mono text-ink/40">
         <div className="flex gap-4">
-          <span>VRAM: {stats.Memory}GB / 80.0GB (A100_SXM4)</span>
-          <span>NETWORK: 4.2 MB/s</span>
-          <span className="text-success">NODE_UUID: 550e8400-e29b-41d4-a716-446655440000</span>
+          <span>VRAM: {telemetry ? `${telemetry.gpuMemoryUsedGB}GB / ${telemetry.gpuMemoryTotalGB}GB (${telemetry.gpuName})` : 'N/A'}</span>
+          <span>NETWORK: {telemetry ? `${telemetry.networkRxMBps.toFixed(1)} / ${telemetry.networkTxMBps.toFixed(1)} MB/s` : 'N/A'}</span>
+          <span className="text-success">NODE_UUID: {telemetry?.nodeId ?? 'N/A'}</span>
         </div>
         <div className="flex gap-4 uppercase">
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-success" />
             <span className="text-success font-bold">System Healthy</span>
           </div>
-          <span>Session: Local Admin</span>
+          <span>Session: {status?.executionMode?.toUpperCase() || 'LOCAL'}</span>
           <span className="text-ink/20">©2026 NPC_GEN_CORE</span>
         </div>
       </footer>

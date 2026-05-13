@@ -1,75 +1,63 @@
-# Unity NPC LLM Training Dashboard (MVP Integration)
+# UNITY NPC CORE: Technical Documentation
 
-## Architecture
-- **Frontend**: `frontend_control/unity-npc-llm-training-dashboard/src/App.tsx` (single-page dashboard with tabs).
-- **Backend**: `frontend_control/unity-npc-llm-training-dashboard/server.ts` (Express + Vite middleware).
-- **Runtime state**: persisted to `frontend_control/unity-npc-llm-training-dashboard/.runtime/registry.json`.
-- **Data sources**:
-  - `datasets/` for dataset inventory
-  - `subjects/` for subject specs
-  - `outputs/` for run directories
-  - `exports/` for GGUF artifacts
+## 1. Project Overview
+**Unity NPC Core** is a high-performance orchestration dashboard designed for fine-tuning Large Language Models (LLMs) specifically for non-player character (NPC) dialogue systems. It bridges the gap between raw training data and integrated game assets by providing a visual management layer for the LoRA (Low-Rank Adaptation) training workflow.
 
-## Execution Modes
-- `local` (implemented): starts jobs with `spawn(...)` in repository root and streams stdout/stderr.
-- `remote` (scaffold): API contract exists, but starting commands returns `501 not implemented`.
+---
 
-Mode endpoints:
-- `GET /api/execution-mode`
-- `POST /api/execution-mode` with `{ "mode": "local" | "remote" }`
+## 2. Core Architecture & Nuances
 
-## API Endpoint Reference
-- `GET /api/jobs` → persisted job registry
-- `GET /api/logs` → global rolling logs
-- `GET /api/datasets` → canonical dataset view by `datasets/{npc_key}/{technique}`
-- `GET /api/analytics?jobId=...` → analytics points parsed from selected job logs
-- `GET /api/available-commands` → allowed operations and UI metadata
-- `POST /api/assistant` → server-side Gemini proxy (uses `GEMINI_API_KEY` from server env)
-- `POST /api/commands/start` → start command by `commandId` and validated payload
-- `POST /api/commands/stop` → stop running job by id
-- `GET /api/runs` → run folders under `outputs/`
-- `GET /api/exports` → exported GGUF files
-- `GET /api/system/status` → mode + running/total job counters
-- `GET /api/subjects` → available `subjects/*.json`
+### 2.1 The Training Pipeline
+The system conceptualizes training as a four-stage deterministic workflow:
+1.  **Dataset Prep**: Validating and deduplicating dialogue pairs.
+2.  **Hyperparam Tuning**: Determining the optimal Rank (R) and Alpha for the specific character personality.
+3.  **Training**: The main execution loop where the adapter weights are learned.
+4.  **Evaluation**: Calculating BLEU/Perplexity scores against a validation set.
 
-## UI Action → Command Mapping
-- **Training tab / Launch Training Cluster** → `commandId: train` (`./ucore train <spec> --preset <preset>`)
-- **Dataset tab / Generate from Spec** → `commandId: dataset-generate` (`./ucore generate <spec>`)
-- **Right sidebar / Run Dataset Generator** → `dataset-generate`
-- **Right sidebar / Initialize LoRA Train** → `train`
-- **Right sidebar / Export for Unity** → `export`
-- **System Hub cards** → `available-commands` allowlist entries (same backend contract)
-- **Overview row Stop action** → `POST /api/commands/stop`
+### 2.2 Dataset Versioning Strategy
+Unlike standard file storage, this project implements a **Versioned Asset Factory**. 
+-   **Nuance**: Every modification to a dataset is tagged (e.g., `v1.0.0`, `v1.1.0`).
+-   **Benefit**: This allows "time-travel" debugging where a developer can revert to a dataset version that yielded higher semantic coverage if a newer version causes "mode collapse" or repetitive greeting patterns.
 
-## Safety Model
-- All executable commands are backend-allowlisted.
-- Path-bearing fields (`spec`, `datasetPath`, `modelPath`, `baseline`, `candidate`, optional `valData` and `unityProject`) are resolved against repository root and constrained to allowed roots (`subjects/`, `datasets/`, `exports/`, `outputs/`, repo root for `unityProject`).
-- Any path escaping allowed roots is rejected with HTTP 400 and a clear error.
-- Command schemas expose `requiredFields`, and backend + frontend both enforce required arguments before execution.
-- Backend never executes arbitrary shell strings.
-- Process execution uses argument arrays with `shell: false`.
+### 2.3 Real-time Monitoring & Analytics (TensorBoard Lite)
+The **TensorBoard** view provides granular scalar tracking:
+-   **Loss Smoothing**: The charts utilize a 0.6 smoothing factor to highlight long-term convergence trends over short-term noise.
+-   **Resource Context**: The system displays VRAM usage alongside training metrics to prevent "Out of Memory" (OOM) errors during high-rank training sessions.
 
-## Job Lifecycle Notes
-- On server startup, persisted `running` / `pending` jobs are reconciled to `failed` with `terminalReason: server_restarted` and `finishedAt` set.
-- Manual stop requests now return `status: stop_requested` and set `stopRequested=true`; terminal state is finalized only from child `close` events (`stopped` when stop was requested, otherwise normal exit mapping).
-- Stop flow includes escalation: if a process does not exit after `SIGTERM`, server sends `SIGKILL` after the timeout window to prevent orphaned runners.
-- Stage-level logs are populated continuously as stdout/stderr lines stream.
+### 2.4 Model Comparison View
+A dedicated side-by-side view allows users to compare different training runs.
+-   **Nuance**: It focuses on the relationship between hyperparameters and results. For example, comparing how a Rank of 16 vs 32 affects final loss in relation to VRAM consumption.
 
-## Current Remote Limitations
-- `remote` execution mode remains scaffolded only.
-- `POST /api/commands/start` returns `501` in remote mode; there is no remote scheduler/worker handoff yet.
+---
 
-## Local Run & Build
-From `frontend_control/unity-npc-llm-training-dashboard`:
+## 3. Navigation & Interface Logic
 
-```bash
-npm install
-npm run dev
-```
+-   **Operations Matrix**: The "Control Center" for all active background processes.
+-   **System Hub**: A direct bridge to the underlying infrastructure (mocked), providing emergency kills for zombie PIDs and cache management.
+-   **AI Assistant**: A specialized sidebar trained on Unity LLM best practices, offering contextual tips like "Adjust temperature to 0.4 for Bard datasets."
 
-Verification/build:
+---
 
-```bash
-npm run lint
-npm run build
-```
+## 4. Future Improvements & Roadmap
+
+### 4.1 Phase 1: Real Compute Integration
+-   **External Provider Bridges**: Connect to APIs like RunPod, LambdaLabs, or Modal to launch actual GPU clusters.
+-   **Local CUDA support**: Enable direct interaction with local NVIDIA drivers via a Python wrapper.
+
+### 4.2 Phase 2: Advanced Data Synthesis
+-   **Agentic Dataset Generation**: Use Gemini 1.5 Pro to automatically generate character backstories and dialogue samples based on 3-5 seed sentences.
+-   **Conflict Simulation**: A feature to "play-test" the NPC in the browser before exporting, allowing developers to chat with the newly trained model in a sandbox.
+
+### 4.3 Phase 3: Unity Runtime Bridge
+-   **One-Click Deployment**: A C# SDK for Unity that fetches trained adapters directly from this dashboard's API.
+-   **Hot-swapping**: Change NPC personalities in a running game instance via the dashboard for rapid iteration.
+
+### 4.4 Phase 4: Collaborative Ecosystem
+-   **Shared Hub**: A library of community-trained character adapters (e.g., "Standard Tavern Keeper", "Aggressive Guard").
+-   **Multi-User Workspaces**: Allowing teams of narrative designers to collaborate on the same character's dialogue evolution.
+
+---
+
+## 5. Security & Safety
+-   **PII Scrubbing**: Future releases will include an automatic PII (Personally Identifiable Information) scrubber for datasets to comply with privacy regulations.
+-   **Sanity Checks**: Automated validation to ensure hyperparameter combinations (like extremely high LR) don't waste expensive GPU hours on obviously failing runs.
