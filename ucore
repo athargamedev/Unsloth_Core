@@ -328,6 +328,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "pipeline":
+        print("[STAGE] dataset")
         print(f"--- Phase 1: Generating Dataset ---")
         gen_cmd = [PYTHON, str(SCRIPTS_DIR / "generate_dataset.py"), args.spec]
         technique = "ollama" if args.ollama else args.technique
@@ -337,22 +338,26 @@ def main():
         if args.notebooklm_input:
             gen_cmd.extend(["--notebooklm-input", args.notebooklm_input])
         run_cmd(gen_cmd)
-        
+
         # Determine paths
         npc_key = Path(args.spec).stem
         dataset_path = f"datasets/{npc_key}/{technique}/train.jsonl"
-        
+
+        print("[STAGE] dataset")
         print(f"\n--- Phase 2: Sanitizing Dataset ---")
         san_path = dataset_path.replace("train.jsonl", "train_clean.jsonl")
         san_cmd = [PYTHON, str(SCRIPTS_DIR / "sanitize_dataset.py"), dataset_path, "--output", san_path, "--strict-canonical"]
         run_cmd(san_cmd)
-        
+
+        print("[STAGE] training")
         print(f"\n--- Phase 3: Training Model ---")
         # Note: train.py --export-gguf will eventually produce a .gguf in exports/{npc_key}/
         train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--from-spec", "--data", san_path, "--preset", args.preset, "--export-gguf"]
         run_cmd(train_cmd)
-        
+
+        print("[STAGE] export")
         if args.track:
+            print("[STAGE] evaluation")
             print(f"\n--- Phase 4: Smoke Testing & Tracking ---")
             # Find the generated GGUF
             export_dir = PROJECT_ROOT / "exports" / npc_key
@@ -362,7 +367,8 @@ def main():
                 run_cmd(smoke_cmd)
             else:
                 print("Warning: No GGUF found for smoke testing")
-        
+
+        print("[STAGE] complete")
         print(f"\n--- Pipeline Complete! ---")
 
     else:

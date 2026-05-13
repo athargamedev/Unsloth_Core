@@ -477,10 +477,16 @@ const commandStageIndex = (job: Job): number => {
 };
 
 const syncPipelineStageFromLogs = (job: Job): number => {
-  const joined = job.logs.join("\n").toLowerCase();
-  if (joined.includes("export")) return 3;
-  if (joined.includes("evaluate") || joined.includes("smoke")) return 2;
-  if (joined.includes("train")) return 1;
+  for (let i = job.logs.length - 1; i >= 0; i -= 1) {
+    const line = job.logs[i].toLowerCase();
+    const marker = line.match(/\[stage\]\s+(dataset|training|evaluation|export|complete)/i);
+    if (!marker) continue;
+    const stage = marker[1];
+    if (stage === "dataset") return 0;
+    if (stage === "training") return 1;
+    if (stage === "evaluation") return 2;
+    if (stage === "export" || stage === "complete") return 3;
+  }
   return 0;
 };
 

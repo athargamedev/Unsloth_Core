@@ -43,11 +43,20 @@ Interpretation:
 - Backend changes: `frontend_control/unity-npc-llm-training-dashboard/server.ts`
 - Frontend compile fixes: `frontend_control/unity-npc-llm-training-dashboard/src/App.tsx`
 
-## Next hardening step (recommended)
-Introduce explicit stage marker protocol in `ucore pipeline` logs, e.g.:
+## Stage marker hardening (implemented)
+Implemented explicit stage markers in `ucore pipeline` output:
 - `[STAGE] dataset`
 - `[STAGE] training`
 - `[STAGE] evaluation`
 - `[STAGE] export`
+- `[STAGE] complete`
 
-and switch server stage parser to consume only these markers.
+Updated dashboard server parser to infer pipeline stage from explicit markers only.
+
+Validation rerun:
+- Triggered `pipeline` via API with no NotebookLM input (expected early failure)
+- Observed deterministic stage result at failure:
+  - status: `failed`
+  - progress: `10`
+  - stages: `["failed","pending","pending","pending"]`
+- Confirmed last logs include `[STAGE] dataset` marker and no false advancement to later stages.
