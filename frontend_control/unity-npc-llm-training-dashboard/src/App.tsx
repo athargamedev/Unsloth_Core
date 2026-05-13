@@ -602,9 +602,9 @@ export default function App() {
               <span className={cn("text-[10px] font-mono font-bold", telemetry && telemetry.cpuLoad > 75 ? "text-danger" : "text-success")}>{telemetry ? `${telemetry.cpuLoad}%` : '---'}</span>
             </div>
             <div className="flex flex-col min-w-[150px] max-w-[220px]">
-              <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">LOCAL_MODEL</span>
+              <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">LOCAL INFERENCE / ASSISTANT</span>
               <span
-                title={isLocalModelLoaded ? `${localModelLabel} (${localModelSource})` : 'No local model loaded'}
+                title={isLocalModelLoaded ? `${localModelLabel} (${localModelSource === 'ollama' ? 'Ollama assistant model' : 'local inference model'})` : 'No Ollama assistant or llama-server inference model detected'}
                 className={cn(
                   "text-[10px] font-mono font-bold truncate rounded-sm border px-1.5 py-0.5",
                   isLocalModelLoaded
@@ -612,7 +612,7 @@ export default function App() {
                     : "text-ink/35 border-line/60 bg-surface/40",
                 )}
               >
-                {isLocalModelLoaded ? `${localModelLabel} · ${localModelSource}` : localModelLabel}
+                {isLocalModelLoaded ? `${localModelLabel} · ${localModelSource === 'ollama' ? 'Ollama assistant' : localModelSource}` : localModelLabel}
               </span>
             </div>
           </div>
