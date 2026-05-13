@@ -55,6 +55,12 @@ def main():
     train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training")
     train_p.add_argument("--wandb", action="store_true", default=None,
                          help="Enable W&B logging (overrides config)")
+    train_p.add_argument("--lr", type=float, help="Learning rate")
+    train_p.add_argument("--batch-size", type=int, help="Batch size")
+    train_p.add_argument("--epochs", type=int, help="Number of epochs")
+    train_p.add_argument("--lora-r", type=int, help="LoRA rank")
+    train_p.add_argument("--lora-alpha", type=int, help="LoRA alpha")
+    train_p.add_argument("--lr-scheduler", help="Learning rate scheduler type")
 
     # Smoke Test
     smoke_p = subparsers.add_parser("smoke", help="Smoke test a GGUF model")
@@ -227,6 +233,12 @@ def main():
         if args.from_spec: cmd.append("--from-spec")
         if args.preset: cmd.extend(["--preset", args.preset])
         if getattr(args, "technique", None): cmd.extend(["--technique", args.technique])
+        if getattr(args, "lr", None): cmd.extend(["--lr", str(args.lr)])
+        if getattr(args, "batch_size", None): cmd.extend(["--batch-size", str(args.batch_size)])
+        if getattr(args, "epochs", None): cmd.extend(["--epochs", str(args.epochs)])
+        if getattr(args, "lora_r", None): cmd.extend(["--lora-r", str(args.lora_r)])
+        if getattr(args, "lora_alpha", None): cmd.extend(["--lora-alpha", str(args.lora_alpha)])
+        if getattr(args, "lr_scheduler", None): cmd.extend(["--lr-scheduler", args.lr_scheduler])
         if args.export_gguf: cmd.append("--export-gguf")
         if args.wandb: cmd.append("--wandb")
         run_cmd(cmd)

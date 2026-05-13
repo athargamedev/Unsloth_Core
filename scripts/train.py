@@ -538,25 +538,61 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
     return trainer, metrics
 
 
-def export_to_gguf(model, tokenizer, config, output_path):
-    """Export the fine-tuned model to GGUF format."""
+def _should_push_gguf_to_hub(export_config):
+    """Return True only when GGUF Hub upload was explicitly configured."""
+    if export_config.get("hub_repo_id"):
+        return True
+    return bool(export_config.get("push_to_hub"))
+
+
+def _move_generated_gguf(temp_dir, output_path):
+    """Move Unsloth's generated GGUF from a temporary export dir."""
+    output_path = Path(output_path)
+    gguf_files = sorted(Path(temp_dir).rglob("*.gguf"))
+    sibling_dir = Path(f"{temp_dir}_gguf")
+
+    if not gguf_files and sibling_dir.exists():
+        gguf_files = sorted(sibling_dir.rglob("*.gguf"))
+
+    if not gguf_files:
+        raise RuntimeError(f"No GGUF file generated in {temp_dir}")
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(gguf_files[0]), str(output_path))
+    return output_path
+
+
+def export_to_gguf(model, tokenizer, config, output_path, quantization=None):
+    """Export the fine-tuned model to a local GGUF file unless Hub upload is explicit."""
     from unsloth import FastLanguageModel
 
-    quantization = config.get("export", {}).get("quantization", "q4_k_m")
+    export_config = config.get("export", {})
+    quantization = quantization or export_config.get("quantization", "q4_k_m")
 
     print(f"  Exporting to GGUF (quant={quantization})...")
     print(f"  Output: {output_path}")
 
     FastLanguageModel.for_inference(model)
 
-    model.push_to_hub_gguf(
-        str(Path(output_path).parent),
-        tokenizer,
-        quantization,
-    )
+    if _should_push_gguf_to_hub(export_config):
+        hub_repo_id = export_config.get("hub_repo_id")
+        if not hub_repo_id:
+            raise RuntimeError("export.push_to_hub requires export.hub_repo_id")
+        model.push_to_hub_gguf(hub_repo_id, tokenizer, quantization)
+        return sorted(Path(output_path).parent.glob("*.gguf"))
 
-    gguf_files = list(Path(output_path).parent.glob("*.gguf"))
-    return gguf_files
+    if not hasattr(model, "save_pretrained_gguf"):
+        raise RuntimeError("Loaded model does not support local GGUF export via save_pretrained_gguf")
+
+    with tempfile.TemporaryDirectory(prefix="train_gguf_export_") as temp_dir:
+        model.save_pretrained_gguf(
+            temp_dir,
+            tokenizer=tokenizer,
+            quantization_method=quantization,
+        )
+        generated_path = _move_generated_gguf(temp_dir, output_path)
+
+    return [generated_path]
 
 
 def main():
@@ -765,7 +801,7 @@ def main():
         gguf_name = f"{npc_key}-{model_id_short}-{quantization}.gguf"
         gguf_path = str(exports_dir / gguf_name)
 
-        gguf_files = export_to_gguf(model, tokenizer, config, gguf_path)
+        gguf_files = export_to_gguf(model, tokenizer, config, gguf_path, quantization)
 
         print(f"  ✓ GGUF export complete:")
         for gf in gguf_files:

@@ -2,6 +2,72 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "job_1778709155922_s8jmi",
+      "name": "Train LoRA",
+      "type": "Training",
+      "commandId": "train",
+      "status": "failed",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T21:52:35.922Z",
+      "startedAt": "2026-05-13T21:52:35.922Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chemistry_instructor.json",
+        "--from-spec",
+        "--preset",
+        "fast-3b",
+        "--lr",
+        "2e-4",
+        "--batch-size",
+        "4",
+        "--epochs",
+        "3",
+        "--lora-r",
+        "16",
+        "--lora-alpha",
+        "32",
+        "--lr-scheduler",
+        "cosine"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "failed",
+          "logs": [
+            "[STDERR][job_1778709155922_s8jmi] usage: ucore [-h]",
+            "[STDERR][job_1778709155922_s8jmi] {generate,sanitize,train,smoke,dashboard,validate-config,validate-spec,migrate-datasets,export,export-resume,export-adapter,deploy,evaluate,quick-eval,track,compare-runs,supabase-check,pipeline,plan-execution,plan-batch}",
+            "[STDERR][job_1778709155922_s8jmi] ...",
+            "[STDERR][job_1778709155922_s8jmi] ucore: error: unrecognized arguments: --lr 2e-4 --batch-size 4 --epochs 3 --lora-r 16 --lora-alpha 32 --lr-scheduler cosine"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[STDERR][job_1778709155922_s8jmi] usage: ucore [-h]",
+        "[STDERR][job_1778709155922_s8jmi] {generate,sanitize,train,smoke,dashboard,validate-config,validate-spec,migrate-datasets,export,export-resume,export-adapter,deploy,evaluate,quick-eval,track,compare-runs,supabase-check,pipeline,plan-execution,plan-batch}",
+        "[STDERR][job_1778709155922_s8jmi] ...",
+        "[STDERR][job_1778709155922_s8jmi] ucore: error: unrecognized arguments: --lr 2e-4 --batch-size 4 --epochs 3 --lora-r 16 --lora-alpha 32 --lr-scheduler cosine"
+      ],
+      "exitCode": 2,
+      "finishedAt": "2026-05-13T21:52:36.029Z"
+    },
+    {
       "id": "ext_proc_706902",
       "name": "External Process (706902) astronomy_guide",
       "type": "Pipeline",
@@ -5354,6 +5420,12 @@
     }
   ],
   "logs": [
+    "[2026-05-13T21:52:36.029Z] [SYSTEM] job job_1778709155922_s8jmi failed (exit 2)",
+    "[2026-05-13T21:52:36.027Z] [STDERR][job_1778709155922_s8jmi] ucore: error: unrecognized arguments: --lr 2e-4 --batch-size 4 --epochs 3 --lora-r 16 --lora-alpha 32 --lr-scheduler cosine",
+    "[2026-05-13T21:52:36.027Z] [STDERR][job_1778709155922_s8jmi] ...",
+    "[2026-05-13T21:52:36.027Z] [STDERR][job_1778709155922_s8jmi] {generate,sanitize,train,smoke,dashboard,validate-config,validate-spec,migrate-datasets,export,export-resume,export-adapter,deploy,evaluate,quick-eval,track,compare-runs,supabase-check,pipeline,plan-execution,plan-batch}",
+    "[2026-05-13T21:52:36.027Z] [STDERR][job_1778709155922_s8jmi] usage: ucore [-h]",
+    "[2026-05-13T21:52:35.922Z] [SYSTEM] starting job_1778709155922_s8jmi: ./ucore train subjects/chemistry_instructor.json --from-spec --preset fast-3b --lr 2e-4 --batch-size 4 --epochs 3 --lora-r 16 --lora-alpha 32 --lr-scheduler cosine",
     "[2026-05-13T21:48:48.098Z] [SYNC] discovered running external process pid=706902",
     "[2026-05-13T21:48:32.129Z] [SYNC] imported external job ext_export_run_001_run_001-llama3.2-3b-q4_k_m.gguf",
     "[2026-05-13T21:41:29.433Z] [SYNC] discovered running external process pid=530329",

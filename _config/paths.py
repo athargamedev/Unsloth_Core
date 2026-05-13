@@ -263,7 +263,45 @@ def best_run_dir(npc_key: str) -> Path | None:
         target = link.resolve()
         if target.exists():
             return target
+    if link.exists() and link.is_dir():
+        return link
     return None
+
+
+def _has_adapter_config(adapter_dir: Path) -> bool:
+    """Return True when a directory contains a PEFT adapter config."""
+    return (adapter_dir / "adapter_config.json").exists()
+
+
+def _latest_adapter_run_dir(npc_key: str) -> Path | None:
+    """Return the newest run_* directory with adapter files for an NPC."""
+    npc_output_dir = output_dir(npc_key)
+    if not npc_output_dir.exists():
+        return None
+
+    run_candidates = [
+        path
+        for path in npc_output_dir.iterdir()
+        if path.is_dir() and path.name.startswith("run_") and _has_adapter_config(path)
+    ]
+    if not run_candidates:
+        return None
+
+    return max(run_candidates, key=lambda path: path.stat().st_mtime)
+
+
+def _infer_npc_key_from_adapter_path(candidate: Path, adapter_dir: Path) -> str:
+    """Infer the NPC key while preserving outputs/<npc_key>/run_* semantics."""
+    if candidate.name in {"best", "latest"} and candidate.parent.name:
+        return candidate.parent.name
+
+    if adapter_dir.parent.name == "runs":
+        return adapter_dir.parent.parent.name
+
+    if adapter_dir.name.startswith("run_") and adapter_dir.parent.parent == output_root():
+        return adapter_dir.parent.name
+
+    return adapter_dir.name
 
 
 def resolve_adapter_dir(npc_key_or_dir: str | Path) -> tuple[str, Path]:
@@ -276,24 +314,26 @@ def resolve_adapter_dir(npc_key_or_dir: str | Path) -> tuple[str, Path]:
     if not candidate.exists():
         # Not an existing path — treat as NPC key
         npc_key = str(npc_key_or_dir)
-        latest = latest_run_dir(npc_key)
-        adapter_dir = latest or output_dir(npc_key)
+        adapter_dir = (
+            best_run_dir(npc_key)
+            or latest_run_dir(npc_key)
+            or _latest_adapter_run_dir(npc_key)
+            or output_dir(npc_key)
+        )
     else:
         # Check name BEFORE following symlinks
         adapter_dir = candidate
-        if adapter_dir.name == "latest":
+        if adapter_dir.name in {"best", "latest"}:
             adapter_dir = adapter_dir.resolve()
         elif adapter_dir.is_symlink() or adapter_dir.exists():
             adapter_dir = candidate.resolve()
-        if adapter_dir.parent.name == "runs":
-            npc_key = adapter_dir.parent.parent.name
-        else:
-            npc_key = adapter_dir.name
+        npc_key = _infer_npc_key_from_adapter_path(candidate, adapter_dir)
 
-    if (adapter_dir / "adapter_config.json").exists():
+    if _has_adapter_config(adapter_dir):
         return npc_key, adapter_dir
 
     raise FileNotFoundError(
         f"No PEFT adapter found at {adapter_dir}. Expected adapter_config.json. "
-        f"Train first, or pass outputs/<npc_key>/latest or outputs/<npc_key>/runs/<run_id>."
+        f"Train first, or pass outputs/<npc_key>/best, outputs/<npc_key>/latest, "
+        f"outputs/<npc_key>/run_<nnn>, or outputs/<npc_key>/runs/<run_id>."
     )
