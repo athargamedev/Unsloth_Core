@@ -326,6 +326,10 @@ export default function App() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'running'>('all');
   const [uiError, setUiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [commandSchemas, setCommandSchemas] = useState<Record<string, any>>({});
+  const [commandModalOpen, setCommandModalOpen] = useState(false);
+  const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
+  const [commandPayload, setCommandPayload] = useState<any>({});
 
   const [trainingConfig, setTrainingConfig] = useState({
     spec: 'subjects/chemistry_instructor.json',
@@ -431,13 +435,14 @@ export default function App() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [jobsData, logsData, datasetsData, commandsData, subjectsData, statusData] = await Promise.all([
+      const [jobsData, logsData, datasetsData, commandsData, subjectsData, statusData, commandSchemasData] = await Promise.all([
         fetchJson<Job[]>('/api/jobs'),
         fetchJson<string[]>('/api/logs'),
         fetchJson<Dataset[]>('/api/datasets'),
         fetchJson<AvailableCommand[]>('/api/available-commands'),
         fetchJson<Subject[]>('/api/subjects'),
         fetchJson<SystemStatus>('/api/system/status'),
+        fetchOptionalJson<Record<string, any>>('/api/command-schemas'),
       ]);
       const [healthData, runsData, exportsData, telemetryData] = await Promise.all([
         fetchOptionalJson<HealthCheck>('/api/health'),
@@ -455,6 +460,7 @@ export default function App() {
       setTelemetry(telemetryData);
       setRuns(runsData ?? []);
       setExportArtifacts(exportsData ?? []);
+      setCommandSchemas(commandSchemasData ?? {});
       setUiError(null);
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Failed to fetch data');
@@ -504,6 +510,9 @@ export default function App() {
   };
 
   const getDefaultPayloadForCommand = (commandId: string): Record<string, unknown> => {
+    if (commandSchemas[commandId]) {
+      return { ...commandSchemas[commandId] };
+    }
     const derivedNpcKey = trainingConfig.spec.replace('subjects/', '').replace('.json', '');
     switch (commandId) {
       case 'dataset-generate':
@@ -543,23 +552,14 @@ export default function App() {
   };
 
   const triggerCommandFromSystemHub = async (cmd: AvailableCommand) => {
-    let payload: Record<string, unknown> = {
+    const payload = {
       commandId: cmd.id,
       type: cmd.type,
       ...getDefaultPayloadForCommand(cmd.id),
     };
-
-    for (const field of cmd.requiredFields) {
-      const existingValue = getNestedValue(payload, field);
-      if (typeof existingValue === 'string' && existingValue.trim()) continue;
-      const provided = window.prompt(`Provide required field: ${field}`);
-      if (!provided || !provided.trim()) {
-        throw new Error(`Missing required field: ${field}`);
-      }
-      payload = setNestedValue(payload, field, provided.trim());
-    }
-
-    await triggerCommand(payload);
+    setSelectedCommand(cmd.id);
+    setCommandPayload(payload);
+    setCommandModalOpen(true);
   };
 
   const stopJob = async (id: string) => {
@@ -1570,6 +1570,81 @@ export default function App() {
           <span className="text-ink/20">©2026 NPC_GEN_CORE</span>
         </div>
       </footer>
+
+      {/* Command Modal */}
+      <AnimatePresence>
+        {commandModalOpen && selectedCommand && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => setCommandModalOpen(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-surface border border-line rounded-lg p-6 w-96 max-w-[90vw] max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-ink-bright">Configure Command</h3>
+                <button onClick={() => setCommandModalOpen(false)} className="text-ink/40 hover:text-ink">
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-ink/60 mb-2">Command ID</label>
+                  <div className="p-2 bg-bg border border-line rounded text-sm font-mono">{selectedCommand}</div>
+                </div>
+                
+                {Object.keys(commandPayload).filter(key => key !== 'commandId' && key !== 'type').map(field => (
+                  <div key={field}>
+                    <label className="block text-sm font-bold text-ink/60 mb-2 capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
+                    <input
+                      type="text"
+                      value={String(commandPayload[field] || '')}
+                      onChange={(e) => setCommandPayload({ ...commandPayload, [field]: e.target.value })}
+                      className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                ))}
+                
+                <div className="flex gap-2 pt-4">
+                  <button 
+                    onClick={async () => {
+                      try {
+                        await triggerCommand(commandPayload);
+                        setCommandModalOpen(false);
+                        setSelectedCommand(null);
+                        setCommandPayload({});
+                      } catch (error) {
+                        setUiError(error instanceof Error ? error.message : 'Command execution failed');
+                      }
+                    }}
+                    className="flex-1 py-2 bg-accent text-bg rounded font-bold hover:bg-accent/80 transition-colors"
+                  >
+                    Execute Command
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setCommandModalOpen(false);
+                      setSelectedCommand(null);
+                      setCommandPayload({});
+                    }}
+                    className="px-4 py-2 bg-line/20 text-ink/60 rounded hover:bg-line/40 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
