@@ -2271,6 +2271,11 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
         npcKey: { type: "string", required: true, default: "chemistry_instructor" },
         "options.playerId": { type: "string", required: false, default: "" },
       },
+      init: {
+        npcKey: { type: "string", required: true, default: "new_npc_key", description: "NPC Key (snake_case)" },
+        "options.subject": { type: "string", required: false, default: "", description: "NPC Subject" },
+        "options.name": { type: "string", required: false, default: "", description: "NPC Display Name" },
+      },
     };
 
     const schemas: Record<string, { fields: Record<string, FieldSchema> }> = {};
