@@ -26,7 +26,7 @@ from _config import paths
 
 
 def load_spec(npc_key: str) -> dict:
-    spec_path = paths.subject_path(npc_key)
+    spec_path = PROJECT_ROOT / "subjects" / f"{npc_key}.json"
     if not spec_path.exists():
         raise FileNotFoundError(f"Subject spec not found: {spec_path}")
     with open(spec_path) as f:
@@ -61,7 +61,7 @@ def upsert_profile(client, npc_key: str, spec: dict, model_path: str | None):
     metadata = {
         "source": "unsloth_core_phase_supabase_check",
         "updated_at": datetime.now(timezone.utc).isoformat(),
-        "subject_file": str(paths.subject_path(npc_key).name),
+        "subject_file": f"{npc_key}.json",
     }
 
     payload = {
@@ -173,7 +173,7 @@ def main():
 
     spec = load_spec(args.npc_key)
     model_path = latest_gguf(args.npc_key)
-    print(f" Subject: {paths.subject_path(args.npc_key)}")
+    print(f" Subject: {PROJECT_ROOT / 'subjects' / f'{args.npc_key}.json'}")
     print(f" Latest GGUF: {model_path or '[none found]'}")
 
     client = connect_supabase()
