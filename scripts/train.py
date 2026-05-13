@@ -744,8 +744,8 @@ def main():
         if best_link.exists() or best_link.is_symlink():
             best_link.unlink()
         try:
-            best_link.symlink_to(f"run_{run_id}")
-            print(f"  ✓ Updated 'best' symlink → run_{run_id}")
+            best_link.symlink_to(run_id)
+            print(f"  ✓ Updated 'best' symlink → {run_id}")
         except OSError:
             pass
     else:

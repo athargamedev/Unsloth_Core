@@ -712,7 +712,7 @@
       "type": "Training",
       "commandId": "train",
       "npcKey": "chemistry_instructor",
-      "status": "running",
+      "status": "stopped",
       "progress": 38,
       "loss": null,
       "createdAt": "2026-05-13T19:07:20.283Z",
@@ -729,8 +729,10 @@
         },
         {
           "name": "Training",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1117781] Process no longer detected"
+          ]
         },
         {
           "name": "Evaluation",
@@ -747,7 +749,9 @@
         "[EXTERNAL][PID 1117781] discovered active process",
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:17:21.518Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_1117645",
@@ -755,7 +759,7 @@
       "type": "Evaluation",
       "commandId": "evaluate",
       "npcKey": "chemistry_instructor",
-      "status": "running",
+      "status": "stopped",
       "progress": 63,
       "loss": null,
       "createdAt": "2026-05-13T19:07:20.283Z",
@@ -777,8 +781,10 @@
         },
         {
           "name": "Evaluation",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1117645] Process no longer detected"
+          ]
         },
         {
           "name": "Export",
@@ -790,7 +796,9 @@
         "[EXTERNAL][PID 1117645] discovered active process",
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:17:21.518Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_1117576",
@@ -844,7 +852,7 @@
       "type": "Training",
       "commandId": "train",
       "npcKey": "chemistry_instructor",
-      "status": "running",
+      "status": "stopped",
       "progress": 38,
       "loss": null,
       "createdAt": "2026-05-13T19:07:19.607Z",
@@ -861,8 +869,10 @@
         },
         {
           "name": "Training",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1117574] Process no longer detected"
+          ]
         },
         {
           "name": "Evaluation",
@@ -879,7 +889,9 @@
         "[EXTERNAL][PID 1117574] discovered active process",
         "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/train.py && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:17:21.518Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_1106103",
