@@ -103,6 +103,40 @@ def get_preset_description(preset_name):
     return ""
 
 
+def check_promotion_rules(training_loss: float, config: dict, num_train_examples: int) -> tuple[bool, list[str]]:
+    """Check if the model meets minimum quality thresholds for promotion to 'best'.
+
+    Reads thresholds from configs/promotion-rules.yaml.
+    Returns (passed, failure_reasons). Returns (True, []) if no rules file exists.
+    """
+    rules_path = PROJECT_ROOT / "configs" / "promotion-rules.yaml"
+    if not rules_path.exists():
+        return True, []
+
+    with open(rules_path) as f:
+        rules = yaml.safe_load(f)
+
+    thresholds = rules.get("thresholds", {})
+    failures = []
+
+    max_loss = thresholds.get("max_training_loss")
+    if max_loss is not None and training_loss > max_loss:
+        failures.append(f"Training loss {training_loss:.4f} exceeds max threshold {max_loss}")
+
+    min_batch = thresholds.get("min_eff_batch_size")
+    if min_batch is not None:
+        eff = (config.get("training", {}).get("batch_size", 1)
+               * config.get("training", {}).get("gradient_accumulation_steps", 8))
+        if eff < min_batch:
+            failures.append(f"Effective batch size {eff} < minimum {min_batch}")
+
+    min_examples = thresholds.get("min_train_examples")
+    if min_examples is not None and num_train_examples < min_examples:
+        failures.append(f"Training examples {num_train_examples} < minimum {min_examples}")
+
+    return len(failures) == 0, failures
+
+
 def load_config(config_path, preset=None, overrides=None):
     """Load a YAML config, apply preset overrides, then CLI overrides."""
     with open(config_path) as f:
@@ -767,25 +801,32 @@ def main():
     with open(run_manifest_path, "w") as f:
         json.dump(run_manifest, f, indent=2)
 
-    # Update "best" symlink (lowest training loss wins)
+    # Update "best" symlink (lowest training loss wins), gated by promotion rules
     current_loss = trainer_stats.training_loss
-    best_loss = current_loss
-    best_run = run_id
-    for manifest_file in sorted(paths.run_dir(npc_key, "").parent.glob("*/run_manifest.json")):
-        try:
-            with open(manifest_file) as f:
-                m = json.load(f)
-            loss = m.get("results", {}).get("training_loss")
-            if loss is not None and loss < best_loss:
-                best_loss = loss
-                best_run = m["run_id"]
-        except Exception:
-            pass
-    best_link = paths.output_dir(npc_key) / "best"
-    if best_link.exists() or best_link.is_symlink():
-        best_link.unlink()
-    os.symlink(f"runs/{best_run}", str(best_link), target_is_directory=True)
-    print(f"  Best run:   {best_run} (loss={best_loss:.4f})")
+    num_train = len(dataset) if dataset is not None else 0
+    promoted, failures = check_promotion_rules(current_loss, config, num_train)
+    if not promoted:
+        print(f"  Promotion gate FAILED — 'best' symlink NOT updated")
+        for f in failures:
+            print(f"    ✗  {f}")
+    else:
+        best_loss = current_loss
+        best_run = run_id
+        for manifest_file in sorted(paths.run_dir(npc_key, "").parent.glob("*/run_manifest.json")):
+            try:
+                with open(manifest_file) as f:
+                    m = json.load(f)
+                loss = m.get("results", {}).get("training_loss")
+                if loss is not None and loss < best_loss:
+                    best_loss = loss
+                    best_run = m["run_id"]
+            except Exception:
+                pass
+        best_link = paths.output_dir(npc_key) / "best"
+        if best_link.exists() or best_link.is_symlink():
+            best_link.unlink()
+        os.symlink(f"runs/{best_run}", str(best_link), target_is_directory=True)
+        print(f"  Best run:   {best_run} (loss={best_loss:.4f})")
 
     print(f"\n{'=' * 60}")
     print(f"  TRAINING COMPLETE")

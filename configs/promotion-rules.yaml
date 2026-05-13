@@ -1,0 +1,8 @@
+# configs/promotion-rules.yaml
+# A model must pass ALL thresholds before being promoted to "best".
+# These prevent garbage models from being promoted due to NaN loss or bad config.
+
+thresholds:
+  max_training_loss: 1.5        # Reject if training loss > 1.5
+  min_eff_batch_size: 4         # Reject if effective batch size < 4
+  min_train_examples: 10        # Reject if fewer than 10 training examples

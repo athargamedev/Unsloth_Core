@@ -1,0 +1,20 @@
+# configs/eval-presets.yaml
+# Eval profiles define standard flag combinations for ./ucore evaluate.
+
+smoke:
+  description: "Fast smoke test — 3 questions, no judge, no HTML"
+  num_questions: 3
+  judge: false
+  report_html: false
+
+quick:
+  description: "Quick check — 10 validation questions, no judge"
+  num_questions: 10
+  judge: false
+  report_html: false
+
+full:
+  description: "Full evaluation — 25 questions, LLM judge, HTML report"
+  num_questions: 25
+  judge: true
+  report_html: true

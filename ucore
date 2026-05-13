@@ -102,6 +102,48 @@ def main():
     deploy_p.add_argument("--skip-export", action="store_true", help="Skip GGUF export step")
     deploy_p.add_argument("--export-only", action="store_true", help="Only export, skip Unity copy")
 
+    # Evaluate
+    eval_p = subparsers.add_parser("evaluate", help="Compare two GGUF models side-by-side")
+    eval_p.add_argument("--baseline", help="Baseline GGUF model path")
+    eval_p.add_argument("--candidate", help="Candidate GGUF model path")
+    eval_p.add_argument("--model", "-m", help="Single model GGUF path (for interactive)")
+    eval_p.add_argument("--spec", "-s", help="Subject spec JSON")
+    eval_p.add_argument("--val-data", help="Validation JSONL path")
+    eval_p.add_argument("--num-questions", type=int, default=10, help="Number of eval questions")
+    eval_p.add_argument("--output", "-o", help="Output report path")
+    eval_p.add_argument("--report-html", action="store_true", help="Generate HTML report with charts")
+    eval_p.add_argument("--judge", action="store_true", help="Use local Ollama judge")
+    eval_p.add_argument("--judge-model", default="llama3.1:latest", help="Judge model")
+    eval_p.add_argument("--track", action="store_true", help="Track results in eval/results/")
+    eval_p.add_argument("--interactive", "-i", action="store_true", help="Interactive chat mode")
+    eval_p.add_argument("--port", type=int, default=8888, help="llama-server port")
+
+    # Quick-eval
+    qe_p = subparsers.add_parser("quick-eval", help="Quick local evaluation (llama-cpp-python)")
+    qe_p.add_argument("adapter_path", help="Path to LoRA adapter or merged GGUF")
+    qe_p.add_argument("--samples", "-n", type=int, default=20, help="Number of validation samples")
+    qe_p.add_argument("--spec", "-s", help="Subject spec JSON")
+    qe_p.add_argument("--val-data", help="Validation JSONL (auto-detected if omitted)")
+
+    # Track
+    track_p = subparsers.add_parser("track", help="Track or show evaluation results")
+    track_p.add_argument("--npc-key", help="NPC key")
+    track_p.add_argument("--model", help="Model GGUF path")
+    track_p.add_argument("--show", action="store_true", help="Show evaluation history")
+    track_p.add_argument("--win-rate", type=float, help="Win rate vs baseline (0-1)")
+    track_p.add_argument("--avg-quality", type=float, help="Average quality score")
+    track_p.add_argument("--val-loss", type=float, help="Validation loss")
+    track_p.add_argument("--notes", default="", help="Notes about this run")
+
+    # Compare runs
+    cr_p = subparsers.add_parser("compare-runs", help="Compare two training runs by run_id")
+    cr_p.add_argument("npc_key", help="NPC key")
+    cr_p.add_argument("--baseline-run", required=True, help="Baseline run ID")
+    cr_p.add_argument("--candidate-run", required=True, help="Candidate run ID")
+    cr_p.add_argument("--spec", help="Subject spec (auto-detected if omitted)")
+    cr_p.add_argument("--num-questions", type=int, default=10, help="Number of eval questions")
+    cr_p.add_argument("--judge", action="store_true", help="Use local Ollama judge")
+
     # Pipeline (Generate + Sanitize + Train)
     pipe_p = subparsers.add_parser("pipeline", help="Run full generation-to-training pipeline")
     pipe_p.add_argument("spec", help="Path to subject spec JSON")
@@ -205,6 +247,56 @@ def main():
         if args.dry_run: cmd.append("--dry-run")
         if args.skip_export: cmd.append("--skip-export")
         if args.export_only: cmd.append("--export-only")
+        run_cmd(cmd)
+
+    elif args.command == "evaluate":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "evaluate.py")]
+        if args.baseline: cmd.extend(["--baseline", args.baseline])
+        if args.candidate: cmd.extend(["--candidate", args.candidate])
+        if args.model: cmd.extend(["--model", args.model])
+        if args.spec: cmd.extend(["--spec", args.spec])
+        if args.val_data: cmd.extend(["--val-data", args.val_data])
+        if args.output: cmd.extend(["--output", args.output])
+        if args.report_html: cmd.append("--report-html")
+        if args.judge: cmd.append("--judge")
+        if args.judge_model: cmd.extend(["--judge-model", args.judge_model])
+        if args.track: cmd.append("--track")
+        if args.interactive: cmd.append("--interactive")
+        if args.port: cmd.extend(["--port", str(args.port)])
+        run_cmd(cmd)
+
+    elif args.command == "quick-eval":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "quick_eval.py"), args.adapter_path]
+        if args.samples: cmd.extend(["--samples", str(args.samples)])
+        if args.spec: cmd.extend(["--spec", args.spec])
+        if args.val_data: cmd.extend(["--val-data", args.val_data])
+        run_cmd(cmd)
+
+    elif args.command == "track":
+        if args.show:
+            cmd = [PYTHON, str(SCRIPTS_DIR / "track_eval_results.py"), "--show"]
+            if args.npc_key: cmd.extend(["--npc-key", args.npc_key])
+            run_cmd(cmd)
+        else:
+            if not args.npc_key:
+                print("Error: --npc-key required for tracking (or use --show)")
+                sys.exit(1)
+            cmd = [PYTHON, str(SCRIPTS_DIR / "track_eval_results.py"), "--track"]
+            cmd.extend(["--npc-key", args.npc_key])
+            if args.model: cmd.extend(["--model", args.model])
+            if args.win_rate: cmd.extend(["--win-rate", str(args.win_rate)])
+            if args.avg_quality: cmd.extend(["--avg-quality", str(args.avg_quality)])
+            if args.val_loss: cmd.extend(["--val-loss", str(args.val_loss)])
+            if args.notes: cmd.extend(["--notes", args.notes])
+            run_cmd(cmd)
+
+    elif args.command == "compare-runs":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "compare_runs.py"), args.npc_key]
+        cmd.extend(["--baseline-run", args.baseline_run])
+        cmd.extend(["--candidate-run", args.candidate_run])
+        if args.spec: cmd.extend(["--spec", args.spec])
+        if args.num_questions: cmd.extend(["--num-questions", str(args.num_questions)])
+        if args.judge: cmd.append("--judge")
         run_cmd(cmd)
 
     elif args.command == "pipeline":

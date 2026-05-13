@@ -1,266 +1,162 @@
 #!/usr/bin/env python3
 """
-compare_runs.py — Compare two or more training runs for the same NPC.
+compare_runs.py — Compare two training runs by run_id.
 
-Extracts TensorBoard metrics and produces a markdown comparison report.
+Resolves run manifests, finds the exported GGUF, and runs evaluate.py
+for a side-by-side comparison. Results go to eval/comparisons/.
 
 Usage:
-    python scripts/compare_runs.py outputs/chemistry_instructor/runs/20260512_fast-3b_001 outputs/chemistry_instructor/runs/20260512_quality-1.7b_001
-    
-    # Compare all runs for an NPC
-    python scripts/compare_runs.py outputs/chemistry_instructor/runs/*
-    
-    # Spec output path
-    python scripts/compare_runs.py outputs/chemistry_instructor/runs/run_1 outputs/chemistry_instructor/runs/run_2 --output eval/comparisons/chemistry_vs_comparison.md
+    python scripts/compare_runs.py chemistry_instructor \\
+        --baseline-run 20260512_llama-3b-fast_001 \\
+        --candidate-run 20260512_llama-3b-quality_001
+
+    # With an LLM judge
+    python scripts/compare_runs.py chemistry_instructor \\
+        --baseline-run 20260512_fast_001 \\
+        --candidate-run 20260512_quality_001 \\
+        --judge
 """
 
 import argparse
 import json
-import math
+import subprocess
 import sys
-from datetime import datetime
+from datetime import date
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-
 from _config import paths
 
 
-def extract_metrics(run_dir: Path) -> dict | None:
-    """Extract training/eval metrics from a run directory.
-    
-    Reads metrics.json first (frozen by train.py).
-    Falls back to parsing TensorBoard event files.
-    Returns None if no metrics found.
+def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str]:
+    """Find the best matching GGUF for a given run.
+
+    Returns (gguf_path, model_id). Exits on failure.
     """
-    metrics_file = run_dir / "metrics.json"
-    if metrics_file.exists():
-        with open(metrics_file) as f:
-            metrics = json.load(f)
-        # Calculate perplexity if we have eval loss
-        eval_loss = metrics.get("eval_loss")
-        if eval_loss is not None and eval_loss > 0:
-            metrics["eval_perplexity"] = round(math.exp(eval_loss), 2)
-        training_loss = metrics.get("training_loss")
-        if training_loss is not None and training_loss > 0:
-            metrics["training_perplexity"] = round(math.exp(training_loss), 2)
-        return metrics
-    
-    # Fallback: parse TensorBoard events if no metrics.json
+    run_dir = paths.run_dir(npc_key, run_id)
+    if not run_dir.exists():
+        print(f"Error: Run directory not found: {run_dir}")
+        print(f"       Available runs for {npc_key}:")
+        runs_dir = paths.output_dir(npc_key) / "runs"
+        if runs_dir.exists():
+            for d in sorted(runs_dir.iterdir()):
+                if d.is_dir():
+                    print(f"         {d.name}")
+        sys.exit(1)
+
+    manifest_path = run_dir / "run_manifest.json"
+    if not manifest_path.exists():
+        print(f"Error: No run_manifest.json in {run_dir}")
+        sys.exit(1)
+
+    with open(manifest_path) as f:
+        manifest = json.load(f)
+
+    model_id = manifest.get("model_id", "unsloth/Llama-3.2-3B-Instruct-bnb-4bit")
+    model_short = None
+    technique = manifest.get("dataset", {}).get("technique", "notebooklm")
     try:
-        from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
-        
-        event_files = list(run_dir.glob("events.out.tfevents.*"))
-        if not event_files:
-            return None
-        
-        ea = EventAccumulator(str(run_dir))
-        ea.Reload()
-        
-        metrics = {
-            "run_id": run_dir.name,
-            "steps": {},
-        }
-        
-        for tag in ea.Tags().get("scalars", []):
-            events = ea.Scalars(tag)
-            if events:
-                metrics["steps"][tag] = {
-                    "final": round(events[-1].value, 4),
-                    "best": round(min(e.value for e in events), 4),
-                    "count": len(events),
-                }
-                if tag in ("eval/loss", "loss") and events[-1].value > 0:
-                    metrics["steps"][f"{tag}_perplexity"] = round(math.exp(events[-1].value), 2)
-        
-        return metrics
-    except ImportError:
-        print("Warning: tensorboard not installed, cannot parse event files")
-        return None
+        model_short = paths.model_short_name(model_id)
+    except Exception:
+        pass
 
+    # Look for GGUF in exports/{npc_key}/
+    export_dir = paths.export_dir(npc_key)
+    if not export_dir.exists():
+        print(f"Error: No exports directory for {npc_key}")
+        print(f"       Export first: ./ucore export {npc_key}")
+        sys.exit(1)
 
-def generate_comparison_report(runs: list[dict], output_path: str | None = None) -> str:
-    """Generate a markdown comparison report."""
-    lines = []
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-    
-    lines.append("# Training Run Comparison\n")
-    lines.append(f"- **Generated:** {now}")
-    lines.append(f"- **Runs compared:** {len(runs)}\n")
-    
-    # Summary table
-    lines.append("## Overview\n")
-    lines.append("| Metric | " + " | ".join(r.get("run_id", f"Run {i}") for i, r in enumerate(runs)) + " |")
-    lines.append("|" + "---|" * (len(runs) + 1))
-    
-    # Training loss
-    train_losses = [r.get("training_loss") for r in runs]
-    if any(tl is not None for tl in train_losses):
-        row = "| Training Loss |"
-        for tl in train_losses:
-            row += f" {tl:.4f} |" if tl is not None else " — |"
-        lines.append(row)
-    
-    # Training perplexity
-    train_perps = [r.get("training_perplexity") for r in runs]
-    if any(tp is not None for tp in train_perps):
-        row = "| Training Perplexity |"
-        for tp in train_perps:
-            row += f" {tp:.2f} |" if tp is not None else " — |"
-        lines.append(row)
-    
-    # Eval loss
-    eval_losses = [r.get("eval_loss") for r in runs]
-    if any(el is not None for el in eval_losses):
-        row = "| Eval Loss |"
-        for el in eval_losses:
-            row += f" {el:.4f} |" if el is not None else " — |"
-        lines.append(row)
-    
-    # Eval perplexity
-    eval_perps = [r.get("eval_perplexity") for r in runs]
-    if any(ep is not None for ep in eval_perps):
-        row = "| Eval Perplexity |"
-        for ep in eval_perps:
-            row += f" {ep:.2f} |" if ep is not None else " — |"
-        lines.append(row)
-    
-    # Preset
-    presets = [r.get("preset", "") for r in runs]
-    if any(p for p in presets):
-        row = "| Preset |"
-        for p in presets:
-            row += f" {p} |" if p else " — |"
-        lines.append(row)
-    
-    # Model
-    models = [r.get("model", "") for r in runs]
-    if any(m for m in models):
-        row = "| Model |"
-        for m in models:
-            row += f" {m} |" if m else " — |"
-        lines.append(row)
-    
-    # Epochs/Steps from config if available
-    configs = [r.get("config", {}) for r in runs]
-    epochs = [c.get("num_epochs") if isinstance(c, dict) else None for c in configs]
-    if any(e is not None for e in epochs):
-        row = "| Epochs |"
-        for e in epochs:
-            row += f" {e} |" if e is not None else " — |"
-        lines.append(row)
-    
-    lines.append("")
-    
-    # Per-run details
-    lines.append("## Run Details\n")
-    for i, run in enumerate(runs):
-        lines.append(f"### Run {i+1}: {run.get('run_id', 'unknown')}\n")
-        lines.append(f"- **Preset:** {run.get('preset', 'N/A')}")
-        lines.append(f"- **Model:** {run.get('model', 'N/A')}")
-        if run.get("config"):
-            c = run["config"]
-            lines.append(f"- **Epochs:** {c.get('num_epochs', 'N/A')}, **LR:** {c.get('learning_rate', 'N/A')}")
-            lines.append(f"- **Batch:** {c.get('batch_size', 'N/A')}, **Grad Accum:** {c.get('gradient_accumulation_steps', 'N/A')}")
-            lines.append(f"- **LoRA r:** {c.get('lora_r', 'N/A')}, **alpha:** {c.get('lora_alpha', 'N/A')}")
-        lines.append("")
-    
-    # TensorBoard step-level detail if available
-    has_steps = any("steps" in r for r in runs)
-    if has_steps:
-        lines.append("## Step-by-Step Metrics\n")
-        for i, run in enumerate(runs):
-            steps = run.get("steps", {})
-            if not steps:
-                continue
-            lines.append(f"### Run {i+1}: {run.get('run_id', 'unknown')}\n")
-            for tag, data in steps.items():
-                lines.append(f"- **{tag}:** final={data.get('final', 'N/A')}, "
-                             f"best={data.get('best', 'N/A')}, steps={data.get('count', 'N/A')}")
-                if f"{tag}_perplexity" in steps:
-                    lines.append(f"  → perplexity: {steps[f'{tag}_perplexity']}")
-            lines.append("")
-    
-    # Recommendations
-    lines.append("## Recommendations\n")
-    if eval_losses and all(el is not None for el in eval_losses):
-        best_idx = eval_losses.index(min(eval_losses))
-        lines.append(f"- **Best eval loss:** Run {best_idx+1} ({runs[best_idx].get('run_id', 'unknown')}) "
-                     f"with {eval_losses[best_idx]:.4f}")
-    if train_losses and all(tl is not None for tl in train_losses):
-        best_train_idx = train_losses.index(min(train_losses))
-        if best_train_idx != (best_idx if eval_losses and all(el is not None for el in eval_losses) else -1):
-            lines.append(f"- **Best training loss:** Run {best_train_idx+1} "
-                         f"({runs[best_train_idx].get('run_id', 'unknown')})")
-    
-    report = "\n".join(lines)
-    
-    if output_path:
-        output = Path(output_path)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        with open(output, "w") as f:
-            f.write(report)
-        print(f"Report saved to: {output}")
-    else:
-        print(report)
-    
-    return report
+    # Search for matching GGUF
+    ggufs = []
+    if model_short:
+        # Try specific model naming first
+        ggufs = sorted(export_dir.glob(f"{npc_key}-{model_short}-*.gguf"))
+    if not ggufs:
+        # Fall back to any GGUF for this NPC
+        ggufs = sorted(export_dir.glob(f"{npc_key}-*.gguf"))
+    if not ggufs:
+        # Last resort: any GGUF in the export dir
+        ggufs = sorted(export_dir.glob("*.gguf"))
+
+    if not ggufs:
+        print(f"Error: No GGUF found for {npc_key} in {export_dir}")
+        print(f"       Export first: ./ucore export {npc_key}")
+        sys.exit(1)
+
+    return str(ggufs[0]), model_id
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Compare training runs for an NPC")
-    parser.add_argument("runs", nargs="+", help="Run directories to compare")
-    parser.add_argument("--output", "-o", help="Output markdown path (default: auto in eval/comparisons/)")
+    parser = argparse.ArgumentParser(
+        description="Compare two training runs by run_id"
+    )
+    parser.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
+    parser.add_argument("--baseline-run", required=True, help="Baseline run ID")
+    parser.add_argument("--candidate-run", required=True, help="Candidate run ID")
+    parser.add_argument("--spec", help="Subject spec path (auto-detected if omitted)")
+    parser.add_argument("--num-questions", type=int, default=10,
+                        help="Number of eval questions (default: 10)")
+    parser.add_argument("--judge", action="store_true",
+                        help="Use local Ollama judge")
+    parser.add_argument("--output", "-o", help="Output report path")
     args = parser.parse_args()
-    
-    if len(args.runs) < 2:
-        print("Error: At least two run directories are required for comparison.")
-        sys.exit(1)
-    
-    # Resolve run directories
-    run_dirs = []
-    for r in args.runs:
-        p = Path(r)
-        if not p.exists():
-            print(f"Error: Run directory not found: {p}")
-            sys.exit(1)
-        run_dirs.append(p)
-    
-    print(f"Comparing {len(run_dirs)} runs...\n")
-    
-    # Extract metrics from each run
-    runs = []
-    for rd in run_dirs:
-        metrics = extract_metrics(rd)
-        if metrics:
-            runs.append(metrics)
-            rid = metrics.get("run_id", rd.name)
-            train_loss = metrics.get("training_loss")
-            eval_loss = metrics.get("eval_loss")
-            print(f"  {rid}: train_loss={train_loss}, eval_loss={eval_loss}")
-        else:
-            print(f"  {rd.name}: No metrics found")
-    
-    if len(runs) < 2:
-        print("Error: Need at least 2 runs with metrics to compare.")
-        sys.exit(1)
-    
-    # Determine output path
-    output_path = args.output
-    if not output_path:
-        # Use the first run's NPC key to find comparison path
-        npc_key = None
-        for rd in run_dirs:
-            # Path format: outputs/{npc_key}/runs/{run_id}/
-            if len(rd.parts) >= 3 and rd.parts[-2] == "runs":
-                npc_key = rd.parts[-3]
-                break
-        if npc_key:
-            baseline_label = runs[0].get("run_id", "baseline")
-            output_path = str(paths.eval_comparison_path(npc_key, baseline_label))
-    
-    generate_comparison_report(runs, output_path)
+
+    # Resolve GGUF paths
+    baseline_gguf, model_id = find_gguf_for_run(args.npc_key, args.baseline_run)
+    candidate_gguf, _ = find_gguf_for_run(args.npc_key, args.candidate_run)
+
+    # Auto-detect spec
+    spec_path = args.spec
+    if not spec_path:
+        spec_guess = PROJECT_ROOT / "subjects" / f"{args.npc_key}.json"
+        if spec_guess.exists():
+            spec_path = str(spec_guess)
+            print(f"Auto-detected spec: {spec_path}")
+
+    # Build evaluate.py command
+    cmd = [
+        sys.executable,
+        str(PROJECT_ROOT / "scripts" / "evaluate.py"),
+        "--baseline", baseline_gguf,
+        "--candidate", candidate_gguf,
+    ]
+    if spec_path:
+        cmd.extend(["--spec", spec_path])
+    cmd.extend(["--num-questions", str(args.num_questions)])
+    if args.judge:
+        cmd.append("--judge")
+
+    # Default output path
+    if not args.output:
+        report_dir = paths.eval_comparison_dir()
+        report_dir.mkdir(parents=True, exist_ok=True)
+        today = date.today().isoformat()
+        args.output = str(
+            report_dir
+            / f"{args.npc_key}_{args.baseline_run}_vs_{args.candidate_run}_{today}.md"
+        )
+    cmd.extend(["--output", args.output])
+
+    # Track results
+    cmd.append("--track")
+
+    print(f"{'=' * 60}")
+    print(f"  RUN COMPARISON")
+    print(f"  NPC:        {args.npc_key}")
+    print(f"  Baseline:   {args.baseline_run}")
+    print(f"  Candidate:  {args.candidate_run}")
+    print(f"{'=' * 60}")
+    print(f"  Baseline GGUF:  {baseline_gguf}")
+    print(f"  Candidate GGUF: {candidate_gguf}")
+    print(f"  Output:         {args.output}")
+    print()
+
+    subprocess.run(cmd, cwd=str(PROJECT_ROOT), check=True)
+    print(f"\n{'=' * 60}")
+    print(f"  Comparison complete: {args.output}")
+    print(f"{'=' * 60}")
 
 
 if __name__ == "__main__":

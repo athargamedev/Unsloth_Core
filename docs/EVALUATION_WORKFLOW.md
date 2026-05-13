@@ -1,6 +1,17 @@
 # Evaluation & Comparison Workflow
 
-This document covers three evaluation modes: side-by-side model comparison, training metrics extraction, and interactive chat — all via `scripts/evaluate.py`, with additional helpers for quick local eval and result tracking.
+This document covers four evaluation modes: side-by-side model comparison, run-vs-run comparison by ID, quick local eval, training metrics extraction, and interactive chat — all accessible via the unified CLI.
+
+**Quick reference:**
+
+| CLI Command | Purpose |
+|-------------|---------|
+| `./ucore evaluate --baseline ... --candidate ... --spec ...` | Side-by-side comparison (llama-server) |
+| `./ucore quick-eval <adapter_or_gguf>` | Quick local eval (llama-cpp-python) |
+| `./ucore compare-runs <npc> --baseline-run ... --candidate-run ...` | Compare two training runs by run_id |
+| `./ucore track --npc-key <key> --win-rate 0.75` | Record evaluation result |
+| `./ucore track --show` | Show evaluation history |
+| `./ucore smoke <gguf> --check-integrity` | Validate GGUF file structure |
 
 ## 1. Overview
 
@@ -30,7 +41,14 @@ Compares a baseline model against a candidate model using questions from a subje
 ### Usage
 
 ```bash
+# Via scripts
 python scripts/evaluate.py \
+    --baseline exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-f16.gguf \
+    --candidate exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf \
+    --spec subjects/chemistry_instructor.json
+
+# Via ucore (same thing)
+./ucore evaluate \
     --baseline exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-f16.gguf \
     --candidate exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf \
     --spec subjects/chemistry_instructor.json
@@ -72,6 +90,18 @@ python scripts/evaluate.py \
 
 The report is saved as a Markdown file with aggregate metrics, per-question comparisons, constraint violation tracking, and winner tallies.
 
+### Eval Presets
+
+Pre-configured flag combinations defined in `configs/eval-presets.yaml`:
+
+| Preset | Questions | Judge | HTML Report | Use Case |
+|--------|-----------|-------|-------------|----------|
+| `smoke` | 3 | no | no | Fast pass/fail smoke test |
+| `quick` | 10 | no | no | Quick quality check |
+| `full` | 25 | yes | yes | Full evaluation for promotion |
+
+Usage: pass the flags directly (presets are documentation/reference, not injected automatically).
+
 ### Output
 
 ```
@@ -82,7 +112,31 @@ eval/comparisons/
 └── {npc_key}_vs_{baseline}_{date}.md
 ```
 
-## 3. Training Metrics Extraction
+## 3. Run-vs-Run Comparison by Run ID
+
+Compare two training runs without needing to remember GGUF paths:
+
+```bash
+./ucore compare-runs chemistry_instructor \
+    --baseline-run 20260512_llama-3b-fast_001 \
+    --candidate-run 20260512_llama-3b-quality_001
+```
+
+This:
+1. Looks up each run's `run_manifest.json` for model_id and metadata
+2. Finds the matching GGUF in `exports/{npc_key}/`
+3. Runs `evaluate.py` with the resolved paths
+4. Saves the report to `eval/comparisons/{npc_key}_{baseline}_vs_{candidate}_{date}.md`
+5. Tracks results automatically
+
+Optional flags:
+- `--judge` — add LLM judge via Ollama
+- `--num-questions` — number of eval questions (default: 10)
+- `--spec` — override subject spec path
+
+Run IDs are listed in `outputs/{npc_key}/runs/` and in each run's `run_manifest.json`.
+
+## 4. Training Metrics Extraction
 
 Extract training loss, validation loss, and perplexity from TensorBoard event files.
 
@@ -118,7 +172,7 @@ Metrics are printed to stdout in this format:
       perplex:  1.67
 ```
 
-## 4. Interactive Chat
+## 5. Interactive Chat
 
 Launch an interactive session with a GGUF model via llama.cpp server for manual testing.
 
@@ -148,28 +202,37 @@ Chemical bonds are the forces that hold atoms together. They're like magnets —
 
 Output includes token count, latency, type-token ratio, and quality score per response.
 
-## 5. Quick Local Evaluation (quick_eval.py)
+## 6. Quick Local Evaluation
 
 For a faster evaluation that doesn't require starting a llama.cpp server (uses `llama-cpp-python` directly):
 
 ```bash
+# Via scripts
 python scripts/quick_eval.py outputs/chemistry_instructor/ \
     --samples 50
 
-# With subject spec
+# Via ucore (same thing)
+./ucore quick-eval outputs/chemistry_instructor/ --samples 50
+
+# With subject spec (via scripts)
 python scripts/quick_eval.py outputs/chemistry_instructor/ \
+    --spec subjects/chemistry_instructor.json \
+    --val-data datasets/chemistry_instructor/notebooklm/validation.jsonl
+
+# Via ucore
+./ucore quick-eval outputs/chemistry_instructor/ \
     --spec subjects/chemistry_instructor.json \
     --val-data datasets/chemistry_instructor/notebooklm/validation.jsonl
 ```
 
 Measures token overlap (Jaccard similarity) between generated and expected responses, plus diversity, sentence count, and AI disclaimer detection.
 
-## 6. Tracking Results (track_eval_results.py)
+## 7. Tracking Results
 
 Store evaluation results locally or in Supabase for historical tracking:
 
 ```bash
-# Save a result
+# Save a result (via scripts)
 python scripts/track_eval_results.py \
     --track \
     --npc-key chemistry_instructor \
@@ -178,14 +241,26 @@ python scripts/track_eval_results.py \
     --avg-quality 42.5 \
     --notes "First training run - good constraint compliance"
 
-# View history
+# Via ucore
+./ucore track \
+    --npc-key chemistry_instructor \
+    --model outputs/chemistry_instructor/chemistry_instructor-lora.f16.gguf \
+    --win-rate 0.75 \
+    --avg-quality 42.5 \
+    --notes "First training run - good constraint compliance"
+
+# View history (scripts)
 python scripts/track_eval_results.py --show
 python scripts/track_eval_results.py --show --npc-key chemistry_instructor
+
+# Via ucore
+./ucore track --show
+./ucore track --show --npc-key chemistry_instructor
 ```
 
 Results are stored locally in `eval_results.jsonl` and optionally synced to the Supabase `test_results` table.
 
-## 7. Output Structure Summary
+## 8. Output Structure Summary
 
 ```
 eval/
@@ -200,7 +275,22 @@ eval/
     └── eval_results.jsonl         # Tracked evaluation results
 ```
 
-## 8. Troubleshooting
+## 10. Promotion Rules
+
+The `best` symlink (`outputs/{npc_key}/best`) is only updated if the model passes quality thresholds defined in `configs/promotion-rules.yaml`:
+
+```yaml
+thresholds:
+  max_training_loss: 1.5        # Reject if training loss > 1.5
+  min_eff_batch_size: 4         # Reject if effective batch size < 4
+  min_train_examples: 10        # Reject if fewer than 10 training examples
+```
+
+If a model fails the promotion gate, the existing `best` symlink is preserved and a warning with the specific failure reasons is printed. This prevents garbage training runs (NaN loss, incorrectly configured batches) from overwriting a working model.
+
+To override the rules temporarily, edit `configs/promotion-rules.yaml` or remove it entirely (which disables the gate).
+
+## 11. Troubleshooting
 
 ### llama-server Not Found
 
