@@ -20,6 +20,8 @@ interface Job {
   id: string;
   name: string;
   type: string;
+  commandId?: string;
+  npcKey?: string;
   status: JobStatus;
   progress: number;
   loss: number | null;
@@ -269,7 +271,7 @@ const buildTelemetryPayload = (nodeId: string) => {
     memoryTotalGB: Math.round((totalMemory / 1024 / 1024 / 1024) * 10) / 10,
     platform: os.platform(),
     nodeVersion: process.version,
-    nodeId: registry.nodeId,
+    nodeId,
     timestamp: isoNow(),
     networkRxMBps: Math.round(rxMBps * 10) / 10,
     networkTxMBps: Math.round(txMBps * 10) / 10,
@@ -453,25 +455,95 @@ const parseLoss = (line: string): number | null => {
   return Number(match[1]);
 };
 
-const updateStagesByProgress = (job: Job) => {
-  const thresholds = [20, 60, 85, 100];
-  job.stages = job.stages.map((stage, index) => {
-    const threshold = thresholds[index] ?? 100;
-    if (job.progress >= threshold) return { ...stage, status: "completed" };
-    if (job.progress >= (thresholds[index - 1] ?? 0) && job.status === "running") return { ...stage, status: "running" };
-    return stage;
-  });
+const commandStageIndex = (job: Job): number => {
+  switch (job.commandId) {
+    case "dataset-generate":
+    case "dataset-sanitize":
+      return 0;
+    case "train":
+      return 1;
+    case "evaluate":
+    case "smoke":
+      return 2;
+    case "export":
+    case "export-adapter":
+    case "deploy":
+      return 3;
+    case "pipeline":
+      return 0;
+    default:
+      return 0;
+  }
 };
 
-const currentStageIndex = (progress: number): number => {
-  if (progress < 20) return 0;
-  if (progress < 60) return 1;
-  if (progress < 85) return 2;
-  return 3;
+const syncPipelineStageFromLogs = (job: Job): number => {
+  const joined = job.logs.join("\n").toLowerCase();
+  if (joined.includes("export")) return 3;
+  if (joined.includes("evaluate") || joined.includes("smoke")) return 2;
+  if (joined.includes("train")) return 1;
+  return 0;
+};
+
+const syncExportStageFromStatusFile = (job: Job) => {
+  if (!job.npcKey) return;
+  const statusPath = path.join(repoRoot, "exports", job.npcKey, "export_status.json");
+  if (!fs.existsSync(statusPath)) return;
+  try {
+    const raw = JSON.parse(fs.readFileSync(statusPath, "utf8")) as { state?: string; substep?: string };
+    if (raw.substep) {
+      const stage = job.stages[3];
+      if (stage) {
+        const line = `[STATUS][export] substep=${raw.substep} state=${raw.state || "unknown"}`;
+        if (stage.logs[stage.logs.length - 1] !== line) {
+          stage.logs.push(line);
+          stage.logs = stage.logs.slice(-50);
+        }
+      }
+    }
+    if (raw.state === "completed") {
+      job.progress = 100;
+    }
+  } catch {
+    // ignore malformed status artifact
+  }
+};
+
+const updateStagesFromTruth = (job: Job) => {
+  const activeIndex = job.commandId === "pipeline" ? syncPipelineStageFromLogs(job) : commandStageIndex(job);
+
+  job.stages = job.stages.map((stage, index) => {
+    if (job.status === "completed") {
+      if (job.commandId === "pipeline") return { ...stage, status: "completed" };
+      return { ...stage, status: index <= activeIndex ? "completed" : "pending" };
+    }
+
+    if (job.status === "failed" || job.status === "stopped") {
+      return { ...stage, status: index === activeIndex ? "failed" : index < activeIndex ? "completed" : "pending" };
+    }
+
+    if (job.status === "running" || job.status === "pending") {
+      return { ...stage, status: index < activeIndex ? "completed" : index === activeIndex ? "running" : "pending" };
+    }
+
+    return stage;
+  });
+
+  if (job.status === "completed") {
+    job.progress = 100;
+    return;
+  }
+
+  const stageProgress = [10, 35, 70, 90][activeIndex] ?? 10;
+  job.progress = Math.min(99, Math.max(job.progress, stageProgress));
+
+  if (activeIndex === 3) {
+    syncExportStageFromStatusFile(job);
+  }
 };
 
 const appendStageLog = (job: Job, message: string) => {
-  const stage = job.stages[currentStageIndex(job.progress)] ?? job.stages[job.stages.length - 1];
+  const activeIndex = job.commandId === "pipeline" ? syncPipelineStageFromLogs(job) : commandStageIndex(job);
+  const stage = job.stages[activeIndex] ?? job.stages[job.stages.length - 1];
   if (!stage) return;
   stage.logs.push(message);
   stage.logs = stage.logs.slice(-50);
@@ -734,7 +806,7 @@ async function startServer() {
     res.json(schemas);
   });
 
-  if (process.env.NODE_ENV === "development") {
+  app.post("/api/commands/start", (req, res) => {
     try {
       const payload = req.body as StartCommandPayload;
       const commandDef = commandMap.get(payload.commandId || "");
@@ -750,6 +822,8 @@ async function startServer() {
         id: makeId(),
         name: `${commandDef.label}${payload.npcKey ? ` (${payload.npcKey})` : ""}`,
         type: payload.type || commandDef.type,
+        commandId: commandDef.id,
+        npcKey: payload.npcKey,
         status: "running",
         progress: 5,
         loss: null,
@@ -759,6 +833,7 @@ async function startServer() {
         stages: defaultStages(),
         logs: [],
       };
+      updateStagesFromTruth(job);
 
       registry.jobs.unshift(job);
       globalLog(registry, `[SYSTEM] starting ${job.id}: ${command.join(" ")}`);
@@ -779,8 +854,7 @@ async function startServer() {
 
           const parsedLoss = parseLoss(line);
           if (parsedLoss !== null) job.loss = parsedLoss;
-          if (job.progress < 95) job.progress += 1;
-          updateStagesByProgress(job);
+          updateStagesFromTruth(job);
         }
         persistRegistry(registry);
       };
@@ -810,7 +884,7 @@ async function startServer() {
           job.progress = code === 0 ? 100 : job.progress;
           job.status = code === 0 ? "completed" : "failed";
         }
-        updateStagesByProgress(job);
+        updateStagesFromTruth(job);
         globalLog(registry, `[SYSTEM] job ${job.id} ${job.status} (exit ${code})`);
         persistRegistry(registry);
       });

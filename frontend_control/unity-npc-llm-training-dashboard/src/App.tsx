@@ -74,6 +74,23 @@ interface Subject {
   path: string;
 }
 
+const fetchJson = async <T,>(url: string): Promise<T> => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.error || `Request failed: ${url}`);
+  }
+  return response.json() as Promise<T>;
+};
+
+const fetchOptionalJson = async <T,>(url: string): Promise<T | null> => {
+  try {
+    return await fetchJson<T>(url);
+  } catch {
+    return null;
+  }
+};
+
 interface AvailableCommand {
   id: string;
   label: string;
@@ -342,24 +359,8 @@ export default function App() {
     baseModel: 'mistralai/Mistral-7B-Instruct-v0.2'
   });
 
-  const fetchJson = async <T,>(url: string): Promise<T> => {
-    const response = await fetch(url);
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({}));
-      throw new Error(payload.error || `Request failed: ${url}`);
-    }
-    return response.json() as Promise<T>;
-  };
 
-  const fetchOptionalJson = async <T,>(url: string): Promise<T | null> => {
-    try {
-      return await fetchJson<T>(url);
-    } catch {
-      return null;
-    }
-  };
-
-  const downloadCsv = (rows: string[][], fileName: string) => {
+  const downloadCsv = (rows: Array<Array<string | number>>, fileName: string) => {
     const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
