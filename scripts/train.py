@@ -540,9 +540,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
 
 def _should_push_gguf_to_hub(export_config):
     """Return True only when GGUF Hub upload was explicitly configured."""
-    if export_config.get("hub_repo_id"):
-        return True
-    return bool(export_config.get("push_to_hub"))
+    return bool(export_config.get("push_to_hub") and export_config.get("hub_repo_id"))
 
 
 def _move_generated_gguf(temp_dir, output_path):

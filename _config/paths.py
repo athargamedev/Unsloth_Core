@@ -273,21 +273,53 @@ def _has_adapter_config(adapter_dir: Path) -> bool:
     return (adapter_dir / "adapter_config.json").exists()
 
 
-def _latest_adapter_run_dir(npc_key: str) -> Path | None:
-    """Return the newest run_* directory with adapter files for an NPC."""
+def _newest_adapter_dir(candidates: list[Path]) -> Path | None:
+    """Return the newest directory containing adapter files from candidates."""
+    adapter_dirs = [path for path in candidates if path.is_dir() and _has_adapter_config(path)]
+    if not adapter_dirs:
+        return None
+
+    return max(adapter_dirs, key=lambda path: path.stat().st_mtime)
+
+
+def _latest_direct_adapter_run_dir(npc_key: str) -> Path | None:
+    """Return the newest outputs/{npc_key}/run_* directory with adapter files."""
     npc_output_dir = output_dir(npc_key)
     if not npc_output_dir.exists():
         return None
 
-    run_candidates = [
+    return _newest_adapter_dir([
         path
         for path in npc_output_dir.iterdir()
-        if path.is_dir() and path.name.startswith("run_") and _has_adapter_config(path)
-    ]
-    if not run_candidates:
+        if path.is_dir() and path.name.startswith("run_")
+    ])
+
+
+def _latest_nested_adapter_run_dir(npc_key: str) -> Path | None:
+    """Return the newest outputs/{npc_key}/runs/* directory with adapter files."""
+    runs_dir = output_dir(npc_key) / "runs"
+    if not runs_dir.exists():
         return None
 
-    return max(run_candidates, key=lambda path: path.stat().st_mtime)
+    return _newest_adapter_dir([path for path in runs_dir.iterdir() if path.is_dir()])
+
+
+def _resolve_npc_adapter_dir(npc_key: str) -> Path:
+    """Resolve an NPC key to the highest-priority valid adapter directory."""
+    npc_output_dir = output_dir(npc_key)
+    fallback_order = [
+        best_run_dir(npc_key),
+        latest_run_dir(npc_key),
+        _latest_direct_adapter_run_dir(npc_key),
+        _latest_nested_adapter_run_dir(npc_key),
+        npc_output_dir,
+    ]
+
+    for adapter_dir in fallback_order:
+        if adapter_dir and _has_adapter_config(adapter_dir):
+            return adapter_dir
+
+    return npc_output_dir
 
 
 def _infer_npc_key_from_adapter_path(candidate: Path, adapter_dir: Path) -> str:
@@ -314,12 +346,7 @@ def resolve_adapter_dir(npc_key_or_dir: str | Path) -> tuple[str, Path]:
     if not candidate.exists():
         # Not an existing path — treat as NPC key
         npc_key = str(npc_key_or_dir)
-        adapter_dir = (
-            best_run_dir(npc_key)
-            or latest_run_dir(npc_key)
-            or _latest_adapter_run_dir(npc_key)
-            or output_dir(npc_key)
-        )
+        adapter_dir = _resolve_npc_adapter_dir(npc_key)
     else:
         # Check name BEFORE following symlinks
         adapter_dir = candidate
