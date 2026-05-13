@@ -6,17 +6,39 @@ import type { Subject, TrainingConfig } from '../api';
 
 interface TrainingSuiteProps {
   subjects: Subject[];
+  presets?: Array<{ name: string; description: string }>;
+  presetDesc?: Record<string, string>;
   trainingConfig: TrainingConfig;
   onUpdateTrainingConfig: (config: Partial<TrainingConfig>) => void;
   onLaunchTraining: () => Promise<void>;
 }
 
+/** Replicates train.py's estimate_vram() logic for the frontend */
+function estimateVram(modelName: string, rank: number, packing = true, maxSeq = 2048): number {
+  const name = modelName.toLowerCase();
+  let gb = 8.0; // baseline for 1.7B–3B
+  if (name.includes('8b')) gb = 14.0;
+  else if (name.includes('7b')) gb = 12.0;
+  else if (name.includes('3b')) gb = 8.0;
+  else if (name.includes('1b')) gb = 4.0;
+
+  gb += (rank - 16) * 0.1;
+  gb *= maxSeq / 2048;
+  if (packing) gb *= 0.85;
+
+  return Math.round(gb * 10) / 10;
+}
+
 export const TrainingSuite = ({
   subjects,
+  presets = [],
+  presetDesc = {},
   trainingConfig,
   onUpdateTrainingConfig,
   onLaunchTraining,
 }: TrainingSuiteProps) => {
+  const vramGb = estimateVram(trainingConfig.baseModel, trainingConfig.rank);
+
   // Real config validation
   const validation = (() => {
     const issues: string[] = [];
@@ -30,13 +52,11 @@ export const TrainingSuite = ({
 
     const valid = issues.length === 0;
     const hint = valid
-      ? `Estimated VRAM: ~${(trainingConfig.rank / 16 * 14.8).toFixed(1)}GB (${trainingConfig.baseModel.split('/').pop()})`
+      ? `Estimated VRAM: ~${vramGb}GB (${trainingConfig.baseModel.split('/').pop() || 'model'}, rank=${trainingConfig.rank})`
       : '';
 
     return { valid, issues, hint };
   })();
-
-  const validSpecSelected = subjects.find((s) => s.path === trainingConfig.spec);
 
   return (
     <motion.div
@@ -71,12 +91,21 @@ export const TrainingSuite = ({
                   <option key={subject.id} value={subject.path}>{subject.path}</option>
                 ))}
               </select>
+
               <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Preset</label>
-              <input
+              <select
                 value={trainingConfig.preset}
                 onChange={(e) => onUpdateTrainingConfig({ preset: e.target.value })}
                 className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-              />
+              >
+                <option value="">None (manual config)</option>
+                {presets.map((p) => (
+                  <option key={p.name} value={p.name}>{p.name}</option>
+                ))}
+              </select>
+              {trainingConfig.preset && presetDesc[trainingConfig.preset] && (
+                <p className="text-[8px] mt-1 text-ink/30 italic">{presetDesc[trainingConfig.preset]}</p>
+              )}
             </div>
             <div>
               <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Base Model Path</label>

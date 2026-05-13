@@ -60,6 +60,8 @@ export default function App() {
   const [datasetViewTechnique, setDatasetViewTechnique] = useState<string>('');
   const [availableTechniques, setAvailableTechniques] = useState<Array<{ name: string; train_count: number; val_count: number }>>([]);
   const [serverPid, setServerPid] = useState<number>(0);
+  const [presets, setPresets] = useState<Array<{ name: string; description: string }>>([]);
+  const [presetDesc, setPresetDesc] = useState<Record<string, string>>({});
 
   const [trainingConfig, setTrainingConfig] = useState<TrainingConfig>({
     spec: 'subjects/chemistry_instructor.json',
@@ -140,6 +142,15 @@ export default function App() {
           try {
             const healthData = await fetchJson<HealthCheck>('/api/health');
             setServerPid(healthData.processId);
+          } catch {}
+        })(),
+        (async () => {
+          try {
+            const presetsData = await fetchJson<Array<{ name: string; description: string }>>('/api/presets');
+            setPresets(presetsData);
+            const descMap: Record<string, string> = {};
+            for (const p of presetsData) descMap[p.name] = p.description;
+            setPresetDesc(descMap);
           } catch {}
         })(),
       ]);
@@ -598,6 +609,8 @@ export default function App() {
             {activeTab === 'training' && (
               <TrainingSuite
                 subjects={subjects}
+                presets={presets}
+                presetDesc={presetDesc}
                 trainingConfig={trainingConfig}
                 onUpdateTrainingConfig={handleUpdateTrainingConfig}
                 onLaunchTraining={handleLaunchTraining}
