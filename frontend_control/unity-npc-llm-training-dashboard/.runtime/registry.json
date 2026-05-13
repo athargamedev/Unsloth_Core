@@ -2,6 +2,145 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_1741370",
+      "name": "External Process (1741370) astronomy_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T22:31:04.899Z",
+      "startedAt": "2026-05-13T22:31:04.899Z",
+      "command": [
+        "external",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore validate-spec subjects/astronomy_guide.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1741370] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1741370] discovered active process",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore validate-spec subjects/astronomy_guide.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T22:31:05.901Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1741369",
+      "name": "External Process (1741369)",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T22:31:04.899Z",
+      "startedAt": "2026-05-13T22:31:04.899Z",
+      "command": [
+        "external",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore pipeline --help"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1741369] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1741369] discovered active process",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore pipeline --help"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T22:31:05.901Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1741332",
+      "name": "External Process (1741332)",
+      "type": "Training",
+      "commandId": "train",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T22:31:04.899Z",
+      "startedAt": "2026-05-13T22:31:04.899Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore train --help"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1741332] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1741332] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore train --help"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T22:31:05.901Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_1560798",
       "name": "External Process (1560798) astronomy_guide",
       "type": "Training",
@@ -5941,6 +6080,9 @@
     }
   ],
   "logs": [
+    "[2026-05-13T22:31:04.936Z] [SYNC] discovered running external process pid=1741370",
+    "[2026-05-13T22:31:04.935Z] [SYNC] discovered running external process pid=1741369",
+    "[2026-05-13T22:31:04.934Z] [SYNC] discovered running external process pid=1741332",
     "[2026-05-13T22:24:14.513Z] [SYSTEM] job job_1778711008241_4i88z completed (exit 0)",
     "[2026-05-13T22:24:12.008Z] [STDOUT][job_1778711008241_4i88z] \u001b[1;34mwandb\u001b[0m: Find logs at: \u001b[1;35mwandb/run-20260513_192400-m3q4ae3e/logs\u001b[0m",
     "[2026-05-13T22:24:12.008Z] [STDOUT][job_1778711008241_4i88z] \u001b[1;34mwandb\u001b[0m: 🚀 View run \u001b[33mdivine-water-1\u001b[0m at: \u001b[34mhttps://wandb.ai/andreabenathar-twl-games/huggingface/runs/m3q4ae3e\u001b[0m",

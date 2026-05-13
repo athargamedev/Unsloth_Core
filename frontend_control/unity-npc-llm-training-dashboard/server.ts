@@ -1539,11 +1539,17 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
   app.get("/api/run/:npcKey/:runId", (req, res) => {
     const { npcKey, runId } = req.params;
 
-    if (npcKey.includes("..") || runId.includes("..")) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(npcKey)) {
       return res.status(400).json({ error: "Invalid path" });
     }
 
-    const runPath = path.join(repoRoot, "outputs", npcKey, "runs", runId);
+    try {
+      safeRunId(runId);
+    } catch (error) {
+      return res.status(400).json({ error: error instanceof Error ? error.message : "Invalid runId" });
+    }
+
+    const runPath = listNpcRunDirs(npcKey).find((run) => run.runId === runId)?.runDir || "";
     if (!fs.existsSync(runPath)) {
       return res.status(404).json({ error: `Run ${npcKey}/${runId} not found` });
     }
@@ -1660,30 +1666,23 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     const runId = typeof req.query.runId === "string" ? req.query.runId.trim() : "";
     if (!runId) return res.json({ runId: "", scalars: {}, error: "runId query parameter is required" });
 
-    // Look for run dirs in outputs/*/runs/ matching the runId
-    const outputsRoot = path.join(repoRoot, "outputs");
-    // Find the run directory by searching all npc outputs
-    let runDir = "";
-    if (fs.existsSync(outputsRoot)) {
-      for (const npcKey of fs.readdirSync(outputsRoot)) {
-        const runsDir = path.join(outputsRoot, npcKey, "runs");
-        if (!fs.existsSync(runsDir)) continue;
-        const candidate = path.join(runsDir, runId);
-        if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
-          runDir = candidate;
-          break;
-        }
-      }
+    let resolvedRun: { runId: string; runDir: string } | null = null;
+    try {
+      resolvedRun = findRunDirById(runId, registry);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Invalid runId";
+      return res.json({ runId, scalars: {}, error: msg });
     }
 
-    if (!runDir) {
+    if (!resolvedRun) {
       return res.json({ runId, scalars: {}, error: `Run directory not found for ${runId}` });
     }
 
     try {
-      const result = execSync(
-        `python scripts/tb_reader.py --run-dir "${runDir}"`,
-        { cwd: repoRoot, encoding: "utf8", timeout: 10000 }
+      const result = execFileSync(
+        "python",
+        ["scripts/tb_reader.py", "--run-dir", resolvedRun.runDir],
+        { cwd: repoRoot, encoding: "utf8", timeout: 10000 },
       );
       const data = JSON.parse(result.trim());
       return res.json(data);
@@ -1843,12 +1842,14 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
   app.post("/api/unity/deploy", (req, res) => {
     try {
       const dryRun = req.body?.dryRun === true;
-      const cmd = ["python", "scripts/deploy_to_unity.py"];
+      const cmd = ["./ucore", "deploy"];
       if (dryRun) cmd.push("--dry-run");
-      if (req.body?.npcKey) {
-        cmd.push("--npc-key", sanitizeToken(String(req.body.npcKey), "npcKey"));
+      if (req.body?.unityProject) {
+        cmd.push("--unity-project", resolvePathWithinRoots(String(req.body.unityProject), "unityProject", [path.resolve(repoRoot, ".."), repoRoot]));
       }
-      const result = require("child_process").execSync(cmd.join(" "), {
+      if (req.body?.skipExport === true) cmd.push("--skip-export");
+      if (req.body?.exportOnly === true) cmd.push("--export-only");
+      const result = execFileSync(cmd[0], cmd.slice(1), {
         cwd: repoRoot,
         encoding: "utf8",
         timeout: 30000,
@@ -2146,10 +2147,10 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     const baseDefaultsByCommand: Record<string, Record<string, FieldSchema>> = {
       "dataset-generate": {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json", description: "Subject spec path" },
-        "options.technique": { type: "string", required: false, default: "ollama", enum: ["notebooklm", "ollama", "template", "openai", "anthropic"] },
+        "options.technique": { type: "string", required: false, default: "notebooklm", enum: ["notebooklm", "ollama", "template", "openai", "anthropic"] },
       },
       "dataset-sanitize": {
-        "options.datasetPath": { type: "string", required: true, default: "datasets/chemistry_instructor/ollama/train.jsonl", description: "Train dataset path" },
+        "options.datasetPath": { type: "string", required: true, default: "datasets/chemistry_instructor/notebooklm/train.jsonl", description: "Train dataset path" },
       },
       train: {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
@@ -2159,33 +2160,37 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
         "options.epochs": { type: "number", required: false, default: 3 },
         "options.rank": { type: "number", required: false, default: 16 },
         "options.alpha": { type: "number", required: false, default: 32 },
+        "options.baseModel": { type: "string", required: false, default: "unsloth/Llama-3.2-3B-Instruct-bnb-4bit" },
       },
       pipeline: {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
         preset: { type: "string", required: false, default: "llama-1b-fast", ...(presetOptions.length ? { enum: presetOptions } : {}) },
-        "options.technique": { type: "string", required: false, default: "ollama", enum: ["notebooklm", "ollama", "template", "openai", "anthropic"] },
+        "options.technique": { type: "string", required: false, default: "notebooklm", enum: ["notebooklm", "ollama", "template", "openai", "anthropic"] },
         "options.track": { type: "boolean", required: false, default: false },
+        "options.wandb": { type: "boolean", required: false, default: false },
       },
       export: {
         npcKey: { type: "string", required: true, default: "chemistry_instructor" },
-        "options.modelId": { type: "string", required: true, default: "unsloth/Llama-3.2-1B-Instruct-bnb-4bit" },
+        "options.modelId": { type: "string", required: true, default: "unsloth/Llama-3.2-3B-Instruct-bnb-4bit" },
       },
       "export-adapter": {
         npcKey: { type: "string", required: true, default: "chemistry_instructor" },
       },
       evaluate: {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
-        "options.baseline": { type: "string", required: true, default: "exports/default/default-llama3.2-3b-f16.gguf" },
-        "options.candidate": { type: "string", required: true, default: "exports/chemistry_instructor/chemistry_instructor-llama3.2-1b-f16.gguf" },
+        "options.baseline": { type: "string", required: true, default: "exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf" },
+        "options.candidate": { type: "string", required: true, default: "exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf" },
         "options.valData": { type: "string", required: false, default: "" },
       },
       smoke: {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
-        "options.modelPath": { type: "string", required: true, default: "exports/chemistry_instructor/chemistry_instructor-llama3.2-1b-f16.gguf" },
+        "options.modelPath": { type: "string", required: true, default: "exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf" },
       },
       deploy: {
-        "options.npcKey": { type: "string", required: true, default: "chemistry_instructor" },
-        "options.modelId": { type: "string", required: true, default: "unsloth/Llama-3.2-1B-Instruct-bnb-4bit" },
+        "options.unityProject": { type: "string", required: false, default: "" },
+        "options.dryRun": { type: "boolean", required: false, default: true },
+        "options.skipExport": { type: "boolean", required: false, default: false },
+        "options.exportOnly": { type: "boolean", required: false, default: false },
       },
       "supabase-check": {
         npcKey: { type: "string", required: true, default: "chemistry_instructor" },

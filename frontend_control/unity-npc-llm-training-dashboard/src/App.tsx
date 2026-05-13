@@ -76,7 +76,7 @@ export default function App() {
     alpha: 32,
     baseModel: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
     wandb: false,
-    technique: 'template',
+    technique: 'notebooklm',
   });
 
   const {
@@ -326,6 +326,7 @@ export default function App() {
     const derivedNpcKey = trainingConfig.spec.replace('subjects/', '').replace('.json', '');
     switch (commandId) {
       case 'dataset-generate':
+        return { spec: trainingConfig.spec, options: { technique: trainingConfig.technique, modelId: trainingConfig.baseModel } };
       case 'train':
       case 'pipeline':
         return { spec: trainingConfig.spec, preset: trainingConfig.preset };
@@ -402,7 +403,7 @@ export default function App() {
 
   const handleGenerateDataset = async () => {
     try {
-      await triggerCommand({ commandId: 'dataset-generate', type: 'Dataset', spec: trainingConfig.spec });
+      await triggerCommand({ commandId: 'dataset-generate', type: 'Dataset', spec: trainingConfig.spec, options: { technique: trainingConfig.technique, modelId: trainingConfig.baseModel } });
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Dataset generation failed');
     }
@@ -478,7 +479,7 @@ export default function App() {
 
   const handleRightSidebarGenerateDataset = async () => {
     try {
-      await triggerCommand({ commandId: 'dataset-generate', type: 'Dataset', spec: trainingConfig.spec });
+      await triggerCommand({ commandId: 'dataset-generate', type: 'Dataset', spec: trainingConfig.spec, options: { technique: trainingConfig.technique, modelId: trainingConfig.baseModel } });
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Dataset generation failed');
     }

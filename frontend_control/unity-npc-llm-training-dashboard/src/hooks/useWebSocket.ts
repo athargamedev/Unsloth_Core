@@ -27,8 +27,8 @@ export function useWebSocket(options: UseWebSocketOptions) {
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname || 'localhost';
-    const url = `${protocol}//${host}:3100/ws`;
+    const host = window.location.host || 'localhost:3100';
+    const url = `${protocol}//${host}/ws`;
 
     const ws = new WebSocket(url);
     wsRef.current = ws;
