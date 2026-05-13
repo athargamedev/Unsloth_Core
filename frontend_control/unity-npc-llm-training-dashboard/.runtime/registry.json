@@ -2,6 +2,94 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "job_1778695228090_q2ytk",
+      "name": "Generate Dataset",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T18:00:28.090Z",
+      "startedAt": "2026-05-13T18:00:28.090Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/nonexistent_integration_spec_2.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [],
+      "stopRequested": true,
+      "exitCode": -1,
+      "finishedAt": "2026-05-13T18:00:28.106Z",
+      "terminalReason": "user_requested_stop"
+    },
+    {
+      "id": "job_1778695226511_zjads",
+      "name": "Generate Dataset",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "status": "failed",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T18:00:26.511Z",
+      "startedAt": "2026-05-13T18:00:26.511Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/nonexistent_integration_spec.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "running",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion."
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [],
+      "stopRequested": true,
+      "terminalReason": "server_restarted",
+      "finishedAt": "2026-05-13T18:00:27.730Z",
+      "exitCode": -1
+    },
+    {
       "id": "job_1778693901429_hxam7",
       "name": "Generate Dataset",
       "type": "Dataset",
@@ -574,17 +662,10 @@
     }
   ],
   "logs": [
-    "[2026-05-13T17:38:21.632Z] [SYSTEM] job job_1778693901429_hxam7 failed (exit 2)",
-    "[2026-05-13T17:38:21.631Z] [STDOUT][job_1778693901429_hxam7] Error: Command failed with return code 2",
-    "[2026-05-13T17:38:21.595Z] [STDOUT][job_1778693901429_hxam7] Export NotebookLM Q&A as JSONL/JSON with messages or question/answer fields.",
-    "[2026-05-13T17:38:21.595Z] [STDOUT][job_1778693901429_hxam7] Error: --technique notebooklm requires --notebooklm-input or NOTEBOOKLM_INPUT.",
-    "[2026-05-13T17:38:21.595Z] [STDOUT][job_1778693901429_hxam7] Subject: General chemistry: atoms, molecules, elements, the periodic table, chemical reactions, stoichiometry, acids and bases",
-    "[2026-05-13T17:38:21.595Z] [STDOUT][job_1778693901429_hxam7] Generating dataset for: ChemistryInstructor",
-    "[2026-05-13T17:38:21.515Z] [STDOUT][job_1778693901429_hxam7] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique notebooklm",
-    "[2026-05-13T17:38:21.429Z] [SYSTEM] starting job_1778693901429_hxam7: ./ucore generate subjects/chemistry_instructor.json",
-    "[2026-05-13T17:17:40.856Z] [SYNC] discovered running external process pid=2426909",
-    "[2026-05-13T17:13:22.813Z] [SYNC] discovered running external process pid=2321847",
-    "[2026-05-13T17:07:39.669Z] [SYNC] discovered running external process pid=2183188"
+    "[2026-05-13T18:00:28.106Z] [SYSTEM] job job_1778695228090_q2ytk stopped (exit null)",
+    "[2026-05-13T18:00:28.103Z] [SYSTEM] stop requested job_1778695228090_q2ytk",
+    "[2026-05-13T18:00:28.090Z] [SYSTEM] starting job_1778695228090_q2ytk: ./ucore generate subjects/nonexistent_integration_spec_2.json",
+    "[2026-05-13T18:00:27.731Z] [SYSTEM] reconciled job_1778695226511_zjads to failed (server_restarted)"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

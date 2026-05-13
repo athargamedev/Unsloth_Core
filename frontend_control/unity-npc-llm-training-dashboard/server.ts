@@ -1035,23 +1035,37 @@ async function startServer() {
 
   app.get("/api/available-commands", (_req, res) => res.json(commandDefinitions.map(({ build, ...rest }) => rest)));
 
-  app.get("/api/presets", (_req, res) => {
+  const listPresets = () => {
     const presetsDir = path.join(repoRoot, "configs", "presets");
     const presets: Array<{ name: string; description: string }> = [];
+
     try {
       for (const file of fs.readdirSync(presetsDir)) {
-        if (!file.endsWith(".yaml")) continue;
-        const name = file.replace(".yaml", "");
+        if (!(file.endsWith(".yaml") || file.endsWith(".yml"))) continue;
+        const name = file.replace(/\.ya?ml$/, "");
         let description = "";
         try {
           const content = fs.readFileSync(path.join(presetsDir, file), "utf8");
-          const firstLine = content.split("\n").find((l) => l.startsWith("#"));
-          if (firstLine) description = firstLine.replace(/^#\s*/, "").trim();
-        } catch { /* ignore */ }
+          const firstLine = content.split("\n").find((l) => l.trim().startsWith("#"));
+          if (firstLine) description = firstLine.replace(/^\s*#\s*/, "").trim();
+        } catch {
+          // ignore malformed preset files
+        }
         presets.push({ name, description });
       }
-    } catch { /* presets dir may not exist */ }
-    res.json(presets);
+    } catch {
+      // presets dir may not exist
+    }
+
+    return presets.sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  app.get("/api/presets", (_req, res) => {
+    res.json(listPresets());
+  });
+
+  app.get("/api/config/presets", (_req, res) => {
+    res.json(listPresets());
   });
 
   app.post("/api/assistant", async (req, res) => {
@@ -1789,6 +1803,8 @@ async function startServer() {
       enum?: string[];
     };
 
+    const presetOptions = listPresets().map((p) => p.name);
+
     const baseDefaultsByCommand: Record<string, Record<string, FieldSchema>> = {
       "dataset-generate": {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json", description: "Subject spec path" },
@@ -1799,7 +1815,7 @@ async function startServer() {
       },
       train: {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
-        preset: { type: "string", required: false, default: "llama-1b-fast" },
+        preset: { type: "string", required: false, default: "llama-1b-fast", ...(presetOptions.length ? { enum: presetOptions } : {}) },
         "options.learningRate": { type: "string", required: false, default: "2e-4" },
         "options.batchSize": { type: "number", required: false, default: 1 },
         "options.epochs": { type: "number", required: false, default: 3 },
@@ -1808,7 +1824,7 @@ async function startServer() {
       },
       pipeline: {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
-        preset: { type: "string", required: false, default: "llama-1b-fast" },
+        preset: { type: "string", required: false, default: "llama-1b-fast", ...(presetOptions.length ? { enum: presetOptions } : {}) },
         "options.technique": { type: "string", required: false, default: "ollama", enum: ["notebooklm", "ollama", "template", "openai", "anthropic"] },
         "options.track": { type: "boolean", required: false, default: false },
       },

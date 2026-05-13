@@ -146,7 +146,12 @@ export default function App() {
         })(),
         (async () => {
           try {
-            const presetsData = await fetchJson<Array<{ name: string; description: string }>>('/api/presets');
+            let presetsData: Array<{ name: string; description: string }> = [];
+            try {
+              presetsData = await fetchJson<Array<{ name: string; description: string }>>('/api/presets');
+            } catch {
+              presetsData = await fetchJson<Array<{ name: string; description: string }>>('/api/config/presets');
+            }
             setPresets(presetsData);
             const descMap: Record<string, string> = {};
             for (const p of presetsData) descMap[p.name] = p.description;
