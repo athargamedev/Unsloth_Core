@@ -1036,6 +1036,64 @@ export default function App() {
         </div>
       </footer>
 
+      {/* Job Logs Drawer */}
+      <AnimatePresence>
+        {selectedJobForLogs && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/55 z-50 flex justify-end"
+            onClick={() => setSelectedJobForLogs(null)}
+          >
+            <motion.aside
+              initial={{ x: 420 }}
+              animate={{ x: 0 }}
+              exit={{ x: 420 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+              className="w-[420px] max-w-[92vw] h-full bg-surface border-l border-line shadow-2xl flex flex-col"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="p-4 border-b border-line bg-header/80 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[9px] text-accent font-bold uppercase tracking-[0.2em]">Job Logs</div>
+                  <h3 className="text-sm font-bold text-ink-bright truncate">{selectedJobForLogs.name}</h3>
+                  <div className="text-[10px] text-ink/40 font-mono truncate">#{selectedJobForLogs.id}</div>
+                </div>
+                <button onClick={() => setSelectedJobForLogs(null)} className="text-ink/40 hover:text-ink transition-colors">
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-4 border-b border-line bg-bg/40 text-[10px] font-mono text-ink/50 space-y-1">
+                <div>Status: <span className="text-ink-bright">{selectedJobForLogs.status}</span></div>
+                <div>Type: <span className="text-ink-bright">{selectedJobForLogs.type}</span></div>
+                {selectedJobForLogs.command && <div className="truncate">Command: <span className="text-accent">{selectedJobForLogs.command.join(' ')}</span></div>}
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar bg-black/50 p-3 font-mono text-[10px] leading-relaxed">
+                {selectedJobLogLines.length > 0 ? (
+                  selectedJobLogLines.map((line, index) => (
+                    <div key={`${index}-${line.slice(0, 20)}`} className={cn(
+                      "py-0.5 border-b border-white/[0.03] whitespace-pre-wrap break-words",
+                      line.includes('[STDERR]') || line.toLowerCase().includes('error') ? 'text-danger/90' : 'text-ink/70',
+                    )}>
+                      {line}
+                    </div>
+                  ))
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-center text-ink/35 gap-2">
+                    <Terminal className="w-8 h-8 opacity-30" />
+                    <div className="text-xs font-bold uppercase tracking-wider">No logs recorded</div>
+                    <p className="max-w-xs text-[10px] leading-relaxed">This job has no stdout, stderr, or stage log lines in the job registry yet. Running jobs will stream logs here once output is captured.</p>
+                  </div>
+                )}
+              </div>
+            </motion.aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Command Modal */}
       <AnimatePresence>
         {commandModalOpen && selectedCommand && (
