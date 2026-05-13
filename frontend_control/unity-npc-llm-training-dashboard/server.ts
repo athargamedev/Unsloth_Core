@@ -416,6 +416,7 @@ const commandDefinitions: CommandDefinition[] = [
       if (opts.epochs) args.push("--epochs", String(opts.epochs));
       if (opts.rank) args.push("--lora-r", String(opts.rank));
       if (opts.alpha) args.push("--lora-alpha", String(opts.alpha));
+      if (opts.scheduler && ["cosine", "linear", "constant"].includes(String(opts.scheduler))) args.push("--lr-scheduler", String(opts.scheduler));
       return args;
     }, requiredFields: ["spec"] },
   {
@@ -1034,6 +1035,25 @@ async function startServer() {
 
   app.get("/api/available-commands", (_req, res) => res.json(commandDefinitions.map(({ build, ...rest }) => rest)));
 
+  app.get("/api/presets", (_req, res) => {
+    const presetsDir = path.join(repoRoot, "configs", "presets");
+    const presets: Array<{ name: string; description: string }> = [];
+    try {
+      for (const file of fs.readdirSync(presetsDir)) {
+        if (!file.endsWith(".yaml")) continue;
+        const name = file.replace(".yaml", "");
+        let description = "";
+        try {
+          const content = fs.readFileSync(path.join(presetsDir, file), "utf8");
+          const firstLine = content.split("\n").find((l) => l.startsWith("#"));
+          if (firstLine) description = firstLine.replace(/^#\s*/, "").trim();
+        } catch { /* ignore */ }
+        presets.push({ name, description });
+      }
+    } catch { /* presets dir may not exist */ }
+    res.json(presets);
+  });
+
   app.post("/api/assistant", async (req, res) => {
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
     const history = Array.isArray(req.body?.history) ? req.body.history : [];
@@ -1254,12 +1274,36 @@ async function startServer() {
       checks: { ...coreChecks, ...supabaseChecks },
       executionMode: registry.executionMode,
       runningJobs: registry.jobs.filter((job) => job.status === "running").length,
+      processId: process.pid,
       timestamp: isoNow(),
     });
   });
 
   app.get("/api/telemetry", (_req, res) => {
     res.json(buildTelemetryPayload(registry.nodeId));
+  });
+
+  app.get("/api/docs", (_req, res) => {
+    const docsRoot = path.join(repoRoot, "docs");
+    const results: string[] = [];
+    const walk = (dir: string) => {
+      try {
+        for (const entry of fs.readdirSync(dir)) {
+          const full = path.join(dir, entry);
+          const stat = fs.statSync(full);
+          if (stat.isDirectory()) {
+            walk(full);
+          } else if (entry.endsWith(".md") || entry.endsWith(".pdf")) {
+            results.push(path.relative(repoRoot, full));
+          }
+        }
+      } catch { /* directory may not exist */ }
+    };
+    if (fs.existsSync(docsRoot)) walk(docsRoot);
+    // Also include AGENTS.md in root
+    const agentsMd = path.join(repoRoot, "AGENTS.md");
+    if (fs.existsSync(agentsMd)) results.unshift("AGENTS.md");
+    res.json(results);
   });
 
   app.get("/api/tensorboard", (req, res) => {

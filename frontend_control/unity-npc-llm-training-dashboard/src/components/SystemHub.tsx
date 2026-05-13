@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Zap, ExternalLink, Layers, XCircle, Database } from 'lucide-react';
+import { Zap, ExternalLink, Layers, XCircle, Database, Shield } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Card } from './Card';
 import type { AvailableCommand } from '../api';
@@ -47,6 +47,7 @@ export const SystemHub = ({ availableCommands, onTriggerCommand }: SystemHubProp
             {cmd.icon === 'layers' && <Layers className="w-5 h-5" />}
             {cmd.icon === 'x-circle' && <XCircle className="w-5 h-5" />}
             {cmd.icon === 'database' && <Database className="w-5 h-5" />}
+            {cmd.icon === 'shield' && <Shield className="w-5 h-5" />}
           </div>
           <span className="text-[11px] font-bold uppercase tracking-tighter text-ink-bright text-center">{cmd.label}</span>
           <span className="text-[8px] opacity-30 font-mono">READY_EXEC</span>

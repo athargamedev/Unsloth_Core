@@ -23,7 +23,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { fetchJson } from './api';
-import type { AvailableCommand, TrainingConfig, TensorBoardData } from './api';
+import type { AvailableCommand, TrainingConfig, TensorBoardData, HealthCheck } from './api';
 import { useJobs } from './hooks/useJobs';
 import { useSystemStatus } from './hooks/useSystemStatus';
 import { useTelemetry } from './hooks/useTelemetry';
@@ -59,6 +59,7 @@ export default function App() {
   const [datasetViewNpc, setDatasetViewNpc] = useState<string>('');
   const [datasetViewTechnique, setDatasetViewTechnique] = useState<string>('');
   const [availableTechniques, setAvailableTechniques] = useState<Array<{ name: string; train_count: number; val_count: number }>>([]);
+  const [serverPid, setServerPid] = useState<number>(0);
 
   const [trainingConfig, setTrainingConfig] = useState<TrainingConfig>({
     spec: 'subjects/chemistry_instructor.json',
@@ -134,6 +135,12 @@ export default function App() {
         (async () => {
           const logsData = await fetchJson<string[]>('/api/logs');
           setLogs(logsData);
+        })(),
+        (async () => {
+          try {
+            const healthData = await fetchJson<HealthCheck>('/api/health');
+            setServerPid(healthData.processId);
+          } catch {}
         })(),
       ]);
       setUiError(null);
@@ -675,6 +682,7 @@ export default function App() {
                     exportArtifacts={exportArtifacts}
                     trainingConfig={trainingConfig}
                     onGenerateDataset={handleGenerateDataset}
+                    onSelectDataset={handleViewDataset}
                   />
                 </div>
                 {/* Dataset viewer controls */}
@@ -724,7 +732,7 @@ export default function App() {
             <div className="flex justify-between items-center mb-2">
               <span className="text-[10px] font-bold text-ink/40 uppercase tracking-widest">Real-time Log Streams</span>
               <div className="flex gap-2 text-[9px] font-mono text-ink/30">
-                <span>PID: 8842</span>
+                <span>PID: {serverPid}</span>
                 <span className="text-accent underline">DEBUG_ACTIVE</span>
               </div>
             </div>

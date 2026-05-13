@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, BookOpen } from 'lucide-react';
 import { fetchOptionalJson, type AssistantMessage } from '../api';
 
 export const AIAssistant = () => {
@@ -12,10 +12,14 @@ export const AIAssistant = () => {
     },
   ]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [docs, setDocs] = useState<string[]>([]);
 
   useEffect(() => {
     fetchOptionalJson<string[]>('/api/suggestions').then((data) => {
       if (data) setSuggestions(data);
+    });
+    fetchOptionalJson<string[]>('/api/docs').then((data) => {
+      if (data && data.length > 0) setDocs(data);
     });
   }, []);
 
@@ -51,6 +55,8 @@ export const AIAssistant = () => {
     }
   };
 
+  const defaultSuggestion = 'System suggests checking Rank size for QuestGiver LoRA if loss plateau persists.';
+
   return (
     <aside className="w-64 border-r border-line bg-surface flex flex-col overflow-hidden">
       <div className="p-3 border-b border-line bg-panel">
@@ -68,16 +74,29 @@ export const AIAssistant = () => {
             Live Suggestions
           </span>
           <div className="p-2 border border-accent/20 rounded bg-accent/5 text-[10px] text-accent/80 italic leading-snug">
-            {suggestions.length > 0 ? suggestions[Math.floor(Math.random() * suggestions.length)] : 'System suggests checking Rank size for QuestGiver LoRA if loss plateau persists.'}
+            {suggestions.length > 0 ? suggestions[Math.floor(Math.random() * suggestions.length)] : defaultSuggestion}
           </div>
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-[9px] uppercase font-bold text-ink/40 tracking-widest">Active Documentation</span>
-          <div className="p-2 border border-line rounded bg-bg text-[10px] text-ink/60 cursor-help hover:border-accent/40 transition-colors">
-            • dataset_formatting.md<br />
-            • unity_npc_protocol.pdf<br />
-            • dialogue_states_v4.json
+          <span className="text-[9px] uppercase font-bold text-ink/40 tracking-widest flex items-center gap-1">
+            <BookOpen className="w-2 h-2" />
+            Available Documentation
+          </span>
+          <div className="p-2 border border-line rounded bg-bg text-[10px] text-ink/60 space-y-1">
+            {docs.length > 0 ? (
+              docs.map((doc, i) => (
+                <div key={i} className="hover:text-accent cursor-help transition-colors">
+                  • {doc}
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="hover:text-accent cursor-help transition-colors">• AGENTS.md — AI agent reference</div>
+                <div className="hover:text-accent cursor-help transition-colors">• docs/reference/CLI_REFERENCE.md — CLI commands</div>
+                <div className="hover:text-accent cursor-help transition-colors">• docs/integration/FRONTEND_DASHBOARD.md — dashboard guide</div>
+              </>
+            )}
           </div>
         </div>
 

@@ -1,20 +1,61 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Unity NPC LLM Training Dashboard
 
-# Run and deploy your AI Studio app
+Web control plane for Unsloth_Core workflow execution, observability, and realtime monitoring.
 
-This contains everything you need to run your app locally.
+Main technical guide:
+- ../../docs/integration/FRONTEND_DASHBOARD.md
 
-View your app in AI Studio: https://ai.studio/apps/00e3d1c4-eb40-4f78-aa61-53c5203c55e4
+## What this dashboard now guarantees
 
-## Run Locally
+- Visibility of dashboard-started jobs and externally-started CLI jobs.
+- WebSocket resilience with replay and heartbeat handling.
+- Schema-driven command forms with required-field validation.
+- Deterministic stage/progress behavior (no heuristic progress buckets).
+- Unit + integration tests for workflow truth and lifecycle transitions.
 
-**Prerequisites:**  Node.js
+## Quick Start
 
+From this directory:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm install
+npm run lint
+npm run test
+npm run dev
+```
+
+Open:
+- http://localhost:3100
+
+## Environment
+
+Create `.env` (or export vars):
+
+```env
+PORT=3100
+GEMINI_API_KEY=your_key_here
+```
+
+## Useful API endpoints
+
+- GET `/api/jobs`
+- POST `/api/jobs/sync`
+- GET `/api/processes/discover`
+- GET `/api/events?since=<eventId>`
+- GET `/api/available-commands`
+- GET `/api/command-schemas`
+
+## Test Commands
+
+- `npm run test` — all tests
+- `npm run test:unit` — `progressTruth.test.ts`
+- `npm run test:integration` — API integration tests
+
+## Files to know
+
+- `server.ts` — backend runtime, APIs, websocket, orchestration
+- `src/hooks/useWebSocket.ts` — reconnect/replay handling
+- `src/App.tsx` — schema-driven command UI + validation
+- `progressTruth.ts` — stage/progress truth logic
+- `progressTruth.test.ts` — unit tests
+- `api.jobs.integration.test.ts` — integration tests

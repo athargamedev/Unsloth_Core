@@ -67,6 +67,7 @@ export interface HealthCheck {
   checks: Record<string, boolean>;
   executionMode: 'local' | 'remote';
   runningJobs: number;
+  processId: number;
   timestamp: string;
 }
 

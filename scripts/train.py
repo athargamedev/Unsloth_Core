@@ -98,212 +98,340 @@ def check_promotion_rules(training_loss: float, config: dict, num_train_examples
         return True, []
 
     with open(rules_path) as f:
-        rules = yaml.safe_load(f)
+        rules = yaml.safe_load(f) or {}
 
-    thresholds = rules.get("thresholds", {})
     failures = []
+    loss_threshold = rules.get("max_training_loss", None)
+    if loss_threshold is not None:
+        if training_loss > loss_threshold:
+            failures.append(
+                f"Training loss {training_loss:.4f} exceeds threshold {loss_threshold:.4f}"
+            )
 
-    max_loss = thresholds.get("max_training_loss")
-    if max_loss is not None and training_loss > max_loss:
-        failures.append(f"Training loss {training_loss:.4f} exceeds max threshold {max_loss}")
-
-    min_batch = thresholds.get("min_eff_batch_size")
-    if min_batch is not None:
-        eff = (config.get("training", {}).get("batch_size", 1)
-               * config.get("training", {}).get("gradient_accumulation_steps", 8))
-        if eff < min_batch:
-            failures.append(f"Effective batch size {eff} < minimum {min_batch}")
-
-    min_examples = thresholds.get("min_train_examples")
-    if min_examples is not None and num_train_examples < min_examples:
-        failures.append(f"Training examples {num_train_examples} < minimum {min_examples}")
+    min_examples = rules.get("min_train_examples", None)
+    if min_examples is not None:
+        if num_train_examples < min_examples:
+            failures.append(
+                f"Only {num_train_examples} training examples, minimum is {min_examples}"
+            )
 
     return len(failures) == 0, failures
 
 
-def load_config(config_path, preset=None, overrides=None):
-    """Load a YAML config, apply preset overrides, then CLI overrides."""
-    with open(config_path) as f:
-        config = yaml.safe_load(f)
+def log_config_snapshot(config, run_dir):
+    """Write a frozen snapshot of the merged config to the run directory."""
+    snapshot_path = os.path.join(run_dir, "config_snapshot.yaml")
+    try:
+        with open(snapshot_path, "w") as f:
+            yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+    except Exception as e:
+        print(f"  [WARN] Could not write config snapshot: {e}")
 
-    # Apply preset overrides from YAML file
+
+def estimate_vram(config: dict) -> tuple[float, str]:
+    """Rough VRAM estimate based on model size and LoRA config.
+
+    Returns (estimated_gb, notes).
+    """
+    model_name = config.get("model", "unknown")
+    lora_r = config.get("lora_r", 16)
+    max_seq = config.get("max_seq_length", 2048)
+    packing = config.get("packing", True)
+
+    # Rough per-parameter-size VRAM factors (bnb-4bit)
+    estimated_gb = 8.0  # baseline for 1.7B-3B models
+    if "8b" in model_name.lower() or "8B" in model_name:
+        estimated_gb = 14.0
+    elif "7b" in model_name.lower() or "7B" in model_name:
+        estimated_gb = 12.0
+    elif "3b" in model_name.lower() or "3B" in model_name:
+        estimated_gb = 8.0
+    elif "1b" in model_name.lower() or "1B" in model_name:
+        estimated_gb = 4.0
+
+    # Adjust for rank
+    estimated_gb += (lora_r - 16) * 0.1
+    # Adjust for seq len
+    estimated_gb *= max_seq / 2048
+    # Packing reduces memory
+    if packing:
+        estimated_gb *= 0.85
+
+    notes = "Optimized for 24GB+ cards" if estimated_gb > 20 else "Fits 12GB+ cards"
+    return round(estimated_gb, 1), notes
+
+
+def get_model_name_from_spec(spec_path):
+    """Extract a model name from the subject spec JSON."""
+    spec_path = Path(spec_path)
+    if not spec_path.exists():
+        return None
+    try:
+        with open(spec_path) as f:
+            spec = json.load(f)
+        return spec.get("model", spec.get("llm", {}).get("model_name", None))
+    except (json.JSONDecodeError, KeyError):
+        return None
+
+
+def get_config_from_spec(spec_path, preset=None, overrides=None):
+    """Build a full training config from a subject spec JSON.
+
+    The spec can define a base model, training parameters, and dataset technique.
+    Preset YAML stacks on top; CLI overrides win.
+    """
+    spec_path = Path(spec_path)
+    if not spec_path.exists():
+        print(f"Error: Spec file not found: {spec_path}")
+        sys.exit(1)
+
+    with open(spec_path) as f:
+        spec = json.load(f)
+
+    npc_key = spec_path.stem
+
+    # Determine technique from spec or default
+    technique = spec.get("technique", spec.get("dataset", {}).get("technique", "notebooklm"))
+
+    # Base model from spec (model_id) or spec.llm.model_name
+    model_id = (
+        spec.get("model")
+        or spec.get("model_id")
+        or spec.get("llm", {}).get("model_name")
+        or spec.get("llm", {}).get("base_model")
+        or "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+    )
+
+    # Dataset path
+    datasets_root = PROJECT_ROOT / "datasets" / npc_key / technique
+    train_path = datasets_root / "train_clean.jsonl"
+    if not train_path.exists():
+        train_path = datasets_root / "train.jsonl"
+
+    # Output dir
+    output_dir = PROJECT_ROOT / "outputs" / npc_key
+
+    config = {
+        "npc_key": npc_key,
+        "model": model_id,
+        "dataset_path": str(train_path),
+        "technique": technique,
+        "output_dir": str(output_dir),
+        "use_lora": True,
+        "unsloth": True,
+        "training": {
+            "batch_size": 2,
+            "gradient_accumulation_steps": 8,
+            "num_epochs": 3,
+            "learning_rate": 2e-4,
+            "lr_scheduler_type": "cosine",
+            "max_seq_length": 2048,
+            "warmup_steps": 10,
+            "packing": True,
+            "train_on_responses_only": True,
+            "save_steps": 50,
+            "eval_steps": 50,
+        },
+        "lora": {
+            "r": 16,
+            "alpha": 32,
+            "dropout": 0.0,
+        },
+        "logging": {
+            "enable_tensorboard": True,
+            "enable_wandb": False,
+        },
+    }
+
     if preset:
         preset_config = load_preset(preset)
         config = deep_merge(config, preset_config)
 
-    # Apply CLI overrides
     if overrides:
-        for key, value in overrides.items():
-            if value is not None:
-                if key in ("model",):
-                    config[key] = value
-                elif key in ("batch_size", "gradient_accumulation_steps", "num_epochs",
-                             "max_steps", "learning_rate", "weight_decay", "warmup_steps",
-                             "save_steps", "eval_steps", "max_seq_length", "packing",
-                             "train_on_responses_only"):
-                    config.setdefault("training", {})[key] = value
-                elif key in ("lora_r", "lora_alpha", "lora_dropout"):
-                    config.setdefault("lora", {})[key] = value
-                elif key in ("output_dir",):
-                    config.setdefault("training", {})["output_dir"] = value
-
-    # Fill defaults
-    training = config.setdefault("training", {})
-    training.setdefault("num_epochs", 3)
-    training.setdefault("learning_rate", 2e-4)
-    training.setdefault("batch_size", 1)
-    training.setdefault("gradient_accumulation_steps", 8)
-    training.setdefault("warmup_steps", 10)
-    training.setdefault("save_steps", 50)
-    training.setdefault("eval_steps", 50)
-    training.setdefault("weight_decay", 0.01)
-    training.setdefault("max_seq_length", 2048)
-    training.setdefault("packing", True)
-    training.setdefault("train_on_responses_only", True)
-    training.setdefault("output_dir", str(PROJECT_ROOT / "outputs" / "default"))
-    training.setdefault("max_steps", -1)
-
-    lora = config.setdefault("lora", {})
-    lora.setdefault("lora_r", 16)
-    lora.setdefault("lora_alpha", 32)
-    lora.setdefault("lora_dropout", 0.0)
-    lora.setdefault("target_modules",
-                     "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj")
-
-    config.setdefault("wandb", {})
-    config["wandb"].setdefault("enabled", False)
-    config["wandb"].setdefault("project", "unsloth-core")
-    config["wandb"].setdefault("entity", None)
-    config["wandb"].setdefault("tags", [])
-
-    config.setdefault("logging", {})
-    config["logging"].setdefault("enable_tensorboard", True)
-
-    # Resolve relative output_dir against PROJECT_ROOT
-    output_dir = training.get("output_dir", "")
-    if output_dir and not Path(output_dir).is_absolute():
-        training["output_dir"] = str(PROJECT_ROOT / output_dir)
+        # Only set non-None overrides
+        clean_overrides = {k: v for k, v in overrides.items() if v is not None}
+        # Map CLI overrides to correct config paths
+        override_map = {
+            "model": ["model"],
+            "batch_size": ["training", "batch_size"],
+            "gradient_accumulation_steps": ["training", "gradient_accumulation_steps"],
+            "num_epochs": ["training", "num_epochs"],
+            "learning_rate": ["training", "learning_rate"],
+            "lr_scheduler_type": ["training", "lr_scheduler_type"],
+            "max_seq_length": ["training", "max_seq_length"],
+            "output_dir": ["output_dir"],
+            "lora_r": ["lora", "r"],
+            "lora_alpha": ["lora", "alpha"],
+            "lora_dropout": ["lora", "dropout"],
+            "packing": ["training", "packing"],
+            "train_on_responses_only": ["training", "train_on_responses_only"],
+            "neftune_noise_alpha": ["training", "neftune_noise_alpha"],
+            "weight_decay": ["training", "weight_decay"],
+            "warmup_steps": ["training", "warmup_steps"],
+        }
+        for key, value in clean_overrides.items():
+            if key in override_map:
+                path_keys = override_map[key]
+                target = config
+                for pk in path_keys[:-1]:
+                    if pk not in target:
+                        target[pk] = {}
+                    target = target[pk]
+                target[path_keys[-1]] = value
 
     return config
 
 
-def print_config(config, preset_name=None):
-    """Pretty-print the resolved training configuration."""
-    print("=" * 60)
-    print("  TRAINING CONFIGURATION")
-    if preset_name:
-        desc = get_preset_description(preset_name)
-        print(f"  Preset: {preset_name} — {desc}")
-    print("=" * 60)
-    print(f"  Model:       {config.get('model', '(not set)')}")
-    training = config.get("training", {})
-    print(f"  Output:      {training.get('output_dir', '(not set)')}")
-    print(f"  Max seq len: {training.get('max_seq_length', 2048)}")
-    print(f"  Batch size:  {training.get('batch_size', 1)}")
-    print(f"  Grad accum:  {training.get('gradient_accumulation_steps', 8)}")
-    eff = training.get("batch_size", 1) * training.get("gradient_accumulation_steps", 8)
-    print(f"  Eff. batch:  {eff}")
-    print(f"  Epochs:      {training.get('num_epochs', 3)}")
-    if training.get("max_steps", -1) > 0:
-        print(f"  Max steps:   {training['max_steps']}")
-    print(f"  LR:          {training.get('learning_rate', 2e-4)}")
-    print(f"  Packing:     {training.get('packing', True)}")
-    print(f"  Train resp:  {training.get('train_on_responses_only', True)}")
-    lora = config.get("lora", {})
-    print(f"  LoRA r:      {lora.get('lora_r', 16)}")
-    print(f"  LoRA alpha:  {lora.get('lora_alpha', 32)}")
-    print(f"  LoRA drop:   {lora.get('lora_dropout', 0.0)}")
-    print(f"  Targets:     {lora.get('target_modules', 'all')}")
-    wb = config.get("wandb", {})
-    print(f"  W&B:         {'enabled' if wb.get('enabled', False) else 'disabled'}{' → ' + wb.get('project', 'unsloth-core') if wb.get('enabled', False) else ''}")
-    print("=" * 60)
+def load_config(config_path, preset=None, overrides=None):
+    """Load and resolve a YAML config, merging presets and CLI overrides."""
+    config_path = Path(config_path)
+    if not config_path.exists():
+        print(f"Error: Config file not found: {config_path}")
+        sys.exit(1)
+
+    with open(config_path) as f:
+        config = yaml.safe_load(f) or {}
+
+    if preset:
+        preset_config = load_preset(preset)
+        config = deep_merge(config, preset_config)
+
+    if overrides:
+        for key, value in overrides.items():
+            if value is not None:
+                if key in ("batch_size", "gradient_accumulation_steps", "num_epochs", "learning_rate",
+                           "max_seq_length", "output_dir", "model"):
+                    config["training"][key] = value
+                elif key in ("lora_r", "lora_alpha", "lora_dropout"):
+                    config["lora"][key.replace("lora_", "")] = value
+                elif key == "lr_scheduler_type":
+                    config["training"]["lr_scheduler_type"] = value
+                elif key == "packing":
+                    config["training"]["packing"] = value
+                elif key == "train_on_responses_only":
+                    config["training"]["train_on_responses_only"] = value
+                elif key == "neftune_noise_alpha":
+                    config["training"]["neftune_noise_alpha"] = value
+                elif key == "weight_decay":
+                    config["training"]["weight_decay"] = value
+                elif key == "warmup_steps":
+                    config["training"]["warmup_steps"] = value
+                else:
+                    config[key] = value
+
+    return config
 
 
-def prepare_dataset(data_path, tokenizer, config):
-    """Load and prepare the dataset with packing, chat template."""
-    from datasets import Dataset, load_dataset
-    from unsloth.chat_templates import get_chat_template
-
-    training = config.get("training", {})
-
-    print(f"\n[dataset] Loading: {data_path}")
-
-    # Load JSONL
-    if data_path.endswith(".jsonl"):
-        dataset = load_dataset("json", data_files=data_path, split="train")
-    elif data_path.endswith(".json"):
-        dataset = load_dataset("json", data_files=data_path, split="train")
-    else:
-        dataset = load_dataset(data_path, split="train")
-
-    print(f"[dataset] Loaded {len(dataset)} examples")
-
-    # Apply chat template to tokenizer (Unsloth 2026.5.2: get_chat_template modifies tokenizer, not dataset)
-    print("[dataset] Applying chatml template to tokenizer")
-    tokenizer = get_chat_template(
-        tokenizer,
-        chat_template="chatml",
-    )
-
-    # Convert messages column to 'text' via tokenizer's chat_template (standard Unsloth pattern)
-    def _format_chat(example):
-        example["text"] = tokenizer.apply_chat_template(
-            example["messages"], tokenize=False, add_generation_prompt=False,
+def count_training_examples(path):
+    """Count JSONL lines efficiently."""
+    if not os.path.exists(path):
+        return 0
+    try:
+        result = subprocess.run(
+            ["wc", "-l", path], capture_output=True, text=True, timeout=10
         )
-        return example
-
-    print(f"[dataset] Converting messages to text via apply_chat_template")
-    dataset = dataset.map(_format_chat)
-    print(f"[dataset] Text sample: {dataset[0]['text'][:120]}...")
-
-    # Check for validation split
-    val_path = str(paths.infer_validation_path(data_path))
-    eval_dataset = None
-    if val_path and os.path.exists(val_path):
-        print(f"[dataset] Found validation set: {val_path}")
-        eval_dataset = load_dataset("json", data_files=val_path, split="train")
-        eval_dataset = eval_dataset.map(_format_chat)
-
-    return dataset, eval_dataset, tokenizer
+        return int(result.stdout.strip().split()[0])
+    except Exception:
+        return 0
 
 
-def setup_model_and_tokenizer(config):
-    """Load the base model and tokenizer with 4-bit quantization via Unsloth."""
+def get_run_output_path(output_dir):
+    """Create a run-specific output directory with an auto-incrementing run ID.
+
+    Returns (run_dir_path, run_id) where run_id is like 'run_001'.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Find highest existing run number
+    existing_runs = [d for d in output_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
+    max_num = 0
+    for d in existing_runs:
+        try:
+            num = int(d.name.split("_")[1])
+            max_num = max(max_num, num)
+        except (IndexError, ValueError):
+            pass
+
+    run_id = max_num + 1
+    run_dir = output_dir / f"run_{run_id:03d}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    return str(run_dir), f"run_{run_id:03d}"
+
+
+def get_model_and_tokenizer(config):
+    """Load the base model and tokenizer via Unsloth."""
     from unsloth import FastLanguageModel
 
-    training = config.get("training", {})
-    lora = config.get("lora", {})
-
     model_name = config.get("model", "unsloth/Llama-3.2-3B-Instruct-bnb-4bit")
-    max_seq_length = training.get("max_seq_length", 2048)
-    load_in_4bit = training.get("load_in_4bit", True)
+    max_seq_length = config.get("training", {}).get("max_seq_length", 2048)
+    use_lora = config.get("use_lora", True)
+    lora_config = config.get("lora", {})
 
-    print(f"\n[model] Loading: {model_name}")
-    print(f"[model] Max seq len: {max_seq_length}")
-    print(f"[model] 4-bit: {load_in_4bit}")
+    print(f"  Loading model: {model_name}")
+    print(f"  Max seq length: {max_seq_length}")
+    if use_lora:
+        print(f"  LoRA rank: {lora_config.get('r', 16)}, alpha: {lora_config.get('alpha', 32)}")
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model_name,
         max_seq_length=max_seq_length,
-        dtype=None,  # Auto-detect
-        load_in_4bit=load_in_4bit,
+        dtype=None,
+        load_in_4bit=True,
     )
 
-    # Configure LoRA
-    print(f"[model] Adding LoRA: r={lora['lora_r']}, alpha={lora['lora_alpha']}")
-    target_modules = [m.strip() for m in lora.get("target_modules", "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj").split(",")]
-    model = FastLanguageModel.get_peft_model(
-        model,
-        r=lora.get("lora_r", 16),
-        lora_alpha=lora.get("lora_alpha", 32),
-        lora_dropout=lora.get("lora_dropout", 0.0),
-        target_modules=target_modules,
-        use_gradient_checkpointing="unsloth",
-        random_state=42,
-        max_seq_length=max_seq_length,
-    )
+    if use_lora:
+        model = FastLanguageModel.get_peft_model(
+            model,
+            r=lora_config.get("r", 16),
+            target_modules=[
+                "q_proj", "k_proj", "v_proj", "o_proj",
+                "gate_proj", "up_proj", "down_proj",
+            ],
+            lora_alpha=lora_config.get("alpha", 32),
+            lora_dropout=lora_config.get("dropout", 0),
+            bias="none",
+            use_gradient_checkpointing="unsloth",
+            random_state=42,
+            use_rslora=False,
+            loftq_config=None,
+        )
 
     return model, tokenizer
+
+
+def load_dataset_from_jsonl(path, tokenizer, config):
+    """Load and tokenize a JSONL dataset."""
+    from datasets import Dataset
+
+    max_seq_length = config.get("training", {}).get("max_seq_length", 2048)
+    packing = config.get("training", {}).get("packing", True)
+
+    print(f"  Loading dataset from: {path}")
+    if not os.path.exists(path):
+        print(f"  [ERROR] Dataset not found: {path}")
+        sys.exit(1)
+
+    rows = []
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    row = json.loads(line)
+                    text = row.get("text", "")
+                    if text:
+                        rows.append({"text": text})
+                except json.JSONDecodeError:
+                    continue
+
+    if not rows:
+        print("  [ERROR] No valid training examples found in dataset.")
+        sys.exit(1)
+
+    print(f"  Loaded {len(rows)} training examples")
+    return Dataset.from_list(rows)
 
 
 def run_training(model, tokenizer, dataset, eval_dataset, config):
@@ -316,10 +444,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
     output_dir = training.get("output_dir", str(PROJECT_ROOT / "outputs" / "default"))
     os.makedirs(output_dir, exist_ok=True)
 
-    effective_batch = training.get("batch_size", 1) * training.get("gradient_accumulation_steps", 8)
-    print(f"\n[train] Effective batch size: {effective_batch}")
-
-    # Build report_to list
+    # Report targets
     report_targets = []
     if config.get("logging", {}).get("enable_tensorboard", True):
         report_targets.append("tensorboard")
@@ -335,6 +460,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
         gradient_accumulation_steps=training.get("gradient_accumulation_steps", 8),
         warmup_steps=training.get("warmup_steps", 10),
         learning_rate=training.get("learning_rate", 2e-4),
+        lr_scheduler_type=training.get("lr_scheduler_type", "cosine"),
         weight_decay=training.get("weight_decay", 0.01),
         neftune_noise_alpha=training.get("neftune_noise_alpha", None),
         logging_steps=1,
@@ -367,96 +493,47 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
     )
 
     # Apply train_on_responses_only to mask user tokens in loss (Unsloth 2026.5.2 API)
-    if training.get("train_on_responses_only", True):
-        from unsloth.chat_templates import train_on_responses_only as apply_toro
-        print("[train] Applying train_on_responses_only")
-        trainer = apply_toro(
-            trainer,
-            instruction_part="<|im_start|>user\n",
-            response_part="<|im_start|>assistant\n",
-            tokenizer=tokenizer,
-        )
+    if training.get("train_on_responses_only", False) and hasattr(tokenizer, "apply_chat_template"):
+        print("  [INFO] Applying train_on_responses_only")
+        trainer.train_on_responses_only()
 
-    print(f"\n[train] Starting training (output: {output_dir})")
-    print(f"[train] {'=' * 50}")
-    trainer_stats = trainer.train()
+    print(f"  Starting training ({training.get('num_epochs', 3)} epochs, {training.get('batch_size', 1)} batch)...")
+    train_result = trainer.train()
 
-    print(f"\n[train] Training complete!")
-    print(f"[train] Final loss: {trainer_stats.training_loss:.4f}")
-
-    # Save the fine-tuned LoRA adapter
-    print(f"\n[train] Saving LoRA adapter to {output_dir}")
-    model.save_pretrained(output_dir)
+    # Save the final model
+    print("  Saving model...")
+    trainer.save_model(output_dir)
     tokenizer.save_pretrained(output_dir)
 
-    return output_dir, trainer_stats
+    # Save training metrics
+    metrics = {}
+    if train_result:
+        metrics = train_result.metrics
+    with open(os.path.join(output_dir, "training_metrics.json"), "w") as f:
+        json.dump(metrics, f, indent=2, default=str)
+
+    return trainer, metrics
 
 
-def export_to_gguf(model, tokenizer, output_dir, quantization="q4_k_m"):
-    """Export the fine-tuned model to GGUF format using conventions from _config/paths.
-    
-    Uses a temp directory because save_pretrained_gguf writes to a directory,
-    not a single file. The generated .gguf is then moved to the final path.
-    """
-    import json
+def export_to_gguf(model, tokenizer, config, output_path):
+    """Export the fine-tuned model to GGUF format."""
+    from unsloth import FastLanguageModel
 
-    # Resolve run output dirs back to their owning NPC key.
-    try:
-        npc_key, adapter_dir = paths.resolve_adapter_dir(output_dir)
-    except FileNotFoundError:
-        adapter_dir = Path(output_dir)
-        npc_key = adapter_dir.parent.parent.name if adapter_dir.parent.name == "runs" else adapter_dir.name
-    # Model ID — try to read from adapter_config, fall back to default
-    model_id = "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
-    adapter_config = adapter_dir / "adapter_config.json"
-    if adapter_config.exists():
-        try:
-            with open(adapter_config) as f:
-                cfg = json.load(f)
-            model_id = cfg.get("base_model_name_or_path", model_id)
-        except Exception:
-            pass
+    quantization = config.get("export", {}).get("quantization", "q4_k_m")
 
-    def _do_export(quant):
-        """Internal: save to temp dir, move result to final path."""
-        gguf_path = paths.export_gguf_path(npc_key, model_id, quant)
-        gguf_path.parent.mkdir(parents=True, exist_ok=True)
+    print(f"  Exporting to GGUF (quant={quantization})...")
+    print(f"  Output: {output_path}")
 
-        with tempfile.TemporaryDirectory(prefix=f"gguf_{npc_key}_") as tmpdir:
-            print(f"[export] Generating GGUF ({quant}) in temp directory...")
-            model.save_pretrained_gguf(
-                tmpdir,
-                tokenizer=tokenizer,
-                quantization_method=quant,
-            )
-            gguf_files = sorted(Path(tmpdir).glob("*.gguf"))
-            if not gguf_files:
-                print(f"[export] ⚠  No GGUF file generated for {quant}, skipping")
-                return None
-            shutil.move(str(gguf_files[0]), str(gguf_path))
+    FastLanguageModel.for_inference(model)
 
-        size = gguf_path.stat().st_size
-        if size > 1024 * 1024 * 1024:
-            print(f"[export] → {gguf_path.name} ({size / 1e9:.2f} GB)")
-        else:
-            print(f"[export] → {gguf_path.name} ({size / 1e6:.0f} MB)")
-        return str(gguf_path)
-
-    print(f"\n[export] NPC: {npc_key}, Model: {model_id}")
-    quant_path = _do_export(quantization)
-    f16_path = _do_export("f16")
-
-    print(f"[export] Export complete!")
-    return quant_path or f16_path
-
-
-def generate_dataset_from_spec(spec_path, output_path=None):
-    """Refuse implicit template generation when no dataset exists."""
-    raise RuntimeError(
-        "No existing dataset found. Generate one explicitly with "
-        "scripts/generate_dataset.py --technique notebooklm --notebooklm-input <export.jsonl>, "
-        "--technique ollama, or --technique template."
+    model.push_to_hub_gguf(
+        str(Path(output_path).parent),
+        tokenizer,
+        quantization,
     )
+
+    gguf_files = list(Path(output_path).parent.glob("*.gguf"))
+    return gguf_files
 
 
 def main():
@@ -466,22 +543,13 @@ def main():
     parser.add_argument("config_or_spec", nargs="?",
                         help="Path to YAML config or subject spec (with --from-spec)")
     parser.add_argument("--from-spec", action="store_true",
-                        help="Treat config_or_spec as a subject spec and auto-generate dataset")
-    parser.add_argument("--remote", choices=["colab"],
-                        help="Generate remote training notebook instead of training locally")
-    parser.add_argument("--drive-data-path", type=str, default=None,
-                        help="Google Drive path to dataset JSONL for Colab drive mode. "
-                             "Sets remote to 'colab' implicitly.")
-    parser.add_argument("--drive-gguf-dir", type=str, default=None,
-                        help="Google Drive directory to save GGUF exports. "
-                             "Defaults to /content/drive/MyDrive/Unsloth/gguf/")
+                        help="Interpret config_or_spec as a subject spec JSON")
 
-    # Data
-    parser.add_argument("--data", "-d", help="Training data path (JSONL or HF dataset)")
-    parser.add_argument("--val-data", help="Validation data path (optional)")
+    # Logging / output
+    parser.add_argument("--debug", action="store_true", help="Enable debug output")
+    parser.add_argument("--quiet", action="store_true", help="Suppress non-essential output")
 
-    # Model
-    parser.add_argument("--model", "-m", help="HuggingFace model ID")
+    # Preset
     available_presets = get_available_presets()
     parser.add_argument("--preset", choices=available_presets if available_presets else None,
                         help="Training preset (overrides YAML defaults)")
@@ -501,6 +569,9 @@ def main():
     parser.add_argument("--neftune", type=float, dest="neftune_noise_alpha", help="NEFTune noise alpha")
     parser.add_argument("--weight-decay", type=float, dest="weight_decay", help="Weight decay")
     parser.add_argument("--warmup", type=int, dest="warmup_steps", help="Warmup steps")
+    parser.add_argument("--lr-scheduler", dest="lr_scheduler_type",
+                        choices=["cosine", "linear", "constant"],
+                        help="Learning rate scheduler type")
 
     # Features
     parser.add_argument("--packing", type=lambda x: x.lower() == "true",
@@ -517,79 +588,28 @@ def main():
 
     # Export
     parser.add_argument("--export-gguf", action="store_true",
-                        help="Export merged model to full GGUF after training")
-    parser.add_argument("--export-lora", action="store_true",
-                        help="Export only the LoRA adapter as GGUF (for LLMUnity runtime loading)")
-    parser.add_argument("--quantization", default="q4_k_m",
-                        help="GGUF quantization (default: q4_k_m)")
-
-    # Validation/config display
-    parser.add_argument("--show-presets", action="store_true",
-                        help="Show available presets and exit")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Print config and exit without training")
-    parser.add_argument("--tune", action="store_true",
-                        help="Run hyperparameter optimization (grid search)")
+                        help="Export trained model to GGUF after training")
+    parser.add_argument("--quantization", default=None, choices=["q4_k_m", "q5_k_m", "q8_0", "f16"],
+                        help="GGUF quantization type (default: q4_k_m)")
 
     args = parser.parse_args()
 
-    # Show presets and exit
-    if args.show_presets:
-        print("Available training presets:\n")
-        for name in get_available_presets():
-            desc = get_preset_description(name)
-            print(f"  {name:15s}  {desc}")
-        return
-
-    # Determine config path and data path
-    npc_key = "default"
-    if args.config_or_spec and args.from_spec:
-        # Load spec early for npc_key and dataset auto-detection
-        with open(args.config_or_spec) as f:
-            spec = json.load(f)
-        npc_key = spec.get("npc_key", "default")
-        # Auto-detect dataset if not explicitly provided
-        if not args.data:
-            detected = paths.autodetect_dataset(npc_key)
-            if detected:
-                technique, train_path, _ = detected
-                data_path = str(train_path)
-                print(f"[auto] Using existing dataset technique '{technique}': {data_path}")
-            else:
-                try:
-                    data_path = generate_dataset_from_spec(args.config_or_spec)
-                except RuntimeError as exc:
-                    print(f"Error: {exc}")
-                    sys.exit(2)
-        else:
-            data_path = args.data
-        config_path = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"
-        if not config_path.exists():
-            print(f"Error: Base config not found at {config_path}")
-            sys.exit(1)
-    elif args.config_or_spec and args.config_or_spec.endswith((".yaml", ".yml")):
-        config_path = args.config_or_spec
-        data_path = args.data
-    else:
-        # Direct CLI usage with no config file
-        config_path = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"
-        data_path = args.data or args.config_or_spec
-        if not config_path.exists():
-            print("Error: No config.yaml found. Provide a config path or subject spec.")
-            parser.print_help()
-            sys.exit(1)
-
-    if not data_path:
-        print("Error: No training data specified. Use --data or --from-spec.")
+    # ── Dispatch ────────────────────────────────────────────────────────
+    if not args.config_or_spec:
+        parser.print_help()
         sys.exit(1)
 
-    # Build overrides from CLI args
+    config_path = args.config_or_spec
+
+    # Determine technique if --from-spec is used (also used for dataset path decisions)
+    # Build cli_overrides for get_config_from_spec
     cli_overrides = {
-        "model": args.model,
+        "model": args.model if hasattr(args, 'model') else None,
         "batch_size": args.batch_size,
         "gradient_accumulation_steps": args.gradient_accumulation_steps,
         "num_epochs": args.num_epochs,
         "learning_rate": args.learning_rate,
+        "lr_scheduler_type": args.lr_scheduler_type,
         "max_seq_length": args.max_seq_length,
         "output_dir": args.output,
         "lora_r": args.lora_r,
@@ -602,355 +622,152 @@ def main():
         "warmup_steps": args.warmup_steps,
     }
 
-    # Load and resolve config
-    config = load_config(config_path, preset=args.preset, overrides=cli_overrides)
+    if args.from_spec:
+        config = get_config_from_spec(config_path, preset=args.preset, overrides=cli_overrides)
+    else:
+        # Standard load_config for YAML
+        config = load_config(config_path, preset=args.preset, overrides=cli_overrides)
 
     if args.no_tensorboard:
         config["logging"]["enable_tensorboard"] = False
 
     # CLI wandb override
-    if args.wandb is not None:
-        config["wandb"]["enabled"] = args.wandb
-    if args.disable_wandb is not None:
-        config["wandb"]["enabled"] = not args.disable_wandb
+    if args.wandb:
+        config["wandb"] = config.get("wandb", {})
+        config["wandb"]["enabled"] = True
+    elif args.disable_wandb:
+        config["wandb"] = config.get("wandb", {})
+        config["wandb"]["enabled"] = False
 
-    # ── Run ID experiment tracking ──────────────────────────────────────
-    # Determine NPC key from output path or data path
-    if args.output:
-        npc_key = Path(args.output).name
-    elif args.from_spec and args.config_or_spec:
-        # npc_key already loaded from spec above
-        pass
+    # Print config summary
+    npc_key = config.get("npc_key", "unknown")
+    model_name = config.get("model", "unknown")
+    technique = config.get("technique", "unknown")
+    lora_r = config.get("lora", {}).get("r", config.get("training", {}).get("lora_r", "?"))
+    lora_alpha_val = config.get("lora", {}).get("alpha", config.get("training", {}).get("lora_alpha", "?"))
+    vram_gb, vram_notes = estimate_vram(config)
 
-    # Generate a unique run ID and override the output directory
-    run_id = paths.generate_run_id(npc_key, args.preset or "base")
-    run_output_dir = paths.run_dir(npc_key, run_id)
+    print(f"\n{'='*60}")
+    print(f"  Unsloth Training Launcher")
+    print(f"{'='*60}")
+    print(f"  NPC:            {npc_key}")
+    print(f"  Model:          {model_name}")
+    print(f"  Technique:      {technique}")
+    print(f"  LoRA Rank:      {lora_r}")
+    print(f"  LoRA Alpha:     {lora_alpha_val}")
+    print(f"  LR Scheduler:   {config.get('training', {}).get('lr_scheduler_type', 'cosine')}")
+    print(f"  Estimated VRAM: {vram_gb}GB ({vram_notes})")
+    print(f"  Preset:         {args.preset or 'none'}")
+    print(f"  W&B:            {'enabled' if config.get('wandb', {}).get('enabled') else 'disabled'}")
+    print(f"  Export GGUF:    {'yes' if args.export_gguf else 'no'}")
+    print(f"{'='*60}\n")
 
-    # Override output_dir with run-specific path (before printing config)
-    config["training"]["output_dir"] = str(run_output_dir)
-
-    print_config(config, preset_name=args.preset)
-    print(f"  Run ID:      {run_id}")
-    print("=" * 60)
-
-    if args.dry_run:
-        print("\n[Dry run] Configuration looks good. Pass --data to train.")
-        return
-
-    # Create the run-specific output directory
-    os.makedirs(run_output_dir, exist_ok=True)
-
-    # Save frozen config for reproducibility
-    frozen_config_path = run_output_dir / "config.yaml"
-    with open(frozen_config_path, "w") as f:
-        yaml.dump(config, f, default_flow_style=False)
-
-    # Create/update latest symlink
-    latest_link = paths.output_dir(npc_key) / "latest"
-    if latest_link.exists() or latest_link.is_symlink():
-        latest_link.unlink()
-    os.symlink(f"runs/{run_id}", str(latest_link), target_is_directory=True)
-
-    # ── W&B Initialization ──────────────────────────────────────────────
-    if config.get("wandb", {}).get("enabled", False):
-        import wandb
-        wb_config = config["wandb"]
-        _train_cfg = config.get("training", {})
-        _lora_cfg = config.get("lora", {})
-        wandb.init(
-            project=wb_config.get("project", "unsloth-core"),
-            entity=wb_config.get("entity", None),
-            config={
-                "model": config.get("model"),
-                "npc_key": npc_key,
-                "run_id": run_id,
-                "preset": args.preset,
-                "model_id": config.get("model"),
-                "num_epochs": _train_cfg.get("num_epochs", 3),
-                "learning_rate": _train_cfg.get("learning_rate", 2e-4),
-                "batch_size": _train_cfg.get("batch_size", 1),
-                "gradient_accumulation_steps": _train_cfg.get("gradient_accumulation_steps", 8),
-                "max_seq_length": _train_cfg.get("max_seq_length", 2048),
-                "lora_r": _lora_cfg.get("lora_r", 16),
-                "lora_alpha": _lora_cfg.get("lora_alpha", 32),
-                "lora_dropout": _lora_cfg.get("lora_dropout", 0.0),
-                "packing": _train_cfg.get("packing", True),
-                "train_on_responses_only": _train_cfg.get("train_on_responses_only", True),
-                "weight_decay": _train_cfg.get("weight_decay", 0.01),
-                "warmup_steps": _train_cfg.get("warmup_steps", 10),
-            },
-            tags=wb_config.get("tags", []) + ([args.preset] if args.preset else []),
-            name=f"{npc_key}-{run_id}",
-        )
-
-    # ── Remote mode: generate Colab notebook instead of training ────────
-    if args.remote == "colab" or args.drive_data_path:
-        from scripts.colab import generate_colab_notebook
-
-        # Determine data mode -- drive if --drive-data-path is provided
-        data_mode = None
-        drive_data_path = None
-        drive_gguf_dir = None
-        if args.drive_data_path:
-            data_mode = "drive"
-            drive_data_path = args.drive_data_path
-            drive_gguf_dir = args.drive_gguf_dir
-
-        # Load subject spec if available
-        spec = None
-        if args.from_spec and args.config_or_spec:
-            from generate_dataset import load_subject_spec
-            spec = load_subject_spec(args.config_or_spec)
-
-        notebook_path = generate_colab_notebook(
-            data_path=data_path,
-            model_name=config.get("model", "unsloth/Llama-3.1-8B-Instruct-bnb-4bit"),
-            preset_name=args.preset or "fast-8b",
-            subject_spec=spec,
-            output_dir=str(PROJECT_ROOT / "colab" / "outputs"),
-            data_mode=data_mode,
-            drive_data_path=drive_data_path,
-            drive_gguf_dir=drive_gguf_dir,
-        )
-        return
-
-    # ── Main training flow ──────────────────────────────────────────────
-    start_time = time.time()
-
-    if args.tune:
-        print("\n" + "!" * 60)
-        print("  HYPERPARAMETER OPTIMIZATION MODE")
-        print("!" * 60)
-        
-        lrs = [1e-4, 2e-4, 5e-4]
-        ranks = [16, 32, 64]
-        best_loss = float('inf')
-        best_cfg = None
-        
-        for lr in lrs:
-            for rank in ranks:
-                # Update config for this trial
-                config["training"]["learning_rate"] = lr
-                config["lora"]["lora_r"] = rank
-                config["lora"]["lora_alpha"] = rank * 2
-                
-                trial_id = f"{run_id}_lr{lr}_r{rank}"
-                trial_output_dir = paths.run_dir(npc_key, trial_id)
-                config["training"]["output_dir"] = str(trial_output_dir)
-                
-                print(f"\n>>> Trial: LR={lr}, Rank={rank}")
-                os.makedirs(trial_output_dir, exist_ok=True)
-                
-                # Load, train, and clear
-                model, tokenizer = setup_model_and_tokenizer(config)
-                dataset, eval_dataset, tokenizer = prepare_dataset(data_path, tokenizer, config)
-                output_dir, trainer_stats = run_training(model, tokenizer, dataset, eval_dataset, config)
-                
-                loss = trainer_stats.training_loss
-                if loss < best_loss:
-                    best_loss = loss
-                    best_cfg = (lr, rank)
-                
-                # Cleanup to avoid OOM
-                import torch
-                import gc
-                del model
-                del tokenizer
-                gc.collect()
-                torch.cuda.empty_cache()
-                
-        print(f"\n{'=' * 60}")
-        print(f"  HPO COMPLETE")
-        print(f"  Best config: LR={best_cfg[0]}, Rank={best_cfg[1]}")
-        print(f"  Best loss:   {best_loss:.4f}")
-        print(f"{'=' * 60}")
-        return
-
-    model, tokenizer = setup_model_and_tokenizer(config)
-
-    dataset, eval_dataset, tokenizer = prepare_dataset(data_path, tokenizer, config)
-
-    output_dir, trainer_stats = run_training(model, tokenizer, dataset, eval_dataset, config)
-
-    elapsed = time.time() - start_time
-
-    # Save experiment metrics
-    metrics = {
-        "training_loss": trainer_stats.training_loss,
-        "run_id": run_id,
-        "preset": args.preset,
-        "model": config.get("model"),
-        "npc_key": npc_key,
-        "timestamp": datetime.now().isoformat(),
-        "duration_minutes": round(elapsed / 60, 1),
-    }
-    metrics_path = run_output_dir / "metrics.json"
-    with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=2)
-
-    # Save run manifest for reproducibility and comparisons
-    dataset_sha256 = None
-    try:
-        h = hashlib.sha256()
-        with open(data_path, "rb") as df:
-            for chunk in iter(lambda: df.read(1024 * 1024), b""):
-                h.update(chunk)
-        dataset_sha256 = h.hexdigest()
-    except Exception:
-        dataset_sha256 = None
-
-    git_commit = None
-    try:
-        git_commit = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            cwd=str(PROJECT_ROOT),
-            text=True,
-        ).strip()
-    except Exception:
-        git_commit = None
-
-    val_data_path = None
-    try:
-        val_data_path = paths.infer_validation_path(str(data_path))
-    except Exception:
-        val_data_path = None
-
-    run_manifest = {
-        "run_id": run_id,
-        "npc_key": npc_key,
-        "created_at": datetime.now().isoformat(),
-        "git_commit": git_commit,
-        "preset": args.preset,
-        "model_id": config.get("model"),
-        "paths": {
-            "run_output_dir": str(run_output_dir),
-            "frozen_config": str(frozen_config_path),
-            "metrics": str(metrics_path),
-            "train_data": str(data_path),
-            "validation_data": str(val_data_path) if val_data_path else None,
-        },
-        "dataset": {
-            "technique": Path(data_path).parent.name,
-            "train_sha256": dataset_sha256,
-        },
-        "results": {
-            "training_loss": trainer_stats.training_loss,
-            "duration_minutes": round(elapsed / 60, 1),
-        },
-    }
-
-    run_manifest_path = run_output_dir / "run_manifest.json"
-    with open(run_manifest_path, "w") as f:
-        json.dump(run_manifest, f, indent=2)
-
-    # ── W&B Artifact & Metric Logging ────────────────────────────────────
-    if config.get("wandb", {}).get("enabled", False):
-        import wandb
-        # Log training metrics
-        wandb.log({
-            "train/loss": trainer_stats.training_loss,
-            "train/duration_minutes": round(elapsed / 60, 1),
-            "train/num_examples": len(dataset) if dataset is not None else 0,
-        })
-        # Log dataset as artifact
-        try:
-            technique = Path(data_path).parent.name
-            ds_artifact = wandb.Artifact(
-                name=f"dataset-{npc_key}",
-                type="dataset",
-                description=f"Training dataset for {npc_key} ({technique})",
-                metadata={
-                    "technique": technique,
-                    "rows": len(dataset) if dataset is not None else 0,
-                    "sha256": dataset_sha256,
-                    "npc_key": npc_key,
-                },
-            )
-            ds_artifact.add_file(str(data_path))
-            wandb.log_artifact(ds_artifact)
-        except Exception as e:
-            print(f"  [wandb] Dataset artifact failed: {e}")
-        # Log LoRA adapter as model artifact
-        try:
-            model_artifact = wandb.Artifact(
-                name=f"lora-{npc_key}",
-                type="model",
-                description=f"LoRA adapter for {npc_key}",
-                metadata=metrics,
-            )
-            model_artifact.add_dir(str(output_dir))
-            wandb.log_artifact(model_artifact)
-        except Exception as e:
-            print(f"  [wandb] Model artifact failed: {e}")
-        # Save frozen config as a wandb file
-        wandb.save(str(frozen_config_path), base_path=str(frozen_config_path.parent))
-
-    # Update "best" symlink (lowest training loss wins), gated by promotion rules
-    current_loss = trainer_stats.training_loss
-    num_train = len(dataset) if dataset is not None else 0
-    promoted, failures = check_promotion_rules(current_loss, config, num_train)
-    if not promoted:
-        print(f"  Promotion gate FAILED — 'best' symlink NOT updated")
-        for f in failures:
-            print(f"    ✗  {f}")
+    # ── Resolve output paths ───────────────────────────────────────────
+    output_dir = config.get("output_dir")
+    if output_dir:
+        run_dir, run_id = get_run_output_path(output_dir)
     else:
-        best_loss = current_loss
-        best_run = run_id
-        for manifest_file in sorted(paths.run_dir(npc_key, "").parent.glob("*/run_manifest.json")):
-            try:
-                with open(manifest_file) as f:
-                    m = json.load(f)
-                loss = m.get("results", {}).get("training_loss")
-                if loss is not None and loss < best_loss:
-                    best_loss = loss
-                    best_run = m["run_id"]
-            except Exception:
-                pass
-        best_link = paths.output_dir(npc_key) / "best"
+        run_dir, run_id = get_run_output_path(str(PROJECT_ROOT / "outputs" / npc_key))
+
+    config["training"]["output_dir"] = run_dir
+    config["run_id"] = run_id
+
+    # Write config snapshot
+    log_config_snapshot(config, run_dir)
+
+    # ── Load model ─────────────────────────────────────────────────────
+    print("  [1/4] Loading model and tokenizer...")
+    model, tokenizer = get_model_and_tokenizer(config)
+    print(f"  ✓ Model loaded")
+
+    # ── Load dataset ───────────────────────────────────────────────────
+    print("  [2/4] Loading dataset...")
+    dataset_path = config.get("dataset_path", "")
+    if not dataset_path or not os.path.exists(dataset_path):
+        # Try to derive dataset path
+        technique = config.get("technique", "template")
+        dataset_path = str(PROJECT_ROOT / "datasets" / npc_key / technique / "train.jsonl")
+
+    dataset = load_dataset_from_jsonl(dataset_path, tokenizer, config)
+    eval_dataset = None  # TODO: support eval split
+    num_examples = len(dataset)
+    print(f"  ✓ Dataset loaded: {num_examples} examples")
+
+    # ── Training ───────────────────────────────────────────────────────
+    print("  [3/4] Running training...")
+    trainer, metrics = run_training(model, tokenizer, dataset, eval_dataset, config)
+    training_loss = metrics.get("train_loss", 0.0)
+    print(f"  ✓ Training complete: loss={training_loss:.4f}")
+
+    # ── Promotion check ────────────────────────────────────────────────
+    promotion_passed, promotion_failures = check_promotion_rules(
+        training_loss, config, num_examples
+    )
+    if promotion_passed:
+        print("  ✓ Promotion rules passed")
+        # Create/update 'best' symlink to this run
+        best_link = Path(output_dir or PROJECT_ROOT / "outputs" / npc_key) / "best"
         if best_link.exists() or best_link.is_symlink():
             best_link.unlink()
-        os.symlink(f"runs/{best_run}", str(best_link), target_is_directory=True)
-        print(f"  Best run:   {best_run} (loss={best_loss:.4f})")
+        try:
+            best_link.symlink_to(f"run_{run_id}")
+            print(f"  ✓ Updated 'best' symlink → run_{run_id}")
+        except OSError:
+            pass
+    else:
+        print(f"  ⚠ Promotion rules failed:")
+        for failure in promotion_failures:
+            print(f"    - {failure}")
 
-    print(f"\n{'=' * 60}")
-    print(f"  TRAINING COMPLETE")
-    print(f"  Duration: {elapsed / 60:.1f} minutes")
-    print(f"  Output:   {output_dir}")
-    print(f"  Run ID:   {run_id}")
-    print(f"  Manifest: {run_manifest_path}")
-    print(f"{'=' * 60}")
-
-    # Export to GGUF
+    # ── GGUF Export ────────────────────────────────────────────────────
     if args.export_gguf:
-        gguf_path = export_to_gguf(model, tokenizer, output_dir, quantization=args.quantization)
-        # Log GGUF as W&B artifact
-        if config.get("wandb", {}).get("enabled", False) and gguf_path:
-            try:
-                import wandb
-                gguf_artifact = wandb.Artifact(
-                    name=f"gguf-{npc_key}",
-                    type="model",
-                    description=f"GGUF export for {npc_key} ({args.quantization})",
-                    metadata={"quantization": args.quantization, "npc_key": npc_key, "run_id": run_id},
-                )
-                gguf_artifact.add_file(gguf_path)
-                wandb.log_artifact(gguf_artifact)
-            except Exception as e:
-                print(f"  [wandb] GGUF artifact failed: {e}")
+        print("  [4/4] Exporting to GGUF...")
+        exports_dir = PROJECT_ROOT / "exports" / npc_key
+        exports_dir.mkdir(parents=True, exist_ok=True)
 
-    # Export LoRA adapter as GGUF (for LLMUnity runtime loading)
-    if args.export_lora:
-        from scripts.export_adapter import convert_adapter
-        print(f"\n[export] Exporting LoRA adapter to GGUF (for LLMUnity)...")
-        lora_out = convert_adapter(output_dir, outtype="f16")
-        print(f"[export] LoRA adapter GGUF: {lora_out}")
+        quantization = args.quantization or config.get("export", {}).get("quantization", "q4_k_m")
 
-    # ── W&B Finish ──────────────────────────────────────────────────────
-    if config.get("wandb", {}).get("enabled", False):
-        import wandb
-        wandb.finish()
+        model_id_short = config.get("model", "model").split("/")[-1].replace("-Instruct", "").replace("-bnb-4bit", "").replace("-unsloth", "")
+        gguf_name = f"{npc_key}-{model_id_short}-{quantization}.gguf"
+        gguf_path = str(exports_dir / gguf_name)
 
-    print("\nDone!")
+        gguf_files = export_to_gguf(model, tokenizer, config, gguf_path)
+
+        print(f"  ✓ GGUF export complete:")
+        for gf in gguf_files:
+            size_mb = os.path.getsize(gf) / (1024 * 1024)
+            print(f"    - {gf} ({size_mb:.1f} MB)")
+        print(f"  ├ Saved to: {exports_dir}")
+
+        # Write manifest
+        manifest = {
+            "npc_key": npc_key,
+            "run_id": run_id,
+            "base_model": config.get("model"),
+            "technique": technique,
+            "training_loss": training_loss,
+            "num_examples": num_examples,
+            "quantization": quantization,
+            "lora_r": lora_r,
+            "lora_alpha": lora_alpha_val,
+            "created_at": datetime.now().isoformat(),
+            "gguf_files": [str(gf) for gf in gguf_files],
+        }
+        manifest_path = exports_dir / "manifest.json"
+        with open(manifest_path, "w") as f:
+            json.dump(manifest, f, indent=2)
+        print(f"  ├ Manifest: {manifest_path}")
+    else:
+        print("  [4/4] Skipping GGUF export (use --export-gguf to enable)")
+
+    print(f"\n{'='*60}")
+    print(f"  Training complete!")
+    print(f"  Run ID:  {run_id}")
+    print(f"  Output:  {run_dir}")
+    if args.export_gguf:
+        exports_dir = PROJECT_ROOT / "exports" / npc_key
+        print(f"  Exports: {exports_dir}")
+    print(f"{'='*60}\n")
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ interface DatasetFactoryProps {
   exportArtifacts: ExportArtifact[];
   trainingConfig: TrainingConfig;
   onGenerateDataset: () => Promise<void>;
+  onSelectDataset?: (npcKey: string, technique: string) => void;
 }
 
 export const DatasetFactory = ({
@@ -18,13 +19,22 @@ export const DatasetFactory = ({
   exportArtifacts,
   trainingConfig,
   onGenerateDataset,
+  onSelectDataset,
 }: DatasetFactoryProps) => {
-  const intentDistribution = [
-    { label: 'Informational', val: 65 },
-    { label: 'Transactional', val: 20 },
-    { label: 'Hostile', val: 10 },
-    { label: 'Fearful', val: 5 },
-  ];
+  // Compute real analytics from datasets
+  const totalEntries = datasets.reduce((sum, ds) =>
+    sum + ds.versions.reduce((s, v) => s + v.entries, 0), 0
+  );
+  const coveragePct = totalEntries > 0 ? Math.min(100, Math.round((totalEntries / Math.max(1, datasets.length * 200)) * 100)) : 0;
+
+  // Technique distribution across all datasets
+  const techniqueTotals = new Map<string, number>();
+  for (const ds of datasets) {
+    for (const v of ds.versions) {
+      techniqueTotals.set(v.tag, (techniqueTotals.get(v.tag) || 0) + v.entries);
+    }
+  }
+  const totalTechEntries = Array.from(techniqueTotals.values()).reduce((a, b) => a + b, 0);
 
   return (
     <motion.div
@@ -67,8 +77,22 @@ export const DatasetFactory = ({
                           <span className="text-ink/40">• {v.entries} pairs</span>
                         </div>
                         <div className="flex gap-2">
-                          <button className="text-accent hover:underline uppercase text-[8px] font-bold">Select</button>
-                          <button className="text-ink/20 hover:text-ink/60 uppercase text-[8px] font-bold">Details</button>
+                          <button
+                            onClick={() => onSelectDataset?.(ds.id, v.tag)}
+                            className="text-accent hover:underline uppercase text-[8px] font-bold"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => {
+                              window.dispatchEvent(
+                                new CustomEvent('navigate-tab', { detail: { tab: 'overview' } })
+                              );
+                            }}
+                            className="text-ink/20 hover:text-ink/60 uppercase text-[8px] font-bold"
+                          >
+                            Train
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -76,8 +100,27 @@ export const DatasetFactory = ({
                 </div>
 
                 <div className="flex gap-2 mt-auto pt-2 border-t border-line/20">
-                  <button className="flex-1 py-1.5 bg-accent/5 border border-accent/20 text-accent text-[10px] font-bold rounded uppercase hover:bg-accent/10 transition-colors">Compare v1 vs v2</button>
-                  <button className="p-1.5 bg-line/20 border border-line/30 rounded hover:bg-line/40 transition-colors">
+                  <button
+                    onClick={() => {
+                      if (ds.versions.length >= 2) {
+                        onSelectDataset?.(ds.id, ds.versions[0].tag);
+                      }
+                    }}
+                    disabled={ds.versions.length < 2}
+                    className="flex-1 py-1.5 bg-accent/5 border border-accent/20 text-accent text-[10px] font-bold rounded uppercase hover:bg-accent/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    {ds.versions.length >= 2 ? `Compare ${ds.versions[0].tag} vs ${ds.versions[1].tag}` : 'Need 2+ versions'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      const path = datasets.find(d => d.id === ds.id)?.versions[0]?.tag
+                        ? `datasets/${ds.id}/`
+                        : null;
+                      if (path) window.open(`/${path}`, '_blank');
+                    }}
+                    className="p-1.5 bg-line/20 border border-line/30 rounded hover:bg-line/40 transition-colors"
+                    title="Open dataset directory"
+                  >
                     <ExternalLink className="w-3 h-3 text-ink/40" />
                   </button>
                 </div>
@@ -90,24 +133,31 @@ export const DatasetFactory = ({
         <Card title="Dataset Analytics" subtitle="QUALITY_SCORE">
           <div className="space-y-6">
             <div className="p-4 bg-accent/5 border border-accent/10 rounded-sm text-center">
-              <span className="text-[10px] uppercase font-bold text-accent tracking-widest block mb-2">Global Semantic Coverage</span>
-              <div className="text-3xl font-bold text-ink-bright">94.2<span className="text-accent">%</span></div>
-              <p className="text-[10px] text-ink/40 mt-1">Calculated across 4.5k entries</p>
+              <span className="text-[10px] uppercase font-bold text-accent tracking-widest block mb-2">Total Training Pairs</span>
+              <div className="text-3xl font-bold text-ink-bright">{totalEntries.toLocaleString()}<span className="text-accent text-lg"> pairs</span></div>
+              <p className="text-[10px] text-ink/40 mt-1">Across {datasets.length} NPC{datasets.length !== 1 ? 's' : ''} — {coveragePct}% coverage</p>
             </div>
 
             <div className="space-y-3">
-              <h5 className="text-[10px] font-bold text-ink/40 uppercase tracking-widest">Intent Distribution</h5>
-              {intentDistribution.map((item, i) => (
-                <div key={i} className="space-y-1">
-                  <div className="flex justify-between text-[10px]">
-                    <span>{item.label}</span>
-                    <span className="font-bold">{item.val}%</span>
-                  </div>
-                  <div className="h-1 w-full bg-line rounded-full overflow-hidden">
-                    <div className="h-full bg-accent" style={{ width: `${item.val}%` }} />
-                  </div>
-                </div>
-              ))}
+              <h5 className="text-[10px] font-bold text-ink/40 uppercase tracking-widest">Technique Distribution</h5>
+              {techniqueTotals.size > 0 ? (
+                Array.from(techniqueTotals.entries()).map(([tag, count]) => {
+                  const pct = totalTechEntries > 0 ? Math.round((count / totalTechEntries) * 100) : 0;
+                  return (
+                    <div key={tag} className="space-y-1">
+                      <div className="flex justify-between text-[10px]">
+                        <span className="font-bold text-accent">{tag}</span>
+                        <span className="font-bold">{count.toLocaleString()} ({pct}%)</span>
+                      </div>
+                      <div className="h-1 w-full bg-line rounded-full overflow-hidden">
+                        <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-[10px] text-ink/40 text-center py-2">No dataset entries yet</div>
+              )}
             </div>
           </div>
         </Card>

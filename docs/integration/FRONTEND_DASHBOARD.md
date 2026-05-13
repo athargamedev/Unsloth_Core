@@ -1,131 +1,148 @@
 # Frontend Control Dashboard
 
-The **Frontend Control Dashboard** is a React-based orchestration layer for the Unsloth_Core pipeline. it provides a visual interface for managing NPC creation, monitoring training metrics in real-time, and deploying models.
+The Frontend Control Dashboard is the web control plane for Unsloth_Core training workflows.
+It provides:
+- reliable process orchestration for `./ucore` commands,
+- deep observability (including externally started jobs),
+- resilient realtime updates over WebSocket,
+- schema-driven command launch forms with validation,
+- deterministic stage/progress behavior.
 
-## 🏗️ Architecture
+## Architecture
 
-The dashboard operates as a standalone Node.js application that interacts directly with the project root.
+- Frontend: React + Vite + Tailwind.
+- Backend: Express (`frontend_control/unity-npc-llm-training-dashboard/server.ts`).
+- Process runtime: local child-process runner for `./ucore` / scripts.
+- State persistence: `.runtime/registry.json`.
+- Realtime channel: WebSocket with event IDs, replay support, and heartbeat.
 
-- **Frontend**: React + Vite + TailwindCSS.
-- **Backend**: Express.js server (`server.ts`) that manages process lifecycle.
-- **Process Management**: Spawns `./ucore` commands as child processes.
-- **Telemetry**: Real-time extraction of GPU (via `nvidia-smi`), CPU, and Network metrics.
-- **Persistence**: Job history and server state are stored in `frontend_control/unity-npc-llm-training-dashboard/.runtime/registry.json`.
+## Major Reliability Improvements
 
-## 🚀 Getting Started
+### 1) Full workflow observability (internal + external)
 
-### Prerequisites
-- **Node.js**: v18+ recommended.
-- **npm**: v9+.
-- **NVIDIA GPU**: Required for training and telemetry monitoring.
-- **unsloth_env**: The Python environment must be accessible (dashboard calls `./ucore`).
+The dashboard no longer relies only on jobs started from UI.
 
-### Installation
+It now merges 3 truth sources:
+1. Internal runner jobs (started via `/api/commands/start` and workflow APIs).
+2. Filesystem artifacts (completed external work discovered from `datasets/`, `outputs/`, `exports/`).
+3. Active OS process discovery (`ps` scan for relevant `ucore` / pipeline scripts).
+
+External jobs are imported/detected with stable IDs like:
+- `ext_dataset_<npc>_<technique>`
+- `ext_train_<npc>_<runid>`
+- `ext_proc_<pid>`
+
+This allows users to see work started from terminal/other tools directly in dashboard views.
+
+### 2) WebSocket replay + heartbeat resilience
+
+Realtime sync now includes:
+- monotonic `eventId` on outbound websocket events,
+- in-memory replay buffer on server,
+- client reconnect replay requests (`request_replay`),
+- heartbeat ping/pong to detect stale sockets,
+- HTTP replay fallback: `GET /api/events?since=<eventId>`.
+
+Result: transient disconnects no longer silently desync job state.
+
+### 3) Schema-driven command launch surface
+
+Command forms are now generated from backend schemas instead of hardcoded UI fields.
+
+Backend endpoint:
+- `GET /api/command-schemas`
+
+Schema includes:
+- field type (`string|number|boolean`),
+- required flag,
+- default value,
+- enum options,
+- descriptions.
+
+Frontend behavior:
+- builds nested payloads from dotted paths (e.g. `options.technique`),
+- type-casts user input by schema type,
+- blocks execution when required fields are missing.
+
+Result: launch UX stays in lockstep with backend command contracts.
+
+### 4) Deterministic stage/progress truth model
+
+Progress is no longer heuristic bucketed percentages.
+
+Current behavior:
+- stage statuses are derived from command + runtime truth,
+- progress is computed from stage-state truth only,
+- completed jobs = 100,
+- in-flight/terminal non-complete jobs get deterministic stage-based progress.
+
+Implementation is extracted for testability:
+- `progressTruth.ts`
+  - `deriveStageStatuses(...)`
+  - `computeProgressFromStages(...)`
+
+## API Endpoints Added/Upgraded
+
+Core jobs + sync:
+- `GET /api/jobs` (includes sync of artifacts + active process discovery before response)
+- `POST /api/jobs/sync` (manual artifact/process sync)
+- `GET /api/processes/discover` (manual active external process discovery)
+
+Realtime/state recovery:
+- `GET /api/events?since=<eventId>`
+- websocket replay request/response protocol (`request_replay`)
+
+Command intelligence:
+- `GET /api/available-commands`
+- `GET /api/command-schemas`
+
+## Logging and Persistence
+
+- Per-job logs are capped and persisted.
+- Stage logs are capped separately.
+- Global log stream is transient and reset on restart.
+- Registry persistence is debounced during heavy output and flushed on terminal events.
+
+## Test Coverage Added
+
+Unit tests:
+- `progressTruth.test.ts`
+  - stage derivation correctness,
+  - progress computation for running/stopped/completed/pending.
+
+Integration tests:
+- `api.jobs.integration.test.ts`
+  - `/api/jobs` shows stage-derived progress for live job,
+  - stop lifecycle verifies `running -> stopped` plus stopped stage marking.
+
+NPM scripts:
+- `npm run lint`
+- `npm run test`
+- `npm run test:unit`
+- `npm run test:integration`
+
+## Runbook
+
+From `frontend_control/unity-npc-llm-training-dashboard`:
+
 ```bash
-cd frontend_control/unity-npc-llm-training-dashboard
 npm install
-```
-
-### Running Locally
-```bash
+npm run lint
+npm run test
 npm run dev
 ```
-The dashboard will be available at `http://localhost:3100` (by default).
 
-### Environment Variables
-Create a `.env` file in the dashboard directory:
+Default URL: `http://localhost:3100`
+
+Optional `.env`:
+
 ```env
 PORT=3100
-GEMINI_API_KEY=your_key_here # Optional: For the AI Assistant sidebar
+GEMINI_API_KEY=your_key_here
 ```
 
-## 🛠️ Core Features
+## Notes
 
-### 1. Control Center (Job Management)
-Trigger any stage of the NPC pipeline with visual progress tracking:
-- **Generate**: Create datasets from subject specs.
-- **Sanitize**: Clean and validate training data.
-- **Train**: Fine-tune models with model-aware presets.
-- **Pipeline**: Run the full Gen -> Sanitize -> Train -> Export loop in one click.
-- **Evaluate/Smoke**: Benchmark and validate exported GGUF models.
-
-### 2. W&B Integration
-Weights & Biases is fully integrated for experiment tracking and artifact versioning.
-
-**Dashboard surface:**
-- **W&B column** in the Operations Matrix table — click the icon to open a run's W&B dashboard in a new tab.
-- **W&B Run Active card** in the job detail panel below the table — shows the full wandb.ai URL with a live indicator.
-- **Enable W&B Tracking checkbox** in the Training Suite — when checked, `--wandb` is appended to the `./ucore train` command.
-
-**How it works (server-side):**
-- The server parses stdout for wandb.ai run URLs as they stream in from `wandb.init()` output.
-- When a URL is detected (`https://wandb.ai/.../runs/<id>`), it's stored on the `Job` object as `wandbUrl`.
-- The URL is broadcasted immediately via WebSocket `job_update` event.
-- Only the first URL per job is captured — subsequent wandb output is ignored.
-
-**CLI equivalent:**
-```bash
-./ucore train subjects/my_npc.json --preset fast-3b --wandb
-```
-
-### 3. Log Streaming
-
-The dashboard captures all stdout/stderr from spawned child processes in real-time.
-
-**Architecture:**
-| Component | Role |
-|-----------|------|
-| `spawn()` in server.ts | Launches `./ucore` as child process |
-| `consume()` callback | Splits stdout/stderr chunks into lines, timestamps them |
-| `job.logs` | Per-job log buffer (capped at 2,000 lines) |
-| `stage.logs` | Per-pipeline-stage log buffer (capped at 50 lines) |
-| `registry.logs` | Global shared log buffer (capped at 600 lines, **cleared on server restart**) |
-| WebSocket broadcast | Streams `job_update` events to connected clients |
-| HTTP polling | Frontend falls back to polling `/api/logs` every 5s |
-
-**Reliability improvements:**
-- **Debounced persistence**: `persistRegistry()` debounces disk writes to `registry.json` (500ms window). High-frequency log output during training no longer floods the disk.
-- **Flush on critical events**: Job completion, failure, stop, and escalation all use `flushPersist()` for immediate durability — no data loss on crash.
-- **Increased log capacity**: Job logs increased from 600 to 2,000 lines to cover multi-hour training runs.
-- **Transient global buffer**: `registry.logs` is wiped on server restart — stale sync messages from previous sessions don't accumulate.
-
-**Log data flow:**
-```
-Child process stdout/stderr
-  → consume() splits lines, adds timestamps
-    → job.logs (2,000 line cap, persisted via .debounce)
-    → stage.logs (50 line cap)
-    → registry.logs (600 line cap, transient)
-    → parseLoss() extracts numeric loss for progress tracking
-    → wandb URL regex extracts run links
-    → persistRegistry(debounced)
-      → registry.json on disk
-```
-
-### 4. Asset Explorer
-- **Subjects**: Browse available NPC specifications.
-- **Datasets**: View generated training data, entry counts, and versions.
-- **Exports**: Quick access to quantized GGUF models ready for Unity.
-
-### 5. AI Assistant
-A specialized sidebar trained on Unity and Unsloth best practices. It provides contextual advice on hyperparameter tuning and NPC persona design.
-
-## 🔌 Integration Details
-
-### How it talks to the CLI
-The dashboard acts as a wrapper around the `ucore` CLI. When you click "Train", the server executes:
-```bash
-./ucore train subjects/npc_key.json --from-spec --preset fast-3b
-```
-It then parses the STDOUT stream for `[stage]` markers and `loss: 0.123` patterns to update the UI progress and charts.
-
-### Directory Mapping
-The dashboard expects the following structure relative to its root:
-- `../../subjects/`: Source of NPC specs.
-- `../../datasets/`: Source/Target for training data.
-- `../../outputs/`: Target for LoRA adapters.
-- `../../exports/`: Target for GGUF models.
-
----
-> [!TIP]
-> If telemetry is not showing GPU data, ensure `nvidia-smi` is in your system PATH and accessible by the user running the dashboard server.
+- If GPU telemetry is empty, verify `nvidia-smi` is available in PATH.
+- If ports are already in use, stop duplicate dashboard server instances before restart.
+- Dashboard is designed to coexist with terminal-driven workflows; external work should appear via sync/discovery.
