@@ -49,17 +49,65 @@ Trigger any stage of the NPC pipeline with visual progress tracking:
 - **Pipeline**: Run the full Gen -> Sanitize -> Train -> Export loop in one click.
 - **Evaluate/Smoke**: Benchmark and validate exported GGUF models.
 
-### 2. Live Monitoring
-- **Loss Curves**: Dynamic charts updated in real-time as `ucore` emits logs.
-- **Hardware Telemetry**: Visual gauges for GPU Load, VRAM usage, and Temperature.
-- **Process Logs**: Filterable, real-time terminal output for active jobs.
+### 2. W&B Integration
+Weights & Biases is fully integrated for experiment tracking and artifact versioning.
 
-### 3. Asset Explorer
+**Dashboard surface:**
+- **W&B column** in the Operations Matrix table — click the icon to open a run's W&B dashboard in a new tab.
+- **W&B Run Active card** in the job detail panel below the table — shows the full wandb.ai URL with a live indicator.
+- **Enable W&B Tracking checkbox** in the Training Suite — when checked, `--wandb` is appended to the `./ucore train` command.
+
+**How it works (server-side):**
+- The server parses stdout for wandb.ai run URLs as they stream in from `wandb.init()` output.
+- When a URL is detected (`https://wandb.ai/.../runs/<id>`), it's stored on the `Job` object as `wandbUrl`.
+- The URL is broadcasted immediately via WebSocket `job_update` event.
+- Only the first URL per job is captured — subsequent wandb output is ignored.
+
+**CLI equivalent:**
+```bash
+./ucore train subjects/my_npc.json --preset fast-3b --wandb
+```
+
+### 3. Log Streaming
+
+The dashboard captures all stdout/stderr from spawned child processes in real-time.
+
+**Architecture:**
+| Component | Role |
+|-----------|------|
+| `spawn()` in server.ts | Launches `./ucore` as child process |
+| `consume()` callback | Splits stdout/stderr chunks into lines, timestamps them |
+| `job.logs` | Per-job log buffer (capped at 2,000 lines) |
+| `stage.logs` | Per-pipeline-stage log buffer (capped at 50 lines) |
+| `registry.logs` | Global shared log buffer (capped at 600 lines, **cleared on server restart**) |
+| WebSocket broadcast | Streams `job_update` events to connected clients |
+| HTTP polling | Frontend falls back to polling `/api/logs` every 5s |
+
+**Reliability improvements:**
+- **Debounced persistence**: `persistRegistry()` debounces disk writes to `registry.json` (500ms window). High-frequency log output during training no longer floods the disk.
+- **Flush on critical events**: Job completion, failure, stop, and escalation all use `flushPersist()` for immediate durability — no data loss on crash.
+- **Increased log capacity**: Job logs increased from 600 to 2,000 lines to cover multi-hour training runs.
+- **Transient global buffer**: `registry.logs` is wiped on server restart — stale sync messages from previous sessions don't accumulate.
+
+**Log data flow:**
+```
+Child process stdout/stderr
+  → consume() splits lines, adds timestamps
+    → job.logs (2,000 line cap, persisted via .debounce)
+    → stage.logs (50 line cap)
+    → registry.logs (600 line cap, transient)
+    → parseLoss() extracts numeric loss for progress tracking
+    → wandb URL regex extracts run links
+    → persistRegistry(debounced)
+      → registry.json on disk
+```
+
+### 4. Asset Explorer
 - **Subjects**: Browse available NPC specifications.
 - **Datasets**: View generated training data, entry counts, and versions.
 - **Exports**: Quick access to quantized GGUF models ready for Unity.
 
-### 4. AI Assistant
+### 5. AI Assistant
 A specialized sidebar trained on Unity and Unsloth best practices. It provides contextual advice on hyperparameter tuning and NPC persona design.
 
 ## 🔌 Integration Details

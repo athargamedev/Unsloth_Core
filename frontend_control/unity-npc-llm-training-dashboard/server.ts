@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { execSync, spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket as WebSocketClient } from "ws";
+import { computeProgressFromStages, deriveStageStatuses } from "./progressTruth";
 
 type ExecutionMode = "local" | "remote";
 type JobStatus = "pending" | "running" | "completed" | "failed" | "stopped";
@@ -569,9 +570,6 @@ const syncExportStageFromStatusFile = (job: Job) => {
         }
       }
     }
-    if (raw.state === "completed") {
-      job.progress = 100;
-    }
   } catch {
     // ignore malformed status artifact
   }
@@ -580,38 +578,13 @@ const syncExportStageFromStatusFile = (job: Job) => {
 const updateStagesFromTruth = (job: Job) => {
   const activeIndex = job.commandId === "pipeline" ? syncPipelineStageFromLogs(job) : commandStageIndex(job);
 
-  job.stages = job.stages.map((stage, index) => {
-    if (job.status === "completed") {
-      if (job.commandId === "pipeline") return { ...stage, status: "completed" };
-      return { ...stage, status: index <= activeIndex ? "completed" : "pending" };
-    }
-
-    if (job.status === "failed") {
-      return { ...stage, status: index === activeIndex ? "failed" : index < activeIndex ? "completed" : "pending" };
-    }
-
-    if (job.status === "stopped") {
-      return { ...stage, status: index === activeIndex ? "stopped" : index < activeIndex ? "completed" : "pending" };
-    }
-
-    if (job.status === "running" || job.status === "pending") {
-      return { ...stage, status: index < activeIndex ? "completed" : index === activeIndex ? "running" : "pending" };
-    }
-
-    return stage;
-  });
-
-  if (job.status === "completed") {
-    job.progress = 100;
-    return;
-  }
-
-  const stageProgress = [10, 35, 70, 90][activeIndex] ?? 10;
-  job.progress = Math.min(99, Math.max(job.progress, stageProgress));
+  job.stages = deriveStageStatuses(job.stages, job.status, activeIndex, job.commandId === "pipeline");
 
   if (activeIndex === 3) {
     syncExportStageFromStatusFile(job);
   }
+
+  job.progress = computeProgressFromStages(job.status, job.stages);
 };
 
 const appendStageLog = (job: Job, message: string) => {
@@ -1618,7 +1591,6 @@ async function startServer() {
           job.status = "stopped";
           job.terminalReason = "user_requested_stop";
         } else {
-          job.progress = code === 0 ? 100 : job.progress;
           job.status = code === 0 ? "completed" : "failed";
         }
 
@@ -1715,7 +1687,6 @@ async function startServer() {
                   nextJob.status = "stopped";
                   nextJob.terminalReason = "user_requested_stop";
                 } else {
-                  nextJob.progress = nextCode === 0 ? 100 : nextJob.progress;
                   nextJob.status = nextCode === 0 ? "completed" : "failed";
                 }
 
@@ -1945,7 +1916,6 @@ async function startServer() {
           job.status = "stopped";
           job.terminalReason = "user_requested_stop";
         } else {
-          job.progress = code === 0 ? 100 : job.progress;
           job.status = code === 0 ? "completed" : "failed";
         }
         updateStagesFromTruth(job);

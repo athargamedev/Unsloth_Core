@@ -56,8 +56,32 @@ A local Supabase instance tracks everything:
   - Use `--preset smoke` for debugging/testing.
   - Use `--preset fast-3b` for standard NPC training.
   - Use `--preset safe-any` if CUDA OOM occurs.
+  - Use `--preset wandb` (or `--wandb`) for W&B experiment tracking.
 - **Context Awareness**: Before generating a dataset, read the `subjects/*.json` spec to ensure the generated data aligns with the NPC's `identity` and `teaching` style.
-- **Error Handling**: If training fails, check `outputs/{npc_key}/runs/` for TensorBoard logs or `eval/results/` for validation metrics.
+- **Error Handling**: If training fails, check `outputs/{npc_key}/runs/` for TensorBoard logs or `eval/results/` for validation metrics. W&B run links appear in the dashboard Operations Matrix and in the console output.
+
+## 📊 W&B Integration
+Weights & Biases tracks every training run with:
+- **Config snapshot**: Full frozen training config logged as a run file.
+- **Metrics**: Loss, learning rate, and any HF Trainer-reported scalars (logged at each eval step).
+- **Dataset artifact**: Dataset JSONL as a W&B artifact (versioned by content hash, technique, row count).
+- **LoRA artifact**: Final adapter weights as a `lora-{npc_key}` artifact.
+- **GGUF artifact**: Exported quantized model as a `gguf-{npc_key}` artifact (when `--export-gguf` is used).
+
+**Dashboard integration:**
+- All training runs launched with `--wandb` get a clickable W&B link in the frontend Operations Matrix.
+- The Training Suite has a toggle to enable/disable W&B tracking before launching.
+- W&B run URLs are auto-extracted from stdout and surfaced immediately — no polling delay.
+
+**Dual logging**: W&B and TensorBoard coexist simultaneously (configurable via `report_to` in `train.py`).
+
+## 🖥️ Frontend Dashboard
+The dashboard at `http://localhost:3100` provides:
+- **Operations Matrix**: Real-time job table with Loss/Progress/Status columns, W&B link per run.
+- **Training Suite**: Hyperparameter config panel with W&B toggle.
+- **TensorBoard Panel**: Live loss/accuracy/LR charts from TensorBoard event files.
+- **System Hub**: Command launcher for all pipeline stages.
+- **Log streaming**: Real-time stdout/stderr capture with 2,000-line per-job buffer, debounced persistence, and auto-extraction of W&B URLs and loss values.
 
 ## 📜 Conventions
 - **NPC Keys**: Always `snake_case` (e.g., `bible_instructor`).

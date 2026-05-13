@@ -36,7 +36,18 @@ Starts a LoRA fine-tuning session.
 - `config_or_spec`: Path to spec or YAML config.
 - `--from-spec`: Must be used when passing a `.json` subject file.
 - `--preset`: Choose from `configs/presets/` (e.g., `smoke`, `fast-3b`, `quality-7b`).
+- `--wandb`: Enable Weights & Biases experiment tracking (logs config, metrics, dataset/LoRA/GGUF artifacts).
+- `--no-wandb`: Disable W&B even if enabled in config.
 - `--export-gguf`: Automatically export to GGUF after training completes.
+
+**W&B convenience preset:**
+```bash
+./ucore train subjects/my_npc.json --preset wandb
+```
+The `wandb` preset enables W&B tracking via config (equivalent to `--wandb`). Stack with other presets:
+```bash
+./ucore train subjects/my_npc.json --preset fast-3b --preset wandb
+```
 
 ### `export`
 Converts a trained adapter to a GGUF model.
