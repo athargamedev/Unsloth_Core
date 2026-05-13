@@ -389,7 +389,15 @@ const commandDefinitions: CommandDefinition[] = [
     color: "accent",
     type: "Dataset",
     requiredFields: ["spec"],
-    build: (payload) => ["./ucore", "generate", parsedSpec(payload)],
+    build: (payload) => {
+      const args = ["./ucore", "generate", parsedSpec(payload)];
+      const technique = String(optionValue(payload, "technique") || "").trim();
+      const model = String(optionValue(payload, "model") || "").trim();
+      if (technique) args.push("--technique", sanitizeToken(technique, "technique"));
+      if (model) args.push("--model", sanitizeToken(model, "model"));
+      if (technique === "ollama") args.push("--ollama");
+      return args;
+    },
   },
   {
     id: "dataset-sanitize",

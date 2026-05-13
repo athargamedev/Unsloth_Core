@@ -2,12 +2,209 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "job_1778696975952_rqli4",
+      "name": "Generate Dataset (workflow_assistant)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "workflow_assistant",
+      "status": "failed",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T18:29:35.957Z",
+      "startedAt": "2026-05-13T18:29:35.957Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/workflow_assistant.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "failed",
+          "logs": [
+            "[STDOUT][job_1778696975952_rqli4] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/workflow_assistant.json --technique notebooklm",
+            "[STDOUT][job_1778696975952_rqli4] Generating dataset for: WorkflowAssistant",
+            "[STDOUT][job_1778696975952_rqli4] Subject: Unsloth_Core pipeline management: dataset generation, sanitization, LoRA training, GGUF export, and smoke testing via ./ucore CLI",
+            "[STDOUT][job_1778696975952_rqli4] Error: --technique notebooklm requires --notebooklm-input or NOTEBOOKLM_INPUT.",
+            "[STDOUT][job_1778696975952_rqli4] Export NotebookLM Q&A as JSONL/JSON with messages or question/answer fields.",
+            "[STDOUT][job_1778696975952_rqli4] Error: Command failed with return code 2"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[STDOUT][job_1778696975952_rqli4] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/workflow_assistant.json --technique notebooklm",
+        "[STDOUT][job_1778696975952_rqli4] Generating dataset for: WorkflowAssistant",
+        "[STDOUT][job_1778696975952_rqli4] Subject: Unsloth_Core pipeline management: dataset generation, sanitization, LoRA training, GGUF export, and smoke testing via ./ucore CLI",
+        "[STDOUT][job_1778696975952_rqli4] Error: --technique notebooklm requires --notebooklm-input or NOTEBOOKLM_INPUT.",
+        "[STDOUT][job_1778696975952_rqli4] Export NotebookLM Q&A as JSONL/JSON with messages or question/answer fields.",
+        "[STDOUT][job_1778696975952_rqli4] Error: Command failed with return code 2"
+      ],
+      "exitCode": 2,
+      "finishedAt": "2026-05-13T18:29:36.213Z"
+    },
+    {
+      "id": "ext_proc_149607",
+      "name": "External Process (149607) chemistry_instructor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-13T18:27:08.176Z",
+      "startedAt": "2026-05-13T18:27:08.176Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore plan-batch --spec subjects/chemistry_instructor.json --presets fast-3b,smoke --json --generate-colab-notebooks --write-plan eval/plan_batch_sample.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 149607] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 149607] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore plan-batch --spec subjects/chemistry_instructor.json --presets fast-3b,smoke --json --generate-colab-notebooks --write-plan eval/plan_batch_sample.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T18:27:08.281Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_149297",
+      "name": "External Process (149297) chemistry_instructor",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-13T18:27:08.176Z",
+      "startedAt": "2026-05-13T18:27:08.176Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-346e8f3036bb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/plan_execution.py scripts/plan_batch_execution.py scripts/colab_notebook_generator.py && ./ucore -h | sed -n '\\''1,220p'\\'' && ./ucore plan-batch --spec subjects/chemistry_instructor.json --presets fast-3b,smoke --json --generate-colab-notebooks --write-plan eval/plan_batch_sample.json' __hermes_ec=$? export -p > /tmp/hermes-snap-346e8f3036bb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-346e8f3036bb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_346e8f3036bb__%s__HERMES_CWD_346e8f3036bb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 149297] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 149297] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-346e8f3036bb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/plan_execution.py scripts/plan_batch_execution.py scripts/colab_notebook_generator.py && ./ucore -h | sed -n '\\''1,220p'\\'' && ./ucore plan-batch --spec subjects/chemistry_instructor.json --presets fast-3b,smoke --json --generate-colab-notebooks --write-plan eval/plan_batch_sample.json' __hermes_ec=$? export -p > /tmp/hermes-snap-346e8f3036bb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-346e8f3036bb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_346e8f3036bb__%s__HERMES_CWD_346e8f3036bb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T18:27:08.281Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_149209",
+      "name": "External Process (149209) chemistry_instructor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-13T18:27:07.607Z",
+      "startedAt": "2026-05-13T18:27:07.607Z",
+      "command": [
+        "external",
+        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- python -m py_compile scripts/plan_execution.py scripts/plan_batch_execution.py scripts/colab_notebook_generator.py && ./ucore -h | sed -n '1,220p' && ./ucore plan-batch --spec subjects/chemistry_instructor.json --presets fast-3b,smoke --json --generate-colab-notebooks --write-plan eval/plan_batch_sample.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 149209] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 149209] discovered active process",
+        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- python -m py_compile scripts/plan_execution.py scripts/plan_batch_execution.py scripts/colab_notebook_generator.py && ./ucore -h | sed -n '1,220p' && ./ucore plan-batch --spec subjects/chemistry_instructor.json --presets fast-3b,smoke --json --generate-colab-notebooks --write-plan eval/plan_batch_sample.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T18:27:08.176Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_3742060",
       "name": "External Process (3742060) workflow_assistant",
       "type": "Dataset",
       "commandId": "dataset-generate",
       "npcKey": "workflow_assistant",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-13T18:13:59.055Z",
@@ -19,8 +216,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3742060] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -42,7 +241,9 @@
         "[EXTERNAL][PID 3742060] discovered active process",
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python scripts/generate_dataset.py subjects/workflow_assistant.json --ollama --model gemma4:e2b"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T18:28:30.924Z",
+      "exitCode": -15
     },
     {
       "id": "job_1778693901429_hxam7",
@@ -617,6 +818,17 @@
     }
   ],
   "logs": [
+    "[2026-05-13T18:29:36.213Z] [SYSTEM] job job_1778696975952_rqli4 failed (exit 2)",
+    "[2026-05-13T18:29:36.208Z] [STDOUT][job_1778696975952_rqli4] Error: Command failed with return code 2",
+    "[2026-05-13T18:29:36.190Z] [STDOUT][job_1778696975952_rqli4] Export NotebookLM Q&A as JSONL/JSON with messages or question/answer fields.",
+    "[2026-05-13T18:29:36.190Z] [STDOUT][job_1778696975952_rqli4] Error: --technique notebooklm requires --notebooklm-input or NOTEBOOKLM_INPUT.",
+    "[2026-05-13T18:29:36.190Z] [STDOUT][job_1778696975952_rqli4] Subject: Unsloth_Core pipeline management: dataset generation, sanitization, LoRA training, GGUF export, and smoke testing via ./ucore CLI",
+    "[2026-05-13T18:29:36.189Z] [STDOUT][job_1778696975952_rqli4] Generating dataset for: WorkflowAssistant",
+    "[2026-05-13T18:29:36.041Z] [STDOUT][job_1778696975952_rqli4] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/workflow_assistant.json --technique notebooklm",
+    "[2026-05-13T18:29:35.957Z] [SYSTEM] starting job_1778696975952_rqli4: ./ucore generate subjects/workflow_assistant.json",
+    "[2026-05-13T18:27:08.222Z] [SYNC] discovered running external process pid=149607",
+    "[2026-05-13T18:27:08.222Z] [SYNC] discovered running external process pid=149297",
+    "[2026-05-13T18:27:07.645Z] [SYNC] discovered running external process pid=149209",
     "[2026-05-13T18:13:59.085Z] [SYNC] discovered running external process pid=3742060"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",

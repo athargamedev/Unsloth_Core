@@ -36,6 +36,7 @@ def main():
     gen_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
     gen_p.add_argument("--technique", default="notebooklm", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
     gen_p.add_argument("--notebooklm-input", help="NotebookLM export JSON/JSONL path")
+    gen_p.add_argument("--model", help="LLM model name (for ollama/openai/anthropic)")
 
     # Sanitize
     san_p = subparsers.add_parser("sanitize", help="Sanitize a dataset")
@@ -178,6 +179,19 @@ def main():
     plan_p.add_argument("--local-vram-gb", type=float, help="Override detected local VRAM")
     plan_p.add_argument("--json", action="store_true", help="Output JSON")
 
+    # Batch execution planning + optional colab notebook generation
+    bp_p = subparsers.add_parser("plan-batch", help="Batch plan local vs remote_colab queues and generate Colab notebooks")
+    bp_p.add_argument("--spec-glob", default="subjects/*.json", help="Spec glob under project root")
+    bp_p.add_argument("--spec", action="append", dest="specs", help="Explicit spec path (repeatable)")
+    bp_p.add_argument("--presets", default="fast-3b", help="Comma-separated presets")
+    bp_p.add_argument("--local-vram-gb", type=float, help="Override detected local VRAM")
+    bp_p.add_argument("--json", action="store_true", help="Output JSON")
+    bp_p.add_argument("--write-plan", help="Write plan JSON to file")
+    bp_p.add_argument("--generate-colab-notebooks", action="store_true", help="Generate notebooks for remote_colab queue")
+    bp_p.add_argument("--colab-output-dir", default="colab/outputs", help="Notebook output directory")
+    bp_p.add_argument("--drive-repo-dir", default="/content/drive/MyDrive/Unsloth_Core", help="Drive path where repo is cloned")
+    bp_p.add_argument("--drive-datasets-dir", default="/content/drive/MyDrive/Unsloth/datasets", help="Drive datasets directory")
+
     args = parser.parse_args()
 
     if args.command == "generate":
@@ -188,6 +202,8 @@ def main():
             cmd.append("--ollama")
         if args.notebooklm_input:
             cmd.extend(["--notebooklm-input", args.notebooklm_input])
+        if args.model:
+            cmd.extend(["--model", args.model])
         run_cmd(cmd)
 
     elif args.command == "sanitize":
@@ -393,6 +409,27 @@ def main():
             cmd.extend(["--local-vram-gb", str(args.local_vram_gb)])
         if args.json:
             cmd.append("--json")
+        run_cmd(cmd)
+
+    elif args.command == "plan-batch":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "plan_batch_execution.py"), "--spec-glob", args.spec_glob, "--presets", args.presets]
+        if args.specs:
+            for s in args.specs:
+                cmd.extend(["--spec", s])
+        if args.local_vram_gb is not None:
+            cmd.extend(["--local-vram-gb", str(args.local_vram_gb)])
+        if args.json:
+            cmd.append("--json")
+        if args.write_plan:
+            cmd.extend(["--write-plan", args.write_plan])
+        if args.generate_colab_notebooks:
+            cmd.append("--generate-colab-notebooks")
+        if args.colab_output_dir:
+            cmd.extend(["--colab-output-dir", args.colab_output_dir])
+        if args.drive_repo_dir:
+            cmd.extend(["--drive-repo-dir", args.drive_repo_dir])
+        if args.drive_datasets_dir:
+            cmd.extend(["--drive-datasets-dir", args.drive_datasets_dir])
         run_cmd(cmd)
 
     else:
