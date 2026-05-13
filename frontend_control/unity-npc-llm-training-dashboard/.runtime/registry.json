@@ -2,6 +2,94 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "job_1778700966532_63b3x",
+      "name": "Generate Dataset",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T19:36:06.532Z",
+      "startedAt": "2026-05-13T19:36:06.532Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/nonexistent_integration_spec_2.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [],
+      "stopRequested": true,
+      "exitCode": -1,
+      "finishedAt": "2026-05-13T19:36:06.542Z",
+      "terminalReason": "user_requested_stop"
+    },
+    {
+      "id": "job_1778700964699_vc93h",
+      "name": "Generate Dataset",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "status": "failed",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T19:36:04.699Z",
+      "startedAt": "2026-05-13T19:36:04.699Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/nonexistent_integration_spec.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "running",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion."
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [],
+      "stopRequested": true,
+      "terminalReason": "server_restarted",
+      "finishedAt": "2026-05-13T19:36:06.093Z",
+      "exitCode": -1
+    },
+    {
       "id": "ext_proc_1132940",
       "name": "External Process (1132940) chemistry_instructor",
       "type": "Training",
@@ -3453,57 +3541,10 @@
     }
   ],
   "logs": [
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132940",
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132928",
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132919",
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132907",
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132898",
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132889",
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132876",
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132867",
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132858",
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132845",
-    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132836",
-    "[2026-05-13T19:07:40.053Z] [SYNC] discovered running external process pid=1125777",
-    "[2026-05-13T19:07:36.774Z] [SYNC] discovered running external process pid=1124554",
-    "[2026-05-13T19:07:33.453Z] [SYNC] discovered running external process pid=1123203",
-    "[2026-05-13T19:07:30.424Z] [SYNC] discovered running external process pid=1121898",
-    "[2026-05-13T19:07:20.317Z] [SYNC] discovered running external process pid=1117781",
-    "[2026-05-13T19:07:20.317Z] [SYNC] discovered running external process pid=1117645",
-    "[2026-05-13T19:07:19.637Z] [SYNC] discovered running external process pid=1117576",
-    "[2026-05-13T19:07:19.637Z] [SYNC] discovered running external process pid=1117574",
-    "[2026-05-13T19:06:50.029Z] [SYNC] discovered running external process pid=1106103",
-    "[2026-05-13T19:06:50.029Z] [SYNC] discovered running external process pid=1106091",
-    "[2026-05-13T19:06:49.729Z] [SYNC] discovered running external process pid=1106088",
-    "[2026-05-13T19:06:49.729Z] [SYNC] discovered running external process pid=1106079",
-    "[2026-05-13T19:06:49.729Z] [SYNC] discovered running external process pid=1106070",
-    "[2026-05-13T19:06:49.729Z] [SYNC] discovered running external process pid=1106061",
-    "[2026-05-13T19:06:49.624Z] [SYNC] discovered running external process pid=1106050",
-    "[2026-05-13T19:06:49.624Z] [SYNC] discovered running external process pid=1106041",
-    "[2026-05-13T19:06:49.624Z] [SYNC] discovered running external process pid=1106032",
-    "[2026-05-13T19:06:49.624Z] [SYNC] discovered running external process pid=1106025",
-    "[2026-05-13T19:06:49.624Z] [SYNC] discovered running external process pid=1106020",
-    "[2026-05-13T19:06:13.376Z] [SYNC] discovered running external process pid=1091139",
-    "[2026-05-13T19:06:08.704Z] [SYNC] discovered running external process pid=1089195",
-    "[2026-05-13T19:06:03.517Z] [SYNC] discovered running external process pid=1087185",
-    "[2026-05-13T19:05:58.336Z] [SYNC] discovered running external process pid=1085068",
-    "[2026-05-13T19:05:47.104Z] [SYNC] discovered running external process pid=1080615",
-    "[2026-05-13T19:05:46.995Z] [SYNC] discovered running external process pid=1080559",
-    "[2026-05-13T19:05:46.995Z] [SYNC] discovered running external process pid=1080494",
-    "[2026-05-13T19:05:46.995Z] [SYNC] discovered running external process pid=1080423",
-    "[2026-05-13T19:05:02.469Z] [SYNC] discovered running external process pid=1062384",
-    "[2026-05-13T19:04:59.479Z] [SYNC] discovered running external process pid=1061189",
-    "[2026-05-13T19:04:56.480Z] [SYNC] discovered running external process pid=1059935",
-    "[2026-05-13T19:04:53.896Z] [SYNC] discovered running external process pid=1058797",
-    "[2026-05-13T19:04:43.980Z] [SYNC] discovered running external process pid=1054780",
-    "[2026-05-13T19:04:43.554Z] [SYNC] discovered running external process pid=1054693",
-    "[2026-05-13T19:04:43.554Z] [SYNC] discovered running external process pid=1054628",
-    "[2026-05-13T19:04:43.554Z] [SYNC] discovered running external process pid=1054525",
-    "[2026-05-13T19:03:01.013Z] [SYNC] discovered running external process pid=1013027",
-    "[2026-05-13T19:03:00.983Z] [SYSTEM] reconciled ext_proc_1001807 to failed (server_restarted)",
-    "[2026-05-13T19:03:00.983Z] [SYSTEM] reconciled ext_proc_1001813 to failed (server_restarted)",
-    "[2026-05-13T19:03:00.983Z] [SYSTEM] reconciled ext_proc_1001930 to failed (server_restarted)",
-    "[2026-05-13T19:03:00.983Z] [SYSTEM] reconciled ext_proc_1008219 to failed (server_restarted)"
+    "[2026-05-13T19:36:06.542Z] [SYSTEM] job job_1778700966532_63b3x stopped (exit null)",
+    "[2026-05-13T19:36:06.539Z] [SYSTEM] stop requested job_1778700966532_63b3x",
+    "[2026-05-13T19:36:06.532Z] [SYSTEM] starting job_1778700966532_63b3x: ./ucore generate subjects/nonexistent_integration_spec_2.json",
+    "[2026-05-13T19:36:06.093Z] [SYSTEM] reconciled job_1778700964699_vc93h to failed (server_restarted)"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

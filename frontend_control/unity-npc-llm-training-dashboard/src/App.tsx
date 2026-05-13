@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Play,
   Square,
@@ -52,6 +52,7 @@ export default function App() {
   const [tbIsFallback, setTbIsFallback] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const fetchInFlightRef = useRef(false);
   const [commandModalOpen, setCommandModalOpen] = useState(false);
   const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
   const [commandPayload, setCommandPayload] = useState<any>({});
@@ -85,6 +86,8 @@ export default function App() {
     activeFilter,
     setActiveFilter,
     filteredJobs,
+    jobTypeFilter,
+    toggleJobTypeFilter,
     stopJob,
     toggleJobSelection,
     exportJobsCsv,
@@ -126,8 +129,10 @@ export default function App() {
 
   // --- Data Fetching ---
 
-  const fetchData = async () => {
-    setIsLoading(true);
+  const fetchData = async (showLoading = false) => {
+    if (fetchInFlightRef.current) return;  // prevent overlapping fetches
+    fetchInFlightRef.current = true;
+    if (showLoading) setIsLoading(true);
     try {
       await Promise.all([
         fetchJobs(),
@@ -163,12 +168,13 @@ export default function App() {
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Failed to fetch data');
     } finally {
-      setIsLoading(false);
+      fetchInFlightRef.current = false;
+      if (showLoading) setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(true);
     const interval = setInterval(fetchData, 5000);
 
     const handleNavigate = (e: Event) => {
@@ -242,7 +248,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: job.id }),
       })));
-      await fetchData();
+      await fetchData(true);
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Failed to stop running jobs');
     } finally {
@@ -269,7 +275,7 @@ export default function App() {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.error || 'Failed to start command');
     }
-    await fetchData();
+    await fetchData(true);
   };
 
   const setNestedValue = (obj: Record<string, unknown>, dottedPath: string, rawValue: unknown): Record<string, unknown> => {
@@ -332,7 +338,7 @@ export default function App() {
   const handleStopJob = async (id: string) => {
     try {
       await stopJob(id);
-      await fetchData();
+      await fetchData(true);
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Failed to stop job');
     }
@@ -600,9 +606,11 @@ export default function App() {
                   selectedJobIds={selectedJobIds}
                   selectedJobId={selectedJobId}
                   activeFilter={activeFilter}
+                  jobTypeFilter={jobTypeFilter}
                   onSelectJob={handleSelectJob}
                   onToggleJobSelection={toggleJobSelection}
                   onSetActiveFilter={handleSetActiveFilter}
+                  onToggleJobTypeFilter={toggleJobTypeFilter}
                   onStopJob={handleStopJob}
                   onExportCsv={exportJobsCsv}
                   onOpenComparison={handleOpenComparison}

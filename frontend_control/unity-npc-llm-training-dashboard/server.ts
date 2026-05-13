@@ -809,6 +809,14 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
     if (typeof child.pid === "number" && Number.isFinite(child.pid)) trackedRunningPids.add(child.pid);
   }
 
+  // Build a set of (commandId,npcKey) pairs already tracked as running ext_proc jobs
+  const trackedCombos = new Set<string>();
+  for (const job of registry.jobs) {
+    if (job.id.startsWith("ext_proc_") && job.status === "running") {
+      trackedCombos.add(`${job.commandId ?? ""}|${job.npcKey ?? ""}`);
+    }
+  }
+
   const discoveredPids = new Set<number>();
   let psOutput = "";
   try {
@@ -841,19 +849,6 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
     if (args.includes("server.ts") || args.includes("vite") || args.includes("npm run dev")) continue;
 
     discoveredPids.add(pid);
-    const id = `ext_proc_${pid}`;
-    const existing = registry.jobs.find((job) => job.id === id);
-    if (existing) {
-      if (existing.status !== "running") {
-        existing.status = "running";
-        existing.finishedAt = undefined;
-        existing.exitCode = undefined;
-        existing.terminalReason = "external_detected";
-        appendStageLog(existing, `[EXTERNAL][PID ${pid}] Process still running`);
-        changed = true;
-      }
-      continue;
-    }
 
     let commandId = "pipeline";
     let type = "Pipeline";
@@ -876,6 +871,34 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
 
     const npcMatch = args.match(/subjects\/([a-zA-Z0-9_\-]+)\.json/);
     const npcKey = npcMatch ? npcMatch[1] : undefined;
+    const comboKey = `${commandId ?? ""}|${npcKey ?? ""}`;
+
+    // --- Dedup: skip if we already track a running ext_proc for same (commandId, npcKey) ---
+    if (trackedCombos.has(comboKey)) {
+      continue;
+    }
+    trackedCombos.add(comboKey);
+
+    const existingCombo = registry.jobs.find(
+      (job) => job.id.startsWith("ext_proc_") && job.commandId === commandId && job.npcKey === npcKey && job.status === "running"
+    );
+    if (existingCombo) {
+      continue;
+    }
+
+    const id = `ext_proc_${pid}`;
+    const existing = registry.jobs.find((job) => job.id === id);
+    if (existing) {
+      if (existing.status !== "running") {
+        existing.status = "running";
+        existing.finishedAt = undefined;
+        existing.exitCode = undefined;
+        existing.terminalReason = "external_detected";
+        appendStageLog(existing, `[EXTERNAL][PID ${pid}] Process still running`);
+        changed = true;
+      }
+      continue;
+    }
 
     const job: Job = {
       id,
@@ -1098,42 +1121,35 @@ ${cliRef}
     const history = Array.isArray(req.body?.history) ? req.body.history : [];
     if (!message) return res.status(400).json({ error: "message is required" });
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.json({
-        content: "Assistant is not configured. Set GEMINI_API_KEY on the server to enable responses.",
-      });
-    }
-
     try {
-      const contents = [...history, { role: "user", content: message }]
-        .slice(-10)
-        .map((item: unknown) => {
-          const typed = item as { role?: string; content?: string };
-          const role = typed.role === "assistant" ? "model" : "user";
-          const content = typeof typed.content === "string" ? typed.content : "";
-          return { role, parts: [{ text: content }] };
-        });
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15_000);
-      let response: Response;
-
-      try {
-        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: `You are a high-level specialist in Unity NPC LLM integration and the Unsloth_Core pipeline. 
+      const messages: Array<{ role: string; content: string }> = [
+        {
+          role: "system",
+          content: `You are a high-level specialist in Unity NPC LLM integration and the Unsloth_Core pipeline.
 Keep responses concise and actionable. Use the following context for your knowledge:
 
 ${assistantContext}
 
 If the user asks to run a command, you can suggest the exact ./ucore command.
-You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is set.` }],
-            },
-            contents,
+You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is set.`,
+        },
+        ...history.slice(-10),
+        { role: "user", content: message },
+      ];
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60_000);
+      let response: Response;
+
+      try {
+        response = await fetch("http://127.0.0.1:11434/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "gemma4:e2b",
+            messages,
+            stream: false,
+            options: { temperature: 0.7, num_predict: 2048 },
           }),
           signal: controller.signal,
         });
@@ -1143,19 +1159,25 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
 
       if (!response.ok) {
         const text = await response.text();
-        return res.status(502).json({ error: `Gemini request failed: ${text}` });
+        return res.status(502).json({ error: `Ollama request failed: ${text}` });
       }
 
       const body = await response.json() as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        message?: { content?: string };
+        done?: boolean;
       };
-      const content = body.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      const content = body.message?.content?.trim();
       return res.json({ content: content || "No assistant response generated." });
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        return res.status(504).json({ error: "Assistant request timed out after 15 seconds.", timeout: true });
+        return res.status(504).json({ error: "Assistant request timed out after 60 seconds.", timeout: true });
       }
       const messageText = error instanceof Error ? error.message : "Assistant request failed.";
+      if (messageText.includes("ECONNREFUSED") || messageText.includes("fetch failed")) {
+        return res.json({
+          content: "**Ollama is not running.** Start it with `ollama serve` or `ollama run gemma4:e2b`, then try again.",
+        });
+      }
       return res.status(500).json({ error: messageText });
     }
   });

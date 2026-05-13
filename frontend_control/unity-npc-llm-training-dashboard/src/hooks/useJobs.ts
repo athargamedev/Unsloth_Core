@@ -1,11 +1,14 @@
 import { useState, useMemo } from 'react';
 import { fetchJson, type Job } from '../api';
 
+const DEFAULT_TYPE_FILTERS = ['Training', 'Dataset'];
+
 export function useJobs() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'running'>('all');
+  const [jobTypeFilter, setJobTypeFilter] = useState<string[]>(DEFAULT_TYPE_FILTERS);
 
   const fetchJobs = async () => {
     const data = await fetchJson<Job[]>('/api/jobs');
@@ -25,9 +28,24 @@ export function useJobs() {
   };
 
   const filteredJobs = useMemo(
-    () => (activeFilter === 'running' ? jobs.filter((job) => job.status === 'running') : jobs),
-    [jobs, activeFilter],
+    () => {
+      let result = jobs;
+      if (activeFilter === 'running') {
+        result = result.filter((job) => job.status === 'running');
+      }
+      if (jobTypeFilter.length > 0) {
+        result = result.filter((job) => jobTypeFilter.includes(job.type));
+      }
+      return result;
+    },
+    [jobs, activeFilter, jobTypeFilter],
   );
+
+  const toggleJobTypeFilter = (type: string) => {
+    setJobTypeFilter((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    );
+  };
 
   const toggleJobSelection = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -79,6 +97,9 @@ export function useJobs() {
     activeFilter,
     setActiveFilter,
     filteredJobs,
+    jobTypeFilter,
+    setJobTypeFilter,
+    toggleJobTypeFilter,
     stopJob,
     toggleJobSelection,
     exportJobsCsv,

@@ -11,9 +11,11 @@ interface OperationsMatrixProps {
   selectedJobIds: string[];
   selectedJobId: string | null;
   activeFilter: 'all' | 'running';
+  jobTypeFilter: string[];
   onSelectJob: (id: string) => void;
   onToggleJobSelection: (e: React.MouseEvent, id: string) => void;
   onSetActiveFilter: () => void;
+  onToggleJobTypeFilter: (type: string) => void;
   onStopJob: (id: string) => void;
   onExportCsv: () => void;
   onOpenComparison: () => void;
@@ -26,9 +28,11 @@ export const OperationsMatrix = ({
   selectedJobIds,
   selectedJobId,
   activeFilter,
+  jobTypeFilter,
   onSelectJob,
   onToggleJobSelection,
   onSetActiveFilter,
+  onToggleJobTypeFilter,
   onStopJob,
   onExportCsv,
   onOpenComparison,
@@ -59,6 +63,22 @@ export const OperationsMatrix = ({
             )}
           </div>
           <div className="flex gap-2">
+            <div className="flex gap-1 items-center">
+              {['Training', 'Dataset', 'Export', 'Evaluation'].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => onToggleJobTypeFilter(t)}
+                  className={cn(
+                    "px-1.5 py-1 rounded text-[9px] font-bold transition-all uppercase",
+                    jobTypeFilter.includes(t)
+                      ? "bg-accent/20 text-accent border border-accent/40"
+                      : "bg-panel border border-line text-ink/40 hover:text-ink/60",
+                  )}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
             <button
               onClick={onSetActiveFilter}
               className={cn(
@@ -96,14 +116,7 @@ export const OperationsMatrix = ({
                   <th className="p-3 border-b border-line font-bold tracking-wider text-right">Action</th>
                 </tr>
               </thead>
-              <motion.tbody 
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  visible: { transition: { staggerChildren: 0.03 } }
-                }}
-                className="text-[11px] font-mono divide-y divide-line/30"
-              >
+            <tbody className="text-[11px] font-mono divide-y divide-line/30">
                 {filteredJobs.length === 0 ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-shimmer opacity-20">
@@ -111,11 +124,7 @@ export const OperationsMatrix = ({
                     </tr>
                   ))
                 ) : filteredJobs.map((job) => (
-                  <motion.tr
-                    variants={{
-                      hidden: { opacity: 0, x: -5 },
-                      visible: { opacity: 1, x: 0 }
-                    }}
+                  <tr
                     key={job.id}
                     onClick={() => onSelectJob(job.id)}
                     className={cn(
@@ -182,9 +191,9 @@ export const OperationsMatrix = ({
                         </button>
                       )}
                     </td>
-                  </motion.tr>
+                  </tr>
                 ))}
-              </motion.tbody>
+            </tbody>
             </table>
           </div>
         </div>
