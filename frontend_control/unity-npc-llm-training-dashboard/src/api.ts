@@ -114,6 +114,61 @@ export interface CommandPayload {
   [key: string]: unknown;
 }
 
+export interface TensorBoardScalar {
+  step: number;
+  value: number;
+}
+
+export interface TensorBoardData {
+  runId: string;
+  scalars: Record<string, TensorBoardScalar[]>;
+  error?: string | null;
+}
+
+export interface WsMessage {
+  type: 'telemetry' | 'job_update' | 'status';
+  payload: any;
+  timestamp: string;
+}
+
+export interface DatasetSample {
+  messages?: Array<{ role: string; content: string }>;
+  _parseError?: boolean;
+  _raw?: string;
+  [key: string]: unknown;
+}
+
+export interface DatasetContent {
+  npcKey: string;
+  technique: string;
+  total: number;
+  samples: DatasetSample[];
+  showing: number;
+}
+
+export interface EvalReportFile {
+  name: string;
+  path: string;
+}
+
+export interface EvalReportGroup {
+  npcKey: string;
+  files: EvalReportFile[];
+}
+
+export interface EvalReportsData {
+  reports: EvalReportGroup[];
+  comparisons: EvalReportFile[];
+}
+
+export interface RunDetail {
+  npcKey: string;
+  runId: string;
+  path: string;
+  config: Record<string, unknown>;
+  metrics: Record<string, unknown>;
+}
+
 // --- API helpers ---
 
 export const fetchJson = async <T,>(url: string): Promise<T> => {

@@ -23,11 +23,12 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { fetchJson } from './api';
-import type { AvailableCommand, TrainingConfig } from './api';
+import type { AvailableCommand, TrainingConfig, TensorBoardData } from './api';
 import { useJobs } from './hooks/useJobs';
 import { useSystemStatus } from './hooks/useSystemStatus';
 import { useTelemetry } from './hooks/useTelemetry';
 import { useDatasets } from './hooks/useDatasets';
+import { useWebSocket } from './hooks/useWebSocket';
 import { AIAssistant } from './components/AIAssistant';
 import { OperationsMatrix } from './components/OperationsMatrix';
 import { DatasetFactory } from './components/DatasetFactory';
@@ -36,16 +37,24 @@ import { TensorBoardPanel } from './components/TensorBoardPanel';
 import { SystemHub } from './components/SystemHub';
 import { ModelComparison } from './components/ModelComparison';
 import { Card } from './components/Card';
+import { DatasetViewer } from './components/DatasetViewer';
+import { EvalReportsPanel } from './components/EvalReportsPanel';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'training' | 'datasets' | 'compare' | 'analytics' | 'commands'>('overview');
   const [logs, setLogs] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<Array<{ step: number; loss: number; acc: number; lr: number }>>([]);
+  const [tensorBoardData, setTensorBoardData] = useState<TensorBoardData | null>(null);
+  const [tbIsFallback, setTbIsFallback] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [commandModalOpen, setCommandModalOpen] = useState(false);
   const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
   const [commandPayload, setCommandPayload] = useState<any>({});
+
+  const [datasetViewNpc, setDatasetViewNpc] = useState<string>('');
+  const [datasetViewTechnique, setDatasetViewTechnique] = useState<string>('');
+  const [availableTechniques, setAvailableTechniques] = useState<Array<{ name: string; train_count: number; val_count: number }>>([]);
 
   const [trainingConfig, setTrainingConfig] = useState<TrainingConfig>({
     spec: 'subjects/chemistry_instructor.json',
@@ -82,6 +91,7 @@ export default function App() {
 
   const {
     telemetry,
+    setTelemetry,
     fetchTelemetry,
   } = useTelemetry();
 
@@ -94,6 +104,12 @@ export default function App() {
     commandSchemas,
     fetchDatasets,
   } = useDatasets();
+
+  const { connectionQuality } = useWebSocket({
+    onTelemetry: (data) => setTelemetry(data),
+    onJobUpdate: () => fetchJobs(),
+    onFallbackPolling: () => { /* polling already runs every 5s */ },
+  });
 
   // --- Data Fetching ---
 
@@ -127,13 +143,45 @@ export default function App() {
   useEffect(() => {
     const targetJobId = selectedJobId || jobs[0]?.id;
     if (!targetJobId) {
-      setAnalyticsData([]);
+      setTensorBoardData(null);
+      setTbIsFallback(true);
+      fetchJson<Array<{ step: number; loss: number; acc: number; lr: number }>>('/api/analytics')
+        .then(setAnalyticsData)
+        .catch(() => setAnalyticsData([]));
       return;
     }
 
-    fetchJson<Array<{ step: number; loss: number; acc: number; lr: number }>>(`/api/analytics?jobId=${encodeURIComponent(targetJobId)}`)
-      .then(setAnalyticsData)
-      .catch(() => setAnalyticsData([]));
+    fetchJson<TensorBoardData>(`/api/tensorboard?runId=${encodeURIComponent(targetJobId)}`)
+      .then((tbData) => {
+        if (tbData.error || Object.keys(tbData.scalars).length === 0) {
+          setTbIsFallback(true);
+          return fetchJson<Array<{ step: number; loss: number; acc: number; lr: number }>>('/api/analytics')
+            .then(setAnalyticsData)
+            .catch(() => setAnalyticsData([]));
+        }
+        setTbIsFallback(false);
+        const lossScalars = tbData.scalars['train/loss'] || tbData.scalars['loss'] || [];
+        const accScalars = tbData.scalars['eval/acc'] || tbData.scalars['acc'] || [];
+        const lrScalars = tbData.scalars['train/learning_rate'] || tbData.scalars['learning_rate'] || [];
+
+        const maxSteps = Math.max(
+          lossScalars.length, accScalars.length, lrScalars.length, 1
+        );
+        const combined = Array.from({ length: maxSteps }, (_, i) => ({
+          step: lossScalars[i]?.step || accScalars[i]?.step || lrScalars[i]?.step || i + 1,
+          loss: lossScalars[i]?.value ?? 0,
+          acc: accScalars[i]?.value ?? 0,
+          lr: lrScalars[i]?.value ?? 0,
+        }));
+        setAnalyticsData(combined);
+        setTensorBoardData(tbData);
+      })
+      .catch(() => {
+        setTbIsFallback(true);
+        fetchJson<Array<{ step: number; loss: number; acc: number; lr: number }>>('/api/analytics')
+          .then(setAnalyticsData)
+          .catch(() => setAnalyticsData([]));
+      });
   }, [selectedJobId, jobs]);
 
   // --- Handlers ---
@@ -256,6 +304,18 @@ export default function App() {
     }
   };
 
+  const handleViewDataset = (npcKey: string, technique: string) => {
+    setDatasetViewNpc(npcKey);
+    setDatasetViewTechnique(technique);
+    // Extract techniques from datasets state
+    const ds = datasets.find((d) => d.id === npcKey);
+    if (ds) {
+      setAvailableTechniques(
+        ds.versions.map((v) => ({ name: v.tag, train_count: v.entries, val_count: 0 }))
+      );
+    }
+  };
+
   const handleClearSelection = () => {
     setSelectedJobIds([]);
   };
@@ -332,105 +392,77 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-bg text-ink font-sans border border-line selection:bg-accent/30 selection:text-ink-bright">
       {/* Top Global Monitor */}
-      <header className="h-12 border-b border-line bg-header flex items-center justify-between px-4 shrink-0 z-50">
+      <header className="h-12 border-b border-line bg-header/80 backdrop-blur-xl flex items-center justify-between px-4 shrink-0 z-50">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 text-accent">
-            <div className="w-2 h-2 rounded-full bg-accent glow-blue"></div>
-            <span className="font-mono text-xs font-bold tracking-widest uppercase">Unity NPC Core v2.4</span>
+          <div className="flex items-center gap-2 group cursor-pointer">
+            <div className="w-2 h-2 rounded-full bg-accent glow-blue group-hover:scale-125 transition-transform"></div>
+            <span className="font-mono text-xs font-bold tracking-widest uppercase gradient-text">Unsloth_Core v2.4</span>
           </div>
-          <div className="h-4 w-px bg-line"></div>
-          <div className="flex gap-4">
+          <div className="h-4 w-px bg-line/50"></div>
+          <div className="flex gap-6">
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase opacity-50 font-bold tracking-tighter">{telemetry?.gpuName ?? 'GPU'}</span>
-              <span className={cn("text-xs font-mono font-bold", telemetry && telemetry.gpuLoad > 90 ? "text-danger" : "text-success")}>
-                {telemetry ? `${telemetry.gpuLoad}% LOAD` : 'N/A'}
+              <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">GPU_NODE</span>
+              <span className={cn("text-[10px] font-mono font-bold tracking-tight", telemetry && telemetry.gpuLoad > 90 ? "text-danger" : "text-accent")}>
+                {telemetry ? `${telemetry.gpuName.split(' ')[0]} / ${telemetry.gpuLoad}%` : '---'}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] uppercase opacity-50 font-bold tracking-tighter">CPU LOAD</span>
-              <span className={cn("text-xs font-mono text-accent font-bold", telemetry && telemetry.cpuLoad > 75 ? "text-danger" : "text-success")}>{telemetry ? `${telemetry.cpuLoad}%` : 'N/A'}</span>
+              <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">CPU_LOAD</span>
+              <span className={cn("text-[10px] font-mono font-bold", telemetry && telemetry.cpuLoad > 75 ? "text-danger" : "text-success")}>{telemetry ? `${telemetry.cpuLoad}%` : '---'}</span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex flex-col text-right">
-            <span className="text-[9px] uppercase opacity-50 font-bold tracking-tighter">SYSTEM HEALTH</span>
-            <span className={cn("text-[10px] font-bold", health?.ok ? "text-success" : "text-warning")}>{health?.ok ? 'HEALTHY' : 'DEGRADED'}</span>
+            <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">NETWORK_IO</span>
+            <span className="text-[10px] font-mono font-bold text-ink/60">{telemetry ? `${telemetry.networkRxMBps.toFixed(1)}MB/s` : '---'}</span>
           </div>
-          <div className="h-8 w-px bg-line" />
-          <button onClick={stopAllJobs} className="px-3 py-1 bg-danger/20 text-danger border border-danger/40 text-[10px] font-bold rounded-sm uppercase tracking-tighter hover:bg-danger/40 transition-colors active:scale-95">
+          <div className="h-8 w-px bg-line/50" />
+          <button onClick={stopAllJobs} className="px-3 py-1 bg-danger/10 text-danger border border-danger/30 text-[9px] font-bold rounded-sm uppercase tracking-wider hover:bg-danger/30 transition-all active:scale-95 shadow-lg shadow-danger/5">
             Emergency Kill
           </button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Background Mesh Overlay */}
+        <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_50%_-20%,var(--accent-glow),transparent_50%)]" />
+
         {/* Left Sidebar: Assistant/Docs */}
         <AIAssistant />
 
         {/* Main Content: Matrix & Logs */}
         <main className="flex-1 flex flex-col overflow-hidden bg-bg">
           {/* Tab Selection */}
-          <div className="flex px-4 border-b border-line bg-surface/50">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={cn(
-                "px-4 py-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-colors",
-                activeTab === 'overview' ? "border-accent text-ink-bright" : "border-transparent text-ink/40 hover:text-ink/60",
-              )}
-            >
-              Operations Matrix
-            </button>
-            <button
-              onClick={() => setActiveTab('datasets')}
-              className={cn(
-                "px-4 py-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-colors",
-                activeTab === 'datasets' ? "border-accent text-ink-bright" : "border-transparent text-ink/40 hover:text-ink/60",
-              )}
-            >
-              Dataset Factory
-            </button>
-            <button
-              onClick={() => setActiveTab('training')}
-              className={cn(
-                "px-4 py-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-colors",
-                activeTab === 'training' ? "border-accent text-ink-bright" : "border-transparent text-ink/40 hover:text-ink/60",
-              )}
-            >
-              Training Suite
-            </button>
-            <button
-              onClick={() => setActiveTab('analytics')}
-              className={cn(
-                "px-4 py-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-colors",
-                activeTab === 'analytics' ? "border-accent text-ink-bright" : "border-transparent text-ink/40 hover:text-ink/60",
-              )}
-            >
-              TensorBoard
-            </button>
-            <button
-              onClick={() => setActiveTab('commands')}
-              className={cn(
-                "px-4 py-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-colors",
-                activeTab === 'commands' ? "border-accent text-ink-bright" : "border-transparent text-ink/40 hover:text-ink/60",
-              )}
-            >
-              System Hub
-            </button>
-            <button
-              onClick={() => setActiveTab('compare')}
-              className={cn(
-                "px-4 py-2 text-[10px] font-bold uppercase tracking-widest border-b-2 transition-colors relative",
-                activeTab === 'compare' ? "border-accent text-ink-bright" : "border-transparent text-ink/40 hover:text-ink/60",
-              )}
-            >
-              Model Comparison
-              {selectedJobIds.length > 0 && (
-                <span className="ml-2 bg-accent text-bg px-1 rounded-full text-[8px]">
-                  {selectedJobIds.length}
-                </span>
-              )}
-            </button>
+          <div className="flex px-4 border-b border-line bg-surface/30 backdrop-blur-md">
+            {[
+              { id: 'overview', label: 'Operations Matrix' },
+              { id: 'datasets', label: 'Dataset Factory' },
+              { id: 'training', label: 'Training Suite' },
+              { id: 'analytics', label: 'TensorBoard' },
+              { id: 'commands', label: 'System Hub' },
+              { id: 'compare', label: 'Model Comparison' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  "px-4 py-3 text-[9px] font-bold uppercase tracking-[0.2em] border-b-2 transition-all duration-300 relative group",
+                  activeTab === tab.id ? "border-accent text-ink-bright" : "border-transparent text-ink/30 hover:text-ink/60",
+                )}
+              >
+                {tab.label}
+                {tab.id === 'compare' && selectedJobIds.length > 0 && (
+                  <span className="ml-2 bg-accent text-bg px-1.5 rounded-full text-[8px] font-mono animate-pulse">
+                    {selectedJobIds.length}
+                  </span>
+                )}
+                {activeTab === tab.id && (
+                  <motion.div layoutId="activeTab" className="absolute inset-0 bg-accent/5 -z-10" />
+                )}
+                <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-accent transition-all duration-300 group-hover:w-full" />
+              </button>
+            ))}
           </div>
 
           <AnimatePresence mode="wait">
@@ -462,16 +494,32 @@ export default function App() {
 
             {activeTab === 'analytics' && (
               <TensorBoardPanel
-                analyticsData={analyticsData}
+                data={analyticsData}
                 onRefresh={fetchData}
+                isLive={connectionQuality === 'connected'}
+                isFallback={tbIsFallback}
               />
             )}
 
             {activeTab === 'commands' && (
-              <SystemHub
-                availableCommands={availableCommands}
-                onTriggerCommand={handleSystemHubCommand}
-              />
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-auto">
+                  <SystemHub
+                    availableCommands={availableCommands}
+                    onTriggerCommand={handleSystemHubCommand}
+                  />
+                </div>
+                <div className="border-t border-line p-4">
+                  <details>
+                    <summary className="text-[10px] font-bold text-ink/40 uppercase tracking-widest cursor-pointer hover:text-ink/60">
+                      Evaluation Reports
+                    </summary>
+                    <div className="mt-3">
+                      <EvalReportsPanel />
+                    </div>
+                  </details>
+                </div>
+              </div>
             )}
 
             {activeTab === 'compare' && (
@@ -485,13 +533,55 @@ export default function App() {
             )}
 
             {activeTab === 'datasets' && (
-              <DatasetFactory
-                datasets={datasets}
-                runs={runs}
-                exportArtifacts={exportArtifacts}
-                trainingConfig={trainingConfig}
-                onGenerateDataset={handleGenerateDataset}
-              />
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-auto">
+                  <DatasetFactory
+                    datasets={datasets}
+                    runs={runs}
+                    exportArtifacts={exportArtifacts}
+                    trainingConfig={trainingConfig}
+                    onGenerateDataset={handleGenerateDataset}
+                  />
+                </div>
+                {/* Dataset viewer controls */}
+                <div className="p-4 border-t border-line">
+                  <div className="flex gap-2 items-center">
+                    <select
+                      value={datasetViewNpc}
+                      onChange={(e) => { setDatasetViewNpc(e.target.value); setDatasetViewTechnique(''); }}
+                      className="bg-bg border border-line text-[10px] rounded px-2 py-1 min-w-[140px]"
+                    >
+                      <option value="">Select NPC...</option>
+                      {datasets.map((ds) => (
+                        <option key={ds.id} value={ds.id}>{ds.name}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={datasetViewTechnique}
+                      onChange={(e) => setDatasetViewTechnique(e.target.value)}
+                      className="bg-bg border border-line text-[10px] rounded px-2 py-1 min-w-[120px]"
+                    >
+                      <option value="">Technique...</option>
+                      {datasets.find((d) => d.id === datasetViewNpc)?.versions.map((v) => (
+                        <option key={v.tag} value={v.tag}>{v.tag} ({v.entries} entries)</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => handleViewDataset(datasetViewNpc, datasetViewTechnique)}
+                      disabled={!datasetViewNpc || !datasetViewTechnique}
+                      className="px-3 py-1 bg-accent text-bg text-[10px] font-bold rounded disabled:opacity-40 hover:bg-accent/80 transition-colors"
+                    >
+                      View Samples
+                    </button>
+                  </div>
+                </div>
+                {/* Dataset viewer results */}
+                {datasetViewNpc && datasetViewTechnique && (
+                  <div className="px-4 pb-4 max-h-[400px] overflow-auto">
+                    <DatasetViewer npcKey={datasetViewNpc} technique={datasetViewTechnique} />
+                  </div>
+                )}
+              </div>
             )}
           </AnimatePresence>
 

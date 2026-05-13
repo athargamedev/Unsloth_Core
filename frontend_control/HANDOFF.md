@@ -185,3 +185,39 @@ npm run start
 8. Review allowed path roots before adding any new command requiring file inputs.
 
 This integration is complete and approved for team use in **local mode**.
+
+---
+
+## 10) FastAPI Dashboard Deprecation
+
+### Status: DEPRECATED
+
+The legacy FastAPI dashboard at `scripts/dashboard.py` (port 8000) is **deprecated**.
+
+### What changed
+All functionality previously provided by the FastAPI dashboard has been migrated to the React+Express SPA:
+
+| FastAPI Feature | SPA Equivalent |
+|----------------|----------------|
+| Real-time metrics (WebSocket) | WebSocket at `/ws` in Express |
+| Training config browser | Training Suite tab |
+| Dataset viewer | Dataset Factory tab |
+| Eval reports | System Hub → Eval Reports |
+| Model comparison | Model Comparison tab |
+| System telemetry | System Hub tab |
+
+### Migration timeline
+- **Now**: FastAPI still runs on port 8000 with deprecation headers (`X-Deprecated: true`)
+- **Next release**: FastAPI will be removed; all functionality is in the Express SPA on port 3100
+
+### To stop FastAPI
+```bash
+# Find and kill the process
+pkill -f "python scripts/dashboard.py"
+# Or
+kill $(lsof -ti:8000)
+```
+
+### Icons/Visual markers
+- Running dashboard.py will log: `WARNING  Deprecated FastAPI dashboard called: GET / — use React+Express SPA`
+- All API responses include header: `X-Deprecated: true`

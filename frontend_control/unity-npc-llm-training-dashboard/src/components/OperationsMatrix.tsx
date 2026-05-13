@@ -79,71 +79,95 @@ export const OperationsMatrix = ({
           </div>
         </div>
 
-        <div className="flex-1 border border-line rounded-sm overflow-hidden bg-surface">
+        <div className="flex-1 border border-line rounded-sm overflow-hidden bg-surface/30 backdrop-blur-sm">
           <div className="overflow-auto h-full">
             <table className="w-full text-left border-collapse table-fixed">
               <thead className="sticky top-0 z-10">
-                <tr className="bg-header text-[10px] text-ink/50 uppercase">
-                  <th className="p-2 border-b border-line font-bold tracking-wider w-8">
+                <tr className="bg-header/80 backdrop-blur-md text-[10px] text-ink/50 uppercase">
+                  <th className="p-3 border-b border-line font-bold tracking-wider w-8">
                     <div className="w-3 h-3 border border-line rounded-sm" />
                   </th>
-                  <th className="p-2 border-b border-line font-bold tracking-wider w-1/3">Model / Version</th>
-                  <th className="p-2 border-b border-line font-bold tracking-wider text-right">Loss</th>
-                  <th className="p-2 border-b border-line font-bold tracking-wider text-right">Prog</th>
-                  <th className="p-2 border-b border-line font-bold tracking-wider">Source</th>
-                  <th className="p-2 border-b border-line font-bold tracking-wider">Status</th>
-                  <th className="p-2 border-b border-line font-bold tracking-wider text-right">Action</th>
+                  <th className="p-3 border-b border-line font-bold tracking-wider w-1/3">Model / Version</th>
+                  <th className="p-3 border-b border-line font-bold tracking-wider text-right">Loss</th>
+                  <th className="p-3 border-b border-line font-bold tracking-wider text-right">Prog</th>
+                  <th className="p-3 border-b border-line font-bold tracking-wider">Source</th>
+                  <th className="p-3 border-b border-line font-bold tracking-wider">Status</th>
+                  <th className="p-3 border-b border-line font-bold tracking-wider text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="text-[11px] font-mono divide-y divide-line/30">
-                {filteredJobs.map((job) => (
-                  <tr
+              <motion.tbody 
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: { transition: { staggerChildren: 0.03 } }
+                }}
+                className="text-[11px] font-mono divide-y divide-line/30"
+              >
+                {filteredJobs.length === 0 ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="animate-shimmer opacity-20">
+                      <td colSpan={7} className="p-4 h-12 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+                    </tr>
+                  ))
+                ) : filteredJobs.map((job) => (
+                  <motion.tr
+                    variants={{
+                      hidden: { opacity: 0, x: -5 },
+                      visible: { opacity: 1, x: 0 }
+                    }}
                     key={job.id}
                     onClick={() => onSelectJob(job.id)}
                     className={cn(
-                      "hover:bg-accent/5 transition-colors cursor-pointer",
+                      "hover:bg-accent/10 transition-all duration-300 cursor-pointer group",
                       job.status === 'running' ? "bg-accent/5" : "",
                       selectedJobId === job.id ? "bg-accent/20 border-l-2 border-accent" : "",
                       selectedJobIds.includes(job.id) ? "bg-accent/10" : "",
                     )}
                   >
-                    <td className="p-2" onClick={(e) => onToggleJobSelection(e, job.id)}>
+                    <td className="p-3" onClick={(e) => onToggleJobSelection(e, job.id)}>
                       <div className={cn(
-                        "w-3 h-3 border rounded-sm flex items-center justify-center transition-colors",
-                        selectedJobIds.includes(job.id) ? "bg-accent border-accent" : "border-line",
+                        "w-3 h-3 border rounded-sm flex items-center justify-center transition-all duration-500",
+                        selectedJobIds.includes(job.id) ? "bg-accent border-accent shadow-[0_0_8px_var(--accent-glow)]" : "border-line",
                       )}>
                         {selectedJobIds.includes(job.id) && <div className="w-1.5 h-1.5 bg-bg rounded-full" />}
                       </div>
                     </td>
-                    <td className="p-2 font-bold text-ink-bright truncate">{job.name}</td>
+                    <td className="p-3 font-bold text-ink-bright truncate group-hover:text-accent transition-colors">{job.name}</td>
                     <td className={cn(
-                      "p-2 text-right font-bold",
+                      "p-3 text-right font-bold",
                       job.loss !== null && job.loss < 0.1 ? "text-success" : "text-warning",
                     )}>
                       {job.loss?.toFixed(3) || '--'}
                     </td>
-                    <td className="p-2 text-right text-ink/70">{job.progress}%</td>
-                    <td className="p-2 text-ink/50 truncate uppercase text-[9px]">{job.type}</td>
-                    <td className="p-2">
-                      <Badge variant={job.status === 'completed' ? 'success' : job.status === 'running' ? 'warning' : job.status === 'failed' ? 'danger' : 'default'}>
+                    <td className="p-3 text-right text-ink/70">
+                      <div className="flex flex-col items-end gap-1">
+                        <span>{job.progress}%</span>
+                        <div className="w-12 h-1 bg-line rounded-full overflow-hidden">
+                          <div className="h-full bg-accent transition-all duration-1000" style={{ width: `${job.progress}%` }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-3 text-ink/50 truncate uppercase text-[9px]">{job.type}</td>
+                    <td className="p-3">
+                      <Badge variant={job.status === 'completed' ? 'success' : job.status === 'running' ? 'warning' : job.status === 'failed' ? 'danger' : 'default'} className={cn(job.status === 'running' && "pulse-active")}>
                         {job.status}
                       </Badge>
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="p-3 text-right">
                       {job.status === 'running' ? (
-                        <button onClick={(e) => { e.stopPropagation(); onStopJob(job.id); }} className="text-danger hover:underline uppercase text-[9px] font-bold">Stop</button>
+                        <button onClick={(e) => { e.stopPropagation(); onStopJob(job.id); }} className="text-danger hover:text-danger/80 transition-colors uppercase text-[9px] font-bold tracking-tighter">Stop</button>
                       ) : (
                         <button
                           onClick={(e) => { e.stopPropagation(); onManageJob(job.id); }}
-                          className="text-accent hover:underline uppercase text-[9px] font-bold"
+                          className="text-accent hover:text-accent/80 transition-colors uppercase text-[9px] font-bold tracking-tighter"
                         >
                           Manage
                         </button>
                       )}
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
         </div>

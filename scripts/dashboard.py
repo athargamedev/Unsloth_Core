@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """
-dashboard.py — FastAPI training monitoring dashboard.
+@deprecated FastAPI training monitoring dashboard.
 
-Usage:
+THIS FILE IS DEPRECATED. The React+Express SPA in
+frontend_control/unity-npc-llm-training-dashboard/ is the
+primary dashboard. This FastAPI server is kept for backward
+compatibility during migration and will be removed in a
+future release.
+
+Usage (legacy):
     python scripts/dashboard.py [--port 8000] [--host 0.0.0.0]
 
-Provides:
+Previously provided:
   - Real-time GPU/CPU/system metrics via WebSocket
   - Training config browser and one-click start/stop
   - Live loss chart from TensorBoard events
@@ -21,7 +27,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Callable
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -43,7 +49,21 @@ from fastapi.templating import Jinja2Templates
 logger = logging.getLogger("unsloth-dashboard")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-app = FastAPI(title="Unsloth Training Dashboard", version="2.0.0")
+app = FastAPI(title="Unsloth Training Dashboard (DEPRECATED)", version="2.0.0")
+
+# ── Deprecation middleware ────────────────────────────────────────────────────
+
+@app.middleware("http")
+async def deprecation_header(request: Request, call_next):
+    logger.warning(
+        "Deprecated FastAPI dashboard called: %s %s — use React+Express SPA on port 3100 instead",
+        request.method,
+        request.url.path,
+    )
+    response = await call_next(request)
+    response.headers["X-Deprecated"] = "true"
+    response.headers["X-Deprecated-Info"] = "Use React+Express SPA on port 3100 instead"
+    return response
 
 # Template path
 template_dir = Path(__file__).resolve().parent.parent / "templates"

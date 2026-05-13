@@ -1,34 +1,18 @@
 #!/usr/bin/env python3
 """
-train.py — Unified Unsloth training launcher with model-size-aware presets.
+train.py — Unified Unsloth Training Launcher
+
+This script manages the SFT (Supervised Fine-Tuning) process using Unsloth
+and LoRA. It supports hierarchical configurations and model-aware presets.
 
 Usage:
-    # Train from a YAML config
-    python scripts/train.py configs/lora-sft-fast-3b.yaml
+    ./ucore train subjects/chemistry_instructor.json --preset fast-3b
+    python scripts/train.py subjects/chemistry_instructor.json --from-spec --export-gguf
 
-    # Direct CLI mode (uses base config + presets)
-    python scripts/train.py --model unsloth/Qwen3-1.7B-bnb-4bit \
-        --preset fast-1.7b \
-        --data datasets/chemistry_instructor/notebooklm/train.jsonl \
-        --output outputs/chemistry_instructor
-
-    # With a custom YAML and overrides
-    python scripts/train.py configs/lora-sft-quality-1.7b.yaml \
-        --data datasets/chemistry_instructor/notebooklm/train.jsonl \
-        --conv-ext 3 \
-        --mix-general 0.15
-
-    # Full pipeline: auto-generate dataset from spec, then train
-    python scripts/train.py subjects/chemistry_instructor.json --from-spec
-
-    # Post-training export (with already-trained model in output dir)
-    python scripts/train.py configs/lora-sft-fast-3b.yaml --export-gguf
-
-    # Export only the LoRA adapter as GGUF (for LLMUnity runtime loading)
-    python scripts/train.py configs/lora-sft-fast-3b.yaml --export-lora
-
-    # One-liner: generate dataset from spec, train with preset, export LoRA
-    python scripts/train.py subjects/chemistry_instructor.json --from-spec --preset fast-1.7b --export-lora
+Technical Details:
+- Input: train_clean.jsonl and a subject spec or YAML config.
+- Output: LoRA adapter weights in outputs/{npc_key}/runs/{run_id}/.
+- Features: Support for packing, response-only training, and automatic GGUF export.
 """
 
 import argparse

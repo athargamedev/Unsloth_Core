@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """
-export.py — Export trained LoRA adapter to GGUF for Unity/LLMUnity.
+export.py — GGUF Model Exporter & Quantizer
+
+This script merges LoRA adapters back into the base model and exports them
+to GGUF format for local inference in Unity/LLMUnity.
 
 Usage:
-    # New style (recommended):
-    python scripts/export.py chemistry_instructor --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit
+    ./ucore export chemistry_instructor --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit
+    python scripts/export.py outputs/my_model --quantization q4_k_m
 
-    # Legacy style (still supported):
-    python scripts/export.py outputs/my_model [--quantization q4_k_m]
+Technical Details:
+- Input: LoRA adapter directory (outputs/) and base model ID.
+- Output: exports/{npc_key}/{npc_key}-{model_short}-{quant}.gguf.
+- Features: Automatic manifest generation, checksums, and f16 fallback.
 """
 
 import argparse

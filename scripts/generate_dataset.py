@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """
-generate_dataset.py — Generate a ChatML JSONL training dataset from a subject spec.
+generate_dataset.py — Synthetic NPC Dataset Generator
+
+This script transforms an NPC subject specification into a ChatML-formatted
+JSONL training dataset using various techniques (NotebookLM, Ollama, OpenAI).
 
 Usage:
-    python scripts/generate_dataset.py subjects/chemistry_instructor.json
-    # Output: datasets/chemistry_instructor/notebooklm/train.jsonl
+    ./ucore generate subjects/chemistry_instructor.json --technique notebooklm
+    python scripts/generate_dataset.py subjects/chemistry_instructor.json --ollama
 
-    python scripts/generate_dataset.py subjects/chemistry_instructor.json --technique ollama
-    # Output: datasets/chemistry_instructor/ollama/train.jsonl
-
-    python scripts/generate_dataset.py subjects/chemistry_instructor.json --output my/custom/path.jsonl
-    # Output: my/custom/path.jsonl (explicit path still works)
-
-The subject spec defines research queries, persona, and per-category example counts.
-This script produces a properly formatted ChatML JSONL file ready for Unsloth training.
+Technical Details:
+- Input: Subject spec JSON file in subjects/
+- Output: datasets/{npc_key}/{technique}/train.jsonl
+- Process: Fetches domain knowledge via research queries and synthesizes Q&A.
 """
 
 import argparse

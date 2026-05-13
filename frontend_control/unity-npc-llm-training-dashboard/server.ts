@@ -753,9 +753,127 @@ async function startServer() {
     }
   });
 
+  app.get("/api/dataset/:npcKey/:technique", (req, res) => {
+    const { npcKey, technique } = req.params;
+    const n = Math.min(Math.max(parseInt(String(req.query.n || "10"), 10) || 10, 1), 100);
+
+    // Security: reject path traversal
+    if (npcKey.includes("..") || technique.includes("..")) {
+      return res.status(400).json({ error: "Invalid path" });
+    }
+
+    const trainPath = path.join(repoRoot, "datasets", npcKey, technique, "train.jsonl");
+    if (!fs.existsSync(trainPath)) {
+      return res.status(404).json({ error: `Dataset ${npcKey}/${technique} not found. Run generation first.` });
+    }
+
+    try {
+      const content = fs.readFileSync(trainPath, "utf8");
+      const lines = content.split("\n").filter(Boolean);
+      const total = lines.length;
+      const samples = lines.slice(0, n).map((line, i) => {
+        try {
+          return JSON.parse(line);
+        } catch {
+          return { _parseError: true, _line: i, _raw: line.slice(0, 200) };
+        }
+      });
+
+      return res.json({
+        npcKey,
+        technique,
+        total,
+        samples,
+        showing: Math.min(n, total),
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err instanceof Error ? err.message : "Failed to read dataset" });
+    }
+  });
+
   app.get("/api/datasets", (_req, res) => res.json(listDatasets()));
   app.get("/api/subjects", (_req, res) => res.json(listSubjects()));
   app.get("/api/runs", (_req, res) => res.json(listRuns()));
+
+  app.get("/api/eval-reports", (_req, res) => {
+    const evalRoot = path.join(repoRoot, "eval");
+    const reports: Array<{ npcKey: string; files: Array<{ name: string; path: string }> }> = [];
+    const comparisons: Array<{ name: string; path: string }> = [];
+
+    const reportsDir = path.join(evalRoot, "reports");
+    if (fs.existsSync(reportsDir)) {
+      for (const npcDir of fs.readdirSync(reportsDir)) {
+        const npcPath = path.join(reportsDir, npcDir);
+        if (!fs.statSync(npcPath).isDirectory()) continue;
+        const files = fs.readdirSync(npcPath).map((f) => ({
+          name: f,
+          path: `eval/reports/${npcDir}/${f}`,
+        }));
+        reports.push({ npcKey: npcDir, files });
+      }
+    }
+
+    const compDir = path.join(evalRoot, "comparisons");
+    if (fs.existsSync(compDir)) {
+      for (const f of fs.readdirSync(compDir)) {
+        const fPath = path.join(compDir, f);
+        if (!fs.statSync(fPath).isFile()) continue;
+        comparisons.push({ name: f, path: `eval/comparisons/${f}` });
+      }
+    }
+
+    return res.json({ reports, comparisons });
+  });
+
+  app.get("/api/run/:npcKey/:runId", (req, res) => {
+    const { npcKey, runId } = req.params;
+
+    if (npcKey.includes("..") || runId.includes("..")) {
+      return res.status(400).json({ error: "Invalid path" });
+    }
+
+    const runPath = path.join(repoRoot, "outputs", npcKey, "runs", runId);
+    if (!fs.existsSync(runPath)) {
+      return res.status(404).json({ error: `Run ${npcKey}/${runId} not found` });
+    }
+
+    // Read config.yaml if exists
+    let config: Record<string, unknown> = {};
+    const configPath = path.join(runPath, "config.yaml");
+    if (fs.existsSync(configPath)) {
+      try {
+        // Simple YAML to JSON parser for basic key-value pairs
+        const raw = fs.readFileSync(configPath, "utf8");
+        config = Object.fromEntries(
+          raw
+            .split("\n")
+            .filter((l) => l.includes(":"))
+            .map((l) => {
+              const [k, ...v] = l.split(":");
+              return [k.trim(), v.join(":").trim()];
+            })
+        );
+      } catch { /* ignore parse errors */ }
+    }
+
+    // Read metrics.json if exists
+    let metrics: Record<string, unknown> = {};
+    const metricsPath = path.join(runPath, "metrics.json");
+    if (fs.existsSync(metricsPath)) {
+      try {
+        metrics = JSON.parse(fs.readFileSync(metricsPath, "utf8"));
+      } catch { /* ignore parse errors */ }
+    }
+
+    return res.json({
+      npcKey,
+      runId,
+      path: runPath,
+      config,
+      metrics,
+    });
+  });
+
   app.get("/api/exports", (_req, res) => res.json(listExports()));
   app.get("/api/execution-mode", (_req, res) => res.json({ mode: registry.executionMode }));
   app.post("/api/execution-mode", (req, res) => {
@@ -798,6 +916,43 @@ async function startServer() {
 
   app.get("/api/telemetry", (_req, res) => {
     res.json(buildTelemetryPayload(registry.nodeId));
+  });
+
+  app.get("/api/tensorboard", (req, res) => {
+    const runId = typeof req.query.runId === "string" ? req.query.runId.trim() : "";
+    if (!runId) return res.json({ runId: "", scalars: {}, error: "runId query parameter is required" });
+
+    // Look for run dirs in outputs/*/runs/ matching the runId
+    const outputsRoot = path.join(repoRoot, "outputs");
+    // Find the run directory by searching all npc outputs
+    let runDir = "";
+    if (fs.existsSync(outputsRoot)) {
+      for (const npcKey of fs.readdirSync(outputsRoot)) {
+        const runsDir = path.join(outputsRoot, npcKey, "runs");
+        if (!fs.existsSync(runsDir)) continue;
+        const candidate = path.join(runsDir, runId);
+        if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
+          runDir = candidate;
+          break;
+        }
+      }
+    }
+
+    if (!runDir) {
+      return res.json({ runId, scalars: {}, error: `Run directory not found for ${runId}` });
+    }
+
+    try {
+      const result = execSync(
+        `python scripts/tb_reader.py --run-dir "${runDir}"`,
+        { cwd: repoRoot, encoding: "utf8", timeout: 10000 }
+      );
+      const data = JSON.parse(result.trim());
+      return res.json(data);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to read TensorBoard data";
+      return res.json({ runId, scalars: {}, error: msg });
+    }
   });
 
   app.get("/api/suggestions", (_req, res) => {

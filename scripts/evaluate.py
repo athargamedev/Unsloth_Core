@@ -1,26 +1,19 @@
 #!/usr/bin/env python3
 """
-evaluate.py — Side-by-side comparison of fine-tuned GGUF models.
+evaluate.py — Side-by-Side Model Evaluator
+
+This script performs deep comparisons between two GGUF models. It uses
+heuristics and an optional LLM judge to score responses based on persona,
+accuracy, and conversational constraints.
 
 Usage:
-    # Compare two GGUF models on a subject spec's held-out questions
-    python scripts/evaluate.py \\
-        --baseline exports/llama3.2-3b-game-surf-v2-gguf/*.gguf \\
-        --candidate outputs/chemistry_instructor-gguf-q4_k_m/*.gguf \\
-        --spec subjects/chemistry_instructor.json \\
-        --output eval_report.md
+    ./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/npc.json
+    python scripts/evaluate.py --model model.gguf --val-data validation.jsonl
 
-    # Single model benchmark mode
-    python scripts/evaluate.py \
-        --model outputs/my_model-gguf-q4_k_m/*.gguf \
-        --val-data datasets/chemistry_instructor/notebooklm/validation.jsonl \
-        --out report_single.md
-
-    # Extract training metrics from TensorBoard logs
-    python scripts/evaluate.py --training-metrics runs/
-
-    # Interactive mode: chat with a GGUF model via llama.cpp server
-    python scripts/evaluate.py --interactive --model exports/model.gguf
+Technical Details:
+- Input: One or two GGUF models, subject spec, and validation dataset.
+- Output: Markdown and HTML reports with metrics, charts, and winner analysis.
+- Features: Lexical diversity scoring, constraint checking, and interactive chat.
 """
 
 import argparse
