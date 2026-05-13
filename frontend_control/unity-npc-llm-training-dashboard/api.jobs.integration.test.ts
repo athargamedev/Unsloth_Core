@@ -1,7 +1,6 @@
-import test from "node:test";
-import assert from "node:assert/strict";
+import { test } from "node:test";
+import * as assert from "node:assert/strict";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
-import path from "node:path";
 
 const DASHBOARD_DIR = "/home/athar/Projects/Unsloth_Core/frontend_control/unity-npc-llm-training-dashboard";
 const PORT = 3211;

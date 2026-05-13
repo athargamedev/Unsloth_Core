@@ -2,6 +2,53 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2183188",
+      "name": "External Process (2183188) nonexistent_integration_spec",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "nonexistent_integration_spec",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-13T17:07:39.639Z",
+      "startedAt": "2026-05-13T17:07:39.639Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/nonexistent_integration_spec.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2183188] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2183188] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/nonexistent_integration_spec.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T17:07:39.917Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_1427406",
       "name": "External Process (1427406)",
       "type": "Evaluation",
@@ -378,14 +425,7 @@
     }
   ],
   "logs": [
-    "[2026-05-13T16:36:22.951Z] [SYNC] discovered running external process pid=1427406",
-    "[2026-05-13T16:36:08.473Z] [SYNC] discovered running external process pid=1421535",
-    "[2026-05-13T16:36:08.473Z] [SYNC] discovered running external process pid=1421528",
-    "[2026-05-13T16:26:32.341Z] [SYNC] discovered running external process pid=1186079",
-    "[2026-05-13T16:26:31.992Z] [SYNC] discovered running external process pid=1185585",
-    "[2026-05-13T16:15:00.274Z] [SYNC] imported external job ext_train_chemistry_instructor_local_20260513_llama-1b-fast_002",
-    "[2026-05-13T16:15:00.274Z] [SYNC] imported external job ext_sanitize_chemistry_instructor_local_ollama",
-    "[2026-05-13T16:15:00.273Z] [SYNC] imported external job ext_dataset_chemistry_instructor_local_ollama"
+    "[2026-05-13T17:07:39.669Z] [SYNC] discovered running external process pid=2183188"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []
