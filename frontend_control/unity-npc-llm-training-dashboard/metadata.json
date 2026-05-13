@@ -1,0 +1,6 @@
+{
+  "name": "Unity NPC LLM Training Dashboard",
+  "description": "A comprehensive dashboard for managing, tracking, and comparing LLM training and dataset generation for Unity NPC dialogues.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

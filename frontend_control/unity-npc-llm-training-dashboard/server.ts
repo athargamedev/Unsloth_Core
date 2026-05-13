@@ -1,0 +1,743 @@
+
+import express from "express";
+import fs from "fs";
+import path from "path";
+import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
+import { createServer as createViteServer } from "vite";
+
+type ExecutionMode = "local" | "remote";
+type JobStatus = "pending" | "running" | "completed" | "failed" | "stopped";
+
+interface Stage {
+  name: string;
+  status: "completed" | "running" | "pending" | "failed";
+  logs: string[];
+}
+
+interface Job {
+  id: string;
+  name: string;
+  type: string;
+  status: JobStatus;
+  progress: number;
+  loss: number | null;
+  createdAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+  command: string[];
+  stages: Stage[];
+  logs: string[];
+  exitCode?: number;
+  stopRequested?: boolean;
+  terminalReason?: string;
+}
+
+interface Registry {
+  executionMode: ExecutionMode;
+  jobs: Job[];
+  logs: string[];
+}
+
+interface StartCommandPayload {
+  commandId?: string;
+  type?: string;
+  spec?: string;
+  preset?: string;
+  npcKey?: string;
+  options?: Record<string, string | number | boolean | undefined>;
+}
+
+const dashboardRoot = process.cwd();
+const repoRoot = path.resolve(dashboardRoot, "../..");
+const runtimeDir = path.join(dashboardRoot, ".runtime");
+const registryPath = path.join(runtimeDir, "registry.json");
+
+const MAX_LOG_LINES = 600;
+const globalLog = (registry: Registry, line: string) => {
+  registry.logs.unshift(line);
+  registry.logs = registry.logs.slice(0, MAX_LOG_LINES);
+};
+
+const defaultStages = (): Stage[] => [
+  { name: "Dataset Prep", status: "pending", logs: [] },
+  { name: "Training", status: "pending", logs: [] },
+  { name: "Evaluation", status: "pending", logs: [] },
+  { name: "Export", status: "pending", logs: [] },
+];
+
+const ensureRuntime = () => fs.mkdirSync(runtimeDir, { recursive: true });
+const loadRegistry = (): Registry => {
+  ensureRuntime();
+  if (!fs.existsSync(registryPath)) {
+    return { executionMode: "local", jobs: [], logs: [] };
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(registryPath, "utf8")) as Registry;
+  } catch {
+    return { executionMode: "local", jobs: [], logs: [] };
+  }
+};
+
+const persistRegistry = (registry: Registry) => {
+  ensureRuntime();
+  fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2), "utf8");
+};
+
+const isoNow = () => new Date().toISOString();
+const makeId = () => `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+type CommandDefinition = {
+  id: string;
+  label: string;
+  icon: string;
+  color: "accent" | "success" | "warning" | "danger" | "default";
+  type: string;
+  requiredFields: string[];
+  build: (payload: StartCommandPayload) => string[];
+};
+
+const sanitizeToken = (value: string, fieldName: string): string => {
+  if (!value || !/^[a-zA-Z0-9_./:-]+$/.test(value)) {
+    throw new Error(`Invalid ${fieldName}.`);
+  }
+  return value;
+};
+
+const normalizeRelativePath = (value: string, fieldName: string): string => {
+  const token = sanitizeToken(value, fieldName);
+  return token.replace(/^\.{1,2}\//, "");
+};
+
+const canonicalizeExistingPath = (targetPath: string): string => {
+  return fs.realpathSync(targetPath);
+};
+
+const canonicalizePathFromNearestExistingParent = (targetPath: string): string => {
+  if (fs.existsSync(targetPath)) {
+    return canonicalizeExistingPath(targetPath);
+  }
+
+  const segments: string[] = [];
+  let currentPath = path.resolve(targetPath);
+  while (!fs.existsSync(currentPath)) {
+    const parentPath = path.dirname(currentPath);
+    if (parentPath === currentPath) {
+      throw new Error("Invalid path: no existing parent for canonicalization.");
+    }
+    segments.unshift(path.basename(currentPath));
+    currentPath = parentPath;
+  }
+
+  const canonicalParent = canonicalizeExistingPath(currentPath);
+  return path.resolve(canonicalParent, ...segments);
+};
+
+const isPathWithinOrEqualToRoot = (candidate: string, allowedRoot: string): boolean => {
+  const relative = path.relative(allowedRoot, candidate);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+};
+
+const resolvePathWithinRoots = (
+  inputPath: string,
+  fieldName: string,
+  allowedRoots: string[],
+): string => {
+  const safeInput = normalizeRelativePath(inputPath, fieldName);
+  const absoluteCandidate = path.resolve(repoRoot, safeInput);
+
+  const canonicalAllowedRoots = allowedRoots.map((root) => {
+    const absoluteRoot = path.resolve(root);
+    if (!fs.existsSync(absoluteRoot)) {
+      throw new Error(`Invalid ${fieldName}: allowed root is unavailable.`);
+    }
+    return canonicalizeExistingPath(absoluteRoot);
+  });
+
+  const canonicalCandidate = canonicalizePathFromNearestExistingParent(absoluteCandidate);
+  const isAllowed = canonicalAllowedRoots.some((canonicalRoot) => {
+    return isPathWithinOrEqualToRoot(canonicalCandidate, canonicalRoot);
+  });
+
+  if (!isAllowed) {
+    throw new Error(`Invalid ${fieldName}: path escapes allowed roots.`);
+  }
+
+  const canonicalRepoRoot = canonicalizeExistingPath(repoRoot);
+  return path.relative(canonicalRepoRoot, canonicalCandidate);
+};
+
+const requireString = (value: unknown, fieldName: string): string => {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new Error(`${fieldName} is required.`);
+  }
+  return value.trim();
+};
+
+const optionValue = (payload: StartCommandPayload, key: string): string => {
+  const raw = payload.options?.[key];
+  if (typeof raw === "string") return raw;
+  if (typeof raw === "number" || typeof raw === "boolean") return String(raw);
+  return "";
+};
+
+const parsedSpec = (payload: StartCommandPayload): string => {
+  const spec = requireString(payload.spec, "spec");
+  return resolvePathWithinRoots(spec, "spec", [path.join(repoRoot, "subjects")]);
+};
+
+const parsedDatasetPath = (payload: StartCommandPayload): string => {
+  return resolvePathWithinRoots(
+    requireString(optionValue(payload, "datasetPath"), "datasetPath"),
+    "datasetPath",
+    [path.join(repoRoot, "datasets")],
+  );
+};
+
+const parsedModelPath = (payload: StartCommandPayload): string => {
+  return resolvePathWithinRoots(
+    requireString(optionValue(payload, "modelPath"), "modelPath"),
+    "modelPath",
+    [path.join(repoRoot, "exports"), path.join(repoRoot, "outputs")],
+  );
+};
+
+const parsedBaseline = (payload: StartCommandPayload): string => {
+  return resolvePathWithinRoots(
+    requireString(optionValue(payload, "baseline"), "baseline"),
+    "baseline",
+    [path.join(repoRoot, "exports"), path.join(repoRoot, "outputs")],
+  );
+};
+
+const parsedCandidate = (payload: StartCommandPayload): string => {
+  return resolvePathWithinRoots(
+    requireString(optionValue(payload, "candidate"), "candidate"),
+    "candidate",
+    [path.join(repoRoot, "exports"), path.join(repoRoot, "outputs")],
+  );
+};
+
+const parsedValData = (payload: StartCommandPayload): string => {
+  return resolvePathWithinRoots(
+    requireString(optionValue(payload, "valData"), "valData"),
+    "valData",
+    [path.join(repoRoot, "datasets")],
+  );
+};
+
+
+const commandDefinitions: CommandDefinition[] = [
+  {
+    id: "dataset-generate",
+    label: "Generate Dataset",
+    icon: "database",
+    color: "accent",
+    type: "Dataset",
+    requiredFields: ["spec"],
+    build: (payload) => ["./ucore", "generate", parsedSpec(payload)],
+  },
+  {
+    id: "dataset-sanitize",
+    label: "Sanitize Dataset",
+    icon: "shield",
+    color: "warning",
+    type: "Dataset",
+    requiredFields: ["options.datasetPath"],
+    build: (payload) => ["./ucore", "sanitize", parsedDatasetPath(payload)],
+  },
+  { id: "train", label: "Train LoRA", icon: "zap", color: "accent", type: "Training", build: ({ spec, preset }) => {
+      const args = [
+        "./ucore",
+        "train",
+        resolvePathWithinRoots(requireString(spec, "spec"), "spec", [path.join(repoRoot, "subjects")]),
+        "--from-spec",
+      ];
+      if (preset) args.push("--preset", sanitizeToken(preset, "preset"));
+      return args;
+    }, requiredFields: ["spec"] },
+  {
+    id: "pipeline",
+    label: "Run Full Pipeline",
+    icon: "layers",
+    color: "success",
+    type: "Pipeline",
+    requiredFields: ["spec"],
+    build: (payload) => ["./ucore", "pipeline", parsedSpec(payload)],
+  },
+  {
+    id: "export",
+    label: "Export GGUF",
+    icon: "external-link",
+    color: "success",
+    type: "Export",
+    requiredFields: ["npcKey", "options.modelId"],
+    build: ({ npcKey, options }) => ["./ucore", "export", sanitizeToken(requireString(npcKey, "npcKey"), "npcKey"), "--model", sanitizeToken(requireString(String(options?.modelId || ""), "modelId"), "modelId")],
+  },
+  {
+    id: "export-adapter",
+    label: "Export Adapter",
+    icon: "external-link",
+    color: "default",
+    type: "Export",
+    requiredFields: ["npcKey"],
+    build: ({ npcKey }) => ["./ucore", "export-adapter", `outputs/${sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")}/`],
+  },
+  {
+    id: "evaluate",
+    label: "Evaluate Candidate",
+    icon: "bar-chart",
+    color: "accent",
+    type: "Evaluation",
+    requiredFields: ["options.baseline", "options.candidate", "spec"],
+    build: (payload) => {
+      const valData = optionValue(payload, "valData");
+      const command = ["./ucore", "evaluate", "--baseline", parsedBaseline(payload), "--candidate", parsedCandidate(payload), "--spec", parsedSpec(payload)];
+      if (valData.trim()) command.push("--val-data", parsedValData(payload));
+      return command;
+    },
+  },
+  {
+    id: "smoke",
+    label: "Smoke Test",
+    icon: "activity",
+    color: "warning",
+    type: "Validation",
+    requiredFields: ["options.modelPath", "spec"],
+    build: (payload) => ["./ucore", "smoke", parsedModelPath(payload), "--spec", parsedSpec(payload)],
+  },
+  {
+    id: "deploy",
+    label: "Deploy Package",
+    icon: "external-link",
+    color: "success",
+    type: "Deploy",
+    requiredFields: ["options.npcKey", "options.modelId"],
+    build: ({ options }) => ["python", "scripts/export.py", sanitizeToken(requireString(String(options?.npcKey || ""), "npcKey"), "npcKey"), "--model", sanitizeToken(requireString(String(options?.modelId || ""), "modelId"), "modelId")],
+  },
+  {
+    id: "supabase-check",
+    label: "Supabase Health Check",
+    icon: "shield",
+    color: "default",
+    type: "System",
+    requiredFields: ["npcKey"],
+    build: ({ npcKey, options }) => {
+      const args = ["./ucore", "supabase-check", "--npc-key", sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")];
+      const playerId = String(options?.playerId || "").trim();
+      if (playerId) args.push("--player-id", sanitizeToken(playerId, "playerId"));
+      return args;
+    },
+  },
+];
+
+const commandMap = new Map(commandDefinitions.map((cmd) => [cmd.id, cmd]));
+
+const runningProcesses = new Map<string, ChildProcessWithoutNullStreams>();
+const terminalJobState = new Map<string, { stopRequested: boolean; terminal: boolean }>();
+const stopEscalationTimers = new Map<string, NodeJS.Timeout>();
+const STOP_ESCALATION_MS = 10_000;
+
+const parseLoss = (line: string): number | null => {
+  const match = line.match(/loss[:=]\s*([0-9]*\.?[0-9]+)/i);
+  if (!match) return null;
+  return Number(match[1]);
+};
+
+const updateStagesByProgress = (job: Job) => {
+  const thresholds = [20, 60, 85, 100];
+  job.stages = job.stages.map((stage, index) => {
+    const threshold = thresholds[index] ?? 100;
+    if (job.progress >= threshold) return { ...stage, status: "completed" };
+    if (job.progress >= (thresholds[index - 1] ?? 0) && job.status === "running") return { ...stage, status: "running" };
+    return stage;
+  });
+};
+
+const currentStageIndex = (progress: number): number => {
+  if (progress < 20) return 0;
+  if (progress < 60) return 1;
+  if (progress < 85) return 2;
+  return 3;
+};
+
+const appendStageLog = (job: Job, message: string) => {
+  const stage = job.stages[currentStageIndex(job.progress)] ?? job.stages[job.stages.length - 1];
+  if (!stage) return;
+  stage.logs.push(message);
+  stage.logs = stage.logs.slice(-50);
+};
+
+const reconcileOrphanedJobs = (registry: Registry) => {
+  let changed = false;
+  const now = isoNow();
+  for (const job of registry.jobs) {
+    if (job.status !== "running" && job.status !== "pending") continue;
+    job.status = "failed";
+    job.terminalReason = "server_restarted";
+    job.finishedAt = job.finishedAt ?? now;
+    job.exitCode = typeof job.exitCode === "number" ? job.exitCode : -1;
+    appendStageLog(job, "[SYSTEM] Marked failed: server restarted before completion.");
+    globalLog(registry, `[SYSTEM] reconciled ${job.id} to failed (server_restarted)`);
+    changed = true;
+  }
+  if (changed) persistRegistry(registry);
+};
+
+const validateRequiredFields = (payload: StartCommandPayload, requiredFields: string[]) => {
+  for (const requiredField of requiredFields) {
+    const [root, key] = requiredField.split(".");
+    if (root === "options" && key) {
+      const value = payload.options?.[key];
+      if (value === undefined || value === null || String(value).trim() === "") {
+        throw new Error(`${requiredField} is required.`);
+      }
+      continue;
+    }
+
+    const directValue = (payload as unknown as Record<string, unknown>)[requiredField];
+    if (directValue === undefined || directValue === null || String(directValue).trim() === "") {
+      throw new Error(`${requiredField} is required.`);
+    }
+  }
+};
+
+async function startServer() {
+  const app = express();
+  const PORT = Number(process.env.PORT || "3000");
+  const registry = loadRegistry();
+  reconcileOrphanedJobs(registry);
+
+  app.use(express.json());
+
+  const listDatasets = () => {
+    const datasetsRoot = path.join(repoRoot, "datasets");
+    if (!fs.existsSync(datasetsRoot)) return [];
+    return fs.readdirSync(datasetsRoot).map((npcKey) => {
+      const npcPath = path.join(datasetsRoot, npcKey);
+      if (!fs.statSync(npcPath).isDirectory()) return null;
+      const versions = fs.readdirSync(npcPath)
+        .filter((technique) => fs.statSync(path.join(npcPath, technique)).isDirectory())
+        .map((technique) => {
+          const trainPath = path.join(npcPath, technique, "train.jsonl");
+          const entries = fs.existsSync(trainPath) ? fs.readFileSync(trainPath, "utf8").split("\n").filter(Boolean).length : 0;
+          const stat = fs.existsSync(trainPath) ? fs.statSync(trainPath) : fs.statSync(path.join(npcPath, technique));
+          return {
+            tag: technique,
+            size: `${Math.max(1, Math.round(stat.size / 1024))}KB`,
+            entries,
+            createdAt: stat.mtime.toISOString(),
+          };
+        });
+
+      return { id: npcKey, name: npcKey, versions };
+    }).filter(Boolean);
+  };
+
+  const listSubjects = () => {
+    const subjectsRoot = path.join(repoRoot, "subjects");
+    if (!fs.existsSync(subjectsRoot)) return [];
+    return fs.readdirSync(subjectsRoot)
+      .filter((f) => f.endsWith(".json"))
+      .map((file) => ({ id: file.replace(/\.json$/, ""), path: `subjects/${file}` }));
+  };
+
+  const listRuns = () => {
+    const outputsRoot = path.join(repoRoot, "outputs");
+    if (!fs.existsSync(outputsRoot)) return [];
+    return fs.readdirSync(outputsRoot)
+      .filter((d) => fs.statSync(path.join(outputsRoot, d)).isDirectory())
+      .map((d) => {
+        const stat = fs.statSync(path.join(outputsRoot, d));
+        return { id: d, npcKey: d, updatedAt: stat.mtime.toISOString() };
+      });
+  };
+
+  const listExports = () => {
+    const exportsRoot = path.join(repoRoot, "exports");
+    if (!fs.existsSync(exportsRoot)) return [];
+    const entries: Array<{ npcKey: string; file: string; updatedAt: string }> = [];
+    for (const npcKey of fs.readdirSync(exportsRoot)) {
+      const npcDir = path.join(exportsRoot, npcKey);
+      if (!fs.statSync(npcDir).isDirectory()) continue;
+      for (const file of fs.readdirSync(npcDir).filter((f) => f.endsWith(".gguf"))) {
+        const stat = fs.statSync(path.join(npcDir, file));
+        entries.push({ npcKey, file: `exports/${npcKey}/${file}`, updatedAt: stat.mtime.toISOString() });
+      }
+    }
+    return entries;
+  };
+
+  // API Routes
+  app.get("/api/jobs", (_req, res) => res.json(registry.jobs));
+
+  app.get("/api/analytics", (req, res) => {
+    const jobId = typeof req.query.jobId === "string" ? req.query.jobId : "";
+    const job = registry.jobs.find((item) => item.id === jobId) ?? registry.jobs[0];
+    if (!job) return res.json([]);
+
+    const points: Array<{ step: number; loss: number; acc: number; lr: number }> = [];
+    let step = 0;
+    for (const line of job.logs) {
+      const loss = parseLoss(line);
+      if (loss === null) continue;
+      step += 1;
+      points.push({ step, loss, acc: Math.max(0, Math.min(1, 1 - loss / 3)), lr: Number((2e-4 / Math.max(1, step)).toPrecision(4)) });
+    }
+    res.json(points);
+  });
+
+  app.get("/api/available-commands", (_req, res) => res.json(commandDefinitions.map(({ build, ...rest }) => rest)));
+
+  app.post("/api/assistant", async (req, res) => {
+    const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
+    const history = Array.isArray(req.body?.history) ? req.body.history : [];
+    if (!message) return res.status(400).json({ error: "message is required" });
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.json({
+        content: "Assistant is not configured. Set GEMINI_API_KEY on the server to enable responses.",
+      });
+    }
+
+    try {
+      const contents = [...history, { role: "user", content: message }]
+        .slice(-10)
+        .map((item: unknown) => {
+          const typed = item as { role?: string; content?: string };
+          const role = typed.role === "assistant" ? "model" : "user";
+          const content = typeof typed.content === "string" ? typed.content : "";
+          return { role, parts: [{ text: content }] };
+        });
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15_000);
+      let response: Response;
+
+      try {
+        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${encodeURIComponent(apiKey)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: "You are a high-level specialist in Unity NPC LLM integration. Keep responses concise and actionable." }],
+            },
+            contents,
+          }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      if (!response.ok) {
+        const text = await response.text();
+        return res.status(502).json({ error: `Gemini request failed: ${text}` });
+      }
+
+      const body = await response.json() as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const content = body.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      return res.json({ content: content || "No assistant response generated." });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return res.status(504).json({ error: "Assistant request timed out after 15 seconds.", timeout: true });
+      }
+      const messageText = error instanceof Error ? error.message : "Assistant request failed.";
+      return res.status(500).json({ error: messageText });
+    }
+  });
+
+  app.get("/api/datasets", (_req, res) => res.json(listDatasets()));
+  app.get("/api/subjects", (_req, res) => res.json(listSubjects()));
+  app.get("/api/runs", (_req, res) => res.json(listRuns()));
+  app.get("/api/exports", (_req, res) => res.json(listExports()));
+  app.get("/api/execution-mode", (_req, res) => res.json({ mode: registry.executionMode }));
+  app.post("/api/execution-mode", (req, res) => {
+    const mode = req.body?.mode;
+    if (mode !== "local" && mode !== "remote") return res.status(400).json({ error: "Invalid mode." });
+    registry.executionMode = mode;
+    persistRegistry(registry);
+    res.json({ mode });
+  });
+  app.get("/api/system/status", (_req, res) => {
+    res.json({
+      executionMode: registry.executionMode,
+      runningJobs: registry.jobs.filter((job) => job.status === "running").length,
+      totalJobs: registry.jobs.length,
+      repoRoot,
+      timestamp: isoNow(),
+    });
+  });
+
+  app.get("/api/health", (_req, res) => {
+    const checks = {
+      ucoreExists: fs.existsSync(path.join(repoRoot, "ucore")),
+      subjectsDir: fs.existsSync(path.join(repoRoot, "subjects")),
+      datasetsDir: fs.existsSync(path.join(repoRoot, "datasets")),
+      outputsDir: fs.existsSync(path.join(repoRoot, "outputs")),
+      exportsDir: fs.existsSync(path.join(repoRoot, "exports")),
+      supabaseUrlConfigured: Boolean(process.env.SUPABASE_URL),
+      supabaseKeyConfigured: Boolean(process.env.SUPABASE_KEY),
+    };
+    const ok = Object.values(checks).every(Boolean);
+    const statusCode = ok ? 200 : 503;
+    res.status(statusCode).json({
+      ok,
+      checks,
+      executionMode: registry.executionMode,
+      runningJobs: registry.jobs.filter((job) => job.status === "running").length,
+      timestamp: isoNow(),
+    });
+  });
+
+  app.get("/api/logs", (_req, res) => res.json(registry.logs));
+
+  app.post("/api/commands/start", (req, res) => {
+    try {
+      const payload = req.body as StartCommandPayload;
+      const commandDef = commandMap.get(payload.commandId || "");
+      if (!commandDef) return res.status(400).json({ error: "Unknown commandId." });
+      if (registry.executionMode === "remote") {
+        return res.status(501).json({ error: "Remote runner not implemented yet.", mode: "remote" });
+      }
+
+      validateRequiredFields(payload, commandDef.requiredFields);
+
+      const command = commandDef.build(payload);
+      const job: Job = {
+        id: makeId(),
+        name: `${commandDef.label}${payload.npcKey ? ` (${payload.npcKey})` : ""}`,
+        type: payload.type || commandDef.type,
+        status: "running",
+        progress: 5,
+        loss: null,
+        createdAt: isoNow(),
+        startedAt: isoNow(),
+        command,
+        stages: defaultStages(),
+        logs: [],
+      };
+
+      registry.jobs.unshift(job);
+      globalLog(registry, `[SYSTEM] starting ${job.id}: ${command.join(" ")}`);
+      persistRegistry(registry);
+
+      const child = spawn(command[0], command.slice(1), { cwd: repoRoot, shell: false });
+      runningProcesses.set(job.id, child);
+      terminalJobState.set(job.id, { stopRequested: false, terminal: false });
+
+      const consume = (chunk: Buffer, source: "stdout" | "stderr") => {
+        const lines = chunk.toString().split("\n").map((line) => line.trim()).filter(Boolean);
+        for (const line of lines) {
+          const prefixed = `[${source.toUpperCase()}][${job.id}] ${line}`;
+          job.logs.push(prefixed);
+          job.logs = job.logs.slice(-MAX_LOG_LINES);
+          appendStageLog(job, prefixed);
+          globalLog(registry, prefixed);
+
+          const parsedLoss = parseLoss(line);
+          if (parsedLoss !== null) job.loss = parsedLoss;
+          if (job.progress < 95) job.progress += 1;
+          updateStagesByProgress(job);
+        }
+        persistRegistry(registry);
+      };
+
+      child.stdout.on("data", (chunk) => consume(chunk, "stdout"));
+      child.stderr.on("data", (chunk) => consume(chunk, "stderr"));
+      child.on("close", (code) => {
+        const terminalState = terminalJobState.get(job.id);
+        const escalationTimer = stopEscalationTimers.get(job.id);
+        if (escalationTimer) {
+          clearTimeout(escalationTimer);
+          stopEscalationTimers.delete(job.id);
+        }
+        runningProcesses.delete(job.id);
+        terminalJobState.delete(job.id);
+
+        if (terminalState?.terminal) {
+          return;
+        }
+
+        job.exitCode = code ?? -1;
+        job.finishedAt = isoNow();
+        if (terminalState?.stopRequested || job.stopRequested) {
+          job.status = "stopped";
+          job.terminalReason = "user_requested_stop";
+        } else {
+          job.progress = code === 0 ? 100 : job.progress;
+          job.status = code === 0 ? "completed" : "failed";
+        }
+        updateStagesByProgress(job);
+        globalLog(registry, `[SYSTEM] job ${job.id} ${job.status} (exit ${code})`);
+        persistRegistry(registry);
+      });
+
+      res.json(job);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to start command.";
+      res.status(400).json({ error: message });
+    }
+  });
+
+  app.post("/api/commands/stop", (req, res) => {
+    const { id } = req.body as { id?: string };
+    if (!id) return res.status(400).json({ error: "id is required" });
+    const process = runningProcesses.get(id);
+    const job = registry.jobs.find((item) => item.id === id);
+    if (!job) return res.status(404).json({ error: "Job not found" });
+    if (!process) return res.status(409).json({ error: "Job is not running" });
+
+    process.kill("SIGTERM");
+    const terminalState = terminalJobState.get(id);
+    if (terminalState) {
+      terminalState.stopRequested = true;
+    } else {
+      terminalJobState.set(id, { stopRequested: true, terminal: false });
+    }
+    job.stopRequested = true;
+
+    if (!stopEscalationTimers.has(id)) {
+      const escalationTimer = setTimeout(() => {
+        const activeProcess = runningProcesses.get(id);
+        if (!activeProcess) {
+          stopEscalationTimers.delete(id);
+          return;
+        }
+        globalLog(registry, `[SYSTEM] escalating stop for ${id} to SIGKILL after ${STOP_ESCALATION_MS}ms`);
+        persistRegistry(registry);
+        activeProcess.kill("SIGKILL");
+        stopEscalationTimers.delete(id);
+      }, STOP_ESCALATION_MS);
+      stopEscalationTimers.set(id, escalationTimer);
+    }
+
+    globalLog(registry, `[SYSTEM] stop requested ${id}`);
+    persistRegistry(registry);
+    return res.json({ status: "stop_requested", id });
+  });
+
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+startServer();
