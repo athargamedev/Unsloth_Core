@@ -11,11 +11,16 @@ Usage:
 """
 
 import argparse
+import contextlib
 import json
 import math
+import os
 import shutil
+import signal
 import sys
 import tempfile
+import threading
+import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -24,7 +29,63 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 
 
-def _export_gguf_file(model, tokenizer, model_id, quantization, output_path):
+def _status_path(npc_key: str) -> Path:
+    return paths.export_dir(npc_key) / "export_status.json"
+
+
+def _write_status(npc_key: str, **fields):
+    sp = _status_path(npc_key)
+    sp.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "npc_key": npc_key,
+        "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+    if sp.exists():
+        with contextlib.suppress(Exception):
+            payload.update(json.loads(sp.read_text()))
+    payload.update(fields)
+    sp.write_text(json.dumps(payload, indent=2))
+
+
+class ExportTimeoutError(RuntimeError):
+    pass
+
+
+@contextlib.contextmanager
+def _time_limit(seconds: int | None, message: str):
+    if not seconds or seconds <= 0:
+        yield
+        return
+
+    def _handler(_signum, _frame):
+        raise ExportTimeoutError(message)
+
+    previous = signal.signal(signal.SIGALRM, _handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous)
+
+
+def _heartbeat(stop_event: threading.Event, npc_key: str, substep: str, interval_s: int = 20):
+    started = time.time()
+    while not stop_event.wait(interval_s):
+        elapsed = int(time.time() - started)
+        msg = f"  [heartbeat] {substep} running ({elapsed}s elapsed)"
+        print(msg)
+        _write_status(
+            npc_key,
+            state="running",
+            substep=substep,
+            last_heartbeat=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            elapsed_seconds=elapsed,
+            pid=os.getpid(),
+        )
+
+
+def _export_gguf_file(model, tokenizer, model_id, quantization, output_path, *, npc_key: str, substep_timeout: int | None = None):
     """Export to GGUF using a temp dir, then move the generated file to output_path.
     
     Unsloth's save_pretrained_gguf creates a directory; this helper
@@ -35,11 +96,20 @@ def _export_gguf_file(model, tokenizer, model_id, quantization, output_path):
 
     with tempfile.TemporaryDirectory(prefix="gguf_export_") as tmpdir:
         print(f"  Generating GGUF in temporary directory...")
-        model.save_pretrained_gguf(
-            tmpdir,
-            tokenizer=tokenizer,
-            quantization_method=quantization,
-        )
+        _write_status(npc_key, state="running", substep=f"export_{quantization}", temp_dir=tmpdir)
+        hb_stop = threading.Event()
+        hb = threading.Thread(target=_heartbeat, args=(hb_stop, npc_key, f"export_{quantization}"), daemon=True)
+        hb.start()
+        try:
+            with _time_limit(substep_timeout, f"Timed out exporting {quantization} GGUF after {substep_timeout}s"):
+                model.save_pretrained_gguf(
+                    tmpdir,
+                    tokenizer=tokenizer,
+                    quantization_method=quantization,
+                )
+        finally:
+            hb_stop.set()
+            hb.join(timeout=1)
         # Find the generated GGUF file — Unsloth may create it in
         # tmpdir itself OR in a parallel {tmpdir}_gguf/ directory.
         gguf_files = sorted(Path(tmpdir).rglob("*.gguf"))
@@ -48,6 +118,7 @@ def _export_gguf_file(model, tokenizer, model_id, quantization, output_path):
         if not gguf_files and sibling.exists():
             gguf_files = sorted(sibling.rglob("*.gguf"))
         if not gguf_files:
+            _write_status(npc_key, state="failed", substep=f"export_{quantization}", error_summary="No GGUF generated")
             print(f"Error: No GGUF file generated in {tmpdir}")
             print(f"Directory contents: {list(Path(tmpdir).iterdir())}")
             if sibling.exists():
@@ -58,6 +129,7 @@ def _export_gguf_file(model, tokenizer, model_id, quantization, output_path):
         shutil.move(str(generated), str(output_path))
 
     file_size = output_path.stat().st_size / (1024 * 1024 * 1024)
+    _write_status(npc_key, state="running", substep=f"export_{quantization}", artifact=str(output_path), artifact_size_gb=round(file_size, 4))
     print(f"  → {output_path} ({file_size:.2f} GB)")
 
 
@@ -179,6 +251,14 @@ def main():
         "--skip-f16", action="store_true",
         help="Skip exporting the f16 variant",
     )
+    parser.add_argument(
+        "--resume", action="store_true",
+        help="Resume mode: skip GGUF variants that already exist",
+    )
+    parser.add_argument(
+        "--timeout-seconds", type=int, default=5400,
+        help="Per-variant export timeout in seconds (default: 5400)",
+    )
     args = parser.parse_args()
 
     # ── Determine adapter directory ─────────────────────────────────────────
@@ -210,51 +290,112 @@ def main():
     print(f"  Model ID:      {model_id}")
     print(f"  Quantization:  {args.quantization}")
 
-    # ── Load model ──────────────────────────────────────────────────────────
-    from unsloth import FastLanguageModel, save as unsloth_save
-    from peft import PeftModel
-    import torch
-    import types
-
-    print(f"\nLoading model...")
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=model_id,
-        max_seq_length=2048,
-        dtype=None,
-        load_in_4bit=True,
+    _write_status(
+        npc_key,
+        state="running",
+        substep="initializing",
+        started_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        model_id=model_id,
+        quantization=args.quantization,
+        resume=bool(args.resume),
+        pid=os.getpid(),
+        timeout_seconds=args.timeout_seconds,
     )
 
-    # ── Load LoRA adapter (if present) ──────────────────────────────────────
-    adapter_path = output_dir / "adapter_config.json"
-    if adapter_path.exists():
-        print(f"  Loading LoRA adapter from: {output_dir}")
-        model = PeftModel.from_pretrained(model, str(output_dir), is_trainable=False)
-        # Re-bind save_pretrained_gguf to the PeftModel wrapper
-        model.save_pretrained_gguf = types.MethodType(
-            unsloth_save.unsloth_save_pretrained_gguf, model,
+    quant_path_pre = paths.export_gguf_path(npc_key, model_id, args.quantization)
+    f16_path_pre = paths.export_gguf_path(npc_key, model_id, "f16")
+    if args.resume and quant_path_pre.exists() and (args.skip_f16 or f16_path_pre.exists()):
+        print("[resume] Requested artifacts already exist. Regenerating manifest/checksums only.")
+        gguf_files = [quant_path_pre]
+        quantizations = [args.quantization]
+        if not args.skip_f16:
+            gguf_files.append(f16_path_pre)
+            quantizations.append("f16")
+        write_manifest(npc_key, model_id, quantizations, gguf_files, output_dir)
+        _write_status(
+            npc_key,
+            state="completed",
+            substep="resume_noop",
+            artifacts=[str(p) for p in gguf_files],
+            completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        )
+        print("Export resume complete (no-op).")
+        return
+
+    try:
+        # ── Load model ──────────────────────────────────────────────────────────
+        from unsloth import FastLanguageModel, save as unsloth_save
+        from peft import PeftModel
+        import torch
+        import types
+
+        print(f"\nLoading model...")
+        model, tokenizer = FastLanguageModel.from_pretrained(
+            model_name=model_id,
+            max_seq_length=2048,
+            dtype=None,
+            load_in_4bit=True,
         )
 
-    # ── Export quantized GGUF ───────────────────────────────────────────────
-    gguf_path = paths.export_gguf_path(npc_key, model_id, args.quantization)
-    _export_gguf_file(model, tokenizer, model_id, args.quantization, gguf_path)
+        # ── Load LoRA adapter (if present) ──────────────────────────────────────
+        adapter_path = output_dir / "adapter_config.json"
+        if adapter_path.exists():
+            print(f"  Loading LoRA adapter from: {output_dir}")
+            model = PeftModel.from_pretrained(model, str(output_dir), is_trainable=False)
+            # Re-bind save_pretrained_gguf to the PeftModel wrapper
+            model.save_pretrained_gguf = types.MethodType(
+                unsloth_save.unsloth_save_pretrained_gguf, model,
+            )
 
-    # ── Also export f16 GGUF for deployment use ─────────────────────────────
-    if not args.skip_f16:
+        # ── Export quantized GGUF ───────────────────────────────────────────────
+        gguf_path = paths.export_gguf_path(npc_key, model_id, args.quantization)
+        if args.resume and gguf_path.exists():
+            print(f"  [resume] Skipping existing quantized GGUF: {gguf_path}")
+            _write_status(npc_key, state="running", substep=f"skip_{args.quantization}", artifact=str(gguf_path))
+        else:
+            _export_gguf_file(
+                model,
+                tokenizer,
+                model_id,
+                args.quantization,
+                gguf_path,
+                npc_key=npc_key,
+                substep_timeout=args.timeout_seconds,
+            )
+
+        # ── Also export f16 GGUF for deployment use ─────────────────────────────
         f16_path = paths.export_gguf_path(npc_key, model_id, "f16")
-        _export_gguf_file(model, tokenizer, model_id, "f16", f16_path)
+        if not args.skip_f16:
+            if args.resume and f16_path.exists():
+                print(f"  [resume] Skipping existing f16 GGUF: {f16_path}")
+                _write_status(npc_key, state="running", substep="skip_f16", artifact=str(f16_path))
+            else:
+                _export_gguf_file(
+                    model,
+                    tokenizer,
+                    model_id,
+                    "f16",
+                    f16_path,
+                    npc_key=npc_key,
+                    substep_timeout=args.timeout_seconds,
+                )
 
-    # ── Write manifest.json ────────────────────────────────────────────────
-    gguf_files = [gguf_path]
-    quantizations = [args.quantization]
-    if not args.skip_f16:
-        gguf_files.append(f16_path)
-        quantizations.append("f16")
-    write_manifest(npc_key, model_id, quantizations, gguf_files, output_dir)
+        # ── Write manifest.json ────────────────────────────────────────────────
+        gguf_files = [gguf_path]
+        quantizations = [args.quantization]
+        if not args.skip_f16:
+            gguf_files.append(f16_path)
+            quantizations.append("f16")
+        write_manifest(npc_key, model_id, quantizations, gguf_files, output_dir)
+        _write_status(npc_key, state="completed", substep="finalized", artifacts=[str(p) for p in gguf_files], completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
 
-    print(f"\nExport complete!")
-    print(f"  GGUF (quant): {gguf_path}")
-    if not args.skip_f16:
-        print(f"  GGUF (f16):   {f16_path}")
+        print(f"\nExport complete!")
+        print(f"  GGUF (quant): {gguf_path}")
+        if not args.skip_f16:
+            print(f"  GGUF (f16):   {f16_path}")
+    except Exception as exc:
+        _write_status(npc_key, state="failed", substep="failed", error_summary=str(exc), failed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+        raise
 
 
 if __name__ == "__main__":

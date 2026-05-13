@@ -87,6 +87,14 @@ def main():
     export_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization (default: q4_k_m)")
     export_p.add_argument("--skip-f16", action="store_true", help="Skip exporting f16 variant")
 
+    # Export resume
+    exr_p = subparsers.add_parser("export-resume", help="Resume/continue GGUF export for an NPC")
+    exr_p.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
+    exr_p.add_argument("--model", "-m", help="Base model ID")
+    exr_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization")
+    exr_p.add_argument("--skip-f16", action="store_true", help="Skip exporting f16 variant")
+    exr_p.add_argument("--timeout-seconds", type=int, default=5400, help="Per-variant timeout")
+
     # Export adapter (LoRA-only for LLMUnity)
     ea_p = subparsers.add_parser("export-adapter", help="Export LoRA adapter as GGUF (for LLMUnity)")
     ea_p.add_argument("adapter_path", nargs="?", help="Path to PEFT adapter directory")
@@ -232,6 +240,14 @@ def main():
         if args.model: cmd.extend(["--model", args.model])
         if args.quantization: cmd.extend(["--quantization", args.quantization])
         if args.skip_f16: cmd.append("--skip-f16")
+        run_cmd(cmd)
+
+    elif args.command == "export-resume":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "export_resume.py"), args.npc_key]
+        if args.model: cmd.extend(["--model", args.model])
+        if args.quantization: cmd.extend(["--quantization", args.quantization])
+        if args.skip_f16: cmd.append("--skip-f16")
+        if args.timeout_seconds: cmd.extend(["--timeout-seconds", str(args.timeout_seconds)])
         run_cmd(cmd)
 
     elif args.command == "export-adapter":
