@@ -56,6 +56,7 @@ export default function App() {
   const [commandModalOpen, setCommandModalOpen] = useState(false);
   const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
   const [commandPayload, setCommandPayload] = useState<any>({});
+  const [selectedJobForLogs, setSelectedJobForLogs] = useState<any | null>(null);
 
   const [datasetViewNpc, setDatasetViewNpc] = useState<string>('');
   const [datasetViewTechnique, setDatasetViewTechnique] = useState<string>('');
@@ -89,6 +90,7 @@ export default function App() {
     jobTypeFilter,
     toggleJobTypeFilter,
     stopJob,
+    deleteJob,
     toggleJobSelection,
     exportJobsCsv,
     fetchJobs,
@@ -341,6 +343,17 @@ export default function App() {
       await fetchData(true);
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Failed to stop job');
+    }
+  };
+
+  const handleDeleteJob = async (id: string) => {
+    try {
+      await deleteJob(id);
+      if (selectedJobId === id) setSelectedJobId(null);
+      setSelectedJobIds(prev => prev.filter(jId => jId !== id));
+      await fetchData(true);
+    } catch (error) {
+      setUiError(error instanceof Error ? error.message : 'Failed to clear job');
     }
   };
 
@@ -634,6 +647,8 @@ export default function App() {
                   onExportCsv={exportJobsCsv}
                   onOpenComparison={handleOpenComparison}
                   onManageJob={handleManageJob}
+                  onDeleteJob={handleDeleteJob}
+                  onViewLogs={(job) => setSelectedJobForLogs(job)}
                 />
               </motion.div>
             )}

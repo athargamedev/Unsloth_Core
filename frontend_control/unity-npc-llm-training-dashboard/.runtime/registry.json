@@ -2,6 +2,146 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_1018556",
+      "name": "External Process (1018556) astronomy_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T22:01:47.008Z",
+      "startedAt": "2026-05-13T22:01:47.008Z",
+      "command": [
+        "external",
+        "bash /home/athar/.pyenv/libexec/pyenv exec python3 ./ucore smoke exports/astronomy_guide/astronomy_guide-llama3.2-3b-q4_k_m.gguf --spec subjects/astronomy_guide.json --check-integrity"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1018556] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1018556] discovered active process",
+        "bash /home/athar/.pyenv/libexec/pyenv exec python3 ./ucore smoke exports/astronomy_guide/astronomy_guide-llama3.2-3b-q4_k_m.gguf --spec subjects/astronomy_guide.json --check-integrity"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T22:01:47.389Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_export_astronomy_guide_astronomy_guide-llama3.2-3b-q4_k_m.gguf",
+      "name": "External Export (astronomy_guide/astronomy_guide-llama3.2-3b-q4_k_m.gguf)",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-13T22:01:25.225Z",
+      "startedAt": "2026-05-13T22:01:25.225Z",
+      "finishedAt": "2026-05-13T22:01:25.225Z",
+      "command": [
+        "./ucore",
+        "export",
+        "astronomy_guide"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "completed",
+          "logs": [
+            "[STATUS][export] substep=export_q4_k_m state=running"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] GGUF artifact detected: exports/astronomy_guide/astronomy_guide-llama3.2-3b-q4_k_m.gguf"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_850339",
+      "name": "External Process (850339)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-13T21:57:18.542Z",
+      "startedAt": "2026-05-13T21:57:18.542Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore export astronomy_guide --quantization q4_k_m --skip-f16"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 850339] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 850339] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore export astronomy_guide --quantization q4_k_m --skip-f16"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T22:01:38.921Z",
+      "exitCode": -15
+    },
+    {
       "id": "job_1778709155922_s8jmi",
       "name": "Train LoRA",
       "type": "Training",
@@ -5420,24 +5560,9 @@
     }
   ],
   "logs": [
-    "[2026-05-13T21:52:36.029Z] [SYSTEM] job job_1778709155922_s8jmi failed (exit 2)",
-    "[2026-05-13T21:52:36.027Z] [STDERR][job_1778709155922_s8jmi] ucore: error: unrecognized arguments: --lr 2e-4 --batch-size 4 --epochs 3 --lora-r 16 --lora-alpha 32 --lr-scheduler cosine",
-    "[2026-05-13T21:52:36.027Z] [STDERR][job_1778709155922_s8jmi] ...",
-    "[2026-05-13T21:52:36.027Z] [STDERR][job_1778709155922_s8jmi] {generate,sanitize,train,smoke,dashboard,validate-config,validate-spec,migrate-datasets,export,export-resume,export-adapter,deploy,evaluate,quick-eval,track,compare-runs,supabase-check,pipeline,plan-execution,plan-batch}",
-    "[2026-05-13T21:52:36.027Z] [STDERR][job_1778709155922_s8jmi] usage: ucore [-h]",
-    "[2026-05-13T21:52:35.922Z] [SYSTEM] starting job_1778709155922_s8jmi: ./ucore train subjects/chemistry_instructor.json --from-spec --preset fast-3b --lr 2e-4 --batch-size 4 --epochs 3 --lora-r 16 --lora-alpha 32 --lr-scheduler cosine",
-    "[2026-05-13T21:48:48.098Z] [SYNC] discovered running external process pid=706902",
-    "[2026-05-13T21:48:32.129Z] [SYNC] imported external job ext_export_run_001_run_001-llama3.2-3b-q4_k_m.gguf",
-    "[2026-05-13T21:41:29.433Z] [SYNC] discovered running external process pid=530329",
-    "[2026-05-13T21:41:23.460Z] [SYNC] discovered running external process pid=527983",
-    "[2026-05-13T21:33:50.868Z] [SYNC] discovered running external process pid=356206",
-    "[2026-05-13T21:33:50.868Z] [SYNC] discovered running external process pid=356091",
-    "[2026-05-13T21:33:38.838Z] [SYNC] discovered running external process pid=351327",
-    "[2026-05-13T21:33:24.946Z] [SYNC] imported external job ext_sanitize_astronomy_guide_template",
-    "[2026-05-13T21:33:24.945Z] [SYNC] imported external job ext_dataset_astronomy_guide_template",
-    "[2026-05-13T21:33:23.594Z] [SYNC] discovered running external process pid=344964",
-    "[2026-05-13T21:33:23.594Z] [SYNC] discovered running external process pid=344963",
-    "[2026-05-13T21:33:15.496Z] [SYNC] discovered running external process pid=341633"
+    "[2026-05-13T22:01:47.037Z] [SYNC] discovered running external process pid=1018556",
+    "[2026-05-13T22:01:26.795Z] [SYNC] imported external job ext_export_astronomy_guide_astronomy_guide-llama3.2-3b-q4_k_m.gguf",
+    "[2026-05-13T21:57:18.567Z] [SYNC] discovered running external process pid=850339"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

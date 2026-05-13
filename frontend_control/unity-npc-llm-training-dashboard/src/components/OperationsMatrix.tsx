@@ -20,6 +20,8 @@ interface OperationsMatrixProps {
   onExportCsv: () => void;
   onOpenComparison: () => void;
   onManageJob: (id: string) => void;
+  onDeleteJob: (id: string) => void;
+  onViewLogs: (job: any) => void;
 }
 
 export const OperationsMatrix = ({
@@ -37,6 +39,8 @@ export const OperationsMatrix = ({
   onExportCsv,
   onOpenComparison,
   onManageJob,
+  onDeleteJob,
+  onViewLogs,
 }: OperationsMatrixProps) => {
   const selectedJob = selectedJobId ? jobs.find((j) => j.id === selectedJobId) : null;
 
@@ -183,12 +187,27 @@ export const OperationsMatrix = ({
                       {job.status === 'running' ? (
                         <button onClick={(e) => { e.stopPropagation(); onStopJob(job.id); }} className="text-danger hover:text-danger/80 transition-colors uppercase text-[9px] font-bold tracking-tighter">Stop</button>
                       ) : (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onManageJob(job.id); }}
-                          className="text-accent hover:text-accent/80 transition-colors uppercase text-[9px] font-bold tracking-tighter"
-                        >
-                          Manage
-                        </button>
+                        <div className="flex justify-end gap-3">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onViewLogs(job); }}
+                            className="text-ink/60 hover:text-ink transition-colors uppercase text-[9px] font-bold tracking-tighter flex items-center gap-1"
+                          >
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                            Logs
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onManageJob(job.id); }}
+                            className="text-accent hover:text-accent/80 transition-colors uppercase text-[9px] font-bold tracking-tighter"
+                          >
+                            Manage
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onDeleteJob(job.id); }}
+                            className="text-ink/40 hover:text-danger transition-colors uppercase text-[9px] font-bold tracking-tighter"
+                          >
+                            Clear
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>

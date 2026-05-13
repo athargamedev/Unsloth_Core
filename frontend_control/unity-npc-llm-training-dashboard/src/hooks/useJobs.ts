@@ -27,6 +27,14 @@ export function useJobs() {
     }
   };
 
+  const deleteJob = async (id: string) => {
+    const response = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to dismiss job');
+    }
+  };
+
   const filteredJobs = useMemo(
     () => {
       let result = jobs;
@@ -101,6 +109,7 @@ export function useJobs() {
     setJobTypeFilter,
     toggleJobTypeFilter,
     stopJob,
+    deleteJob,
     toggleJobSelection,
     exportJobsCsv,
     fetchJobs,

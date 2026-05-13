@@ -2255,6 +2255,20 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     return res.json({ status: "stop_requested", id });
   });
 
+  app.delete("/api/jobs/:id", (req, res) => {
+    const { id } = req.params;
+    const index = registry.jobs.findIndex((j) => j.id === id);
+    if (index === -1) return res.status(404).json({ error: "Job not found" });
+    const job = registry.jobs[index];
+    if (job.status === "running") return res.status(409).json({ error: "Cannot delete a running job" });
+
+    registry.jobs.splice(index, 1);
+    globalLog(registry, `[SYSTEM] dismissed job ${id}`);
+    flushPersist(registry);
+    broadcast("job_deleted", { id });
+    return res.json({ success: true });
+  });
+
   app.post("/api/jobs/sync", (_req, res) => {
     const changedArtifacts = syncExternalArtifactsToRegistry(registry);
     const proc = discoverActiveExternalProcesses(registry);
