@@ -23,6 +23,8 @@ interface Job {
   type: string;
   commandId?: string;
   npcKey?: string;
+  workflowId?: string;
+  chainNext?: { commandId: string; payload: Record<string, unknown> };
   status: JobStatus;
   progress: number;
   loss: number | null;
@@ -42,6 +44,7 @@ interface Registry {
   jobs: Job[];
   logs: string[];
   nodeId: string;
+  workflows: Workflow[];
 }
 
 interface StartCommandPayload {
@@ -51,6 +54,24 @@ interface StartCommandPayload {
   preset?: string;
   npcKey?: string;
   options?: Record<string, string | number | boolean | undefined>;
+}
+
+interface WorkflowStep {
+  commandId: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  jobId?: string;
+  payload: Record<string, unknown>;
+}
+
+interface Workflow {
+  id: string;
+  name: string;
+  spec: string;
+  steps: WorkflowStep[];
+  currentStep: number;
+  overallStatus: 'running' | 'completed' | 'failed';
+  createdAt: string;
+  finishedAt?: string;
 }
 
 const dashboardRoot = process.cwd();
@@ -76,7 +97,7 @@ const ensureRuntime = () => fs.mkdirSync(runtimeDir, { recursive: true });
 const loadRegistry = (): Registry => {
   ensureRuntime();
   if (!fs.existsSync(registryPath)) {
-    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID() };
+    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID(), workflows: [] };
     persistRegistry(registry);
     return registry;
   }
@@ -89,7 +110,7 @@ const loadRegistry = (): Registry => {
     }
     return registry;
   } catch {
-    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID() };
+    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID(), workflows: [] };
     persistRegistry(registry);
     return registry;
   }
@@ -358,14 +379,22 @@ const commandDefinitions: CommandDefinition[] = [
     requiredFields: ["options.datasetPath"],
     build: (payload) => ["./ucore", "sanitize", parsedDatasetPath(payload)],
   },
-  { id: "train", label: "Train LoRA", icon: "zap", color: "accent", type: "Training", build: ({ spec, preset }) => {
+  { id: "train", label: "Train LoRA", icon: "zap", color: "accent", type: "Training", build: (payload) => {
       const args = [
         "./ucore",
         "train",
-        resolvePathWithinRoots(requireString(spec, "spec"), "spec", [path.join(repoRoot, "subjects")]),
+        resolvePathWithinRoots(requireString(payload.spec, "spec"), "spec", [path.join(repoRoot, "subjects")]),
         "--from-spec",
       ];
+      const preset = String(payload.preset || "").trim();
       if (preset) args.push("--preset", sanitizeToken(preset, "preset"));
+      // Hyperparams from options
+      const opts = payload.options || {};
+      if (opts.learningRate) args.push("--lr", String(opts.learningRate));
+      if (opts.batchSize) args.push("--batch-size", String(opts.batchSize));
+      if (opts.epochs) args.push("--epochs", String(opts.epochs));
+      if (opts.rank) args.push("--lora-r", String(opts.rank));
+      if (opts.alpha) args.push("--lora-alpha", String(opts.alpha));
       return args;
     }, requiredFields: ["spec"] },
   {
@@ -673,6 +702,7 @@ async function startServer() {
 
   // API Routes
   app.get("/api/jobs", (_req, res) => res.json(registry.jobs));
+  app.get("/api/logs", (_req, res) => res.json(registry.logs));
 
   app.get("/api/analytics", (req, res) => {
     const jobId = typeof req.query.jobId === "string" ? req.query.jobId : "";
@@ -894,20 +924,22 @@ async function startServer() {
   });
 
   app.get("/api/health", (_req, res) => {
-    const checks = {
+    const coreChecks = {
       ucoreExists: fs.existsSync(path.join(repoRoot, "ucore")),
       subjectsDir: fs.existsSync(path.join(repoRoot, "subjects")),
       datasetsDir: fs.existsSync(path.join(repoRoot, "datasets")),
       outputsDir: fs.existsSync(path.join(repoRoot, "outputs")),
       exportsDir: fs.existsSync(path.join(repoRoot, "exports")),
+    };
+    const supabaseChecks = {
       supabaseUrlConfigured: Boolean(process.env.SUPABASE_URL),
       supabaseKeyConfigured: Boolean(process.env.SUPABASE_KEY),
     };
-    const ok = Object.values(checks).every(Boolean);
+    const ok = Object.values(coreChecks).every(Boolean);
     const statusCode = ok ? 200 : 503;
     res.status(statusCode).json({
       ok,
-      checks,
+      checks: { ...coreChecks, ...supabaseChecks },
       executionMode: registry.executionMode,
       runningJobs: registry.jobs.filter((job) => job.status === "running").length,
       timestamp: isoNow(),
@@ -1029,6 +1061,352 @@ async function startServer() {
   });
 
   // ── End Supabase Integration ──────────────────────────────────────────────
+
+  // ── Unity Deployment ──────────────────────────────────────────────────────
+
+  app.get("/api/unity/status", (_req, res) => {
+    const exportsRoot = path.join(repoRoot, "exports");
+    const npcs: Array<{ npcKey: string; ggufFiles: Array<{ name: string; sizeMB: number; quant: string }>; manifest: Record<string, unknown> }> = [];
+
+    if (fs.existsSync(exportsRoot)) {
+      for (const npcDir of fs.readdirSync(exportsRoot)) {
+        const npcPath = path.join(exportsRoot, npcDir);
+        if (!fs.statSync(npcPath).isDirectory()) continue;
+        const ggufFiles = fs.readdirSync(npcPath)
+          .filter((f) => f.endsWith(".gguf"))
+          .map((f) => {
+            const stat = fs.statSync(path.join(npcPath, f));
+            const quant = f.includes("q4_k_m") ? "q4_k_m" : f.includes("f16") ? "f16" : f.includes("q8_0") ? "q8_0" : "unknown";
+            return { name: f, sizeMB: Math.round(stat.size / (1024 * 1024) * 10) / 10, quant };
+          });
+        let manifest: Record<string, unknown> = {};
+        const manifestPath = path.join(npcPath, "manifest.json");
+        if (fs.existsSync(manifestPath)) {
+          try { manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")); } catch {}
+        }
+        npcs.push({ npcKey: npcDir, ggufFiles, manifest });
+      }
+    }
+
+    // Detect Unity project (same logic as deploy_to_unity.py: sibling dir with Assets/ + ProjectSettings/)
+    let unityProjectPath = "";
+    const parent = path.resolve(repoRoot, "..");
+    if (fs.existsSync(parent)) {
+      const candidates = fs.readdirSync(parent).filter((entry) => {
+        const entryPath = path.join(parent, entry);
+        if (entry === path.basename(repoRoot)) return false;
+        try {
+          return fs.statSync(path.join(entryPath, "Assets")).isDirectory() &&
+                 fs.statSync(path.join(entryPath, "ProjectSettings")).isDirectory();
+        } catch { return false; }
+      });
+      if (candidates.length === 1) {
+        unityProjectPath = path.resolve(parent, candidates[0]);
+      } else if (candidates.length > 1) {
+        // Store the first one
+        unityProjectPath = path.resolve(parent, candidates[0]);
+      }
+    }
+
+    const streamingModelsPath = unityProjectPath ? path.join(unityProjectPath, "Assets", "StreamingAssets", "Models") : "";
+    const deployedFiles: string[] = [];
+    if (streamingModelsPath && fs.existsSync(streamingModelsPath)) {
+      const files = fs.readdirSync(streamingModelsPath).filter((f) => f.endsWith(".gguf"));
+      for (const f of files) {
+        const fPath = path.join(streamingModelsPath, f);
+        const stat = fs.statSync(fPath);
+        deployedFiles.push(`${f} (${Math.round(stat.size / (1024 * 1024))}MB)`);
+      }
+    }
+
+    res.json({
+      exported: npcs,
+      unityProject: unityProjectPath || null,
+      deployedFiles,
+      deployScript: fs.existsSync(path.join(repoRoot, "scripts", "deploy_to_unity.py")),
+    });
+  });
+
+  app.post("/api/unity/deploy", (req, res) => {
+    try {
+      const dryRun = req.body?.dryRun === true;
+      const cmd = ["python", "scripts/deploy_to_unity.py"];
+      if (dryRun) cmd.push("--dry-run");
+      if (req.body?.npcKey) {
+        cmd.push("--npc-key", sanitizeToken(String(req.body.npcKey), "npcKey"));
+      }
+      const result = require("child_process").execSync(cmd.join(" "), {
+        cwd: repoRoot,
+        encoding: "utf8",
+        timeout: 30000,
+      });
+      res.json({ success: true, output: result.trim(), dryRun });
+    } catch (err: any) {
+      const output = err.stdout?.toString() || err.message || "Deploy failed";
+      res.status(500).json({ success: false, output, error: err.message });
+    }
+  });
+
+  app.get("/api/remote-config", (_req, res) => {
+    res.json({
+      configured: Boolean(process.env.REMOTE_API_URL && process.env.REMOTE_API_KEY),
+      remoteUrl: process.env.REMOTE_API_URL || "",
+      hasKey: Boolean(process.env.REMOTE_API_KEY),
+      mode: registry.executionMode,
+    });
+  });
+
+  // ── End Unity Deployment ──────────────────────────────────────────────────
+
+  // ── Workflow Chaining ─────────────────────────────────────────────────────
+
+  app.get("/api/workflows", (_req, res) => {
+    res.json(registry.workflows);
+  });
+
+  app.post("/api/workflow/start", (req, res) => {
+    try {
+      const spec = String(req.body?.spec || "").trim();
+      const preset = String(req.body?.preset || "").trim();
+      const technique = String(req.body?.technique || "notebooklm").trim();
+      if (!spec) return res.status(400).json({ error: "spec is required" });
+
+      const npcKey = spec.replace(/^subjects\//, "").replace(/\.json$/, "");
+      const workflowId = `wf_${Date.now()}`;
+
+      const steps: WorkflowStep[] = [
+        { commandId: "dataset-generate", status: "pending", payload: { commandId: "dataset-generate", type: "Dataset", spec, options: { technique } } },
+        { commandId: "dataset-sanitize", status: "pending", payload: { commandId: "dataset-sanitize", type: "Dataset", spec, options: { datasetPath: `datasets/${npcKey}/${technique}/train.jsonl` } } },
+        { commandId: "train", status: "pending", payload: { commandId: "train", type: "Training", spec, preset, npcKey, options: { ...req.body?.options || {} } } },
+        { commandId: "export", status: "pending", payload: { commandId: "export", type: "Export", npcKey, options: { modelId: String(req.body?.options?.baseModel || "") } } },
+      ];
+
+      const workflow: Workflow = {
+        id: workflowId,
+        name: `Pipeline: ${npcKey} (${preset || "default"})`,
+        spec,
+        steps,
+        currentStep: 0,
+        overallStatus: "running",
+        createdAt: isoNow(),
+      };
+
+      registry.workflows.unshift(workflow);
+      persistRegistry(registry);
+
+      // Start the first step
+      const firstStep = steps[0];
+      const firstDef = commandMap.get(firstStep.commandId);
+      if (!firstDef) return res.status(500).json({ error: `Unknown command: ${firstStep.commandId}` });
+
+      const command = firstDef.build(firstStep.payload as StartCommandPayload);
+      const chainNext = steps.length > 1 ? {
+        commandId: steps[1].commandId,
+        payload: steps[1].payload,
+      } : undefined;
+
+      const job: Job = {
+        id: makeId(),
+        name: `${firstDef.label} (${npcKey})`,
+        type: firstDef.type,
+        commandId: firstDef.id,
+        npcKey,
+        workflowId,
+        chainNext,
+        status: "running",
+        progress: 5,
+        loss: null,
+        createdAt: isoNow(),
+        startedAt: isoNow(),
+        command,
+        stages: defaultStages(),
+        logs: [],
+      };
+      updateStagesFromTruth(job);
+
+      firstStep.status = "running";
+      firstStep.jobId = job.id;
+      registry.jobs.unshift(job);
+      globalLog(registry, `[WORKFLOW] starting ${workflowId} step 1/${steps.length}: ${command.join(" ")}`);
+      persistRegistry(registry);
+      broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+
+      const child = spawn(command[0], command.slice(1), { cwd: repoRoot, shell: false, detached: true });
+      runningProcesses.set(job.id, child);
+      terminalJobState.set(job.id, { stopRequested: false, terminal: false });
+
+      const consume = (chunk: Buffer, source: "stdout" | "stderr") => {
+        const lines = chunk.toString().split("\n").map((l) => l.trim()).filter(Boolean);
+        for (const line of lines) {
+          const prefixed = `[${source.toUpperCase()}][${job.id}] ${line}`;
+          job.logs.push(prefixed);
+          job.logs = job.logs.slice(-MAX_LOG_LINES);
+          appendStageLog(job, prefixed);
+          globalLog(registry, prefixed);
+          const parsedLoss = parseLoss(line);
+          if (parsedLoss !== null) {
+            job.loss = parsedLoss;
+            broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+          }
+          updateStagesFromTruth(job);
+        }
+        persistRegistry(registry);
+      };
+
+      child.stdout.on("data", (chunk) => consume(chunk, "stdout"));
+      child.stderr.on("data", (chunk) => consume(chunk, "stderr"));
+      child.on("close", (code) => {
+        const terminalState = terminalJobState.get(job.id);
+        const escalationTimer = stopEscalationTimers.get(job.id);
+        if (escalationTimer) {
+          clearTimeout(escalationTimer);
+          stopEscalationTimers.delete(job.id);
+        }
+        runningProcesses.delete(job.id);
+        terminalJobState.delete(job.id);
+        if (terminalState?.terminal) return;
+
+        job.exitCode = code ?? -1;
+        job.finishedAt = isoNow();
+        if (terminalState?.stopRequested || job.stopRequested) {
+          job.status = "stopped";
+          job.terminalReason = "user_requested_stop";
+        } else {
+          job.progress = code === 0 ? 100 : job.progress;
+          job.status = code === 0 ? "completed" : "failed";
+        }
+
+        firstStep.status = code === 0 ? "completed" : "failed";
+        workflow.currentStep = 1;
+
+        if (code !== 0) {
+          workflow.overallStatus = "failed";
+          workflow.finishedAt = isoNow();
+        }
+
+        updateStagesFromTruth(job);
+        globalLog(registry, `[SYSTEM] ${job.id} ${job.status} (exit ${code})`);
+        persistRegistry(registry);
+        broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+
+        // Chain to next step
+        if (code === 0 && chainNext) {
+          const nextDef = commandMap.get(chainNext.commandId);
+          if (nextDef) {
+            try {
+              globalLog(registry, `[WORKFLOW] chaining to step 2: ${chainNext.commandId}`);
+              const nextCommand = nextDef.build(chainNext.payload as StartCommandPayload);
+              const nextChain = steps.length > 2 ? {
+                commandId: steps[2].commandId,
+                payload: steps[2].payload,
+              } : undefined;
+
+              const nextJob: Job = {
+                id: makeId(),
+                name: `${nextDef.label} (${npcKey})`,
+                type: nextDef.type,
+                commandId: nextDef.id,
+                npcKey,
+                workflowId,
+                chainNext: nextChain,
+                status: "running",
+                progress: 5,
+                loss: null,
+                createdAt: isoNow(),
+                startedAt: isoNow(),
+                command: nextCommand,
+                stages: defaultStages(),
+                logs: [],
+              };
+              updateStagesFromTruth(nextJob);
+
+              const stepIndex = 1;
+              steps[stepIndex].status = "running";
+              steps[stepIndex].jobId = nextJob.id;
+              registry.jobs.unshift(nextJob);
+              globalLog(registry, `[WORKFLOW] starting step ${stepIndex + 1}/${steps.length}: ${nextCommand.join(" ")}`);
+              persistRegistry(registry);
+              broadcast("job_update", { id: nextJob.id, status: nextJob.status, loss: nextJob.loss, progress: nextJob.progress });
+
+              const nextChild = spawn(nextCommand[0], nextCommand.slice(1), { cwd: repoRoot, shell: false, detached: true });
+              runningProcesses.set(nextJob.id, nextChild);
+              terminalJobState.set(nextJob.id, { stopRequested: false, terminal: false });
+
+              const nextConsume = (chunk: Buffer, source: "stdout" | "stderr") => {
+                const lines = chunk.toString().split("\n").map((l) => l.trim()).filter(Boolean);
+                for (const line of lines) {
+                  const prefixed = `[${source.toUpperCase()}][${nextJob.id}] ${line}`;
+                  nextJob.logs.push(prefixed);
+                  nextJob.logs = nextJob.logs.slice(-MAX_LOG_LINES);
+                  appendStageLog(nextJob, prefixed);
+                  globalLog(registry, prefixed);
+                  const parsedLoss = parseLoss(line);
+                  if (parsedLoss !== null) {
+                    nextJob.loss = parsedLoss;
+                    broadcast("job_update", { id: nextJob.id, status: nextJob.status, loss: nextJob.loss, progress: nextJob.progress });
+                  }
+                  updateStagesFromTruth(nextJob);
+                }
+                persistRegistry(registry);
+              };
+
+              nextChild.stdout.on("data", (chunk) => nextConsume(chunk, "stdout"));
+              nextChild.stderr.on("data", (chunk) => nextConsume(chunk, "stderr"));
+              nextChild.on("close", (nextCode) => {
+                const nextTerminalState = terminalJobState.get(nextJob.id);
+                const nextEscalationTimer = stopEscalationTimers.get(nextJob.id);
+                if (nextEscalationTimer) {
+                  clearTimeout(nextEscalationTimer);
+                  stopEscalationTimers.delete(nextJob.id);
+                }
+                runningProcesses.delete(nextJob.id);
+                terminalJobState.delete(nextJob.id);
+                if (nextTerminalState?.terminal) return;
+
+                nextJob.exitCode = nextCode ?? -1;
+                nextJob.finishedAt = isoNow();
+                if (nextTerminalState?.stopRequested || nextJob.stopRequested) {
+                  nextJob.status = "stopped";
+                  nextJob.terminalReason = "user_requested_stop";
+                } else {
+                  nextJob.progress = nextCode === 0 ? 100 : nextJob.progress;
+                  nextJob.status = nextCode === 0 ? "completed" : "failed";
+                }
+
+                steps[stepIndex].status = nextCode === 0 ? "completed" : "failed";
+                workflow.currentStep = stepIndex + 1;
+
+                if (nextCode !== 0) {
+                  workflow.overallStatus = "failed";
+                  workflow.finishedAt = isoNow();
+                } else if (stepIndex === steps.length - 1) {
+                  workflow.overallStatus = "completed";
+                  workflow.finishedAt = isoNow();
+                }
+
+                updateStagesFromTruth(nextJob);
+                globalLog(registry, `[SYSTEM] ${nextJob.id} ${nextJob.status} (exit ${nextCode})`);
+                persistRegistry(registry);
+                broadcast("job_update", { id: nextJob.id, status: nextJob.status, loss: nextJob.loss, progress: nextJob.progress });
+              });
+            } catch (chainErr) {
+              globalLog(registry, `[WORKFLOW] chaining failed: ${chainErr instanceof Error ? chainErr.message : String(chainErr)}`);
+              workflow.overallStatus = "failed";
+              workflow.finishedAt = isoNow();
+              persistRegistry(registry);
+            }
+          }
+        }
+      });
+
+      res.json({ workflow, job });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to start workflow";
+      res.status(400).json({ error: message });
+    }
+  });
+
+  // ── End Workflow Chaining ─────────────────────────────────────────────────
 
   app.get("/api/suggestions", (_req, res) => {
     const suggestions = [

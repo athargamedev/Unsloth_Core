@@ -36,10 +36,13 @@ import { TrainingSuite } from './components/TrainingSuite';
 import { TensorBoardPanel } from './components/TensorBoardPanel';
 import { SystemHub } from './components/SystemHub';
 import { ModelComparison } from './components/ModelComparison';
+import { NpcOverview } from './components/NpcOverview';
 import { Card } from './components/Card';
 import { DatasetViewer } from './components/DatasetViewer';
 import { EvalReportsPanel } from './components/EvalReportsPanel';
 import { LeaderboardPanel } from './components/LeaderboardPanel';
+import { UnityDeployPanel } from './components/UnityDeployPanel';
+import { RemoteConfigPanel } from './components/RemoteConfigPanel';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'training' | 'datasets' | 'compare' | 'analytics' | 'commands'>('overview');
@@ -138,7 +141,17 @@ export default function App() {
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
+
+    const handleNavigate = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { tab: string; npcKey?: string };
+      setActiveTab(detail.tab as any);
+    };
+    window.addEventListener('navigate-tab', handleNavigate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('navigate-tab', handleNavigate);
+    };
   }, []);
 
   useEffect(() => {
@@ -468,20 +481,38 @@ export default function App() {
 
           <AnimatePresence mode="wait">
             {activeTab === 'overview' && (
-              <OperationsMatrix
-                jobs={jobs}
-                filteredJobs={filteredJobs}
-                selectedJobIds={selectedJobIds}
-                selectedJobId={selectedJobId}
-                activeFilter={activeFilter}
-                onSelectJob={handleSelectJob}
-                onToggleJobSelection={toggleJobSelection}
-                onSetActiveFilter={handleSetActiveFilter}
-                onStopJob={handleStopJob}
-                onExportCsv={exportJobsCsv}
-                onOpenComparison={handleOpenComparison}
-                onManageJob={handleManageJob}
-              />
+              <motion.div
+                key="overview"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex-1 flex flex-col overflow-hidden"
+              >
+                <div className="p-4 pb-0">
+                  <NpcOverview
+                    subjects={subjects}
+                    datasets={datasets}
+                    runs={runs}
+                    exportArtifacts={exportArtifacts}
+                    jobs={jobs}
+                  />
+                  <div className="h-px bg-line/50 mb-3" />
+                </div>
+                <OperationsMatrix
+                  jobs={jobs}
+                  filteredJobs={filteredJobs}
+                  selectedJobIds={selectedJobIds}
+                  selectedJobId={selectedJobId}
+                  activeFilter={activeFilter}
+                  onSelectJob={handleSelectJob}
+                  onToggleJobSelection={toggleJobSelection}
+                  onSetActiveFilter={handleSetActiveFilter}
+                  onStopJob={handleStopJob}
+                  onExportCsv={exportJobsCsv}
+                  onOpenComparison={handleOpenComparison}
+                  onManageJob={handleManageJob}
+                />
+              </motion.div>
             )}
 
             {activeTab === 'training' && (
@@ -526,6 +557,26 @@ export default function App() {
                     </summary>
                     <div className="mt-3">
                       <LeaderboardPanel />
+                    </div>
+                  </details>
+
+                  <div className="border-t border-line my-3" />
+                  <details>
+                    <summary className="text-[10px] font-bold text-ink/40 uppercase tracking-widest cursor-pointer hover:text-ink/60">
+                      Unity Deployment
+                    </summary>
+                    <div className="mt-3">
+                      <UnityDeployPanel />
+                    </div>
+                  </details>
+
+                  <div className="border-t border-line my-3" />
+                  <details>
+                    <summary className="text-[10px] font-bold text-ink/40 uppercase tracking-widest cursor-pointer hover:text-ink/60">
+                      Remote Configuration
+                    </summary>
+                    <div className="mt-3">
+                      <RemoteConfigPanel />
                     </div>
                   </details>
                 </div>

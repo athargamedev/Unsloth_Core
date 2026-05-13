@@ -19,6 +19,7 @@ export interface Job {
   startedAt?: string;
   finishedAt?: string;
   logs?: string[];
+  npcKey?: string;
 }
 
 export interface DatasetVersion {
