@@ -11,6 +11,7 @@ This directory contains the detailed technical documentation for the Unsloth_Cor
 
 ### 🛠️ Workflows
 - [TRAINING_WORKFLOW.md](TRAINING_WORKFLOW.md): How to train a new model from scratch.
+- [SUBJECT_SPEC_REVIEW_WORKFLOW.md](SUBJECT_SPEC_REVIEW_WORKFLOW.md): Checklist for reviewing `subjects/*.json` before generation/training.
 - [NOTEBOOKLM_WORKFLOW.md](NOTEBOOKLM_WORKFLOW.md): Using NotebookLM for high-quality dataset generation.
 - [OLLAMA_WORKFLOW.md](OLLAMA_WORKFLOW.md): Local-only generation and evaluation using Ollama.
 - [EXPORT_WORKFLOW.md](EXPORT_WORKFLOW.md): Quantization and GGUF export for Unity.

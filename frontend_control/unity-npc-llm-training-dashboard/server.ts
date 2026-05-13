@@ -12,6 +12,19 @@ import type CodeInterpreter from "@e2b/code-interpreter";
 
 type ExecutionMode = "local" | "remote";
 type JobStatus = "pending" | "running" | "completed" | "failed" | "stopped";
+type LocalModelSource = "llama-server" | "ollama" | "export" | "job" | "none";
+
+interface LocalModelStatus {
+  loaded: boolean;
+  source: LocalModelSource;
+  displayName: string | null;
+  modelId?: string | null;
+  ggufPath?: string | null;
+  npcKey?: string | null;
+  pid?: number | null;
+  port?: number | null;
+  updatedAt: string;
+}
 
 interface Stage {
   name: string;
@@ -144,6 +157,120 @@ const flushPersist = (registry: Registry) => {
 
 const isoNow = () => new Date().toISOString();
 const makeId = () => `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+const noLocalModel = (updatedAt = isoNow()): LocalModelStatus => ({
+  loaded: false,
+  source: "none",
+  displayName: null,
+  updatedAt,
+});
+
+const tokenizeProcessArgs = (args: string): string[] => {
+  const matches = args.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g);
+  if (!matches) return [];
+  return matches.map((token) => token.replace(/^["']|["']$/g, ""));
+};
+
+const valueAfterProcessFlag = (tokens: string[], flagNames: string[]): string | null => {
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    const matchingFlag = flagNames.find((flagName) => token === flagName || token.startsWith(`${flagName}=`));
+    if (!matchingFlag) continue;
+
+    if (token.startsWith(`${matchingFlag}=`)) {
+      const [, value] = token.split(/=(.*)/s);
+      return value || null;
+    }
+
+    return tokens[index + 1] || null;
+  }
+
+  return null;
+};
+
+const inferNpcKeyFromGgufPath = (ggufPath: string): string | null => {
+  const segments = path.normalize(ggufPath).split(path.sep);
+  const exportsIndex = segments.lastIndexOf("exports");
+  if (exportsIndex >= 0 && segments[exportsIndex + 1]) return segments[exportsIndex + 1];
+  return null;
+};
+
+const displayNameFromGgufPath = (ggufPath: string): string => {
+  const basename = path.basename(ggufPath);
+  return basename.endsWith(".gguf") ? basename.slice(0, -".gguf".length) : basename;
+};
+
+const detectLlamaServerModel = (updatedAt: string): LocalModelStatus | null => {
+  try {
+    const processList = execSync("ps -eo pid=,args=", { encoding: "utf8", timeout: 1000 });
+    const llamaServerLine = processList
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.includes("llama-server") && /(?:^|\s)(?:-m|--model)(?:\s|=)/.test(line));
+
+    if (!llamaServerLine) return null;
+
+    const [, pidText = "", args = ""] = llamaServerLine.match(/^(\d+)\s+(.*)$/) || [];
+    const pid = Number(pidText);
+    const tokens = tokenizeProcessArgs(args);
+    const ggufPath = valueAfterProcessFlag(tokens, ["-m", "--model"]);
+    if (!ggufPath) return null;
+
+    const portText = valueAfterProcessFlag(tokens, ["--port"]);
+    const port = portText ? Number(portText) : null;
+
+    return {
+      loaded: true,
+      source: "llama-server",
+      displayName: displayNameFromGgufPath(ggufPath),
+      ggufPath,
+      npcKey: inferNpcKeyFromGgufPath(ggufPath),
+      pid: Number.isFinite(pid) ? pid : null,
+      port: port !== null && Number.isFinite(port) ? port : null,
+      updatedAt,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const fetchOllamaModel = async (updatedAt: string): Promise<LocalModelStatus | null> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1000);
+
+  try {
+    const response = await fetch("http://127.0.0.1:11434/api/ps", { signal: controller.signal });
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as { models?: Array<{ name?: string; model?: string }> };
+    const model = payload.models?.[0];
+    const modelId = model?.model || model?.name || null;
+    if (!modelId) return null;
+
+    return {
+      loaded: true,
+      source: "ollama",
+      displayName: model.name || modelId,
+      modelId,
+      updatedAt,
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+const detectLocalModel = async (): Promise<LocalModelStatus> => {
+  const updatedAt = isoNow();
+  const llamaServerModel = detectLlamaServerModel(updatedAt);
+  if (llamaServerModel) return llamaServerModel;
+
+  const ollamaModel = await fetchOllamaModel(updatedAt);
+  if (ollamaModel) return ollamaModel;
+
+  return noLocalModel(updatedAt);
+};
 
 type CommandDefinition = {
   id: string;
@@ -419,6 +546,7 @@ const commandDefinitions: CommandDefinition[] = [
       if (preset) args.push("--preset", sanitizeToken(preset, "preset"));
       // Hyperparams from options
       const opts = payload.options || {};
+      if (opts.technique) args.push("--technique", String(opts.technique));
       if (opts.wandb === true || opts.wandb === "true") args.push("--wandb");
       if (opts.learningRate) args.push("--lr", String(opts.learningRate));
       if (opts.batchSize) args.push("--batch-size", String(opts.batchSize));
@@ -1195,6 +1323,34 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     }
   });
 
+  const unloadGemmaModel = () => {
+    try {
+      require("child_process").execSync("ollama stop gemma4:e2b", { stdio: "ignore", timeout: 5000 });
+      globalLog(registry, "[SYSTEM] Unloaded gemma4:e2b to free GPU memory");
+    } catch {
+      // ignore
+    }
+  };
+
+  app.post("/api/assistant/unload", (_req, res) => {
+    unloadGemmaModel();
+    res.json({ success: true, message: "Model unloaded" });
+  });
+
+  app.post("/api/assistant/load", async (_req, res) => {
+    try {
+      // Send empty generate request just to load it into VRAM
+      await fetch("http://127.0.0.1:11434/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "gemma4:e2b", keep_alive: "5m" })
+      });
+      res.json({ success: true, message: "Model loading requested" });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to load model" });
+    }
+  });
+
   app.get("/api/dataset/:npcKey/:technique", (req, res) => {
     const { npcKey, technique } = req.params;
     const n = Math.min(Math.max(parseInt(String(req.query.n || "10"), 10) || 10, 1), 100);
@@ -1325,12 +1481,13 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     persistRegistry(registry);
     return res.json({ mode });
   });
-  app.get("/api/system/status", (_req, res) => {
+  app.get("/api/system/status", async (_req, res) => {
     res.json({
       executionMode: registry.executionMode,
       runningJobs: registry.jobs.filter((job) => job.status === "running").length,
       totalJobs: registry.jobs.length,
       repoRoot,
+      localModel: await detectLocalModel(),
       timestamp: isoNow(),
     });
   });
@@ -1674,6 +1831,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
       persistRegistry(registry);
       broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
 
+      unloadGemmaModel();
       const child = spawn(command[0], command.slice(1), { cwd: repoRoot, shell: false, detached: true });
       runningProcesses.set(job.id, child);
       terminalJobState.set(job.id, { stopRequested: false, terminal: false });
@@ -1770,6 +1928,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
               persistRegistry(registry);
               broadcast("job_update", { id: nextJob.id, status: nextJob.status, loss: nextJob.loss, progress: nextJob.progress });
 
+              unloadGemmaModel();
               const nextChild = spawn(nextCommand[0], nextCommand.slice(1), { cwd: repoRoot, shell: false, detached: true });
               runningProcesses.set(nextJob.id, nextChild);
               terminalJobState.set(nextJob.id, { stopRequested: false, terminal: false });
@@ -1986,6 +2145,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
       persistRegistry(registry);
       broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
 
+      unloadGemmaModel();
       const child = spawn(command[0], command.slice(1), { cwd: repoRoot, shell: false, detached: true });
       runningProcesses.set(job.id, child);
       terminalJobState.set(job.id, { stopRequested: false, terminal: false });

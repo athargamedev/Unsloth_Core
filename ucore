@@ -17,13 +17,15 @@ SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 VENV_PYTHON = PROJECT_ROOT / "unsloth_env" / "bin" / "python"
 PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
 
-def run_cmd(cmd, cwd=PROJECT_ROOT):
+def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True):
     """Run a shell command and print its output."""
-    print(f"Running: {' '.join(cmd)}")
+    if announce:
+        print(f"Running: {' '.join(cmd)}", flush=True)
     try:
         subprocess.run(cmd, cwd=str(cwd), check=True)
     except subprocess.CalledProcessError as e:
-        print(f"Error: Command failed with return code {e.returncode}")
+        if announce:
+            print(f"Error: Command failed with return code {e.returncode}")
         sys.exit(e.returncode)
 
 def main():
@@ -49,6 +51,7 @@ def main():
     train_p.add_argument("config_or_spec", help="Path to config YAML or subject spec")
     train_p.add_argument("--from-spec", action="store_true", help="Train directly from spec")
     train_p.add_argument("--preset", help="Training preset")
+    train_p.add_argument("--technique", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
     train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training")
     train_p.add_argument("--wandb", action="store_true", default=None,
                          help="Enable W&B logging (overrides config)")
@@ -77,6 +80,13 @@ def main():
     val_p.add_argument("--format", default="yaml", choices=["yaml", "json"], help="Output format")
     val_p.add_argument("--strict", action="store_true", help="Treat warnings as errors")
     val_p.add_argument("--require-canonical", action="store_true", help="Require canonical dataset train path")
+
+    # Validate subject spec
+    spec_val_p = subparsers.add_parser("validate-spec", help="Validate subject specs before generation/training")
+    spec_val_p.add_argument("spec", nargs="?", help="Path to subject spec JSON")
+    spec_val_p.add_argument("--all", action="store_true", help="Validate every subjects/*.json spec")
+    spec_val_p.add_argument("--json", action="store_true", help="Output JSON")
+    spec_val_p.add_argument("--strict", action="store_true", help="Treat warnings as errors")
 
     # Migrate datasets
     mig_p = subparsers.add_parser("migrate-datasets", help="Migrate legacy flat datasets to canonical structure")
@@ -216,6 +226,7 @@ def main():
         cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.config_or_spec]
         if args.from_spec: cmd.append("--from-spec")
         if args.preset: cmd.extend(["--preset", args.preset])
+        if getattr(args, "technique", None): cmd.extend(["--technique", args.technique])
         if args.export_gguf: cmd.append("--export-gguf")
         if args.wandb: cmd.append("--wandb")
         run_cmd(cmd)
@@ -254,6 +265,18 @@ def main():
         if args.require_canonical:
             cmd.append("--require-canonical")
         run_cmd(cmd)
+
+    elif args.command == "validate-spec":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "validate_subject_spec.py")]
+        if args.spec:
+            cmd.append(args.spec)
+        if args.all:
+            cmd.append("--all")
+        if args.json:
+            cmd.append("--json")
+        if args.strict:
+            cmd.append("--strict")
+        run_cmd(cmd, announce=not args.json)
 
     elif args.command == "migrate-datasets":
         cmd = [PYTHON, str(SCRIPTS_DIR / "migrate_datasets.py")]

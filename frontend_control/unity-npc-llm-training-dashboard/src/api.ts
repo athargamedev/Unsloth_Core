@@ -59,7 +59,21 @@ export interface SystemStatus {
   executionMode: 'local' | 'remote';
   runningJobs: number;
   totalJobs: number;
+  repoRoot?: string;
   timestamp: string;
+  localModel: LocalModelStatus;
+}
+
+export interface LocalModelStatus {
+  loaded: boolean;
+  source: 'llama-server' | 'ollama' | 'export' | 'job' | 'none';
+  displayName: string | null;
+  modelId?: string | null;
+  ggufPath?: string | null;
+  npcKey?: string | null;
+  pid?: number | null;
+  port?: number | null;
+  updatedAt: string;
 }
 
 export interface HealthCheck {

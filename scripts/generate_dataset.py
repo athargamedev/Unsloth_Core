@@ -430,13 +430,16 @@ class AnthropicGenerator:
 def concept_pool_for_subject(spec):
     """Extract concept keywords from the subject and research queries."""
     subject = spec.get("subject", "")
-    research = spec.get("research", [])
+    research = spec.get("research_queries") or spec.get("research", [])
     
     keywords = subject.replace(":", ",").replace("—", ",").replace("-", ",").split(",")
     concepts = [k.strip() for k in keywords if k.strip()]
     
     # Add concepts from research queries
     for r in research:
+        if not isinstance(r, dict):
+            continue
+
         q = r.get("query", "")
         if q:
             # Simple heuristic: split by space and take longer words

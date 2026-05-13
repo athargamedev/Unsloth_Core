@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, BookOpen, Send, User, Bot, Command } from 'lucide-react';
+import { Sparkles, BookOpen, Send, User, Bot, Command, Power, PowerOff } from 'lucide-react';
 import { fetchOptionalJson, type AssistantMessage } from '../api';
 import ReactMarkdown from 'react-markdown';
 
@@ -71,6 +71,20 @@ How can I help with your workflow today?`,
 
   const defaultSuggestion = 'Try checking Rank size for QuestGiver LoRA if loss plateau persists.';
 
+  const handleUnloadModel = async () => {
+    try {
+      await fetch('/api/assistant/unload', { method: 'POST' });
+      setMessages((prev) => [...prev, { role: 'assistant', content: '_Model unloaded from GPU._' }]);
+    } catch {}
+  };
+
+  const handleLoadModel = async () => {
+    try {
+      setMessages((prev) => [...prev, { role: 'assistant', content: '_Loading model into GPU..._' }]);
+      await fetch('/api/assistant/load', { method: 'POST' });
+    } catch {}
+  };
+
   return (
     <aside className="w-80 border-r border-line bg-surface flex flex-col overflow-hidden shadow-2xl">
       {/* Header */}
@@ -79,7 +93,14 @@ How can I help with your workflow today?`,
           <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
           <h2 className="text-[11px] font-bold text-ink-bright uppercase tracking-widest">Workflow Assistant</h2>
         </div>
-        <Sparkles className="w-3 h-3 text-accent" />
+        <div className="flex gap-2">
+          <button onClick={handleLoadModel} title="Load Model into GPU" className="p-1 hover:bg-white/10 rounded text-accent">
+            <Power className="w-3 h-3" />
+          </button>
+          <button onClick={handleUnloadModel} title="Unload Model from GPU" className="p-1 hover:bg-white/10 rounded text-danger">
+            <PowerOff className="w-3 h-3" />
+          </button>
+        </div>
       </div>
 
       {/* Messages Area */}

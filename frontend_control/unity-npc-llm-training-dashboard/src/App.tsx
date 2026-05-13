@@ -505,6 +505,11 @@ export default function App() {
     setCommandPayload((prev: Record<string, unknown>) => setNestedValue(prev, field, typedValue));
   };
 
+  const localModel = status?.localModel;
+  const isLocalModelLoaded = Boolean(localModel?.loaded);
+  const localModelLabel = localModel?.displayName || 'none loaded';
+  const localModelSource = localModel?.source && localModel.source !== 'none' ? localModel.source : 'idle';
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-bg text-ink font-sans border border-line selection:bg-accent/30 selection:text-ink-bright">
       {/* Top Global Monitor */}
@@ -525,6 +530,20 @@ export default function App() {
             <div className="flex flex-col">
               <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">CPU_LOAD</span>
               <span className={cn("text-[10px] font-mono font-bold", telemetry && telemetry.cpuLoad > 75 ? "text-danger" : "text-success")}>{telemetry ? `${telemetry.cpuLoad}%` : '---'}</span>
+            </div>
+            <div className="flex flex-col min-w-[150px] max-w-[220px]">
+              <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">LOCAL_MODEL</span>
+              <span
+                title={isLocalModelLoaded ? `${localModelLabel} (${localModelSource})` : 'No local model loaded'}
+                className={cn(
+                  "text-[10px] font-mono font-bold truncate rounded-sm border px-1.5 py-0.5",
+                  isLocalModelLoaded
+                    ? "text-accent border-accent/30 bg-accent/10 shadow-[0_0_16px_rgba(81,226,255,0.08)]"
+                    : "text-ink/35 border-line/60 bg-surface/40",
+                )}
+              >
+                {isLocalModelLoaded ? `${localModelLabel} · ${localModelSource}` : localModelLabel}
+              </span>
             </div>
           </div>
         </div>

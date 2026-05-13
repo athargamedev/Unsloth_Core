@@ -13,6 +13,18 @@ The easiest way to run the entire flow.
 
 ## 🏗️ Dataset Management
 
+### `validate-spec`
+Reviews subject specs before generation or training.
+- `spec`: Path to one `subjects/*.json` file.
+- `--all`: Validate every spec in `subjects/`; this is a repository-wide audit and can fail because checked-in draft or incomplete specs exist.
+- `--json`: Emit machine-readable results with per-spec errors, warnings, and summary counts.
+- `--strict`: Exit nonzero on warnings as well as errors.
+
+```bash
+./ucore validate-spec subjects/chemistry_instructor.json
+./ucore validate-spec --all --json
+```
+
 ### `generate`
 Generates training data from a subject spec.
 - `spec`: Path to JSON spec.
