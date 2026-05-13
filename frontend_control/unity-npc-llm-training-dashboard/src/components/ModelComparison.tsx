@@ -11,7 +11,7 @@ interface ModelComparisonProps {
   exportArtifacts: ExportArtifact[];
   onToggleJobSelection: (e: React.MouseEvent, id: string) => void;
   onClearSelection: () => void;
-  onNavigateTo: (tab: 'overview' | 'training' | 'datasets' | 'compare' | 'analytics' | 'commands') => void;
+  onNavigateTo: (tab: 'overview' | 'training' | 'datasets' | 'dataset_params' | 'compare' | 'analytics' | 'commands') => void;
 }
 
 export const ModelComparison = ({
