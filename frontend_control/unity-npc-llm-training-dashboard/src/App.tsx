@@ -23,7 +23,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { fetchJson } from './api';
-import type { AvailableCommand, TrainingConfig, TensorBoardData, HealthCheck } from './api';
+import type { AvailableCommand, Job, TrainingConfig, TensorBoardData, HealthCheck } from './api';
 import { useJobs } from './hooks/useJobs';
 import { useSystemStatus } from './hooks/useSystemStatus';
 import { useTelemetry } from './hooks/useTelemetry';
@@ -39,13 +39,14 @@ import { ModelComparison } from './components/ModelComparison';
 import { NpcOverview } from './components/NpcOverview';
 import { Card } from './components/Card';
 import { DatasetViewer } from './components/DatasetViewer';
+import { DatasetFormatPanel } from './components/DatasetFormatPanel';
 import { EvalReportsPanel } from './components/EvalReportsPanel';
 import { LeaderboardPanel } from './components/LeaderboardPanel';
 import { UnityDeployPanel } from './components/UnityDeployPanel';
 import { RemoteConfigPanel } from './components/RemoteConfigPanel';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'training' | 'datasets' | 'compare' | 'analytics' | 'commands'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'training' | 'datasets' | 'dataset_params' | 'compare' | 'analytics' | 'commands'>('overview');
   const [logs, setLogs] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<Array<{ step: number; loss: number; acc: number; lr: number }>>([]);
   const [tensorBoardData, setTensorBoardData] = useState<TensorBoardData | null>(null);
@@ -56,7 +57,7 @@ export default function App() {
   const [commandModalOpen, setCommandModalOpen] = useState(false);
   const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
   const [commandPayload, setCommandPayload] = useState<any>({});
-  const [selectedJobForLogs, setSelectedJobForLogs] = useState<any | null>(null);
+  const [selectedJobForLogs, setSelectedJobForLogs] = useState<Job | null>(null);
 
   const [datasetViewNpc, setDatasetViewNpc] = useState<string>('');
   const [datasetViewTechnique, setDatasetViewTechnique] = useState<string>('');
@@ -119,6 +120,7 @@ export default function App() {
     commandSchemas,
     fetchDatasets,
   } = useDatasets();
+  const datasetsRef = useRef(datasets);
 
   const { connectionQuality } = useWebSocket({
     onTelemetry: (data) => setTelemetry(data),
@@ -131,6 +133,10 @@ export default function App() {
   });
 
   // --- Data Fetching ---
+
+  useEffect(() => {
+    datasetsRef.current = datasets;
+  }, [datasets]);
 
   const fetchData = async (showLoading = false) => {
     if (fetchInFlightRef.current) return;  // prevent overlapping fetches
@@ -181,7 +187,14 @@ export default function App() {
     const interval = setInterval(fetchData, 5000);
 
     const handleNavigate = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { tab: string; npcKey?: string };
+      const detail = (e as CustomEvent).detail as { tab: string; npcKey?: string; technique?: string };
+      if (detail.tab === 'datasets' && detail.npcKey) {
+        const targetDataset = datasetsRef.current.find((dataset) => dataset.id === detail.npcKey);
+        const targetTechnique = detail.technique || targetDataset?.versions[0]?.tag || '';
+        setDatasetViewNpc(detail.npcKey);
+        setDatasetViewTechnique(targetTechnique);
+        setAvailableTechniques(targetDataset?.versions.map((version) => ({ name: version.tag, train_count: version.entries, val_count: 0 })) || []);
+      }
       setActiveTab(detail.tab as any);
     };
     window.addEventListener('navigate-tab', handleNavigate);
@@ -246,11 +259,20 @@ export default function App() {
     }
     setIsLoading(true);
     try {
-      await Promise.all(runningJobs.map((job) => fetch('/api/commands/stop', {
+      const stopResults = await Promise.all(runningJobs.map(async (job) => {
+        const response = await fetch('/api/commands/stop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: job.id }),
-      })));
+        });
+        if (response.ok) return { id: job.id, ok: true, message: '' };
+        const payload = await response.json().catch(() => ({}));
+        return { id: job.id, ok: false, message: payload.error || response.statusText };
+      }));
+      const failures = stopResults.filter((result) => !result.ok);
+      if (failures.length > 0) {
+        setUiError(`Failed to stop ${failures.length} job(s): ${failures.map((failure) => `${failure.id} (${failure.message})`).join(', ')}`);
+      }
       await fetchData(true);
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Failed to stop running jobs');
@@ -261,14 +283,22 @@ export default function App() {
 
   const handleToggleExecutionMode = async () => {
     try {
+      if (status?.executionMode === 'local') {
+        const confirmed = window.confirm('Remote runner is not implemented yet. Remote command starts return 501. Switch anyway for configuration testing?');
+        if (!confirmed) return;
+      }
       await toggleExecutionMode();
-      setUiError(null);
+      setUiError(status?.executionMode === 'local' ? 'Remote mode selected for configuration only. Remote runner is not implemented; command starts are blocked.' : null);
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Failed to toggle execution mode');
     }
   };
 
   const triggerCommand = async (payload: Record<string, unknown>) => {
+    if (status?.executionMode === 'remote') {
+      throw new Error('Remote runner is not implemented yet. Switch Execution Mode back to Local before starting commands.');
+    }
+
     const response = await fetch('/api/commands/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -373,6 +403,7 @@ export default function App() {
 
   const handleManageJob = (id: string) => {
     setSelectedJobId(id);
+    setSelectedJobIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
     setActiveTab('compare');
   };
 
@@ -410,6 +441,7 @@ export default function App() {
   };
 
   const handleViewDataset = (npcKey: string, technique: string) => {
+    if (!npcKey || !technique) return;
     setDatasetViewNpc(npcKey);
     setDatasetViewTechnique(technique);
     // Extract techniques from datasets state
@@ -419,6 +451,17 @@ export default function App() {
         ds.versions.map((v) => ({ name: v.tag, train_count: v.entries, val_count: 0 }))
       );
     }
+  };
+
+  const handlePrepareTrainingFromDataset = (npcKey: string, technique: string) => {
+    if (!npcKey || !technique) return;
+    setTrainingConfig((prev) => ({
+      ...prev,
+      spec: `subjects/${npcKey}.json`,
+      technique,
+    }));
+    setUiError(`Training Suite preselected for ${npcKey} using ${technique}. Review settings, then launch training.`);
+    setActiveTab('training');
   };
 
   const handleClearSelection = () => {
@@ -526,6 +569,16 @@ export default function App() {
   const isLocalModelLoaded = Boolean(localModel?.loaded);
   const localModelLabel = localModel?.displayName || 'none loaded';
   const localModelSource = localModel?.source && localModel.source !== 'none' ? localModel.source : 'idle';
+  const isRemoteMode = status?.executionMode === 'remote';
+  const healthLabel = health ? (health.ok ? 'Health OK' : 'Health Degraded') : 'Health Unknown';
+  const healthColorClass = health ? (health.ok ? 'text-success' : 'text-danger') : 'text-ink/40';
+  const healthDotClass = health ? (health.ok ? 'bg-success' : 'bg-danger') : 'bg-ink/40';
+  const selectedJobLogLines = selectedJobForLogs
+    ? [
+        ...(selectedJobForLogs.logs || []),
+        ...selectedJobForLogs.stages.flatMap((stage) => stage.logs.map((line) => `[${stage.name}] ${line}`)),
+      ]
+    : [];
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-bg text-ink font-sans border border-line selection:bg-accent/30 selection:text-ink-bright">
@@ -590,6 +643,7 @@ export default function App() {
             {[
               { id: 'overview', label: 'Operations Matrix' },
               { id: 'datasets', label: 'Dataset Factory' },
+              { id: 'dataset_params', label: 'Generation Specs' },
               { id: 'training', label: 'Training Suite' },
               { id: 'analytics', label: 'TensorBoard' },
               { id: 'commands', label: 'System Hub' },
@@ -734,6 +788,14 @@ export default function App() {
                 onToggleJobSelection={toggleJobSelection}
                 onClearSelection={handleClearSelection}
                 onNavigateTo={setActiveTab}
+              />
+            )}
+
+            {activeTab === 'dataset_params' && (
+              <DatasetFormatPanel
+                subjects={subjects}
+                datasets={datasets}
+                trainingConfig={trainingConfig}
               />
             )}
 
