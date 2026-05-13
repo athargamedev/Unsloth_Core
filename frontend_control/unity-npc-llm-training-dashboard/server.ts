@@ -374,7 +374,18 @@ const commandDefinitions: CommandDefinition[] = [
     color: "success",
     type: "Pipeline",
     requiredFields: ["spec"],
-    build: (payload) => ["./ucore", "pipeline", parsedSpec(payload)],
+    build: (payload) => {
+      const cmd = ["./ucore", "pipeline", parsedSpec(payload)];
+      const preset = String(payload.preset || "").trim();
+      const technique = String(optionValue(payload, "technique") || "").trim();
+      const notebooklmInput = String(optionValue(payload, "notebooklmInput") || "").trim();
+      const track = String(optionValue(payload, "track") || "").trim().toLowerCase();
+      if (preset) cmd.push("--preset", sanitizeToken(preset, "preset"));
+      if (technique) cmd.push("--technique", sanitizeToken(technique, "technique"));
+      if (notebooklmInput) cmd.push("--notebooklm-input", normalizeRelativePath(notebooklmInput, "notebooklmInput"));
+      if (track === "true" || track === "1") cmd.push("--track");
+      return cmd;
+    },
   },
   {
     id: "export",

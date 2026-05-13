@@ -60,3 +60,25 @@ Validation rerun:
   - progress: `10`
   - stages: `["failed","pending","pending","pending"]`
 - Confirmed last logs include `[STAGE] dataset` marker and no false advancement to later stages.
+
+## Green-path marker validation (progressed into training)
+Follow-up probe updated the pipeline API payload to pass through optional settings (`preset`, `options.technique`, `options.notebooklmInput`, `options.track`) so the dashboard can launch deterministic variants of pipeline runs.
+
+Probe payload:
+- commandId: `pipeline`
+- spec: `subjects/chemistry_instructor.json`
+- preset: `fast-3b`
+- options.technique: `template`
+
+Observed runtime state:
+- status: `running`
+- progress: `35`
+- stages: `["completed","running","pending","pending"]`
+
+Interpretation:
+- Marker parser correctly advanced from dataset -> training using explicit `[STAGE]` markers.
+- No false transitions to evaluation/export occurred while only training logs were present.
+
+Operational note discovered:
+- `/api/commands/stop` acknowledged request but did not terminate the active training subprocess chain in this run; manual PID termination was required.
+- This indicates a separate stop/kill process-group reliability issue (outside stage-truth parser scope) that should be addressed in next hardening pass.
