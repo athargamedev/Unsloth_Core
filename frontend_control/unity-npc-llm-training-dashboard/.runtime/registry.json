@@ -2,6 +2,143 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "job_1778692662395_pch16",
+      "name": "Generate Dataset",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T17:17:42.395Z",
+      "startedAt": "2026-05-13T17:17:42.395Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/nonexistent_integration_spec_2.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [],
+      "stopRequested": true,
+      "exitCode": -1,
+      "finishedAt": "2026-05-13T17:17:42.404Z",
+      "terminalReason": "user_requested_stop"
+    },
+    {
+      "id": "ext_proc_2426909",
+      "name": "External Process (2426909) nonexistent_integration_spec",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "nonexistent_integration_spec",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-13T17:17:40.821Z",
+      "startedAt": "2026-05-13T17:17:40.821Z",
+      "command": [
+        "external",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore generate subjects/nonexistent_integration_spec.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2426909] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2426909] discovered active process",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore generate subjects/nonexistent_integration_spec.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T17:17:41.100Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2321847",
+      "name": "External Process (2321847) nonexistent_integration_spec",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "nonexistent_integration_spec",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-13T17:13:22.782Z",
+      "startedAt": "2026-05-13T17:13:22.782Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/nonexistent_integration_spec.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2321847] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2321847] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/nonexistent_integration_spec.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T17:13:23.085Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_2183188",
       "name": "External Process (2183188) nonexistent_integration_spec",
       "type": "Dataset",
@@ -425,7 +562,9 @@
     }
   ],
   "logs": [
-    "[2026-05-13T17:07:39.669Z] [SYNC] discovered running external process pid=2183188"
+    "[2026-05-13T17:17:42.404Z] [SYSTEM] job job_1778692662395_pch16 stopped (exit null)",
+    "[2026-05-13T17:17:42.402Z] [SYSTEM] stop requested job_1778692662395_pch16",
+    "[2026-05-13T17:17:42.395Z] [SYSTEM] starting job_1778692662395_pch16: ./ucore generate subjects/nonexistent_integration_spec_2.json"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []
