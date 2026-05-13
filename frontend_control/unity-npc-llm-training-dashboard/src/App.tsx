@@ -248,10 +248,48 @@ export default function App() {
     await fetchData();
   };
 
-  const getDefaultPayloadForCommand = (commandId: string): Record<string, unknown> => {
-    if (commandSchemas[commandId]) {
-      return { ...commandSchemas[commandId] };
+  const setNestedValue = (obj: Record<string, unknown>, dottedPath: string, rawValue: unknown): Record<string, unknown> => {
+    const next: Record<string, unknown> = { ...obj };
+    const parts = dottedPath.split('.');
+    let cur: Record<string, unknown> = next;
+
+    for (let i = 0; i < parts.length - 1; i += 1) {
+      const part = parts[i];
+      const existing = cur[part];
+      if (typeof existing === 'object' && existing !== null && !Array.isArray(existing)) {
+        cur[part] = { ...(existing as Record<string, unknown>) };
+      } else {
+        cur[part] = {};
+      }
+      cur = cur[part] as Record<string, unknown>;
     }
+
+    cur[parts[parts.length - 1]] = rawValue;
+    return next;
+  };
+
+  const getNestedValue = (obj: Record<string, unknown>, dottedPath: string): unknown => {
+    return dottedPath.split('.').reduce<unknown>((acc, key) => {
+      if (acc && typeof acc === 'object' && key in (acc as Record<string, unknown>)) {
+        return (acc as Record<string, unknown>)[key];
+      }
+      return undefined;
+    }, obj);
+  };
+
+  const getDefaultPayloadForCommand = (commandId: string): Record<string, unknown> => {
+    const schema = commandSchemas[commandId]?.fields as Record<string, { default?: unknown }> | undefined;
+    if (schema) {
+      let payload: Record<string, unknown> = {};
+      for (const [fieldPath, config] of Object.entries(schema)) {
+        if (config.default !== undefined) {
+          payload = setNestedValue(payload, fieldPath, config.default);
+        }
+      }
+      if (!payload.commandId) payload.commandId = commandId;
+      return payload;
+    }
+
     const derivedNpcKey = trainingConfig.spec.replace('subjects/', '').replace('.json', '');
     switch (commandId) {
       case 'dataset-generate':
@@ -406,8 +444,33 @@ export default function App() {
     }
   };
 
+  const validateCommandPayload = (commandId: string, payload: Record<string, unknown>): string[] => {
+    const fields = commandSchemas[commandId]?.fields as Record<string, { required?: boolean }> | undefined;
+    if (!fields) return [];
+
+    const missing: string[] = [];
+    for (const [path, schema] of Object.entries(fields)) {
+      if (!schema?.required || path === 'commandId') continue;
+      const value = getNestedValue(payload, path);
+      if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
+        missing.push(path);
+      }
+    }
+    return missing;
+  };
+
   const handleSetCommandPayload = (field: string, value: string) => {
-    setCommandPayload((prev: Record<string, unknown>) => ({ ...prev, [field]: value }));
+    const selectedSchema = selectedCommand ? commandSchemas[selectedCommand]?.fields?.[field] : undefined;
+
+    let typedValue: unknown = value;
+    if (selectedSchema?.type === 'number') {
+      const n = Number(value);
+      typedValue = Number.isFinite(n) ? n : value;
+    } else if (selectedSchema?.type === 'boolean') {
+      typedValue = value === 'true';
+    }
+
+    setCommandPayload((prev: Record<string, unknown>) => setNestedValue(prev, field, typedValue));
   };
 
   return (
@@ -854,22 +917,74 @@ export default function App() {
                   <div className="p-2 bg-bg border border-line rounded text-sm font-mono">{selectedCommand}</div>
                 </div>
 
-                {Object.keys(commandPayload).filter((key: string) => key !== 'commandId' && key !== 'type').map((field: string) => (
-                  <div key={field}>
-                    <label className="block text-sm font-bold text-ink/60 mb-2 capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
-                    <input
-                      type="text"
-                      value={String(commandPayload[field] || '')}
-                      onChange={(e) => handleSetCommandPayload(field, e.target.value)}
-                      className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
-                    />
-                  </div>
-                ))}
+                {(selectedCommand && commandSchemas[selectedCommand]?.fields
+                  ? Object.entries(commandSchemas[selectedCommand].fields)
+                      .filter(([field]) => field !== 'commandId' && field !== 'type')
+                      .map(([field, schema]: [string, any]) => {
+                        const rawValue = getNestedValue(commandPayload as Record<string, unknown>, field);
+                        const value = rawValue === undefined || rawValue === null ? '' : String(rawValue);
+                        return (
+                          <div key={field}>
+                            <label className="block text-sm font-bold text-ink/60 mb-2">
+                              {field.replace(/\./g, ' → ').replace(/([A-Z])/g, ' $1')}
+                              {schema?.required ? <span className="text-danger"> *</span> : null}
+                            </label>
+                            {Array.isArray(schema?.enum) && schema.enum.length > 0 ? (
+                              <select
+                                value={value}
+                                onChange={(e) => handleSetCommandPayload(field, e.target.value)}
+                                className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
+                              >
+                                {schema.enum.map((opt: string) => (
+                                  <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                              </select>
+                            ) : schema?.type === 'boolean' ? (
+                              <select
+                                value={value || 'false'}
+                                onChange={(e) => handleSetCommandPayload(field, e.target.value)}
+                                className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
+                              >
+                                <option value="false">false</option>
+                                <option value="true">true</option>
+                              </select>
+                            ) : (
+                              <input
+                                type={schema?.type === 'number' ? 'number' : 'text'}
+                                value={value}
+                                onChange={(e) => handleSetCommandPayload(field, e.target.value)}
+                                className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
+                              />
+                            )}
+                            {schema?.description ? (
+                              <div className="text-[10px] text-ink/40 mt-1">{schema.description}</div>
+                            ) : null}
+                          </div>
+                        );
+                      })
+                  : Object.keys(commandPayload)
+                      .filter((key: string) => key !== 'commandId' && key !== 'type')
+                      .map((field: string) => (
+                        <div key={field}>
+                          <label className="block text-sm font-bold text-ink/60 mb-2 capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
+                          <input
+                            type="text"
+                            value={String((commandPayload as Record<string, unknown>)[field] || '')}
+                            onChange={(e) => handleSetCommandPayload(field, e.target.value)}
+                            className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
+                          />
+                        </div>
+                      )))
+                }
 
                 <div className="flex gap-2 pt-4">
                   <button
                     onClick={async () => {
                       try {
+                        const missing = validateCommandPayload(selectedCommand, commandPayload as Record<string, unknown>);
+                        if (missing.length > 0) {
+                          throw new Error(`Missing required fields: ${missing.join(', ')}`);
+                        }
                         await triggerCommand(commandPayload);
                         setCommandModalOpen(false);
                         setSelectedCommand(null);

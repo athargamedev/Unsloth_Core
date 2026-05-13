@@ -109,6 +109,7 @@ const loadRegistry = (): Registry => {
 
   try {
     const registry = JSON.parse(fs.readFileSync(registryPath, "utf8")) as Registry;
+    registry.logs = []; // Global log buffer is transient — cleared on restart
     if (!registry.nodeId) {
       registry.nodeId = crypto.randomUUID();
       flushPersist(registry);
@@ -1765,19 +1766,92 @@ async function startServer() {
   });
 
   app.get("/api/command-schemas", (_req, res) => {
-    const schemas: Record<string, { fields: Record<string, { type: string; required: boolean; default?: string }> }> = {};
+    type FieldSchema = {
+      type: "string" | "number" | "boolean";
+      required: boolean;
+      default?: string | number | boolean;
+      description?: string;
+      enum?: string[];
+    };
+
+    const baseDefaultsByCommand: Record<string, Record<string, FieldSchema>> = {
+      "dataset-generate": {
+        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json", description: "Subject spec path" },
+        "options.technique": { type: "string", required: false, default: "ollama", enum: ["notebooklm", "ollama", "template", "openai", "anthropic"] },
+      },
+      "dataset-sanitize": {
+        "options.datasetPath": { type: "string", required: true, default: "datasets/chemistry_instructor/ollama/train.jsonl", description: "Train dataset path" },
+      },
+      train: {
+        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
+        preset: { type: "string", required: false, default: "llama-1b-fast" },
+        "options.learningRate": { type: "string", required: false, default: "2e-4" },
+        "options.batchSize": { type: "number", required: false, default: 1 },
+        "options.epochs": { type: "number", required: false, default: 3 },
+        "options.rank": { type: "number", required: false, default: 16 },
+        "options.alpha": { type: "number", required: false, default: 32 },
+      },
+      pipeline: {
+        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
+        preset: { type: "string", required: false, default: "llama-1b-fast" },
+        "options.technique": { type: "string", required: false, default: "ollama", enum: ["notebooklm", "ollama", "template", "openai", "anthropic"] },
+        "options.track": { type: "boolean", required: false, default: false },
+      },
+      export: {
+        npcKey: { type: "string", required: true, default: "chemistry_instructor" },
+        "options.modelId": { type: "string", required: true, default: "unsloth/Llama-3.2-1B-Instruct-bnb-4bit" },
+      },
+      "export-adapter": {
+        npcKey: { type: "string", required: true, default: "chemistry_instructor" },
+      },
+      evaluate: {
+        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
+        "options.baseline": { type: "string", required: true, default: "exports/default/default-llama3.2-3b-f16.gguf" },
+        "options.candidate": { type: "string", required: true, default: "exports/chemistry_instructor/chemistry_instructor-llama3.2-1b-f16.gguf" },
+        "options.valData": { type: "string", required: false, default: "" },
+      },
+      smoke: {
+        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
+        "options.modelPath": { type: "string", required: true, default: "exports/chemistry_instructor/chemistry_instructor-llama3.2-1b-f16.gguf" },
+      },
+      deploy: {
+        "options.npcKey": { type: "string", required: true, default: "chemistry_instructor" },
+        "options.modelId": { type: "string", required: true, default: "unsloth/Llama-3.2-1B-Instruct-bnb-4bit" },
+      },
+      "supabase-check": {
+        npcKey: { type: "string", required: true, default: "chemistry_instructor" },
+        "options.playerId": { type: "string", required: false, default: "" },
+      },
+    };
+
+    const schemas: Record<string, { fields: Record<string, FieldSchema> }> = {};
+
     for (const [id, def] of commandMap.entries()) {
-      schemas[id] = {
-        fields: def.requiredFields.reduce((acc, field) => {
-          acc[field] = { type: 'string', required: true };
-          return acc;
-        }, {} as Record<string, { type: string; required: boolean }>),
+      const fields: Record<string, FieldSchema> = {};
+
+      for (const requiredField of def.requiredFields) {
+        fields[requiredField] = {
+          type: "string",
+          required: true,
+          description: `Required by ${id}`,
+        };
+      }
+
+      const defaults = baseDefaultsByCommand[id] || {};
+      for (const [k, v] of Object.entries(defaults)) {
+        fields[k] = { ...fields[k], ...v };
+      }
+
+      fields.commandId = {
+        type: "string",
+        required: true,
+        default: id,
+        description: "Backend command identifier",
       };
-      // Add common fields
-      schemas[id].fields['spec'] = { type: 'string', required: false, default: 'subjects/chemistry_instructor.json' };
-      schemas[id].fields['preset'] = { type: 'string', required: false, default: 'fast-3b' };
-      schemas[id].fields['options.model'] = { type: 'string', required: false, default: 'mistralai/Mistral-7B-Instruct-v0.2' };
+
+      schemas[id] = { fields };
     }
+
     res.json(schemas);
   });
 
