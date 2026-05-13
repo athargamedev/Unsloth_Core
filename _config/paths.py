@@ -304,14 +304,22 @@ def _latest_nested_adapter_run_dir(npc_key: str) -> Path | None:
     return _newest_adapter_dir([path for path in runs_dir.iterdir() if path.is_dir()])
 
 
+def _latest_adapter_run_dir(npc_key: str) -> Path | None:
+    """Return the newest valid adapter across legacy and canonical run layouts."""
+    candidates = []
+    for adapter_dir in (_latest_direct_adapter_run_dir(npc_key), _latest_nested_adapter_run_dir(npc_key)):
+        if adapter_dir is not None:
+            candidates.append(adapter_dir)
+    return _newest_adapter_dir(candidates)
+
+
 def _resolve_npc_adapter_dir(npc_key: str) -> Path:
     """Resolve an NPC key to the highest-priority valid adapter directory."""
     npc_output_dir = output_dir(npc_key)
     fallback_order = [
         best_run_dir(npc_key),
         latest_run_dir(npc_key),
-        _latest_direct_adapter_run_dir(npc_key),
-        _latest_nested_adapter_run_dir(npc_key),
+        _latest_adapter_run_dir(npc_key),
         npc_output_dir,
     ]
 
@@ -349,12 +357,22 @@ def resolve_adapter_dir(npc_key_or_dir: str | Path) -> tuple[str, Path]:
         adapter_dir = _resolve_npc_adapter_dir(npc_key)
     else:
         # Check name BEFORE following symlinks
-        adapter_dir = candidate
-        if adapter_dir.name in {"best", "latest"}:
-            adapter_dir = adapter_dir.resolve()
-        elif adapter_dir.is_symlink() or adapter_dir.exists():
-            adapter_dir = candidate.resolve()
-        npc_key = _infer_npc_key_from_adapter_path(candidate, adapter_dir)
+        resolved_candidate = candidate.resolve()
+        try:
+            relative_to_outputs = resolved_candidate.relative_to(output_root().resolve())
+        except ValueError:
+            relative_to_outputs = None
+
+        if relative_to_outputs is not None and len(relative_to_outputs.parts) == 1:
+            npc_key = relative_to_outputs.parts[0]
+            adapter_dir = _resolve_npc_adapter_dir(npc_key)
+        else:
+            adapter_dir = candidate
+            if adapter_dir.name in {"best", "latest"}:
+                adapter_dir = adapter_dir.resolve()
+            elif adapter_dir.is_symlink() or adapter_dir.exists():
+                adapter_dir = resolved_candidate
+            npc_key = _infer_npc_key_from_adapter_path(candidate, adapter_dir)
 
     if _has_adapter_config(adapter_dir):
         return npc_key, adapter_dir

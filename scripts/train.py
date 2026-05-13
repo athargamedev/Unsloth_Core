@@ -299,22 +299,34 @@ def load_config(config_path, preset=None, overrides=None):
     if overrides:
         for key, value in overrides.items():
             if value is not None:
-                if key in ("batch_size", "gradient_accumulation_steps", "num_epochs", "learning_rate",
-                           "max_seq_length", "output_dir", "model"):
+                if key == "model":
+                    config["model"] = value
+                elif key == "output_dir":
+                    config["output_dir"] = value
+                elif key in ("batch_size", "gradient_accumulation_steps", "num_epochs", "learning_rate",
+                             "max_seq_length"):
+                    config.setdefault("training", {})
                     config["training"][key] = value
                 elif key in ("lora_r", "lora_alpha", "lora_dropout"):
+                    config.setdefault("lora", {})
                     config["lora"][key.replace("lora_", "")] = value
                 elif key == "lr_scheduler_type":
+                    config.setdefault("training", {})
                     config["training"]["lr_scheduler_type"] = value
                 elif key == "packing":
+                    config.setdefault("training", {})
                     config["training"]["packing"] = value
                 elif key == "train_on_responses_only":
+                    config.setdefault("training", {})
                     config["training"]["train_on_responses_only"] = value
                 elif key == "neftune_noise_alpha":
+                    config.setdefault("training", {})
                     config["training"]["neftune_noise_alpha"] = value
                 elif key == "weight_decay":
+                    config.setdefault("training", {})
                     config["training"]["weight_decay"] = value
                 elif key == "warmup_steps":
+                    config.setdefault("training", {})
                     config["training"]["warmup_steps"] = value
                 else:
                     config[key] = value
@@ -341,10 +353,14 @@ def get_run_output_path(output_dir):
     Returns (run_dir_path, run_id) where run_id is like 'run_001'.
     """
     output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    runs_dir = output_dir / "runs"
+    runs_dir.mkdir(parents=True, exist_ok=True)
 
     # Find highest existing run number
-    existing_runs = [d for d in output_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
+    existing_runs = [
+        d for parent in (output_dir, runs_dir) if parent.exists()
+        for d in parent.iterdir() if d.is_dir() and d.name.startswith("run_")
+    ]
     max_num = 0
     for d in existing_runs:
         try:
@@ -354,7 +370,7 @@ def get_run_output_path(output_dir):
             pass
 
     run_id = max_num + 1
-    run_dir = output_dir / f"run_{run_id:03d}"
+    run_dir = runs_dir / f"run_{run_id:03d}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
     return str(run_dir), f"run_{run_id:03d}"
@@ -543,6 +559,12 @@ def _should_push_gguf_to_hub(export_config):
     return bool(export_config.get("push_to_hub") and export_config.get("hub_repo_id"))
 
 
+def _assert_valid_hub_export_config(export_config):
+    """Fail loudly for explicit Hub uploads missing a destination repo."""
+    if export_config.get("push_to_hub") and not export_config.get("hub_repo_id"):
+        raise RuntimeError("export.push_to_hub is true, but export.hub_repo_id is missing")
+
+
 def _move_generated_gguf(temp_dir, output_path):
     """Move Unsloth's generated GGUF from a temporary export dir."""
     output_path = Path(output_path)
@@ -572,10 +594,10 @@ def export_to_gguf(model, tokenizer, config, output_path, quantization=None):
 
     FastLanguageModel.for_inference(model)
 
+    _assert_valid_hub_export_config(export_config)
+
     if _should_push_gguf_to_hub(export_config):
         hub_repo_id = export_config.get("hub_repo_id")
-        if not hub_repo_id:
-            raise RuntimeError("export.push_to_hub requires export.hub_repo_id")
         model.push_to_hub_gguf(hub_repo_id, tokenizer, quantization)
         return sorted(Path(output_path).parent.glob("*.gguf"))
 
@@ -615,6 +637,7 @@ def main():
 
     # Training overrides
     parser.add_argument("--output", "-o", help="Output directory")
+    parser.add_argument("--model", help="Base model ID/path override")
     parser.add_argument("--lr", type=float, dest="learning_rate", help="Learning rate")
     parser.add_argument("--epochs", type=int, dest="num_epochs", help="Number of epochs")
     parser.add_argument("--batch-size", type=int, dest="batch_size", help="Per-device batch size")
@@ -659,6 +682,8 @@ def main():
         sys.exit(1)
 
     config_path = args.config_or_spec
+    if not args.from_spec and Path(config_path).suffix.lower() == ".json":
+        args.from_spec = True
 
     # Determine technique if --from-spec is used (also used for dataset path decisions)
     # Build cli_overrides for get_config_from_spec
@@ -735,7 +760,7 @@ def main():
     else:
         run_dir, run_id = get_run_output_path(str(PROJECT_ROOT / "outputs" / npc_key))
 
-    config["training"]["output_dir"] = run_dir
+    config.setdefault("training", {})["output_dir"] = run_dir
     config["run_id"] = run_id
 
     # Write config snapshot
@@ -778,10 +803,19 @@ def main():
         if best_link.exists() or best_link.is_symlink():
             best_link.unlink()
         try:
-            best_link.symlink_to(run_id)
-            print(f"  ✓ Updated 'best' symlink → {run_id}")
+            best_link.symlink_to(Path("runs") / run_id)
+            print(f"  ✓ Updated 'best' symlink → runs/{run_id}")
         except OSError:
             pass
+
+    latest_link = Path(output_dir or PROJECT_ROOT / "outputs" / npc_key) / "latest"
+    if latest_link.exists() or latest_link.is_symlink():
+        latest_link.unlink()
+    try:
+        latest_link.symlink_to(Path("runs") / run_id)
+        print(f"  ✓ Updated 'latest' symlink → runs/{run_id}")
+    except OSError:
+        pass
     else:
         print(f"  ⚠ Promotion rules failed:")
         for failure in promotion_failures:
@@ -790,14 +824,12 @@ def main():
     # ── GGUF Export ────────────────────────────────────────────────────
     if args.export_gguf:
         print("  [4/4] Exporting to GGUF...")
-        exports_dir = PROJECT_ROOT / "exports" / npc_key
+        exports_dir = paths.export_dir(npc_key)
         exports_dir.mkdir(parents=True, exist_ok=True)
 
         quantization = args.quantization or config.get("export", {}).get("quantization", "q4_k_m")
 
-        model_id_short = config.get("model", "model").split("/")[-1].replace("-Instruct", "").replace("-bnb-4bit", "").replace("-unsloth", "")
-        gguf_name = f"{npc_key}-{model_id_short}-{quantization}.gguf"
-        gguf_path = str(exports_dir / gguf_name)
+        gguf_path = str(paths.export_gguf_path(npc_key, config.get("model", "model"), quantization))
 
         gguf_files = export_to_gguf(model, tokenizer, config, gguf_path, quantization)
 

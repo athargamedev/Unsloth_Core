@@ -4,7 +4,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import crypto from "crypto";
-import { execSync, spawn, type ChildProcessWithoutNullStreams } from "child_process";
+import { execFileSync, execSync, spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket as WebSocketClient } from "ws";
 import { computeProgressFromStages, deriveStageStatuses } from "./progressTruth";
@@ -91,7 +91,22 @@ interface Workflow {
 }
 
 const dashboardRoot = process.cwd();
-const repoRoot = path.resolve(dashboardRoot, "../..");
+const findRepoRoot = (): string => {
+  const candidates = [
+    process.env.UNSLOTH_CORE_ROOT,
+    path.resolve(dashboardRoot, "../.."),
+    path.resolve(__dirname, "../.."),
+    path.resolve(__dirname, "../../.."),
+  ].filter((candidate): candidate is string => Boolean(candidate));
+
+  for (const candidate of candidates) {
+    const resolved = path.resolve(candidate);
+    if (fs.existsSync(path.join(resolved, "ucore"))) return resolved;
+  }
+
+  throw new Error(`Unable to locate Unsloth_Core root. Set UNSLOTH_CORE_ROOT or launch from the dashboard directory. Tried: ${candidates.join(", ")}`);
+};
+const repoRoot = findRepoRoot();
 const runtimeDir = path.join(dashboardRoot, ".runtime");
 const registryPath = path.join(runtimeDir, "registry.json");
 
@@ -507,6 +522,14 @@ const parsedValData = (payload: StartCommandPayload): string => {
   );
 };
 
+const parsedNotebooklmInput = (inputPath: string): string => {
+  return resolvePathWithinRoots(
+    inputPath,
+    "notebooklmInput",
+    [path.join(repoRoot, "datasets"), path.join(repoRoot, "subjects"), path.join(repoRoot, "docs")],
+  );
+};
+
 
 const commandDefinitions: CommandDefinition[] = [
   {
@@ -519,9 +542,11 @@ const commandDefinitions: CommandDefinition[] = [
     build: (payload) => {
       const args = ["./ucore", "generate", parsedSpec(payload)];
       const technique = String(optionValue(payload, "technique") || "").trim();
-      const model = String(optionValue(payload, "model") || "").trim();
+      const model = String(optionValue(payload, "model") || optionValue(payload, "modelId") || "").trim();
+      const notebooklmInput = String(optionValue(payload, "notebooklmInput") || "").trim();
       if (technique) args.push("--technique", sanitizeToken(technique, "technique"));
       if (model) args.push("--model", sanitizeToken(model, "model"));
+      if (notebooklmInput) args.push("--notebooklm-input", parsedNotebooklmInput(notebooklmInput));
       if (technique === "ollama") args.push("--ollama");
       return args;
     },
@@ -547,6 +572,8 @@ const commandDefinitions: CommandDefinition[] = [
       // Hyperparams from options
       const opts = payload.options || {};
       if (opts.technique) args.push("--technique", String(opts.technique));
+      const baseModel = String(opts.baseModel || opts.model || "").trim();
+      if (baseModel) args.push("--model", sanitizeToken(baseModel, "model"));
       if (opts.wandb === true || opts.wandb === "true") args.push("--wandb");
       if (opts.learningRate) args.push("--lr", String(opts.learningRate));
       if (opts.batchSize) args.push("--batch-size", String(opts.batchSize));
@@ -572,7 +599,7 @@ const commandDefinitions: CommandDefinition[] = [
       const wandb = String(optionValue(payload, "wandb") || "").trim().toLowerCase();
       if (preset) cmd.push("--preset", sanitizeToken(preset, "preset"));
       if (technique) cmd.push("--technique", sanitizeToken(technique, "technique"));
-      if (notebooklmInput) cmd.push("--notebooklm-input", normalizeRelativePath(notebooklmInput, "notebooklmInput"));
+      if (notebooklmInput) cmd.push("--notebooklm-input", parsedNotebooklmInput(notebooklmInput));
       if (track === "true" || track === "1") cmd.push("--track");
       if (wandb === "true" || wandb === "1") cmd.push("--wandb");
       return cmd;
@@ -594,7 +621,7 @@ const commandDefinitions: CommandDefinition[] = [
     color: "default",
     type: "Export",
     requiredFields: ["npcKey"],
-    build: ({ npcKey }) => ["./ucore", "export-adapter", `outputs/${sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")}/`],
+    build: ({ npcKey }) => ["./ucore", "export-adapter", `outputs/${sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")}/best`],
   },
   {
     id: "evaluate",
@@ -625,8 +652,16 @@ const commandDefinitions: CommandDefinition[] = [
     icon: "external-link",
     color: "success",
     type: "Deploy",
-    requiredFields: ["options.npcKey", "options.modelId"],
-    build: ({ options }) => ["python", "scripts/export.py", sanitizeToken(requireString(String(options?.npcKey || ""), "npcKey"), "npcKey"), "--model", sanitizeToken(requireString(String(options?.modelId || ""), "modelId"), "modelId")],
+    requiredFields: [],
+    build: ({ options }) => {
+      const args = ["./ucore", "deploy"];
+      const unityProject = String(options?.unityProject || "").trim();
+      if (unityProject) args.push("--unity-project", resolvePathWithinRoots(unityProject, "unityProject", [path.resolve(repoRoot, ".."), repoRoot]));
+      if (options?.dryRun === true || options?.dryRun === "true") args.push("--dry-run");
+      if (options?.skipExport === true || options?.skipExport === "true") args.push("--skip-export");
+      if (options?.exportOnly === true || options?.exportOnly === "true") args.push("--export-only");
+      return args;
+    },
   },
   {
     id: "supabase-check",
@@ -755,6 +790,67 @@ const fileIso = (filePath: string): string => {
   } catch {
     return isoNow();
   }
+};
+
+const safeRunId = (value: string): string => {
+  if (!/^run_[0-9]{3,}$|^[0-9]{8}_[a-zA-Z0-9_-]+_[0-9]{3,}$/.test(value)) {
+    throw new Error("Invalid runId.");
+  }
+  return value;
+};
+
+const safeJobOrRunId = (value: string): string => {
+  if (!/^(job_[0-9]+_[a-z0-9]+|ext_train_[a-zA-Z0-9_-]+_.+|run_[0-9]{3,}|[0-9]{8}_[a-zA-Z0-9_-]+_[0-9]{3,})$/.test(value)) {
+    throw new Error("Invalid runId.");
+  }
+  return value;
+};
+
+const listNpcRunDirs = (npcKey: string): Array<{ runId: string; runDir: string; layout: "canonical" | "legacy" }> => {
+  const npcOutputDir = path.join(repoRoot, "outputs", npcKey);
+  const layouts = [
+    { root: path.join(npcOutputDir, "runs"), layout: "canonical" as const },
+    { root: npcOutputDir, layout: "legacy" as const },
+  ];
+  const runs: Array<{ runId: string; runDir: string; layout: "canonical" | "legacy" }> = [];
+
+  for (const { root, layout } of layouts) {
+    if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) continue;
+    for (const runId of fs.readdirSync(root)) {
+      if (!runId.startsWith("run_") && !/^\d{8}_/.test(runId)) continue;
+      const runDir = path.join(root, runId);
+      if (fs.statSync(runDir).isDirectory()) runs.push({ runId, runDir, layout });
+    }
+  }
+
+  return runs;
+};
+
+const findRunDirById = (requestedId: string, registry: Registry): { runId: string; runDir: string } | null => {
+  const id = safeJobOrRunId(requestedId);
+  const job = registry.jobs.find((item) => item.id === id);
+  const possibleRunIds = new Set<string>([id]);
+
+  if (job) {
+    for (const line of job.logs) {
+      const match = line.match(/outputs\/([a-zA-Z0-9_-]+)\/(?:runs\/)?([^/\s]+)(?:\/|\s|$)/);
+      if (match?.[2]) possibleRunIds.add(match[2]);
+    }
+    const outputLine = job.logs.find((line) => line.includes("Output:"));
+    const outputMatch = outputLine?.match(/outputs\/([a-zA-Z0-9_-]+)\/(?:runs\/)?([^/\s]+)/);
+    if (outputMatch?.[2]) possibleRunIds.add(outputMatch[2]);
+  }
+
+  const npcKeys = job?.npcKey ? [job.npcKey] : fs.existsSync(path.join(repoRoot, "outputs")) ? fs.readdirSync(path.join(repoRoot, "outputs")) : [];
+  for (const npcKey of npcKeys) {
+    const npcDir = path.join(repoRoot, "outputs", npcKey);
+    if (!fs.existsSync(npcDir) || !fs.statSync(npcDir).isDirectory()) continue;
+    for (const run of listNpcRunDirs(npcKey)) {
+      if (possibleRunIds.has(run.runId)) return { runId: run.runId, runDir: run.runDir };
+    }
+  }
+
+  return null;
 };
 
 const ensureExternalJob = (

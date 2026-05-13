@@ -52,6 +52,7 @@ def main():
     train_p.add_argument("--from-spec", action="store_true", help="Train directly from spec")
     train_p.add_argument("--preset", help="Training preset")
     train_p.add_argument("--technique", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
+    train_p.add_argument("--model", help="Base model ID/path override")
     train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training")
     train_p.add_argument("--wandb", action="store_true", default=None,
                          help="Enable W&B logging (overrides config)")
@@ -187,6 +188,7 @@ def main():
     pipe_p.add_argument("--technique", default="notebooklm", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
     pipe_p.add_argument("--notebooklm-input", help="NotebookLM export JSON/JSONL path")
     pipe_p.add_argument("--track", action="store_true", help="Track results in Supabase")
+    pipe_p.add_argument("--wandb", action="store_true", help="Enable W&B logging during training")
 
     # Plan execution placement
     plan_p = subparsers.add_parser("plan-execution", help="Recommend local vs remote (Colab) for generation/training")
@@ -230,9 +232,10 @@ def main():
 
     elif args.command == "train":
         cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.config_or_spec]
-        if args.from_spec: cmd.append("--from-spec")
+        if args.from_spec or Path(args.config_or_spec).suffix.lower() == ".json": cmd.append("--from-spec")
         if args.preset: cmd.extend(["--preset", args.preset])
         if getattr(args, "technique", None): cmd.extend(["--technique", args.technique])
+        if getattr(args, "model", None): cmd.extend(["--model", args.model])
         if getattr(args, "lr", None): cmd.extend(["--lr", str(args.lr)])
         if getattr(args, "batch_size", None): cmd.extend(["--batch-size", str(args.batch_size)])
         if getattr(args, "epochs", None): cmd.extend(["--epochs", str(args.epochs)])
@@ -418,20 +421,23 @@ def main():
         print(f"\n--- Phase 3: Training Model ---")
         # Note: train.py --export-gguf will eventually produce a .gguf in exports/{npc_key}/
         train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--from-spec", "--technique", technique, "--preset", args.preset, "--export-gguf"]
+        if args.wandb:
+            train_cmd.append("--wandb")
         run_cmd(train_cmd)
 
         print("[STAGE] export")
-        if args.track:
-            print("[STAGE] evaluation")
-            print(f"\n--- Phase 4: Smoke Testing & Tracking ---")
-            # Find the generated GGUF
-            export_dir = PROJECT_ROOT / "exports" / npc_key
-            ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
-            if ggufs:
-                smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec, "--track"]
-                run_cmd(smoke_cmd)
-            else:
-                print("Warning: No GGUF found for smoke testing")
+        print("[STAGE] evaluation")
+        print(f"\n--- Phase 4: Smoke Testing ---")
+        # Find the generated GGUF
+        export_dir = PROJECT_ROOT / "exports" / npc_key
+        ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
+        if ggufs:
+            smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
+            if args.track:
+                smoke_cmd.append("--track")
+            run_cmd(smoke_cmd)
+        else:
+            print("Warning: No GGUF found for smoke testing")
 
         print("[STAGE] complete")
         print(f"\n--- Pipeline Complete! ---")
