@@ -87,21 +87,25 @@ export const TrainingSuite = ({
 
       <Card title="Optimization Logic" subtitle="SCHEDULER_V1">
         <div className="space-y-4">
-          <div>
-            <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Learning Rate</label>
-            <div className="flex gap-2">
-              <input
-                value={trainingConfig.learningRate}
-                onChange={(e) => onUpdateTrainingConfig({ learningRate: e.target.value })}
-                className="flex-1 bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-              />
-              <select className="bg-bg border border-line rounded px-2 text-[10px] text-ink/60 outline-none">
-                <option>Cosine</option>
-                <option>Linear</option>
-                <option>Constant</option>
-              </select>
-            </div>
-          </div>
+              <div>
+                <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Learning Rate</label>
+                <div className="flex gap-2">
+                  <input
+                    value={trainingConfig.learningRate}
+                    onChange={(e) => onUpdateTrainingConfig({ learningRate: e.target.value })}
+                    className="flex-1 bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
+                  />
+                  <select
+                    value={trainingConfig.scheduler}
+                    onChange={(e) => onUpdateTrainingConfig({ scheduler: e.target.value as any })}
+                    className="bg-bg border border-line rounded px-2 text-[10px] text-ink/60 outline-none"
+                  >
+                    <option value="cosine">Cosine</option>
+                    <option value="linear">Linear</option>
+                    <option value="constant">Constant</option>
+                  </select>
+                </div>
+              </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Batch Size</label>
@@ -134,10 +138,14 @@ export const TrainingSuite = ({
     <div className="mt-auto p-4 bg-accent/5 border border-accent/10 rounded-sm flex justify-between items-center">
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <Shield className="w-3 h-3 text-success" />
-          <span className="text-[10px] font-bold text-success uppercase tracking-tighter">Config Validation Passed</span>
+          <Shield className={`w-3 h-3 ${validation.valid ? 'text-success' : 'text-warning'}`} />
+          <span className={`text-[10px] font-bold uppercase tracking-tighter ${validation.valid ? 'text-success' : 'text-warning'}`}>
+            {validation.valid ? 'Config Validation Passed' : validation.issues[0]}
+          </span>
         </div>
-        <p className="text-[10px] text-ink/40">Estimated VRAM requirement: 14.8GB (Optimized for 24GB+ cards)</p>
+        {validation.valid && (
+          <p className="text-[10px] text-ink/40">{validation.hint}</p>
+        )}
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input
             type="checkbox"
@@ -150,7 +158,12 @@ export const TrainingSuite = ({
       </div>
       <button
         onClick={onLaunchTraining}
-        className="px-6 py-2 bg-accent text-bg text-[11px] font-bold rounded-sm uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-accent/20"
+        disabled={!validation.valid}
+        className={`px-6 py-2 text-[11px] font-bold rounded-sm uppercase tracking-widest transition-all active:scale-95 ${
+          validation.valid
+            ? 'bg-accent text-bg hover:brightness-110 shadow-xl shadow-accent/20'
+            : 'bg-line/30 text-ink/30 cursor-not-allowed'
+        }`}
       >
         Launch Training Cluster
       </button>

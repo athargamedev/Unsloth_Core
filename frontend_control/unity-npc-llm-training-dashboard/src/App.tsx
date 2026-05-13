@@ -64,11 +64,12 @@ export default function App() {
     spec: 'subjects/chemistry_instructor.json',
     preset: 'fast-3b',
     learningRate: '2e-4',
+    scheduler: 'cosine',
     batchSize: 4,
     epochs: 3,
     rank: 16,
     alpha: 32,
-    baseModel: 'mistralai/Mistral-7B-Instruct-v0.2',
+    baseModel: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
     wandb: false,
   });
 
@@ -341,6 +342,7 @@ export default function App() {
         options: {
           wandb: trainingConfig.wandb ? 'true' : 'false',
           learningRate: trainingConfig.learningRate,
+          scheduler: trainingConfig.scheduler,
           batchSize: trainingConfig.batchSize,
           epochs: trainingConfig.epochs,
           rank: trainingConfig.rank,
@@ -404,6 +406,7 @@ export default function App() {
           model: trainingConfig.baseModel,
           wandb: trainingConfig.wandb ? 'true' : 'false',
           learningRate: trainingConfig.learningRate,
+          scheduler: trainingConfig.scheduler,
           batchSize: trainingConfig.batchSize,
           epochs: trainingConfig.epochs,
           rank: trainingConfig.rank,

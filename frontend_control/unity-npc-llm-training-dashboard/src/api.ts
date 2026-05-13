@@ -104,6 +104,7 @@ export interface TrainingConfig {
   preset: string;
   baseModel: string;
   learningRate: string;
+  scheduler: 'cosine' | 'linear' | 'constant';
   batchSize: number;
   epochs: number;
   rank: number;
