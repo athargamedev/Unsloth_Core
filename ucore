@@ -171,6 +171,13 @@ def main():
     pipe_p.add_argument("--notebooklm-input", help="NotebookLM export JSON/JSONL path")
     pipe_p.add_argument("--track", action="store_true", help="Track results in Supabase")
 
+    # Plan execution placement
+    plan_p = subparsers.add_parser("plan-execution", help="Recommend local vs remote (Colab) for generation/training")
+    plan_p.add_argument("--spec", required=True, help="Path to subject spec JSON")
+    plan_p.add_argument("--preset", help="Training preset")
+    plan_p.add_argument("--local-vram-gb", type=float, help="Override detected local VRAM")
+    plan_p.add_argument("--json", action="store_true", help="Output JSON")
+
     args = parser.parse_args()
 
     if args.command == "generate":
@@ -377,6 +384,16 @@ def main():
 
         print("[STAGE] complete")
         print(f"\n--- Pipeline Complete! ---")
+
+    elif args.command == "plan-execution":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "plan_execution.py"), "--spec", args.spec]
+        if args.preset:
+            cmd.extend(["--preset", args.preset])
+        if args.local_vram_gb is not None:
+            cmd.extend(["--local-vram-gb", str(args.local_vram_gb)])
+        if args.json:
+            cmd.append("--json")
+        run_cmd(cmd)
 
     else:
         parser.print_help()

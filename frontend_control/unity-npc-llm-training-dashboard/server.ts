@@ -8,6 +8,7 @@ import { execSync, spawn, type ChildProcessWithoutNullStreams } from "child_proc
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket as WebSocketClient } from "ws";
 import { computeProgressFromStages, deriveStageStatuses } from "./progressTruth";
+import { CodeInterpreter } from "@e2b/code-interpreter";
 
 type ExecutionMode = "local" | "remote";
 type JobStatus = "pending" | "running" | "completed" | "failed" | "stopped";
@@ -1068,6 +1069,22 @@ async function startServer() {
     res.json(listPresets());
   });
 
+
+  let assistantContext = "";
+  try {
+    const agentsMd = fs.readFileSync(path.join(repoRoot, "AGENTS.md"), "utf8");
+    const cliRef = fs.readFileSync(path.join(repoRoot, "docs/reference/CLI_REFERENCE.md"), "utf8");
+    assistantContext = `
+PROJECT CONTEXT (AGENTS.md):
+${agentsMd}
+
+CLI REFERENCE:
+${cliRef}
+    `;
+  } catch (err) {
+    console.warn("Failed to load assistant context files:", err);
+  }
+
   app.post("/api/assistant", async (req, res) => {
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
     const history = Array.isArray(req.body?.history) ? req.body.history : [];
@@ -1100,7 +1117,13 @@ async function startServer() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             systemInstruction: {
-              parts: [{ text: "You are a high-level specialist in Unity NPC LLM integration. Keep responses concise and actionable." }],
+              parts: [{ text: `You are a high-level specialist in Unity NPC LLM integration and the Unsloth_Core pipeline. 
+Keep responses concise and actionable. Use the following context for your knowledge:
+
+${assistantContext}
+
+If the user asks to run a command, you can suggest the exact ./ucore command.
+You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is set.` }],
             },
             contents,
           }),

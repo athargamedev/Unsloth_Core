@@ -130,15 +130,28 @@ python scripts/train.py configs/lora-sft-fast-3b.yaml --export-gguf
 python scripts/train.py configs/lora-sft-fast-3b.yaml --export-lora
 ```
 
-### Remote Training (Colab)
+### Local vs Remote (Colab) Planning
 
-Generate a Colab notebook for training in the cloud:
+Before launching expensive runs, compute deterministic placement:
 
 ```bash
-python scripts/train.py subjects/chemistry_instructor.json \
-    --from-spec \
-    --remote colab
+./ucore plan-execution \
+    --spec subjects/chemistry_instructor.json \
+    --preset fast-3b
 ```
+
+JSON mode for automation/pipelines:
+
+```bash
+./ucore plan-execution \
+    --spec subjects/chemistry_instructor.json \
+    --preset fast-3b \
+    --json
+```
+
+This evaluates dataset-size and VRAM policy from `configs/workload-policy.yaml` and recommends:
+- dataset generation location (`local` vs `remote`)
+- training location (`local` vs `remote_colab`)
 
 ## 4. Flag Reference
 

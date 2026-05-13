@@ -34,6 +34,7 @@ The project follows a deterministic workflow to transform a subject spec into a 
 3.  **Training**: `scripts/train.py`
     - Uses Unsloth SFTTrainer with LoRA for efficient fine-tuning.
     - Supports hierarchical configs (Base YAML < Preset < CLI).
+    - Use `./ucore plan-execution --spec ... --preset ...` before long runs to choose local vs remote_colab.
     - Output: `outputs/{npc_key}/` (LoRA adapter).
 4.  **Export & Validation**: `scripts/export.py` & `scripts/smoke_test.py`
     - Converts LoRA + Base Model to quantized GGUF.

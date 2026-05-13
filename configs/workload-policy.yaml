@@ -1,0 +1,26 @@
+# Workload placement policy for local vs remote execution.
+# Used by scripts/plan_execution.py.
+
+version: 1
+
+safety:
+  # Require local VRAM to exceed estimated requirement by this multiplier.
+  training_vram_safety_margin: 1.25
+
+local_caps:
+  # NotebookLM tends to rate-limit heavily for large generation runs.
+  notebooklm_max_examples_local: 120
+  # If ollama generation is selected and local VRAM is below this, prefer remote.
+  ollama_min_vram_gb: 6
+
+model_vram_baseline_gb:
+  "0.5b": 3.0
+  "1b": 4.0
+  "1.7b": 6.0
+  "3b": 8.0
+  "7b": 12.0
+  "8b": 14.0
+
+notes:
+  - "These are conservative planning baselines for 4-bit Unsloth-style fine-tuning."
+  - "Final runtime decision should still be validated with ./ucore validate-config and a smoke train run."
