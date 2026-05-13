@@ -382,7 +382,7 @@ def main():
         print("[STAGE] training")
         print(f"\n--- Phase 3: Training Model ---")
         # Note: train.py --export-gguf will eventually produce a .gguf in exports/{npc_key}/
-        train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--from-spec", "--data", san_path, "--preset", args.preset, "--export-gguf"]
+        train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--from-spec", "--technique", technique, "--preset", args.preset, "--export-gguf"]
         run_cmd(train_cmd)
 
         print("[STAGE] export")

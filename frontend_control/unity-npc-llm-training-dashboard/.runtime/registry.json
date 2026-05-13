@@ -2,6 +2,2629 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_1132940",
+      "name": "External Process (1132940) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132940] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132940] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1132928",
+      "name": "External Process (1132928) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132928] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132928] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1132919",
+      "name": "External Process (1132919) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132919] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132919] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1132907",
+      "name": "External Process (1132907) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132907] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132907] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1132898",
+      "name": "External Process (1132898) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132898] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132898] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1132889",
+      "name": "External Process (1132889) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132889] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132889] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1132876",
+      "name": "External Process (1132876) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132876] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132876] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1132867",
+      "name": "External Process (1132867) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132867] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132867] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1132858",
+      "name": "External Process (1132858) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132858] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132858] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1132845",
+      "name": "External Process (1132845) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132845] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132845] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1132836",
+      "name": "External Process (1132836) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:57.626Z",
+      "startedAt": "2026-05-13T19:07:57.626Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1132836] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1132836] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:08:00.926Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1125777",
+      "name": "External Process (1125777) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:40.024Z",
+      "startedAt": "2026-05-13T19:07:40.024Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1125777] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1125777] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:07:44.366Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1124554",
+      "name": "External Process (1124554) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:36.742Z",
+      "startedAt": "2026-05-13T19:07:36.742Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1124554] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1124554] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:07:40.024Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1123203",
+      "name": "External Process (1123203) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:33.416Z",
+      "startedAt": "2026-05-13T19:07:33.416Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1123203] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1123203] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:07:36.742Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1121898",
+      "name": "External Process (1121898) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:30.393Z",
+      "startedAt": "2026-05-13T19:07:30.393Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1121898] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1121898] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:07:33.361Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1117781",
+      "name": "External Process (1117781) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "running",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:20.283Z",
+      "startedAt": "2026-05-13T19:07:20.283Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1117781] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_1117645",
+      "name": "External Process (1117645) chemistry_instructor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chemistry_instructor",
+      "status": "running",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:20.283Z",
+      "startedAt": "2026-05-13T19:07:20.283Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1117645] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_1117576",
+      "name": "External Process (1117576)",
+      "type": "Training",
+      "commandId": "train",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:19.607Z",
+      "startedAt": "2026-05-13T19:07:19.607Z",
+      "command": [
+        "external",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python -m py_compile scripts/train.py"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1117576] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1117576] discovered active process",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python -m py_compile scripts/train.py"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:07:19.666Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1117574",
+      "name": "External Process (1117574) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "running",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:07:19.607Z",
+      "startedAt": "2026-05-13T19:07:19.607Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/train.py && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1117574] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/train.py && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_1106103",
+      "name": "External Process (1106103) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.995Z",
+      "startedAt": "2026-05-13T19:06:49.995Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106103] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106103] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1106091",
+      "name": "External Process (1106091) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.995Z",
+      "startedAt": "2026-05-13T19:06:49.995Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106091] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106091] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1106088",
+      "name": "External Process (1106088) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.684Z",
+      "startedAt": "2026-05-13T19:06:49.684Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106088] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106088] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1106079",
+      "name": "External Process (1106079) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.684Z",
+      "startedAt": "2026-05-13T19:06:49.684Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106079] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106079] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1106070",
+      "name": "External Process (1106070) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.684Z",
+      "startedAt": "2026-05-13T19:06:49.684Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106070] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106070] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1106061",
+      "name": "External Process (1106061) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.684Z",
+      "startedAt": "2026-05-13T19:06:49.684Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106061] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106061] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1106050",
+      "name": "External Process (1106050) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.581Z",
+      "startedAt": "2026-05-13T19:06:49.581Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106050] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106050] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1106041",
+      "name": "External Process (1106041) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.581Z",
+      "startedAt": "2026-05-13T19:06:49.581Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106041] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106041] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1106032",
+      "name": "External Process (1106032) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.581Z",
+      "startedAt": "2026-05-13T19:06:49.581Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106032] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106032] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1106025",
+      "name": "External Process (1106025) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.581Z",
+      "startedAt": "2026-05-13T19:06:49.581Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106025] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106025] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1106020",
+      "name": "External Process (1106020) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:49.581Z",
+      "startedAt": "2026-05-13T19:06:49.581Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1106020] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1106020] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:54.521Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1091139",
+      "name": "External Process (1091139) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:13.341Z",
+      "startedAt": "2026-05-13T19:06:13.341Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1091139] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1091139] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:31.876Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1089195",
+      "name": "External Process (1089195) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:08.675Z",
+      "startedAt": "2026-05-13T19:06:08.675Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1089195] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1089195] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:12.969Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1087185",
+      "name": "External Process (1087185) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:06:03.484Z",
+      "startedAt": "2026-05-13T19:06:03.484Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1087185] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1087185] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:08.675Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1085068",
+      "name": "External Process (1085068) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:05:58.304Z",
+      "startedAt": "2026-05-13T19:05:58.304Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1085068] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1085068] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:03.484Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1080615",
+      "name": "External Process (1080615) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:05:47.073Z",
+      "startedAt": "2026-05-13T19:05:47.073Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1080615] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1080615] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:56.240Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1080559",
+      "name": "External Process (1080559) chemistry_instructor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T19:05:46.963Z",
+      "startedAt": "2026-05-13T19:05:46.963Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique template"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1080559] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1080559] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique template"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:05:47.073Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1080494",
+      "name": "External Process (1080494) chemistry_instructor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-13T19:05:46.963Z",
+      "startedAt": "2026-05-13T19:05:46.963Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1080494] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1080494] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:56.337Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1080423",
+      "name": "External Process (1080423) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:05:46.963Z",
+      "startedAt": "2026-05-13T19:05:46.963Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/train.py && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1080423] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1080423] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/train.py && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:06:56.337Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1062384",
+      "name": "External Process (1062384) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:05:02.441Z",
+      "startedAt": "2026-05-13T19:05:02.441Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1062384] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1062384] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:05:05.529Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1061189",
+      "name": "External Process (1061189) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:04:59.448Z",
+      "startedAt": "2026-05-13T19:04:59.448Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1061189] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1061189] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:05:02.441Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1059935",
+      "name": "External Process (1059935) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:04:56.449Z",
+      "startedAt": "2026-05-13T19:04:56.449Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1059935] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1059935] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:04:59.365Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1058797",
+      "name": "External Process (1058797) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:04:53.860Z",
+      "startedAt": "2026-05-13T19:04:53.860Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1058797] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1058797] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:04:56.449Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1054780",
+      "name": "External Process (1054780) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:04:43.945Z",
+      "startedAt": "2026-05-13T19:04:43.945Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1054780] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1054780] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --technique template --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:05:19.231Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1054693",
+      "name": "External Process (1054693) chemistry_instructor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T19:04:43.520Z",
+      "startedAt": "2026-05-13T19:04:43.520Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique template"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1054693] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1054693] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique template"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:04:43.945Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1054628",
+      "name": "External Process (1054628) chemistry_instructor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-13T19:04:43.520Z",
+      "startedAt": "2026-05-13T19:04:43.520Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1054628] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1054628] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:05:19.576Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1054525",
+      "name": "External Process (1054525) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:04:43.520Z",
+      "startedAt": "2026-05-13T19:04:43.520Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/train.py && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1054525] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1054525] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/train.py && ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:05:19.576Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1013027",
+      "name": "External Process (1013027) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:03:00.984Z",
+      "startedAt": "2026-05-13T19:03:00.984Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1013027] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1013027] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:03:04.872Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1008219",
+      "name": "External Process (1008219) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "failed",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:02:49.173Z",
+      "startedAt": "2026-05-13T19:02:49.173Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "running",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion."
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1008219] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --preset smoke --export-gguf"
+      ],
+      "terminalReason": "server_restarted",
+      "finishedAt": "2026-05-13T19:03:00.983Z",
+      "exitCode": -1
+    },
+    {
+      "id": "ext_proc_1001930",
+      "name": "External Process (1001930) chemistry_instructor",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-13T19:02:33.532Z",
+      "startedAt": "2026-05-13T19:02:33.532Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --preset smoke --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 1001930] Process still running",
+            "[EXTERNAL][PID 1001930] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1001930] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/chemistry_instructor.json --from-spec --preset smoke --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:03:25.656Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1001878",
+      "name": "External Process (1001878) chemistry_instructor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-13T19:02:33.115Z",
+      "startedAt": "2026-05-13T19:02:33.115Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique template"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1001878] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1001878] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique template"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:02:33.532Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1001813",
+      "name": "External Process (1001813) chemistry_instructor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-13T19:02:33.115Z",
+      "startedAt": "2026-05-13T19:02:33.115Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 1001813] Process still running",
+            "[EXTERNAL][PID 1001813] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1001813] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:03:25.757Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1001807",
+      "name": "External Process (1001807) chemistry_instructor",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-13T19:02:33.115Z",
+      "startedAt": "2026-05-13T19:02:33.115Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 1001807] Process still running",
+            "[EXTERNAL][PID 1001807] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1001807] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:03:25.757Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_sanitize_chemistry_instructor_template",
+      "name": "External Dataset Sanitize (chemistry_instructor/template)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "chemistry_instructor",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-13T19:02:18.059Z",
+      "startedAt": "2026-05-13T19:02:18.059Z",
+      "finishedAt": "2026-05-13T19:02:18.059Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "datasets/chemistry_instructor/template/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: datasets/chemistry_instructor/template/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_chemistry_instructor_template",
+      "name": "External Dataset Generate (chemistry_instructor/template)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-13T19:02:18.000Z",
+      "startedAt": "2026-05-13T19:02:18.000Z",
+      "finishedAt": "2026-05-13T19:02:18.000Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/chemistry_instructor.json",
+        "--technique",
+        "template"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/chemistry_instructor/template/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_995594",
+      "name": "External Process (995594) chemistry_instructor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-13T19:02:17.823Z",
+      "startedAt": "2026-05-13T19:02:17.823Z",
+      "command": [
+        "external",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 995594] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 995594] discovered active process",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:02:18.211Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_995588",
+      "name": "External Process (995588) chemistry_instructor",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-13T19:02:17.823Z",
+      "startedAt": "2026-05-13T19:02:17.823Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 995588] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 995588] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-47a74d1bbeeb.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore pipeline subjects/chemistry_instructor.json --preset smoke --technique template' __hermes_ec=$? export -p > /tmp/hermes-snap-47a74d1bbeeb.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-47a74d1bbeeb.txt 2>/dev/null || true printf '\\n__HERMES_CWD_47a74d1bbeeb__%s__HERMES_CWD_47a74d1bbeeb__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-13T19:02:18.211Z",
+      "exitCode": -15
+    },
+    {
       "id": "job_1778696975952_rqli4",
       "name": "Generate Dataset (workflow_assistant)",
       "type": "Dataset",
@@ -818,18 +3441,57 @@
     }
   ],
   "logs": [
-    "[2026-05-13T18:29:36.213Z] [SYSTEM] job job_1778696975952_rqli4 failed (exit 2)",
-    "[2026-05-13T18:29:36.208Z] [STDOUT][job_1778696975952_rqli4] Error: Command failed with return code 2",
-    "[2026-05-13T18:29:36.190Z] [STDOUT][job_1778696975952_rqli4] Export NotebookLM Q&A as JSONL/JSON with messages or question/answer fields.",
-    "[2026-05-13T18:29:36.190Z] [STDOUT][job_1778696975952_rqli4] Error: --technique notebooklm requires --notebooklm-input or NOTEBOOKLM_INPUT.",
-    "[2026-05-13T18:29:36.190Z] [STDOUT][job_1778696975952_rqli4] Subject: Unsloth_Core pipeline management: dataset generation, sanitization, LoRA training, GGUF export, and smoke testing via ./ucore CLI",
-    "[2026-05-13T18:29:36.189Z] [STDOUT][job_1778696975952_rqli4] Generating dataset for: WorkflowAssistant",
-    "[2026-05-13T18:29:36.041Z] [STDOUT][job_1778696975952_rqli4] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/workflow_assistant.json --technique notebooklm",
-    "[2026-05-13T18:29:35.957Z] [SYSTEM] starting job_1778696975952_rqli4: ./ucore generate subjects/workflow_assistant.json",
-    "[2026-05-13T18:27:08.222Z] [SYNC] discovered running external process pid=149607",
-    "[2026-05-13T18:27:08.222Z] [SYNC] discovered running external process pid=149297",
-    "[2026-05-13T18:27:07.645Z] [SYNC] discovered running external process pid=149209",
-    "[2026-05-13T18:13:59.085Z] [SYNC] discovered running external process pid=3742060"
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132940",
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132928",
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132919",
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132907",
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132898",
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132889",
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132876",
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132867",
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132858",
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132845",
+    "[2026-05-13T19:07:57.668Z] [SYNC] discovered running external process pid=1132836",
+    "[2026-05-13T19:07:40.053Z] [SYNC] discovered running external process pid=1125777",
+    "[2026-05-13T19:07:36.774Z] [SYNC] discovered running external process pid=1124554",
+    "[2026-05-13T19:07:33.453Z] [SYNC] discovered running external process pid=1123203",
+    "[2026-05-13T19:07:30.424Z] [SYNC] discovered running external process pid=1121898",
+    "[2026-05-13T19:07:20.317Z] [SYNC] discovered running external process pid=1117781",
+    "[2026-05-13T19:07:20.317Z] [SYNC] discovered running external process pid=1117645",
+    "[2026-05-13T19:07:19.637Z] [SYNC] discovered running external process pid=1117576",
+    "[2026-05-13T19:07:19.637Z] [SYNC] discovered running external process pid=1117574",
+    "[2026-05-13T19:06:50.029Z] [SYNC] discovered running external process pid=1106103",
+    "[2026-05-13T19:06:50.029Z] [SYNC] discovered running external process pid=1106091",
+    "[2026-05-13T19:06:49.729Z] [SYNC] discovered running external process pid=1106088",
+    "[2026-05-13T19:06:49.729Z] [SYNC] discovered running external process pid=1106079",
+    "[2026-05-13T19:06:49.729Z] [SYNC] discovered running external process pid=1106070",
+    "[2026-05-13T19:06:49.729Z] [SYNC] discovered running external process pid=1106061",
+    "[2026-05-13T19:06:49.624Z] [SYNC] discovered running external process pid=1106050",
+    "[2026-05-13T19:06:49.624Z] [SYNC] discovered running external process pid=1106041",
+    "[2026-05-13T19:06:49.624Z] [SYNC] discovered running external process pid=1106032",
+    "[2026-05-13T19:06:49.624Z] [SYNC] discovered running external process pid=1106025",
+    "[2026-05-13T19:06:49.624Z] [SYNC] discovered running external process pid=1106020",
+    "[2026-05-13T19:06:13.376Z] [SYNC] discovered running external process pid=1091139",
+    "[2026-05-13T19:06:08.704Z] [SYNC] discovered running external process pid=1089195",
+    "[2026-05-13T19:06:03.517Z] [SYNC] discovered running external process pid=1087185",
+    "[2026-05-13T19:05:58.336Z] [SYNC] discovered running external process pid=1085068",
+    "[2026-05-13T19:05:47.104Z] [SYNC] discovered running external process pid=1080615",
+    "[2026-05-13T19:05:46.995Z] [SYNC] discovered running external process pid=1080559",
+    "[2026-05-13T19:05:46.995Z] [SYNC] discovered running external process pid=1080494",
+    "[2026-05-13T19:05:46.995Z] [SYNC] discovered running external process pid=1080423",
+    "[2026-05-13T19:05:02.469Z] [SYNC] discovered running external process pid=1062384",
+    "[2026-05-13T19:04:59.479Z] [SYNC] discovered running external process pid=1061189",
+    "[2026-05-13T19:04:56.480Z] [SYNC] discovered running external process pid=1059935",
+    "[2026-05-13T19:04:53.896Z] [SYNC] discovered running external process pid=1058797",
+    "[2026-05-13T19:04:43.980Z] [SYNC] discovered running external process pid=1054780",
+    "[2026-05-13T19:04:43.554Z] [SYNC] discovered running external process pid=1054693",
+    "[2026-05-13T19:04:43.554Z] [SYNC] discovered running external process pid=1054628",
+    "[2026-05-13T19:04:43.554Z] [SYNC] discovered running external process pid=1054525",
+    "[2026-05-13T19:03:01.013Z] [SYNC] discovered running external process pid=1013027",
+    "[2026-05-13T19:03:00.983Z] [SYSTEM] reconciled ext_proc_1001807 to failed (server_restarted)",
+    "[2026-05-13T19:03:00.983Z] [SYSTEM] reconciled ext_proc_1001813 to failed (server_restarted)",
+    "[2026-05-13T19:03:00.983Z] [SYSTEM] reconciled ext_proc_1001930 to failed (server_restarted)",
+    "[2026-05-13T19:03:00.983Z] [SYSTEM] reconciled ext_proc_1008219 to failed (server_restarted)"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

@@ -421,7 +421,27 @@ def load_dataset_from_jsonl(path, tokenizer, config):
                 try:
                     row = json.loads(line)
                     text = row.get("text", "")
-                    if text:
+
+                    # Preferred modern format: ChatML messages
+                    if not text and isinstance(row.get("messages"), list):
+                        messages = row.get("messages", [])
+                        if hasattr(tokenizer, "apply_chat_template"):
+                            text = tokenizer.apply_chat_template(
+                                messages,
+                                tokenize=False,
+                                add_generation_prompt=False,
+                            )
+                        else:
+                            # Fallback: naive role/content join
+                            chunks = []
+                            for m in messages:
+                                role = m.get("role", "")
+                                content = m.get("content", "")
+                                if role and content:
+                                    chunks.append(f"{role}: {content}")
+                            text = "\n".join(chunks)
+
+                    if isinstance(text, str) and text.strip():
                         rows.append({"text": text})
                 except json.JSONDecodeError:
                     continue
@@ -492,10 +512,13 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
         args=args,
     )
 
-    # Apply train_on_responses_only to mask user tokens in loss (Unsloth 2026.5.2 API)
+    # Apply train_on_responses_only to mask user tokens in loss when available.
     if training.get("train_on_responses_only", False) and hasattr(tokenizer, "apply_chat_template"):
-        print("  [INFO] Applying train_on_responses_only")
-        trainer.train_on_responses_only()
+        if hasattr(trainer, "train_on_responses_only"):
+            print("  [INFO] Applying train_on_responses_only")
+            trainer.train_on_responses_only()
+        else:
+            print("  [WARN] train_on_responses_only requested, but current trainer API does not expose it; continuing without response-only masking")
 
     print(f"  Starting training ({training.get('num_epochs', 3)} epochs, {training.get('batch_size', 1)} batch)...")
     train_result = trainer.train()
@@ -544,6 +567,8 @@ def main():
                         help="Path to YAML config or subject spec (with --from-spec)")
     parser.add_argument("--from-spec", action="store_true",
                         help="Interpret config_or_spec as a subject spec JSON")
+    parser.add_argument("--technique", choices=["notebooklm", "ollama", "template", "openai", "anthropic"],
+                        help="Override dataset technique when training from spec")
 
     # Logging / output
     parser.add_argument("--debug", action="store_true", help="Enable debug output")
@@ -628,6 +653,13 @@ def main():
         # Standard load_config for YAML
         config = load_config(config_path, preset=args.preset, overrides=cli_overrides)
 
+    if args.technique:
+        config["technique"] = args.technique
+        npc_for_path = config.get("npc_key", Path(config_path).stem)
+        clean_path = PROJECT_ROOT / "datasets" / npc_for_path / args.technique / "train_clean.jsonl"
+        raw_path = PROJECT_ROOT / "datasets" / npc_for_path / args.technique / "train.jsonl"
+        config["dataset_path"] = str(clean_path if clean_path.exists() else raw_path)
+
     if args.no_tensorboard:
         config["logging"]["enable_tensorboard"] = False
 
@@ -686,7 +718,9 @@ def main():
     if not dataset_path or not os.path.exists(dataset_path):
         # Try to derive dataset path
         technique = config.get("technique", "template")
-        dataset_path = str(PROJECT_ROOT / "datasets" / npc_key / technique / "train.jsonl")
+        clean_candidate = PROJECT_ROOT / "datasets" / npc_key / technique / "train_clean.jsonl"
+        raw_candidate = PROJECT_ROOT / "datasets" / npc_key / technique / "train.jsonl"
+        dataset_path = str(clean_candidate if clean_candidate.exists() else raw_candidate)
 
     dataset = load_dataset_from_jsonl(dataset_path, tokenizer, config)
     eval_dataset = None  # TODO: support eval split
