@@ -2,70 +2,25 @@
   "executionMode": "local",
   "jobs": [
     {
-      "id": "job_1778695228090_q2ytk",
-      "name": "Generate Dataset",
+      "id": "ext_proc_3742060",
+      "name": "External Process (3742060) workflow_assistant",
       "type": "Dataset",
       "commandId": "dataset-generate",
-      "status": "stopped",
+      "npcKey": "workflow_assistant",
+      "status": "running",
       "progress": 13,
       "loss": null,
-      "createdAt": "2026-05-13T18:00:28.090Z",
-      "startedAt": "2026-05-13T18:00:28.090Z",
+      "createdAt": "2026-05-13T18:13:59.055Z",
+      "startedAt": "2026-05-13T18:13:59.055Z",
       "command": [
-        "./ucore",
-        "generate",
-        "subjects/nonexistent_integration_spec_2.json"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [],
-      "stopRequested": true,
-      "exitCode": -1,
-      "finishedAt": "2026-05-13T18:00:28.106Z",
-      "terminalReason": "user_requested_stop"
-    },
-    {
-      "id": "job_1778695226511_zjads",
-      "name": "Generate Dataset",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "status": "failed",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-13T18:00:26.511Z",
-      "startedAt": "2026-05-13T18:00:26.511Z",
-      "command": [
-        "./ucore",
-        "generate",
-        "subjects/nonexistent_integration_spec.json"
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python scripts/generate_dataset.py subjects/workflow_assistant.json --ollama --model gemma4:e2b"
       ],
       "stages": [
         {
           "name": "Dataset Prep",
           "status": "running",
-          "logs": [
-            "[SYSTEM] Marked failed: server restarted before completion."
-          ]
+          "logs": []
         },
         {
           "name": "Training",
@@ -83,11 +38,11 @@
           "logs": []
         }
       ],
-      "logs": [],
-      "stopRequested": true,
-      "terminalReason": "server_restarted",
-      "finishedAt": "2026-05-13T18:00:27.730Z",
-      "exitCode": -1
+      "logs": [
+        "[EXTERNAL][PID 3742060] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python scripts/generate_dataset.py subjects/workflow_assistant.json --ollama --model gemma4:e2b"
+      ],
+      "terminalReason": "external_detected"
     },
     {
       "id": "job_1778693901429_hxam7",
@@ -662,10 +617,7 @@
     }
   ],
   "logs": [
-    "[2026-05-13T18:00:28.106Z] [SYSTEM] job job_1778695228090_q2ytk stopped (exit null)",
-    "[2026-05-13T18:00:28.103Z] [SYSTEM] stop requested job_1778695228090_q2ytk",
-    "[2026-05-13T18:00:28.090Z] [SYSTEM] starting job_1778695228090_q2ytk: ./ucore generate subjects/nonexistent_integration_spec_2.json",
-    "[2026-05-13T18:00:27.731Z] [SYSTEM] reconciled job_1778695226511_zjads to failed (server_restarted)"
+    "[2026-05-13T18:13:59.085Z] [SYNC] discovered running external process pid=3742060"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []
