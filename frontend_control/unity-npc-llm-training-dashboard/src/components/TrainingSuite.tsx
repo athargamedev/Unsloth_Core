@@ -106,6 +106,19 @@ export const TrainingSuite = ({
               {trainingConfig.preset && presetDesc[trainingConfig.preset] && (
                 <p className="text-[8px] mt-1 text-ink/30 italic">{presetDesc[trainingConfig.preset]}</p>
               )}
+
+              <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block mt-4">Dataset Technique</label>
+              <select
+                value={trainingConfig.technique}
+                onChange={(e) => onUpdateTrainingConfig({ technique: e.target.value })}
+                className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
+              >
+                <option value="template">template</option>
+                <option value="notebooklm">notebooklm</option>
+                <option value="ollama">ollama</option>
+                <option value="openai">openai</option>
+                <option value="anthropic">anthropic</option>
+              </select>
             </div>
             <div>
               <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Base Model Path</label>

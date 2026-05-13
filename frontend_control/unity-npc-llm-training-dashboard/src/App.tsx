@@ -76,6 +76,7 @@ export default function App() {
     alpha: 32,
     baseModel: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
     wandb: false,
+    technique: 'template',
   });
 
   const {
@@ -390,6 +391,7 @@ export default function App() {
           rank: trainingConfig.rank,
           alpha: trainingConfig.alpha,
           baseModel: trainingConfig.baseModel,
+          technique: trainingConfig.technique,
         },
       });
       setActiveTab('overview');
@@ -453,6 +455,7 @@ export default function App() {
           epochs: trainingConfig.epochs,
           rank: trainingConfig.rank,
           alpha: trainingConfig.alpha,
+          technique: trainingConfig.technique,
         },
       });
     } catch (error) {

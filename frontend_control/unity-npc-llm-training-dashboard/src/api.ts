@@ -117,6 +117,7 @@ export interface ExportArtifact {
 export interface TrainingConfig {
   spec: string;
   preset: string;
+  technique: string;
   baseModel: string;
   learningRate: string;
   scheduler: 'cosine' | 'linear' | 'constant';
