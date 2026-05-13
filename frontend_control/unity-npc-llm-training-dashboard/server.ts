@@ -91,12 +91,13 @@ interface Workflow {
 }
 
 const dashboardRoot = process.cwd();
+const serverDir = process.argv[1] ? path.dirname(path.resolve(process.argv[1])) : dashboardRoot;
 const findRepoRoot = (): string => {
   const candidates = [
     process.env.UNSLOTH_CORE_ROOT,
     path.resolve(dashboardRoot, "../.."),
-    path.resolve(__dirname, "../.."),
-    path.resolve(__dirname, "../../.."),
+    path.resolve(serverDir, "../.."),
+    path.resolve(serverDir, "../../.."),
   ].filter((candidate): candidate is string => Boolean(candidate));
 
   for (const candidate of candidates) {
@@ -848,6 +849,12 @@ const findRunDirById = (requestedId: string, registry: Registry): { runId: strin
     for (const run of listNpcRunDirs(npcKey)) {
       if (possibleRunIds.has(run.runId)) return { runId: run.runId, runDir: run.runDir };
     }
+  }
+
+  // Final fallback for active training: try the latest run directory for the NPC
+  if (job?.status === "running" && job.npcKey) {
+    const runs = listNpcRunDirs(job.npcKey).sort((a, b) => fs.statSync(b.runDir).mtimeMs - fs.statSync(a.runDir).mtimeMs);
+    if (runs.length > 0) return { runId: runs[0].runId, runDir: runs[0].runDir };
   }
 
   return null;

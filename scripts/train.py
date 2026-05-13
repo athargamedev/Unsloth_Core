@@ -478,6 +478,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
 
     training = config.get("training", {})
     output_dir = training.get("output_dir", str(PROJECT_ROOT / "outputs" / "default"))
+    print(f"  Output: {os.path.relpath(output_dir, PROJECT_ROOT)}")
     os.makedirs(output_dir, exist_ok=True)
 
     # Report targets
