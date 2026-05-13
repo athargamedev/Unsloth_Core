@@ -785,6 +785,8 @@ export default function App() {
               <ModelComparison
                 selectedJobIds={selectedJobIds}
                 jobs={jobs}
+                runs={runs}
+                exportArtifacts={exportArtifacts}
                 onToggleJobSelection={toggleJobSelection}
                 onClearSelection={handleClearSelection}
                 onNavigateTo={setActiveTab}
@@ -809,6 +811,7 @@ export default function App() {
                     trainingConfig={trainingConfig}
                     onGenerateDataset={handleGenerateDataset}
                     onSelectDataset={handleViewDataset}
+                    onPrepareTraining={handlePrepareTrainingFromDataset}
                   />
                 </div>
                 {/* Dataset viewer controls */}
@@ -890,19 +893,25 @@ export default function App() {
               <div className="grid grid-cols-1 gap-2">
                 <button
                   onClick={handleRightSidebarGenerateDataset}
-                  className="w-full py-2 bg-accent hover:bg-accent/80 text-bg rounded-sm text-[11px] font-bold uppercase transition-all active:scale-95 shadow-lg shadow-accent/20"
+                  disabled={isRemoteMode}
+                  title={isRemoteMode ? 'Remote runner is not implemented. Switch to Local to start commands.' : 'Run dataset generation locally'}
+                  className="w-full py-2 bg-accent hover:bg-accent/80 text-bg rounded-sm text-[11px] font-bold uppercase transition-all active:scale-95 shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Run Dataset Generator
                 </button>
                 <button
                   onClick={handleRightSidebarLaunchTraining}
-                  className="w-full py-2 bg-panel border border-line hover:border-accent text-ink rounded-sm text-[11px] font-bold uppercase transition-colors"
+                  disabled={isRemoteMode}
+                  title={isRemoteMode ? 'Remote runner is not implemented. Switch to Local to start commands.' : 'Start LoRA training locally'}
+                  className="w-full py-2 bg-panel border border-line hover:border-accent text-ink rounded-sm text-[11px] font-bold uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Initialize LoRA Train
                 </button>
                 <button
                   onClick={handleRightSidebarExport}
-                  className="w-full py-2 bg-panel border border-line hover:border-accent text-ink rounded-sm text-[11px] font-bold uppercase transition-colors"
+                  disabled={isRemoteMode}
+                  title={isRemoteMode ? 'Remote runner is not implemented. Switch to Local to start commands.' : 'Export locally for Unity'}
+                  className="w-full py-2 bg-panel border border-line hover:border-accent text-ink rounded-sm text-[11px] font-bold uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Export for Unity
                 </button>
@@ -960,7 +969,10 @@ export default function App() {
                   <div className="flex justify-between items-center gap-2">
                     <div>
                       <div className="text-[10px] uppercase opacity-70">Execution Mode</div>
-                      <div className="text-[11px] font-bold">{status?.executionMode?.toUpperCase() || 'LOCAL'}</div>
+                      <div className="text-[11px] font-bold flex flex-col gap-1">
+                        <span>{status?.executionMode?.toUpperCase() || 'LOCAL'}</span>
+                        {isRemoteMode && <span className="text-[8px] text-warning uppercase">Remote runner not implemented</span>}
+                      </div>
                     </div>
                     <button
                       onClick={handleToggleExecutionMode}
@@ -1016,8 +1028,8 @@ export default function App() {
         </div>
         <div className="flex gap-4 uppercase">
           <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-success" />
-            <span className="text-success font-bold">System Healthy</span>
+            <div className={cn("w-1.5 h-1.5 rounded-full", healthDotClass)} />
+            <span className={cn("font-bold", healthColorClass)}>{healthLabel}</span>
           </div>
           <span>Session: {status?.executionMode?.toUpperCase() || 'LOCAL'}</span>
           <span className="text-ink/20">©2026 NPC_GEN_CORE</span>
