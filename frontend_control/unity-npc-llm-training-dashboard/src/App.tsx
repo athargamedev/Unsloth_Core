@@ -195,7 +195,11 @@ export default function App() {
         setDatasetViewTechnique(targetTechnique);
         setAvailableTechniques(targetDataset?.versions.map((version) => ({ name: version.tag, train_count: version.entries, val_count: 0 })) || []);
       }
-      setActiveTab(detail.tab as any);
+      const VALID_TABS = ['overview', 'training', 'datasets', 'dataset_params', 'compare', 'analytics', 'commands'] as const;
+      type ValidTab = typeof VALID_TABS[number];
+      if ((VALID_TABS as readonly string[]).includes(detail.tab)) {
+        setActiveTab(detail.tab as ValidTab);
+      }
     };
     window.addEventListener('navigate-tab', handleNavigate);
 
@@ -364,6 +368,8 @@ export default function App() {
         return { npcKey: derivedNpcKey, options: { modelId: trainingConfig.baseModel } };
       case 'export-adapter':
         return { npcKey: derivedNpcKey };
+      case 'init':
+        return { npcKey: '', options: { subject: '', name: '' } };
       default:
         return { spec: trainingConfig.spec };
     }
@@ -437,6 +443,13 @@ export default function App() {
       await triggerCommand({ commandId: 'dataset-generate', type: 'Dataset', spec: trainingConfig.spec, options: { technique: trainingConfig.technique, modelId: trainingConfig.baseModel } });
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Dataset generation failed');
+    }
+  };
+
+  const handleInitNpc = () => {
+    const cmd = availableCommands.find(c => c.id === 'init');
+    if (cmd) {
+      triggerCommandFromSystemHub(cmd);
     }
   };
 
@@ -795,7 +808,7 @@ export default function App() {
 
             {activeTab === 'dataset_params' && (
               <DatasetFormatPanel
-                subjects={subjects}
+                subjects={subjects.map((subject) => ({ ...subject, name: subject.id }))}
                 datasets={datasets}
                 trainingConfig={trainingConfig}
               />
@@ -810,6 +823,7 @@ export default function App() {
                     exportArtifacts={exportArtifacts}
                     trainingConfig={trainingConfig}
                     onGenerateDataset={handleGenerateDataset}
+                    onInitNpc={handleInitNpc}
                     onSelectDataset={handleViewDataset}
                     onPrepareTraining={handlePrepareTrainingFromDataset}
                   />
@@ -1200,9 +1214,11 @@ export default function App() {
                         setUiError(error instanceof Error ? error.message : 'Command execution failed');
                       }
                     }}
-                    className="flex-1 py-2 bg-accent text-bg rounded font-bold hover:bg-accent/80 transition-colors"
+                    disabled={isRemoteMode}
+                    title={isRemoteMode ? 'Remote runner is not implemented. Switch to Local before executing commands.' : 'Execute command locally'}
+                    className="flex-1 py-2 bg-accent text-bg rounded font-bold hover:bg-accent/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Execute Command
+                    {isRemoteMode ? 'Remote Runner Unavailable' : 'Execute Command'}
                   </button>
                   <button
                     onClick={() => {

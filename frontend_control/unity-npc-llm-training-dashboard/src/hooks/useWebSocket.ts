@@ -11,7 +11,6 @@ interface UseWebSocketOptions {
 type ConnectionQuality = 'connected' | 'reconnecting' | 'disconnected' | 'fallback-polling';
 
 export function useWebSocket(options: UseWebSocketOptions) {
-  const { onTelemetry, onJobUpdate, onFallbackPolling, onResync } = options;
   const [isConnected, setIsConnected] = useState(false);
   const [connectionQuality, setConnectionQuality] = useState<ConnectionQuality>('disconnected');
   const wsRef = useRef<WebSocket | null>(null);
@@ -19,6 +18,16 @@ export function useWebSocket(options: UseWebSocketOptions) {
   const maxRetries = 10;
   const fallbackTriggeredRef = useRef(false);
   const lastEventIdRef = useRef(0);
+
+  // Store callbacks in refs so WebSocket never reconnects on re-render
+  const onTelemetryRef = useRef(options.onTelemetry);
+  const onJobUpdateRef = useRef(options.onJobUpdate);
+  const onFallbackPollingRef = useRef(options.onFallbackPolling);
+  const onResyncRef = useRef(options.onResync);
+  onTelemetryRef.current = options.onTelemetry;
+  onJobUpdateRef.current = options.onJobUpdate;
+  onFallbackPollingRef.current = options.onFallbackPolling;
+  onResyncRef.current = options.onResync;
 
   const connect = useCallback(() => {
     if (wsRef.current) {
@@ -44,7 +53,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
         sinceEventId: lastEventIdRef.current,
       }));
 
-      onResync?.();
+      onResyncRef.current?.();
     };
 
     ws.onmessage = (event) => {
@@ -70,19 +79,19 @@ export function useWebSocket(options: UseWebSocketOptions) {
             if (typeof evt.eventId === 'number' && Number.isFinite(evt.eventId)) {
               lastEventIdRef.current = Math.max(lastEventIdRef.current, evt.eventId);
             }
-            if (evt.type === 'telemetry' && onTelemetry) {
-              onTelemetry(evt.payload);
-            } else if (evt.type === 'job_update' && onJobUpdate) {
-              onJobUpdate(evt.payload);
+            if (evt.type === 'telemetry' && onTelemetryRef.current) {
+              onTelemetryRef.current(evt.payload);
+            } else if (evt.type === 'job_update' && onJobUpdateRef.current) {
+              onJobUpdateRef.current(evt.payload);
             }
           }
           return;
         }
 
-        if (msg.type === 'telemetry' && onTelemetry) {
-          onTelemetry(msg.payload);
-        } else if (msg.type === 'job_update' && onJobUpdate) {
-          onJobUpdate(msg.payload);
+        if (msg.type === 'telemetry' && onTelemetryRef.current) {
+          onTelemetryRef.current(msg.payload);
+        } else if (msg.type === 'job_update' && onJobUpdateRef.current) {
+          onJobUpdateRef.current(msg.payload);
         }
       } catch {
         // ignore malformed messages
@@ -100,7 +109,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
         setConnectionQuality('fallback-polling');
         if (!fallbackTriggeredRef.current) {
           fallbackTriggeredRef.current = true;
-          onFallbackPolling?.();
+          onFallbackPollingRef.current?.();
         }
       }
     };
@@ -108,7 +117,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     ws.onerror = () => {
       ws.close();
     };
-  }, [onTelemetry, onJobUpdate, onFallbackPolling, onResync]);
+  }, []);
 
   useEffect(() => {
     connect();

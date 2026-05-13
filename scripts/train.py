@@ -808,7 +808,12 @@ def main():
             print(f"  ✓ Updated 'best' symlink → runs/{run_id}")
         except OSError:
             pass
+    else:
+        print(f"  ⚠ Promotion rules failed:")
+        for failure in promotion_failures:
+            print(f"    - {failure}")
 
+    # Always update 'latest' symlink regardless of promotion result
     latest_link = Path(output_dir or PROJECT_ROOT / "outputs" / npc_key) / "latest"
     if latest_link.exists() or latest_link.is_symlink():
         latest_link.unlink()
@@ -817,10 +822,6 @@ def main():
         print(f"  ✓ Updated 'latest' symlink → runs/{run_id}")
     except OSError:
         pass
-    else:
-        print(f"  ⚠ Promotion rules failed:")
-        for failure in promotion_failures:
-            print(f"    - {failure}")
 
     # ── GGUF Export ────────────────────────────────────────────────────
     if args.export_gguf:

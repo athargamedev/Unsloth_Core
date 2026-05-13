@@ -33,7 +33,6 @@ export const ModelComparison = ({
     const npcKey = getJobNpcKey(job);
     if (!npcKey) return;
     onNavigateTo('datasets');
-    window.dispatchEvent(new CustomEvent('navigate-tab', { detail: { tab: 'datasets', npcKey } }));
   };
 
   return (

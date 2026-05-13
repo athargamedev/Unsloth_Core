@@ -78,6 +78,7 @@ export const EvalReportsPanel = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-accent underline shrink-0"
+                  title="Opens in a new tab (external to dashboard)"
                 >
                   View
                 </a>

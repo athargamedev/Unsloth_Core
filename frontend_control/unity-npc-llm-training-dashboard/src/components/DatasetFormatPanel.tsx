@@ -29,7 +29,6 @@ export const DatasetFormatPanel = ({ subjects, datasets, trainingConfig }: Datas
   const [selectedSubject, setSelectedSubject] = React.useState<string>('');
   const [selectedTechnique, setSelectedTechnique] = React.useState<string>('');
 
-  const subjectSpec = subjects.find((s) => s.path === selectedSubject);
   const dataset = datasets.find((d) => d.id === selectedSubject);
   const techniqueInfo = dataset?.versions.find((v) => v.tag === selectedTechnique);
 

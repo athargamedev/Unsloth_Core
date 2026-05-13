@@ -10,6 +10,7 @@ interface DatasetFactoryProps {
   exportArtifacts: ExportArtifact[];
   trainingConfig: TrainingConfig;
   onGenerateDataset: () => Promise<void>;
+  onInitNpc?: () => void;
   onSelectDataset?: (npcKey: string, technique: string) => void;
   onPrepareTraining?: (npcKey: string, technique: string) => void;
 }
@@ -48,12 +49,20 @@ export const DatasetFactory = ({
     >
       <div className="flex justify-between items-end">
         <h3 className="text-xs font-bold text-ink-bright uppercase tracking-widest">Dataset Versioning & Control</h3>
-        <button
-          onClick={onGenerateDataset}
-          className="px-3 py-1 bg-accent text-bg text-[10px] font-bold rounded-sm uppercase tracking-tighter hover:brightness-110 active:scale-95 transition-all"
-        >
-          Generate from Spec
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={onInitNpc}
+            className="px-3 py-1 bg-surface border border-line text-ink/60 text-[10px] font-bold rounded-sm uppercase tracking-tighter hover:bg-line/20 active:scale-95 transition-all"
+          >
+            Init New NPC
+          </button>
+          <button
+            onClick={onGenerateDataset}
+            className="px-3 py-1 bg-accent text-bg text-[10px] font-bold rounded-sm uppercase tracking-tighter hover:brightness-110 active:scale-95 transition-all"
+          >
+            Generate from Spec
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">

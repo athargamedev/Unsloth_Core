@@ -678,6 +678,22 @@ const commandDefinitions: CommandDefinition[] = [
       return args;
     },
   },
+  {
+    id: "init",
+    label: "Initialize NPC",
+    icon: "database",
+    color: "accent",
+    type: "System",
+    requiredFields: ["npcKey"],
+    build: ({ npcKey, options }) => {
+      const args = ["./ucore", "init", sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")];
+      const subject = String(options?.subject || "").trim();
+      const name = String(options?.name || "").trim();
+      if (subject) args.push("--subject", subject);
+      if (name) args.push("--name", name);
+      return args;
+    },
+  },
 ];
 
 const commandMap = new Map(commandDefinitions.map((cmd) => [cmd.id, cmd]));
@@ -851,9 +867,13 @@ const findRunDirById = (requestedId: string, registry: Registry): { runId: strin
     }
   }
 
-  // Final fallback for active training: try the latest run directory for the NPC
+  // Final fallback for active training: try the latest run directory for the NPC.
+  // Only return runs created AFTER the job started to avoid showing stale data from previous completed runs.
   if (job?.status === "running" && job.npcKey) {
-    const runs = listNpcRunDirs(job.npcKey).sort((a, b) => fs.statSync(b.runDir).mtimeMs - fs.statSync(a.runDir).mtimeMs);
+    const jobCreatedMs = new Date(job.createdAt).getTime() || 0;
+    const runs = listNpcRunDirs(job.npcKey)
+      .filter((run) => fs.statSync(run.runDir).mtimeMs >= jobCreatedMs)
+      .sort((a, b) => fs.statSync(b.runDir).mtimeMs - fs.statSync(a.runDir).mtimeMs);
     if (runs.length > 0) return { runId: runs[0].runId, runDir: runs[0].runDir };
   }
 
@@ -1913,12 +1933,42 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
       const npcKey = spec.replace(/^subjects\//, "").replace(/\.json$/, "");
       const workflowId = `wf_${Date.now()}`;
 
+      // Resolve model ID for the export step — auto-detect from spec or training output config
+      let exportModelId = String(req.body?.options?.baseModel || "");
+      if (!exportModelId) {
+        try {
+          const specPath = path.join(repoRoot, "subjects", `${npcKey}.json`);
+          if (fs.existsSync(specPath)) {
+            const specData = JSON.parse(fs.readFileSync(specPath, "utf8")) as Record<string, unknown>;
+            exportModelId = String(
+              specData.model || specData.model_id || (specData.llm as Record<string, unknown> || {}).model_name || "",
+            );
+          }
+        } catch (e) { console.warn("[WORKFLOW] Failed to parse subject spec JSON:", e); }
+      }
+      if (!exportModelId) {
+        try {
+          const bestConfigPath = path.join(repoRoot, "outputs", npcKey, "best", "config_snapshot.yaml");
+          if (fs.existsSync(bestConfigPath)) {
+            const content = fs.readFileSync(bestConfigPath, "utf8");
+            const modelMatch = content.match(/^model:\s*(.+)$/m);
+            if (modelMatch) exportModelId = modelMatch[1].trim();
+          }
+        } catch (e) { console.warn("[WORKFLOW] Failed to parse training config snapshot:", e); }
+      }
+
       const steps: WorkflowStep[] = [
         { commandId: "dataset-generate", status: "pending", payload: { commandId: "dataset-generate", type: "Dataset", spec, options: { technique } } },
         { commandId: "dataset-sanitize", status: "pending", payload: { commandId: "dataset-sanitize", type: "Dataset", spec, options: { datasetPath: `datasets/${npcKey}/${technique}/train.jsonl` } } },
         { commandId: "train", status: "pending", payload: { commandId: "train", type: "Training", spec, preset, npcKey, options: { ...req.body?.options || {} } } },
-        { commandId: "export", status: "pending", payload: { commandId: "export", type: "Export", npcKey, options: { modelId: String(req.body?.options?.baseModel || "") } } },
       ];
+
+      // Only add export step if we have a model to export with
+      if (exportModelId) {
+        steps.push({ commandId: "export", status: "pending", payload: { commandId: "export", type: "Export", npcKey, options: { modelId: exportModelId } } });
+      } else {
+        globalLog(registry, `[WORKFLOW] export step skipped: no baseModel provided and model could not be auto-detected from spec or training config`);
+      }
 
       const workflow: Workflow = {
         id: workflowId,

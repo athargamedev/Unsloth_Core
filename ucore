@@ -56,6 +56,8 @@ def main():
     train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training")
     train_p.add_argument("--wandb", action="store_true", default=None,
                          help="Enable W&B logging (overrides config)")
+    train_p.add_argument("--no-wandb", action="store_true", default=None,
+                         dest="no_wandb", help="Disable W&B logging (overrides config)")
     train_p.add_argument("--lr", type=float, help="Learning rate")
     train_p.add_argument("--batch-size", type=int, help="Batch size")
     train_p.add_argument("--epochs", type=int, help="Number of epochs")
@@ -210,7 +212,22 @@ def main():
     bp_p.add_argument("--drive-repo-dir", default="/content/drive/MyDrive/Unsloth_Core", help="Drive path where repo is cloned")
     bp_p.add_argument("--drive-datasets-dir", default="/content/drive/MyDrive/Unsloth/datasets", help="Drive datasets directory")
 
+    # Init/Scaffold
+    init_p = subparsers.add_parser("init", aliases=["new-npc"], help="Scaffold a new NPC (folders + spec)")
+    init_p.add_argument("npc_key", help="NPC key (snake_case)")
+    init_p.add_argument("--subject", help="Subject description")
+    init_p.add_argument("--name", help="NPC display name")
+    init_p.add_argument("--force", action="store_true", help="Overwrite existing spec")
+
     args = parser.parse_args()
+
+    if args.command in ["init", "new-npc"]:
+        cmd = [PYTHON, str(SCRIPTS_DIR / "scaffold_npc.py"), args.npc_key]
+        if args.subject: cmd.extend(["--subject", args.subject])
+        if args.name: cmd.extend(["--name", args.name])
+        if args.force: cmd.append("--force")
+        run_cmd(cmd)
+        sys.exit(0)
 
     if args.command == "generate":
         cmd = [PYTHON, str(SCRIPTS_DIR / "generate_dataset.py"), args.spec]
@@ -244,6 +261,7 @@ def main():
         if getattr(args, "lr_scheduler", None): cmd.extend(["--lr-scheduler", args.lr_scheduler])
         if args.export_gguf: cmd.append("--export-gguf")
         if args.wandb: cmd.append("--wandb")
+        if args.no_wandb: cmd.append("--no-wandb")
         run_cmd(cmd)
 
     elif args.command == "smoke":
