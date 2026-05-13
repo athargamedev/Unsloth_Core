@@ -107,8 +107,8 @@ def is_canonical_train_path(path: str | Path) -> bool:
 def infer_validation_path(train_path: str | Path) -> Path:
     """Infer validation path from a train path.
 
-    Canonical: datasets/{npc_key}/{technique}/train.jsonl -> validation.jsonl
-    Legacy fallback: datasets/{npc_key}.jsonl -> datasets/{npc_key}_validation.jsonl
+    Canonical path is datasets/{npc_key}/{technique}/train.jsonl -> validation.jsonl.
+    For non-canonical paths, this returns a best-effort sibling filename.
     """
     p = Path(train_path)
     if not p.is_absolute():

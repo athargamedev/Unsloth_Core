@@ -253,7 +253,6 @@ def main():
         if detected:
             _, _, detected_val = detected
             val_candidates.append(detected_val)
-        val_candidates.append(PROJECT_ROOT / "datasets" / f"{npc_key}_validation.jsonl")
         for vc in val_candidates:
             if vc.exists():
                 val_path = str(vc)

@@ -318,16 +318,12 @@ def extract_questions_from_spec(spec, val_path=None):
 
 
 def autodetect_validation_path(npc_key):
-    """Find the preferred validation file for an NPC without subject-specific fallbacks."""
+    """Find the canonical validation file for an NPC."""
     detected = paths.autodetect_dataset(npc_key)
     if detected:
         _, _, val_path = detected
         if val_path.exists():
             return val_path
-
-    legacy_path = PROJECT_ROOT / "datasets" / f"{npc_key}_validation.jsonl"
-    if legacy_path.exists():
-        return legacy_path
     return None
 
 
