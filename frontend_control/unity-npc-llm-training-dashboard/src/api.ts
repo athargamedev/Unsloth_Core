@@ -169,6 +169,44 @@ export interface RunDetail {
   metrics: Record<string, unknown>;
 }
 
+// --- Supabase types ---
+
+export interface SupabaseTestResult {
+  id: string;
+  npc_id: string;
+  test_name: string;
+  test_type: string;
+  score: number;
+  metrics: Record<string, number>;
+  created_at: string;
+}
+
+export interface SupabaseNpcProfile {
+  npc_id: string;
+  npc_name: string;
+  display_name: string;
+  description: string;
+  is_active: boolean;
+  lora_path: string;
+  lora_weight: number;
+  created_at: string;
+}
+
+export interface SupabaseLeaderboardEntry {
+  rank: number;
+  npc_id: string;
+  npc_name: string;
+  test_name: string;
+  score: number;
+  metrics: Record<string, number>;
+}
+
+export interface SupabaseStatus {
+  connected: boolean;
+  url: string;
+  error?: string;
+}
+
 // --- API helpers ---
 
 export const fetchJson = async <T,>(url: string): Promise<T> => {

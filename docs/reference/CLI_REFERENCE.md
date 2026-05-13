@@ -67,8 +67,10 @@ Compares two training runs using their specific `run_id`.
 
 ## 🛠️ Utility & Infrastructure
 
-### `dashboard`
-Starts the local monitoring dashboard (default port 8000).
+### `dashboard` (DEPRECATED)
+> **Deprecated**: Use `npm run dev` in `frontend_control/unity-npc-llm-training-dashboard/` instead (port 3100).
+
+Starts the legacy monitoring dashboard (default port 8000). Will be removed in a future release.
 
 ### `supabase-check`
 Verifies that an NPC's profile and memory structures are correctly set up in the local Supabase instance.

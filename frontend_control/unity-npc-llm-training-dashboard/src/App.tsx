@@ -39,6 +39,7 @@ import { ModelComparison } from './components/ModelComparison';
 import { Card } from './components/Card';
 import { DatasetViewer } from './components/DatasetViewer';
 import { EvalReportsPanel } from './components/EvalReportsPanel';
+import { LeaderboardPanel } from './components/LeaderboardPanel';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'training' | 'datasets' | 'compare' | 'analytics' | 'commands'>('overview');
@@ -516,6 +517,15 @@ export default function App() {
                     </summary>
                     <div className="mt-3">
                       <EvalReportsPanel />
+                    </div>
+                    </details>
+                  <div className="border-t border-line my-3" />
+                  <details>
+                    <summary className="text-[10px] font-bold text-ink/40 uppercase tracking-widest cursor-pointer hover:text-ink/60">
+                      Supabase Leaderboard
+                    </summary>
+                    <div className="mt-3">
+                      <LeaderboardPanel />
                     </div>
                   </details>
                 </div>

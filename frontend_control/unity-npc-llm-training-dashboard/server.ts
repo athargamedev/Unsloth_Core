@@ -955,6 +955,81 @@ async function startServer() {
     }
   });
 
+  // ── Supabase Integration ──────────────────────────────────────────────────
+
+  app.get("/api/supabase/status", async (_req, res) => {
+    const supabaseUrl = process.env.SUPABASE_URL || "";
+    const supabaseKey = process.env.SUPABASE_KEY || "";
+    if (!supabaseUrl || !supabaseKey) {
+      return res.json({ connected: false, url: "", error: "SUPABASE_URL and SUPABASE_KEY not configured" });
+    }
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      let response;
+      try {
+        response = await fetch(`${supabaseUrl}/rest/v1/health`, {
+          headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` },
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+      res.json({ connected: response.ok, url: supabaseUrl, error: response.ok ? undefined : `Health check failed: ${response.status}` });
+    } catch (err: any) {
+      res.json({ connected: false, url: supabaseUrl, error: err.message });
+    }
+  });
+
+  app.get("/api/supabase/leaderboard", async (_req, res) => {
+    const supabaseUrl = process.env.SUPABASE_URL || "";
+    const supabaseKey = process.env.SUPABASE_KEY || "";
+    if (!supabaseUrl || !supabaseKey) {
+      return res.json({ entries: [], status: { connected: false, url: "", error: "Supabase not configured" } });
+    }
+    try {
+      // Fetch top test results ordered by score
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/test_results?select=*,npc_profiles!inner(npc_name,display_name)&order=score.desc&limit=20`,
+        { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` } }
+      );
+      if (!response.ok) throw new Error(`Supabase query failed: ${response.status}`);
+      const data = await response.json();
+      const entries = data.map((row: any, i: number) => ({
+        rank: i + 1,
+        npc_id: row.npc_id,
+        npc_name: row.npc_profiles?.npc_name || row.npc_id,
+        test_name: row.test_name,
+        score: row.score,
+        metrics: row.metrics || {},
+      }));
+      res.json({ entries, status: { connected: true, url: supabaseUrl } });
+    } catch (err: any) {
+      res.json({ entries: [], status: { connected: false, url: supabaseUrl, error: err.message } });
+    }
+  });
+
+  app.get("/api/supabase/npc-profiles", async (_req, res) => {
+    const supabaseUrl = process.env.SUPABASE_URL || "";
+    const supabaseKey = process.env.SUPABASE_KEY || "";
+    if (!supabaseUrl || !supabaseKey) {
+      return res.json({ profiles: [], status: { connected: false, url: "", error: "Supabase not configured" } });
+    }
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/npc_profiles?select=*&order=created_at.desc`,
+        { headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` } }
+      );
+      if (!response.ok) throw new Error(`Supabase query failed: ${response.status}`);
+      const data = await response.json();
+      res.json({ profiles: data, status: { connected: true, url: supabaseUrl } });
+    } catch (err: any) {
+      res.json({ profiles: [], status: { connected: false, url: supabaseUrl, error: err.message } });
+    }
+  });
+
+  // ── End Supabase Integration ──────────────────────────────────────────────
+
   app.get("/api/suggestions", (_req, res) => {
     const suggestions = [
       "Check Rank size for QuestGiver LoRA if loss plateau persists.",
