@@ -37,7 +37,7 @@ import {
 // --- Types ---
 interface Stage {
   name: string;
-  status: 'completed' | 'running' | 'pending' | 'failed';
+  status: 'completed' | 'running' | 'pending' | 'failed' | 'stopped';
   logs: string[];
 }
 
@@ -160,13 +160,15 @@ const WorkflowVisualizer = ({ stages }: { stages: Stage[] }) => (
             "w-2.5 h-2.5 rounded-full z-10",
             stage.status === 'completed' ? "bg-success glow-blue" : 
             stage.status === 'running' ? "bg-warning animate-pulse" :
-            stage.status === 'failed' ? "bg-danger ring-2 ring-danger/40" : "bg-line"
+            stage.status === 'failed' ? "bg-danger ring-2 ring-danger/40" :
+            stage.status === 'stopped' ? "bg-ink/30 ring-2 ring-ink/20" : "bg-line"
           )} />
           <span className={cn(
             "text-[9px] font-bold uppercase tracking-widest truncate",
             stage.status === 'running' ? "text-warning" :
             stage.status === 'completed' ? "text-ink" :
-            stage.status === 'failed' ? "text-danger" : "text-ink/30"
+            stage.status === 'failed' ? "text-danger" :
+            stage.status === 'stopped' ? "text-ink/30" : "text-ink/30"
           )}>
             {stage.name}
           </span>
@@ -1207,10 +1209,12 @@ export default function App() {
                                               "w-1.5 h-1.5 rounded-full",
                                               s.status === 'completed' ? "bg-success" :
                                               s.status === 'running' ? "bg-warning" :
-                                              s.status === 'failed' ? "bg-danger" : "bg-line"
+                                              s.status === 'failed' ? "bg-danger" :
+                                              s.status === 'stopped' ? "bg-ink/30" : "bg-line"
                                             )} />
                                             <span className={cn(
                                               s.status === 'failed' ? "text-danger" :
+                                              s.status === 'stopped' ? "text-ink/30" :
                                               s.status === 'pending' ? "text-ink/20" : "text-ink/70"
                                             )}>{s.name}</span>
                                          </div>

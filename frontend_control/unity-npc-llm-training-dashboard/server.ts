@@ -12,7 +12,7 @@ type JobStatus = "pending" | "running" | "completed" | "failed" | "stopped";
 
 interface Stage {
   name: string;
-  status: "completed" | "running" | "pending" | "failed";
+  status: "completed" | "running" | "pending" | "failed" | "stopped";
   logs: string[];
 }
 
@@ -534,8 +534,12 @@ const updateStagesFromTruth = (job: Job) => {
       return { ...stage, status: index <= activeIndex ? "completed" : "pending" };
     }
 
-    if (job.status === "failed" || job.status === "stopped") {
+    if (job.status === "failed") {
       return { ...stage, status: index === activeIndex ? "failed" : index < activeIndex ? "completed" : "pending" };
+    }
+
+    if (job.status === "stopped") {
+      return { ...stage, status: index === activeIndex ? "stopped" : index < activeIndex ? "completed" : "pending" };
     }
 
     if (job.status === "running" || job.status === "pending") {
@@ -856,7 +860,7 @@ async function startServer() {
       globalLog(registry, `[SYSTEM] starting ${job.id}: ${command.join(" ")}`);
       persistRegistry(registry);
 
-      const child = spawn(command[0], command.slice(1), { cwd: repoRoot, shell: false });
+      const child = spawn(command[0], command.slice(1), { cwd: repoRoot, shell: false, detached: true });
       runningProcesses.set(job.id, child);
       terminalJobState.set(job.id, { stopRequested: false, terminal: false });
 
@@ -916,12 +920,13 @@ async function startServer() {
   app.post("/api/commands/stop", (req, res) => {
     const { id } = req.body as { id?: string };
     if (!id) return res.status(400).json({ error: "id is required" });
-    const process = runningProcesses.get(id);
+    const proc = runningProcesses.get(id);
     const job = registry.jobs.find((item) => item.id === id);
     if (!job) return res.status(404).json({ error: "Job not found" });
-    if (!process) return res.status(409).json({ error: "Job is not running" });
+    if (!proc) return res.status(409).json({ error: "Job is not running" });
 
-    process.kill("SIGTERM");
+    // Negative PID kills the entire process group (detached: true ensures proc.pid == pgid)
+    try { process.kill(-proc.pid, "SIGTERM"); } catch { proc.kill("SIGTERM"); }
     const terminalState = terminalJobState.get(id);
     if (terminalState) {
       terminalState.stopRequested = true;
@@ -939,7 +944,7 @@ async function startServer() {
         }
         globalLog(registry, `[SYSTEM] escalating stop for ${id} to SIGKILL after ${STOP_ESCALATION_MS}ms`);
         persistRegistry(registry);
-        activeProcess.kill("SIGKILL");
+        try { process.kill(-activeProcess.pid, "SIGKILL"); } catch { activeProcess.kill("SIGKILL"); }
         stopEscalationTimers.delete(id);
       }, STOP_ESCALATION_MS);
       stopEscalationTimers.set(id, escalationTimer);

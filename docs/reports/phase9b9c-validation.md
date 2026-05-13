@@ -81,4 +81,22 @@ Interpretation:
 
 Operational note discovered:
 - `/api/commands/stop` acknowledged request but did not terminate the active training subprocess chain in this run; manual PID termination was required.
-- This indicates a separate stop/kill process-group reliability issue (outside stage-truth parser scope) that should be addressed in next hardening pass.
+
+## Stop reliability fix — process group kill (implemented)
+Root cause: `spawn()` with default settings creates the child in the parent's process group. `process.kill("SIGTERM")` only signals the immediate child PID (e.g., `ucore`), not its subprocess tree (train.py, etc.).
+
+Fix applied:
+- Changed `spawn()` to use `{ detached: true }` — makes the child the leader of a new process group (PID == PGID).
+- Changed stop handler from `process.kill("SIGTERM")` to `process.kill(-proc.pid, "SIGTERM")` — negative PID kills the entire process group.
+- Same fix applied to escalation timer (SIGKILL path).
+- Fixed pre-existing variable shadowing bug: stop handler variable `process` renamed to `proc` to avoid shadowing the Node.js global `process` object.
+- Added `"stopped"` to `Stage.status` union type in both server.ts and App.tsx.
+- Separated "stopped" stage mapping from "failed" in `updateStagesFromTruth()` — stopped jobs now show active stage as `"stopped"` instead of `"failed"`.
+- Added `"stopped"` visual styling in WorkflowVisualizer and detail view.
+
+Verification test:
+- Started pipeline command, waited until training phase (stage[1] == "running").
+- Issued `POST /api/commands/stop` → response `{ status: "stop_requested" }`.
+- Observed immediate state transition to `stopped` with stages `["completed","stopped","pending","pending"]`.
+- Verified zero orphaned pipeline processes after stop.
+
