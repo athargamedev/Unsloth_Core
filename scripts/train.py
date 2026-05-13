@@ -470,7 +470,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
         report_targets.append("tensorboard")
     if config.get("wandb", {}).get("enabled", False):
         report_targets.append("wandb")
-    report_to = ",".join(report_targets) if report_targets else "none"
+    report_to = report_targets if report_targets else "none"
 
     args = TrainingArguments(
         output_dir=output_dir,
