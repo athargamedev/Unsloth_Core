@@ -21,6 +21,7 @@ export const DatasetFactory = ({
   exportArtifacts,
   trainingConfig,
   onGenerateDataset,
+  onInitNpc,
   onSelectDataset,
   onPrepareTraining,
 }: DatasetFactoryProps) => {
