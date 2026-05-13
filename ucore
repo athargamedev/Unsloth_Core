@@ -144,6 +144,12 @@ def main():
     cr_p.add_argument("--num-questions", type=int, default=10, help="Number of eval questions")
     cr_p.add_argument("--judge", action="store_true", help="Use local Ollama judge")
 
+    # Supabase integration check
+    sb_p = subparsers.add_parser("supabase-check", help="Verify NPC profile + dialogue memory path in Supabase")
+    sb_p.add_argument("--npc-key", required=True, help="NPC key")
+    sb_p.add_argument("--player-id", help="Probe player UUID")
+    sb_p.add_argument("--skip-probe", action="store_true", help="Only profile alignment, skip dialogue probe")
+
     # Pipeline (Generate + Sanitize + Train)
     pipe_p = subparsers.add_parser("pipeline", help="Run full generation-to-training pipeline")
     pipe_p.add_argument("spec", help="Path to subject spec JSON")
@@ -297,6 +303,12 @@ def main():
         if args.spec: cmd.extend(["--spec", args.spec])
         if args.num_questions: cmd.extend(["--num-questions", str(args.num_questions)])
         if args.judge: cmd.append("--judge")
+        run_cmd(cmd)
+
+    elif args.command == "supabase-check":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "supabase_integration_check.py"), "--npc-key", args.npc_key]
+        if args.player_id: cmd.extend(["--player-id", args.player_id])
+        if args.skip_probe: cmd.append("--skip-probe")
         run_cmd(cmd)
 
     elif args.command == "pipeline":
