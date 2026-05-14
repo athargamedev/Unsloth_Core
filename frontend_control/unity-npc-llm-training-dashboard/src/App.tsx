@@ -163,7 +163,7 @@ export default function App() {
           try {
             const healthData = await fetchJson<HealthCheck>('/api/health');
             setServerPid(healthData.processId);
-          } catch {}
+          } catch { }
         })(),
         (async () => {
           try {
@@ -177,7 +177,7 @@ export default function App() {
             const descMap: Record<string, string> = {};
             for (const p of presetsData) descMap[p.name] = p.description;
             setPresetDesc(descMap);
-          } catch {}
+          } catch { }
         })(),
       ]);
       setUiError(null);
@@ -272,9 +272,9 @@ export default function App() {
     try {
       const stopResults = await Promise.all(runningJobs.map(async (job) => {
         const response = await fetch('/api/commands/stop', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: job.id }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: job.id }),
         });
         if (response.ok) return { id: job.id, ok: true, message: '' };
         const payload = await response.json().catch(() => ({}));
@@ -595,9 +595,9 @@ export default function App() {
   const healthDotClass = health ? (health.ok ? 'bg-success' : 'bg-danger') : 'bg-ink/40';
   const selectedJobLogLines = selectedJobForLogs
     ? [
-        ...(selectedJobForLogs.logs || []),
-        ...selectedJobForLogs.stages.flatMap((stage) => stage.logs.map((line) => `[${stage.name}] ${line}`)),
-      ]
+      ...(selectedJobForLogs.logs || []),
+      ...selectedJobForLogs.stages.flatMap((stage) => stage.logs.map((line) => `[${stage.name}] ${line}`)),
+    ]
     : [];
 
   return (
@@ -718,7 +718,7 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-                
+
                 <NpcOverview
                   subjects={subjects}
                   datasets={datasets}
@@ -773,7 +773,7 @@ export default function App() {
                   </div>
                   <div className="flex gap-3">
                     <span className="text-[9px] text-ink/40 font-mono">BUFFER: {logs.length} LINES</span>
-                    <button 
+                    <button
                       onClick={() => setLogs([])}
                       className="text-[9px] font-bold text-accent hover:brightness-125 uppercase tracking-tighter"
                     >
@@ -789,7 +789,7 @@ export default function App() {
                         .replace(/^\[STDOUT\]\[[^\]]+\]\s*/, '')
                         .replace(/^\[STDERR\]\[[^\]]+\]\s*/, '⚠️ ')
                         .replace(/^\[SYSTEM\]\s*/, '⚙️ ');
-                      
+
                       return (
                         <div key={i} className="whitespace-pre-wrap break-all border-l border-line/5 pl-2 py-0.5 hover:bg-white/5 transition-colors group flex gap-3">
                           <span className="text-ink/10 select-none group-hover:text-ink/30 shrink-0 w-8">{(i + 1).toString().padStart(4, '0')}</span>
@@ -846,7 +846,7 @@ export default function App() {
                     <div className="mt-3">
                       <EvalReportsPanel />
                     </div>
-                    </details>
+                  </details>
                   <div className="border-t border-line my-3" />
                   <details>
                     <summary className="text-[10px] font-bold text-ink/40 uppercase tracking-widest cursor-pointer hover:text-ink/60">
@@ -987,8 +987,8 @@ export default function App() {
                   <span className="text-accent opacity-60">[{new Date().toLocaleTimeString([], { hour12: false })}]</span>
                   <span className={cn(
                     log.includes('[ERROR]') ? "text-danger" :
-                    log.includes('[SYSTEM]') ? "text-success" :
-                    log.includes('[DEBUG]') ? "text-warning" : "text-ink/60",
+                      log.includes('[SYSTEM]') ? "text-success" :
+                        log.includes('[DEBUG]') ? "text-warning" : "text-ink/60",
                   )}>
                     {log}
                   </span>
@@ -1009,7 +1009,7 @@ export default function App() {
                 <span className="text-[9px] font-bold text-ink/40 uppercase">{connectionQuality}</span>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               <div>
                 <div className="flex justify-between text-[9px] mb-1">
@@ -1064,7 +1064,7 @@ export default function App() {
                 <span className="text-ink/20 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <div className="mt-4">
-                <LocalModelPanel status={systemStatus?.localModel} />
+                <LocalModelPanel status={useSystemStatus?.localModel} />
               </div>
             </details>
 
@@ -1199,62 +1199,62 @@ export default function App() {
 
                 {(selectedCommand && commandSchemas[selectedCommand]?.fields
                   ? Object.entries(commandSchemas[selectedCommand].fields)
-                      .filter(([field]) => field !== 'commandId' && field !== 'type')
-                      .map(([field, schema]: [string, any]) => {
-                        const rawValue = getNestedValue(commandPayload as Record<string, unknown>, field);
-                        const value = rawValue === undefined || rawValue === null ? '' : String(rawValue);
-                        return (
-                          <div key={field}>
-                            <label className="block text-sm font-bold text-ink/60 mb-2">
-                              {field.replace(/\./g, ' → ').replace(/([A-Z])/g, ' $1')}
-                              {schema?.required ? <span className="text-danger"> *</span> : null}
-                            </label>
-                            {Array.isArray(schema?.enum) && schema.enum.length > 0 ? (
-                              <select
-                                value={value}
-                                onChange={(e) => handleSetCommandPayload(field, e.target.value)}
-                                className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
-                              >
-                                {schema.enum.map((opt: string) => (
-                                  <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                              </select>
-                            ) : schema?.type === 'boolean' ? (
-                              <select
-                                value={value || 'false'}
-                                onChange={(e) => handleSetCommandPayload(field, e.target.value)}
-                                className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
-                              >
-                                <option value="false">false</option>
-                                <option value="true">true</option>
-                              </select>
-                            ) : (
-                              <input
-                                type={schema?.type === 'number' ? 'number' : 'text'}
-                                value={value}
-                                onChange={(e) => handleSetCommandPayload(field, e.target.value)}
-                                className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
-                              />
-                            )}
-                            {schema?.description ? (
-                              <div className="text-[10px] text-ink/40 mt-1">{schema.description}</div>
-                            ) : null}
-                          </div>
-                        );
-                      })
-                  : Object.keys(commandPayload)
-                      .filter((key: string) => key !== 'commandId' && key !== 'type')
-                      .map((field: string) => (
+                    .filter(([field]) => field !== 'commandId' && field !== 'type')
+                    .map(([field, schema]: [string, any]) => {
+                      const rawValue = getNestedValue(commandPayload as Record<string, unknown>, field);
+                      const value = rawValue === undefined || rawValue === null ? '' : String(rawValue);
+                      return (
                         <div key={field}>
-                          <label className="block text-sm font-bold text-ink/60 mb-2 capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
-                          <input
-                            type="text"
-                            value={String((commandPayload as Record<string, unknown>)[field] || '')}
-                            onChange={(e) => handleSetCommandPayload(field, e.target.value)}
-                            className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
-                          />
+                          <label className="block text-sm font-bold text-ink/60 mb-2">
+                            {field.replace(/\./g, ' → ').replace(/([A-Z])/g, ' $1')}
+                            {schema?.required ? <span className="text-danger"> *</span> : null}
+                          </label>
+                          {Array.isArray(schema?.enum) && schema.enum.length > 0 ? (
+                            <select
+                              value={value}
+                              onChange={(e) => handleSetCommandPayload(field, e.target.value)}
+                              className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
+                            >
+                              {schema.enum.map((opt: string) => (
+                                <option key={opt} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+                          ) : schema?.type === 'boolean' ? (
+                            <select
+                              value={value || 'false'}
+                              onChange={(e) => handleSetCommandPayload(field, e.target.value)}
+                              className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
+                            >
+                              <option value="false">false</option>
+                              <option value="true">true</option>
+                            </select>
+                          ) : (
+                            <input
+                              type={schema?.type === 'number' ? 'number' : 'text'}
+                              value={value}
+                              onChange={(e) => handleSetCommandPayload(field, e.target.value)}
+                              className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
+                            />
+                          )}
+                          {schema?.description ? (
+                            <div className="text-[10px] text-ink/40 mt-1">{schema.description}</div>
+                          ) : null}
                         </div>
-                      )))
+                      );
+                    })
+                  : Object.keys(commandPayload)
+                    .filter((key: string) => key !== 'commandId' && key !== 'type')
+                    .map((field: string) => (
+                      <div key={field}>
+                        <label className="block text-sm font-bold text-ink/60 mb-2 capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
+                        <input
+                          type="text"
+                          value={String((commandPayload as Record<string, unknown>)[field] || '')}
+                          onChange={(e) => handleSetCommandPayload(field, e.target.value)}
+                          className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
+                        />
+                      </div>
+                    )))
                 }
 
                 <div className="flex gap-2 pt-4">
@@ -1303,7 +1303,7 @@ export default function App() {
 
 function LocalModelPanel({ status }: { status: any }) {
   if (!status) return <div className="text-[10px] text-ink/40 italic">No model status reported.</div>;
-  
+
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
@@ -1329,7 +1329,7 @@ function LocalModelPanel({ status }: { status: any }) {
 
 function SystemStatusPanel({ status }: { status: any }) {
   if (!status) return <div className="text-[10px] text-ink/40 italic">Health data unavailable.</div>;
-  
+
   return (
     <div className="space-y-2">
       {Object.entries(status.checks || {}).map(([key, ok]) => (
