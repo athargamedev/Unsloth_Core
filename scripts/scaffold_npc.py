@@ -12,13 +12,15 @@ Creates:
 from __future__ import annotations
 
 import argparse
+import copy
 import json
-import re
 import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SNAKE_CASE_RE = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from _config.paths import SNAKE_CASE_PATTERN
 
 TECHNIQUES = ["notebooklm", "ollama", "template", "openai", "anthropic"]
 
@@ -89,14 +91,9 @@ DEFAULT_SPEC = {
 
 
 def validate_npc_key(npc_key: str) -> None:
-    """Exit with error if npc_key is not valid snake_case."""
-    if not SNAKE_CASE_RE.fullmatch(npc_key):
-        print(
-            f"Error: npc_key '{npc_key}' must be snake_case "
-            "(lowercase letters, numbers, underscores, starting with a letter).",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    """Raise ValueError if npc_key is not valid snake_case."""
+    if not SNAKE_CASE_PATTERN.fullmatch(npc_key):
+        raise ValueError(npc_key)
 
 
 def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
@@ -117,15 +114,33 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
         spec_path.parent.mkdir(parents=True, exist_ok=True)
 
         if not spec_path.exists() or force:
-            spec_json = json.dumps(DEFAULT_SPEC)
-            spec_json = spec_json \
-                .replace("{npc_key}", npc_key) \
-                .replace("{npc_name}", npc_name) \
-                .replace("{subject}", subject_text)
-            spec = json.loads(spec_json)
+            spec = copy.deepcopy(DEFAULT_SPEC)
+            spec["npc_key"] = npc_key
+            spec["npc_name"] = npc_name
+            spec["subject"] = subject_text
+            spec["system_prompt"] = (
+                f"You are {npc_name}. Subject: {subject_text}. "
+                "Style: clear and professional. Rules: Speak in 1-3 short sentences. "
+                f"Stay in character as {npc_name}. Never mention you are an AI. Max 3 sentences."
+            )
+            spec["identity"]["background"] = f"Expert in {subject_text}."
+            spec["dialogue"]["example_topics"] = [
+                f"Introduction to {subject_text}",
+                f"Common misconceptions about {subject_text}",
+                f"How to get started with {subject_text}",
+            ]
+            spec["quest"]["scenarios"][0]["description"] = (
+                f"Learner asks an introductory question about {subject_text}"
+            )
+            spec["research_queries"][0]["query"] = (
+                f"Fundamentals of {subject_text} core concepts beginner guide"
+            )
+            spec["research_queries"][1]["query"] = (
+                f"{subject_text} key topics examples and real-world applications"
+            )
 
-            with open(spec_path, "w") as f:
-                json.dump(spec, f, indent=2)
+            with open(spec_path, "w", encoding="utf-8") as f:
+                json.dump(spec, f, indent=2, ensure_ascii=False)
             created_files.append(f"subjects/{npc_key}.json")
         else:
             skipped_files.append(f"subjects/{npc_key}.json (use --force to overwrite)")
@@ -135,7 +150,7 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
     # ── 2. Dataset folders ──────────────────────────────────────────────────
     for tech in TECHNIQUES:
         tech_dir = PROJECT_ROOT / "datasets" / npc_key / tech
-        if not tech_dir.exists():
+        if force or not tech_dir.exists():
             tech_dir.mkdir(parents=True, exist_ok=True)
             (tech_dir / ".gitkeep").touch()
             created_dirs.append(f"datasets/{npc_key}/{tech}/")
@@ -144,9 +159,11 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
 
     # ── 3. Outputs dir (training) ───────────────────────────────────────────
     output_dir = PROJECT_ROOT / "outputs" / npc_key
-    if not output_dir.exists():
+    runs_dir = output_dir / "runs"
+    if force or not output_dir.exists():
         output_dir.mkdir(parents=True, exist_ok=True)
-        (output_dir / "runs").mkdir(parents=True, exist_ok=True)
+        runs_dir.mkdir(parents=True, exist_ok=True)
+        (runs_dir / ".gitkeep").touch()
         created_dirs.append(f"outputs/{npc_key}/")
         created_dirs.append(f"outputs/{npc_key}/runs/")
     else:
@@ -154,7 +171,7 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
 
     # ── 4. Exports dir (GGUF) ──────────────────────────────────────────────
     export_dir = PROJECT_ROOT / "exports" / npc_key
-    if not export_dir.exists():
+    if force or not export_dir.exists():
         export_dir.mkdir(parents=True, exist_ok=True)
         created_dirs.append(f"exports/{npc_key}/")
     else:
@@ -182,11 +199,20 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
             print(f"    {d}")
 
     print()
-    print("  Next steps:")
-    print(f"    ./ucore validate-spec subjects/{npc_key}.json")
-    print(f"    ./ucore generate subjects/{npc_key}.json --technique template")
-    print(f"    ./ucore sanitize datasets/{npc_key}/template/train.jsonl")
-    print(f"    ./ucore validate-config --spec subjects/{npc_key}.json --preset smoke --data datasets/{npc_key}/template/train_clean.jsonl")
+    if skip_spec:
+        print("  Next steps (spec was skipped — create or edit subjects/{npc_key}.json manually):")
+        print(f"    ./ucore validate-spec subjects/{npc_key}.json")
+        print(f"    ./ucore generate subjects/{npc_key}.json --technique template")
+        print(f"    ./ucore sanitize datasets/{npc_key}/template/train.jsonl")
+        print(f"    ./ucore validate-config --spec subjects/{npc_key}.json --preset smoke"
+              f" --data datasets/{npc_key}/template/train_clean.jsonl")
+    else:
+        print("  Next steps:")
+        print(f"    ./ucore validate-spec subjects/{npc_key}.json")
+        print(f"    ./ucore generate subjects/{npc_key}.json --technique template")
+        print(f"    ./ucore sanitize datasets/{npc_key}/template/train.jsonl")
+        print(f"    ./ucore validate-config --spec subjects/{npc_key}.json --preset smoke"
+              f" --data datasets/{npc_key}/template/train_clean.jsonl")
 
 
 def main() -> None:
@@ -198,7 +224,15 @@ def main() -> None:
     parser.add_argument("--skip-spec", action="store_true", help="Only create folders, skip spec file")
 
     args = parser.parse_args()
-    scaffold(args.npc_key, args.subject, args.name, args.force, args.skip_spec)
+    try:
+        scaffold(args.npc_key, args.subject, args.name, args.force, args.skip_spec)
+    except ValueError as exc:
+        print(
+            f"Error: npc_key '{exc}' must be snake_case "
+            "(lowercase letters, numbers, underscores, starting with a letter).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":

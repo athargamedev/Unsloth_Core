@@ -24,6 +24,11 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
+# ── Shared validation constants ──────────────────────────────────────────────
+
+SNAKE_CASE_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
+
+
 # ── Model short name derivation ──────────────────────────────────────────────
 
 _MODEL_SUFFIXES = [

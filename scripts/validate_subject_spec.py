@@ -13,8 +13,11 @@ from typing import Any
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from _config.paths import SNAKE_CASE_PATTERN
+
 GENERATOR_SUPPORTED_DATASET_CATEGORIES = {"identity", "teaching", "dialogue", "quest", "refusal"}
-SNAKE_CASE_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 
 
 @dataclass(frozen=True)
