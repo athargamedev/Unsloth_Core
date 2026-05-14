@@ -1,0 +1,62 @@
+{
+  "os":  "Linux-6.8.0-116-generic-x86_64-with-glibc2.39",
+  "python":  "CPython 3.12.13",
+  "startedAt":  "2026-05-14T02:13:50.859735Z",
+  "args":  [
+    "subjects/world_presidents_instructor.json",
+    "--from-spec",
+    "--preset",
+    "fast-3b",
+    "--technique",
+    "ollama",
+    "--model",
+    "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+    "--lr",
+    "0.0002",
+    "--batch-size",
+    "4",
+    "--epochs",
+    "3",
+    "--lora-r",
+    "16",
+    "--lora-alpha",
+    "32",
+    "--lr-scheduler",
+    "cosine",
+    "--wandb"
+  ],
+  "program":  "/home/athar/Projects/Unsloth_Core/scripts/train.py",
+  "codePath":  "scripts/train.py",
+  "codePathLocal":  "scripts/train.py",
+  "git":  {
+    "commit":  "4fb8e758e440f76063f5a5280339872839f94cad"
+  },
+  "email":  "andreabenathar@gmail.com",
+  "root":  "/home/athar/Projects/Unsloth_Core",
+  "host":  "Predator-PH315-54",
+  "executable":  "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python",
+  "cpu_count":  8,
+  "cpu_count_logical":  16,
+  "gpu":  "NVIDIA GeForce RTX 3060 Laptop GPU",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "431944888320",
+      "used":  "321086922752"
+    }
+  },
+  "memory":  {
+    "total":  "33419972608"
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce RTX 3060 Laptop GPU",
+      "memoryTotal":  "6442450944",
+      "cudaCores":  3840,
+      "architecture":  "Ampere",
+      "uuid":  "GPU-c533d80f-c6f5-c6d1-37aa-cc58c93b70df"
+    }
+  ],
+  "cudaVersion":  "13.2",
+  "writerId":  "1lj09cz9m8pt7cuham8qg1x8r8euxokz"
+}

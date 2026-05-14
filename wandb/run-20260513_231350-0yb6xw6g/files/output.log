@@ -1,0 +1,115 @@
+wandb: Detected [huggingface_hub.inference] in use.
+wandb: Use W&B Weave for improved LLM call tracing. Install Weave with `pip install weave` then add `import weave` to the top of your script.
+wandb: For more information, check out the docs at: https://weave-docs.wandb.ai
+  0%|          | 0/3 [00:00<?, ?it/s]`use_return_dict` is deprecated! Use `return_dict` instead!
+ 33%|███▎      | 1/3 [00:08<00:16,  8.40s/it]Traceback (most recent call last):
+{'loss': '3.709', 'grad_norm': '5.276', 'learning_rate': '0', 'epoch': '1'}
+  File "/home/athar/Projects/Unsloth_Core/scripts/train.py", line 876, in <module>
+    main()
+  File "/home/athar/Projects/Unsloth_Core/scripts/train.py", line 792, in main
+    trainer, metrics = run_training(model, tokenizer, dataset, eval_dataset, config)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/scripts/train.py", line 541, in run_training
+    train_result = trainer.train()
+                   ^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_compiled_cache/UnslothSFTTrainer.py", line 84, in wrapper
+    output = f(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/transformers/trainer.py", line 1424, in train
+    return inner_training_loop(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 83, in _fast_inner_training_loop
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/transformers/trainer.py", line 1734, in _run_epoch
+    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_compiled_cache/UnslothSFTTrainer.py", line 1327, in training_step
+    return super().training_step(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 40, in _unsloth_training_step
+  File "/home/athar/Projects/Unsloth_Core/unsloth_compiled_cache/UnslothSFTTrainer.py", line 1316, in compute_loss
+    outputs = super().compute_loss(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/unsloth/models/_utils.py", line 2207, in _unsloth_pre_compute_loss
+    outputs = self._old_compute_loss(model, inputs, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 41, in compute_loss
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/accelerate/utils/operations.py", line 823, in forward
+    return model_forward(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/accelerate/utils/operations.py", line 811, in __call__
+    return convert_to_fp32(self.model_forward(*args, **kwargs))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/amp/autocast_mode.py", line 44, in decorate_autocast
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_compile.py", line 54, in inner
+    return disable_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1181, in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/unsloth/models/llama.py", line 1673, in PeftModel_fast_forward
+    return self.base_model(
+           ^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/peft/tuners/tuners_utils.py", line 330, in forward
+    return self.model.forward(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/unsloth/models/llama.py", line 1549, in _CausalLM_fast_forward
+    loss = unsloth_fused_ce_loss(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/unsloth_zoo/fused_losses/cross_entropy_loss.py", line 555, in unsloth_fused_ce_loss
+    return apply_autograd_function(UnslothFusedLoss, dict(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/unsloth_zoo/fused_losses/cross_entropy_loss.py", line 63, in apply_autograd_function
+    return getattr(autograd, "apply")(*(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/autograd/function.py", line 583, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/unsloth_zoo/fused_losses/cross_entropy_loss.py", line 405, in forward
+    accumulate_chunk(
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 953, in compile_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/unsloth_zoo/fused_losses/cross_entropy_loss.py", line 238, in accumulate_chunk
+    def accumulate_chunk(
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1181, in _fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py", line 1148, in forward
+    return compiled_fn(full_args)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 1962, in __call__
+    return self.compiled_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 357, in runtime_wrapper
+    all_outs = call_func_at_runtime_with_args(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py", line 134, in call_func_at_runtime_with_args
+    out = normalize_as_list(f(args))
+                            ^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 531, in wrapper
+    return compiled_fn(runtime_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_inductor/output_code.py", line 638, in __call__
+    return self.current_callable(inputs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/_inductor/utils.py", line 3220, in run
+    out = model(new_inputs)
+          ^^^^^^^^^^^^^^^^^
+  File "/tmp/torchinductor_athar/go/cgogwalit6dpjqtpcs2bhdsdbyxq4jcixbrp74umqhtf7wmufvjo.py", line 353, in call
+    buf4 = empty_strided_cuda((s31, 128256), (128256, 1), torch.bfloat16)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 252.00 MiB. GPU 0 has a total capacity of 5.67 GiB of which 255.94 MiB is free. Process 3457 has 122.00 MiB memory in use. Process 4247 has 112.18 MiB memory in use. Including non-PyTorch memory, this process has 5.10 GiB memory in use. Of the allocated memory 4.90 GiB is allocated by PyTorch, and 25.10 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

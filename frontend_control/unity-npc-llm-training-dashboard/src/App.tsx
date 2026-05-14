@@ -46,7 +46,7 @@ import { UnityDeployPanel } from './components/UnityDeployPanel';
 import { RemoteConfigPanel } from './components/RemoteConfigPanel';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'training' | 'datasets' | 'dataset_params' | 'compare' | 'analytics' | 'commands'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'jobs' | 'training' | 'datasets' | 'dataset_params' | 'compare' | 'analytics' | 'commands' | 'logs'>('overview');
   const [logs, setLogs] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<Array<{ step: number; loss: number; acc: number; lr: number }>>([]);
   const [tensorBoardData, setTensorBoardData] = useState<TensorBoardData | null>(null);
@@ -654,7 +654,9 @@ export default function App() {
           {/* Tab Selection */}
           <div className="flex px-4 border-b border-line bg-surface/30 backdrop-blur-md">
             {[
-              { id: 'overview', label: 'Operations Matrix' },
+              { id: 'overview', label: 'Project Status' },
+              { id: 'jobs', label: 'Operations Matrix' },
+              { id: 'logs', label: 'System Console' },
               { id: 'datasets', label: 'Dataset Factory' },
               { id: 'dataset_params', label: 'Generation Specs' },
               { id: 'training', label: 'Training Suite' },
@@ -691,18 +693,43 @@ export default function App() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
+                className="flex-1 flex flex-col overflow-auto p-4 space-y-6 custom-scrollbar bg-bg/20"
+              >
+                <div className="flex justify-between items-end mb-2">
+                  <div>
+                    <h3 className="text-xs font-bold text-ink-bright uppercase tracking-widest">Project Infrastructure</h3>
+                    <p className="text-[10px] text-ink/40">Real-time status of all NPC subjects and knowledge bases</p>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="text-right">
+                      <span className="block text-[8px] uppercase font-bold text-ink/30">Total Subjects</span>
+                      <span className="text-lg font-bold text-accent">{subjects.length}</span>
+                    </div>
+                    <div className="text-right border-l border-line/30 pl-4">
+                      <span className="block text-[8px] uppercase font-bold text-ink/30">Active Jobs</span>
+                      <span className="text-lg font-bold text-success">{jobs.filter(j => j.status === 'running').length}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <NpcOverview
+                  subjects={subjects}
+                  datasets={datasets}
+                  runs={runs}
+                  exportArtifacts={exportArtifacts}
+                  jobs={jobs}
+                />
+              </motion.div>
+            )}
+
+            {activeTab === 'jobs' && (
+              <motion.div
+                key="jobs"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 className="flex-1 flex flex-col overflow-hidden"
               >
-                <div className="p-4 pb-0">
-                  <NpcOverview
-                    subjects={subjects}
-                    datasets={datasets}
-                    runs={runs}
-                    exportArtifacts={exportArtifacts}
-                    jobs={jobs}
-                  />
-                  <div className="h-px bg-line/50 mb-3" />
-                </div>
                 <OperationsMatrix
                   jobs={jobs}
                   filteredJobs={filteredJobs}
@@ -721,6 +748,58 @@ export default function App() {
                   onDeleteJob={handleDeleteJob}
                   onViewLogs={(job) => setSelectedJobForLogs(job)}
                 />
+              </motion.div>
+            )}
+
+            {activeTab === 'logs' && (
+              <motion.div
+                key="logs"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="flex-1 flex flex-col overflow-hidden bg-black/40"
+              >
+                <div className="p-3 border-b border-line bg-surface/30 flex justify-between items-center backdrop-blur-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                    <span className="text-[10px] font-bold text-ink-bright uppercase tracking-widest">Global Telemetry Stream</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-[9px] text-ink/40 font-mono">BUFFER: {logs.length} LINES</span>
+                    <button 
+                      onClick={() => setLogs([])}
+                      className="text-[9px] font-bold text-accent hover:brightness-125 uppercase tracking-tighter"
+                    >
+                      Reset Console
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-auto p-4 font-mono text-[10px] space-y-0.5 custom-scrollbar bg-black/30 selection:bg-accent/30">
+                  {logs.length > 0 ? (
+                    logs.map((log, i) => {
+                      // Clean up log lines for display
+                      const cleanedLog = log
+                        .replace(/^\[STDOUT\]\[[^\]]+\]\s*/, '')
+                        .replace(/^\[STDERR\]\[[^\]]+\]\s*/, '⚠️ ')
+                        .replace(/^\[SYSTEM\]\s*/, '⚙️ ');
+                      
+                      return (
+                        <div key={i} className="whitespace-pre-wrap break-all border-l border-line/5 pl-2 py-0.5 hover:bg-white/5 transition-colors group flex gap-3">
+                          <span className="text-ink/10 select-none group-hover:text-ink/30 shrink-0 w-8">{(i + 1).toString().padStart(4, '0')}</span>
+                          <span className={log.includes('[ERROR]') || log.includes('failed') ? 'text-danger' : log.includes('[STDERR]') ? 'text-warning/80' : log.includes('[SYSTEM]') ? 'text-accent' : 'text-ink/60'}>
+                            {cleanedLog}
+                          </span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center space-y-2 opacity-20">
+                      <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                      <div className="text-[10px] uppercase font-bold tracking-[0.2em]">Synchronizing Stream...</div>
+                    </div>
+                  )}
+                  <div ref={logsEndRef} />
+                </div>
               </motion.div>
             )}
 
@@ -913,136 +992,95 @@ export default function App() {
           </section>
         </main>
 
-        {/* Right Sidebar: Command Center */}
-        <aside className="w-64 border-l border-line bg-surface flex flex-col shrink-0">
-          <div className="p-4 flex flex-col gap-6">
-            <div>
-              <h4 className="text-[10px] font-bold text-ink/40 uppercase tracking-widest mb-3">Workflow Controls</h4>
-              <div className="grid grid-cols-1 gap-2">
+        {/* Right Sidebar: Contextual Controls & Telemetry */}
+        <aside className="w-64 border-l border-line bg-surface flex flex-col shrink-0 overflow-hidden backdrop-blur-xl">
+          <div className="p-4 border-b border-line bg-accent/5">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-[10px] font-bold text-accent uppercase tracking-[0.2em]">Node Status</h3>
+              <div className="flex items-center gap-1.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${connectionQuality === 'connected' ? 'bg-success animate-pulse' : 'bg-danger'}`} />
+                <span className="text-[9px] font-bold text-ink/40 uppercase">{connectionQuality}</span>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between text-[9px] mb-1">
+                  <span className="text-ink/40 uppercase font-bold">GPU Load</span>
+                  <span className="text-ink font-mono font-bold">{telemetry?.gpuLoad || 0}%</span>
+                </div>
+                <div className="h-1 w-full bg-line rounded-full overflow-hidden">
+                  <div className="h-full bg-accent transition-all duration-500" style={{ width: `${telemetry?.gpuLoad || 0}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-[9px] mb-1">
+                  <span className="text-ink/40 uppercase font-bold">Memory</span>
+                  <span className="text-ink font-mono font-bold">{((telemetry?.memoryUsedGB || 0) / (telemetry?.memoryTotalGB || 1) * 100).toFixed(0)}%</span>
+                </div>
+                <div className="h-1 w-full bg-line rounded-full overflow-hidden">
+                  <div className="h-full bg-ink/30" style={{ width: `${Math.min(100, (telemetry?.memoryUsedGB || 0) / (telemetry?.memoryTotalGB || 1) * 100)}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-auto custom-scrollbar p-4 space-y-6">
+            {/* Quick Actions */}
+            <details className="group" open>
+              <summary className="flex justify-between items-center cursor-pointer list-none">
+                <span className="text-[9px] font-bold text-ink/40 uppercase tracking-widest group-open:text-ink/60">Quick Actions</span>
+                <span className="text-ink/20 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="mt-4 space-y-2">
                 <button
                   onClick={handleRightSidebarGenerateDataset}
                   disabled={isRemoteMode}
-                  title={isRemoteMode ? 'Remote runner is not implemented. Switch to Local to start commands.' : 'Run dataset generation locally'}
-                  className="w-full py-2 bg-accent hover:bg-accent/80 text-bg rounded-sm text-[11px] font-bold uppercase transition-all active:scale-95 shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full py-1.5 bg-accent text-bg text-[10px] font-bold rounded-sm uppercase tracking-tighter hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-accent/10 disabled:opacity-40"
                 >
-                  Run Dataset Generator
+                  Generate Data
                 </button>
                 <button
                   onClick={handleRightSidebarLaunchTraining}
                   disabled={isRemoteMode}
-                  title={isRemoteMode ? 'Remote runner is not implemented. Switch to Local to start commands.' : 'Start LoRA training locally'}
-                  className="w-full py-2 bg-panel border border-line hover:border-accent text-ink rounded-sm text-[11px] font-bold uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full py-1.5 bg-surface border border-line text-ink text-[10px] font-bold rounded-sm uppercase tracking-tighter hover:bg-line/20 active:scale-95 transition-all disabled:opacity-40"
                 >
-                  Initialize LoRA Train
-                </button>
-                <button
-                  onClick={handleRightSidebarExport}
-                  disabled={isRemoteMode}
-                  title={isRemoteMode ? 'Remote runner is not implemented. Switch to Local to start commands.' : 'Export locally for Unity'}
-                  className="w-full py-2 bg-panel border border-line hover:border-accent text-ink rounded-sm text-[11px] font-bold uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Export for Unity
+                  Launch Train
                 </button>
               </div>
-            </div>
+            </details>
 
-            <div>
-              <h4 className="text-[10px] font-bold text-ink/40 uppercase tracking-widest mb-3">Dataset Versions</h4>
-              <div className="space-y-2">
-                {datasets.map((ds) => (
-                  <div key={ds.id} className="p-2 bg-panel border border-line rounded flex flex-col gap-1">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-ink-bright truncate">{ds.name}</span>
-                      <Shield className="w-3 h-3 text-success" />
-                    </div>
-                    <select className="bg-bg text-[10px] border border-line/30 rounded p-1 outline-none text-ink/60">
-                      {ds.versions.map((v) => (
-                        <option key={v.tag}>{v.tag} ({v.entries} entries)</option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
-                {datasets.length === 0 && <div className="text-[10px] text-ink/40">No datasets detected.</div>}
+            {/* Model & Registry */}
+            <details className="group">
+              <summary className="flex justify-between items-center cursor-pointer list-none">
+                <span className="text-[9px] font-bold text-ink/40 uppercase tracking-widest group-open:text-ink/60">Local Model</span>
+                <span className="text-ink/20 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="mt-4">
+                <LocalModelPanel status={systemStatus?.localModel} />
               </div>
-            </div>
+            </details>
 
-            <div>
-              <h4 className="text-[10px] font-bold text-ink/40 uppercase tracking-widest mb-3">Subjects</h4>
-              <select
-                value={trainingConfig.spec}
-                onChange={(e) => setTrainingConfig({ ...trainingConfig, spec: e.target.value })}
-                className="w-full bg-bg text-[10px] border border-line/30 rounded p-1.5 outline-none text-ink/60"
-              >
-                {subjects.map((subject) => (
-                  <option key={subject.id} value={subject.path}>{subject.path}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="h-px bg-line"></div>
-
-            <div>
-              <h4 className="text-[10px] font-bold text-ink/40 uppercase tracking-widest mb-3">Project Status</h4>
-              <Card className="bg-bg/50 border-line/40">
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between items-center text-[10px] mb-1.5">
-                      <span className="mono-label">Active Nodes</span>
-                      <span className="font-bold">{status ? `${status.runningJobs} / ${status.totalJobs}` : '--'}</span>
-                    </div>
-                    <div className="h-1 w-full bg-line rounded-full overflow-hidden">
-                      <div className="h-full bg-accent" style={{ width: status && status.totalJobs ? `${Math.round((status.runningJobs / status.totalJobs) * 100)}%` : '0%' }} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center gap-2">
-                    <div>
-                      <div className="text-[10px] uppercase opacity-70">Execution Mode</div>
-                      <div className="text-[11px] font-bold flex flex-col gap-1">
-                        <span>{status?.executionMode?.toUpperCase() || 'LOCAL'}</span>
-                        {isRemoteMode && <span className="text-[8px] text-warning uppercase">Remote runner not implemented</span>}
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleToggleExecutionMode}
-                      className="px-2 py-1 bg-panel border border-line text-[10px] rounded-sm hover:border-accent transition-colors"
-                    >
-                      Switch to {status?.executionMode === 'local' ? 'Remote' : 'Local'}
-                    </button>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center text-[10px] mb-1.5">
-                      <span className="mono-label">Health</span>
-                      <span className={cn(
-                        "font-bold",
-                        health?.ok ? 'text-success' : 'text-danger',
-                      )}>
-                        {health ? (health.ok ? 'OK' : 'DEGRADED') : 'UNKNOWN'}
-                      </span>
-                    </div>
-                    <div className="space-y-2 text-[10px] text-ink/50">
-                      {health ? Object.entries(health.checks).map(([key, value]) => (
-                        <div key={key} className="flex justify-between">
-                          <span>{key}</span>
-                          <span className={value ? 'text-success' : 'text-danger'}>{value ? 'PASS' : 'FAIL'}</span>
-                        </div>
-                      )) : <div>Health status unavailable.</div>}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            <div className="mt-4">
-              <div className="bg-accent/10 border border-accent/20 p-3 rounded-sm">
-                <div className="text-[10px] text-accent font-bold mb-1 flex items-center gap-1">
-                  <Zap className="w-3 h-3 fill-current" />
-                  LLM TIP
-                </div>
-                <p className="text-[10px] leading-normal text-ink/80 italic">
-                  Adjust temperature to 0.4 for the Bard dataset to prevent repetitive greeting patterns found in v03.
-                </p>
+            {/* Health Monitor */}
+            <details className="group">
+              <summary className="flex justify-between items-center cursor-pointer list-none">
+                <span className="text-[9px] font-bold text-ink/40 uppercase tracking-widest group-open:text-ink/60">Registry Health</span>
+                <span className="text-ink/20 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="mt-4">
+                <SystemStatusPanel status={health} />
               </div>
+            </details>
+          </div>
+
+          <div className="p-4 bg-accent/5 border-t border-line">
+            <div className="text-[9px] text-accent font-bold mb-1 flex items-center gap-1 uppercase tracking-tighter">
+              <Zap className="w-2.5 h-2.5 fill-current" />
+              Optimization Tip
             </div>
+            <p className="text-[9px] leading-tight text-ink/60 italic">
+              Adjust temperature to 0.4 for higher coherence in complex instruction sets.
+            </p>
           </div>
         </aside>
       </div>
@@ -1250,6 +1288,54 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// --- Sub-components for Sidebar ---
+
+function LocalModelPanel({ status }: { status: any }) {
+  if (!status) return <div className="text-[10px] text-ink/40 italic">No model status reported.</div>;
+  
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <span className="text-[10px] text-ink/40">Model ID</span>
+        <span className="text-[10px] font-mono text-accent truncate max-w-[100px]">{status.modelId || 'none'}</span>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="text-[10px] text-ink/40">Status</span>
+        <span className={`text-[9px] font-bold uppercase ${status.loaded ? 'text-success' : 'text-warning'}`}>
+          {status.loaded ? 'Loaded' : 'Idle'}
+        </span>
+      </div>
+      {status.loaded && (
+        <div className="pt-1">
+          <div className="h-1 w-full bg-line rounded-full overflow-hidden">
+            <div className="h-full bg-success animate-pulse" style={{ width: '100%' }} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SystemStatusPanel({ status }: { status: any }) {
+  if (!status) return <div className="text-[10px] text-ink/40 italic">Health data unavailable.</div>;
+  
+  return (
+    <div className="space-y-2">
+      {Object.entries(status.checks || {}).map(([key, ok]) => (
+        <div key={key} className="flex justify-between items-center group">
+          <span className="text-[10px] text-ink/40 capitalize">{key.replace(/_/g, ' ')}</span>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[9px] font-bold ${ok ? 'text-success' : 'text-danger'}`}>
+              {ok ? 'PASS' : 'FAIL'}
+            </span>
+            <div className={`w-1 h-1 rounded-full ${ok ? 'bg-success' : 'bg-danger'}`} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
