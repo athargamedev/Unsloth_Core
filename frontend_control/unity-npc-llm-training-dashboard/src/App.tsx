@@ -58,6 +58,13 @@ export default function App() {
   const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
   const [commandPayload, setCommandPayload] = useState<any>({});
   const [selectedJobForLogs, setSelectedJobForLogs] = useState<Job | null>(null);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeTab === 'logs' && logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [logs, activeTab]);
 
   const [datasetViewNpc, setDatasetViewNpc] = useState<string>('');
   const [datasetViewTechnique, setDatasetViewTechnique] = useState<string>('');
