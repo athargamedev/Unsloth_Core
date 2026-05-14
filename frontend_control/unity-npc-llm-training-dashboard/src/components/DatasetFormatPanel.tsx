@@ -20,12 +20,13 @@ interface SubjectInfo {
 }
 
 interface DatasetFormatPanelProps {
-  subjects: SubjectInfo[];
-  datasets: DatasetInfo[];
-  trainingConfig: any; // reuse trainingConfig shape
+  subjects: any[];
+  datasets: any[];
+  trainingConfig: any;
+  onGenerateDataset?: (npcKey: string) => void;
 }
 
-export const DatasetFormatPanel = ({ subjects, datasets, trainingConfig }: DatasetFormatPanelProps) => {
+export const DatasetFormatPanel = ({ subjects, datasets, trainingConfig, onGenerateDataset }: DatasetFormatPanelProps) => {
   const [selectedSubject, setSelectedSubject] = React.useState<string>('');
   const [selectedTechnique, setSelectedTechnique] = React.useState<string>('');
 
@@ -45,9 +46,19 @@ export const DatasetFormatPanel = ({ subjects, datasets, trainingConfig }: Datas
     <div className="p-4 space-y-6 flex-1 overflow-auto custom-scrollbar">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-bold text-ink-bright uppercase tracking-widest">Generation Logic & Parameters</h3>
-        <div className="flex gap-2">
-          <span className="px-2 py-0.5 bg-accent/10 border border-accent/30 text-accent text-[9px] font-bold rounded uppercase">Logic: Synthetic_v3</span>
-          <span className="px-2 py-0.5 bg-success/10 border border-success/30 text-success text-[9px] font-bold rounded uppercase">Output: ChatML</span>
+        <div className="flex gap-4 items-center">
+          <div className="flex gap-2">
+            <span className="px-2 py-0.5 bg-accent/10 border border-accent/30 text-accent text-[9px] font-bold rounded uppercase">Logic: Synthetic_v3</span>
+            <span className="px-2 py-0.5 bg-success/10 border border-success/30 text-success text-[9px] font-bold rounded uppercase">Output: ChatML</span>
+          </div>
+          {selectedSubject && (
+            <button
+              onClick={() => onGenerateDataset?.(selectedSubject)}
+              className="px-4 py-1.5 bg-accent text-bg text-[10px] font-bold rounded uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-accent/20"
+            >
+              Trigger Generation
+            </button>
+          )}
         </div>
       </div>
 

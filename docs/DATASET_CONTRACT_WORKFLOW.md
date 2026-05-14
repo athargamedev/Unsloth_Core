@@ -1,5 +1,7 @@
 # Dataset Contract Workflow (Phase 3)
 
+> **Cross-reference**: For the complete dataset structure, generation logic, sanitization rules, training data flow, and minimum requirements, see [`docs/DATASET_STRUCTURE_AND_LOGIC.md`](DATASET_STRUCTURE_AND_LOGIC.md).
+
 This phase enforces a single dataset path contract across generation, sanitization, training, and evaluation.
 
 Contract

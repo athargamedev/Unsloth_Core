@@ -8,6 +8,7 @@ This directory contains the detailed technical documentation for the Unsloth_Cor
 - [PIPELINE_FLOW.md](architecture/PIPELINE_FLOW.md): Detailed breakdown of the 4-stage pipeline.
 - [SUPABASE_SCHEMA.md](architecture/SUPABASE_SCHEMA.md): Database tables, functions, and memory retrieval logic.
 - [NPC_LORA_WORKFLOW_ANALYSIS.md](NPC_LORA_WORKFLOW_ANALYSIS.md): Deep dive into LoRA adaptation for NPCs.
+- [DATASET_STRUCTURE_AND_LOGIC.md](DATASET_STRUCTURE_AND_LOGIC.md): Comprehensive dataset lifecycle — format, generation techniques, sanitization, training flow, and minimum requirements.
 
 ### 🛠️ Workflows
 - [TRAINING_WORKFLOW.md](TRAINING_WORKFLOW.md): How to train a new model from scratch.

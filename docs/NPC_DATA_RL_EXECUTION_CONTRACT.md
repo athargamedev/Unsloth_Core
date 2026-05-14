@@ -10,6 +10,8 @@ Use this document as the single source of truth for production workflow decision
 
 ## 1) Canonical Dataset Structure
 
+> **Cross-reference**: For a visual walkthrough of the full dataset lifecycle — including generation techniques, sanitization flow, training data pipeline, and minimum requirements — see [`docs/DATASET_STRUCTURE_AND_LOGIC.md`](DATASET_STRUCTURE_AND_LOGIC.md).
+
 Required filesystem layout:
 
 - SFT train file: `datasets/{npc_key}/{technique}/train.jsonl`
@@ -54,9 +56,11 @@ Required fields:
 - at least one `user` and one `assistant`
 - `assistant.content` non-empty
 
-Strongly recommended metadata keys:
+Strongly recommended metadata keys (available but not auto-populated by all generators):
 - `npc_key`, `technique`, `split`, `category`, `difficulty`, `source`
 - `safety_tags` (array) when refusal/boundary behavior is present
+
+Note: the template and LLM generation paths only populate `npc_key`, `category`, and `source` automatically. Fields like `technique`, `split`, and `difficulty` are intentionally absent from those generators but may be manually added for downstream consumers that require them.
 
 ## 3) Reinforcement Learning Dataset Contract
 

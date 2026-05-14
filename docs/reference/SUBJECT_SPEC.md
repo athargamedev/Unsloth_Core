@@ -1,5 +1,7 @@
 # Subject Specification Schema (subjects/*.json)
 
+> **Cross-reference**: For the complete dataset lifecycle, generation techniques, sanitization rules, training data flow, and minimum requirements, see [`docs/DATASET_STRUCTURE_AND_LOGIC.md`](../DATASET_STRUCTURE_AND_LOGIC.md).
+
 The `subjects/` directory contains JSON files that define the identity, knowledge, and behavior of an NPC. These files are the primary input for the dataset generation pipeline.
 
 ## 📂 Top-Level Fields

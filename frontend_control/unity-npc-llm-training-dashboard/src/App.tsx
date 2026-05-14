@@ -808,9 +808,23 @@ export default function App() {
 
             {activeTab === 'dataset_params' && (
               <DatasetFormatPanel
-                subjects={subjects.map((subject) => ({ ...subject, name: subject.id }))}
+                subjects={subjects.map((s) => ({ ...s, name: s.id }))}
                 datasets={datasets}
                 trainingConfig={trainingConfig}
+                onGenerateDataset={(npcKey) => {
+                  const cmd = availableCommands.find(c => c.id === 'dataset-generate');
+                  if (cmd) {
+                    const payload = {
+                      commandId: cmd.id,
+                      type: cmd.type,
+                      spec: `subjects/${npcKey}.json`,
+                      options: { technique: 'ollama' }
+                    };
+                    setSelectedCommand(cmd.id);
+                    setCommandPayload(payload);
+                    setCommandModalOpen(true);
+                  }
+                }}
               />
             )}
 
