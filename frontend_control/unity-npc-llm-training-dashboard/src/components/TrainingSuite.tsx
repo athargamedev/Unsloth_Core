@@ -81,7 +81,7 @@ export const TrainingSuite = ({
         <Card title="Structural Parameters" subtitle="RANK_AND_DIM">
           <div className="space-y-4">
             <div>
-              <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Subject Spec</label>
+              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Subject Spec</label>
               <select
                 value={trainingConfig.spec}
                 onChange={(e) => onUpdateTrainingConfig({ spec: e.target.value })}
@@ -92,7 +92,7 @@ export const TrainingSuite = ({
                 ))}
               </select>
 
-              <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Preset</label>
+              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Preset</label>
               <select
                 value={trainingConfig.preset}
                 onChange={(e) => onUpdateTrainingConfig({ preset: e.target.value })}
@@ -107,12 +107,13 @@ export const TrainingSuite = ({
                 <p className="text-[8px] mt-1 text-ink/30 italic">{presetDesc[trainingConfig.preset]}</p>
               )}
 
-              <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block mt-4">Dataset Technique</label>
+              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block mt-4">Dataset Technique</label>
               <select
                 value={trainingConfig.technique}
                 onChange={(e) => onUpdateTrainingConfig({ technique: e.target.value })}
                 className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
               >
+                <option value="docs">docs</option>
                 <option value="template">template</option>
                 <option value="notebooklm">notebooklm</option>
                 <option value="ollama">ollama</option>
@@ -121,7 +122,7 @@ export const TrainingSuite = ({
               </select>
             </div>
             <div>
-              <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Base Model Path</label>
+              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Base Model Path</label>
               <input
                 value={trainingConfig.baseModel}
                 onChange={(e) => onUpdateTrainingConfig({ baseModel: e.target.value })}
@@ -130,7 +131,7 @@ export const TrainingSuite = ({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">LoRA Rank (R)</label>
+                <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">LoRA Rank (R)</label>
                 <input
                   type="number"
                   value={trainingConfig.rank}
@@ -140,7 +141,7 @@ export const TrainingSuite = ({
                 <p className="text-[8px] mt-1 text-ink/30">Higher = more capacity but larger file size.</p>
               </div>
               <div>
-                <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">LoRA Alpha</label>
+                <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">LoRA Alpha</label>
                 <input
                   type="number"
                   value={trainingConfig.alpha}
@@ -155,7 +156,7 @@ export const TrainingSuite = ({
         <Card title="Optimization Logic" subtitle="SCHEDULER_V1">
           <div className="space-y-4">
             <div>
-              <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Learning Rate</label>
+              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Learning Rate</label>
               <div className="flex gap-2">
                 <input
                   value={trainingConfig.learningRate}
@@ -175,7 +176,7 @@ export const TrainingSuite = ({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Batch Size</label>
+                <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Batch Size</label>
                 <select
                   value={trainingConfig.batchSize}
                   onChange={(e) => onUpdateTrainingConfig({ batchSize: parseInt(e.target.value) })}
@@ -189,7 +190,7 @@ export const TrainingSuite = ({
                 </select>
               </div>
               <div>
-                <label className="text-[9px] uppercase font-bold text-ink/30 mb-1.5 block">Epochs</label>
+                <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Epochs</label>
                 <input
                   type="number"
                   value={trainingConfig.epochs}

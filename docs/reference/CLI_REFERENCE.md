@@ -28,8 +28,15 @@ Reviews subject specs before generation or training.
 ### `generate`
 Generates training data from a subject spec.
 - `spec`: Path to JSON spec.
-- `--technique`: `notebooklm` (default), `ollama`, `openai`, `anthropic`, `template`.
+- `--technique`: `notebooklm` (default), `docs`, `ollama`, `openai`, `anthropic`, `template`.
 - `--ollama`: Shortcut for `--technique ollama`.
+- `--docs-manifest`: Optional manifest override for the dedicated `docs` technique.
+
+The `docs` technique is the canonical path for `subjects/workflow_assistant.json`. It reads a curated checked-in corpus manifest instead of calling an LLM:
+
+```bash
+./ucore generate subjects/workflow_assistant.json --technique docs
+```
 
 ### `sanitize`
 Validates and cleans a `.jsonl` dataset.
@@ -51,6 +58,8 @@ Starts a LoRA fine-tuning session.
 - `--wandb`: Enable Weights & Biases experiment tracking (logs config, metrics, dataset/LoRA/GGUF artifacts).
 - `--no-wandb`: Disable W&B even if enabled in config.
 - `--export-gguf`: Automatically export to GGUF after training completes.
+
+For the Workflow Assistant, pair `--technique docs` with the sanitized dataset under `datasets/workflow_assistant/docs/`.
 
 **W&B convenience preset:**
 ```bash

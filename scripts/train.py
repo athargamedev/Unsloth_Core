@@ -624,7 +624,7 @@ def main():
                         help="Path to YAML config or subject spec (with --from-spec)")
     parser.add_argument("--from-spec", action="store_true",
                         help="Interpret config_or_spec as a subject spec JSON")
-    parser.add_argument("--technique", choices=["notebooklm", "ollama", "template", "openai", "anthropic"],
+    parser.add_argument("--technique", choices=["docs", "notebooklm", "ollama", "template", "openai", "anthropic"],
                         help="Override dataset technique when training from spec")
 
     # Logging / output

@@ -36,8 +36,9 @@ def main():
     gen_p = subparsers.add_parser("generate", help="Generate dataset from spec")
     gen_p.add_argument("spec", help="Path to subject spec JSON")
     gen_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
-    gen_p.add_argument("--technique", default="notebooklm", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
+    gen_p.add_argument("--technique", default="notebooklm", choices=["docs", "notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
     gen_p.add_argument("--notebooklm-input", help="NotebookLM export JSON/JSONL path")
+    gen_p.add_argument("--docs-manifest", help="Docs corpus manifest override for --technique docs")
     gen_p.add_argument("--model", help="LLM model name (for ollama/openai/anthropic)")
 
     # Sanitize
@@ -51,7 +52,7 @@ def main():
     train_p.add_argument("config_or_spec", help="Path to config YAML or subject spec")
     train_p.add_argument("--from-spec", action="store_true", help="Train directly from spec")
     train_p.add_argument("--preset", help="Training preset")
-    train_p.add_argument("--technique", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
+    train_p.add_argument("--technique", choices=["docs", "notebooklm", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
     train_p.add_argument("--model", help="Base model ID/path override")
     train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training")
     train_p.add_argument("--wandb", action="store_true", default=None,
@@ -187,8 +188,9 @@ def main():
     pipe_p.add_argument("spec", help="Path to subject spec JSON")
     pipe_p.add_argument("--preset", default="fast-3b", help="Training preset")
     pipe_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
-    pipe_p.add_argument("--technique", default="notebooklm", choices=["notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
+    pipe_p.add_argument("--technique", default="notebooklm", choices=["docs", "notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
     pipe_p.add_argument("--notebooklm-input", help="NotebookLM export JSON/JSONL path")
+    pipe_p.add_argument("--docs-manifest", help="Docs corpus manifest override for --technique docs")
     pipe_p.add_argument("--track", action="store_true", help="Track results in Supabase")
     pipe_p.add_argument("--wandb", action="store_true", help="Enable W&B logging during training")
 
@@ -239,6 +241,8 @@ def main():
             cmd.append("--ollama")
         if args.notebooklm_input:
             cmd.extend(["--notebooklm-input", args.notebooklm_input])
+        if args.docs_manifest:
+            cmd.extend(["--docs-manifest", args.docs_manifest])
         if args.model:
             cmd.extend(["--model", args.model])
         run_cmd(cmd)
@@ -425,6 +429,8 @@ def main():
             gen_cmd.append("--ollama")
         if args.notebooklm_input:
             gen_cmd.extend(["--notebooklm-input", args.notebooklm_input])
+        if args.docs_manifest:
+            gen_cmd.extend(["--docs-manifest", args.docs_manifest])
         run_cmd(gen_cmd)
 
         # Determine paths

@@ -18,6 +18,7 @@ The `subjects/` directory contains JSON files that define the identity, knowledg
 | `research_queries` | `array` | Queries used by NotebookLM/Ollama to gather data. |
 | `system_prompt` | `string` | The final system message used during inference. |
 | `dataset` | `object` | Configuration for dataset balancing. |
+| `technique` | `string` | Optional preferred dataset technique for this subject (for example `docs` for the Workflow Assistant). |
 
 ---
 
@@ -59,6 +60,8 @@ Used by the generation stage to find source material.
 Controls the distribution of examples in the generated `.jsonl` file.
 ```json
 "dataset": {
+  "technique": "docs",
+  "corpus_manifest": "docs/corpora/workflow_assistant_docs.json",
   "examples_per_category": {
     "identity": 8,
     "teaching": 32,
@@ -69,9 +72,13 @@ Controls the distribution of examples in the generated `.jsonl` file.
 }
 ```
 
+- `technique`: Optional preferred dataset technique for this spec.
+- `corpus_manifest`: Optional curated manifest used by the `docs` technique.
+
 ---
 
 ## 💡 Best Practices
 1. **Consistency**: Ensure the `system_prompt` incorporates elements from `identity` and `dialogue`.
 2. **Specific Queries**: Use detailed queries to avoid generic or repetitive training data.
 3. **Small Steps**: For complex NPCs, start with a small `examples_per_category` count to verify the generation quality before scaling up.
+4. **Curated corpus**: Use `dataset.corpus_manifest` only for checked-in docs and structured reports; avoid logs, outputs, secrets, or machine-local state.

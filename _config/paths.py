@@ -57,7 +57,7 @@ def model_short_name(model_id: str) -> str:
 
 # ── Datasets ─────────────────────────────────────────────────────────────────
 
-DATASET_TECHNIQUES = ("notebooklm", "ollama", "openai", "anthropic", "template")
+DATASET_TECHNIQUES = ("docs", "notebooklm", "ollama", "openai", "anthropic", "template")
 
 
 def dataset_root() -> Path:
@@ -83,7 +83,7 @@ def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
     """Auto-detect the best available dataset technique for an NPC.
 
     Returns (technique, train_path, val_path) or None if none found.
-    Preference order: notebooklm > ollama > API-generated > template.
+    Preference order: docs > notebooklm > ollama > API-generated > template.
     """
     for technique in DATASET_TECHNIQUES:
         train = dataset_train_path(npc_key, technique)

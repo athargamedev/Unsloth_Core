@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import {
   Play,
   Square,
@@ -31,19 +31,20 @@ import { useDatasets } from './hooks/useDatasets';
 import { useWebSocket } from './hooks/useWebSocket';
 import { AIAssistant } from './components/AIAssistant';
 import { OperationsMatrix } from './components/OperationsMatrix';
-import { DatasetFactory } from './components/DatasetFactory';
 import { TrainingSuite } from './components/TrainingSuite';
-import { TensorBoardPanel } from './components/TensorBoardPanel';
 import { SystemHub } from './components/SystemHub';
-import { ModelComparison } from './components/ModelComparison';
 import { NpcOverview } from './components/NpcOverview';
 import { Card } from './components/Card';
-import { DatasetViewer } from './components/DatasetViewer';
-import { DatasetFormatPanel } from './components/DatasetFormatPanel';
-import { EvalReportsPanel } from './components/EvalReportsPanel';
-import { LeaderboardPanel } from './components/LeaderboardPanel';
-import { UnityDeployPanel } from './components/UnityDeployPanel';
-import { RemoteConfigPanel } from './components/RemoteConfigPanel';
+
+const DatasetFactory = lazy(() => import('./components/DatasetFactory').then((m) => ({ default: m.DatasetFactory })));
+const TensorBoardPanel = lazy(() => import('./components/TensorBoardPanel').then((m) => ({ default: m.TensorBoardPanel })));
+const ModelComparison = lazy(() => import('./components/ModelComparison').then((m) => ({ default: m.ModelComparison })));
+const DatasetViewer = lazy(() => import('./components/DatasetViewer').then((m) => ({ default: m.DatasetViewer })));
+const DatasetFormatPanel = lazy(() => import('./components/DatasetFormatPanel').then((m) => ({ default: m.DatasetFormatPanel })));
+const EvalReportsPanel = lazy(() => import('./components/EvalReportsPanel').then((m) => ({ default: m.EvalReportsPanel })));
+const LeaderboardPanel = lazy(() => import('./components/LeaderboardPanel').then((m) => ({ default: m.LeaderboardPanel })));
+const UnityDeployPanel = lazy(() => import('./components/UnityDeployPanel').then((m) => ({ default: m.UnityDeployPanel })));
+const RemoteConfigPanel = lazy(() => import('./components/RemoteConfigPanel').then((m) => ({ default: m.RemoteConfigPanel })));
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'jobs' | 'training' | 'datasets' | 'dataset_params' | 'compare' | 'analytics' | 'commands' | 'logs'>('overview');
@@ -59,6 +60,44 @@ export default function App() {
   const [commandPayload, setCommandPayload] = useState<any>({});
   const [selectedJobForLogs, setSelectedJobForLogs] = useState<Job | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
+
+  const renderTabSkeleton = (variant: 'chart' | 'table' | 'form' | 'list') => (
+    <div className="flex-1 p-4 space-y-3 animate-pulse">
+      <div className="h-4 w-40 bg-line/60 rounded" />
+      {variant === 'chart' && (
+        <>
+          <div className="h-48 bg-line/40 rounded" />
+          <div className="grid grid-cols-3 gap-3">
+            <div className="h-16 bg-line/30 rounded" />
+            <div className="h-16 bg-line/30 rounded" />
+            <div className="h-16 bg-line/30 rounded" />
+          </div>
+        </>
+      )}
+      {variant === 'table' && (
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <div key={idx} className="h-10 bg-line/30 rounded" />
+          ))}
+        </div>
+      )}
+      {variant === 'form' && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-20 bg-line/30 rounded" />
+          <div className="h-20 bg-line/30 rounded" />
+          <div className="h-20 bg-line/30 rounded" />
+          <div className="h-20 bg-line/30 rounded" />
+        </div>
+      )}
+      {variant === 'list' && (
+        <div className="space-y-2">
+          <div className="h-24 bg-line/30 rounded" />
+          <div className="h-24 bg-line/30 rounded" />
+          <div className="h-24 bg-line/30 rounded" />
+        </div>
+      )}
+    </div>
+  );
 
   useEffect(() => {
     if (activeTab === 'logs' && logsEndRef.current) {
@@ -488,6 +527,22 @@ export default function App() {
     setSelectedJobIds([]);
   };
 
+  const handleQuickStartOpenPrepareData = () => {
+    setActiveTab('dataset_params');
+  };
+
+  const handleQuickStartOpenTraining = () => {
+    setActiveTab('training');
+  };
+
+  const handleQuickStartOpenEvaluate = () => {
+    setActiveTab('analytics');
+  };
+
+  const handleQuickStartOpenDeployOps = () => {
+    setActiveTab('jobs');
+  };
+
   const triggerCommandFromSystemHub = async (cmd: AvailableCommand) => {
     const payload = {
       commandId: cmd.id,
@@ -589,6 +644,18 @@ export default function App() {
   const isLocalModelLoaded = Boolean(localModel?.loaded);
   const localModelLabel = localModel?.displayName || 'none loaded';
   const localModelSource = localModel?.source && localModel.source !== 'none' ? localModel.source : 'idle';
+  const workflowStepByTab: Record<string, string> = {
+    overview: 'Quick Start',
+    dataset_params: 'Step 1 · Prepare Data',
+    training: 'Step 2 · Train',
+    analytics: 'Step 3 · Evaluate',
+    jobs: 'Step 4 · Deploy/Run Ops',
+    datasets: 'Dataset Browser',
+    compare: 'Model Comparison',
+    logs: 'System Console',
+    commands: 'Advanced',
+  };
+  const activeWorkflowStep = workflowStepByTab[activeTab] || 'Quick Start';
   const isRemoteMode = status?.executionMode === 'remote';
   const healthLabel = health ? (health.ok ? 'Health OK' : 'Health Degraded') : 'Health Unknown';
   const healthColorClass = health ? (health.ok ? 'text-success' : 'text-danger') : 'text-ink/40';
@@ -609,20 +676,23 @@ export default function App() {
             <div className="w-2 h-2 rounded-full bg-accent glow-blue group-hover:scale-125 transition-transform"></div>
             <span className="font-mono text-xs font-bold tracking-widest uppercase gradient-text">Unsloth_Core v2.4</span>
           </div>
+          <div className="px-2 py-0.5 border border-accent/30 bg-accent/10 rounded text-[11px] text-accent font-semibold whitespace-nowrap">
+            {activeWorkflowStep}
+          </div>
           <div className="h-4 w-px bg-line/50"></div>
           <div className="flex gap-6">
             <div className="flex flex-col">
-              <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">GPU_NODE</span>
+              <span className="text-[12px] uppercase opacity-40 font-bold tracking-widest">GPU_NODE</span>
               <span className={cn("text-[10px] font-mono font-bold tracking-tight", telemetry && telemetry.gpuLoad > 90 ? "text-danger" : "text-accent")}>
                 {telemetry ? `${telemetry.gpuName.split(' ')[0]} / ${telemetry.gpuLoad}%` : '---'}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">CPU_LOAD</span>
+              <span className="text-[12px] uppercase opacity-40 font-bold tracking-widest">CPU_LOAD</span>
               <span className={cn("text-[10px] font-mono font-bold", telemetry && telemetry.cpuLoad > 75 ? "text-danger" : "text-success")}>{telemetry ? `${telemetry.cpuLoad}%` : '---'}</span>
             </div>
             <div className="flex flex-col min-w-[150px] max-w-[220px]">
-              <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">LOCAL INFERENCE / ASSISTANT</span>
+              <span className="text-[12px] uppercase opacity-40 font-bold tracking-widest">LOCAL INFERENCE / ASSISTANT</span>
               <span
                 title={isLocalModelLoaded ? `${localModelLabel} (${localModelSource === 'ollama' ? 'Ollama assistant model' : 'local inference model'})` : 'No Ollama assistant or llama-server inference model detected'}
                 className={cn(
@@ -639,11 +709,11 @@ export default function App() {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex flex-col text-right">
-            <span className="text-[8px] uppercase opacity-40 font-bold tracking-widest">NETWORK_IO</span>
+            <span className="text-[12px] uppercase opacity-40 font-bold tracking-widest">NETWORK_IO</span>
             <span className="text-[10px] font-mono font-bold text-ink/60">{telemetry ? `${telemetry.networkRxMBps.toFixed(1)}MB/s` : '---'}</span>
           </div>
           <div className="h-8 w-px bg-line/50" />
-          <button onClick={stopAllJobs} className="px-3 py-1 bg-danger/10 text-danger border border-danger/30 text-[9px] font-bold rounded-sm uppercase tracking-wider hover:bg-danger/30 transition-all active:scale-95 shadow-lg shadow-danger/5">
+          <button onClick={stopAllJobs} className="px-3 py-1 bg-danger/10 text-danger border border-danger/30 text-[12px] font-bold rounded-sm uppercase tracking-wider hover:bg-danger/30 transition-all active:scale-95 shadow-lg shadow-danger/5">
             Emergency Kill
           </button>
         </div>
@@ -659,29 +729,30 @@ export default function App() {
         {/* Main Content: Matrix & Logs */}
         <main className="flex-1 flex flex-col overflow-hidden bg-bg">
           {/* Tab Selection */}
-          <div className="flex px-4 border-b border-line bg-surface/30 backdrop-blur-md">
+          <div className="flex px-4 border-b border-line bg-surface/30 backdrop-blur-md overflow-x-auto whitespace-nowrap no-scrollbar">
             {[
-              { id: 'overview', label: 'Project Status' },
-              { id: 'jobs', label: 'Operations Matrix' },
-              { id: 'logs', label: 'System Console' },
-              { id: 'datasets', label: 'Dataset Factory' },
-              { id: 'dataset_params', label: 'Generation Specs' },
-              { id: 'training', label: 'Training Suite' },
-              { id: 'analytics', label: 'TensorBoard' },
-              { id: 'commands', label: 'System Hub' },
-              { id: 'compare', label: 'Model Comparison' },
+              { id: 'overview', label: 'Quick Start', shortLabel: 'Start' },
+              { id: 'dataset_params', label: '1) Prepare Data', shortLabel: 'Data' },
+              { id: 'training', label: '2) Train', shortLabel: 'Train' },
+              { id: 'analytics', label: '3) Evaluate', shortLabel: 'Eval' },
+              { id: 'jobs', label: '4) Deploy/Run Ops', shortLabel: 'Ops' },
+              { id: 'datasets', label: 'Dataset Browser', shortLabel: 'Browser' },
+              { id: 'compare', label: 'Model Comparison', shortLabel: 'Compare' },
+              { id: 'logs', label: 'System Console', shortLabel: 'Console' },
+              { id: 'commands', label: 'Advanced', shortLabel: 'Adv' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
-                  "px-4 py-3 text-[9px] font-bold uppercase tracking-[0.2em] border-b-2 transition-all duration-300 relative group",
+                  "shrink-0 px-4 py-3 text-[12px] font-bold uppercase tracking-[0.12em] border-b-2 transition-all duration-300 relative group",
                   activeTab === tab.id ? "border-accent text-ink-bright" : "border-transparent text-ink/30 hover:text-ink/60",
                 )}
               >
-                {tab.label}
+                <span className="sm:hidden">{tab.shortLabel}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
                 {tab.id === 'compare' && selectedJobIds.length > 0 && (
-                  <span className="ml-2 bg-accent text-bg px-1.5 rounded-full text-[8px] font-mono animate-pulse">
+                  <span className="ml-2 bg-accent text-bg px-1.5 rounded-full text-[12px] font-mono animate-pulse">
                     {selectedJobIds.length}
                   </span>
                 )}
@@ -709,14 +780,73 @@ export default function App() {
                   </div>
                   <div className="flex gap-4">
                     <div className="text-right">
-                      <span className="block text-[8px] uppercase font-bold text-ink/30">Total Subjects</span>
+                      <span className="block text-[12px] uppercase font-bold text-ink/30">Total Subjects</span>
                       <span className="text-lg font-bold text-accent">{subjects.length}</span>
                     </div>
                     <div className="text-right border-l border-line/30 pl-4">
-                      <span className="block text-[8px] uppercase font-bold text-ink/30">Active Jobs</span>
+                      <span className="block text-[12px] uppercase font-bold text-ink/30">Active Jobs</span>
                       <span className="text-lg font-bold text-success">{jobs.filter(j => j.status === 'running').length}</span>
                     </div>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                  <button
+                    onClick={handleQuickStartOpenPrepareData}
+                    className="p-3 border border-accent/30 bg-accent/5 rounded-sm text-left hover:bg-accent/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    <div className="text-[12px] font-bold text-accent uppercase tracking-wider">Step 1</div>
+                    <div className="text-sm font-semibold text-ink-bright mt-1">Prepare Data</div>
+                    <div className="text-[12px] text-ink/60 mt-1">Set spec + generation technique and launch dataset generation.</div>
+                  </button>
+
+                  <button
+                    onClick={handleQuickStartOpenTraining}
+                    className="p-3 border border-success/30 bg-success/5 rounded-sm text-left hover:bg-success/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/60"
+                  >
+                    <div className="text-[12px] font-bold text-success uppercase tracking-wider">Step 2</div>
+                    <div className="text-sm font-semibold text-ink-bright mt-1">Train</div>
+                    <div className="text-[12px] text-ink/60 mt-1">Review rank, alpha, base model and launch training.</div>
+                  </button>
+
+                  <button
+                    onClick={handleQuickStartOpenEvaluate}
+                    className="p-3 border border-warning/30 bg-warning/5 rounded-sm text-left hover:bg-warning/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning/60"
+                  >
+                    <div className="text-[12px] font-bold text-warning uppercase tracking-wider">Step 3</div>
+                    <div className="text-sm font-semibold text-ink-bright mt-1">Evaluate</div>
+                    <div className="text-[12px] text-ink/60 mt-1">Check TensorBoard curves and compare run quality.</div>
+                  </button>
+
+                  <button
+                    onClick={handleQuickStartOpenDeployOps}
+                    className="p-3 border border-line bg-surface rounded-sm text-left hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    <div className="text-[12px] font-bold text-ink/70 uppercase tracking-wider">Step 4</div>
+                    <div className="text-sm font-semibold text-ink-bright mt-1">Deploy / Run Ops</div>
+                    <div className="text-[12px] text-ink/60 mt-1">Track jobs, stop failures, open logs, and verify completion.</div>
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2 items-center">
+                  <button
+                    onClick={handleGenerateDataset}
+                    className="px-3 py-1.5 bg-accent text-bg text-[12px] font-bold rounded-sm hover:brightness-110 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    Run Step 1 Now
+                  </button>
+                  <button
+                    onClick={handleLaunchTraining}
+                    className="px-3 py-1.5 bg-success text-bg text-[12px] font-bold rounded-sm hover:brightness-110 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/60"
+                  >
+                    Run Step 2 Now
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('compare')}
+                    className="px-3 py-1.5 bg-panel border border-line text-[12px] font-bold rounded-sm hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    Open Compare
+                  </button>
                 </div>
 
                 <NpcOverview
@@ -744,6 +874,8 @@ export default function App() {
                   selectedJobId={selectedJobId}
                   activeFilter={activeFilter}
                   jobTypeFilter={jobTypeFilter}
+                  isLoading={isLoading}
+                  uiError={uiError}
                   onSelectJob={handleSelectJob}
                   onToggleJobSelection={toggleJobSelection}
                   onSetActiveFilter={handleSetActiveFilter}
@@ -772,10 +904,10 @@ export default function App() {
                     <span className="text-[10px] font-bold text-ink-bright uppercase tracking-widest">Global Telemetry Stream</span>
                   </div>
                   <div className="flex gap-3">
-                    <span className="text-[9px] text-ink/40 font-mono">BUFFER: {logs.length} LINES</span>
+                    <span className="text-[12px] text-ink/40 font-mono">BUFFER: {logs.length} LINES</span>
                     <button
                       onClick={() => setLogs([])}
-                      className="text-[9px] font-bold text-accent hover:brightness-125 uppercase tracking-tighter"
+                      className="text-[12px] font-bold text-accent hover:brightness-125 uppercase tracking-tighter"
                     >
                       Reset Console
                     </button>
@@ -822,12 +954,14 @@ export default function App() {
             )}
 
             {activeTab === 'analytics' && (
-              <TensorBoardPanel
-                data={analyticsData}
-                onRefresh={fetchData}
-                isLive={connectionQuality === 'connected'}
-                isFallback={tbIsFallback}
-              />
+              <Suspense fallback={renderTabSkeleton('chart')}>
+                <TensorBoardPanel
+                  data={analyticsData}
+                  onRefresh={fetchData}
+                  isLive={connectionQuality === 'connected'}
+                  isFallback={tbIsFallback}
+                />
+              </Suspense>
             )}
 
             {activeTab === 'commands' && (
@@ -844,7 +978,9 @@ export default function App() {
                       Evaluation Reports
                     </summary>
                     <div className="mt-3">
-                      <EvalReportsPanel />
+                      <Suspense fallback={<div className="text-[12px] text-ink/50">Loading reports…</div>}>
+                        <EvalReportsPanel />
+                      </Suspense>
                     </div>
                   </details>
                   <div className="border-t border-line my-3" />
@@ -853,7 +989,9 @@ export default function App() {
                       Supabase Leaderboard
                     </summary>
                     <div className="mt-3">
-                      <LeaderboardPanel />
+                      <Suspense fallback={<div className="text-[12px] text-ink/50">Loading leaderboard…</div>}>
+                        <LeaderboardPanel />
+                      </Suspense>
                     </div>
                   </details>
 
@@ -863,7 +1001,9 @@ export default function App() {
                       Unity Deployment
                     </summary>
                     <div className="mt-3">
-                      <UnityDeployPanel />
+                      <Suspense fallback={<div className="text-[12px] text-ink/50">Loading deployment panel…</div>}>
+                        <UnityDeployPanel />
+                      </Suspense>
                     </div>
                   </details>
 
@@ -873,7 +1013,9 @@ export default function App() {
                       Remote Configuration
                     </summary>
                     <div className="mt-3">
-                      <RemoteConfigPanel />
+                      <Suspense fallback={<div className="text-[12px] text-ink/50">Loading remote config…</div>}>
+                        <RemoteConfigPanel />
+                      </Suspense>
                     </div>
                   </details>
                 </div>
@@ -881,92 +1023,100 @@ export default function App() {
             )}
 
             {activeTab === 'compare' && (
-              <ModelComparison
-                selectedJobIds={selectedJobIds}
-                jobs={jobs}
-                runs={runs}
-                exportArtifacts={exportArtifacts}
-                onToggleJobSelection={toggleJobSelection}
-                onClearSelection={handleClearSelection}
-                onNavigateTo={setActiveTab}
-              />
+              <Suspense fallback={renderTabSkeleton('table')}>
+                <ModelComparison
+                  selectedJobIds={selectedJobIds}
+                  jobs={jobs}
+                  runs={runs}
+                  exportArtifacts={exportArtifacts}
+                  onToggleJobSelection={toggleJobSelection}
+                  onClearSelection={handleClearSelection}
+                  onNavigateTo={setActiveTab}
+                />
+              </Suspense>
             )}
 
             {activeTab === 'dataset_params' && (
-              <DatasetFormatPanel
-                subjects={subjects.map((s) => ({ ...s, name: s.id }))}
-                datasets={datasets}
-                trainingConfig={trainingConfig}
-                onGenerateDataset={(npcKey) => {
-                  const cmd = availableCommands.find(c => c.id === 'dataset-generate');
-                  if (cmd) {
-                    const payload = {
-                      commandId: cmd.id,
-                      type: cmd.type,
-                      spec: `subjects/${npcKey}.json`,
-                      options: { technique: 'ollama' }
-                    };
-                    setSelectedCommand(cmd.id);
-                    setCommandPayload(payload);
-                    setCommandModalOpen(true);
-                  }
-                }}
-              />
+              <Suspense fallback={renderTabSkeleton('form')}>
+                <DatasetFormatPanel
+                  subjects={subjects.map((s) => ({ ...s, name: s.id }))}
+                  datasets={datasets}
+                  trainingConfig={trainingConfig}
+                  onGenerateDataset={(npcKey) => {
+                    const cmd = availableCommands.find(c => c.id === 'dataset-generate');
+                    if (cmd) {
+                      const payload = {
+                        commandId: cmd.id,
+                        type: cmd.type,
+                        spec: `subjects/${npcKey}.json`,
+                        options: { technique: 'ollama' }
+                      };
+                      setSelectedCommand(cmd.id);
+                      setCommandPayload(payload);
+                      setCommandModalOpen(true);
+                    }
+                  }}
+                />
+              </Suspense>
             )}
 
             {activeTab === 'datasets' && (
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-auto">
-                  <DatasetFactory
-                    datasets={datasets}
-                    runs={runs}
-                    exportArtifacts={exportArtifacts}
-                    trainingConfig={trainingConfig}
-                    onGenerateDataset={handleGenerateDataset}
-                    onInitNpc={handleInitNpc}
-                    onSelectDataset={handleViewDataset}
-                    onPrepareTraining={handlePrepareTrainingFromDataset}
-                  />
-                </div>
-                {/* Dataset viewer controls */}
-                <div className="p-4 border-t border-line">
-                  <div className="flex gap-2 items-center">
-                    <select
-                      value={datasetViewNpc}
-                      onChange={(e) => { setDatasetViewNpc(e.target.value); setDatasetViewTechnique(''); }}
-                      className="bg-bg border border-line text-[10px] rounded px-2 py-1 min-w-[140px]"
-                    >
-                      <option value="">Select NPC...</option>
-                      {datasets.map((ds) => (
-                        <option key={ds.id} value={ds.id}>{ds.name}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={datasetViewTechnique}
-                      onChange={(e) => setDatasetViewTechnique(e.target.value)}
-                      className="bg-bg border border-line text-[10px] rounded px-2 py-1 min-w-[120px]"
-                    >
-                      <option value="">Technique...</option>
-                      {datasets.find((d) => d.id === datasetViewNpc)?.versions.map((v) => (
-                        <option key={v.tag} value={v.tag}>{v.tag} ({v.entries} entries)</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => handleViewDataset(datasetViewNpc, datasetViewTechnique)}
-                      disabled={!datasetViewNpc || !datasetViewTechnique}
-                      className="px-3 py-1 bg-accent text-bg text-[10px] font-bold rounded disabled:opacity-40 hover:bg-accent/80 transition-colors"
-                    >
-                      View Samples
-                    </button>
+              <Suspense fallback={renderTabSkeleton('list')}>
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="flex-1 overflow-auto">
+                    <DatasetFactory
+                      datasets={datasets}
+                      runs={runs}
+                      exportArtifacts={exportArtifacts}
+                      trainingConfig={trainingConfig}
+                      onGenerateDataset={handleGenerateDataset}
+                      onInitNpc={handleInitNpc}
+                      onSelectDataset={handleViewDataset}
+                      onPrepareTraining={handlePrepareTrainingFromDataset}
+                    />
                   </div>
-                </div>
-                {/* Dataset viewer results */}
-                {datasetViewNpc && datasetViewTechnique && (
-                  <div className="px-4 pb-4 max-h-[400px] overflow-auto">
-                    <DatasetViewer npcKey={datasetViewNpc} technique={datasetViewTechnique} />
+                  {/* Dataset viewer controls */}
+                  <div className="p-4 border-t border-line">
+                    <div className="flex gap-2 items-center">
+                      <select
+                        value={datasetViewNpc}
+                        onChange={(e) => { setDatasetViewNpc(e.target.value); setDatasetViewTechnique(''); }}
+                        className="bg-bg border border-line text-[10px] rounded px-2 py-1 min-w-[140px]"
+                      >
+                        <option value="">Select NPC...</option>
+                        {datasets.map((ds) => (
+                          <option key={ds.id} value={ds.id}>{ds.name}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={datasetViewTechnique}
+                        onChange={(e) => setDatasetViewTechnique(e.target.value)}
+                        className="bg-bg border border-line text-[10px] rounded px-2 py-1 min-w-[120px]"
+                      >
+                        <option value="">Technique...</option>
+                        {datasets.find((d) => d.id === datasetViewNpc)?.versions.map((v) => (
+                          <option key={v.tag} value={v.tag}>{v.tag} ({v.entries} entries)</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => handleViewDataset(datasetViewNpc, datasetViewTechnique)}
+                        disabled={!datasetViewNpc || !datasetViewTechnique}
+                        className="px-3 py-1 bg-accent text-bg text-[10px] font-bold rounded disabled:opacity-40 hover:bg-accent/80 transition-colors"
+                      >
+                        View Samples
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
+                  {/* Dataset viewer results */}
+                  {datasetViewNpc && datasetViewTechnique && (
+                    <div className="px-4 pb-4 max-h-[400px] overflow-auto">
+                      <Suspense fallback={<div className="text-[12px] text-ink/50">Loading dataset samples…</div>}>
+                        <DatasetViewer npcKey={datasetViewNpc} technique={datasetViewTechnique} />
+                      </Suspense>
+                    </div>
+                  )}
+                </div>
+              </Suspense>
             )}
           </AnimatePresence>
 
@@ -974,7 +1124,7 @@ export default function App() {
           <section className="h-52 border-t border-line bg-bg p-3 overflow-hidden flex flex-col group">
             <div className="flex justify-between items-center mb-2">
               <span className="text-[10px] font-bold text-ink/40 uppercase tracking-widest">Real-time Log Streams</span>
-              <div className="flex gap-2 text-[9px] font-mono text-ink/30">
+              <div className="flex gap-2 text-[12px] font-mono text-ink/30">
                 <span>PID: {serverPid}</span>
                 <span className="text-accent underline">DEBUG_ACTIVE</span>
               </div>
@@ -1006,13 +1156,13 @@ export default function App() {
               <h3 className="text-[10px] font-bold text-accent uppercase tracking-[0.2em]">Node Status</h3>
               <div className="flex items-center gap-1.5">
                 <div className={`w-1.5 h-1.5 rounded-full ${connectionQuality === 'connected' ? 'bg-success animate-pulse' : 'bg-danger'}`} />
-                <span className="text-[9px] font-bold text-ink/40 uppercase">{connectionQuality}</span>
+                <span className="text-[12px] font-bold text-ink/40 uppercase">{connectionQuality}</span>
               </div>
             </div>
 
             <div className="space-y-3">
               <div>
-                <div className="flex justify-between text-[9px] mb-1">
+                <div className="flex justify-between text-[12px] mb-1">
                   <span className="text-ink/40 uppercase font-bold">GPU Load</span>
                   <span className="text-ink font-mono font-bold">{telemetry?.gpuLoad || 0}%</span>
                 </div>
@@ -1021,7 +1171,7 @@ export default function App() {
                 </div>
               </div>
               <div>
-                <div className="flex justify-between text-[9px] mb-1">
+                <div className="flex justify-between text-[12px] mb-1">
                   <span className="text-ink/40 uppercase font-bold">Memory</span>
                   <span className="text-ink font-mono font-bold">{((telemetry?.memoryUsedGB || 0) / (telemetry?.memoryTotalGB || 1) * 100).toFixed(0)}%</span>
                 </div>
@@ -1036,7 +1186,7 @@ export default function App() {
             {/* Quick Actions */}
             <details className="group" open>
               <summary className="flex justify-between items-center cursor-pointer list-none">
-                <span className="text-[9px] font-bold text-ink/40 uppercase tracking-widest group-open:text-ink/60">Quick Actions</span>
+                <span className="text-[12px] font-bold text-ink/40 uppercase tracking-widest group-open:text-ink/60">Quick Actions</span>
                 <span className="text-ink/20 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <div className="mt-4 space-y-2">
@@ -1060,18 +1210,18 @@ export default function App() {
             {/* Model & Registry */}
             <details className="group">
               <summary className="flex justify-between items-center cursor-pointer list-none">
-                <span className="text-[9px] font-bold text-ink/40 uppercase tracking-widest group-open:text-ink/60">Local Model</span>
+                <span className="text-[12px] font-bold text-ink/40 uppercase tracking-widest group-open:text-ink/60">Local Model</span>
                 <span className="text-ink/20 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <div className="mt-4">
-                <LocalModelPanel status={useSystemStatus?.localModel} />
+                <LocalModelPanel status={status?.localModel} />
               </div>
             </details>
 
             {/* Health Monitor */}
             <details className="group">
               <summary className="flex justify-between items-center cursor-pointer list-none">
-                <span className="text-[9px] font-bold text-ink/40 uppercase tracking-widest group-open:text-ink/60">Registry Health</span>
+                <span className="text-[12px] font-bold text-ink/40 uppercase tracking-widest group-open:text-ink/60">Registry Health</span>
                 <span className="text-ink/20 group-open:rotate-180 transition-transform">▼</span>
               </summary>
               <div className="mt-4">
@@ -1081,11 +1231,11 @@ export default function App() {
           </div>
 
           <div className="p-4 bg-accent/5 border-t border-line">
-            <div className="text-[9px] text-accent font-bold mb-1 flex items-center gap-1 uppercase tracking-tighter">
+            <div className="text-[12px] text-accent font-bold mb-1 flex items-center gap-1 uppercase tracking-tighter">
               <Zap className="w-2.5 h-2.5 fill-current" />
               Optimization Tip
             </div>
-            <p className="text-[9px] leading-tight text-ink/60 italic">
+            <p className="text-[12px] leading-tight text-ink/60 italic">
               Adjust temperature to 0.4 for higher coherence in complex instruction sets.
             </p>
           </div>
@@ -1093,7 +1243,7 @@ export default function App() {
       </div>
 
       {/* Footer Status Bar */}
-      <footer className="h-6 bg-header border-t border-line px-4 flex items-center justify-between text-[9px] font-mono text-ink/40">
+      <footer className="h-6 bg-header border-t border-line px-4 flex items-center justify-between text-[12px] font-mono text-ink/40">
         <div className="flex gap-4">
           <span>VRAM: {telemetry ? `${telemetry.gpuMemoryUsedGB}GB / ${telemetry.gpuMemoryTotalGB}GB (${telemetry.gpuName})` : 'N/A'}</span>
           <span>NETWORK: {telemetry ? `${telemetry.networkRxMBps.toFixed(1)} / ${telemetry.networkTxMBps.toFixed(1)} MB/s` : 'N/A'}</span>
@@ -1129,7 +1279,7 @@ export default function App() {
             >
               <div className="p-4 border-b border-line bg-header/80 flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-[9px] text-accent font-bold uppercase tracking-[0.2em]">Job Logs</div>
+                  <div className="text-[12px] text-accent font-bold uppercase tracking-[0.2em]">Job Logs</div>
                   <h3 className="text-sm font-bold text-ink-bright truncate">{selectedJobForLogs.name}</h3>
                   <div className="text-[10px] text-ink/40 font-mono truncate">#{selectedJobForLogs.id}</div>
                 </div>
@@ -1312,7 +1462,7 @@ function LocalModelPanel({ status }: { status: any }) {
       </div>
       <div className="flex justify-between items-center">
         <span className="text-[10px] text-ink/40">Status</span>
-        <span className={`text-[9px] font-bold uppercase ${status.loaded ? 'text-success' : 'text-warning'}`}>
+        <span className={`text-[12px] font-bold uppercase ${status.loaded ? 'text-success' : 'text-warning'}`}>
           {status.loaded ? 'Loaded' : 'Idle'}
         </span>
       </div>
@@ -1336,7 +1486,7 @@ function SystemStatusPanel({ status }: { status: any }) {
         <div key={key} className="flex justify-between items-center group">
           <span className="text-[10px] text-ink/40 capitalize">{key.replace(/_/g, ' ')}</span>
           <div className="flex items-center gap-1.5">
-            <span className={`text-[9px] font-bold ${ok ? 'text-success' : 'text-danger'}`}>
+            <span className={`text-[12px] font-bold ${ok ? 'text-success' : 'text-danger'}`}>
               {ok ? 'PASS' : 'FAIL'}
             </span>
             <div className={`w-1 h-1 rounded-full ${ok ? 'bg-success' : 'bg-danger'}`} />

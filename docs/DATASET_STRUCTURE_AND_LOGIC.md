@@ -44,6 +44,10 @@ project_root/
 │
 ├── datasets/                          # All generated training data
 │   └── {npc_key}/                     # One directory per NPC
+│       ├── docs/                      # Curated checked-in docs / reports corpus
+│       │   ├── train.jsonl
+│       │   ├── train_clean.jsonl
+│       │   └── validation.jsonl
 │       ├── notebooklm/                # Production default — NotebookLM-sourced data
 │       │   ├── train.jsonl
 │       │   ├── train_clean.jsonl
@@ -115,9 +119,9 @@ All path construction is centralized in `_config/paths.py`. Key function signatu
 | `export_dir(npc_key)` | `exports/{npc_key}/` |
 | `export_gguf_path(npc_key, model_id, quant)` | `exports/{npc_key}/{npc_key}-{model_short}-{quant}.gguf` |
 
-Valid techniques: `notebooklm`, `ollama`, `openai`, `anthropic`, `template` (declared in `DATASET_TECHNIQUES`).
+Valid techniques: `docs`, `notebooklm`, `ollama`, `openai`, `anthropic`, `template` (declared in `DATASET_TECHNIQUES`).
 
-The `is_canonical_train_path()` function validates a path against the `datasets/{npc_key}/{technique}/train.jsonl` pattern. The `autodetect_dataset()` function auto-discovers the best available dataset by checking techniques in priority order: `notebooklm` > `ollama` > `openai` > `anthropic` > `template`.
+The `is_canonical_train_path()` function validates a path against the `datasets/{npc_key}/{technique}/train.jsonl` pattern. The `autodetect_dataset()` function auto-discovers the best available dataset by checking techniques in priority order: `docs` > `notebooklm` > `ollama` > `openai` > `anthropic` > `template`.
 
 ---
 
@@ -265,7 +269,7 @@ graph TD
 
 ---
 
-## 5. The Five Generation Techniques
+## 5. The Six Generation Techniques
 
 ```mermaid
 flowchart TD
@@ -274,6 +278,7 @@ flowchart TD
     CheckSpeed -- Yes --> Template["template<br/>Quick & simple<br/>No external deps<br/>5-20 examples only"]
     CheckSpeed -- No --> CheckQuality["Need production quality?"]
     CheckQuality -- Yes --> NotebookLM["notebooklm<br/>Research-grounded<br/>Requires NotebookLM export<br/>Best for real NPCs"]
+    CheckSpeed -- Workflow docs --> DocsTechnique["docs<br/>Curated checked-in docs and reports<br/>No external calls<br/>Best for WorkflowAssistant"]
     CheckQuality -- No --> CheckLocal["Want local generation?"]
     CheckLocal -- Yes --> Ollama["ollama<br/>Uses local LLM<br/>Private, no API cost<br/>Requires Ollama running"]
     CheckLocal -- No --> CheckAPI["API key available?"]
@@ -285,11 +290,20 @@ flowchart TD
 
 | Technique | Quality | Speed | Dependencies | Best For | Command |
 |-----------|---------|-------|-------------|----------|---------|
+| **docs** | Medium-High | Fast | Checked-in corpus manifest | Repo-helpful assistants grounded in local docs/reports | `./ucore generate ... --technique docs` |
 | **template** | Low | Fastest | None | Smoke tests, validation, prototyping | `./ucore generate ... --technique template` |
 | **notebooklm** | High | Medium | NotebookLM export JSON | Production NPCs with research grounding | `./ucore generate ... --technique notebooklm` |
 | **ollama** | Medium-High | Medium | Ollama server + model | Private/offline generation, no API cost | `./ucore generate ... --technique ollama` |
 | **openai** | High | Fast | `OPENAI_API_KEY` | High-quality, configurable generation | `./ucore generate ... --technique openai` |
 | **anthropic** | High | Fast | `ANTHROPIC_API_KEY` | High-quality, configurable generation | `./ucore generate ... --technique anthropic` |
+
+### docs
+
+- **How it works**: Reads a curated corpus manifest of checked-in docs and structured reports, then turns curated practical questions into ChatML Q/A by extracting commands, bullets, tables, and prose from the matched sections.
+- **Pros**: Fast, deterministic, safe for repository assistants, no external model call required.
+- **Cons**: Limited to what the checked-in corpus says; not a substitute for research-grounded NotebookLM datasets on broad external subjects.
+- **Output**: ChatML JSONL in `datasets/{npc_key}/docs/`.
+- **Canonical use**: `subjects/workflow_assistant.json` with `docs/corpora/workflow_assistant_docs.json`.
 
 ### template
 

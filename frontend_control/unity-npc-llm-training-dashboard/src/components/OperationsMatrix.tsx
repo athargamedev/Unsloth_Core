@@ -12,6 +12,8 @@ interface OperationsMatrixProps {
   selectedJobId: string | null;
   activeFilter: 'all' | 'running';
   jobTypeFilter: string[];
+  isLoading?: boolean;
+  uiError?: string | null;
   onSelectJob: (id: string) => void;
   onToggleJobSelection: (e: React.MouseEvent, id: string) => void;
   onSetActiveFilter: () => void;
@@ -31,6 +33,8 @@ export const OperationsMatrix = ({
   selectedJobId,
   activeFilter,
   jobTypeFilter,
+  isLoading = false,
+  uiError = null,
   onSelectJob,
   onToggleJobSelection,
   onSetActiveFilter,
@@ -68,13 +72,13 @@ export const OperationsMatrix = ({
           </div>
           <div className="flex gap-2">
             <div className="flex gap-1 items-center">
-              <span className="text-[9px] text-ink/35 font-bold uppercase tracking-wider mr-1">Types shown</span>
+              <span className="text-[12px] text-ink/45 font-bold uppercase tracking-wider mr-1">Types shown</span>
               {['Training', 'Dataset', 'Export', 'Evaluation'].map((t) => (
                 <button
                   key={t}
                   onClick={() => onToggleJobTypeFilter(t)}
                   className={cn(
-                    "px-1.5 py-1 rounded text-[9px] font-bold transition-all uppercase",
+                    "px-2 py-1 rounded text-[12px] font-bold transition-all uppercase",
                     jobTypeFilter.includes(t)
                       ? "bg-accent/20 text-accent border border-accent/40"
                       : "bg-panel border border-line text-ink/40 hover:text-ink/60",
@@ -122,18 +126,41 @@ export const OperationsMatrix = ({
                 </tr>
               </thead>
             <tbody className="text-[11px] font-mono divide-y divide-line/30">
-                {filteredJobs.length === 0 ? (
+                {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-shimmer opacity-20">
                       <td colSpan={8} className="p-4 h-12 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
                     </tr>
                   ))
+                ) : uiError ? (
+                  <tr>
+                    <td colSpan={8} className="p-6 text-center text-[12px] text-danger font-medium">
+                      Failed to load jobs: {uiError}
+                    </td>
+                  </tr>
+                ) : filteredJobs.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-6 text-center text-[12px] text-ink/60">
+                      {activeFilter === 'running'
+                        ? 'No running jobs right now.'
+                        : 'No jobs to display yet. Launch a dataset or training task to populate this table.'}
+                    </td>
+                  </tr>
                 ) : filteredJobs.map((job) => (
                   <tr
                     key={job.id}
                     onClick={() => onSelectJob(job.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelectJob(job.id);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Select job ${job.name}`}
                     className={cn(
-                      "hover:bg-accent/10 transition-all duration-300 cursor-pointer group",
+                      "hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 transition-all duration-300 cursor-pointer group",
                       job.status === 'running' ? "bg-accent/5" : "",
                       selectedJobId === job.id ? "bg-accent/20 border-l-2 border-accent" : "",
                       selectedJobIds.includes(job.id) ? "bg-accent/10" : "",
@@ -162,7 +189,7 @@ export const OperationsMatrix = ({
                         </div>
                       </div>
                     </td>
-                    <td className="p-3 text-ink/50 truncate uppercase text-[9px]">{job.type}</td>
+                    <td className="p-3 text-ink/55 truncate uppercase text-[12px]">{job.type}</td>
                     <td className="p-3">
                       <Badge variant={job.status === 'completed' ? 'success' : job.status === 'running' ? 'warning' : job.status === 'failed' ? 'danger' : 'default'} className={cn(job.status === 'running' && "pulse-active")}>
                         {job.status}
@@ -186,25 +213,28 @@ export const OperationsMatrix = ({
                     </td>
                     <td className="p-3 text-right">
                       {job.status === 'running' ? (
-                        <button onClick={(e) => { e.stopPropagation(); onStopJob(job.id); }} className="text-danger hover:text-danger/80 transition-colors uppercase text-[9px] font-bold tracking-tighter">Stop</button>
+                        <button onClick={(e) => { e.stopPropagation(); onStopJob(job.id); }} aria-label={`Stop job ${job.name}`} className="text-danger hover:text-danger/80 transition-colors uppercase text-[12px] font-bold tracking-tighter">Stop</button>
                       ) : (
                         <div className="flex justify-end gap-3">
                           <button
                             onClick={(e) => { e.stopPropagation(); onViewLogs(job); }}
-                            className="text-ink/60 hover:text-ink transition-colors uppercase text-[9px] font-bold tracking-tighter flex items-center gap-1"
+                            aria-label={`View logs for job ${job.name}`}
+                            className="text-ink/60 hover:text-ink transition-colors uppercase text-[12px] font-bold tracking-tighter flex items-center gap-1"
                           >
                             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
                             Logs
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); onManageJob(job.id); }}
-                            className="text-accent hover:text-accent/80 transition-colors uppercase text-[9px] font-bold tracking-tighter"
+                            aria-label={`Compare job ${job.name}`}
+                            className="text-accent hover:text-accent/80 transition-colors uppercase text-[12px] font-bold tracking-tighter"
                           >
                             Compare
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); onDeleteJob(job.id); }}
-                            className="text-ink/40 hover:text-danger transition-colors uppercase text-[9px] font-bold tracking-tighter"
+                            aria-label={`Clear job ${job.name}`}
+                            className="text-ink/40 hover:text-danger transition-colors uppercase text-[12px] font-bold tracking-tighter"
                           >
                             Clear
                           </button>

@@ -1,0 +1,227 @@
+{
+  "npc_key": "workflow_assistant",
+  "description": "Safe checked-in docs and structured validation reports for the WorkflowAssistant training path. Excludes logs, outputs, exports, runtime registry files, secrets, and machine-local state.",
+  "sources": [
+    {
+      "path": "README.md",
+      "kind": "doc",
+      "section_hints": ["Quick Start", "Project Structure", "Unified CLI"],
+      "questions": [
+        {
+          "prompt": "How do I run the main Unsloth_Core workflow from the repo root?",
+          "category": "teaching",
+          "include_commands": true
+        },
+        {
+          "prompt": "Which top-level folders matter most when I am tracing the training pipeline?",
+          "category": "dialogue"
+        }
+      ]
+    },
+    {
+      "path": "AGENTS.md",
+      "kind": "doc",
+      "section_hints": ["Quick Start for Agents", "The 4-Stage Pipeline", "Frontend Dashboard"],
+      "questions": [
+        {
+          "prompt": "What is the canonical 4-stage pipeline in this repository?",
+          "category": "teaching"
+        },
+        {
+          "prompt": "Which quick commands should I run before I start a long NPC training session?",
+          "category": "quest",
+          "include_commands": true
+        }
+      ]
+    },
+    {
+      "path": "docs/MAP.md",
+      "kind": "doc",
+      "questions": [
+        {
+          "prompt": "Where should I look first in the docs for CLI usage, training, export, or frontend dashboard details?",
+          "category": "dialogue"
+        }
+      ]
+    },
+    {
+      "path": "docs/reference/CLI_REFERENCE.md",
+      "kind": "doc",
+      "section_hints": ["Dataset Management", "Training & Export", "Evaluation & Testing"],
+      "questions": [
+        {
+          "prompt": "Which command validates a subject spec before generation or training?",
+          "category": "teaching",
+          "include_commands": true
+        },
+        {
+          "prompt": "How do I run generate, sanitize, train, and smoke test from `./ucore`?",
+          "category": "teaching",
+          "include_commands": true
+        },
+        {
+          "prompt": "How do I compare or evaluate trained models from the CLI?",
+          "category": "dialogue",
+          "include_commands": true
+        }
+      ]
+    },
+    {
+      "path": "docs/reference/SUBJECT_SPEC.md",
+      "kind": "doc",
+      "questions": [
+        {
+          "prompt": "What fields must a valid `subjects/*.json` spec contain?",
+          "category": "teaching"
+        },
+        {
+          "prompt": "How should `dataset.examples_per_category` be shaped in a subject spec?",
+          "category": "dialogue"
+        }
+      ]
+    },
+    {
+      "path": "docs/DATASET_STRUCTURE_AND_LOGIC.md",
+      "kind": "doc",
+      "section_hints": ["Canonical Filesystem Layout", "ChatML Record Format", "The Five Generation Techniques"],
+      "questions": [
+        {
+          "prompt": "Where do `train.jsonl`, `validation.jsonl`, and `train_clean.jsonl` live in the canonical dataset layout?",
+          "category": "teaching"
+        },
+        {
+          "prompt": "What does one ChatML training record look like in this project?",
+          "category": "dialogue"
+        },
+        {
+          "prompt": "When should I use `docs`, `notebooklm`, `ollama`, or `template` for dataset generation?",
+          "category": "quest"
+        }
+      ]
+    },
+    {
+      "path": "docs/TRAINING_WORKFLOW.md",
+      "kind": "doc",
+      "section_hints": ["Usage Examples", "Validate Effective Config", "Troubleshooting"],
+      "questions": [
+        {
+          "prompt": "How do I train from a subject spec with a preset?",
+          "category": "teaching",
+          "include_commands": true
+        },
+        {
+          "prompt": "How do I validate the resolved training config before running a job?",
+          "category": "dialogue",
+          "include_commands": true
+        }
+      ]
+    },
+    {
+      "path": "docs/CONFIG_VALIDATION_WORKFLOW.md",
+      "kind": "doc",
+      "questions": [
+        {
+          "prompt": "What does `validate-config` check before training starts?",
+          "category": "teaching"
+        },
+        {
+          "prompt": "When should I require canonical dataset paths during validation?",
+          "category": "dialogue",
+          "include_commands": true
+        }
+      ]
+    },
+    {
+      "path": "docs/NOTEBOOKLM_WORKFLOW.md",
+      "kind": "doc",
+      "questions": [
+        {
+          "prompt": "What does the `notebooklm` technique require before dataset generation can succeed?",
+          "category": "teaching",
+          "include_commands": true
+        }
+      ]
+    },
+    {
+      "path": "docs/OLLAMA_WORKFLOW.md",
+      "kind": "doc",
+      "questions": [
+        {
+          "prompt": "When should I choose the `ollama` technique instead of a docs-backed or NotebookLM-backed dataset?",
+          "category": "dialogue"
+        }
+      ]
+    },
+    {
+      "path": "docs/EXPORT_WORKFLOW.md",
+      "kind": "doc",
+      "questions": [
+        {
+          "prompt": "How do I export a trained adapter to GGUF and where does it land?",
+          "category": "teaching",
+          "include_commands": true
+        }
+      ]
+    },
+    {
+      "path": "docs/EVALUATION_WORKFLOW.md",
+      "kind": "doc",
+      "questions": [
+        {
+          "prompt": "How do I compare a candidate model against a baseline in this repo?",
+          "category": "teaching",
+          "include_commands": true
+        }
+      ]
+    },
+    {
+      "path": "docs/integration/FRONTEND_DASHBOARD.md",
+      "kind": "doc",
+      "questions": [
+        {
+          "prompt": "How do I start the frontend dashboard and what does it orchestrate?",
+          "category": "teaching",
+          "include_commands": true
+        },
+        {
+          "prompt": "What reliability guarantees does the frontend dashboard provide for workflow jobs?",
+          "category": "dialogue"
+        }
+      ]
+    },
+    {
+      "path": "frontend_control/DOCUMENTATION.md",
+      "kind": "doc",
+      "questions": [
+        {
+          "prompt": "What are the key components of the Unity NPC LLM Training Dashboard?",
+          "category": "dialogue"
+        }
+      ]
+    },
+    {
+      "path": "frontend_control/unity-npc-llm-training-dashboard/README.md",
+      "kind": "doc",
+      "questions": [
+        {
+          "prompt": "Which frontend dashboard files should I inspect first when debugging workflow execution?",
+          "category": "quest"
+        }
+      ]
+    },
+    {
+      "path": "docs/reports/phase9b9c-validation.md",
+      "kind": "report",
+      "questions": [
+        {
+          "prompt": "What changed in the dashboard stage-marker and stop behavior hardening?",
+          "category": "teaching"
+        },
+        {
+          "prompt": "Why can a pipeline fail early at the dataset stage without falsely advancing later stages?",
+          "category": "dialogue"
+        }
+      ]
+    }
+  ]
+}

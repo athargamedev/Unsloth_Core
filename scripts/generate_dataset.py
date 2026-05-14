@@ -30,6 +30,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from scripts.generate_workflow_dataset import (
+    default_manifest_path,
+    generate_workflow_dataset_from_manifest,
+)
 
 # ── Category templates ──────────────────────────────────────────────────────
 # Each category defines how to generate examples. In production, these would
@@ -725,10 +729,12 @@ def main():
     parser.add_argument("--multi-turn-ratio", type=float, default=0.2, help="Ratio of multi-turn dialogues (0.0 to 1.0)")
     parser.add_argument("--temperature", type=float, default=0.8, help="Generation temperature")
     parser.add_argument("--technique", default="notebooklm",
-                        choices=["template", "ollama", "notebooklm", "openai", "anthropic"],
+                        choices=["template", "ollama", "notebooklm", "openai", "anthropic", "docs"],
                         help="Generation technique subdirectory (default: notebooklm)")
     parser.add_argument("--notebooklm-input", default=os.environ.get("NOTEBOOKLM_INPUT"),
                         help="NotebookLM export JSON/JSONL to import (or NOTEBOOKLM_INPUT env var)")
+    parser.add_argument("--docs-manifest", default=None,
+                        help="Curated corpus manifest for --technique docs (defaults to spec dataset.corpus_manifest)")
     args = parser.parse_args()
 
     # Import re for JSON extraction
@@ -760,7 +766,25 @@ def main():
     print(f"  Subject: {spec['subject']}")
     print()
 
-    if args.technique == "notebooklm":
+    if args.technique == "docs":
+        manifest_path = (
+            args.docs_manifest
+            or spec.get("dataset", {}).get("corpus_manifest")
+            or str(default_manifest_path())
+        )
+        try:
+            result = generate_workflow_dataset_from_manifest(
+                spec,
+                manifest_path,
+                output_path,
+                seed=args.seed,
+                include_validation=not args.no_validation,
+                val_split=args.val_split,
+            )
+        except Exception as exc:
+            print(f"Error: docs manifest generation failed: {exc}")
+            sys.exit(2)
+    elif args.technique == "notebooklm":
         if not args.notebooklm_input:
             print("Error: --technique notebooklm requires --notebooklm-input or NOTEBOOKLM_INPUT.")
             print("       Export NotebookLM Q&A as JSONL/JSON with messages or question/answer fields.")

@@ -21,5 +21,22 @@ export default defineConfig(({mode}) => {
         ignored: ['**/.runtime/**']
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
+
+            if (id.includes('recharts')) return 'vendor-recharts';
+            if (id.includes('react-markdown') || id.includes('remark-') || id.includes('mdast-') || id.includes('micromark')) return 'vendor-markdown';
+            if (id.includes('motion')) return 'vendor-motion';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('scheduler')) return 'vendor-react';
+
+            return 'vendor-misc';
+          },
+        },
+      },
+    },
   };
 });

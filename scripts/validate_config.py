@@ -113,9 +113,10 @@ def validate(args):
             warnings.append(f"Dataset npc_key '{d_npc}' differs from target npc_key '{npc_key}'.")
         if d_technique and d_technique not in paths.DATASET_TECHNIQUES:
             warnings.append(f"Dataset technique '{d_technique}' is not in {paths.DATASET_TECHNIQUES}.")
-        if d_technique and d_technique != "notebooklm":
+        recommended_technique = "docs" if npc_key == "workflow_assistant" else "notebooklm"
+        if d_technique and d_technique != recommended_technique:
             warnings.append(
-                f"Technique '{d_technique}' selected. For production NPC training, notebooklm is recommended."
+                f"Technique '{d_technique}' selected. For production training of '{npc_key}', {recommended_technique} is recommended."
             )
         if d_file and d_file != "train.jsonl":
             warnings.append(f"Dataset file should be train.jsonl, got {d_file}.")

@@ -95,10 +95,10 @@ How can I help with your workflow today?`,
           <h2 className="text-[11px] font-bold text-ink-bright uppercase tracking-widest">Workflow Assistant</h2>
         </div>
         <div className="flex gap-2">
-          <button onClick={handleLoadModel} title="Load the Ollama assistant model (gemma4:e2b), not an NPC GGUF model" className="p-1 hover:bg-white/10 rounded text-accent">
+          <button aria-label="Load assistant model" onClick={handleLoadModel} title="Load the Ollama assistant model (gemma4:e2b), not an NPC GGUF model" className="p-1 hover:bg-white/10 rounded text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
             <Power className="w-3 h-3" />
           </button>
-          <button onClick={handleUnloadModel} title="Unload the Ollama assistant model (gemma4:e2b) only" className="p-1 hover:bg-white/10 rounded text-danger">
+          <button aria-label="Unload assistant model" onClick={handleUnloadModel} title="Unload the Ollama assistant model (gemma4:e2b) only" className="p-1 hover:bg-white/10 rounded text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/60">
             <PowerOff className="w-3 h-3" />
           </button>
         </div>

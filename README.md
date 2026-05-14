@@ -51,12 +51,26 @@ The project documentation is structured for both human developers and AI agents:
 ## 🛠️ Unified CLI (`ucore`)
 
 ```bash
+./ucore generate subjects/workflow_assistant.json --technique docs
 ./ucore generate subjects/subject.json --technique notebooklm
 ./ucore sanitize datasets/subject/notebooklm/train.jsonl
 ./ucore train subjects/subject.json --preset fast-3b
 ./ucore smoke exports/subject/model.gguf
 ./ucore evaluate --baseline old.gguf --candidate new.gguf
 ```
+
+### Workflow Assistant path
+
+The frontend Workflow Assistant has a dedicated docs-backed dataset path:
+
+```bash
+./ucore validate-spec subjects/workflow_assistant.json
+./ucore generate subjects/workflow_assistant.json --technique docs
+./ucore sanitize datasets/workflow_assistant/docs/train.jsonl --strict-canonical
+./ucore validate-config --spec subjects/workflow_assistant.json --preset smoke --data datasets/workflow_assistant/docs/train_clean.jsonl --require-canonical
+```
+
+Its safe corpus manifest lives at `docs/corpora/workflow_assistant_docs.json`.
 
 For a full list of commands, see the [CLI Reference](docs/reference/CLI_REFERENCE.md).
 
