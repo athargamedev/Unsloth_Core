@@ -4,7 +4,7 @@ scaffold_npc.py — Initialize directory structure and spec for a new NPC.
 
 Creates:
   subjects/{npc_key}.json   — validated subject spec
-  datasets/{npc_key}/...    — per-technique dataset folders
+  subjects/datasets/{npc_key}/...    — per-technique dataset folders
   outputs/{npc_key}/        — training output dir (runs/)
   exports/{npc_key}/        — GGUF export dir
 """
@@ -154,18 +154,18 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
         if force or not tech_dir.exists():
             tech_dir.mkdir(parents=True, exist_ok=True)
             (tech_dir / ".gitkeep").touch()
-            created_dirs.append(f"datasets/{npc_key}/{tech}/")
+            created_dirs.append(f"subjects/datasets/{npc_key}/{tech}/")
         else:
-            skipped_dirs.append(f"datasets/{npc_key}/{tech}/ (already exists)")
+            skipped_dirs.append(f"subjects/datasets/{npc_key}/{tech}/ (already exists)")
 
         if tech == "onyx":
             ref_dir = tech_dir / "reference_doc"
             if force or not ref_dir.exists():
                 ref_dir.mkdir(parents=True, exist_ok=True)
                 (ref_dir / ".gitkeep").touch()
-                created_dirs.append(f"datasets/{npc_key}/onyx/reference_doc/")
+                created_dirs.append(f"subjects/datasets/{npc_key}/onyx/reference_doc/")
             else:
-                skipped_dirs.append(f"datasets/{npc_key}/onyx/reference_doc/ (already exists)")
+                skipped_dirs.append(f"subjects/datasets/{npc_key}/onyx/reference_doc/ (already exists)")
 
     # ── 3. Outputs dir (training) ───────────────────────────────────────────
     output_dir = paths.output_dir(npc_key)
@@ -213,16 +213,16 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
         print("  Next steps (spec was skipped — create or edit subjects/{npc_key}.json manually):")
         print(f"    ./ucore validate-spec subjects/{npc_key}.json")
         print(f"    ./ucore generate subjects/{npc_key}.json --technique template")
-        print(f"    ./ucore sanitize datasets/{npc_key}/template/train.jsonl")
+        print(f"    ./ucore sanitize subjects/datasets/{npc_key}/template/train.jsonl")
         print(f"    ./ucore validate-config --spec subjects/{npc_key}.json --preset smoke"
-              f" --data datasets/{npc_key}/template/train_clean.jsonl")
+              f" --data subjects/datasets/{npc_key}/template/train_clean.jsonl")
     else:
         print("  Next steps:")
         print(f"    ./ucore validate-spec subjects/{npc_key}.json")
         print(f"    ./ucore generate subjects/{npc_key}.json --technique template")
-        print(f"    ./ucore sanitize datasets/{npc_key}/template/train.jsonl")
+        print(f"    ./ucore sanitize subjects/datasets/{npc_key}/template/train.jsonl")
         print(f"    ./ucore validate-config --spec subjects/{npc_key}.json --preset smoke"
-              f" --data datasets/{npc_key}/template/train_clean.jsonl")
+              f" --data subjects/datasets/{npc_key}/template/train_clean.jsonl")
 
 
 def main() -> None:

@@ -36,6 +36,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from _config.log_setup import log_info, log_warn, log_error, log_state
 
 # ── Constraint checking ─────────────────────────────────────────────────────
 

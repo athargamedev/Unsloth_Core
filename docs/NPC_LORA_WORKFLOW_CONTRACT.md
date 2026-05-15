@@ -9,7 +9,7 @@ This contract defines the expected paths, metadata, dataset techniques, testing 
 | Project root | `/home/athar/Projects/Unsloth_Core` |
 | CLI | `./ucore` |
 | Subject specs | `subjects/{npc_key}.json` |
-| Datasets | `datasets/{npc_key}/{technique}/train.jsonl` and `validation.jsonl` |
+| Datasets | `subjects/datasets/{npc_key}/{technique}/train.jsonl` and `validation.jsonl` |
 | Training runs | `outputs/{npc_key}/runs/{run_id}` |
 | Current run pointer | `outputs/{npc_key}/latest` |
 | TensorBoard logs | `outputs/{npc_key}/runs/{run_id}` |

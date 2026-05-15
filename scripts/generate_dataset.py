@@ -11,7 +11,7 @@ Usage:
 
 Technical Details:
 - Input: Subject spec JSON file in subjects/
-- Output: datasets/{npc_key}/{technique}/train.jsonl
+- Output: subjects/datasets/{npc_key}/{technique}/train.jsonl
 - Process: Fetches domain knowledge via research queries and synthesizes Q&A.
 """
 
@@ -31,6 +31,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.generate_workflow_dataset import (
     default_manifest_path,
     generate_workflow_dataset_from_manifest,
@@ -1370,7 +1371,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate ChatML dataset from a subject spec")
     parser.add_argument("spec", help="Path to subject spec JSON file")
     parser.add_argument("--output", "-o", default=None,
-                        help="Output JSONL path (default: datasets/<npc_key>/<technique>/train.jsonl)")
+                        help="Output JSONL path (default: subjects/datasets/<npc_key>/<technique>/train.jsonl)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--no-validation", action="store_true",
                         help="Skip validation split")
@@ -1559,6 +1560,9 @@ def main():
             temperature=args.temperature
         )
 
+    log_state("dataset_generated", npc_key=result.get("npc_key", spec.get("npc_key", "unknown")),
+              total=result["total"], train=result["train"], validation=result["validation"],
+              train_path=result["train_path"], technique=args.technique)
     print(f"  Total examples:  {result['total']}")
     print(f"  Training:        {result['train']}")
     print(f"  Validation:      {result['validation']}")

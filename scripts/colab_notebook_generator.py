@@ -43,8 +43,8 @@ def build_notebook(
     drive_datasets_dir: str,
     plan_payload: dict[str, Any],
 ) -> dict[str, Any]:
-    ds_train = f"datasets/{npc_key}/{technique}/train.jsonl"
-    ds_clean = f"datasets/{npc_key}/{technique}/train_clean.jsonl"
+    ds_train = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
+    ds_clean = f"subjects/datasets/{npc_key}/{technique}/train_clean.jsonl"
     spec_name = Path(spec_relpath).name
 
     markdown = f"""

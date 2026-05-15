@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unsloth-core.local/schemas/datasets/sft_record.schema.json",
+  "$id": "https://unsloth-core.local/subjects/schemas/sft_record.schema.json",
   "title": "SFT ChatML JSONL Record",
   "type": "object",
   "required": ["messages"],

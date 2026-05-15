@@ -49,7 +49,7 @@ python scripts/generate_dataset.py subjects/chemistry_instructor.json --techniqu
 python scripts/generate_dataset.py subjects/chemistry_instructor.json --ollama --multi-turn-ratio 0.4
 ```
 **Key Flags:**
-- `--technique ollama`: Sets the generation technique to Ollama (writes to `datasets/{npc_key}/ollama/`).
+- `--technique ollama`: Sets the generation technique to Ollama (writes to `subjects/datasets/{npc_key}/ollama/`).
 - `--ollama`: Legacy flag to enable LLM generation (requires Ollama running locally).
 - `--multi-turn-ratio`: Percentage of the dataset that will be multi-turn conversations (0.0 to 1.0).
 - `--temperature`: Controls the diversity of the generated responses.
@@ -60,7 +60,7 @@ The system includes a sanitization step to ensure all message content is formatt
 ### Step 3: Run Training
 Fine-tune the model on the new dataset:
 ```bash
-python scripts/train.py --data datasets/chemistry_instructor/ollama/train.jsonl --preset fast-1.7b --export-lora
+python scripts/train.py --data subjects/datasets/chemistry_instructor/ollama/train.jsonl --preset fast-1.7b --export-lora
 ```
 **Key Presets:**
 - `fast-1.7b`: Recommended for 1.7B - 3B models on 6GB VRAM.

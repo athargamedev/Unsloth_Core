@@ -3,7 +3,7 @@
 validate_config.py — Resolve and validate effective training config without running training.
 
 Usage:
-  python scripts/validate_config.py --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/onyx/train.jsonl
+  python scripts/validate_config.py --spec subjects/chemistry_instructor.json --preset fast-3b --data subjects/datasets/chemistry_instructor/onyx/train.jsonl
   python scripts/validate_config.py --config configs/lora-sft-base.yaml --preset quality-1.7b
 """
 
@@ -103,7 +103,7 @@ def validate(args):
         warnings.append("No training data path provided and could not auto-detect from npc_key.")
     else:
         if not _is_canonical_dataset_path(data_path):
-            msg = f"Non-canonical data path: {data_path} (expected datasets/{{npc_key}}/{{technique}}/{{train.jsonl|train_clean.jsonl}})"
+            msg = f"Non-canonical data path: {data_path} (expected subjects/datasets/{{npc_key}}/{{technique}}/{{train.jsonl|train_clean.jsonl}})"
             if args.require_canonical:
                 errors.append(msg)
             else:

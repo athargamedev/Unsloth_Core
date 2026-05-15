@@ -99,13 +99,13 @@ Generate Q&A pairs from your spec using one of several techniques.
 2. Select **NPC Spec**: `subjects/my_npc.json`
 3. Choose **Technique**: `onyx` (or `docs`, `ollama`, etc.)
 4. Click **Start** → Dataset generation runs
-5. Output: `datasets/my_npc/<technique>/train.jsonl` and `validation.jsonl`
+5. Output: `subjects/datasets/my_npc/<technique>/train.jsonl` and `validation.jsonl`
 
 ### Output Files
 
 After generation, you'll find:
-- **`datasets/my_npc/<technique>/train.jsonl`** — Training data (typically 25–100 Q&A pairs)
-- **`datasets/my_npc/<technique>/validation.jsonl`** — Holdout validation set
+- **`subjects/datasets/my_npc/<technique>/train.jsonl`** — Training data (typically 25–100 Q&A pairs)
+- **`subjects/datasets/my_npc/<technique>/validation.jsonl`** — Holdout validation set
 - **`metadata.json`** — Generation provenance (timestamp, technique, source count, etc.)
 
 ---
@@ -118,15 +118,15 @@ Validate ChatML format, clean whitespace, remove duplicates, and ensure data qua
 
 ```bash
 ./ucore sanitize subjects/my_npc.json \
-  --data-path datasets/my_npc/onyx/train.jsonl
+  --data-path subjects/datasets/my_npc/onyx/train.jsonl
 ```
 
 ### Dashboard Workflow
 
 1. **Operations Matrix** → **Sanitize Dataset**
-2. Specify dataset path: `datasets/my_npc/onyx/train.jsonl`
+2. Specify dataset path: `subjects/datasets/my_npc/onyx/train.jsonl`
 3. Click **Start** → Sanitization runs
-4. Output: `datasets/my_npc/onyx/train_clean.jsonl` (and validation_clean)
+4. Output: `subjects/datasets/my_npc/onyx/train_clean.jsonl` (and validation_clean)
 
 ### What Sanitization Checks
 
@@ -340,10 +340,10 @@ Or **Dashboard**: Workflow Panel → Spec: `space_explorer` → Technique: `onyx
 CLI:
 ```bash
 ./ucore sanitize subjects/space_explorer.json \
-  --data-path datasets/space_explorer/onyx/train.jsonl
+  --data-path subjects/datasets/space_explorer/onyx/train.jsonl
 ```
 
-Or **Dashboard**: Sanitize Dataset → Path: `datasets/space_explorer/onyx/train.jsonl` → Start
+Or **Dashboard**: Sanitize Dataset → Path: `subjects/datasets/space_explorer/onyx/train.jsonl` → Start
 
 ### 4. Train
 
@@ -378,20 +378,20 @@ Done! The `space_explorer` NPC is trained, exported, and ready for Unity integra
 If you want to ground your NPC in **custom content** (e.g., astronomy PDFs, company docs), keep the reference content with the NPC dataset and index it into Onyx:
 
 1. Create a reference doc under the NPC dataset folder, for example:
-   `datasets/my_npc/onyx/reference_doc/my_npc_reference.md`
+   `subjects/datasets/my_npc/onyx/reference_doc/my_npc_reference.md`
 2. Index it:
    ```bash
    python scripts/onyx_index_repo.py \
      --npc-key my_npc \
      --document-set my_npc \
-     datasets/my_npc/onyx/reference_doc/**/*.md
+     subjects/datasets/my_npc/onyx/reference_doc/**/*.md
    ```
 3. Generate with scoped retrieval and Onyx prep:
    ```bash
    ./ucore generate subjects/my_npc.json --technique onyx --onyx-prep
    ```
 
-If the NPC has `datasets/{npc_key}/onyx/reference_doc/` files, `--onyx-prep` now automatically includes them during indexing.
+If the NPC has `subjects/datasets/{npc_key}/onyx/reference_doc/` files, `--onyx-prep` now automatically includes them during indexing.
 
 ---
 

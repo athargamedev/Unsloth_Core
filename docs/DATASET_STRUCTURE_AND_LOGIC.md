@@ -9,9 +9,9 @@ This document provides a comprehensive walkthrough of the Unsloth_Core dataset l
 ```mermaid
 graph TD
     Spec["Subject Spec<br/>subjects/{npc_key}.json"] --> Gen["1. Generation<br/>generate_dataset.py"]
-    Gen --> Raw["datasets/{npc_key}/{technique}/train.jsonl"]
+    Gen --> Raw["subjects/subjects/datasets/{npc_key}/{technique}/train.jsonl"]
     Raw --> San["2. Sanitization<br/>sanitize_dataset.py"]
-    San --> Clean["datasets/{npc_key}/{technique}/train_clean.jsonl"]
+    San --> Clean["subjects/subjects/datasets/{npc_key}/{technique}/train_clean.jsonl"]
     Clean --> Train["3. Training<br/>train.py (Unsloth SFT)"]
     Train --> Adapter["outputs/{npc_key}/runs/{run_id}/<br/>LoRA Adapter"]
     Adapter --> Export["4. Export<br/>export.py"]
@@ -42,7 +42,7 @@ graph TD
 ```
 project_root/
 │
-├── datasets/                          # All generated training data
+├── subjects/datasets/                          # All generated training data
 │   └── {npc_key}/                     # One directory per NPC
 │       ├── docs/                      # Curated checked-in docs / reports corpus
 │       │   ├── train.jsonl
@@ -96,8 +96,8 @@ project_root/
 
 ### Key directory explanations
 
-- **`datasets/{npc_key}/{technique}/`** — Each technique gets its own subdirectory. The `technique` directory name matches the generation method used. This keeps provenance clear and allows side-by-side comparison.
-- **`datasets/{npc_key}/onyx/reference_doc/`** — NPC-specific grounding content and source documents for Onyx retrieval.
+- **`subjects/datasets/{npc_key}/{technique}/`** — Each technique gets its own subdirectory. The `technique` directory name matches the generation method used. This keeps provenance clear and allows side-by-side comparison.
+- **`subjects/datasets/{npc_key}/onyx/reference_doc/`** — NPC-specific grounding content and source documents for Onyx retrieval.
 - **`train.jsonl`** — Raw generated data (Stage 1 output).
 - **`train_clean.jsonl`** — Sanitized data ready for training (Stage 2 output).
 - **`validation.jsonl`** — Held-out set for evaluation during training. Generated simultaneously with the training split.
@@ -112,10 +112,10 @@ All path construction is centralized in `_config/paths.py`. Key function signatu
 
 | Function | Returns |
 |----------|---------|
-| `dataset_dir(npc_key)` | `datasets/{npc_key}/` |
-| `dataset_train_path(npc_key, technique)` | `datasets/{npc_key}/{technique}/train.jsonl` |
-| `dataset_val_path(npc_key, technique)` | `datasets/{npc_key}/{technique}/validation.jsonl` |
-| `dataset_reference_dir(npc_key, technique)` | `datasets/{npc_key}/{technique}/reference_doc/` |
+| `dataset_dir(npc_key)` | `subjects/datasets/{npc_key}/` |
+| `dataset_train_path(npc_key, technique)` | `subjects/datasets/{npc_key}/{technique}/train.jsonl` |
+| `dataset_val_path(npc_key, technique)` | `subjects/datasets/{npc_key}/{technique}/validation.jsonl` |
+| `dataset_reference_dir(npc_key, technique)` | `subjects/datasets/{npc_key}/{technique}/reference_doc/` |
 | `output_dir(npc_key)` | `outputs/{npc_key}/` |
 | `run_dir(npc_key, run_id)` | `outputs/{npc_key}/runs/{run_id}/` |
 | `export_dir(npc_key)` | `exports/{npc_key}/` |
@@ -123,7 +123,7 @@ All path construction is centralized in `_config/paths.py`. Key function signatu
 
 Valid techniques: `docs`, `onyx`, `ollama`, `openai`, `anthropic`, `template` (declared in `DATASET_TECHNIQUES`).
 
-The `is_canonical_train_path()` function validates a path against the `datasets/{npc_key}/{technique}/train.jsonl` pattern. The `autodetect_dataset()` function auto-discovers the best available dataset by checking techniques in priority order: `docs` > `onyx` > `ollama` > `openai` > `anthropic` > `template`.
+The `is_canonical_train_path()` function validates a path against the `subjects/datasets/{npc_key}/{technique}/train.jsonl` pattern. The `autodetect_dataset()` function auto-discovers the best available dataset by checking techniques in priority order: `docs` > `onyx` > `ollama` > `openai` > `anthropic` > `template`.
 
 ---
 
@@ -191,7 +191,7 @@ Every line in a JSONL dataset file is one JSON object representing a single dial
 
 ### Real-world example from the project
 
-The following is an actual record from `datasets/chemistry_instructor/template/train.jsonl`:
+The following is an actual record from `subjects/datasets/chemistry_instructor/template/train.jsonl`:
 
 ```json
 {"messages": [{"role": "system", "content": "You are ChemistryInstructor. Subject: General chemistry \u2014 atoms, molecules, elements, the periodic table, chemical reactions, stoichiometry, acids and bases. Style: clear, patient, encouraging like a friendly high school chemistry tutor. Rules: Speak in 1-3 short sentences. Stay in character as ChemistryInstructor. Use analogies when helpful. Never mention you are an AI. Max 3 sentences."}, {"role": "user", "content": "Can you give me a practice problem about molecules?"}, {"role": "assistant", "content": "Quick quiz: What is the most important thing to remember about molecules?"}], "metadata": {"npc_key": "chemistry_instructor", "category": "quest", "source": "template"}}
@@ -239,7 +239,7 @@ graph TD
     end
 
     KEY --> META_NPC
-    KEY --> DIR["Directory: datasets/{npc_key}/"]
+    KEY --> DIR["Directory: subjects/datasets/{npc_key}/"]
     NAME --> SYS
     SUBJ --> SYS
     SUBJ --> CON
@@ -304,7 +304,7 @@ flowchart TD
 - **How it works**: Reads a curated corpus manifest of checked-in docs and structured reports, then turns curated practical questions into ChatML Q/A by extracting commands, bullets, tables, and prose from the matched sections.
 - **Pros**: Fast, deterministic, safe for repository assistants, no external model call required.
 - **Cons**: Limited to what the checked-in corpus says; not a substitute for retrieval-grounded Onyx datasets on broad external subjects.
-- **Output**: ChatML JSONL in `datasets/{npc_key}/docs/`.
+- **Output**: ChatML JSONL in `subjects/datasets/{npc_key}/docs/`.
 - **Canonical use**: `subjects/workflow_assistant.json` with `docs/corpora/workflow_assistant_docs.json`.
 
 ### template
@@ -313,28 +313,28 @@ flowchart TD
 - **Pros**: Zero external dependencies, instant generation, deterministic.
 - **Cons**: Repetitive phrasing, shallow content, limited variety.
 - **Default scale**: 5-20 examples per category (smoke tests only).
-- **Output**: ChatML JSONL in `datasets/{npc_key}/template/`.
+- **Output**: ChatML JSONL in `subjects/datasets/{npc_key}/template/`.
 
 ### ollama
 
 - **How it works**: Sends category-specific prompts to a local Ollama model (default: `llama3.1:latest`). The LLM generates both user and assistant turns. Supports multi-turn examples for `dialogue` and `teaching` categories.
 - **Pros**: Private, free, good quality with modern local models.
 - **Cons**: Requires Ollama running locally (http://localhost:11434). Slower than API-based methods.
-- **Output**: ChatML JSONL in `datasets/{npc_key}/ollama/`.
+- **Output**: ChatML JSONL in `subjects/datasets/{npc_key}/ollama/`.
 
 ### openai
 
 - **How it works**: Same prompt structure as Ollama but routed to the OpenAI API (default model: `gpt-4o`). Requires `OPENAI_API_KEY` environment variable.
 - **Pros**: High-quality output, fast, configurable model selection.
 - **Cons**: API cost, requires internet, data sent to OpenAI.
-- **Output**: ChatML JSONL in `datasets/{npc_key}/openai/`.
+- **Output**: ChatML JSONL in `subjects/datasets/{npc_key}/openai/`.
 
 ### anthropic
 
 - **How it works**: Same prompt structure routed to the Anthropic API (default model: `claude-3-5-sonnet-20240620`). Requires `ANTHROPIC_API_KEY` environment variable.
 - **Pros**: High-quality output, different model behavior for variety.
 - **Cons**: API cost, requires internet.
-- **Output**: ChatML JSONL in `datasets/{npc_key}/anthropic/`.
+- **Output**: ChatML JSONL in `subjects/datasets/{npc_key}/anthropic/`.
 
 ---
 
@@ -383,7 +383,7 @@ graph TD
 4. **Output files**:
    - `train.jsonl` — Training set (88% of examples).
    - `validation.jsonl` — Validation set (12% of examples).
-   - Both placed in `datasets/{npc_key}/{technique}/`.
+   - Both placed in `subjects/datasets/{npc_key}/{technique}/`.
 
 ---
 
@@ -439,13 +439,13 @@ I don't have a personal identity
 
 ```bash
 # Basic sanitization
-./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl
+./ucore sanitize subjects/datasets/chemistry_instructor/onyx/train.jsonl
 
 # Strict canonical path validation
-./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl --strict-canonical
+./ucore sanitize subjects/datasets/chemistry_instructor/onyx/train.jsonl --strict-canonical
 
 # Custom thresholds
-./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl \
+./ucore sanitize subjects/datasets/chemistry_instructor/onyx/train.jsonl \
   --min-length 20 --max-sentences 3 --verbose
 ```
 
@@ -558,8 +558,8 @@ Presets are model-size-aware YAML files in `configs/presets/`. Available presets
 |-------|----------------|------------------|
 | **Spec Validation** | Valid subject spec (all required fields above) | `./ucore validate-spec subjects/{npc_key}.json` |
 | **Dataset Generation** | Valid subject spec | `./ucore validate-spec` + `./ucore generate ... --technique template` |
-| **Dataset Sanitization** | `train.jsonl` in canonical path | `./ucore sanitize datasets/{npc_key}/{technique}/train.jsonl` |
-| **Training** | `train_clean.jsonl` + base model (bnb-4bit) + preset | `./ucore validate-config --spec subjects/{npc_key}.json --preset smoke --data datasets/{npc_key}/{technique}/train_clean.jsonl` |
+| **Dataset Sanitization** | `train.jsonl` in canonical path | `./ucore sanitize subjects/datasets/{npc_key}/{technique}/train.jsonl` |
+| **Training** | `train_clean.jsonl` + base model (bnb-4bit) + preset | `./ucore validate-config --spec subjects/{npc_key}.json --preset smoke --data subjects/datasets/{npc_key}/{technique}/train_clean.jsonl` |
 | **Export** | `adapter_config.json` in `outputs/{npc_key}/` (best/latest/runs/*) | `./ucore export {npc_key}` |
 | **Smoke Test** | `.gguf` file + subject spec | `./ucore smoke exports/{npc_key}/{npc_key}-*.gguf --spec subjects/{npc_key}.json --check-integrity` |
 
@@ -640,11 +640,11 @@ All stages can be run in sequence with a single command:
 ./ucore generate subjects/{npc_key}.json --technique template
 
 # 5. Sanitize
-./ucore sanitize datasets/{npc_key}/template/train.jsonl
+./ucore sanitize subjects/datasets/{npc_key}/template/train.jsonl
 
 # 6. Validate config
 ./ucore validate-config --spec subjects/{npc_key}.json --preset smoke \
-  --data datasets/{npc_key}/template/train_clean.jsonl
+  --data subjects/datasets/{npc_key}/template/train_clean.jsonl
 
 # 7. Train
 ./ucore train subjects/{npc_key}.json --preset smoke

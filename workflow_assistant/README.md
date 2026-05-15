@@ -31,6 +31,6 @@ To use the Workflow Assistant with Onyx:
 
 ## Notes
 
-- This tool lives separately from `datasets/workflow_assistant/docs/`.
+- This tool lives separately from `subjects/datasets/workflow_assistant/docs/`.
 - The legacy docs-backed dataset path remains available for offline corpus generation, validation, and historical artifact tracking.
 - The runtime assistant behavior is now designed as a local tool, not a Unity NPC training asset.

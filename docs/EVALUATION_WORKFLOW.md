@@ -75,7 +75,7 @@ Override the validation set:
 python scripts/evaluate.py \
     --baseline baseline.gguf \
     --candidate candidate.gguf \
-    --val-data datasets/chemistry_instructor/ollama/validation.jsonl \
+    --val-data subjects/datasets/chemistry_instructor/ollama/validation.jsonl \
     --num-questions 25
 ```
 
@@ -217,12 +217,12 @@ python scripts/quick_eval.py outputs/chemistry_instructor/ \
 # With subject spec (via scripts)
 python scripts/quick_eval.py outputs/chemistry_instructor/ \
     --spec subjects/chemistry_instructor.json \
-    --val-data datasets/chemistry_instructor/onyx/validation.jsonl
+    --val-data subjects/datasets/chemistry_instructor/onyx/validation.jsonl
 
 # Via ucore
 ./ucore quick-eval outputs/chemistry_instructor/ \
     --spec subjects/chemistry_instructor.json \
-    --val-data datasets/chemistry_instructor/onyx/validation.jsonl
+    --val-data subjects/datasets/chemistry_instructor/onyx/validation.jsonl
 ```
 
 Measures token overlap (Jaccard similarity) between generated and expected responses, plus diversity, sentence count, and AI disclaimer detection.
@@ -312,7 +312,7 @@ Install via Unsloth's llama.cpp build or ensure the binary is on your PATH.
 No validation set found. Using generic evaluation questions.
 ```
 
-The script looks for validation data at `datasets/{npc_key}/{technique}/validation.jsonl`. Generate a dataset first:
+The script looks for validation data at `subjects/datasets/{npc_key}/{technique}/validation.jsonl`. Generate a dataset first:
 
 ```bash
 python scripts/generate_dataset.py subjects/chemistry_instructor.json

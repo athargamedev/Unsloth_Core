@@ -35,7 +35,7 @@ Current scan findings (from this repo)
 Target architecture (single source of truth)
 1) Canonical directories
 - subjects/{npc_key}.json
-- datasets/{npc_key}/{technique}/{split}.jsonl
+- subjects/datasets/{npc_key}/{technique}/{split}.jsonl
   - technique: onyx | ollama | template
   - split: train.jsonl | validation.jsonl
 - outputs/{npc_key}/runs/{run_id}/
@@ -87,7 +87,7 @@ Phase 2 — Configuration normalization (Day 1)
   - dry-run that prints resolved effective config and paths
 
 Phase 3 — Dataset pipeline normalization (Day 1-2)
-- Enforce datasets/{npc_key}/{technique}/train|validation.jsonl.
+- Enforce subjects/datasets/{npc_key}/{technique}/train|validation.jsonl.
 - Remove legacy filename suffix logic from generation/training/eval flows.
 - Add dataset manifest per generated set (optional but recommended):
   - npc_key, technique, generation timestamp, source model/tool, row counts, hash
@@ -136,7 +136,7 @@ Phase 8 — Cleanup + migration completion (Day 4)
 
 Acceptance criteria
 - Root README is fully project-accurate and ucore-centric.
-- No script writes datasets outside datasets/{npc_key}/{technique}/.
+- No script writes datasets outside subjects/datasets/{npc_key}/{technique}/.
 - No deployable GGUF stored in outputs/ (exports only).
 - Every training run has immutable run_id folder + config snapshot + metrics.
 - compare workflow can rank at least 2 runs for same NPC.

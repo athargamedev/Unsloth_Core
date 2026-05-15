@@ -969,8 +969,8 @@ const syncExternalArtifactsToRegistry = (registry: Registry) => {
             npcKey,
             createdAt: fileIso(cleanPath),
             finishedAt: fileIso(cleanPath),
-            command: ["./ucore", "sanitize", `datasets/${npcKey}/${technique}/train.jsonl`],
-            logs: [`[EXTERNAL] sanitized dataset artifact detected: datasets/${npcKey}/${technique}/train_clean.jsonl`],
+            command: ["./ucore", "sanitize", `subjects/datasets/${npcKey}/${technique}/train.jsonl`],
+            logs: [`[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/${npcKey}/${technique}/train_clean.jsonl`],
           }) || changed;
         }
       }
@@ -2052,7 +2052,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
 
       const steps: WorkflowStep[] = [
         { commandId: "dataset-generate", status: "pending", payload: { commandId: "dataset-generate", type: "Dataset", spec, options: { technique } } },
-        { commandId: "dataset-sanitize", status: "pending", payload: { commandId: "dataset-sanitize", type: "Dataset", spec, options: { datasetPath: `datasets/${npcKey}/${technique}/train.jsonl` } } },
+        { commandId: "dataset-sanitize", status: "pending", payload: { commandId: "dataset-sanitize", type: "Dataset", spec, options: { datasetPath: `subjects/datasets/${npcKey}/${technique}/train.jsonl` } } },
       ];
 
       if (isWorkflowTool) {
@@ -2065,7 +2065,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
             spec,
             preset,
             options: {
-              dataPath: `datasets/${npcKey}/${technique}/train_clean.jsonl`,
+              dataPath: `subjects/datasets/${npcKey}/${technique}/train_clean.jsonl`,
               requireCanonical: true,
             },
           },
@@ -2341,7 +2341,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
         "options.technique": { type: "string", required: false, default: "onyx", enum: ["onyx", "ollama", "template", "openai", "anthropic"] },
       },
       "dataset-sanitize": {
-        "options.datasetPath": { type: "string", required: true, default: "datasets/chemistry_instructor/onyx/train.jsonl", description: "Train dataset path" },
+        "options.datasetPath": { type: "string", required: true, default: "subjects/datasets/chemistry_instructor/onyx/train.jsonl", description: "Train dataset path" },
       },
       train: {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },

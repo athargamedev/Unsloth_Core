@@ -25,7 +25,7 @@ Validate config first:
 ./ucore validate-config \
   --spec subjects/chemistry_instructor.json \
   --preset llama-3b-fast \
-  --data datasets/chemistry_instructor/onyx/train.jsonl \
+  --data subjects/datasets/chemistry_instructor/onyx/train.jsonl \
   --strict
 ```
 

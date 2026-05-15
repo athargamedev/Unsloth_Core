@@ -25,7 +25,7 @@ A professional, "agent-first" pipeline for building NPC dialogue models with Uns
 
 - `ucore`: The unified CLI entry point.
 - `subjects/`: NPC identity and knowledge specifications (.json).
-- `datasets/`: Generated training and validation data (.jsonl).
+- `subjects/datasets/`: Generated training and validation data (.jsonl).
 - `scripts/`: Core Python implementation of the 4-stage pipeline.
 - `configs/`: YAML presets for different hardware and model targets.
 - `outputs/`: LoRA adapters and training logs.
@@ -53,7 +53,7 @@ The project documentation is structured for both human developers and AI agents:
 ```bash
 ./ucore generate subjects/workflow_assistant.json --technique docs
 ./ucore generate subjects/subject.json --technique onyx
-./ucore sanitize datasets/subject/onyx/train.jsonl
+./ucore sanitize subjects/datasets/subject/onyx/train.jsonl
 ./ucore train subjects/subject.json --preset fast-3b
 ./ucore smoke exports/subject/model.gguf
 ./ucore evaluate --baseline old.gguf --candidate new.gguf
@@ -67,8 +67,8 @@ For offline artifact generation and corpus auditing, the legacy docs-backed work
 ```bash
 ./ucore validate-spec subjects/workflow_assistant.json
 ./ucore generate subjects/workflow_assistant.json --technique docs
-./ucore sanitize datasets/workflow_assistant/docs/train.jsonl --strict-canonical
-./ucore validate-config --spec subjects/workflow_assistant.json --preset smoke --data datasets/workflow_assistant/docs/train_clean.jsonl --require-canonical
+./ucore sanitize subjects/datasets/workflow_assistant/docs/train.jsonl --strict-canonical
+./ucore validate-config --spec subjects/workflow_assistant.json --preset smoke --data subjects/datasets/workflow_assistant/docs/train_clean.jsonl --require-canonical
 ```
 
 This path is for audit and tooling support only; `workflow_assistant` is not intended for Unity model export.

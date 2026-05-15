@@ -2,17 +2,21 @@
 """
 export.py — GGUF Model Exporter & Quantizer
 
-This script merges LoRA adapters back into the base model and exports them
-to GGUF format for local inference in Unity/LLMUnity.
+This script exports trained LoRA adapters to GGUF format for Unity/LLMUnity.
+
+Two modes:
+  1. Adapter mode (default, for Unity): Produces a small LoRA-only GGUF via
+     llama.cpp's convert_lora_to_gguf.py. Fast, no base model loading.
+  2. Full-merge mode (--full-merge): Merges LoRA into base model and exports
+     as a standalone GGUF. Uses single f16 export + llama-quantize for
+     additional quant levels (avoids redundant unsloth passes).
 
 Usage:
-    ./ucore export chemistry_instructor --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit
-    python scripts/export.py outputs/my_model --quantization q4_k_m
+    # Adapter mode (default, recommended for Unity NPCs):
+    ./ucore export chemistry_instructor
 
-Technical Details:
-- Input: LoRA adapter directory (outputs/) and base model ID.
-- Output: exports/{npc_key}/{npc_key}-{model_short}-{quant}.gguf.
-- Features: Automatic manifest generation, checksums, and f16 fallback.
+    # Full-merge mode:
+    ./ucore export chemistry_instructor --full-merge --quantization q4_k_m
 """
 
 import argparse
@@ -22,6 +26,7 @@ import math
 import os
 import shutil
 import signal
+import subprocess
 import sys
 import tempfile
 import threading
@@ -32,6 +37,195 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+
+# ── llama.cpp toolchain paths ─────────────────────────────────────────────
+LLAMA_CPP_DIR = Path.home() / ".unsloth" / "llama.cpp"
+CONVERTER = LLAMA_CPP_DIR / "convert_lora_to_gguf.py"
+LLAMA_QUANTIZE = LLAMA_CPP_DIR / "build" / "bin" / "llama-quantize"
+
+CONVERTER_CANDIDATES = [
+    CONVERTER,
+    LLAMA_CPP_DIR / "convert" / "convert_lora_to_gguf.py",
+    Path.home() / "llama.cpp" / "convert_lora_to_gguf.py",
+    Path("/usr/local/lib/llama.cpp/convert_lora_to_gguf.py"),
+]
+CONVERTER_GITHUB_URL = (
+    "https://raw.githubusercontent.com/ggml-org/llama.cpp/master/convert_lora_to_gguf.py"
+)
+
+
+def _find_converter() -> Path | None:
+    """Find convert_lora_to_gguf.py in standard locations."""
+    for candidate in CONVERTER_CANDIDATES:
+        if candidate.exists():
+            return candidate
+    import shutil
+    found = shutil.which("convert_lora_to_gguf.py")
+    if found:
+        return Path(found)
+    return None
+
+
+def _download_converter(target_dir: Path | None = None) -> Path | None:
+    """Download the converter script from GitHub as last resort."""
+    if target_dir is None:
+        target_dir = PROJECT_ROOT
+    target = target_dir / "convert_lora_to_gguf.py"
+    if target.exists():
+        return target
+    print(f"  [export] Converter not found locally. Downloading from GitHub...")
+    try:
+        import urllib.request
+        urllib.request.urlretrieve(CONVERTER_GITHUB_URL, str(target))
+        print(f"  [export] Downloaded to {target}")
+        return target
+    except Exception as e:
+        print(f"  [export] Failed to download converter: {e}")
+        return None
+
+
+def _get_clean_config(adapter_path) -> str | None:
+    """Get clean config.json from adapter's base model (strips bitsandbytes keys).
+
+    Returns path to a temp directory containing the cleaned config.json.
+    Caller must clean up the returned directory.
+    """
+    adapter_config_path = Path(adapter_path) / "adapter_config.json"
+    if not adapter_config_path.exists():
+        print(f"Error: {adapter_config_path} not found")
+        return None
+
+    with open(adapter_config_path) as f:
+        adapter_config = json.load(f)
+
+    base_model = adapter_config.get("base_model_name_or_path")
+    if not base_model:
+        print("Error: No base_model_name_or_path in adapter_config.json")
+        return None
+
+    print(f"  Adapter base model: {base_model}")
+
+    # Try cached config first
+    configs_dir = PROJECT_ROOT / "configs" / "base_configs"
+    if configs_dir.exists():
+        cached_name = base_model.replace("/", "-").replace("_", "-")
+        cached_path = configs_dir / f"{cached_name}.json"
+        if cached_path.exists():
+            print(f"  Using cached config: {cached_path}")
+            with open(cached_path) as f:
+                config = json.load(f)
+            tmp_dir = tempfile.mkdtemp(prefix="lora-gguf-config-")
+            with open(os.path.join(tmp_dir, "config.json"), "w") as f:
+                json.dump(config, f)
+            return tmp_dir
+
+    # Try HuggingFace
+    try:
+        from huggingface_hub import hf_hub_download
+        token_path = Path.home() / ".cache" / "huggingface" / "token"
+        token = token_path.read_text().strip() if token_path.exists() else None
+        config_path = hf_hub_download(base_model, "config.json", token=token)
+        with open(config_path) as f:
+            config = json.load(f)
+    except Exception as e:
+        print(f"  Could not load config from HF: {e}")
+        from transformers import AutoConfig
+        try:
+            config = AutoConfig.from_pretrained(base_model).to_dict()
+        except Exception as e2:
+            print(f"  Could not load config locally either: {e2}")
+            print("  Provide a clean config dir with --base-config")
+            return None
+
+    # Strip bitsandbytes keys
+    for key in ["quantization_config", "quant_method"]:
+        config.pop(key, None)
+
+    tmp_dir = tempfile.mkdtemp(prefix="lora-gguf-config-")
+    with open(os.path.join(tmp_dir, "config.json"), "w") as f:
+        json.dump(config, f)
+    return tmp_dir
+
+
+def _export_adapter_gguf(adapter_path: Path, npc_key: str, outtype: str = "f16",
+                         output_path: Path | None = None) -> Path:
+    """Export LoRA adapter as a lightweight GGUF using convert_lora_to_gguf.py.
+
+    No base model loading needed — just the adapter weights + config.
+    Fast output suitable for Unity/LLMUnity LoRA loading.
+    """
+    converter = _find_converter()
+    if converter is None:
+        converter = _download_converter()
+    if converter is None:
+        print("Error: convert_lora_to_gguf.py not found.")
+        print("  Install llama.cpp or download from:")
+        print(f"  {CONVERTER_GITHUB_URL}")
+        sys.exit(1)
+
+    if output_path is None:
+        # Adapter GGUFs go in exports/{npc_key}/{npc_key}-lora-{outtype}.gguf
+        base_name = f"{npc_key}-lora-{outtype}.gguf"
+        output_path = paths.export_dir(npc_key) / base_name
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    clean_config_dir = _get_clean_config(adapter_path)
+    if clean_config_dir is None:
+        sys.exit(1)
+
+    try:
+        cmd = [
+            sys.executable, str(converter),
+            str(adapter_path),
+            "--outtype", outtype,
+            "--outfile", str(output_path),
+            "--base", clean_config_dir,
+        ]
+        print(f"  Running: convert_lora_to_gguf.py --outtype {outtype}")
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+
+        for line in result.stdout.splitlines():
+            print(f"    {line}")
+        if result.returncode != 0:
+            for line in result.stderr.splitlines():
+                print(f"    ERR: {line}")
+            print(f"  Conversion failed (exit {result.returncode})")
+            sys.exit(result.returncode)
+
+        if output_path.exists():
+            size_mb = output_path.stat().st_size / (1024 * 1024)
+            print(f"  Adapter GGUF: {output_path} ({size_mb:.1f} MB)")
+        return output_path
+    finally:
+        if os.path.exists(clean_config_dir):
+            shutil.rmtree(clean_config_dir, ignore_errors=True)
+
+
+def _quantize_gguf(f16_path: Path, output_path: Path, quant_type: str) -> Path:
+    """Quantize an f16 GGUF to a lower bit width using llama-quantize."""
+    if not LLAMA_QUANTIZE.exists():
+        print(f"Warning: llama-quantize not found at {LLAMA_QUANTIZE}")
+        print("  Install the complete ~/.unsloth/llama.cpp build with CUDA support.")
+        return None
+
+    cmd = [str(LLAMA_QUANTIZE), str(f16_path), str(output_path), quant_type]
+    print(f"  Quantizing: {quant_type} via llama-quantize...")
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+
+    for line in result.stdout.splitlines():
+        print(f"    {line}")
+
+    if result.returncode != 0:
+        for line in result.stderr.splitlines():
+            print(f"    ERR: {line}")
+        print(f"  Quantization failed (exit {result.returncode})")
+        return None
+
+    if output_path.exists():
+        size_gb = output_path.stat().st_size / (1024**3)
+        print(f"  → {output_path} ({size_gb:.2f} GB)")
+    return output_path
 
 
 def _status_path(npc_key: str) -> Path:
@@ -242,7 +436,7 @@ def main():
     parser.add_argument(
         "--quantization",
         default="q4_k_m",
-        help="GGUF quantization method (default: q4_k_m)",
+        help="GGUF quantization method for full-merge mode (default: q4_k_m)",
     )
     parser.add_argument(
         "--model", "-m",
@@ -253,16 +447,25 @@ def main():
         help="Override output directory path (default: auto-detected from npc_key)",
     )
     parser.add_argument(
+        "--full-merge", action="store_true",
+        help="Produce a full merged GGUF (loads base model, slower). Default is LoRA adapter only.",
+    )
+    parser.add_argument(
         "--skip-f16", action="store_true",
-        help="Skip exporting the f16 variant",
+        help="In full-merge mode: skip exporting the f16 variant (quantize directly from adapter)",
     )
     parser.add_argument(
         "--resume", action="store_true",
-        help="Resume mode: skip GGUF variants that already exist",
+        help="Resume mode: skip GGUFs that already exist",
     )
     parser.add_argument(
         "--timeout-seconds", type=int, default=5400,
         help="Per-variant export timeout in seconds (default: 5400)",
+    )
+    parser.add_argument(
+        "--outtype", default="f16",
+        choices=["f32", "f16", "bf16", "q8_0"],
+        help="LoRA adapter output format (default: f16). Only used in adapter mode.",
     )
     args = parser.parse_args()
 
@@ -276,7 +479,47 @@ def main():
         print(f"Error: {exc}")
         sys.exit(1)
 
-    # Auto-detect model ID from adapter_config if not provided
+    _write_status(
+        npc_key,
+        state="running",
+        substep="initializing",
+        started_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        mode="full_merge" if args.full_merge else "adapter",
+        quantization=args.quantization,
+        resume=bool(args.resume),
+        pid=os.getpid(),
+        timeout_seconds=args.timeout_seconds,
+    )
+
+    if not args.full_merge:
+        # ── Adapter mode (default) — fast, no base model loading ─────────────
+        print(f"Mode: adapter-only (for Unity/LLMUnity)")
+        print(f"  Adapter: {output_dir}")
+        print(f"  NPC:     {npc_key}")
+        print(f"  Outtype: {args.outtype}")
+
+        output_path = _export_adapter_gguf(
+            output_dir, npc_key,
+            outtype=args.outtype,
+        )
+
+        # Write manifest
+        write_manifest(
+            npc_key, "adapter",
+            [f"lora-{args.outtype}"],
+            [output_path], output_dir,
+        )
+        _write_status(
+            npc_key, state="completed", substep="adapter_done",
+            artifacts=[str(output_path)],
+            completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        )
+        print(f"\nExport complete! Adapter GGUF ready for Unity.")
+        print(f"  Load in LLMUnity: base_model.gguf + lora_adapter.gguf")
+        print(f"  Size: {output_path.stat().st_size / 1e6:.1f} MB")
+        return
+
+    # ── Full-merge mode — optimized: single f16 export + local quantize ─────
     model_id = args.model
     if model_id is None:
         adapter_config = output_dir / "adapter_config.json"
@@ -290,45 +533,30 @@ def main():
         else:
             model_id = "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
 
-    print(f"Exporting LoRA from: {output_dir}")
-    print(f"  NPC key:       {npc_key}")
-    print(f"  Model ID:      {model_id}")
-    print(f"  Quantization:  {args.quantization}")
+    print(f"Mode: full-merge (standalone GGUF)")
+    print(f"  Adapter:  {output_dir}")
+    print(f"  NPC key:  {npc_key}")
+    print(f"  Model ID: {model_id}")
 
-    _write_status(
-        npc_key,
-        state="running",
-        substep="initializing",
-        started_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        model_id=model_id,
-        quantization=args.quantization,
-        resume=bool(args.resume),
-        pid=os.getpid(),
-        timeout_seconds=args.timeout_seconds,
-    )
+    quant_path = paths.export_gguf_path(npc_key, model_id, args.quantization)
+    f16_path = paths.export_gguf_path(npc_key, model_id, "f16")
 
-    quant_path_pre = paths.export_gguf_path(npc_key, model_id, args.quantization)
-    f16_path_pre = paths.export_gguf_path(npc_key, model_id, "f16")
-    if args.resume and quant_path_pre.exists() and (args.skip_f16 or f16_path_pre.exists()):
-        print("[resume] Requested artifacts already exist. Regenerating manifest/checksums only.")
-        gguf_files = [quant_path_pre]
+    # Check resume
+    if args.resume and quant_path.exists() and (args.skip_f16 or f16_path.exists()):
+        print("[resume] Artifacts exist. Regenerating manifest.")
+        gguf_files = [quant_path]
         quantizations = [args.quantization]
         if not args.skip_f16:
-            gguf_files.append(f16_path_pre)
+            gguf_files.append(f16_path)
             quantizations.append("f16")
         write_manifest(npc_key, model_id, quantizations, gguf_files, output_dir)
-        _write_status(
-            npc_key,
-            state="completed",
-            substep="resume_noop",
-            artifacts=[str(p) for p in gguf_files],
-            completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        )
+        _write_status(npc_key, state="completed", substep="resume_noop",
+                      artifacts=[str(p) for p in gguf_files])
         print("Export resume complete (no-op).")
         return
 
     try:
-        # ── Load model ──────────────────────────────────────────────────────────
+        # ── Load model ──────────────────────────────────────────────────────
         from unsloth import FastLanguageModel, save as unsloth_save
         from peft import PeftModel
         import torch
@@ -342,64 +570,62 @@ def main():
             load_in_4bit=True,
         )
 
-        # ── Load LoRA adapter (if present) ──────────────────────────────────────
+        # ── Load LoRA adapter ──────────────────────────────────────────────
         adapter_path = output_dir / "adapter_config.json"
         if adapter_path.exists():
             print(f"  Loading LoRA adapter from: {output_dir}")
             model = PeftModel.from_pretrained(model, str(output_dir), is_trainable=False)
-            # Re-bind save_pretrained_gguf to the PeftModel wrapper
             model.save_pretrained_gguf = types.MethodType(
                 unsloth_save.unsloth_save_pretrained_gguf, model,
             )
 
-        # ── Export quantized GGUF ───────────────────────────────────────────────
-        gguf_path = paths.export_gguf_path(npc_key, model_id, args.quantization)
-        if args.resume and gguf_path.exists():
-            print(f"  [resume] Skipping existing quantized GGUF: {gguf_path}")
-            _write_status(npc_key, state="running", substep=f"skip_{args.quantization}", artifact=str(gguf_path))
+        # ── Export only f16 via unsloth (one slow pass) ─────────────────────
+        f16_path = paths.export_gguf_path(npc_key, model_id, "f16")
+        if args.resume and f16_path.exists():
+            print(f"  [resume] Skipping f16 export — already exists")
         else:
             _export_gguf_file(
-                model,
-                tokenizer,
-                model_id,
-                args.quantization,
-                gguf_path,
+                model, tokenizer, model_id, "f16",
+                f16_path,
                 npc_key=npc_key,
                 substep_timeout=args.timeout_seconds,
             )
 
-        # ── Also export f16 GGUF for deployment use ─────────────────────────────
-        f16_path = paths.export_gguf_path(npc_key, model_id, "f16")
-        if not args.skip_f16:
-            if args.resume and f16_path.exists():
-                print(f"  [resume] Skipping existing f16 GGUF: {f16_path}")
-                _write_status(npc_key, state="running", substep="skip_f16", artifact=str(f16_path))
-            else:
-                _export_gguf_file(
-                    model,
-                    tokenizer,
-                    model_id,
-                    "f16",
-                    f16_path,
-                    npc_key=npc_key,
-                    substep_timeout=args.timeout_seconds,
-                )
+        # ── Quantize to target format via llama-quantize (fast) ─────────────
+        gguf_files = [f16_path]
+        quantizations = ["f16"]
 
-        # ── Write manifest.json ────────────────────────────────────────────────
-        gguf_files = [gguf_path]
-        quantizations = [args.quantization]
-        if not args.skip_f16:
-            gguf_files.append(f16_path)
-            quantizations.append("f16")
+        if args.quantization and args.quantization != "f16":
+            if args.resume and quant_path.exists():
+                print(f"  [resume] Skipping {args.quantization} — already exists")
+            else:
+                result = _quantize_gguf(f16_path, quant_path, args.quantization)
+                if result:
+                    gguf_files.append(quant_path)
+                    quantizations.append(args.quantization)
+                else:
+                    print(f"  [WARN] Local quantization to {args.quantization} failed.")
+                    print(f"  The f16 GGUF is still available at: {f16_path}")
+                    print(f"  You can run quantize manually:")
+                    print(f"    {LLAMA_QUANTIZE} {f16_path} {quant_path} {args.quantization}")
+
+        # ── Write manifest ──────────────────────────────────────────────────
         write_manifest(npc_key, model_id, quantizations, gguf_files, output_dir)
-        _write_status(npc_key, state="completed", substep="finalized", artifacts=[str(p) for p in gguf_files], completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+        _write_status(
+            npc_key, state="completed", substep="finalized",
+            artifacts=[str(p) for p in gguf_files],
+            completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        )
 
         print(f"\nExport complete!")
-        print(f"  GGUF (quant): {gguf_path}")
-        if not args.skip_f16:
-            print(f"  GGUF (f16):   {f16_path}")
+        print(f"  GGUF (f16):       {f16_path}")
+        if args.quantization and args.quantization != "f16" and quant_path.exists():
+            print(f"  GGUF ({args.quantization}): {quant_path}")
+
     except Exception as exc:
-        _write_status(npc_key, state="failed", substep="failed", error_summary=str(exc), failed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+        _write_status(npc_key, state="failed", substep="failed",
+                      error_summary=str(exc),
+                      failed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
         raise
 
 

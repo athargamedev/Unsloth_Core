@@ -2,12 +2,249 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_export_star_navigator_star_navigator-llama3.2-3b-q4_k_m.gguf",
+      "name": "External Export (star_navigator/star_navigator-llama3.2-3b-q4_k_m.gguf)",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "star_navigator",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-15T15:33:10.545Z",
+      "startedAt": "2026-05-15T15:33:10.545Z",
+      "finishedAt": "2026-05-15T15:33:10.545Z",
+      "command": [
+        "./ucore",
+        "export",
+        "star_navigator"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "completed",
+          "logs": [
+            "[STATUS][export] substep=export_f16 state=running"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] GGUF artifact detected: exports/star_navigator/star_navigator-llama3.2-3b-q4_k_m.gguf"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_1296067",
+      "name": "External Process (1296067)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T15:14:33.571Z",
+      "startedAt": "2026-05-15T15:14:33.571Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-8cd4a6e69928.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && python3 -c \" import ast with open('\\''ucore'\\'') as f:     ast.parse(f.read()) print('\\''ucore syntax OK'\\'') with open('\\''scripts/train.py'\\'') as f:     ast.parse(f.read()) print('\\''train.py syntax OK'\\'') with open('\\''scripts/generate_dataset.py'\\'') as f:     ast.parse(f.read()) print('\\''generate_dataset.py syntax OK'\\'') with open('\\''scripts/evaluate.py'\\'') as f:     ast.parse(f.read()) print('\\''evaluate.py syntax OK'\\'') \"' __hermes_ec=$? export -p > /tmp/hermes-snap-8cd4a6e69928.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-8cd4a6e69928.txt 2>/dev/null || true printf '\\n__HERMES_CWD_8cd4a6e69928__%s__HERMES_CWD_8cd4a6e69928__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1296067] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1296067] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-8cd4a6e69928.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && python3 -c \" import ast with open('\\''ucore'\\'') as f:     ast.parse(f.read()) print('\\''ucore syntax OK'\\'') with open('\\''scripts/train.py'\\'') as f:     ast.parse(f.read()) print('\\''train.py syntax OK'\\'') with open('\\''scripts/generate_dataset.py'\\'') as f:     ast.parse(f.read()) print('\\''generate_dataset.py syntax OK'\\'') with open('\\''scripts/evaluate.py'\\'') as f:     ast.parse(f.read()) print('\\''evaluate.py syntax OK'\\'') \"' __hermes_ec=$? export -p > /tmp/hermes-snap-8cd4a6e69928.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-8cd4a6e69928.txt 2>/dev/null || true printf '\\n__HERMES_CWD_8cd4a6e69928__%s__HERMES_CWD_8cd4a6e69928__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T15:14:33.856Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1295749",
+      "name": "External Process (1295749)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "running",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-15T15:14:27.517Z",
+      "startedAt": "2026-05-15T15:14:27.517Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && rm -f /home/athar/.unsloth/llama.cpp/__pycache__/original_gguf_* && UNSLOTH_LLAMA_CPP_SCRIPTS_DIR=/home/athar/.unsloth/llama.cpp ./ucore export star_navigator --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "running",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1295749] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && rm -f /home/athar/.unsloth/llama.cpp/__pycache__/original_gguf_* && UNSLOTH_LLAMA_CPP_SCRIPTS_DIR=/home/athar/.unsloth/llama.cpp ./ucore export star_navigator --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit 2>&1"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_1152077",
+      "name": "External Process (1152077) star_navigator",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "star_navigator",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-15T14:08:39.399Z",
+      "startedAt": "2026-05-15T14:08:39.399Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore train subjects/star_navigator.json --preset fast-3b --from-spec --export-gguf 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 1152077] Process still running (re-classified as Training)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 1152077] Process still running (re-classified as Training)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 1152077] Process still running (re-classified as Training)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 1152077] Process still running (re-classified as Training)",
+            "[EXTERNAL][PID 1152077] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1152077] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore train subjects/star_navigator.json --preset fast-3b --from-spec --export-gguf 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T15:10:15.816Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_star_navigator_20260515_default_003",
+      "name": "External Train (star_navigator/20260515_default_003)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "star_navigator",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-15T14:08:37.674Z",
+      "startedAt": "2026-05-15T14:08:37.674Z",
+      "finishedAt": "2026-05-15T14:08:37.674Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/star_navigator.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/star_navigator/runs/20260515_default_003/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_proc_1047970",
       "name": "External Process (1047970) star_navigator",
       "type": "Training",
       "commandId": "train",
       "npcKey": "star_navigator",
-      "status": "running",
+      "status": "stopped",
       "progress": 38,
       "loss": null,
       "createdAt": "2026-05-15T13:09:01.513Z",
@@ -24,12 +261,13 @@
         },
         {
           "name": "Training",
-          "status": "running",
+          "status": "stopped",
           "logs": [
             "[SYSTEM] Marked failed: server restarted before completion.",
             "[EXTERNAL][PID 1047970] Process still running (re-classified as Training)",
             "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 1047970] Process still running (re-classified as Training)"
+            "[EXTERNAL][PID 1047970] Process still running (re-classified as Training)",
+            "[EXTERNAL][PID 1047970] Process no longer detected"
           ]
         },
         {
@@ -47,7 +285,9 @@
         "[EXTERNAL][PID 1047970] discovered active process",
         "/bin/bash -c ./ucore train subjects/star_navigator.json --preset fast-3b --from-spec --export-gguf 2>&1"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T14:07:48.377Z",
+      "exitCode": -15
     },
     {
       "id": "ext_train_star_navigator_20260515_default_002",
@@ -25811,7 +26051,10 @@
     }
   ],
   "logs": [
-    "[2026-05-15T13:25:35.515Z] [SYSTEM] reconciled ext_proc_1047970 to failed (server_restarted)"
+    "[2026-05-15T15:33:14.555Z] [SYNC] imported external job ext_export_star_navigator_star_navigator-llama3.2-3b-q4_k_m.gguf",
+    "[2026-05-15T15:14:33.602Z] [SYNC] discovered running external process pid=1296067",
+    "[2026-05-15T15:14:27.544Z] [SYNC] discovered running external process pid=1295749",
+    "[2026-05-15T14:50:54.650Z] [SYSTEM] reconciled ext_proc_1152077 to failed (server_restarted)"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

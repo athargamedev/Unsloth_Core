@@ -7,7 +7,7 @@ This document summarizes the current NPC LoRA workflow in `Unsloth_Core`, the ma
 The project already has a usable four-stage pipeline:
 
 1. **Subject specification** in `subjects/{npc_key}.json` defines persona, teaching scope, dialogue rules, quest behavior, refusal boundaries, and research queries.
-2. **Dataset generation** writes ChatML JSONL to `datasets/{npc_key}/{technique}/train.jsonl` and `datasets/{npc_key}/{technique}/validation.jsonl`.
+2. **Dataset generation** writes ChatML JSONL to `subjects/datasets/{npc_key}/{technique}/train.jsonl` and `subjects/datasets/{npc_key}/{technique}/validation.jsonl`.
 3. **Unsloth LoRA training** produces run artifacts under `outputs/{npc_key}/runs/{run_id}` with `outputs/{npc_key}/latest` expected to point at the current run.
 4. **Export and validation** produce GGUF or adapter artifacts under `exports/{npc_key}` and run smoke/evaluation checks before Unity handoff.
 
@@ -16,7 +16,7 @@ The canonical CLI is `./ucore` for common workflows:
 ```bash
 ./ucore generate subjects/chemistry_instructor.json --technique onyx
 ./ucore generate subjects/chemistry_instructor.json --technique ollama
-./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl
+./ucore sanitize subjects/datasets/chemistry_instructor/onyx/train.jsonl
 ./ucore train subjects/chemistry_instructor.json --preset smoke --from-spec
 ./ucore smoke exports/chemistry_instructor/model.gguf --spec subjects/chemistry_instructor.json
 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke
@@ -49,7 +49,7 @@ Direct scripts remain useful when a workflow needs lower-level control: `scripts
 | Artifact | Owner | Path |
 | --- | --- | --- |
 | Subject spec | Human/agent author | `subjects/{npc_key}.json` |
-| Dataset | Generation workflow | `datasets/{npc_key}/{technique}/train.jsonl` and `validation.jsonl` |
+| Dataset | Generation workflow | `subjects/datasets/{npc_key}/{technique}/train.jsonl` and `validation.jsonl` |
 | Sanitized dataset/report | Sanitizer | Same dataset tree or explicit sanitized output/report path |
 | Training run | `scripts/train.py` / `./ucore train` | `outputs/{npc_key}/runs/{run_id}` |
 | Current run pointer | Training workflow | `outputs/{npc_key}/latest` |

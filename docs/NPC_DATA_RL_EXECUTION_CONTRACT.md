@@ -14,9 +14,9 @@ Use this document as the single source of truth for production workflow decision
 
 Required filesystem layout:
 
-- SFT train file: `datasets/{npc_key}/{technique}/train.jsonl`
-- SFT validation file: `datasets/{npc_key}/{technique}/validation.jsonl`
-- Sanitized train file: `datasets/{npc_key}/{technique}/train_clean.jsonl`
+- SFT train file: `subjects/datasets/{npc_key}/{technique}/train.jsonl`
+- SFT validation file: `subjects/datasets/{npc_key}/{technique}/validation.jsonl`
+- Sanitized train file: `subjects/datasets/{npc_key}/{technique}/train_clean.jsonl`
 
 Valid techniques:
 - `onyx` (production default)
@@ -26,7 +26,7 @@ Valid techniques:
 - `template` (smoke/prototyping only)
 
 Validation gates:
-- `./ucore sanitize datasets/{npc_key}/{technique}/train.jsonl --strict-canonical`
+- `./ucore sanitize subjects/datasets/{npc_key}/{technique}/train.jsonl --strict-canonical`
 - `./ucore validate-config --spec subjects/{npc_key}.json --preset <preset> --require-canonical --strict`
 
 ## 2) Definitive SFT JSONL Record Format
@@ -66,9 +66,9 @@ Note: the template and LLM generation paths only populate `npc_key`, `category`,
 
 RL datasets should live alongside SFT datasets:
 
-- Preference pairs: `datasets/{npc_key}/{technique}/rl/preferences.jsonl`
-- Reward rollouts: `datasets/{npc_key}/{technique}/rl/reward_rollouts.jsonl`
-- Safety eval probes: `datasets/{npc_key}/{technique}/rl/safety_probes.jsonl`
+- Preference pairs: `subjects/datasets/{npc_key}/{technique}/rl/preferences.jsonl`
+- Reward rollouts: `subjects/datasets/{npc_key}/{technique}/rl/reward_rollouts.jsonl`
+- Safety eval probes: `subjects/datasets/{npc_key}/{technique}/rl/safety_probes.jsonl`
 
 ### 3.1 Preference pairs (DPO/IPO style)
 

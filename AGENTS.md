@@ -14,20 +14,21 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 | **Unified CLI** | `ucore` | Main entry point for all operations. |
 | **Core Scripts** | `scripts/` | Python implementation of the pipeline stages. |
 | **NPC Specs** | `subjects/` | JSON files defining NPC identity and knowledge. |
-| **Datasets** | `datasets/` | Generated training and validation data (JSONL). |
+| **Datasets** | `subjects/datasets/` | Generated training and validation data (JSONL). |
 | **Training Configs**| `configs/` | YAML base configs and presets. |
 | **LoRA Adapters** | `outputs/` | Checkpoints and final adapters from training. |
-| **GGUF Exports** | `exports/` | Quantized models for Unity deployment. |
+| **GGUF Exports** | `exports/` | Quantized models (full-merge) or LoRA adapters (default) for Unity. |
 | **Evaluations** | `eval/` | Reports, results, and comparison metrics. |
 | **Supabase** | `supabase/` | DB migrations and local Docker setup. |
 | **Frontend** | `frontend_control/` | Monitoring dashboard and React controls. |
+| **llama.cpp** | `~/.unsloth/llama.cpp/` | Prebuilt binaries: llama-server, llama-quantize, convert_lora_to_gguf.py. |
 
 ## 🛠️ The 4-Stage Pipeline
 The project follows a deterministic workflow to transform a subject spec into a playable NPC:
 
 1.  **Generation**: `scripts/generate_dataset.py`
     - Uses NotebookLM API (default), Ollama, or OpenAI to generate Q&A pairs.
-    - Output: `datasets/{npc_key}/{technique}/train.jsonl`.
+    - Output: `subjects/datasets/{npc_key}/{technique}/train.jsonl`.
 2.  **Sanitization**: `scripts/sanitize_dataset.py`
     - Validates ChatML format, cleans white-space, and ensures dataset integrity.
     - Output: `.../train_clean.jsonl`.
@@ -36,9 +37,10 @@ The project follows a deterministic workflow to transform a subject spec into a 
     - Supports hierarchical configs (Base YAML < Preset < CLI).
     - Use `./ucore plan-execution --spec ... --preset ...` before long runs to choose local vs remote_colab.
     - Output: `outputs/{npc_key}/` (LoRA adapter).
-4.  **Export & Validation**: `scripts/export.py` & `scripts/smoke_test.py`
-    - Converts LoRA + Base Model to quantized GGUF.
-    - Validates persona adherence via automated smoke tests.
+4.  **Export & Validation**: `scripts/export.py`
+    - **Default (adapter)**: Converts LoRA to lightweight GGUF via `export_adapter.py`/`convert_lora_to_gguf.py` — fast, no base model loading (MBs, for Unity/LLMUnity).
+    - **Full-merge** (`--full-merge`): Exports f16 GGUF via unsloth once, then uses `llama-quantize` from `~/.unsloth/` for additional quant levels. Much faster than unsloth's double-export.
+    - **Validation**: `scripts/smoke_test.py` validates persona adherence via automated smoke tests (uses `llama-server` from `~/.unsloth/`).
 
 ## 💾 Supabase Integration
 A local Supabase instance tracks everything:
@@ -53,11 +55,14 @@ A local Supabase instance tracks everything:
 
 ## 🤖 AI Agent Best Practices
 - **Always use `ucore`**: Prefer the unified CLI over direct script calls when possible.
+- **Export mode**: `ucore export <npc_key>` defaults to adapter-only mode (fast, lightweight GGUF for Unity/LLMUnity). Use `ucore export <npc_key> --full-merge` for standalone merged GGUFs.
+- **Training + export**: `./ucore train ... --export-gguf` uses adapter mode automatically. Use `--full-merge-export` for full merged GGUF after training.
 - **Preset Selection**:
   - Use `--preset smoke` for debugging/testing.
   - Use `--preset fast-3b` for standard NPC training.
   - Use `--preset safe-any` if CUDA OOM occurs.
   - Use `--preset wandb` (or `--wandb`) for W&B experiment tracking.
+- **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. Contains `llama-server` (inference), `llama-quantize` (fast local quantization from f16→q4_k_m etc.), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary. Used by: export (converter), smoke tests (server), eval (server), full-merge quantization.
 - **Context Awareness**: Before generating a dataset, read the `subjects/*.json` spec to ensure the generated data aligns with the NPC's `identity` and `teaching` style.
 - **Error Handling**: If training fails, check `outputs/{npc_key}/runs/` for TensorBoard logs or `eval/results/` for validation metrics. W&B run links appear in the dashboard Operations Matrix and in the console output.
 

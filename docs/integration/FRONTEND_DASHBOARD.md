@@ -24,7 +24,7 @@ The dashboard no longer relies only on jobs started from UI.
 
 It now merges 3 truth sources:
 1. Internal runner jobs (started via `/api/commands/start` and workflow APIs).
-2. Filesystem artifacts (completed external work discovered from `datasets/`, `outputs/`, `exports/`).
+2. Filesystem artifacts (completed external work discovered from `subjects/datasets/`, `outputs/`, `exports/`).
 3. Active OS process discovery (`ps` scan for relevant `ucore` / pipeline scripts).
 
 External jobs are imported/detected with stable IDs like:

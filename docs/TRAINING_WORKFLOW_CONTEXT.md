@@ -29,7 +29,7 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 | `template` | Simple template-based generation (smoke test only - NOT production) | Testing pipeline mechanics only |
 | `openai` / `anthropic` | Uses OpenAI/Anthropic API to generate | Higher quality, costs money |
 
-**Output:** `datasets/{npc_key}/{technique}/train.jsonl`
+**Output:** `subjects/datasets/{npc_key}/{technique}/train.jsonl`
 
 **Important constraints:**
 - Onyx technique: chunk limit 10-12, 10s+ delays between calls (15-20 asks then rate block)
@@ -170,7 +170,7 @@ source unsloth_env/bin/activate
 
 # 3. Full production pipeline
 ./ucore generate subjects/chemistry_instructor.json --technique onyx
-./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl
+./ucore sanitize subjects/datasets/chemistry_instructor/onyx/train.jsonl
 ./ucore train subjects/chemistry_instructor.json --preset fast-3b
 ./ucore export outputs/chemistry_instructor/lora_model --base-model llama3.2-3b
 ./ucore smoke exports/chemistry_instructor-llama3.2-3b-q4_k_m.gguf --spec subjects/chemistry_instructor.json
@@ -188,8 +188,8 @@ source unsloth_env/bin/activate
 
 | Stage | Output Path | Format |
 |-------|-------------|--------|
-| Generate | `datasets/{npc_key}/{technique}/train.jsonl` | JSONL (ChatML) |
-| Sanitize | `datasets/{npc_key}/{technique}/train_clean.jsonl` | JSONL (cleaned) |
+| Generate | `subjects/datasets/{npc_key}/{technique}/train.jsonl` | JSONL (ChatML) |
+| Sanitize | `subjects/datasets/{npc_key}/{technique}/train_clean.jsonl` | JSONL (cleaned) |
 | Train | `outputs/{npc_key}/` | LoRA adapter (SafeTensors) |
 | Export | `exports/{npc_key}-{model}-{quant}.gguf` | GGUF (quantized) |
 | Validate | `eval/results/{npc_key}/` | HTML/MD report |
@@ -205,7 +205,7 @@ subjects/chemistry_instructor.json
   scripts/generate_dataset.py ───────► Onyx (local RAG)
           │                                │
           ▼                                ▼
-  datasets/chemistry_instructor/     docs/ (indexed source)
+  subjects/datasets/chemistry_instructor/     docs/ (indexed source)
           │
           ▼
   scripts/sanitize_dataset.py ─────► train_clean.jsonl

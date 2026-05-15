@@ -17,8 +17,8 @@ Train a repo-helpful frontend assistant from safe checked-in docs and structured
 ```bash
 ./ucore validate-spec subjects/workflow_assistant.json
 ./ucore generate subjects/workflow_assistant.json --technique docs
-./ucore sanitize datasets/workflow_assistant/docs/train.jsonl --strict-canonical
-./ucore validate-config --spec subjects/workflow_assistant.json --preset smoke --data datasets/workflow_assistant/docs/train_clean.jsonl --require-canonical
+./ucore sanitize subjects/datasets/workflow_assistant/docs/train.jsonl --strict-canonical
+./ucore validate-config --spec subjects/workflow_assistant.json --preset smoke --data subjects/datasets/workflow_assistant/docs/train_clean.jsonl --require-canonical
 ```
 
 These commands are for offline artifact generation and corpus auditing only. The Workflow Assistant runtime itself is powered by local Onyx retrieval and the frontend tool layer, not by Unity NPC export.
@@ -29,9 +29,9 @@ These commands are for offline artifact generation and corpus auditing only. The
 
 These paths are legacy offline artifacts for the workflow tool and corpus auditing; they are not part of the Unity NPC export pipeline.
 
-- Raw dataset: `datasets/workflow_assistant/docs/train.jsonl`
-- Validation split: `datasets/workflow_assistant/docs/validation.jsonl`
-- Sanitized train set: `datasets/workflow_assistant/docs/train_clean.jsonl`
+- Raw dataset: `subjects/datasets/workflow_assistant/docs/train.jsonl`
+- Validation split: `subjects/datasets/workflow_assistant/docs/validation.jsonl`
+- Sanitized train set: `subjects/datasets/workflow_assistant/docs/train_clean.jsonl`
 - Legacy training outputs: `outputs/workflow_assistant/runs/<run_id>/`
 
 ## Notes

@@ -5,8 +5,8 @@
 This phase enforces a single dataset path contract across generation, sanitization, training, and evaluation.
 
 Contract
-- Train file: `datasets/{npc_key}/{technique}/train.jsonl`
-- Validation file: `datasets/{npc_key}/{technique}/validation.jsonl`
+- Train file: `subjects/datasets/{npc_key}/{technique}/train.jsonl`
+- Validation file: `subjects/datasets/{npc_key}/{technique}/validation.jsonl`
 
 Valid techniques
 - `onyx` (production default)
@@ -23,7 +23,7 @@ Valid techniques
 ./ucore validate-config \
   --spec subjects/chemistry_instructor.json \
   --preset llama-3b-fast \
-  --data datasets/chemistry_instructor/onyx/train.jsonl \
+  --data subjects/datasets/chemistry_instructor/onyx/train.jsonl \
   --require-canonical \
   --strict
 ```
@@ -31,7 +31,7 @@ Valid techniques
 2) Enforce canonical input during sanitize
 
 ```bash
-./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl --strict-canonical
+./ucore sanitize subjects/datasets/chemistry_instructor/onyx/train.jsonl --strict-canonical
 ```
 
 3) Migrate legacy flat datasets to canonical structure

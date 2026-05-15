@@ -7,7 +7,7 @@ Unsloth_Core follows a deterministic 4-stage pipeline to transform an NPC subjec
 ```mermaid
 graph TD
     A[Subject Spec .json] --> B[1. Generation]
-    B -->|datasets/| C[2. Sanitization]
+    B -->|subjects/datasets/| C[2. Sanitization]
     C -->|train_clean.jsonl| D[3. Training]
     D -->|outputs/| E[4. Export & Eval]
     E -->|exports/| F[Unity Integration]
@@ -19,7 +19,7 @@ graph TD
 ## 🟢 Stage 1: Generation
 **Script**: `scripts/generate_dataset.py`  
 **Inputs**: `subjects/*.json`  
-**Outputs**: `datasets/{npc_key}/{technique}/train.jsonl`
+**Outputs**: `subjects/datasets/{npc_key}/{technique}/train.jsonl`
 
 Using the `research_queries` defined in the subject spec, the generator fetches domain knowledge and synthesizes Q&A pairs.
 - **Techniques**: `onyx` (default), `ollama` (local), `openai` (cloud).

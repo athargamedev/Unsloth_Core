@@ -68,7 +68,9 @@ def main():
     train_p.add_argument("--preset", help="Training preset")
     train_p.add_argument("--technique", choices=["docs", "onyx", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
     train_p.add_argument("--model", help="Base model ID/path override")
-    train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training")
+    train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training (adapter mode for Unity)")
+    train_p.add_argument("--full-merge-export", action="store_true",
+                         help="Full merge export after training (slower, standalone GGUF)")
     train_p.add_argument("--wandb", action="store_true", default=None,
                          help="Enable W&B logging (overrides config)")
     train_p.add_argument("--no-wandb", action="store_true", default=None,
@@ -117,12 +119,15 @@ def main():
     mig_p.add_argument("--apply", action="store_true", help="Apply migration (default dry-run)")
     mig_p.add_argument("--move", action="store_true", help="Move files instead of copy")
 
-    # Export
-    export_p = subparsers.add_parser("export", help="Export trained LoRA adapter to GGUF")
+    # Export (adapter-only by default for Unity, --full-merge for standalone GGUF)
+    export_p = subparsers.add_parser("export", help="Export trained LoRA adapter to GGUF (adapter-only by default)")
     export_p.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
     export_p.add_argument("--model", "-m", help="Base model ID (auto-detected if omitted)")
-    export_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization (default: q4_k_m)")
-    export_p.add_argument("--skip-f16", action="store_true", help="Skip exporting f16 variant")
+    export_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization for full-merge mode (default: q4_k_m)")
+    export_p.add_argument("--full-merge", action="store_true", help="Produce full merged GGUF (slower, standalone)")
+    export_p.add_argument("--skip-f16", action="store_true", help="In full-merge mode: skip f16 variant")
+    export_p.add_argument("--outtype", default="f16", choices=["f32", "f16", "bf16", "q8_0"],
+                          help="Adapter output format (default: f16)")
 
     # Export resume
     exr_p = subparsers.add_parser("export-resume", help="Resume/continue GGUF export for an NPC")
@@ -243,6 +248,18 @@ def main():
     bp_p.add_argument("--drive-repo-dir", default="/content/drive/MyDrive/Unsloth_Core", help="Drive path where repo is cloned")
     bp_p.add_argument("--drive-datasets-dir", default="/content/drive/MyDrive/Unsloth/datasets", help="Drive datasets directory")
 
+    # Batch export (reuse base model for all NPCs)
+    be_p = subparsers.add_parser("batch-export", help="Export all NPCs to GGUF without reloading base model between NPCs")
+    be_p.add_argument("--npc", help="Comma-separated NPC keys (default: auto-detect from outputs/)")
+    be_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization (default: q4_k_m)")
+    be_p.add_argument("--model", help="Base model ID (auto-detected if omitted)")
+    be_p.add_argument("--skip-f16", action="store_true", help="Skip f16 variants")
+
+    # TensorBoard reader
+    tb_p = subparsers.add_parser("tb-reader", help="Read TensorBoard event files as JSON")
+    tb_p.add_argument("--run-dir", required=True, help="Path to TensorBoard event directory")
+    tb_p.add_argument("--indent", type=int, default=2, help="JSON indent (default: 2)")
+
     # Init/Scaffold
     init_p = subparsers.add_parser("init", aliases=["new-npc"], help="Scaffold a new NPC (folders + spec)")
     init_p.add_argument("npc_key", help="NPC key (snake_case)")
@@ -325,6 +342,7 @@ def main():
         if getattr(args, "lora_alpha", None): cmd.extend(["--lora-alpha", str(args.lora_alpha)])
         if getattr(args, "lr_scheduler", None): cmd.extend(["--lr-scheduler", args.lr_scheduler])
         if args.export_gguf: cmd.append("--export-gguf")
+        if getattr(args, 'full_merge_export', False): cmd.append("--full-merge-export")
         if args.wandb: cmd.append("--wandb")
         if args.no_wandb: cmd.append("--no-wandb")
         run_cmd(cmd)
@@ -336,7 +354,24 @@ def main():
         if args.track: cmd.append("--track")
         run_cmd(cmd)
 
+    elif args.command == "batch-export":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "batch_export.py")]
+        if args.npc: cmd.extend(["--npc", args.npc])
+        if args.quantization: cmd.extend(["--quantization", args.quantization])
+        if args.model: cmd.extend(["--model", args.model])
+        if args.skip_f16: cmd.append("--skip-f16")
+        run_cmd(cmd)
+
+    elif args.command == "tb-reader":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "tb_reader.py"), "--run-dir", args.run_dir]
+        if args.indent: cmd.extend(["--indent", str(args.indent)])
+        run_cmd(cmd)
+
     elif args.command == "dashboard":
+        print("[DEPRECATED] This FastAPI dashboard is deprecated.")
+        print("  The React+Express SPA at http://localhost:3100 is the current dashboard.")
+        print("  Deploy it from frontend_control/unity-npc-llm-training-dashboard/.")
+        print("  Starting legacy dashboard anyway...\n")
         cmd = [PYTHON, str(SCRIPTS_DIR / "dashboard.py"), "--port", str(args.port)]
         run_cmd(cmd)
 
@@ -388,7 +423,9 @@ def main():
         cmd = [PYTHON, str(SCRIPTS_DIR / "export.py"), args.npc_key]
         if args.model: cmd.extend(["--model", args.model])
         if args.quantization: cmd.extend(["--quantization", args.quantization])
+        if args.full_merge: cmd.append("--full-merge")
         if args.skip_f16: cmd.append("--skip-f16")
+        if args.outtype: cmd.extend(["--outtype", args.outtype])
         run_cmd(cmd)
 
     elif args.command == "export-resume":
@@ -526,7 +563,7 @@ def main():
 
         # Determine paths
         npc_key = Path(args.spec).stem
-        dataset_path = f"datasets/{npc_key}/{technique}/train.jsonl"
+        dataset_path = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
 
         print("[STAGE] dataset")
         print(f"\n--- Phase 2: Sanitizing Dataset ---")

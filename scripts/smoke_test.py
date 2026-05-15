@@ -28,23 +28,31 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 def run_llama_cli(model_path, prompt, system_prompt=None, max_tokens=128):
-    """Run a single inference using llama-cli (if available) or llama.cpp main."""
-    # Try to find llama-cli or main
+    """Run inference using llama.cpp CLI or server."""
     llama_bin = None
+    use_server = False
     candidates = ["llama-cli", "llama.cpp/main", "./main", "main"]
     for c in candidates:
         if subprocess.run(["which", c], capture_output=True).returncode == 0:
             llama_bin = c
             break
-    
+
     if not llama_bin:
-        # Check standard unsloth/llama.cpp locations
-        unsloth_llama = Path.home() / ".unsloth/llama.cpp/build/bin/llama-cli"
-        if unsloth_llama.exists():
-            llama_bin = str(unsloth_llama)
-    
+        # Check standard unsloth/llama.cpp locations — first llama-cli, then server
+        unsloth_dir = Path.home() / ".unsloth/llama.cpp/build/bin"
+        llama_cli = unsloth_dir / "llama-cli"
+        llama_server = unsloth_dir / "llama-server"
+        if llama_cli.exists():
+            llama_bin = str(llama_cli)
+        elif llama_server.exists():
+            llama_bin = str(llama_server)
+            use_server = True
+
     if not llama_bin:
-        return "[ERROR] llama-cli or main binary not found in PATH or ~/.unsloth"
+        return "[ERROR] llama-cli or llama-server not found in PATH or ~/.unsloth"
+
+    if use_server:
+        return _run_via_server(llama_bin, model_path, prompt, system_prompt, max_tokens)
 
     full_prompt = prompt
     if system_prompt:
@@ -70,12 +78,64 @@ def run_llama_cli(model_path, prompt, system_prompt=None, max_tokens=128):
             output = output.split("<|im_start|>assistant\n")[-1]
         elif "assistant\n" in output:
              output = output.split("assistant\n")[-1]
-        
+
         # Clean up tags
         output = output.split("<|im_end|>")[0].strip()
         return output
     except Exception as e:
         return f"[ERROR] Inference failed: {e}"
+
+
+def _run_via_server(server_bin, model_path, prompt, system_prompt=None, max_tokens=128):
+    """Run inference by briefly starting llama-server and calling its HTTP API."""
+    import requests
+    import socket
+    import time
+
+    # Find a free port
+    with socket.socket() as s:
+        s.bind(("", 0))
+        port = s.getsockname()[1]
+
+    messages = [{"role": "user", "content": prompt}]
+    if system_prompt:
+        messages.insert(0, {"role": "system", "content": system_prompt})
+
+    proc = subprocess.Popen(
+        [server_bin, "-m", str(model_path), "--port", str(port),
+         "-ngl", "99", "--no-web"],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
+
+    try:
+        # Wait for server to be ready
+        url = f"http://127.0.0.1:{port}/v1/chat/completions"
+        for _ in range(30):
+            time.sleep(0.5)
+            try:
+                r = requests.get(f"http://127.0.0.1:{port}/health", timeout=2)
+                if r.status_code == 200:
+                    break
+            except requests.ConnectionError:
+                continue
+        else:
+            proc.kill()
+            return "[ERROR] llama-server failed to start within 15s"
+
+        req = {
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": 0.7,
+            "repeat_penalty": 1.1,
+        }
+        r = requests.post(url, json=req, timeout=60)
+        data = r.json()
+        return data["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        return f"[ERROR] Server inference failed: {e}"
+    finally:
+        proc.kill()
+        proc.wait(timeout=5)
 
 def check_gguf_integrity(model_path: Path) -> bool:
     """Quick integrity check: verify GGUF magic bytes and read header fields.

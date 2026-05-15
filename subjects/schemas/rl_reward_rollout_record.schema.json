@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unsloth-core.local/schemas/datasets/rl_reward_rollout_record.schema.json",
+  "$id": "https://unsloth-core.local/subjects/schemas/rl_reward_rollout_record.schema.json",
   "title": "RL Reward Rollout Record",
   "type": "object",
   "required": ["prompt", "response", "scores"],

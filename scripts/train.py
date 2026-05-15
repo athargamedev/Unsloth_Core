@@ -36,6 +36,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from _config.log_setup import log_info, log_warn, log_error, log_state
 
 # ── Model-size-aware presets ────────────────────────────────────────────────
 # Each preset overrides the base YAML config for specific model sizes.
@@ -410,9 +411,9 @@ def load_dataset_from_jsonl(path, tokenizer, config):
     max_seq_length = config.get("training", {}).get("max_seq_length", 2048)
     packing = config.get("training", {}).get("packing", True)
 
-    print(f"  Loading dataset from: {path}")
+    log_info("Loading dataset from: %s", path)
     if not os.path.exists(path):
-        print(f"  [ERROR] Dataset not found: {path}")
+        log_error("Dataset not found: %s", path)
         sys.exit(1)
 
     rows = []
@@ -541,70 +542,8 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
     return trainer, metrics
 
 
-def _should_push_gguf_to_hub(export_config):
-    """Return True only when GGUF Hub upload was explicitly configured."""
-    return bool(export_config.get("push_to_hub") and export_config.get("hub_repo_id"))
-
-
-def _assert_valid_hub_export_config(export_config):
-    """Fail loudly for explicit Hub uploads missing a destination repo."""
-    if export_config.get("push_to_hub") and not export_config.get("hub_repo_id"):
-        raise RuntimeError("export.push_to_hub is true, but export.hub_repo_id is missing")
-
-
-def _move_generated_gguf(temp_dir, output_path):
-    """Move Unsloth's generated GGUF from a temporary export dir."""
-    output_path = Path(output_path)
-    gguf_files = sorted(Path(temp_dir).rglob("*.gguf"))
-    sibling_dir = Path(f"{temp_dir}_gguf")
-
-    if not gguf_files and sibling_dir.exists():
-        gguf_files = sorted(sibling_dir.rglob("*.gguf"))
-
-    if not gguf_files:
-        raise RuntimeError(f"No GGUF file generated in {temp_dir}")
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.move(str(gguf_files[0]), str(output_path))
-    return output_path
-
-
-def export_to_gguf(model, tokenizer, config, output_path, quantization=None):
-    """Export the fine-tuned model to a local GGUF file unless Hub upload is explicit."""
-    from unsloth import FastLanguageModel
-
-    export_config = config.get("export", {})
-    quantization = quantization or export_config.get("quantization", "q4_k_m")
-
-    print(f"  Exporting to GGUF (quant={quantization})...")
-    print(f"  Output: {output_path}")
-
-    FastLanguageModel.for_inference(model)
-
-    _assert_valid_hub_export_config(export_config)
-
-    if _should_push_gguf_to_hub(export_config):
-        hub_repo_id = export_config.get("hub_repo_id")
-        model.push_to_hub_gguf(hub_repo_id, tokenizer, quantization)
-        return sorted(Path(output_path).parent.glob("*.gguf"))
-
-    if not hasattr(model, "save_pretrained_gguf"):
-        raise RuntimeError("Loaded model does not support local GGUF export via save_pretrained_gguf")
-
-    with tempfile.TemporaryDirectory(prefix="train_gguf_export_") as temp_dir:
-        model.save_pretrained_gguf(
-            temp_dir,
-            tokenizer=tokenizer,
-            quantization_method=quantization,
-        )
-        generated_path = _move_generated_gguf(temp_dir, output_path)
-
-    return [generated_path]
-
-
 def main():
     parser = argparse.ArgumentParser(description="Unsloth training launcher")
-
     # Mode
     parser.add_argument("config_or_spec", nargs="?",
                         help="Path to YAML config or subject spec (with --from-spec)")
@@ -752,14 +691,15 @@ def main():
 
     # Write config snapshot
     log_config_snapshot(config, run_dir)
+    log_state("training_start", npc_key=npc_key, run_id=run_id, model=model_name, preset=args.preset)
 
     # ── Load model ─────────────────────────────────────────────────────
-    print("  [1/4] Loading model and tokenizer...")
+    log_info("[1/4] Loading model and tokenizer...")
     model, tokenizer = get_model_and_tokenizer(config)
-    print(f"  ✓ Model loaded")
+    log_info("Model loaded")
 
     # ── Load dataset ───────────────────────────────────────────────────
-    print("  [2/4] Loading dataset...")
+    log_info("[2/4] Loading dataset...")
     dataset_path = config.get("dataset_path", "")
     if not dataset_path or not os.path.exists(dataset_path):
         # Try to derive dataset path
@@ -771,33 +711,34 @@ def main():
     dataset = load_dataset_from_jsonl(dataset_path, tokenizer, config)
     eval_dataset = None  # TODO: support eval split
     num_examples = len(dataset)
-    print(f"  ✓ Dataset loaded: {num_examples} examples")
+    log_info("Dataset loaded: %d examples", num_examples)
 
     # ── Training ───────────────────────────────────────────────────────
-    print("  [3/4] Running training...")
+    log_info("[3/4] Running training...")
     trainer, metrics = run_training(model, tokenizer, dataset, eval_dataset, config)
     training_loss = metrics.get("train_loss", 0.0)
-    print(f"  ✓ Training complete: loss={training_loss:.4f}")
+    log_info("Training complete: loss=%.4f", training_loss)
+    log_state("training_complete", npc_key=npc_key, run_id=run_id, loss=training_loss, examples=num_examples)
 
     # ── Promotion check ────────────────────────────────────────────────
     promotion_passed, promotion_failures = check_promotion_rules(
         training_loss, config, num_examples
     )
     if promotion_passed:
-        print("  ✓ Promotion rules passed")
+        log_info("Promotion rules passed")
         # Create/update 'best' symlink to this run
         best_link = Path(output_dir or paths.output_dir(npc_key)) / "best"
         if best_link.exists() or best_link.is_symlink():
             best_link.unlink()
         try:
             best_link.symlink_to(Path("runs") / run_id)
-            print(f"  ✓ Updated 'best' symlink → runs/{run_id}")
+            log_info("Updated 'best' symlink → runs/%s", run_id)
         except OSError:
             pass
     else:
-        print(f"  ⚠ Promotion rules failed:")
+        log_warn("Promotion rules failed:")
         for failure in promotion_failures:
-            print(f"    - {failure}")
+            log_warn("  - %s", failure)
 
     # Always update 'latest' symlink regardless of promotion result
     latest_link = Path(output_dir or paths.output_dir(npc_key)) / "latest"
@@ -805,29 +746,36 @@ def main():
         latest_link.unlink()
     try:
         latest_link.symlink_to(Path("runs") / run_id)
-        print(f"  ✓ Updated 'latest' symlink → runs/{run_id}")
+        log_info("Updated 'latest' symlink → runs/%s", run_id)
     except OSError:
         pass
 
     # ── GGUF Export ────────────────────────────────────────────────────
     if args.export_gguf:
-        print("  [4/4] Exporting to GGUF...")
+        log_info("[4/4] Exporting to GGUF (adapter mode for Unity)...")
         exports_dir = paths.export_dir(npc_key)
         exports_dir.mkdir(parents=True, exist_ok=True)
 
-        quantization = args.quantization or config.get("export", {}).get("quantization", "q4_k_m")
+        # Use the unified export.py in adapter mode (fast, no base model loading)
+        export_script = PROJECT_ROOT / "scripts" / "export.py"
+        export_cmd = [sys.executable, str(export_script), str(output_dir)]
+        if getattr(args, 'full_merge_export', False):
+            export_cmd.append("--full-merge")
+            quant = args.quantization or config.get("export", {}).get("quantization", "q4_k_m")
+            export_cmd.extend(["--quantization", quant])
+            log_info("  Mode: full-merge (standalone GGUF)")
+        else:
+            log_info("  Mode: adapter-only (LLMUnity compatible)")
 
-        gguf_path = str(paths.export_gguf_path(npc_key, config.get("model", "model"), quantization))
+        log_info("  Running: %s", " ".join(str(c) for c in export_cmd[2:]))
+        result = subprocess.run(export_cmd, capture_output=False, text=True, timeout=7200)
+        if result.returncode != 0:
+            log_error("GGUF export failed (exit %d)", result.returncode)
+        else:
+            log_info("GGUF export complete")
 
-        gguf_files = export_to_gguf(model, tokenizer, config, gguf_path, quantization)
-
-        print(f"  ✓ GGUF export complete:")
-        for gf in gguf_files:
-            size_mb = os.path.getsize(gf) / (1024 * 1024)
-            print(f"    - {gf} ({size_mb:.1f} MB)")
-        print(f"  ├ Saved to: {exports_dir}")
-
-        # Write manifest
+        # Write manifest with export info
+        gguf_files = sorted(exports_dir.glob(f"{npc_key}*.gguf"))
         manifest = {
             "npc_key": npc_key,
             "run_id": run_id,
@@ -835,19 +783,19 @@ def main():
             "technique": technique,
             "training_loss": training_loss,
             "num_examples": num_examples,
-            "quantization": quantization,
-            "lora_r": lora_r,
-            "lora_alpha": lora_alpha_val,
             "created_at": datetime.now().isoformat(),
+            "mode": "full_merge" if getattr(args, 'full_merge_export', False) else "adapter",
             "gguf_files": [str(gf) for gf in gguf_files],
         }
         manifest_path = exports_dir / "manifest.json"
         with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=2)
-        print(f"  ├ Manifest: {manifest_path}")
+        log_info("  Manifest: %s", manifest_path)
     else:
-        print("  [4/4] Skipping GGUF export (use --export-gguf to enable)")
+        log_info("[4/4] Skipping GGUF export (use --export-gguf to enable)")
 
+    log_state("training_finished", npc_key=npc_key, run_id=run_id, loss=training_loss,
+              export=bool(args.export_gguf), promoted=promotion_passed)
     print(f"\n{'='*60}")
     print(f"  Training complete!")
     print(f"  Run ID:  {run_id}")

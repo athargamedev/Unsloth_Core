@@ -10,7 +10,7 @@ Naming conventions:
   - Model short:   unsloth/Llama-3.2-3B-Instruct-bnb-4bit → llama3.2-3b
   - Output dir:    outputs/{npc_key}/
   - Export dir:    exports/{npc_key}/
-  - Dataset dir:   datasets/{npc_key}/{technique}/
+  - Dataset dir:   subjects/datasets/{npc_key}/{technique}/
   - Eval reports:  eval/reports/{npc_key}/
 """
 
@@ -61,26 +61,27 @@ DATASET_TECHNIQUES = ("docs", "onyx", "ollama", "openai", "anthropic", "template
 
 
 def dataset_root() -> Path:
-    return PROJECT_ROOT / "datasets"
+    """Return subjects/datasets/ — datasets live inside subjects/ since they're tightly coupled to NPC specs."""
+    return PROJECT_ROOT / "subjects" / "datasets"
 
 
 def dataset_dir(npc_key: str) -> Path:
-    """Return datasets/{npc_key}/"""
+    """Return subjects/datasets/{npc_key}/"""
     return dataset_root() / npc_key
 
 
 def dataset_train_path(npc_key: str, technique: str = "onyx") -> Path:
-    """Return datasets/{npc_key}/{technique}/train.jsonl"""
+    """Return subjects/datasets/{npc_key}/{technique}/train.jsonl"""
     return dataset_dir(npc_key) / technique / "train.jsonl"
 
 
 def dataset_val_path(npc_key: str, technique: str = "onyx") -> Path:
-    """Return datasets/{npc_key}/{technique}/validation.jsonl"""
+    """Return subjects/datasets/{npc_key}/{technique}/validation.jsonl"""
     return dataset_dir(npc_key) / technique / "validation.jsonl"
 
 
 def dataset_reference_dir(npc_key: str, technique: str = "onyx") -> Path:
-    """Return datasets/{npc_key}/{technique}/reference_doc/"""
+    """Return subjects/datasets/{npc_key}/{technique}/reference_doc/"""
     return dataset_dir(npc_key) / technique / "reference_doc"
 
 
@@ -102,7 +103,7 @@ def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
 
 
 def is_canonical_train_path(path: str | Path) -> bool:
-    """Return True if path matches datasets/{npc_key}/{technique}/train.jsonl."""
+    """Return True if path matches subjects/datasets/{npc_key}/{technique}/train.jsonl."""
     p = Path(path)
     if not p.is_absolute():
         p = (PROJECT_ROOT / p).resolve()
@@ -117,7 +118,7 @@ def is_canonical_train_path(path: str | Path) -> bool:
 def infer_validation_path(train_path: str | Path) -> Path:
     """Infer validation path from a train path.
 
-    Canonical path is datasets/{npc_key}/{technique}/train.jsonl -> validation.jsonl.
+    Canonical path is subjects/datasets/{npc_key}/{technique}/train.jsonl -> validation.jsonl.
     For non-canonical paths, this returns a best-effort sibling filename.
     """
     p = Path(train_path)

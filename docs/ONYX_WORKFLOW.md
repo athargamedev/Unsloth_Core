@@ -68,8 +68,8 @@ Retrieval-only, lowest resource cost:
 Output follows the normal contract:
 
 ```text
-datasets/{npc_key}/onyx/train.jsonl
-datasets/{npc_key}/onyx/validation.jsonl
+subjects/datasets/{npc_key}/onyx/train.jsonl
+subjects/datasets/{npc_key}/onyx/validation.jsonl
 ```
 
 Each example includes provenance metadata:
@@ -112,7 +112,7 @@ Preflight:
 ./ucore validate-config \
   --spec subjects/chemistry_instructor.json \
   --preset fast-3b \
-  --data datasets/chemistry_instructor/onyx/train.jsonl \
+  --data subjects/datasets/chemistry_instructor/onyx/train.jsonl \
   --require-canonical \
   --strict
 ```
