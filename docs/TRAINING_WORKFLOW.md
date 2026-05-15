@@ -51,7 +51,7 @@ Generate a dataset from a subject spec and train with a preset:
 python scripts/train.py subjects/chemistry_instructor.json --from-spec --preset fast-3b
 ```
 
-This auto-generates the dataset to `datasets/chemistry_instructor/notebooklm/train.jsonl`, then trains with the `fast-3b` preset.
+This auto-generates the dataset to `datasets/chemistry_instructor/onyx/train.jsonl`, then trains with the `fast-3b` preset.
 
 ### YAML Config with Overrides
 
@@ -59,7 +59,7 @@ Use an existing config file and override specific values:
 
 ```bash
 python scripts/train.py configs/lora-sft-base.yaml \
-    --data datasets/chemistry_instructor/notebooklm/train.jsonl \
+    --data datasets/chemistry_instructor/onyx/train.jsonl \
     --preset fast-1.7b
 ```
 
@@ -100,7 +100,7 @@ python scripts/train.py subjects/chemistry_instructor.json \
 Validate the resolved config and canonical path conventions before training:
 
 ```bash
-./ucore validate-config --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/notebooklm/train.jsonl --require-canonical --strict
+./ucore validate-config --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/onyx/train.jsonl --require-canonical --strict
 ```
 
 Direct script mode:
@@ -117,7 +117,7 @@ Train by specifying everything on the command line:
 python scripts/train.py \
     --model unsloth/Qwen3-1.7B-bnb-4bit \
     --preset fast-1.7b \
-    --data datasets/chemistry_instructor/notebooklm/train.jsonl \
+    --data datasets/chemistry_instructor/onyx/train.jsonl \
     --output outputs/chemistry_instructor
 ```
 

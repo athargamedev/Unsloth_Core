@@ -179,7 +179,7 @@ def write_examples_with_validation(examples, output_path, seed=42, include_valid
         "total": len(examples),
         "train": len(train_examples),
         "validation": len(val_examples),
-        "categories": {"notebooklm_import": len(examples)},
+        "categories": {"onyx_retrieval": len(examples)},
         "train_path": str(output_path),
         "val_path": str(val_path) if val_path else None,
     }

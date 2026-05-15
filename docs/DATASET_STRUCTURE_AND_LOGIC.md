@@ -141,7 +141,7 @@ Every line in a JSONL dataset file is one JSON object representing a single dial
   "metadata": {
     "npc_key": "chemistry_instructor",
     "category": "teaching",
-    "source": "notebooklm"
+    "source": "onyx"
   }
 }
 ```
@@ -180,7 +180,7 @@ Every line in a JSONL dataset file is one JSON object representing a single dial
 |-----|----------|------|-------------|
 | `npc_key` | Yes | string | Matches the NPC's `npc_key` from the subject spec |
 | `category` | Yes | string | One of: `identity`, `teaching`, `dialogue`, `quest`, `refusal` |
-| `source` | Yes | string | Provenance: `template`, `notebooklm`, `ollama`, `openai`, `anthropic`. Note: for LLM generators, the actual code populates `ollama:{model_name}` (a known code artifact). |
+| `source` | Yes | string | Provenance: `template`, `onyx`, `ollama`, `openai`, `anthropic`. Note: for LLM generators, the actual code populates `ollama:{model_name}` (a known code artifact). |
 | `difficulty` | No | string | `beginner`, `intermediate`, `expert` |
 | `technique` | No | string | The generation technique used (may duplicate `source`) |
 | `concept` | No | string | The concept keyword used during generation |
@@ -277,7 +277,7 @@ flowchart TD
     Start --> CheckSpeed["Need fast smoke test?"]
     CheckSpeed -- Yes --> Template["template<br/>Quick & simple<br/>No external deps<br/>5-20 examples only"]
     CheckSpeed -- No --> CheckQuality["Need production quality?"]
-    CheckQuality -- Yes --> NotebookLM["notebooklm<br/>Research-grounded<br/>Requires NotebookLM export<br/>Best for real NPCs"]
+    CheckQuality -- Yes --> OnyxTech["onyx<br/>Retrieval-grounded<br/>Local Onyx index<br/>Best for real NPCs"]
     CheckSpeed -- Workflow docs --> DocsTechnique["docs<br/>Curated checked-in docs and reports<br/>No external calls<br/>Best for WorkflowAssistant"]
     CheckQuality -- No --> CheckLocal["Want local generation?"]
     CheckLocal -- Yes --> Ollama["ollama<br/>Uses local LLM<br/>Private, no API cost<br/>Requires Ollama running"]
@@ -292,7 +292,7 @@ flowchart TD
 |-----------|---------|-------|-------------|----------|---------|
 | **docs** | Medium-High | Fast | Checked-in corpus manifest | Repo-helpful assistants grounded in local docs/reports | `./ucore generate ... --technique docs` |
 | **template** | Low | Fastest | None | Smoke tests, validation, prototyping | `./ucore generate ... --technique template` |
-| **notebooklm** | High | Medium | NotebookLM export JSON | Production NPCs with research grounding | `./ucore generate ... --technique notebooklm` |
+| **onyx** | High | Medium | Onyx server with indexed documents | Production NPCs with local retrieval grounding | `./ucore generate ... --technique onyx` |
 | **ollama** | Medium-High | Medium | Ollama server + model | Private/offline generation, no API cost | `./ucore generate ... --technique ollama` |
 | **openai** | High | Fast | `OPENAI_API_KEY` | High-quality, configurable generation | `./ucore generate ... --technique openai` |
 | **anthropic** | High | Fast | `ANTHROPIC_API_KEY` | High-quality, configurable generation | `./ucore generate ... --technique anthropic` |
@@ -301,7 +301,7 @@ flowchart TD
 
 - **How it works**: Reads a curated corpus manifest of checked-in docs and structured reports, then turns curated practical questions into ChatML Q/A by extracting commands, bullets, tables, and prose from the matched sections.
 - **Pros**: Fast, deterministic, safe for repository assistants, no external model call required.
-- **Cons**: Limited to what the checked-in corpus says; not a substitute for research-grounded NotebookLM datasets on broad external subjects.
+- **Cons**: Limited to what the checked-in corpus says; not a substitute for retrieval-grounded Onyx datasets on broad external subjects.
 - **Output**: ChatML JSONL in `datasets/{npc_key}/docs/`.
 - **Canonical use**: `subjects/workflow_assistant.json` with `docs/corpora/workflow_assistant_docs.json`.
 
@@ -312,14 +312,6 @@ flowchart TD
 - **Cons**: Repetitive phrasing, shallow content, limited variety.
 - **Default scale**: 5-20 examples per category (smoke tests only).
 - **Output**: ChatML JSONL in `datasets/{npc_key}/template/`.
-
-### notebooklm
-
-- **How it works**: Loads a pre-generated NotebookLM export JSON, coerces each record into ChatML format via `_coerce_notebooklm_record()`. The NotebookLM source is expected to have research-grounded Q&A pairs.
-- **Pros**: Highest real-world data quality, grounded in actual research material.
-- **Cons**: Requires a NotebookLM Notebook to be created and exported first. External dependency.
-- **Output**: ChatML JSONL in `datasets/{npc_key}/notebooklm/`.
-- **See also**: `docs/NOTEBOOKLM_WORKFLOW.md` for the full NotebookLM integration workflow.
 
 ### ollama
 
@@ -355,10 +347,10 @@ graph TD
     Concepts --> Loop
     Loop --> TemplateGen["Template-based:<br/>Fill {concept} placeholders<br/>into user/assistant templates"]
     Loop --> OLLM["Ollama/OpenAI/Anthropic:<br/>Prompt LLM with category + system"]
-    Loop --> NB["NotebookLM:<br/>Coerce imported records<br/>to ChatML format"]
+    Loop --> OnyxGen["Onyx:<br/>Retrieve from local index<br/>and generate ChatML"]
     TemplateGen --> Split["Split train/validation<br/>(88%/12% default)"]
     OLLM --> Split
-    NB --> Split
+    OnyxGen --> Split
     Split --> TrainFile["train.jsonl"]
     Split --> ValFile["validation.jsonl"]
 ```
@@ -381,7 +373,7 @@ graph TD
      - **Template fallback**: If no LLM or LLM fails, uses template-based generation with concept placeholders.
 
 3. **Train/validation split**:
-   - **NotebookLM import path**: Uses `write_examples_with_validation()` which shuffles globally and splits (default 12% validation).
+   - **Onyx generation path**: Uses `write_examples_with_validation()` which shuffles globally and splits (default 12% validation).
    - **Template and LLM generation paths**: Split is performed inline in `generate_dataset()` — stratified by category, each category's examples are shuffled and split independently.
    - Default validation split: 12% (minimum 1 held-out per category).
    - Training and validation files are written simultaneously.
@@ -445,13 +437,13 @@ I don't have a personal identity
 
 ```bash
 # Basic sanitization
-./ucore sanitize datasets/chemistry_instructor/notebooklm/train.jsonl
+./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl
 
 # Strict canonical path validation
-./ucore sanitize datasets/chemistry_instructor/notebooklm/train.jsonl --strict-canonical
+./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl --strict-canonical
 
 # Custom thresholds
-./ucore sanitize datasets/chemistry_instructor/notebooklm/train.jsonl \
+./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl \
   --min-length 20 --max-sentences 3 --verbose
 ```
 
@@ -680,7 +672,7 @@ All stages can be run in sequence with a single command:
 | `docs/TRAINING_WORKFLOW.md` | Training configuration and execution |
 | `docs/EXPORT_WORKFLOW.md` | GGUF export and quantization details |
 | `docs/EVALUATION_WORKFLOW.md` | Evaluation, smoke testing, and comparison |
-| `docs/NOTEBOOKLM_WORKFLOW.md` | NotebookLM dataset generation workflow |
+| `docs/ONYX_WORKFLOW.md` | Onyx retrieval-backed dataset generation workflow |
 | `docs/OLLAMA_WORKFLOW.md` | Local Ollama dataset generation workflow |
 | `docs/architecture/PIPELINE_FLOW.md` | Pipeline architecture overview |
 | `_config/paths.py` | Canonical path resolution functions |

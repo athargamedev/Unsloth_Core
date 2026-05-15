@@ -217,12 +217,12 @@ python scripts/quick_eval.py outputs/chemistry_instructor/ \
 # With subject spec (via scripts)
 python scripts/quick_eval.py outputs/chemistry_instructor/ \
     --spec subjects/chemistry_instructor.json \
-    --val-data datasets/chemistry_instructor/notebooklm/validation.jsonl
+    --val-data datasets/chemistry_instructor/onyx/validation.jsonl
 
 # Via ucore
 ./ucore quick-eval outputs/chemistry_instructor/ \
     --spec subjects/chemistry_instructor.json \
-    --val-data datasets/chemistry_instructor/notebooklm/validation.jsonl
+    --val-data datasets/chemistry_instructor/onyx/validation.jsonl
 ```
 
 Measures token overlap (Jaccard similarity) between generated and expected responses, plus diversity, sentence count, and AI disclaimer detection.

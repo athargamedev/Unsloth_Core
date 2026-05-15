@@ -25,7 +25,7 @@ Current scan findings (from this repo)
    - Impact: model provenance and deployment confusion.
 
 5) Environment/vendor noise in repo root:
-   - unsloth_env/, notebooklm-py/, caches and generated artifacts can mask project signal.
+   - unsloth_env/, caches and generated artifacts can mask project signal.
    - Impact: navigation friction and risk of accidental commits.
 
 6) Good foundation already exists:
@@ -36,7 +36,7 @@ Target architecture (single source of truth)
 1) Canonical directories
 - subjects/{npc_key}.json
 - datasets/{npc_key}/{technique}/{split}.jsonl
-  - technique: notebooklm | ollama | template
+  - technique: onyx | ollama | template
   - split: train.jsonl | validation.jsonl
 - outputs/{npc_key}/runs/{run_id}/
   - adapter/checkpoints/config snapshot/metrics/TB logs

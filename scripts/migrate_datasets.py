@@ -25,7 +25,7 @@ from _config import paths
 DATASETS = paths.dataset_root()
 
 TECHNIQUE_SUFFIX = {
-    "": "notebooklm",
+    "": "onyx",
     "_ollama": "ollama",
     "_template": "template",
     "_openai": "openai",
@@ -42,7 +42,7 @@ def parse_legacy_name(stem: str):
         if suffix and base.endswith(suffix):
             npc_key = base[: -len(suffix)]
             return npc_key, technique, is_validation
-    return base, "notebooklm", is_validation
+    return base, "onyx", is_validation
 
 
 def proposed_migrations():

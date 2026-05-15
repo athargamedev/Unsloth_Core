@@ -8,8 +8,6 @@ safety:
   training_vram_safety_margin: 1.25
 
 local_caps:
-  # NotebookLM tends to rate-limit heavily for large generation runs.
-  notebooklm_max_examples_local: 120
   # If ollama generation is selected and local VRAM is below this, prefer remote.
   ollama_min_vram_gb: 6
 

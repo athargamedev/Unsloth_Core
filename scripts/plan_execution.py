@@ -112,7 +112,7 @@ def load_resolved_config(spec: dict[str, Any], preset_name: str | None) -> dict[
     base = parse_yaml(BASE_CONFIG_PATH)
 
     # Spec-derived defaults
-    technique = spec.get("technique") or spec.get("dataset", {}).get("technique") or "notebooklm"
+    technique = spec.get("technique") or spec.get("dataset", {}).get("technique") or "onyx"
     model_id = (
         spec.get("model")
         or spec.get("model_id")
@@ -149,23 +149,16 @@ def recommend(spec: dict[str, Any], preset: str | None, local_vram_gb: float | N
     policy = parse_yaml(POLICY_PATH)
     config = load_resolved_config(spec, preset)
 
-    technique = str(config.get("dataset", {}).get("technique", "notebooklm"))
+    technique = str(config.get("dataset", {}).get("technique", "onyx"))
     examples = sum_examples(spec)
 
     # Dataset generation decision
     gen_location = "local"
     gen_reason = "Default local orchestration"
 
-    notebooklm_cap = int(policy.get("local_caps", {}).get("notebooklm_max_examples_local", 120))
     ollama_min = float(policy.get("local_caps", {}).get("ollama_min_vram_gb", 6))
 
-    if technique == "notebooklm" and examples > notebooklm_cap:
-        gen_location = "remote"
-        gen_reason = (
-            f"NotebookLM dataset size ({examples}) exceeds local cap ({notebooklm_cap}); "
-            "prefer remote batched generation workflow"
-        )
-    elif technique == "ollama" and local_vram_gb is not None and local_vram_gb < ollama_min:
+    if technique == "ollama" and local_vram_gb is not None and local_vram_gb < ollama_min:
         gen_location = "remote"
         gen_reason = f"Ollama generation needs >= {ollama_min}GB VRAM, local has {local_vram_gb}GB"
 

@@ -106,7 +106,7 @@
           "target_headings": ["ChatML Record Format"]
         },
         {
-          "prompt": "When should I use `docs`, `notebooklm`, `ollama`, or `template` for dataset generation?",
+          "prompt": "When should I use `docs`, `onyx`, `ollama`, or `template` for dataset generation?",
           "category": "quest",
           "target_headings": ["Technique comparison"]
         }
@@ -149,13 +149,13 @@
       ]
     },
     {
-      "path": "docs/NOTEBOOKLM_WORKFLOW.md",
+      "path": "docs/ONYX_WORKFLOW.md",
       "kind": "doc",
       "questions": [
         {
-          "prompt": "What does the `notebooklm` technique require before dataset generation can succeed?",
+          "prompt": "What does the `onyx` technique require before dataset generation can succeed?",
           "category": "teaching",
-          "target_headings": ["Basic Dataset Generation", "Technique Comparison", "Troubleshooting"],
+          "target_headings": ["Local Server Requirements", "Generate an Onyx-Grounded Dataset", "Debugging"],
           "include_commands": true
         }
       ]
@@ -165,7 +165,7 @@
       "kind": "doc",
       "questions": [
         {
-          "prompt": "When should I choose the `ollama` technique instead of a docs-backed or NotebookLM-backed dataset?",
+          "prompt": "When should I choose the `ollama` technique instead of a docs-backed or Onyx-backed dataset?",
           "category": "dialogue",
           "target_headings": ["Overview", "Why This is Better", "Technical Requirements"]
         }

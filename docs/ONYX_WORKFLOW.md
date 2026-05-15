@@ -41,6 +41,14 @@ export ONYX_API_KEY=...
 
 ## Generate an Onyx-Grounded Dataset
 
+First connect/update this repo in Onyx using the ingestion helper:
+
+```bash
+python scripts/onyx_index_repo.py
+```
+
+That helper indexes docs, subject specs, configs, and key workflow scripts only; it skips generated datasets, outputs, exports, venvs, frontend runtime blobs, and model artifacts. Use `--dry-run` to preview, or `--glob 'docs/**/*.md' --limit 10` for a smaller test.
+
 Retrieval-only, lowest resource cost:
 
 ```bash

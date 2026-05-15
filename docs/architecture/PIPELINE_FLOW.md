@@ -22,7 +22,7 @@ graph TD
 **Outputs**: `datasets/{npc_key}/{technique}/train.jsonl`
 
 Using the `research_queries` defined in the subject spec, the generator fetches domain knowledge and synthesizes Q&A pairs.
-- **Techniques**: `notebooklm` (standard), `ollama` (local), `openai` (cloud).
+- **Techniques**: `onyx` (default), `ollama` (local), `openai` (cloud).
 - **Format**: All data is generated in **ChatML** format to ensure compatibility with modern instruct models.
 
 ---

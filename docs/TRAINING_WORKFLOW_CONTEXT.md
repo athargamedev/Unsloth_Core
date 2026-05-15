@@ -6,7 +6,7 @@ Purpose: compact, high-signal context for AI agents and humans working on the Un
 
 - Use `./ucore` as the public interface. Direct `python scripts/*.py` calls are implementation details unless debugging internals.
 - Production NPC datasets should use `onyx` unless a subject has a dedicated technique such as `docs` for `workflow_assistant`.
-- Use `onyx` when local source material is already indexed and you need retrieval-grounded, reproducible generation without NotebookLM rate limits.
+- Use `onyx` as the default technique for retrieval-grounded, reproducible generation from locally indexed source material without rate limits or external API dependencies.
 - Template generation is only for smoke tests and scaffolding. Do not train production LoRAs on template data.
 - Dataset paths are canonical: `datasets/{npc_key}/{technique}/train.jsonl` and `datasets/{npc_key}/{technique}/validation.jsonl`.
 - Sanitized training data is written as `train_clean.jsonl`; `train.py` prefers it when present and falls back to `train.jsonl`.
@@ -99,6 +99,7 @@ Onyx generation writes canonical ChatML under `datasets/{npc_key}/onyx/`. It is 
 Useful command:
 
 ```bash
+python scripts/onyx_index_repo.py
 ./ucore generate subjects/{npc_key}.json --technique onyx --onyx-max-results 3 --onyx-max-context-chars 1200
 ```
 

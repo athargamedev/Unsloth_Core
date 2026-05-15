@@ -45,17 +45,17 @@ Promotion and handoff records should include:
 
 ## Dataset technique contracts
 
-### `notebooklm`
+### `onyx`
 
-NotebookLM is the production, research-grounded technique. It must either call a configured NotebookLM CLI or import NotebookLM-produced artifacts, then convert them to ChatML JSONL.
+Onyx is the production default, retrieval-grounded technique. It queries the local Onyx index for relevant document chunks and generates ChatML JSONL with full provenance metadata (source titles, document IDs, retrieval scores).
 
 Expected command shape:
 
 ```bash
-./ucore generate subjects/{npc_key}.json --technique notebooklm
+./ucore generate subjects/{npc_key}.json --technique onyx
 ```
 
-The workflow must record the source queries, imported/raw NotebookLM artifact path, conversion step, split ratio, and final dataset hash. It must fail with a clear setup/import error if NotebookLM is unavailable; it must not silently fall back to template data.
+The workflow must record the Onyx query, retrieved chunks, and final dataset hash. It must fail with a clear setup/connection error if Onyx is unavailable; it must not silently fall back to template data.
 
 ### `ollama`
 
@@ -119,7 +119,7 @@ Permissive public RLS is acceptable only for local development. Shared or produc
 2. Classify each failure as persona, factual, refusal, memory, latency, formatting, hallucination, unsafe, or integration-related.
 3. Store structured evidence locally and, when configured, in Supabase.
 4. Convert validated failures into dataset patches or validation prompts.
-5. Use NotebookLM for research-grounded patches, Ollama for local synthetic patches, and manual curation for critical examples.
+5. Use Onyx for retrieval-grounded patches, Ollama for local synthetic patches, and manual curation for critical examples.
 6. Sanitize patched data and keep validation examples separate from training examples.
 7. Train smoke first, then fast/quality only after smoke passes.
 8. Evaluate against the promoted baseline and promote only if composite quality improves without critical regressions.

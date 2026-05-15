@@ -52,8 +52,8 @@ The project documentation is structured for both human developers and AI agents:
 
 ```bash
 ./ucore generate subjects/workflow_assistant.json --technique docs
-./ucore generate subjects/subject.json --technique notebooklm
-./ucore sanitize datasets/subject/notebooklm/train.jsonl
+./ucore generate subjects/subject.json --technique onyx
+./ucore sanitize datasets/subject/onyx/train.jsonl
 ./ucore train subjects/subject.json --preset fast-3b
 ./ucore smoke exports/subject/model.gguf
 ./ucore evaluate --baseline old.gguf --candidate new.gguf

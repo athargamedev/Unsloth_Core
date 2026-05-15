@@ -23,7 +23,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from _config.paths import SNAKE_CASE_PATTERN
 
-TECHNIQUES = ["docs", "notebooklm", "ollama", "template", "openai", "anthropic"]
+TECHNIQUES = ["docs", "onyx", "ollama", "template", "openai", "anthropic"]
 
 DEFAULT_SPEC = {
     "npc_key": "{npc_key}",

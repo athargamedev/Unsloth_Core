@@ -85,7 +85,7 @@ def generate_colab_notebooks(
     for entry in batch_plan.get("remote_colab_queue", []):
         npc_key = str(entry["npc_key"])
         preset = str(entry["preset"])
-        technique = str(entry.get("technique") or "notebooklm")
+        technique = str(entry.get("technique") or "onyx")
         dataset_location = str(entry.get("dataset_generation", {}).get("location") or "local")
         spec_path = str(entry["spec_path"])
 

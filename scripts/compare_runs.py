@@ -55,7 +55,7 @@ def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str]:
 
     model_id = manifest.get("model_id", "unsloth/Llama-3.2-3B-Instruct-bnb-4bit")
     model_short = None
-    technique = manifest.get("dataset", {}).get("technique", "notebooklm")
+    technique = manifest.get("dataset", {}).get("technique", "onyx")
     try:
         model_short = paths.model_short_name(model_id)
     except Exception:

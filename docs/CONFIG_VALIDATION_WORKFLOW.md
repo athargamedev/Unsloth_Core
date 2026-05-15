@@ -20,20 +20,20 @@ Validation catches common drift:
 Use unified CLI:
 
 ```bash
-./ucore validate-config --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/notebooklm/train.jsonl --format yaml
+./ucore validate-config --spec subjects/chemistry_instructor.json --preset fast-3b --data datasets/chemistry_instructor/onyx/train.jsonl --format yaml
 ```
 
 Strict mode (warnings fail the command):
 
 ```bash
-./ucore validate-config --spec subjects/chemistry_instructor.json --preset llama-3b-fast --data datasets/chemistry_instructor/notebooklm/train.jsonl --require-canonical --strict
+./ucore validate-config --spec subjects/chemistry_instructor.json --preset llama-3b-fast --data datasets/chemistry_instructor/onyx/train.jsonl --require-canonical --strict
 ```
 
 ## Direct script usage
 
 ```bash
 python scripts/validate_config.py --spec subjects/chemistry_instructor.json --preset fast-3b
-python scripts/validate_config.py --config configs/lora-sft-base.yaml --preset quality-1.7b --npc-key chemistry_instructor --data datasets/chemistry_instructor/notebooklm/train.jsonl
+python scripts/validate_config.py --config configs/lora-sft-base.yaml --preset quality-1.7b --npc-key chemistry_instructor --data datasets/chemistry_instructor/onyx/train.jsonl
 ```
 
 Output formats:
@@ -47,7 +47,7 @@ Dataset train path should be:
 `datasets/{npc_key}/{technique}/train.jsonl`
 
 Where `technique` is one of:
-- notebooklm
+- onyx
 - ollama
 - template
 

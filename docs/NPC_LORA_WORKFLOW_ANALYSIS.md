@@ -14,9 +14,9 @@ The project already has a usable four-stage pipeline:
 The canonical CLI is `./ucore` for common workflows:
 
 ```bash
-./ucore generate subjects/chemistry_instructor.json --technique notebooklm
+./ucore generate subjects/chemistry_instructor.json --technique onyx
 ./ucore generate subjects/chemistry_instructor.json --technique ollama
-./ucore sanitize datasets/chemistry_instructor/notebooklm/train.jsonl
+./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl
 ./ucore train subjects/chemistry_instructor.json --preset smoke --from-spec
 ./ucore smoke exports/chemistry_instructor/model.gguf --spec subjects/chemistry_instructor.json
 ./ucore pipeline subjects/chemistry_instructor.json --preset smoke
@@ -29,13 +29,13 @@ Direct scripts remain useful when a workflow needs lower-level control: `scripts
 ### What is solid
 
 - Subject specs, datasets, outputs, exports, and evaluation reports already have recognizable project conventions.
-- NotebookLM, Ollama, and template dataset techniques are documented as separate generation modes.
+- Onyx, Ollama, and template dataset techniques are documented as separate generation modes.
 - Training presets make smoke and low-VRAM iteration practical on consumer GPUs.
 - Supabase tables exist for NPC profiles, dialogue sessions/turns, memories, embeddings, relation graphs, and test results.
 
 ### Known gaps
 
-- `notebooklm` must be a real CLI/import workflow, not a silent template fallback.
+- `onyx` must have a working local retrieval workflow, not a silent template fallback.
 - `ollama` should stay first-class for local/private iteration and synthetic expansion.
 - Dataset technique lists and autodetection behavior need to be normalized across config, scripts, CLI, and docs.
 - Some evaluation/export helpers disagree about whether the source of truth is `outputs/{npc_key}` or `outputs/{npc_key}/runs/{run_id}`.
@@ -62,7 +62,7 @@ Direct scripts remain useful when a workflow needs lower-level control: `scripts
 
 ### Blocking
 
-- Add or repair explicit NotebookLM CLI/import support for `--technique notebooklm`.
+- Verify local Onyx retrieval for `--technique onyx` and document the required local setup.
 - Verify local Ollama generation for `--technique ollama` and document the required local model.
 - Fix smoke testing and tracking so default smoke runs produce actionable results.
 - Align evaluation tracking with the current Supabase `test_results` schema.
@@ -86,7 +86,7 @@ Direct scripts remain useful when a workflow needs lower-level control: `scripts
 
 ## Open decisions
 
-- Which NotebookLM CLI/import executable and raw export format should be canonical on this machine?
+- Which Onyx search mode (admin vs search) should be the default on this machine?
 - Which Ollama model should be the default generator for local datasets?
 - Should Unity consume merged GGUF only, LoRA adapter GGUF only, or both?
 - What Unity project path should deployment validation target?

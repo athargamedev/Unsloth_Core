@@ -19,7 +19,7 @@ Required filesystem layout:
 - Sanitized train file: `datasets/{npc_key}/{technique}/train_clean.jsonl`
 
 Valid techniques:
-- `notebooklm` (production default)
+- `onyx` (production default)
 - `ollama`
 - `openai`
 - `anthropic`
@@ -42,11 +42,11 @@ Every line MUST be one JSON object in ChatML shape:
   ],
   "metadata": {
     "npc_key": "chemistry_instructor",
-    "technique": "notebooklm",
+    "technique": "onyx",
     "split": "train",
     "category": "teaching",
     "difficulty": "beginner",
-    "source": "notebooklm"
+    "source": "onyx"
   }
 }
 ```
@@ -145,7 +145,7 @@ Recommended metadata JSON (`npc_profiles.metadata`):
 {
   "model_id": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
   "preset": "fast-3b",
-  "dataset_technique": "notebooklm",
+  "dataset_technique": "onyx",
   "dataset_hash": "sha256:...",
   "run_id": "20260513_fast-3b_001",
   "gguf_path": "exports/chemistry_instructor/...gguf",
@@ -194,7 +194,6 @@ Recommended training/eval tracking:
 - `WANDB_PROJECT`
 
 Generation providers (as applicable):
-- `NOTEBOOKLM_INPUT` (for notebooklm file-based import workflows)
 - provider-specific keys if using `openai` / `anthropic`
 
 Remote execution control-plane (dashboard-ready):
@@ -230,7 +229,7 @@ Planner outputs:
 
 Policy defaults:
 - training safety margin: `1.25x`
-- NotebookLM local cap: `120` examples (above this => remote recommended)
+- Onyx local generation: no rate limits, suitable for any dataset size
 - Ollama generation minimum local VRAM: `6GB`
 
 ## 7) Operational Best-Practice Flow

@@ -20,8 +20,8 @@ from _config import paths
 
 def load_training_data():
     """Load training and validation data."""
-    train_path = paths.dataset_train_path("chemistry_instructor", "notebooklm")
-    val_path = paths.dataset_val_path("chemistry_instructor", "notebooklm")
+    train_path = paths.dataset_train_path("chemistry_instructor", "onyx")
+    val_path = paths.dataset_val_path("chemistry_instructor", "onyx")
     
     train_data = []
     if train_path.exists():

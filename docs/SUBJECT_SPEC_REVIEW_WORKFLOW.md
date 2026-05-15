@@ -46,7 +46,7 @@ Plan whether the run belongs on the local machine or remote Colab before expensi
 After generation, sanitize the produced JSONL before training:
 
 ```bash
-./ucore sanitize datasets/chemistry_instructor/notebooklm/train.jsonl --strict-canonical
+./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl --strict-canonical
 ```
 
 Use smoke presets for early pipeline checks and reserve full presets for specs that pass review.

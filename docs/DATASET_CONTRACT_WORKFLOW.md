@@ -9,7 +9,7 @@ Contract
 - Validation file: `datasets/{npc_key}/{technique}/validation.jsonl`
 
 Valid techniques
-- `notebooklm` (production default)
+- `onyx` (production default)
 - `ollama`
 - `openai`
 - `anthropic`
@@ -23,7 +23,7 @@ Valid techniques
 ./ucore validate-config \
   --spec subjects/chemistry_instructor.json \
   --preset llama-3b-fast \
-  --data datasets/chemistry_instructor/notebooklm/train.jsonl \
+  --data datasets/chemistry_instructor/onyx/train.jsonl \
   --require-canonical \
   --strict
 ```
@@ -31,7 +31,7 @@ Valid techniques
 2) Enforce canonical input during sanitize
 
 ```bash
-./ucore sanitize datasets/chemistry_instructor/notebooklm/train.jsonl --strict-canonical
+./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl --strict-canonical
 ```
 
 3) Migrate legacy flat datasets to canonical structure

@@ -206,7 +206,7 @@ Each `exports/{npc_key}/manifest.json` contains provenance metadata:
     "run_id": "20260512_llama-3b-fast_001",
     "git_commit": "a1b2c3d4e5f6...",
     "preset": "llama-3b-fast",
-    "dataset_technique": "notebooklm",
+    "dataset_technique": "onyx",
     "dataset_sha256": "abc123def456...",
     "training_loss": 0.4231,
     "duration_minutes": 12.5,
