@@ -20,6 +20,7 @@ import json
 import os
 import random
 import re
+import subprocess
 import sys
 import time
 import requests
@@ -174,8 +175,9 @@ def write_examples_with_validation(examples, output_path, seed=42, include_valid
             for ex in val_examples:
                 f.write(json.dumps(ex) + "\n")
 
+    first_example = examples[0] if examples else {}
     return {
-        "spec": examples[0].get("metadata", {}).get("npc_key", "unknown"),
+        "spec": first_example.get("metadata", {}).get("npc_key", "unknown"),
         "total": len(examples),
         "train": len(train_examples),
         "validation": len(val_examples),
@@ -304,7 +306,232 @@ def _onyx_query_for_category(spec, category, concept):
     return category_guidance.get(category, f"{subject} {concept}")
 
 
-def _fallback_onyx_example(spec, category, concept, retrieval_query, context_results):
+def _clean_onyx_query(query):
+    """Normalize a generated Onyx query while preserving deterministic wording."""
+    return " ".join(str(query or "").split())
+
+
+def _spec_research_query_texts(spec):
+    """Return research query strings from supported subject spec fields."""
+    research_queries = spec.get("research_queries") or spec.get("research") or []
+    if isinstance(research_queries, dict):
+        research_queries = research_queries.get("queries") or research_queries.get("research_queries") or []
+
+    query_texts = []
+    for query in research_queries:
+        query_text = query.get("query", "") if isinstance(query, dict) else query
+        cleaned = _clean_onyx_query(query_text)
+        if cleaned:
+            query_texts.append(cleaned)
+    return query_texts
+
+
+def _learning_objective_text(spec):
+    """Extract concise teaching objective text when the spec provides it."""
+    teaching = spec.get("teaching") or {}
+    learning_objectives = teaching.get("learning_objectives") or spec.get("learning_objectives") or []
+    if isinstance(learning_objectives, str):
+        return _clean_onyx_query(learning_objectives)
+    if isinstance(learning_objectives, list):
+        return _clean_onyx_query(" ".join(str(objective) for objective in learning_objectives[:2]))
+    return ""
+
+
+def _append_unique_onyx_query(queries, query, max_queries):
+    """Append a non-empty query unless an equivalent one is already present."""
+    if len(queries) >= max_queries:
+        return
+    cleaned = _clean_onyx_query(query)
+    if not cleaned:
+        return
+    if cleaned.lower() in {existing.lower() for existing in queries}:
+        return
+    queries.append(cleaned)
+
+
+def _relevant_research_query(spec, concept, subject):
+    """Choose one relevant research query, preferring concept matches over subject matches."""
+    query_texts = _spec_research_query_texts(spec)
+    if not query_texts:
+        return ""
+
+    concept_text = _clean_onyx_query(concept).lower()
+    subject_text = _clean_onyx_query(subject).lower()
+    for query in query_texts:
+        lowered = query.lower()
+        if concept_text and concept_text in lowered:
+            return query
+    for query in query_texts:
+        lowered = query.lower()
+        if subject_text and subject_text in lowered:
+            return query
+    return query_texts[0]
+
+
+def _onyx_queries_for_category(spec, category, concept, max_queries=3):
+    """Return multiple focused Onyx retrieval queries for a category/concept."""
+    max_queries = max(1, int(max_queries or 1))
+    subject = spec.get("subject", "")
+    npc_name = spec.get("npc_name", spec.get("npc_key", "NPC"))
+    objective_text = _learning_objective_text(spec)
+
+    queries = []
+    _append_unique_onyx_query(queries, _onyx_query_for_category(spec, category, concept), max_queries)
+
+    category_queries = {
+        "identity": [
+            f"{npc_name} persona style scope {subject}",
+            f"{npc_name} teaching voice learning goals {subject} {objective_text}",
+        ],
+        "teaching": [
+            f"{concept} explanation examples beginner {subject}",
+            f"{concept} misconception application practice {subject}",
+        ],
+        "dialogue": [
+            f"student confusion about {concept} in {subject}",
+            f"Socratic follow up questions {concept} {subject}",
+        ],
+        "quest": [
+            f"quiz practice challenge {concept} {subject}",
+            f"assessment question applied problem {concept} {subject}",
+        ],
+        "refusal": [
+            f"scope boundaries safety refusal {npc_name} {subject}",
+            f"out of scope questions safe redirect {subject}",
+        ],
+    }
+    focused_queries = category_queries.get(category, [f"{subject} {concept} source material"])
+    if focused_queries:
+        _append_unique_onyx_query(queries, focused_queries[0], max_queries)
+    research_query = _relevant_research_query(spec, concept, subject)
+    _append_unique_onyx_query(queries, research_query, max_queries)
+    for query in focused_queries[1:]:
+        _append_unique_onyx_query(queries, query, max_queries)
+    return queries
+
+
+def _merge_onyx_results(result_groups, max_results):
+    """Merge ranked Onyx result groups round-robin while removing duplicate chunks."""
+    if max_results <= 0:
+        return []
+
+    merged = []
+    seen = set()
+    result_groups = [list(results) for results in result_groups if results]
+    if not result_groups:
+        return []
+
+    max_group_length = max(len(results) for results in result_groups)
+    for rank_index in range(max_group_length):
+        for results in result_groups:
+            if rank_index >= len(results):
+                continue
+            result = results[rank_index]
+            content = _clean_onyx_query(result.get("content", ""))
+            key = (result.get("document_id"), result.get("chunk_ind"), content[:120])
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(result)
+            if len(merged) >= max_results:
+                return merged
+    return merged
+
+
+def _effective_onyx_document_sets(spec, document_sets=None):
+    """Use explicit DocumentSets as-is, otherwise default to the NPC key when available."""
+    if document_sets is not None:
+        return document_sets
+    npc_key = (spec.get("npc_key") or "").strip()
+    if not npc_key:
+        return None
+    return [npc_key]
+
+
+def _repo_relative_glob(path_or_glob):
+    """Return a repo-relative glob/path when the value points inside this repo."""
+    value = str(path_or_glob or "").strip()
+    if not value:
+        return None
+
+    path = Path(value).expanduser()
+    has_glob_meta = any(char in value for char in "*?[")
+    if has_glob_meta and not path.is_absolute():
+        return value
+    if has_glob_meta:
+        try:
+            return str(path.relative_to(PROJECT_ROOT))
+        except ValueError:
+            return None
+
+    absolute_path = path if path.is_absolute() else PROJECT_ROOT / path
+    try:
+        return str(absolute_path.resolve().relative_to(PROJECT_ROOT))
+    except ValueError:
+        return None
+
+
+def _onyx_prep_globs(spec_path, extra_docs=None):
+    """Build targeted repo-relative globs for Onyx prep indexing."""
+    globs = []
+    seen = set()
+    for candidate in [spec_path, "docs/ONYX_WORKFLOW.md", *(extra_docs or [])]:
+        rel_glob = _repo_relative_glob(candidate)
+        if not rel_glob or rel_glob in seen:
+            continue
+        globs.append(rel_glob)
+        seen.add(rel_glob)
+    return globs
+
+
+def run_onyx_prep_index(spec_path, npc_key, document_sets, extra_docs=None, sleep_seconds=2.0):
+    """Index targeted subject/repo context into Onyx before generation."""
+    globs = _onyx_prep_globs(spec_path, extra_docs=extra_docs)
+    if not globs:
+        raise RuntimeError("No repo-local files or globs were available for Onyx prep indexing.")
+
+    command = [sys.executable, str(PROJECT_ROOT / "scripts" / "onyx_index_repo.py")]
+    if npc_key:
+        command.extend(["--npc-key", npc_key])
+    for document_set in document_sets or []:
+        command.extend(["--document-set", document_set])
+    for rel_glob in globs:
+        command.extend(["--glob", rel_glob])
+
+    sanitized_cmd = list(command)
+    try:
+        subprocess.run(command, cwd=str(PROJECT_ROOT), check=True, timeout=120)
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("Onyx prep indexing timed out after 120 seconds.") from exc
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"Onyx prep indexing failed with exit code {exc.returncode}.") from exc
+
+    return {"indexed": True, "command": sanitized_cmd, "globs": globs}
+
+
+def _print_onyx_coverage(document_sets, coverage, prefix="Onyx coverage"):
+    """Print a compact JSON coverage summary."""
+    coverage_summary = {
+        "document_sets": document_sets,
+        "total_queries": coverage["total_queries"],
+        "with_results": coverage["with_results"],
+        "total_results": coverage["total_results"],
+        "coverage_ratio": coverage["coverage_ratio"],
+        "empty_queries": coverage["empty_queries"],
+    }
+    print(f"{prefix}: {json.dumps(coverage_summary)}")
+
+
+def _coverage_satisfies_prep_goal(coverage, min_coverage):
+    """Return whether coverage is good enough to generate after prep checks."""
+    if coverage is None:
+        return min_coverage <= 0
+    if min_coverage > 0:
+        return coverage["coverage_ratio"] >= min_coverage
+    return coverage["with_results"] > 0
+
+
+def _fallback_onyx_example(spec, category, concept, retrieval_query, context_results, document_sets=None, retrieval_queries=None):
     context = _format_onyx_context(context_results, max_context_chunks=1, max_context_chars=700)
     top = context[0] if context else {}
     title = top.get("title") or "the local Onyx index"
@@ -332,22 +559,127 @@ def _fallback_onyx_example(spec, category, concept, retrieval_query, context_res
             {"role": "user", "content": user_templates.get(category, f"What should I know about {concept}?")},
             {"role": "assistant", "content": assistant_templates.get(category, f"The local notes point to this: {source_sentence}")},
         ],
-        "metadata": _onyx_metadata(spec, category, concept, retrieval_query, context_results),
+        "metadata": _onyx_metadata(
+            spec,
+            category,
+            concept,
+            retrieval_query,
+            context_results,
+            document_sets=document_sets,
+            retrieval_queries=retrieval_queries,
+        ),
     }
 
 
-def _onyx_metadata(spec, category, concept, retrieval_query, context_results):
+def _onyx_metadata(spec, category, concept, retrieval_query, context_results, document_sets=None, retrieval_queries=None):
+    attempted_queries = retrieval_queries or [retrieval_query]
     return {
         "npc_key": spec["npc_key"],
         "category": category,
         "source": "onyx",
         "concept": concept,
         "onyx_query": retrieval_query,
+        "onyx_queries": attempted_queries,
+        "onyx_query_count": len(attempted_queries),
+        "onyx_document_sets": document_sets,
         "onyx_document_ids": [r.get("document_id") for r in context_results if r.get("document_id")],
         "onyx_titles": [r.get("title") for r in context_results if r.get("title")],
         "onyx_links": [r.get("link") for r in context_results if r.get("link")],
         "onyx_scores": [r.get("score") for r in context_results if r.get("score") is not None],
         "onyx_context_chunks": len(context_results),
+    }
+
+
+def _assistant_message_content(example):
+    """Return assistant text from a ChatML example, or an empty string."""
+    for message in example.get("messages", []):
+        if message.get("role") == "assistant":
+            return str(message.get("content", ""))
+    return ""
+
+
+def _metadata_int(metadata, key):
+    """Parse integer metadata fields defensively at the scoring boundary."""
+    try:
+        return int(metadata.get(key) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def score_onyx_example(example):
+    """Return deterministic 0.0-1.0 quality score for an Onyx-generated example."""
+    metadata = example.get("metadata") or {}
+    score = 0.0
+
+    if metadata.get("onyx_document_ids"):
+        score += 0.35
+
+    if _metadata_int(metadata, "onyx_context_chunks") > 0:
+        score += 0.20
+
+    onyx_scores = metadata.get("onyx_scores") or []
+    if any(isinstance(value, (int, float)) and value > 0 for value in onyx_scores):
+        score += 0.15
+
+    assistant_content = _assistant_message_content(example).strip()
+    generic_phrases = [
+        "based on the retrieved context",
+        "i don't have enough",
+        "i do not have enough",
+        "no context",
+    ]
+    has_substantive_answer = len(assistant_content) >= 80 and not any(
+        phrase in assistant_content.lower() for phrase in generic_phrases
+    )
+    if has_substantive_answer:
+        score += 0.15
+
+    onyx_queries = metadata.get("onyx_queries") or []
+    onyx_query_count = _metadata_int(metadata, "onyx_query_count")
+    if len(onyx_queries) >= 2 or onyx_query_count > 1:
+        score += 0.15
+
+    return min(1.0, max(0.0, round(score, 4)))
+
+
+def _with_onyx_quality_score(example):
+    """Attach deterministic Onyx quality metadata and return the example."""
+    metadata = example.setdefault("metadata", {})
+    metadata["onyx_quality_score"] = score_onyx_example(example)
+    return example
+
+
+def onyx_check_coverage(spec, onyx_client, document_sets=None, max_results=1):
+    """Check whether Onyx has indexed content matching the spec's research queries."""
+    query_texts = _spec_research_query_texts(spec)
+
+    with_results = 0
+    empty_queries = []
+    total_results = 0
+
+    for query in query_texts:
+        try:
+            results = onyx_client.search(query, max_results=max_results, document_sets=document_sets)
+        except Exception as exc:
+            print(f"  [warn] Coverage check failed for query '{query[:60]}': {exc}")
+            empty_queries.append(query)
+            continue
+
+        count = len(results)
+        total_results += count
+        if count > 0:
+            with_results += 1
+            continue
+        empty_queries.append(query)
+
+    total_queries = len(query_texts)
+    coverage_ratio = with_results / total_queries if total_queries else 0.0
+    return {
+        "total_queries": total_queries,
+        "with_results": with_results,
+        "empty_queries": empty_queries,
+        "total_results": total_results,
+        "coverage_ratio": coverage_ratio,
     }
 
 
@@ -362,16 +694,49 @@ def generate_onyx_example(
     max_context_chars=1800,
     document_sets=None,
     tags=None,
+    max_queries=1,
 ):
     """Generate one source-grounded example from local Onyx retrieval."""
-    retrieval_query = _onyx_query_for_category(spec, category, concept)
-    results = onyx_client.search(
-        retrieval_query,
-        max_results=max_context_chunks,
-        document_sets=document_sets,
-        tags=tags,
-    )
+    retrieval_queries = _onyx_queries_for_category(spec, category, concept, max_queries=max_queries)
+    retrieval_query = retrieval_queries[0]
+    result_groups = []
+    search_errors = []
+    for query in retrieval_queries:
+        try:
+            results = onyx_client.search(
+                query,
+                max_results=max_context_chunks,
+                document_sets=document_sets,
+                tags=tags,
+            )
+            if results:
+                result_groups.append(results)
+        except Exception as exc:
+            if len(retrieval_queries) == 1:
+                raise
+            search_errors.append((query, exc))
+            print(f"  [warn] Onyx search failed for query '{query[:80]}': {exc}")
+
+    results = _merge_onyx_results(result_groups, max_context_chunks)
+    if not results:
+        if search_errors:
+            raise RuntimeError(
+                "Onyx retrieval failed for all useful queries for "
+                f"category={category!r}, concept={concept!r}, document_sets={document_sets!r}"
+            )
+        raise RuntimeError(
+            "Onyx returned no context for "
+            f"category={category!r}, concept={concept!r}, document_sets={document_sets!r}; "
+            "index subject docs or adjust --onyx-document-set"
+        )
+
     context_results = _format_onyx_context(results, max_context_chunks=max_context_chunks, max_context_chars=max_context_chars)
+    if not context_results:
+        raise RuntimeError(
+            "Onyx returned results but no usable context for "
+            f"category={category!r}, concept={concept!r}, document_sets={document_sets!r}; "
+            "check indexed document content"
+        )
 
     if generator and context_results:
         context_text = "\n\n".join(r["context_text"] for r in context_results)
@@ -397,22 +762,90 @@ Return ONLY JSON with this exact shape:
         if raw_res:
             try:
                 parsed = json.loads(raw_res)
-                return {
+                return _with_onyx_quality_score({
                     "messages": [
                         {"role": "system", "content": spec["system_prompt"]},
                         {"role": "user", "content": str(parsed.get("user", "What should I know?"))},
                         {"role": "assistant", "content": str(parsed.get("assistant", "Let us use the source material as our guide."))},
                     ],
                     "metadata": {
-                        **_onyx_metadata(spec, category, concept, retrieval_query, context_results),
+                        **_onyx_metadata(
+                            spec,
+                            category,
+                            concept,
+                            retrieval_query,
+                            context_results,
+                            document_sets=document_sets,
+                            retrieval_queries=retrieval_queries,
+                        ),
                         "thought": parsed.get("thought", ""),
                         "onyx_generation_mode": f"llm:{generator.__class__.__name__}",
                     },
-                }
+                })
             except Exception as exc:
                 print(f"  [warn] Onyx-grounded LLM response parse failed: {exc}")
 
-    return _fallback_onyx_example(spec, category, concept, retrieval_query, context_results)
+    return _with_onyx_quality_score(_fallback_onyx_example(
+        spec,
+        category,
+        concept,
+        retrieval_query,
+        context_results,
+        document_sets=document_sets,
+        retrieval_queries=retrieval_queries,
+    ))
+
+
+def _empty_onyx_quality_stats():
+    return {"scores": [], "accepted": 0, "rejected": 0}
+
+
+def _record_onyx_quality(stats, category, score, accepted):
+    category_stats = stats["by_category"].setdefault(category, _empty_onyx_quality_stats())
+    if accepted:
+        stats["scores"].append(score)
+        category_stats["scores"].append(score)
+        stats["accepted"] += 1
+        category_stats["accepted"] += 1
+        return
+
+    stats["rejected"] += 1
+    category_stats["rejected"] += 1
+
+
+def _summarize_onyx_quality_stats(stats):
+    def summarize_scores(scores):
+        if not scores:
+            return {"min": 0.0, "max": 0.0, "avg": 0.0}
+        return {
+            "min": round(min(scores), 4),
+            "max": round(max(scores), 4),
+            "avg": round(sum(scores) / len(scores), 4),
+        }
+
+    summary = summarize_scores(stats["scores"])
+    summary.update({"accepted": stats["accepted"], "rejected": stats["rejected"], "by_category": {}})
+    for category, category_stats in stats["by_category"].items():
+        category_summary = summarize_scores(category_stats["scores"])
+        category_summary.update({
+            "accepted": category_stats["accepted"],
+            "rejected": category_stats["rejected"],
+        })
+        summary["by_category"][category] = category_summary
+    return summary
+
+
+def _format_onyx_under_generation(category_targets, quality_stats):
+    lines = []
+    for category, target in category_targets.items():
+        category_stats = quality_stats["by_category"].get(category, _empty_onyx_quality_stats())
+        accepted = category_stats["accepted"]
+        if accepted >= target:
+            continue
+        lines.append(
+            f"{category}: target={target}, accepted={accepted}, rejected={category_stats['rejected']}"
+        )
+    return "; ".join(lines)
 
 
 def generate_onyx_dataset(
@@ -428,6 +861,9 @@ def generate_onyx_dataset(
     max_context_chars=1800,
     document_sets=None,
     tags=None,
+    max_queries=1,
+    min_quality_score=0.0,
+    allow_partial=False,
 ):
     """Generate a dataset using local Onyx retrieval as the grounding layer.
 
@@ -436,12 +872,17 @@ def generate_onyx_dataset(
     """
     random.seed(seed)
     onyx_client = onyx_client or OnyxClient()
+    document_sets = _effective_onyx_document_sets(spec, document_sets)
     concepts = concept_pool_for_subject(spec)
     examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
     examples = []
     total_count = sum(examples_per_category.values())
     current = 0
     search_cache = {}
+    min_quality_score = float(min_quality_score or 0.0)
+    if not 0.0 <= min_quality_score <= 1.0:
+        raise ValueError("min_quality_score must be between 0.0 and 1.0")
+    quality_stats = {"scores": [], "accepted": 0, "rejected": 0, "by_category": {}}
 
     class CachedOnyxClient:
         def search(self, query, max_results=4, document_sets=None, tags=None):
@@ -457,8 +898,18 @@ def generate_onyx_dataset(
             print(f"  [warn] Unknown category '{category}', skipping")
             continue
         print(f"  Generating {count} Onyx-grounded examples for '{category}'...")
-        for _ in range(count):
-            concept = random.choice(concepts)
+        accepted_for_category = 0
+        attempts_for_category = 0
+        max_attempts_for_category = count if min_quality_score <= 0 else count * 3
+        concept_start = random.randrange(len(concepts)) if concepts else 0
+        while accepted_for_category < count and attempts_for_category < max_attempts_for_category:
+            if min_quality_score <= 0:
+                concept = random.choice(concepts)
+            else:
+                concept = concepts[(concept_start + attempts_for_category) % len(concepts)]
+            effective_max_queries = max_queries
+            if min_quality_score > 0 and attempts_for_category % 2 == 1:
+                effective_max_queries = min(5, max_queries + 1)
             example = generate_onyx_example(
                 spec,
                 category,
@@ -470,11 +921,49 @@ def generate_onyx_dataset(
                 max_context_chars=max_context_chars,
                 document_sets=document_sets,
                 tags=tags,
+                max_queries=effective_max_queries,
             )
+            attempts_for_category += 1
+            quality_score = example.get("metadata", {}).get("onyx_quality_score")
+            if quality_score is None:
+                quality_score = score_onyx_example(example)
+                example.setdefault("metadata", {})["onyx_quality_score"] = quality_score
+
+            if min_quality_score > 0 and quality_score < min_quality_score:
+                _record_onyx_quality(quality_stats, category, quality_score, accepted=False)
+                print(
+                    f"  [warn] Skipping low-quality Onyx example for '{category}' "
+                    f"(score {quality_score:.2f} < {min_quality_score:.2f}, attempt "
+                    f"{attempts_for_category}/{max_attempts_for_category})"
+                )
+                continue
+
             examples.append(example)
+            _record_onyx_quality(quality_stats, category, quality_score, accepted=True)
+            accepted_for_category += 1
             current += 1
             if current % 5 == 0 or current == total_count:
                 print(f"    Progress: {current}/{total_count}")
+
+        if accepted_for_category < count:
+            print(
+                f"  [warn] Accepted {accepted_for_category}/{count} Onyx examples for '{category}' "
+                f"after {attempts_for_category} attempts."
+            )
+
+    if not examples:
+        raise RuntimeError(
+            "Onyx generation produced zero examples. Improve indexing, use --onyx-prep, "
+            "lower --onyx-min-score, or adjust Onyx retrieval settings."
+        )
+
+    under_generation = _format_onyx_under_generation(examples_per_category, quality_stats)
+    if under_generation and not allow_partial:
+        raise RuntimeError(
+            "Onyx generation accepted fewer examples than requested: "
+            f"{under_generation}. Lower --onyx-min-score, improve indexing, use --onyx-prep, "
+            "or pass --onyx-allow-partial to write a partial dataset."
+        )
 
     return write_examples_with_validation(
         examples,
@@ -482,7 +971,11 @@ def generate_onyx_dataset(
         seed=seed,
         include_validation=include_validation,
         val_split=val_split,
-    ) | {"categories": dict(examples_per_category), "onyx_searches": len(search_cache)}
+    ) | {
+        "categories": dict(examples_per_category),
+        "onyx_searches": len(search_cache),
+        "onyx_quality": _summarize_onyx_quality_stats(quality_stats),
+    }
 
 
 # ── Ollama Generation ────────────────────────────────────────────────────────
@@ -898,10 +1391,28 @@ def main():
                         help="Optional Onyx bearer token (default: ONYX_API_KEY)")
     parser.add_argument("--onyx-max-results", type=int, default=4,
                         help="Max Onyx chunks per retrieval query; keep low for local resources (default: 4)")
+    parser.add_argument("--onyx-queries", type=int, default=1,
+                        help="Number of Onyx retrieval queries per generated example (1 preserves legacy behavior; max: 5).")
     parser.add_argument("--onyx-max-context-chars", type=int, default=1800,
                         help="Max retrieved context chars per example before generation (default: 1800)")
     parser.add_argument("--onyx-document-set", action="append", dest="onyx_document_sets",
                         help="Limit Onyx retrieval to a document set; repeatable")
+    parser.add_argument("--onyx-check", action="store_true",
+                        help="Check Onyx coverage for spec research queries before generation")
+    parser.add_argument("--onyx-min-coverage", type=float, default=0.0,
+                        help="Abort Onyx generation if coverage ratio is below this threshold (default: 0.0)")
+    parser.add_argument("--onyx-min-score", type=float, default=0.0,
+                        help="Minimum Onyx example quality score (0.0-1.0); lower-scoring examples are retried/skipped.")
+    parser.add_argument("--onyx-allow-partial", action="store_true",
+                        help="Allow Onyx generation to write fewer examples than requested when quality filtering rejects examples.")
+    parser.add_argument("--onyx-prep", action="store_true",
+                        help="Before Onyx generation, index subject/repo context into the NPC document set and re-check coverage.")
+    parser.add_argument("--onyx-prep-passes", type=int, default=1,
+                        help="Maximum Onyx prep/index/check passes before generation.")
+    parser.add_argument("--onyx-index-doc", action="append", dest="onyx_index_docs",
+                        help="Additional file path or glob to index during --onyx-prep; repeatable.")
+    parser.add_argument("--onyx-prep-sleep", type=float, default=2.0,
+                        help="Seconds to wait after indexing before re-checking coverage.")
     parser.add_argument("--onyx-use-llm", action="store_true",
                         help="Use the selected --model generator to rewrite Onyx-grounded examples; default is retrieval-only to save local resources")
     args = parser.parse_args()
@@ -911,6 +1422,16 @@ def main():
 
     if args.ollama:
         args.technique = "ollama"
+
+    if not 0.0 <= args.onyx_min_coverage <= 1.0:
+        parser.error("--onyx-min-coverage must be between 0.0 and 1.0")
+    if not 0.0 <= args.onyx_min_score <= 1.0:
+        parser.error("--onyx-min-score must be between 0.0 and 1.0")
+
+    if not 1 <= args.onyx_queries <= 5:
+        parser.error("--onyx-queries must be between 1 and 5")
+    args.onyx_prep_passes = min(3, max(1, args.onyx_prep_passes))
+    args.onyx_prep_sleep = min(30.0, max(0.0, args.onyx_prep_sleep))
 
     generator = None
     if args.technique == "ollama":
@@ -959,6 +1480,52 @@ def main():
     elif args.technique == "onyx":
         try:
             onyx_client = OnyxClient(base_url=args.onyx_url, api_key=args.onyx_api_key)
+            document_sets = _effective_onyx_document_sets(spec, args.onyx_document_sets)
+            should_check_coverage = args.onyx_check or args.onyx_min_coverage > 0 or args.onyx_prep
+            coverage = None
+            if should_check_coverage:
+                coverage = onyx_check_coverage(
+                    spec,
+                    onyx_client,
+                    document_sets=document_sets,
+                    max_results=1,
+                )
+                _print_onyx_coverage(document_sets, coverage)
+
+            if args.onyx_prep:
+                has_extra_docs = bool(args.onyx_index_docs)
+                if _coverage_satisfies_prep_goal(coverage, args.onyx_min_coverage) and not has_extra_docs:
+                    print("Onyx prep: coverage target already met; skipping targeted indexing.")
+                else:
+                    for prep_pass in range(1, args.onyx_prep_passes + 1):
+                        print(f"Onyx prep pass {prep_pass}/{args.onyx_prep_passes}: indexing targeted context...")
+                        prep_result = run_onyx_prep_index(
+                            args.spec,
+                            npc_key,
+                            document_sets,
+                            extra_docs=args.onyx_index_docs,
+                            sleep_seconds=args.onyx_prep_sleep,
+                        )
+                        print(f"Onyx prep indexed: {json.dumps(prep_result)}")
+                        if args.onyx_prep_sleep:
+                            time.sleep(args.onyx_prep_sleep)
+                        coverage = onyx_check_coverage(
+                            spec,
+                            onyx_client,
+                            document_sets=document_sets,
+                            max_results=1,
+                        )
+                        _print_onyx_coverage(document_sets, coverage, prefix="Onyx coverage after prep")
+                        if _coverage_satisfies_prep_goal(coverage, args.onyx_min_coverage):
+                            break
+
+            if coverage is not None and coverage["coverage_ratio"] < args.onyx_min_coverage:
+                print(
+                    "Error: Onyx coverage ratio "
+                    f"{coverage['coverage_ratio']:.2f} is below required {args.onyx_min_coverage:.2f}. "
+                    "Index docs for this NPC, pass the correct --onyx-document-set/--onyx-index-doc, or lower --onyx-min-coverage."
+                )
+                sys.exit(2)
             result = generate_onyx_dataset(
                 spec,
                 output_path,
@@ -970,7 +1537,10 @@ def main():
                 temperature=args.temperature,
                 max_context_chunks=args.onyx_max_results,
                 max_context_chars=args.onyx_max_context_chars,
-                document_sets=args.onyx_document_sets,
+                document_sets=document_sets,
+                max_queries=args.onyx_queries,
+                min_quality_score=args.onyx_min_score,
+                allow_partial=args.onyx_allow_partial,
             )
         except Exception as exc:
             print(f"Error: Onyx retrieval generation failed: {exc}")

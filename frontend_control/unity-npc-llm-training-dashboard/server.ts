@@ -550,6 +550,25 @@ const commandDefinitions: CommandDefinition[] = [
     requiredFields: ["options.datasetPath"],
     build: (payload) => ["./ucore", "sanitize", parsedDatasetPath(payload)],
   },
+  {
+    id: "validate-config",
+    label: "Validate Config",
+    icon: "check-circle",
+    color: "accent",
+    type: "Validation",
+    requiredFields: ["spec"],
+    build: (payload) => {
+      const args = ["./ucore", "validate-config", parsedSpec(payload)];
+      const preset = String(payload.preset || "").trim();
+      if (preset) args.push("--preset", sanitizeToken(preset, "preset"));
+      const dataPath = String(payload.options?.dataPath || "").trim();
+      if (dataPath) args.push("--data", resolvePathWithinRoots(dataPath, "dataPath", [repoRoot]));
+      if (payload.options?.requireCanonical === true || String(payload.options?.requireCanonical || "").toLowerCase() === "true") {
+        args.push("--require-canonical");
+      }
+      return args;
+    },
+  },
   { id: "train", label: "Train LoRA", icon: "zap", color: "accent", type: "Training", build: (payload) => {
       const args = [
         "./ucore",
@@ -701,6 +720,7 @@ const commandStageIndex = (job: Job): number => {
     case "dataset-generate":
     case "dataset-sanitize":
       return 0;
+    case "validate-config":
     case "train":
       return 1;
     case "evaluate":
@@ -1022,8 +1042,7 @@ const syncExternalArtifactsToRegistry = (registry: Registry) => {
     for (const npcKey of fs.readdirSync(exportsRoot)) {
       const npcDir = path.join(exportsRoot, npcKey);
       if (!fs.statSync(npcDir).isDirectory()) continue;
-      for (const file of fs.readdirSync(npcDir)) {
-        if (!file.endsWith(".gguf")) continue;
+      for (const file of fs.readdirSync(npcDir).filter((f) => f.endsWith(".gguf"))) {
         const artifact = path.join(npcDir, file);
         const key = `ext_export_${npcKey}_${file}`;
         changed = ensureExternalJob(registry, key, {
@@ -1407,10 +1426,69 @@ ${cliRef}
     console.warn("Failed to load assistant context files:", err);
   }
 
+  const onyxBaseUrl = process.env.ONYX_BASE_URL || "http://localhost";
+  const onyxApiKey = process.env.ONYX_API_KEY;
+  const onyxSearchMode = (process.env.ONYX_SEARCH_MODE || "admin").toLowerCase();
+  const onyxSearchPath = onyxSearchMode === "search" ? "/api/search" : "/api/admin/search";
+
+  const truncateText = (text: string, maxLength: number) =>
+    text.length > maxLength ? `${text.slice(0, maxLength - 3).trim()}...` : text;
+
+  async function fetchOnyxAssistantContext(query: string, maxResults = 4) {
+    try {
+      const payload: Record<string, unknown> =
+        onyxSearchMode === "admin"
+          ? { query, filters: {} }
+          : { query, skip_query_expansion: true };
+
+      const response = await fetch(`${onyxBaseUrl}${onyxSearchPath}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(onyxApiKey ? { Authorization: `Bearer ${onyxApiKey}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) return null;
+
+      const data = (await response.json()) as Record<string, unknown>;
+      const rawResults = (data.results as any[]) || (data.documents as any[]) || [];
+      const results = (rawResults as any[]).slice(0, maxResults).map((item, index) => {
+        const title = item.title || item.semantic_identifier || item.document_id || `source-${index + 1}`;
+        const content = truncateText(item.content || item.blurb || "", 900);
+        return {
+          title,
+          document_id: item.document_id || item.citation_id || `source-${index + 1}`,
+          content,
+          score: item.score,
+        };
+      });
+      if (!results.length) return null;
+
+      const context = results
+        .map((item) => `Source: ${item.title} (${item.document_id})\n${item.content}`)
+        .join("\n\n");
+      return { results, context };
+    } catch (err) {
+      console.warn("Onyx assistant context fetch failed:", err);
+      return null;
+    }
+  }
+
   app.post("/api/assistant", async (req, res) => {
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
     const history = Array.isArray(req.body?.history) ? req.body.history : [];
     if (!message) return res.status(400).json({ error: "message is required" });
+
+    let onyxContextText = "";
+    try {
+      const onyxContextPayload = await fetchOnyxAssistantContext(message, 4);
+      if (onyxContextPayload?.context) {
+        onyxContextText = `\n\nLOCAL ONYX CONTEXT:\n${onyxContextPayload.context}\n\nUse the retrieved sources above to ground answers whenever relevant.`;
+      }
+    } catch {
+      // Ignore Onyx fetch failures; assistant still works with repo docs.
+    }
 
     try {
       const messages: Array<{ role: string; content: string }> = [
@@ -1419,7 +1497,7 @@ ${cliRef}
           content: `You are a high-level specialist in Unity NPC LLM integration and the Unsloth_Core pipeline.
 Keep responses concise and actionable. Use the following context for your knowledge:
 
-${assistantContext}
+${assistantContext}${onyxContextText}
 
 If the user asks to run a command, you can suggest the exact ./ucore command.
 You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is set.`,
@@ -1937,10 +2015,11 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     try {
       const spec = String(req.body?.spec || "").trim();
       const preset = String(req.body?.preset || "").trim();
-      const technique = String(req.body?.technique || "onyx").trim();
+      const npcKey = spec.replace(/^subjects\//, "").replace(/\.json$/, "");
+      const technique = String(req.body?.technique || (npcKey === "workflow_assistant" ? "docs" : "onyx")).trim();
       if (!spec) return res.status(400).json({ error: "spec is required" });
 
-      const npcKey = spec.replace(/^subjects\//, "").replace(/\.json$/, "");
+      const isWorkflowTool = npcKey === "workflow_assistant";
       const workflowId = `wf_${Date.now()}`;
 
       // Resolve model ID for the export step — auto-detect from spec or training output config
@@ -1970,14 +2049,34 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
       const steps: WorkflowStep[] = [
         { commandId: "dataset-generate", status: "pending", payload: { commandId: "dataset-generate", type: "Dataset", spec, options: { technique } } },
         { commandId: "dataset-sanitize", status: "pending", payload: { commandId: "dataset-sanitize", type: "Dataset", spec, options: { datasetPath: `datasets/${npcKey}/${technique}/train.jsonl` } } },
-        { commandId: "train", status: "pending", payload: { commandId: "train", type: "Training", spec, preset, npcKey, options: { ...req.body?.options || {} } } },
       ];
 
-      // Only add export step if we have a model to export with
-      if (exportModelId) {
-        steps.push({ commandId: "export", status: "pending", payload: { commandId: "export", type: "Export", npcKey, options: { modelId: exportModelId } } });
+      if (isWorkflowTool) {
+        steps.push({
+          commandId: "validate-config",
+          status: "pending",
+          payload: {
+            commandId: "validate-config",
+            type: "Validation",
+            spec,
+            preset,
+            options: {
+              dataPath: `datasets/${npcKey}/${technique}/train_clean.jsonl`,
+              requireCanonical: true,
+            },
+          },
+        });
       } else {
-        globalLog(registry, `[WORKFLOW] export step skipped: no baseModel provided and model could not be auto-detected from spec or training config`);
+        steps.push({ commandId: "train", status: "pending", payload: { commandId: "train", type: "Training", spec, preset, npcKey, options: { ...req.body?.options || {}, technique } } });
+      }
+
+      // Only add export step for real NPCs, not the workflow assistant tool.
+      if (!isWorkflowTool) {
+        if (exportModelId) {
+          steps.push({ commandId: "export", status: "pending", payload: { commandId: "export", type: "Export", npcKey, options: { modelId: exportModelId } } });
+        } else {
+          globalLog(registry, `[WORKFLOW] export step skipped: no baseModel provided and model could not be auto-detected from spec or training config`);
+        }
       }
 
       const workflow: Workflow = {

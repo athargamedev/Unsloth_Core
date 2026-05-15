@@ -1,203 +1,309 @@
-# Training Workflow Context
+# Unsloth Core Training Workflow
 
-Purpose: compact, high-signal context for AI agents and humans working on the Unsloth_Core NPC LoRA training workflow. Prefer this as the orientation document before changing training, generation, export, dashboard, or Unity deployment code.
+## Overview
 
-## Ground Rules
+The Unsloth Core training pipeline transforms an NPC subject specification into a playable GGUF-quantized LoRA model ready for Unity deployment. The pipeline follows four deterministic stages:
 
-- Use `./ucore` as the public interface. Direct `python scripts/*.py` calls are implementation details unless debugging internals.
-- Production NPC datasets should use `onyx` unless a subject has a dedicated technique such as `docs` for `workflow_assistant`.
-- Use `onyx` as the default technique for retrieval-grounded, reproducible generation from locally indexed source material without rate limits or external API dependencies.
-- Template generation is only for smoke tests and scaffolding. Do not train production LoRAs on template data.
-- Dataset paths are canonical: `datasets/{npc_key}/{technique}/train.jsonl` and `datasets/{npc_key}/{technique}/validation.jsonl`.
-- Sanitized training data is written as `train_clean.jsonl`; `train.py` prefers it when present and falls back to `train.jsonl`.
-- Outputs and deployable artifacts are separate: LoRA run outputs live in `outputs/{npc_key}/`; GGUF exports live in `exports/{npc_key}/`.
-- Default deployable quantization is `q4_k_m`.
+```
+Subject Spec (JSON) → [Generate] → [Sanitize] → [Train] → [Export & Validate] → GGUF
+```
 
-## End-to-End Flow
+---
 
-The standard pipeline is:
+## 1. Pipeline Stages
 
+### Stage 1: Generate Dataset
+
+**Entry point:** `./ucore generate <spec>`
+**Script:** `scripts/generate_dataset.py`
+
+Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
+
+**Technique selection (--technique):**
+
+| Technique | Description | When to use |
+|-----------|-------------|-------------|
+| `onyx` | Default. Retrieves relevant context from local Onyx knowledge base, then generates Q&A via Ollama or direct prompt | Production: when Onyx is indexed with docs from the subject domain |
+| `docs` | Reads a manifest of local markdown/text files and generates from those | Docs are available but not in Onyx |
+| `ollama` | Uses Ollama to generate from model knowledge (no RAG context) | Quick prototyping |
+| `template` | Simple template-based generation (smoke test only - NOT production) | Testing pipeline mechanics only |
+| `openai` / `anthropic` | Uses OpenAI/Anthropic API to generate | Higher quality, costs money |
+
+**Output:** `datasets/{npc_key}/{technique}/train.jsonl`
+
+**Important constraints:**
+- Onyx technique: chunk limit 10-12, 10s+ delays between calls (15-20 asks then rate block)
+- Template technique is for smoke-test only; never train a production LoRA on template data
+
+**Key CLI flags:**
 ```bash
-./ucore pipeline subjects/{npc_key}.json --preset fast-3b --technique onyx --wandb --track
+./ucore generate subjects/chemistry_instructor.json
+./ucore generate subjects/chemistry_instructor.json --technique onyx
+./ucore generate subjects/chemistry_instructor.json --technique onyx --onyx-prep
+./ucore generate subjects/chemistry_instructor.json --technique ollama --model llama3.1
+./ucore generate subjects/chemistry_instructor.json --technique docs --docs-manifest docs/manifests/chemistry.json
 ```
 
-Internally this runs:
+### Stage 2: Sanitize Dataset
 
-1. Generate dataset:
-   - Command: `./ucore generate subjects/{npc_key}.json --technique onyx`
-   - Script: `scripts/generate_dataset.py`
-   - Output: `datasets/{npc_key}/onyx/train.jsonl` plus `validation.jsonl` when enough examples exist.
-2. Sanitize dataset:
-   - Command: `./ucore sanitize datasets/{npc_key}/{technique}/train.jsonl --output datasets/{npc_key}/{technique}/train_clean.jsonl --strict-canonical`
-   - Script: `scripts/sanitize_dataset.py`
-   - Output: cleaned ChatML JSONL.
-3. Train LoRA:
-   - Command: `./ucore train subjects/{npc_key}.json --preset fast-3b --technique {technique} --export-gguf`
-   - Script: `scripts/train.py`
-   - Output: `outputs/{npc_key}/runs/{run_id}/` and `outputs/{npc_key}/latest` symlink.
-4. Export GGUF:
-   - Usually triggered by `--export-gguf` in training or pipeline.
-   - Standalone command: `./ucore export {npc_key} --quantization q4_k_m`.
-   - Output: `exports/{npc_key}/{npc_key}-{model_short}-q4_k_m.gguf` and `exports/{npc_key}/manifest.json`.
-5. Smoke test:
-   - Command: `./ucore smoke exports/{npc_key}/{file}.gguf --spec subjects/{npc_key}.json --track`
-   - Script: `scripts/smoke_test.py`.
+**Entry point:** `./ucore sanitize <input>`
+**Script:** `scripts/sanitize_dataset.py`
 
-## Preflight Checklist Before Expensive Training
+Validates dataset integrity:
+- Confirms ChatML format (role/content turn structure)
+- Strips leading/trailing whitespace on content fields
+- Ensures no empty messages
+- Outputs clean version
 
-Run these before launching non-smoke jobs:
+**Output:** `{input_path}_clean.jsonl` (in same directory as input)
 
+### Stage 3: Training
+
+**Entry point:** `./ucore train <spec>`
+**Script:** `scripts/train.py`
+
+Uses Unsloth's `SFTTrainer` with LoRA for parameter-efficient fine-tuning. Config hierarchy:
+
+```
+Base config → Preset override → CLI override
+(configs/lora-sft-*.yaml)  (configs/presets/*.yaml)  (--flags)
+```
+
+**Preset selection:**
+
+| Preset | Model | LoRA rank | Epochs | Batch | When to use |
+|--------|-------|-----------|--------|-------|-------------|
+| `smoke` | LLaMA 3.2 1B | 8 | 1 | 2 | Debugging/testing pipeline |
+| `fast-3b` | LLaMA 3.2 3B | 16 | 5 | 4 | Standard NPC training |
+| `safe-any` | Auto-detect | 8 | 3 | 2 | CUDA OOM fallback |
+| `wandb` | (inherits) | — | — | — | W&B experiment tracking (use as overlay) |
+
+**Output:** `outputs/{npc_key}/` (LoRA adapter weights)
+
+**Running locally vs remotely:**
+Before a long training run:
 ```bash
-./ucore validate-spec subjects/{npc_key}.json --strict
-./ucore validate-config --spec subjects/{npc_key}.json --preset fast-3b --data datasets/{npc_key}/{technique}/train.jsonl --require-canonical --strict
-./ucore plan-execution --spec subjects/{npc_key}.json --preset fast-3b
+./ucore plan-execution --spec subjects/chemistry_instructor.json --preset fast-3b
 ```
+This checks GPU VRAM, model size, and recommends local or Colab-based training.
 
-Use `./ucore plan-execution --json` for automation. Placement uses `configs/workload-policy.yaml` and considers estimated training VRAM, NotebookLM dataset size, and local caps.
+**Training config files:**
+- `configs/lora-sft-fast-3b.yaml` — Base 3B model config
+- `configs/lora-sft-smoke.yaml` — Base 1B smoke config
+- `configs/presets/fast-3b.yaml` — Training hyperparameter preset
+- `configs/presets/smoke.yaml` — Smoke-test preset
+- `configs/presets/safe-any.yaml` — Conservative fallback preset
+- `configs/presets/wandb.yaml` — W&B tracking preset (--wandb alias)
 
-## Config Resolution
+**Checkpointing:**
+- Intermediate checkpoints saved to `outputs/{npc_key}/runs/`
+- TensorBoard logs also in `outputs/{npc_key}/runs/`
 
-Training config precedence is:
+### Stage 4: Export & Validate
 
-```text
-subject spec or base YAML
-  < configs/presets/{preset}.yaml
-  < CLI overrides
-```
+**Entry point:** `./ucore export <lora_path> --base-model <model>`
+**Scripts:** `scripts/export.py`, `scripts/smoke_test.py`
 
-Important fields:
+**Export (scripts/export.py):**
+- Merges LoRA adapter with base model
+- Quantizes to GGUF format (default: q4_k_m)
+- Output: `exports/{npc_key}-{model_short}-{quant}.gguf`
 
-- Base model: `model`, `model_id`, `llm.model_name`, or `llm.base_model`; default is `unsloth/Llama-3.2-3B-Instruct-bnb-4bit`.
-- Dataset technique: `technique` or `dataset.technique`; default is `onyx`.
-- Training data: `datasets/{npc_key}/{technique}/train_clean.jsonl` if present, otherwise `train.jsonl`.
-- Output dir: `outputs/{npc_key}/` with run-specific subdirs.
-- Logging: TensorBoard enabled by default; W&B enabled by `--wandb` or `configs/presets/wandb.yaml`.
+**Smoke test (scripts/smoke_test.py):**
+- Loads exported GGUF
+- Runs persona-adherence prompts from the subject spec
+- Validates output quality and identity preservation
+- Generates a report at `eval/results/{npc_key}/`
 
-Common presets:
+---
 
-- `smoke`: quick 10-step validation, not production.
-- `fast-3b`: standard 3B local training preset.
-- `safe-any`: fallback for CUDA OOM or constrained VRAM.
-- `wandb`: enables W&B but is single-select; use `--wandb` with another preset for normal training.
+## 2. Subject Spec Format
 
-## Dataset Contract
-
-Each JSONL row should be ChatML-style:
+Located in `subjects/*.json`. Structure:
 
 ```json
-{"messages":[{"role":"system","content":"..."},{"role":"user","content":"..."},{"role":"assistant","content":"..."}],"metadata":{"npc_key":"...","category":"...","source":"onyx"}}
+{
+  "npc_key": "chemistry_instructor",          // snake_case key for the NPC
+  "npc_name": "ChemistryInstructor",           // Display name
+  "identity": {
+    "personality": "Friendly, patient...",     // Personality description
+    "backstory": "...",                        // NPC background
+    "role": "high school chemistry teacher"    // Role definition
+  },
+  "teaching": {
+    "subjects": ["stoichiometry", "periodic table", ...],
+    "style": "Socratic",                       // Teaching approach
+    "difficulty_level": "high_school",
+    "max_explanations": 3,
+    "use_analogies": true
+  },
+  "knowledge_sources": [                       // Reference sources for generation
+    {"name": "...", "path": "docs/..."}
+  ],
+  "generation": {
+    "num_examples": 100,                       // Target dataset size
+    "max_turns": 6,                            // Max dialog turns per example
+    "language": "en"
+  },
+  "evaluation_criteria": {
+    "persona_accuracy": 0.85,                  // Minimum persona adherence
+    "knowledge_correctness": 0.90              // Minimum factual accuracy
+  }
+}
 ```
 
-Training converts `messages` to model text through the tokenizer chat template when available. Rows with an explicit non-empty `text` field are also accepted. Invalid JSON lines are skipped during training, but sanitization should catch shape problems earlier.
+**Conventions:**
+- `npc_key` always `snake_case`
+- GGUF naming: `{npc_key}-{model_short}-{quant}.gguf`
+- Default quantization: `q4_k_m`
 
-Technique priority in shared path helpers is: `docs`, `onyx`, `ollama`, `openai`, `anthropic`, `template`.
+---
 
-## Onyx Local Retrieval Notes
-
-Onyx generation writes canonical ChatML under `datasets/{npc_key}/onyx/`. It is retrieval-only by default to protect local CPU/GPU resources: bounded top-k, bounded context chars, and per-run search caching. Add `--onyx-use-llm` only when the local Ollama model can rewrite retrieved chunks without competing with training.
-
-Useful command:
+## 3. Quick Commands
 
 ```bash
-python scripts/onyx_index_repo.py
-./ucore generate subjects/{npc_key}.json --technique onyx --onyx-max-results 3 --onyx-max-context-chars 1200
+# 1. Activate
+source unsloth_env/bin/activate
+
+# 2. Quick smoke test of the whole pipeline
+./ucore pipeline subjects/chemistry_instructor.json --preset smoke
+
+# 3. Full production pipeline
+./ucore generate subjects/chemistry_instructor.json --technique onyx
+./ucore sanitize datasets/chemistry_instructor/onyx/train.jsonl
+./ucore train subjects/chemistry_instructor.json --preset fast-3b
+./ucore export outputs/chemistry_instructor/lora_model --base-model llama3.2-3b
+./ucore smoke exports/chemistry_instructor-llama3.2-3b-q4_k_m.gguf --spec subjects/chemistry_instructor.json
+
+# 4. W&B tracking
+./ucore train subjects/chemistry_instructor.json --preset wandb --preset fast-3b
+
+# 5. Onyx-enabled generation with prep (index repo docs first)
+./ucore generate subjects/chemistry_instructor.json --technique onyx --onyx-prep
 ```
 
-See `docs/ONYX_WORKFLOW.md` for auth, resource policy, and troubleshooting.
+---
 
-## Onyx Production Notes
+## 4. Output Artifacts
 
-Onyx is the default production dataset source because it is retrieval-grounded from locally indexed material — no rate limits, no external API calls. Onyx generation is resource-conscious by default (bounded top-k, bounded context chars, per-run search caching). For production work, ensure your source documents are well-indexed in Onyx before generating.
+| Stage | Output Path | Format |
+|-------|-------------|--------|
+| Generate | `datasets/{npc_key}/{technique}/train.jsonl` | JSONL (ChatML) |
+| Sanitize | `datasets/{npc_key}/{technique}/train_clean.jsonl` | JSONL (cleaned) |
+| Train | `outputs/{npc_key}/` | LoRA adapter (SafeTensors) |
+| Export | `exports/{npc_key}-{model}-{quant}.gguf` | GGUF (quantized) |
+| Validate | `eval/results/{npc_key}/` | HTML/MD report |
 
-Use `--onyx-use-llm` only when the local Ollama model can run comfortably while Onyx is already indexed.
+---
 
+## 5. Data Flow Diagram
+
+```
+subjects/chemistry_instructor.json
+          │
+          ▼
+  scripts/generate_dataset.py ───────► Onyx (local RAG)
+          │                                │
+          ▼                                ▼
+  datasets/chemistry_instructor/     docs/ (indexed source)
+          │
+          ▼
+  scripts/sanitize_dataset.py ─────► train_clean.jsonl
+          │
+          ▼
+  scripts/train.py ─────► configs/lora-sft-*.yaml
+          │                    └─ presets/*.yaml
+          ▼
+  outputs/chemistry_instructor/ (LoRA adapter)
+          │
+          ▼
+  scripts/export.py ─────► exports/chemistry_instructor-*.gguf
+          │
+          ▼
+  scripts/smoke_test.py ──► eval/results/chemistry_instructor/
+          │
+          ▼
+  Unity StreamingAssets/Models/
+```
+
+---
+
+## 6. Config Hierarchy
+
+Training configs use a layered merge:
+
+1. **Base config** (`configs/lora-sft-{model}.yaml`) defines model, dataset path template, LoRA hyperparams
+2. **Preset** (`configs/presets/{name}.yaml`) overrides training-specific settings (epochs, LR, batch size)
+3. **CLI flags** (`--lr`, `--epochs`, etc.) override everything above
+
+Multiple presets can be stacked:
 ```bash
-./ucore generate subjects/{npc_key}.json --technique onyx --onyx-max-results 3 --onyx-max-context-chars 1200
+./ucore train subjects/chemistry_instructor.json \
+  --preset fast-3b \
+  --preset wandb
 ```
 
-## Training Internals
-
-`scripts/train.py` loads the base model with Unsloth `FastLanguageModel.from_pretrained(load_in_4bit=True)`, attaches LoRA target modules (`q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj`), and trains with TRL `SFTTrainer`.
-
-Defaults and behaviors to remember:
-
-- `train_on_responses_only` defaults on, but the trainer API must support it; otherwise a warning is printed and training continues.
-- `packing` is usually enabled.
-- Optimizer is `adamw_8bit`.
-- Seed and data seed are fixed at `42`.
-- Eval split support is currently not wired in `train.py`; validation files exist for other checks/evaluation but `eval_dataset` is set to `None` in the current training loop.
-- `latest` symlink always points to the newest run; `best` updates only when promotion rules pass.
-- Promotion thresholds are read from `configs/promotion-rules.yaml` when present.
-
-Run layout:
-
-```text
-outputs/{npc_key}/
-  latest -> runs/{run_id}
-  best -> runs/{run_id}       # only if promotion rules pass
-  runs/{run_id}/
-    adapter_model.safetensors
-    adapter_config.json
-    tokenizer.json
-    tokenizer_config.json
-    config_snapshot.yaml
-    training_metrics.json
-    runs/events.out.tfevents.*
+Example preset (`fast-3b.yaml`):
+```yaml
+model_name: "unsloth/Llama-3.2-3B-Instruct"
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 2e-4
+num_train_epochs: 5
+max_seq_length: 2048
+warmup_steps: 10
+logging_steps: 1
+save_steps: 50
 ```
 
-## W&B and TensorBoard
+---
 
-Use W&B for serious runs:
+## 7. Onyx Integration
 
+Onyx is a local RAG knowledge base. The pipeline uses it to:
+
+**During generation:**
+- Retrieve relevant context chunks from indexed docs
+- Feed context to LLM for accurate Q&A generation
+- Support document-set scoping per subject
+
+**Configuration:**
 ```bash
-./ucore train subjects/{npc_key}.json --preset fast-3b --wandb --export-gguf
+# .env
+ONYX_BASE_URL=http://localhost
+ONYX_API_KEY=onyx_pat_...
 ```
 
-W&B config defaults are in `configs/lora-sft-base.yaml` and `configs/presets/wandb.yaml`. Current project convention is entity `andreabenathar-twl-games`, project `unsloth-core`. TensorBoard logs are written under the run output directory unless disabled with `--no-tensorboard`.
-
-## Export and Unity Deployment
-
-Full GGUF export:
-
+**Indexing repo content:**
 ```bash
-./ucore export {npc_key} --quantization q4_k_m
+python scripts/onyx_index_repo.py     # index project docs/specs/configs
+python scripts/onyx_index_repo.py --dry-run  # preview without indexing
 ```
 
-LoRA-only adapter export for LLMUnity side-loading:
-
+**Onyx-backed generation:**
 ```bash
-./ucore export-adapter outputs/{npc_key}/latest --outtype f16
+./ucore generate subjects/chemistry_instructor.json \
+  --technique onyx \
+  --onyx-max-results 3 \
+  --onyx-max-context-chars 1200 \
+  --onyx-prep
 ```
 
-Deploy to Unity:
+The `--onyx-prep` flag indexes targeted subject context and checks coverage before generation.
 
-```bash
-./ucore deploy --dry-run
-./ucore deploy
-```
+---
 
-Deployment copies GGUF files into the Unity project's `Assets/StreamingAssets/Models/` directory and writes a manifest consumed by the Unity import path.
+## 8. Documentation
 
-## Debugging Playbook
-
-- Dataset missing: check `datasets/{npc_key}/{technique}/train_clean.jsonl` first, then `train.jsonl`; verify technique matches spec and CLI.
-- Wrong technique: pass `--technique` explicitly to both `generate` and `train`.
-- CUDA OOM: retry with `--preset safe-any`, lower `--max-seq-len`, or move to Colab via planning.
-- Loss is flat/high: validate ChatML shape, confirm response-only masking warning did not appear, and inspect whether dataset is template/smoke quality.
-- Export missing: inspect `outputs/{npc_key}/latest`, then run `./ucore export {npc_key}`; use `./ucore export-resume` for interrupted exports.
-- Dashboard mismatch: compare frontend command payloads with `./ucore --help` and the `ucore` parser; stale UI values often come from frontend/control-plane contract drift.
-
-## Source Map
-
-- Unified CLI: `ucore`
-- Dataset generation: `scripts/generate_dataset.py`
-- Sanitization: `scripts/sanitize_dataset.py`
-- Training: `scripts/train.py`
-- Local/Colab placement: `scripts/plan_execution.py`, `scripts/plan_batch_execution.py`, `configs/workload-policy.yaml`
-- Presets: `configs/presets/*.yaml`
-- Base training config: `configs/lora-sft-base.yaml`
-- Shared paths and naming: `_config/paths.py`
-- Export: `scripts/export.py`, `scripts/export_adapter.py`, `scripts/export_resume.py`
-- Smoke/eval: `scripts/smoke_test.py`, `scripts/evaluate.py`, `scripts/compare_runs.py`
-- Dashboard: `frontend_control/unity-npc-llm-training-dashboard/`
-- Related docs: `docs/TRAINING_WORKFLOW.md`, `docs/ONYX_WORKFLOW.md`, `docs/DATASET_CONTRACT_WORKFLOW.md`, `docs/EXPORT_WORKFLOW.md`, `docs/reference/CLI_REFERENCE.md`
+| Document | Purpose |
+|----------|---------|
+| `README.md` | Project overview and quick start |
+| `AGENTS.md` | AI agent reference (architecture, commands, logic map) |
+| `docs/TRAINING_WORKFLOW_CONTEXT.md` | This document — full pipeline detail |
+| `docs/ONYX_WORKFLOW.md` | Onyx setup, indexing, and generation workflow |
+| `subjects/*.json` | NPC specification files |
+| `configs/*.yaml` | Training configuration base files |
+| `configs/presets/*.yaml` | Training presets (hyperparameter profiles) |

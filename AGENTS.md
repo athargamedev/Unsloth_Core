@@ -87,7 +87,18 @@ The dashboard at `http://localhost:3100` provides:
 ## 📜 Conventions
 - **NPC Keys**: Always `snake_case` (e.g., `bible_instructor`).
 - **GGUF Naming**: `{npc_key}-{model_short}-{quant}.gguf`.
-- **Quantization**: Default to `q4_k_m`.
+|- **Quantization**: Default to `q4_k_m`.
+
+---
+
+## 📚 Key Reference Documents
+
+| Document | Purpose |
+|----------|---------|
+| `docs/TRAINING_WORKFLOW_CONTEXT.md` | Full training pipeline detail — stages, presets, flags, data flow, Onyx integration |
+| `docs/ONYX_WORKFLOW.md` | Onyx setup, indexing, and RAG-based generation workflow |
+| `README.md` | Project overview and quick start |
+| `AGENTS.md` | (this file) Quick-reference for AI agents |
 
 ---
 *For detailed human-readable guides, see the [README.md](README.md) and the `docs/` directory.*

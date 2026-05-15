@@ -59,9 +59,10 @@ The project documentation is structured for both human developers and AI agents:
 ./ucore evaluate --baseline old.gguf --candidate new.gguf
 ```
 
-### Workflow Assistant path
+### Workflow Assistant tool
+The Workflow Assistant is a dedicated local tool for mastering Unsloth_Core, not a Unity NPC dataset. It lives in `workflow_assistant/` and uses local Onyx retrieval to ground the frontend assistant in indexed repo docs and workflow sources.
 
-The frontend Workflow Assistant has a dedicated docs-backed dataset path:
+For offline artifact generation and corpus auditing, the legacy docs-backed workflow assistant path remains available:
 
 ```bash
 ./ucore validate-spec subjects/workflow_assistant.json
@@ -69,6 +70,8 @@ The frontend Workflow Assistant has a dedicated docs-backed dataset path:
 ./ucore sanitize datasets/workflow_assistant/docs/train.jsonl --strict-canonical
 ./ucore validate-config --spec subjects/workflow_assistant.json --preset smoke --data datasets/workflow_assistant/docs/train_clean.jsonl --require-canonical
 ```
+
+This path is for audit and tooling support only; `workflow_assistant` is not intended for Unity model export.
 
 Its safe corpus manifest lives at `docs/corpora/workflow_assistant_docs.json`.
 

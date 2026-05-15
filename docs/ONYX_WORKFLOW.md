@@ -49,6 +49,12 @@ python scripts/onyx_index_repo.py
 
 That helper indexes docs, subject specs, configs, and key workflow scripts only; it skips generated datasets, outputs, exports, venvs, frontend runtime blobs, and model artifacts. Use `--dry-run` to preview, or `--glob 'docs/**/*.md' --limit 10` for a smaller test.
 
+For a new subject, you can opt into targeted prep indexing before generation. This indexes the subject spec plus core Onyx workflow docs into the NPC DocumentSet, checks coverage, and only proceeds once the requested threshold is met:
+
+```bash
+./ucore generate subjects/new_subject.json --technique onyx --onyx-prep --onyx-min-coverage 0.5 --onyx-queries 3
+```
+
 Retrieval-only, lowest resource cost:
 
 ```bash
@@ -72,10 +78,14 @@ Each example includes provenance metadata:
 {
   "source": "onyx",
   "onyx_query": "explain atoms for a beginner in chemistry",
+  "onyx_document_sets": ["chemistry_instructor"],
+  "onyx_queries": ["explain atoms for a beginner", "define atoms with examples"],
+  "onyx_query_count": 2,
   "onyx_document_ids": ["doc-id"],
   "onyx_titles": ["Source Title"],
   "onyx_scores": [0.91],
-  "onyx_context_chunks": 1
+  "onyx_context_chunks": 1,
+  "onyx_quality_score": 0.86
 }
 ```
 

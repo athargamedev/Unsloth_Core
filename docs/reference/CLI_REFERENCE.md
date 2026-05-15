@@ -33,7 +33,7 @@ Generates training data from a subject spec.
 - `--docs-manifest`: Optional manifest override for the dedicated `docs` technique.
 - `--onyx-url`, `--onyx-api-key`, `--onyx-max-results`, `--onyx-max-context-chars`: Local Onyx retrieval settings for resource-conscious grounded generation.
 
-The `docs` technique is the canonical path for `subjects/workflow_assistant.json`. It reads a curated checked-in corpus manifest instead of calling an LLM:
+The `docs` technique is the canonical path for `subjects/workflow_assistant.json`, which is a special local workflow tool artifact path. It reads a curated checked-in corpus manifest instead of calling an LLM, and it is intended for offline audit and tooling support rather than Unity NPC export:
 
 ```bash
 ./ucore generate subjects/workflow_assistant.json --technique docs
@@ -66,7 +66,7 @@ Starts a LoRA fine-tuning session.
 - `--no-wandb`: Disable W&B even if enabled in config.
 - `--export-gguf`: Automatically export to GGUF after training completes.
 
-For the Workflow Assistant, pair `--technique docs` with the sanitized dataset under `datasets/workflow_assistant/docs/`. For Onyx-grounded datasets, train with `--technique onyx` so `train.py` prefers `datasets/{npc_key}/onyx/train_clean.jsonl` and falls back to `train.jsonl`.
+For the Workflow Assistant tool, `subjects/workflow_assistant.json` is a docs-backed audit artifact path. This subject is not intended for production Unity NPC export, and its dataset should be used for offline validation or tooling support only.
 
 **W&B convenience preset:**
 ```bash

@@ -13,7 +13,7 @@ This directory contains the detailed technical documentation for the Unsloth_Cor
 ### 🛠️ Workflows
 - [TRAINING_WORKFLOW_CONTEXT.md](TRAINING_WORKFLOW_CONTEXT.md): High-signal AI-agent context for the end-to-end training workflow, contracts, pitfalls, and source map.
 - [TRAINING_WORKFLOW.md](TRAINING_WORKFLOW.md): How to train a new model from scratch.
-- [WORKFLOW_ASSISTANT_WORKFLOW.md](WORKFLOW_ASSISTANT_WORKFLOW.md): Dedicated docs-backed dataset and training path for the frontend Workflow Assistant.
+- [WORKFLOW_ASSISTANT_WORKFLOW.md](WORKFLOW_ASSISTANT_WORKFLOW.md): Dedicated local Workflow Assistant tool path, with docs-backed artifact generation and Onyx integration.
 - [SUBJECT_SPEC_REVIEW_WORKFLOW.md](SUBJECT_SPEC_REVIEW_WORKFLOW.md): Checklist for reviewing `subjects/*.json` before generation/training.
 - [ONYX_WORKFLOW.md](ONYX_WORKFLOW.md): Local Onyx retrieval-backed dataset generation with resource-conscious defaults.
 - [OLLAMA_WORKFLOW.md](OLLAMA_WORKFLOW.md): Local-only generation and evaluation using Ollama.

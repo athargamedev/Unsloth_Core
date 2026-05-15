@@ -4,7 +4,8 @@
 This uses Onyx's ingestion API, not a heavyweight connector, so it is safe for
 local resource-constrained workflows. It intentionally indexes docs/specs/key
 workflow scripts rather than the whole repo, avoiding venvs, generated datasets,
-frontend runtime blobs, and model artifacts.
+frontend runtime blobs, and model artifacts. Indexed content can be tagged with
+subject/NPC-scoped DocumentSets so generation retrieves only relevant context.
 """
 
 from __future__ import annotations
@@ -93,6 +94,19 @@ def document_id_for(rel_path: str) -> str:
     return f"unsloth_core:{digest}"
 
 
+def normalize_document_sets(document_sets: Iterable[str] | None, npc_key: str | None = None) -> list[str]:
+    """Return unique, non-empty DocumentSet names while preserving input order."""
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for value in [npc_key, *(document_sets or [])]:
+        document_set = (value or "").strip()
+        if not document_set or document_set in seen:
+            continue
+        normalized.append(document_set)
+        seen.add(document_set)
+    return normalized
+
+
 def read_text(path: Path) -> str | None:
     try:
         return path.read_text(encoding="utf-8")
@@ -106,29 +120,43 @@ def section_for(rel_path: str, text: str) -> dict:
     return {"type": "text", "text": body, "link": f"file://{PROJECT_ROOT / rel_path}", "heading": heading}
 
 
-def upsert_document(session: requests.Session, base_url: str, headers: dict[str, str], path: Path, timeout: int) -> dict:
+def upsert_document(
+    session: requests.Session,
+    base_url: str,
+    headers: dict[str, str],
+    path: Path,
+    timeout: int,
+    npc_key: str | None = None,
+    document_sets: list[str] | None = None,
+) -> dict:
     rel_path = str(path.relative_to(PROJECT_ROOT))
     text = read_text(path)
     if not text or not text.strip():
         return {"path": rel_path, "skipped": "empty_or_binary"}
     doc_id = document_id_for(rel_path)
     suffix = path.suffix.lower().lstrip(".") or "script"
+    metadata = {
+        "project": "Unsloth_Core",
+        "repo_path": rel_path,
+        "kind": suffix,
+        "index_profile": "local_repo_context",
+    }
+    if npc_key:
+        metadata["npc_key"] = npc_key
+
     payload = {
         "document": {
             "id": doc_id,
             "sections": [section_for(rel_path, text)],
             "source": "ingestion_api",
             "semantic_identifier": rel_path,
-            "metadata": {
-                "project": "Unsloth_Core",
-                "repo_path": rel_path,
-                "kind": suffix,
-                "index_profile": "local_repo_context",
-            },
+            "metadata": metadata,
             "title": rel_path,
             "from_ingestion_api": True,
         }
     }
+    if document_sets:
+        payload["document_sets"] = document_sets
     response = session.post(f"{base_url}/api/onyx-api/ingestion", headers=headers, json=payload, timeout=timeout)
     response.raise_for_status()
     data = response.json()
@@ -141,7 +169,7 @@ def cancel_secondary_index(session: requests.Session, base_url: str, headers: di
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Index selected Unsloth_Core repo files into local Onyx")
+    parser = argparse.ArgumentParser(description="Index selected Unsloth_Core repo files into local Onyx with optional NPC-scoped DocumentSet tags")
     parser.add_argument("--glob", action="append", dest="globs", help="Repo-relative glob to index; repeatable. Defaults to docs/specs/key scripts.")
     parser.add_argument("--max-file-kb", type=int, default=256, help="Skip files larger than this (default: 256 KB)")
     parser.add_argument("--limit", type=int, default=0, help="Index at most N files (default: all selected)")
@@ -149,6 +177,8 @@ def main() -> int:
     parser.add_argument("--timeout", type=int, default=90, help="Per-request timeout seconds (default: 90)")
     parser.add_argument("--no-cancel-secondary", action="store_true", help="Do not cancel Onyx secondary embedding/contextual-RAG index first")
     parser.add_argument("--dry-run", action="store_true", help="Print files that would be indexed without writing to Onyx")
+    parser.add_argument("--npc-key", help="NPC key to store in metadata and auto-add as a document set")
+    parser.add_argument("--document-set", action="append", dest="document_sets", help="DocumentSet name to tag indexed content with; repeatable")
     args = parser.parse_args()
 
     env = load_env()
@@ -161,7 +191,12 @@ def main() -> int:
     files = iter_files(args.globs or DEFAULT_GLOBS, max_bytes=args.max_file_kb * 1024)
     if args.limit:
         files = files[: args.limit]
+    document_sets = normalize_document_sets(args.document_sets, npc_key=args.npc_key)
     print(f"Selected {len(files)} files for Onyx indexing")
+    if args.npc_key:
+        print(f"NPC key: {args.npc_key}")
+    if document_sets:
+        print(f"DocumentSets: {', '.join(document_sets)}")
     for path in files[:20]:
         print(f"  - {path.relative_to(PROJECT_ROOT)}")
     if len(files) > 20:
@@ -180,7 +215,15 @@ def main() -> int:
     for idx, path in enumerate(files, start=1):
         rel = path.relative_to(PROJECT_ROOT)
         try:
-            result = upsert_document(session, base_url, headers, path, args.timeout)
+            result = upsert_document(
+                session,
+                base_url,
+                headers,
+                path,
+                args.timeout,
+                npc_key=args.npc_key,
+                document_sets=document_sets,
+            )
             ok += 1
             print(f"[{idx}/{len(files)}] indexed {rel} -> {result['document_id']}")
         except Exception as exc:

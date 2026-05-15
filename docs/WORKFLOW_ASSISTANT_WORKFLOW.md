@@ -1,6 +1,6 @@
-# Workflow Assistant Dataset + Training Path
+# Workflow Assistant Tool Path
 
-This workflow is the canonical path for `subjects/workflow_assistant.json`.
+This document describes the local Workflow Assistant tool, which is separate from the Unity NPC dataset training/export pipeline. The assistant is a frontend tool that uses local Onyx retrieval plus checked-in docs to answer workflow questions and help master the Unsloth_Core app.
 
 ## Goal
 
@@ -21,20 +21,21 @@ Train a repo-helpful frontend assistant from safe checked-in docs and structured
 ./ucore validate-config --spec subjects/workflow_assistant.json --preset smoke --data datasets/workflow_assistant/docs/train_clean.jsonl --require-canonical
 ```
 
-If you want to train after validation:
+These commands are for offline artifact generation and corpus auditing only. The Workflow Assistant runtime itself is powered by local Onyx retrieval and the frontend tool layer, not by Unity NPC export.
 
-```bash
-./ucore train subjects/workflow_assistant.json --preset smoke --technique docs
-```
+> Optional: you may prototype the docs-backed assistant corpus with `./ucore train` for offline validation, but this is not required for the runtime workflow assistant tool.
 
 ## Output paths
+
+These paths are legacy offline artifacts for the workflow tool and corpus auditing; they are not part of the Unity NPC export pipeline.
 
 - Raw dataset: `datasets/workflow_assistant/docs/train.jsonl`
 - Validation split: `datasets/workflow_assistant/docs/validation.jsonl`
 - Sanitized train set: `datasets/workflow_assistant/docs/train_clean.jsonl`
-- Training outputs: `outputs/workflow_assistant/runs/<run_id>/`
+- Legacy training outputs: `outputs/workflow_assistant/runs/<run_id>/`
 
 ## Notes
 
 - The `docs` technique is truthful here because data comes from a manifest-backed docs/report corpus, not NotebookLM or a synthetic local LLM.
 - The generator lives in `scripts/generate_workflow_dataset.py` and is routed through the normal `scripts/generate_dataset.py` / `./ucore generate` path.
+- The dedicated runtime tool home is `workflow_assistant/`, and its README documents the Onyx-backed local workflow assistant integration.

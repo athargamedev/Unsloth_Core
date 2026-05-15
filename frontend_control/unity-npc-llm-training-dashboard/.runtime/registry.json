@@ -2,6 +2,332 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_899318",
+      "name": "External Process (899318) star_navigator",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "star_navigator",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T12:32:57.072Z",
+      "startedAt": "2026-05-15T12:32:57.072Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore generate subjects/star_navigator.json \\   --technique onyx \\   --onyx-prep \\   --onyx-check \\   --onyx-queries 3 \\   --onyx-min-score 0.0 \\   --onyx-min-coverage 0.0 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 899318] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 899318] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore generate subjects/star_navigator.json \\   --technique onyx \\   --onyx-prep \\   --onyx-check \\   --onyx-queries 3 \\   --onyx-min-score 0.0 \\   --onyx-min-coverage 0.0 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T12:33:07.093Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_sanitize_star_navigator_onyx",
+      "name": "External Dataset Sanitize (star_navigator/onyx)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "star_navigator",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-15T11:58:54.284Z",
+      "startedAt": "2026-05-15T11:58:54.284Z",
+      "finishedAt": "2026-05-15T11:58:54.284Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "datasets/star_navigator/onyx/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: datasets/star_navigator/onyx/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_834961",
+      "name": "External Process (834961)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T11:58:53.943Z",
+      "startedAt": "2026-05-15T11:58:53.943Z",
+      "command": [
+        "external",
+        "python3 ./ucore sanitize datasets/star_navigator/onyx/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 834961] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 834961] discovered active process",
+        "python3 ./ucore sanitize datasets/star_navigator/onyx/train.jsonl"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T11:58:58.212Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_dataset_star_navigator_onyx",
+      "name": "External Dataset Generate (star_navigator/onyx)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "star_navigator",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-15T11:58:47.062Z",
+      "startedAt": "2026-05-15T11:58:47.062Z",
+      "finishedAt": "2026-05-15T11:58:47.062Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/star_navigator.json",
+        "--technique",
+        "onyx"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/star_navigator/onyx/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_831267",
+      "name": "External Process (831267) star_navigator",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "star_navigator",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T11:56:45.060Z",
+      "startedAt": "2026-05-15T11:56:45.060Z",
+      "command": [
+        "external",
+        "python3 ./ucore generate subjects/star_navigator.json --technique onyx --onyx-prep --onyx-check --onyx-min-coverage 0.0 --onyx-queries 3 --onyx-min-score 0.0"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 831267] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 831267] discovered active process",
+        "python3 ./ucore generate subjects/star_navigator.json --technique onyx --onyx-prep --onyx-check --onyx-min-coverage 0.0 --onyx-queries 3 --onyx-min-score 0.0"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T11:56:52.791Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_825794",
+      "name": "External Process (825794) star_navigator",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "star_navigator",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T11:53:41.495Z",
+      "startedAt": "2026-05-15T11:53:41.495Z",
+      "command": [
+        "external",
+        "python3 ./ucore generate subjects/star_navigator.json --technique onyx --onyx-prep --onyx-check --onyx-min-coverage 0.0 --onyx-queries 3 --onyx-min-score 0.0"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 825794] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 825794] discovered active process",
+        "python3 ./ucore generate subjects/star_navigator.json --technique onyx --onyx-prep --onyx-check --onyx-min-coverage 0.0 --onyx-queries 3 --onyx-min-score 0.0"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T11:55:09.620Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_771149",
+      "name": "External Process (771149) chemistry_instructor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T11:17:49.600Z",
+      "startedAt": "2026-05-15T11:17:49.600Z",
+      "command": [
+        "external",
+        "/bin/bash -c python - <<'PY' import subprocess  commands = [     [\"python\", \"scripts/generate_dataset.py\", \"subjects/chemistry_instructor.json\", \"--technique\", \"onyx\", \"--onyx-min-coverage\", \"-0.1\"],     [\"python\", \"scripts/generate_dataset.py\", \"subjects/chemistry_instructor.json\", \"--technique\", \"onyx\", \"--onyx-min-score\", \"1.5\"],     [\"./ucore\", \"generate\", \"subjects/chemistry_instructor.json\", \"--technique\", \"onyx\", \"--onyx-min-coverage\", \"-0.1\"],     [\"./ucore\", \"generate\", \"subjects/chemistry_instructor.json\", \"--technique\", \"onyx\", \"--onyx-min-score\", \"1.5\"], ]  keywords = (\"onyx-min-coverage\", \"onyx_min_coverage\", \"onyx-min-score\", \"onyx_min_score\", \"range\", \"error\", \"invalid\")  for index, command in enumerate(commands, 1):     completed = subprocess.run(command, text=True, capture_output=True)     combined_lines = (completed.stderr + \"\\n\" + completed.stdout).splitlines()     relevant = [line for line in combined_lines if any(keyword.lower() in line.lower() for keyword in keywords)]     print(f\"[{index}] {' '.join(command)}\")     print(f\"exit_code={completed.returncode}\")     if relevant:         for line in relevant[:12]:             print(line)     else:         print(\"<no relevant error lines matched>\")     print(\"---\") PY"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 771149] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 771149] discovered active process",
+        "/bin/bash -c python - <<'PY' import subprocess  commands = [     [\"python\", \"scripts/generate_dataset.py\", \"subjects/chemistry_instructor.json\", \"--technique\", \"onyx\", \"--onyx-min-coverage\", \"-0.1\"],     [\"python\", \"scripts/generate_dataset.py\", \"subjects/chemistry_instructor.json\", \"--technique\", \"onyx\", \"--onyx-min-score\", \"1.5\"],     [\"./ucore\", \"generate\", \"subjects/chemistry_instructor.json\", \"--technique\", \"onyx\", \"--onyx-min-coverage\", \"-0.1\"],     [\"./ucore\", \"generate\", \"subjects/chemistry_instructor.json\", \"--technique\", \"onyx\", \"--onyx-min-score\", \"1.5\"], ]  keywords = (\"onyx-min-coverage\", \"onyx_min_coverage\", \"onyx-min-score\", \"onyx_min_score\", \"range\", \"error\", \"invalid\")  for index, command in enumerate(commands, 1):     completed = subprocess.run(command, text=True, capture_output=True)     combined_lines = (completed.stderr + \"\\n\" + completed.stdout).splitlines()     relevant = [line for line in combined_lines if any(keyword.lower() in line.lower() for keyword in keywords)]     print(f\"[{index}] {' '.join(command)}\")     print(f\"exit_code={completed.returncode}\")     if relevant:         for line in relevant[:12]:             print(line)     else:         print(\"<no relevant error lines matched>\")     print(\"---\") PY"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T11:17:51.024Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_469874",
       "name": "External Process (469874)",
       "type": "Training",
@@ -25156,8 +25482,12 @@
     }
   ],
   "logs": [
-    "[2026-05-15T08:40:58.123Z] [SYNC] discovered running external process pid=469874",
-    "[2026-05-15T08:40:58.123Z] [SYNC] discovered running external process pid=469867"
+    "[2026-05-15T12:32:57.101Z] [SYNC] discovered running external process pid=899318",
+    "[2026-05-15T11:58:55.013Z] [SYNC] imported external job ext_sanitize_star_navigator_onyx",
+    "[2026-05-15T11:58:53.979Z] [SYNC] discovered running external process pid=834961",
+    "[2026-05-15T11:58:47.525Z] [SYNC] imported external job ext_dataset_star_navigator_onyx",
+    "[2026-05-15T11:56:45.111Z] [SYNC] discovered running external process pid=831267",
+    "[2026-05-15T11:53:41.534Z] [SYNC] discovered running external process pid=825794"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

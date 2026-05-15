@@ -9,11 +9,11 @@ export const AIAssistant = () => {
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       role: 'assistant',
-      content: `Welcome to **Unity NPC Core Assistant**. I can help you with:
-- Generating synthetic datasets
+      content: `Welcome to the **Workflow Assistant** tool. I use local Onyx retrieval and repo docs to help you master Unsloth_Core.
+- Generating or auditing workflow datasets
 - Choosing the right training presets
 - Exporting models to GGUF
-- Troubleshooting pipeline errors
+- Troubleshooting pipeline and dashboard issues
 
 How can I help with your workflow today?`,
     },
@@ -92,7 +92,7 @@ How can I help with your workflow today?`,
       <div className="p-4 border-b border-line bg-panel/50 backdrop-blur-md flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-          <h2 className="text-[11px] font-bold text-ink-bright uppercase tracking-widest">Workflow Assistant</h2>
+          <h2 className="text-[11px] font-bold text-ink-bright uppercase tracking-widest">Workflow Assistant Tool</h2>
         </div>
         <div className="flex gap-2">
           <button aria-label="Load assistant model" onClick={handleLoadModel} title="Load the Ollama assistant model (gemma4:e2b), not an NPC GGUF model" className="p-1 hover:bg-white/10 rounded text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
