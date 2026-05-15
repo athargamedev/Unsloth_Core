@@ -935,6 +935,7 @@ const syncExternalArtifactsToRegistry = (registry: Registry) => {
   let changed = false;
 
   const datasetsRoot = path.join(repoRoot, "subjects", "datasets");
+  if (fs.existsSync(datasetsRoot)) {
     for (const npcKey of fs.readdirSync(datasetsRoot)) {
       const npcDir = path.join(datasetsRoot, npcKey);
       if (!fs.statSync(npcDir).isDirectory()) continue;
@@ -2641,6 +2642,80 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     }
   };
 
+  // Helper for launching jobs (shared by /api/commands/start and /api/assistant/execute)
+  const launchJob = (job: Job) => {
+    updateStagesFromTruth(job);
+    registry.jobs.unshift(job);
+    invalidateJobsCache();
+    globalLog(registry, `[SYSTEM] starting ${job.id}: ${job.command.join(" ")}`);
+    persistRegistry(registry);
+    broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+
+    unloadGemmaModel();
+    const child = spawn(job.command[0], job.command.slice(1), { cwd: repoRoot, shell: false, detached: true });
+    runningProcesses.set(job.id, child);
+    terminalJobState.set(job.id, { stopRequested: false, terminal: false });
+
+    const consume = (chunk: Buffer, source: "stdout" | "stderr") => {
+      const lines = chunk.toString().split("\n").map((line) => line.trim()).filter(Boolean);
+      for (const line of lines) {
+        const prefixed = `[${source.toUpperCase()}][${job.id}] ${line}`;
+        job.logs.push(prefixed);
+        job.logs = job.logs.slice(-MAX_LOG_LINES);
+        appendStageLog(job, prefixed);
+        globalLog(registry, prefixed);
+
+        const wandbMatch = line.match(/https:\/\/wandb\.ai\/[-a-zA-Z0-9./_?=&#%~]+\/runs\/([a-z0-9]+)/i);
+        if (wandbMatch) {
+          const wandbUrl = wandbMatch[0];
+          if (!job.wandbUrl) {
+            job.wandbUrl = wandbUrl;
+            broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress, wandbUrl });
+          }
+        }
+
+        const parsedLossValue = parseLoss(line);
+        if (parsedLossValue !== null) {
+          job.loss = parsedLossValue;
+          broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+        }
+        updateStagesFromTruth(job);
+      }
+      persistRegistry(registry);
+    };
+
+    child.stdout.on("data", (chunk) => consume(chunk, "stdout"));
+    child.stderr.on("data", (chunk) => consume(chunk, "stderr"));
+    child.on("close", (code) => {
+      const terminalState = terminalJobState.get(job.id);
+      const escalationTimer = stopEscalationTimers.get(job.id);
+      if (escalationTimer) {
+        clearTimeout(escalationTimer);
+        stopEscalationTimers.delete(job.id);
+      }
+      runningProcesses.delete(job.id);
+      terminalJobState.delete(job.id);
+
+      if (terminalState?.terminal) return;
+
+      job.exitCode = code ?? -1;
+      job.finishedAt = isoNow();
+      if (terminalState?.stopRequested || job.stopRequested) {
+        job.status = "stopped";
+        job.terminalReason = "user_requested_stop";
+      } else {
+        job.status = code === 0 ? "completed" : "failed";
+      }
+      updateStagesFromTruth(job);
+      globalLog(registry, `[SYSTEM] job ${job.id} ${job.status} (exit ${code})`);
+      flushPersist(registry);
+      invalidateJobsCache();
+      broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+    });
+    
+    return job;
+  };
+
   wss.on("connection", (ws) => {
     clients.add(ws);
     ws.send(
@@ -2703,76 +2778,4 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
 
 startServer();
 
-// Helper for launching jobs (shared by /api/commands/start and /api/assistant/execute)
-const launchJob = (job: Job) => {
-  updateStagesFromTruth(job);
-  registry.jobs.unshift(job);
-  invalidateJobsCache();
-  globalLog(registry, `[SYSTEM] starting ${job.id}: ${job.command.join(" ")}`);
-  persistRegistry(registry);
-  broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
 
-  unloadGemmaModel();
-  const child = spawn(job.command[0], job.command.slice(1), { cwd: repoRoot, shell: false, detached: true });
-  runningProcesses.set(job.id, child);
-  terminalJobState.set(job.id, { stopRequested: false, terminal: false });
-
-  const consume = (chunk: Buffer, source: "stdout" | "stderr") => {
-    const lines = chunk.toString().split("\n").map((line) => line.trim()).filter(Boolean);
-    for (const line of lines) {
-      const prefixed = `[${source.toUpperCase()}][${job.id}] ${line}`;
-      job.logs.push(prefixed);
-      job.logs = job.logs.slice(-MAX_LOG_LINES);
-      appendStageLog(job, prefixed);
-      globalLog(registry, prefixed);
-
-      const wandbMatch = line.match(/https:\/\/wandb\.ai\/[-a-zA-Z0-9./_?=&#%~]+\/runs\/([a-z0-9]+)/i);
-      if (wandbMatch) {
-        const wandbUrl = wandbMatch[0];
-        if (!job.wandbUrl) {
-          job.wandbUrl = wandbUrl;
-          broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress, wandbUrl });
-        }
-      }
-
-      const parsedLossValue = parseLoss(line);
-      if (parsedLossValue !== null) {
-        job.loss = parsedLossValue;
-        broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
-      }
-      updateStagesFromTruth(job);
-    }
-    persistRegistry(registry);
-  };
-
-  child.stdout.on("data", (chunk) => consume(chunk, "stdout"));
-  child.stderr.on("data", (chunk) => consume(chunk, "stderr"));
-  child.on("close", (code) => {
-    const terminalState = terminalJobState.get(job.id);
-    const escalationTimer = stopEscalationTimers.get(job.id);
-    if (escalationTimer) {
-      clearTimeout(escalationTimer);
-      stopEscalationTimers.delete(job.id);
-    }
-    runningProcesses.delete(job.id);
-    terminalJobState.delete(job.id);
-
-    if (terminalState?.terminal) return;
-
-    job.exitCode = code ?? -1;
-    job.finishedAt = isoNow();
-    if (terminalState?.stopRequested || job.stopRequested) {
-      job.status = "stopped";
-      job.terminalReason = "user_requested_stop";
-    } else {
-      job.status = code === 0 ? "completed" : "failed";
-    }
-    updateStagesFromTruth(job);
-    globalLog(registry, `[SYSTEM] job ${job.id} ${job.status} (exit ${code})`);
-    flushPersist(registry);
-    invalidateJobsCache();
-    broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
-  });
-  
-  return job;
-};

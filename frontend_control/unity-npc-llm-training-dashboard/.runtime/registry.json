@@ -2,6 +2,194 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_dataset_biology_tutor_onyx",
+      "name": "External Dataset Generate (biology_tutor/onyx)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "biology_tutor",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-15T17:50:42.146Z",
+      "startedAt": "2026-05-15T17:50:42.146Z",
+      "finishedAt": "2026-05-15T17:50:42.146Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/biology_tutor.json",
+        "--technique",
+        "onyx"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/biology_tutor/onyx/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_1595940",
+      "name": "External Process (1595940) biology_tutor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "biology_tutor",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T17:50:26.175Z",
+      "startedAt": "2026-05-15T17:50:26.175Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-b8cf6715aaae.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && echo \"=== Biology: Onyx generation ===\" && python scripts/generate_dataset.py subjects/biology_tutor.json --technique onyx --onyx-queries 3 --onyx-allow-partial 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-b8cf6715aaae.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b8cf6715aaae.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b8cf6715aaae__%s__HERMES_CWD_b8cf6715aaae__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1595940] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1595940] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-b8cf6715aaae.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && echo \"=== Biology: Onyx generation ===\" && python scripts/generate_dataset.py subjects/biology_tutor.json --technique onyx --onyx-queries 3 --onyx-allow-partial 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-b8cf6715aaae.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b8cf6715aaae.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b8cf6715aaae__%s__HERMES_CWD_b8cf6715aaae__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T17:50:44.184Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_dataset_chemistry_instructor_onyx",
+      "name": "External Dataset Generate (chemistry_instructor/onyx)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-15T17:50:20.222Z",
+      "startedAt": "2026-05-15T17:50:20.222Z",
+      "finishedAt": "2026-05-15T17:50:20.222Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/chemistry_instructor.json",
+        "--technique",
+        "onyx"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/chemistry_instructor/onyx/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_1595300",
+      "name": "External Process (1595300) chemistry_instructor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T17:50:08.174Z",
+      "startedAt": "2026-05-15T17:50:08.174Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-b8cf6715aaae.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && echo \"=== Chemistry: Onyx coverage check ===\" && python scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --onyx-check --onyx-queries 3 --onyx-allow-partial 2>&1 | head -30' __hermes_ec=$? export -p > /tmp/hermes-snap-b8cf6715aaae.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b8cf6715aaae.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b8cf6715aaae__%s__HERMES_CWD_b8cf6715aaae__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1595300] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1595300] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-b8cf6715aaae.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && echo \"=== Chemistry: Onyx coverage check ===\" && python scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --onyx-check --onyx-queries 3 --onyx-allow-partial 2>&1 | head -30' __hermes_ec=$? export -p > /tmp/hermes-snap-b8cf6715aaae.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b8cf6715aaae.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b8cf6715aaae__%s__HERMES_CWD_b8cf6715aaae__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T17:50:22.924Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_export_star_navigator_star_navigator-lora-f16.gguf",
       "name": "External Export (star_navigator/star_navigator-lora-f16.gguf)",
       "type": "Export",
@@ -26242,14 +26430,10 @@
     }
   ],
   "logs": [
-    "[2026-05-15T16:22:37.106Z] [SYNC] imported external job ext_export_star_navigator_star_navigator-lora-f16.gguf",
-    "[2026-05-15T16:22:33.265Z] [SYNC] discovered running external process pid=1450835",
-    "[2026-05-15T16:21:12.213Z] [SYNC] discovered running external process pid=1448068",
-    "[2026-05-15T16:21:12.157Z] [SYNC] imported external job ext_train_star_navigator_20260515_default_004",
-    "[2026-05-15T15:33:14.555Z] [SYNC] imported external job ext_export_star_navigator_star_navigator-llama3.2-3b-q4_k_m.gguf",
-    "[2026-05-15T15:14:33.602Z] [SYNC] discovered running external process pid=1296067",
-    "[2026-05-15T15:14:27.544Z] [SYNC] discovered running external process pid=1295749",
-    "[2026-05-15T14:50:54.650Z] [SYSTEM] reconciled ext_proc_1152077 to failed (server_restarted)"
+    "[2026-05-15T17:50:44.176Z] [SYNC] imported external job ext_dataset_biology_tutor_onyx",
+    "[2026-05-15T17:50:26.209Z] [SYNC] discovered running external process pid=1595940",
+    "[2026-05-15T17:50:22.916Z] [SYNC] imported external job ext_dataset_chemistry_instructor_onyx",
+    "[2026-05-15T17:50:08.202Z] [SYNC] discovered running external process pid=1595300"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

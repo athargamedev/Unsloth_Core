@@ -371,7 +371,14 @@ def _relevant_research_query(spec, concept, subject):
 
 
 def _onyx_queries_for_category(spec, category, concept, max_queries=3):
-    """Return multiple focused Onyx retrieval queries for a category/concept."""
+    """Return multiple focused Onyx retrieval queries for a category/concept.
+
+    Generates queries that probe the concept from different angles:
+    - Explanation/definition angle
+    - Examples/applications angle
+    - Common misconceptions angle
+    - Related concepts / comparison angle
+    """
     max_queries = max(1, int(max_queries or 1))
     subject = spec.get("subject", "")
     npc_name = spec.get("npc_name", spec.get("npc_key", "NPC"))
@@ -380,6 +387,12 @@ def _onyx_queries_for_category(spec, category, concept, max_queries=3):
     queries = []
     _append_unique_onyx_query(queries, _onyx_query_for_category(spec, category, concept), max_queries)
 
+    # Get a related concept from expertise list for cross-concept probing
+    teaching = spec.get("teaching") or {}
+    expertise = teaching.get("expertise") or []
+    related_concepts = [e for e in expertise if e.lower() != concept.lower()]
+    related = related_concepts[0] if related_concepts else None
+
     category_queries = {
         "identity": [
             f"{npc_name} persona style scope {subject}",
@@ -387,11 +400,13 @@ def _onyx_queries_for_category(spec, category, concept, max_queries=3):
         ],
         "teaching": [
             f"{concept} explanation examples beginner {subject}",
-            f"{concept} misconception application practice {subject}",
+            f"real world example of {concept} in everyday life",
+            f"common mistakes misconceptions about {concept}",
         ],
         "dialogue": [
             f"student confusion about {concept} in {subject}",
             f"Socratic follow up questions {concept} {subject}",
+            f"how to explain {concept} when a student is struggling",
         ],
         "quest": [
             f"quiz practice challenge {concept} {subject}",
@@ -402,13 +417,28 @@ def _onyx_queries_for_category(spec, category, concept, max_queries=3):
             f"out of scope questions safe redirect {subject}",
         ],
     }
+
+    # Add the primary category query
     focused_queries = category_queries.get(category, [f"{subject} {concept} source material"])
     if focused_queries:
         _append_unique_onyx_query(queries, focused_queries[0], max_queries)
+
+    # Add the research query most relevant to this concept
     research_query = _relevant_research_query(spec, concept, subject)
     _append_unique_onyx_query(queries, research_query, max_queries)
+
+    # Add remaining category-specific angle queries (up to max_queries)
     for query in focused_queries[1:]:
         _append_unique_onyx_query(queries, query, max_queries)
+
+    # If we have room, add a cross-concept query for richer context
+    if len(queries) < max_queries and related:
+        _append_unique_onyx_query(
+            queries,
+            f"{related} comparison relationship to {concept} in {subject}",
+            max_queries,
+        )
+
     return queries
 
 
@@ -1087,27 +1117,51 @@ class AnthropicGenerator:
             return None
 
 def concept_pool_for_subject(spec):
-    """Extract concept keywords from the subject and research queries."""
+    """Extract concept keywords from the subject spec.
+
+    Priority order:
+      1. teaching.expertise (structured concept list)
+      2. Subject description (split into phrase groups)
+      3. Research query phrases (extract meaningful 2-4 word groups)
+    """
+    concepts = []
+    seen = set()
+
+    # 1. Use structured expertise list (most reliable)
+    teaching = spec.get("teaching") or {}
+    expertise = teaching.get("expertise") or []
+    for exp in expertise:
+        clean = str(exp).strip().lower()
+        if clean and clean not in seen:
+            concepts.append(clean)
+            seen.add(clean)
+
+    # 2. Parse subject description into meaningful phrase groups
     subject = spec.get("subject", "")
+    for sep in [":", "—", "-", ","]:
+        subject = subject.replace(sep, "|")
+    for phrase in subject.split("|"):
+        phrase = phrase.strip()
+        if phrase and phrase.lower() not in seen and len(phrase) > 3:
+            concepts.append(phrase)
+            seen.add(phrase.lower())
+
+    # 3. Extract meaningful multi-word phrases from research queries
     research = spec.get("research_queries") or spec.get("research", [])
-    
-    keywords = subject.replace(":", ",").replace("—", ",").replace("-", ",").split(",")
-    concepts = [k.strip() for k in keywords if k.strip()]
-    
-    # Add concepts from research queries
     for r in research:
         if not isinstance(r, dict):
             continue
-
         q = r.get("query", "")
-        if q:
-            # Simple heuristic: split by space and take longer words
-            q_words = [w.strip() for w in q.split() if len(w) > 3]
-            concepts.extend(q_words[:5])
-    # De-duplicate while preserving order
-    seen = set()
-    concepts = [x for x in concepts if not (x.lower() in seen or seen.add(x.lower()))]
-    
+        if not q:
+            continue
+        # Split on common query separators and keep 2-4 word phrases
+        words = q.replace("?", "").replace(",", "").split()
+        for i in range(len(words) - 1):
+            phrase = " ".join(words[i:i+2]).lower()
+            if phrase not in seen and all(len(w) > 2 for w in words[i:i+2]):
+                concepts.append(words[i] + " " + words[i+1])
+                seen.add(phrase)
+
     if not concepts:
         concepts = ["this topic"]
     return concepts
