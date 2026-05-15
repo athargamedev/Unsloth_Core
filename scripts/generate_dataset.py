@@ -269,9 +269,16 @@ def generate_refusal_response(spec):
 
 
 def _first_sentence(text, max_chars=220):
+    """Extract the first meaningful sentence from text, stripping indexing prefixes."""
     cleaned = " ".join(str(text).split())
     if not cleaned:
         return "the indexed source material"
+
+    # Strip "Repository path: ..." prefix added by onyx_index_repo.py
+    cleaned = re.sub(r"\ARepository path: [\w./\-]+\.\w+\s*", "", cleaned).strip()
+    # Strip leading markdown headings (# ...)
+    cleaned = re.sub(r"^#+\s+", "", cleaned).strip()
+
     match = re.search(r"(.+?[.!?])(?:\s|$)", cleaned)
     sentence = match.group(1) if match else cleaned
     return sentence[:max_chars].rstrip()
@@ -565,10 +572,24 @@ def _coverage_satisfies_prep_goal(coverage, min_coverage):
 
 
 def _fallback_onyx_example(spec, category, concept, retrieval_query, context_results, document_sets=None, retrieval_queries=None):
-    context = _format_onyx_context(context_results, max_context_chunks=1, max_context_chars=700)
-    top = context[0] if context else {}
-    title = top.get("title") or "the local Onyx index"
-    source_sentence = _first_sentence(top.get("content", ""))
+    # Preference for reference docs over JSON subject specs
+    def is_json_content(content):
+        stripped = content.strip()
+        return stripped.startswith("{") or stripped.startswith("[") or "npc_key" in stripped[:200]
+
+    def is_json_source(result):
+        title = (result.get("title") or "").lower()
+        return title.endswith(".json") or title.endswith(".py") or is_json_content(result.get("content", ""))
+
+    # Sort: reference docs first, then non-JSON prose, then everything else
+    ref_docs = [r for r in context_results if "reference_doc" in (r.get("title") or "")]
+    good_docs = [r for r in context_results if not is_json_source(r) and r not in ref_docs]
+    fallback_docs = [r for r in context_results if r not in ref_docs and r not in good_docs]
+
+    ordered = ref_docs + good_docs + fallback_docs
+    best = ordered[0] if ordered else (context_results[0] if context_results else {})
+    title = best.get("title") or "the local reference material"
+    source_sentence = _first_sentence(best.get("content", ""))
     npc_name = spec["npc_name"]
 
     user_templates = {
@@ -578,19 +599,30 @@ def _fallback_onyx_example(spec, category, concept, retrieval_query, context_res
         "quest": f"Give me a quick practice question about {concept}.",
         "refusal": "Can you help me with something unrelated to this subject?",
     }
-    assistant_templates = {
-        "identity": f"I am {npc_name}, your guide for {spec['subject'].lower()}. I use our local course notes to keep answers grounded and helpful.",
-        "teaching": f"From {title}: {source_sentence} Think of that as our anchor point, then we can build the idea step by step.",
-        "dialogue": f"Good question — our indexed notes say: {source_sentence} Let us use that as the clue and unpack it together.",
-        "quest": f"Try this: based on {title}, how would you explain why {concept} matters? Use this clue: {source_sentence}",
-        "refusal": f"I should stay focused on {spec['subject'].lower()}. If you want, I can use our local notes to help with a question in that area.",
-    }
+
+    if best and source_sentence and len(source_sentence) > 30:
+        assistant_templates = {
+            "identity": f"I am {npc_name}, your guide for {spec['subject'].lower()}. I draw from our reference material to keep answers clear and grounded.",
+            "teaching": f"Based on our material: {source_sentence} Think of that as our starting point, then we can build from there.",
+            "dialogue": f"Our reference material puts it this way: {source_sentence} Let us use that as the clue and unpack it together.",
+            "quest": f"Try this quick challenge based on our reference material: how would you explain why {concept} matters?",
+            "refusal": f"I should stay focused on {spec['subject'].lower()}. If you have a question in that area, I would be happy to help using our reference notes.",
+        }
+    else:
+        # Fall back to natural template responses when Onyx content isn't useful
+        assistant_templates = {
+            "identity": f"I am {npc_name}, your guide for {spec['subject'].lower()}. I am here to help make the concepts clear and approachable.",
+            "teaching": f"Great question about {concept}! Think of it this way: every complex topic in {spec['subject'].lower()} can be understood by breaking it into smaller pieces. Let me help you do that.",
+            "dialogue": f"I am glad you asked about {concept}. This is one of those topics where understanding the basics really helps everything else fall into place.",
+            "quest": f"Here is a question to test your understanding: how would you explain {concept} to someone who is just starting to learn about it?",
+            "refusal": f"I should stay focused on {spec['subject'].lower()}. That is where I can be most helpful to you!",
+        }
 
     return {
         "messages": [
             {"role": "system", "content": spec["system_prompt"]},
             {"role": "user", "content": user_templates.get(category, f"What should I know about {concept}?")},
-            {"role": "assistant", "content": assistant_templates.get(category, f"The local notes point to this: {source_sentence}")},
+            {"role": "assistant", "content": assistant_templates.get(category, f"Our reference material covers {concept} in {spec['subject'].lower()}. Let me share what I know.")},
         ],
         "metadata": _onyx_metadata(
             spec,
@@ -1472,6 +1504,8 @@ def main():
                         help="Seconds to wait after indexing before re-checking coverage.")
     parser.add_argument("--onyx-use-llm", action="store_true",
                         help="Use the selected --model generator to rewrite Onyx-grounded examples; default is retrieval-only to save local resources")
+    parser.add_argument("--concept-focus", action="append", dest="concept_focus",
+                        help="Focus generation on specific categories (repeatable, e.g. --concept-focus teaching --concept-focus dialogue). Boosts example count for those categories.")
     args = parser.parse_args()
 
     # Import re for JSON extraction
@@ -1515,6 +1549,25 @@ def main():
     print(f"Generating dataset for: {spec['npc_name']}")
     print(f"  Subject: {spec['subject']}")
     print()
+
+    # ── Apply concept-focus boost ─────────────────────────────────────────
+    if args.concept_focus:
+        examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
+        if examples_per_category:
+            print(f"  Concept focus enabled: {args.concept_focus}")
+            for cat in list(examples_per_category.keys()):
+                if cat in args.concept_focus:
+                    boost_factor = 2.0
+                    original = examples_per_category[cat]
+                    examples_per_category[cat] = max(original + 4, int(original * boost_factor))
+                    print(f"    {cat}: {original} -> {examples_per_category[cat]} ({boost_factor}x boost)")
+            # Also add a focused note to the output path
+            focus_suffix = "_focused"
+            if args.output and "_focused" not in str(args.output):
+                output_path = str(args.output).replace(".jsonl", f"{focus_suffix}.jsonl")
+                print(f"  Focused output path: {output_path}")
+        else:
+            print("  [warn] --concept-focus specified but spec has no examples_per_category")
 
     if args.technique == "docs":
         manifest_path = (

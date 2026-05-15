@@ -379,6 +379,7 @@ def evaluate_model(server, questions, spec=None):
             "expected": expected,
             "response": response,
             "metrics": metrics,
+            "metadata": q.get("metadata", {}) if isinstance(q, dict) else {},
         })
 
     return results
@@ -399,6 +400,7 @@ def compare_models(baseline_results, candidate_results, spec=None, judge=None):
             "candidate": c["response"],
             "baseline_metrics": b["metrics"],
             "candidate_metrics": c["metrics"],
+            "metadata": b.get("metadata", {}),
             "winner": "tie",
             "reasoning": "Heuristic match"
         }
@@ -923,6 +925,9 @@ def main():
     parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
     parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
 
+    # Feedback loop
+    parser.add_argument("--feedback-json", help="Save structured per-concept eval results to this JSON file for the feedback loop")
+
     args = parser.parse_args()
 
     # Training metrics mode
@@ -1092,6 +1097,80 @@ def main():
                     "reasoning": comp.get("reasoning")
                 }
             )
+
+    # ── Feedback JSON output ────────────────────────────────────────────
+    if args.feedback_json and spec:
+        npc_key = spec.get("npc_key", "unknown")
+        feedback_path = Path(args.feedback_json)
+        feedback_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Group comparisons by concept (extracted from question or use generic)
+        from collections import defaultdict
+        by_concept = defaultdict(list)
+        for comp in comparison.get("comparisons", []):
+            concept = "general"
+            # Try to extract concept from metadata in the validation question
+            q_meta = comp.get("metadata", {})
+            if q_meta.get("category"):
+                concept = f"{q_meta['category']}/{q_meta.get('concept', 'general')}"
+            by_concept[concept].append(comp)
+
+        # Compute per-concept metrics
+        per_concept = {}
+        for concept, comps in by_concept.items():
+            b_metrics = [c["baseline_metrics"] for c in comps]
+            c_metrics = [c["candidate_metrics"] for c in comps]
+            baseline_wins = sum(1 for c in comps if c["winner"] == "baseline")
+            candidate_wins = sum(1 for c in comps if c["winner"] == "candidate")
+            ties = sum(1 for c in comps if c["winner"] == "tie")
+
+            per_concept[concept] = {
+                "total": len(comps),
+                "baseline_wins": baseline_wins,
+                "candidate_wins": candidate_wins,
+                "ties": ties,
+                "win_rate": candidate_wins / len(comps) if comps else 0,
+                "avg_baseline_quality": sum(m.get("quality", 0) for m in b_metrics) / len(b_metrics) if b_metrics else 0,
+                "avg_candidate_quality": sum(m.get("quality", 0) for m in c_metrics) / len(c_metrics) if c_metrics else 0,
+                "constraint_violations": sum(
+                    1 for c in comps
+                    if not c["candidate_metrics"].get("sentences_ok", True)
+                    or not c["candidate_metrics"].get("no_ai_disclaimer", True)
+                ),
+                "examples": [{
+                    "question": c["question"],
+                    "winner": c["winner"],
+                    "candidate_quality": c["candidate_metrics"].get("quality", 0),
+                    "candidate_words": c["candidate_metrics"].get("length", 0),
+                    "sentences_ok": c["candidate_metrics"].get("sentences_ok", True),
+                    "no_ai_disclaimer": c["candidate_metrics"].get("no_ai_disclaimer", True),
+                } for c in comps],
+            }
+
+        feedback_data = {
+            "npc_key": npc_key,
+            "baseline": baseline_name,
+            "candidate": candidate_name,
+            "total_examples": comparison["total"],
+            "baseline_wins": comparison["baseline_wins"],
+            "candidate_wins": comparison["candidate_wins"],
+            "ties": comparison["ties"],
+            "win_rate": comparison["candidate_wins"] / comparison["total"] if comparison["total"] > 0 else 0,
+            "per_concept": per_concept,
+            "weak_concepts": [
+                concept for concept, data in per_concept.items()
+                if data["win_rate"] < 0.5 or data["avg_candidate_quality"] < 20 or data["constraint_violations"] > 0
+            ],
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+        with open(feedback_path, "w") as f:
+            json.dump(feedback_data, f, indent=2)
+        print(f"\n[feedback] Structured eval results saved to: {feedback_path}")
+        print(f"[feedback] Weak concepts identified: {len(feedback_data['weak_concepts'])}")
+        for wc in feedback_data["weak_concepts"]:
+            info = per_concept[wc]
+            print(f"  - {wc}: win_rate={info['win_rate']:.0%}, avg_quality={info['avg_candidate_quality']:.1f}, violations={info['constraint_violations']}")
 
     # ── W&B Evaluation Tracking ─────────────────────────────────────────
     if args.wandb and spec:

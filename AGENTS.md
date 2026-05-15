@@ -20,7 +20,9 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 | **Training Configs**| `configs/` | YAML base configs and presets. |
 | **LoRA Adapters** | `outputs/` | Checkpoints and final adapters from training. |
 | **GGUF Exports** | `exports/` | Quantized models (full-merge) or LoRA adapters (default) for Unity. |
-| **Evaluations** | `eval/` | Reports, results, and comparison metrics. |
+| **Evaluations** | `eval/` | Reports, results, comparison metrics, and feedback data. |
+| **Pipeline State** | `eval/results/pipeline_state.json` | Shared status of all NPCs for frontend dashboard polling |
+| **Feedback Gaps** | `eval/results/gaps/` | Knowledge gap analysis JSON reports from feedback loop. |
 | **Supabase** | `supabase/` | DB migrations and local Docker setup. |
 | **Frontend** | `frontend_control/` | Monitoring dashboard and React controls. |
 | **llama.cpp** | `~/.unsloth/llama.cpp/` | Prebuilt binaries: llama-server, llama-quantize, convert_lora_to_gguf.py. |
@@ -48,6 +50,41 @@ The project follows a deterministic workflow to transform a subject spec into a 
     - Tracks results in `eval/results/` for baseline comparison.
     - Compares iterations with `./ucore compare-runs`.
     - The `ucore pipeline` command now runs all 5 stages and supports `--skip-smoke`, `--skip-eval`, `--full-merge-export`.
+
+#### Stage 6 — Feedback Loop (Self-Improving Dataset Factory)
+The `ucore feedback` command closes the loop between evaluation and dataset generation:
+
+1. **Evaluate with structured output**: `./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/npc.json --feedback-json eval/results/feedback/npc.json`
+   - Saves per-concept win rates, quality scores, and constraint violations
+   - Groups results by category/concept for targeted analysis
+2. **Run feedback loop**: `./ucore feedback eval/results/feedback/npc.json`
+   - Analyzes which concepts are weak (low win rate, poor quality, constraint violations)
+   - Plans targeted dataset regeneration for weak areas
+   - Executes regeneration via Onyx-grounded generation
+3. **Iterate**: Retrain with the improved dataset and re-evaluate against the same baseline
+4. **Auto-retrain** (CI mode): `./ucore feedback eval/results/feedback/npc.json --auto-retrain --baseline exports/npc/baseline.gguf --train-preset fast-3b`
+   - Chains regeneration → sanitize → train → evaluate in one command
+   - Writes structured JSON output with `--json` for CI/CD pipelines
+   - Updates shared pipeline state in `eval/results/pipeline_state.json` for frontend dashboard
+
+Implementation:
+- `scripts/feedback_loop.py` — Analysis + regeneration orchestration
+- `scripts/evaluate.py --feedback-json` — Structured per-concept eval output
+- New concept-grouped metrics: win rate, avg quality, constraint violations per concept
+
+### 🔍 Phase 3 — Knowledge Gap Detection
+
+The feedback loop automatically differentiates between two types of model weaknesses:
+
+| Gap Type | Onyx Has Docs? | Cause | Fix |
+|----------|---------------|-------|-----|
+| `training_density` | Yes | Not enough training examples | Regenerate with `--concept-focus` |
+| `knowledge_gap` | No | Missing reference material | Add reference docs + re-index |
+
+**Usage:**
+- `./ucore feedback npc.json` — includes gap detection by default
+- `./ucore feedback npc.json --skip-gap-detection` — skip Onyx check
+- `./ucore feedback npc.json --save-gaps eval/results/gaps/npc.json` — save JSON report
 
 ## 💾 Supabase Integration
 A local Supabase instance tracks everything:

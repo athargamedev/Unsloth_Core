@@ -59,6 +59,29 @@ The project documentation is structured for both human developers and AI agents:
 ./ucore train subjects/subject.json --preset fast-3b
 ./ucore smoke exports/subject/model.gguf
 ./ucore evaluate --baseline old.gguf --candidate new.gguf
+./ucore feedback eval/results/feedback/subject.json --dry-run
+```
+
+### Self-Improving Dataset Factory (Phases 1-3)
+
+The Onyx-powered feedback loop closes the gap between evaluation and dataset generation:
+
+1. **Generate** datasets with Onyx-grounded retrieval (`--technique onyx`, `--concept-focus`)
+2. **Evaluate** with structured output (`--feedback-json`)
+3. **Feedback** auto-detects weak concepts, classifies as training density vs knowledge gaps, and triggers targeted regeneration
+
+```bash
+# Full loop
+./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/npc.json --feedback-json eval/results/feedback/npc.json
+./ucore feedback eval/results/feedback/npc.json --auto
+# Then retrain and re-evaluate to measure improvement
+
+# One-shot auto-retrain (CI mode):
+./ucore feedback eval/results/feedback/npc.json --auto --auto-retrain --baseline old.gguf --train-preset fast-3b
+# Chains: regenerate → sanitize → train → evaluate → pipeline state
+
+# Machine-readable output for dashboards:
+./ucore feedback eval/results/feedback/npc.json --json --skip-gap-detection
 ```
 
 ### Workflow Assistant tool
