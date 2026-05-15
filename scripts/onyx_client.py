@@ -117,9 +117,14 @@ class OnyxClient:
         if self.search_mode == "admin":
             payload = {"query": query, "filters": {}}
         if document_sets:
-            payload["document_sets" if self.search_mode == "search" else "filters"] = (
-                document_sets if self.search_mode == "search" else {"document_set": document_sets}
-            )
+            if self.search_mode == "search":
+                payload["document_sets"] = document_sets
+            else:
+                # Admin search does not support document_set filters.
+                # Use metadata-based npc_key filtering instead, since the
+                # indexing helper (onyx_index_repo.py) stamps npc_key into
+                # document metadata for every indexed file.
+                payload["filters"] = {"metadata": {"npc_key": document_sets}}
         if tags:
             if self.search_mode == "search":
                 payload["tags"] = tags
