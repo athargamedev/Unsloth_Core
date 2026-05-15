@@ -36,7 +36,10 @@ import { SystemHub } from './components/SystemHub';
 import { NpcOverview } from './components/NpcOverview';
 import { Card } from './components/Card';
 
-const DatasetFactory = lazy(() => import('./components/DatasetFactory').then((m) => ({ default: m.DatasetFactory })));
+import { DatasetFactory } from './components/DatasetFactory';
+const PipelineFlowPanel = lazy(() => import('./components/PipelineFlowPanel').then(m => ({ default: m.PipelineFlowPanel })));
+const EvalWorkflowPanel = lazy(() => import('./components/EvalWorkflowPanel').then(m => ({ default: m.EvalWorkflowPanel })));
+const FeedbackLoopPanel = lazy(() => import('./components/FeedbackLoopPanel').then(m => ({ default: m.FeedbackLoopPanel })));
 const TensorBoardPanel = lazy(() => import('./components/TensorBoardPanel').then((m) => ({ default: m.TensorBoardPanel })));
 const ModelComparison = lazy(() => import('./components/ModelComparison').then((m) => ({ default: m.ModelComparison })));
 const DatasetViewer = lazy(() => import('./components/DatasetViewer').then((m) => ({ default: m.DatasetViewer })));
@@ -47,7 +50,7 @@ const UnityDeployPanel = lazy(() => import('./components/UnityDeployPanel').then
 const RemoteConfigPanel = lazy(() => import('./components/RemoteConfigPanel').then((m) => ({ default: m.RemoteConfigPanel })));
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'jobs' | 'training' | 'datasets' | 'dataset_params' | 'compare' | 'analytics' | 'commands' | 'logs'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands'>('overview');
   const [logs, setLogs] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<Array<{ step: number; loss: number; acc: number; lr: number }>>([]);
   const [tensorBoardData, setTensorBoardData] = useState<TensorBoardData | null>(null);
@@ -241,7 +244,7 @@ export default function App() {
         setDatasetViewTechnique(targetTechnique);
         setAvailableTechniques(targetDataset?.versions.map((version) => ({ name: version.tag, train_count: version.entries, val_count: 0 })) || []);
       }
-      const VALID_TABS = ['overview', 'training', 'datasets', 'dataset_params', 'compare', 'analytics', 'commands'] as const;
+      const VALID_TABS = ['overview', 'pipeline', 'training', 'datasets', 'dataset_params', 'compare', 'analytics', 'eval', 'feedback', 'commands'] as const;
       type ValidTab = typeof VALID_TABS[number];
       if ((VALID_TABS as readonly string[]).includes(detail.tab)) {
         setActiveTab(detail.tab as ValidTab);
@@ -249,9 +252,34 @@ export default function App() {
     };
     window.addEventListener('navigate-tab', handleNavigate);
 
+    // Pipeline action event: navigate to the tab for the given stage
+    const handlePipelineAction = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { npcKey: string; stage: string };
+      // Map pipeline stage → tab
+      const stageToTab: Record<string, string> = {
+        spec: 'dataset_params',
+        dataset: 'dataset_params',
+        train: 'training',
+        export: 'jobs',
+        eval: 'eval',
+        feedback: 'feedback',
+      };
+      const targetTab = stageToTab[detail.stage] || 'dataset_params';
+      setActiveTab(targetTab as any);
+      if (detail.npcKey) {
+        // Auto-select the NPC in the training suite
+        const subject = datasetsRef.current.find((d) => d.id === detail.npcKey);
+        if (subject) {
+          // The training suite will pick up the npcKey from subjects
+        }
+      }
+    };
+    window.addEventListener('navigate-pipeline-action', handlePipelineAction);
+
     return () => {
       clearInterval(interval);
       window.removeEventListener('navigate-tab', handleNavigate);
+      window.removeEventListener('navigate-pipeline-action', handlePipelineAction);
     };
   }, []);
 
@@ -536,7 +564,7 @@ export default function App() {
   };
 
   const handleQuickStartOpenEvaluate = () => {
-    setActiveTab('analytics');
+    setActiveTab('eval');
   };
 
   const handleQuickStartOpenDeployOps = () => {
@@ -646,12 +674,15 @@ export default function App() {
   const localModelSource = localModel?.source && localModel.source !== 'none' ? localModel.source : 'idle';
   const workflowStepByTab: Record<string, string> = {
     overview: 'Quick Start',
+    pipeline: 'Pipeline',
     dataset_params: 'Step 1 · Prepare Data',
     training: 'Step 2 · Train',
-    analytics: 'Step 3 · Evaluate',
-    jobs: 'Step 4 · Deploy/Run Ops',
-    datasets: 'Dataset Browser',
+    eval: 'Step 3 · Eval',
+    feedback: 'Step 4 · Feedback',
+    analytics: 'TensorBoard',
+    jobs: 'Step 5 · Deploy/Run Ops',
     compare: 'Model Comparison',
+    datasets: 'Dataset Browser',
     logs: 'System Console',
     commands: 'Advanced',
   };
@@ -732,14 +763,16 @@ export default function App() {
           <div className="flex px-4 border-b border-line bg-surface/30 backdrop-blur-md overflow-x-auto whitespace-nowrap no-scrollbar">
             {[
               { id: 'overview', label: 'Quick Start', shortLabel: 'Start' },
-              { id: 'dataset_params', label: '1) Prepare Data', shortLabel: 'Data' },
+              { id: 'pipeline', label: 'Pipeline', shortLabel: 'Pipe' },
+              { id: 'dataset_params', label: '1) Data', shortLabel: 'Data' },
               { id: 'training', label: '2) Train', shortLabel: 'Train' },
-              { id: 'analytics', label: '3) Evaluate', shortLabel: 'Eval' },
-              { id: 'jobs', label: '4) Deploy/Run Ops', shortLabel: 'Ops' },
-              { id: 'datasets', label: 'Dataset Browser', shortLabel: 'Browser' },
-              { id: 'compare', label: 'Model Comparison', shortLabel: 'Compare' },
-              { id: 'logs', label: 'System Console', shortLabel: 'Console' },
-              { id: 'commands', label: 'Advanced', shortLabel: 'Adv' },
+              { id: 'eval', label: '3) Eval', shortLabel: 'Eval' },
+              { id: 'feedback', label: '4) Feedback', shortLabel: 'FB' },
+              { id: 'jobs', label: '5) Ops', shortLabel: 'Ops' },
+              { id: 'analytics', label: 'TensorBoard', shortLabel: 'TB' },
+              { id: 'compare', label: 'Compare', shortLabel: 'Cmp' },
+              { id: 'datasets', label: 'Datasets', shortLabel: 'DS' },
+              { id: 'logs', label: 'Console', shortLabel: 'Log' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -815,7 +848,7 @@ export default function App() {
                   >
                     <div className="text-[12px] font-bold text-warning uppercase tracking-wider">Step 3</div>
                     <div className="text-sm font-semibold text-ink-bright mt-1">Evaluate</div>
-                    <div className="text-[12px] text-ink/60 mt-1">Check TensorBoard curves and compare run quality.</div>
+                    <div className="text-[12px] text-ink/60 mt-1">Configure baseline, candidate, base model, and run comparison evals.</div>
                   </button>
 
                   <button
@@ -856,6 +889,56 @@ export default function App() {
                   exportArtifacts={exportArtifacts}
                   jobs={jobs}
                 />
+              </motion.div>
+            )}
+
+            {activeTab === 'pipeline' && (
+              <motion.div
+                key="pipeline"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex-1 flex flex-col overflow-hidden"
+              >
+                <Suspense fallback={<div className="flex-1 flex items-center justify-center text-[12px] text-ink/40">Loading pipeline…</div>}>
+                  <PipelineFlowPanel
+                    subjects={subjects}
+                    datasets={datasets}
+                    runs={runs}
+                    exportArtifacts={exportArtifacts}
+                  />
+                </Suspense>
+              </motion.div>
+            )}
+
+            {activeTab === 'eval' && (
+              <motion.div
+                key="eval"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex-1 flex flex-col overflow-hidden"
+              >
+                <Suspense fallback={<div className="flex-1 flex items-center justify-center text-[12px] text-ink/40">Loading eval panel…</div>}>
+                  <EvalWorkflowPanel
+                    subjects={subjects}
+                    exportArtifacts={exportArtifacts}
+                  />
+                </Suspense>
+              </motion.div>
+            )}
+
+            {activeTab === 'feedback' && (
+              <motion.div
+                key="feedback"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex-1 flex flex-col overflow-hidden"
+              >
+                <Suspense fallback={<div className="flex-1 flex items-center justify-center text-[12px] text-ink/40">Loading feedback panel…</div>}>
+                  <FeedbackLoopPanel />
+                </Suspense>
               </motion.div>
             )}
 

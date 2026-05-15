@@ -189,6 +189,71 @@ export interface RunDetail {
   metrics: Record<string, unknown>;
 }
 
+// --- Pipeline State types ---
+
+export interface PipelineNpcState {
+  status: string;
+  weak_concepts_count?: number;
+  focus_categories?: string[];
+  knowledge_gaps?: number;
+  training_density_issues?: number;
+  latest_gguf?: string;
+  latest_win_rate?: number;
+  auto_retrain_complete?: boolean;
+  last_updated?: string;
+  dataset?: string;
+  training?: string;
+  gguf_adapter?: string;
+  eval_report?: string;
+  gguf_validation?: string;
+  [key: string]: unknown;
+}
+
+export type PipelineState = Record<string, PipelineNpcState>;
+
+// --- Feedback types ---
+
+export interface ConceptFeedback {
+  total: number;
+  baseline_wins: number;
+  candidate_wins: number;
+  ties: number;
+  win_rate: number;
+  avg_baseline_quality: number;
+  avg_candidate_quality: number;
+  constraint_violations: number;
+  examples?: Array<{
+    question: string;
+    winner: string;
+    candidate_quality?: number;
+    candidate_words?: number;
+    [key: string]: unknown;
+  }>;
+}
+
+export interface FeedbackResult {
+  npc_key: string;
+  baseline: string;
+  candidate: string;
+  total_examples: number;
+  baseline_wins: number;
+  candidate_wins: number;
+  ties: number;
+  win_rate: number;
+  per_concept: Record<string, ConceptFeedback>;
+  weak_concepts: string[];
+  timestamp: string;
+  gaps?: FeedbackGapResult[];
+}
+
+export interface FeedbackGapResult {
+  concept: string;
+  category: string;
+  gap_type: 'training_density' | 'knowledge_gap';
+  onyx_result_count: number;
+  onyx_sources?: string[];
+}
+
 // --- Supabase types ---
 
 export interface SupabaseTestResult {

@@ -2,11 +2,561 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_1885063",
+      "name": "External Process (1885063) chemistry_instructor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T20:35:15.915Z",
+      "startedAt": "2026-05-15T20:35:15.915Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1885063] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1885063] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T20:35:16.035Z",
+      "exitCode": -15
+    },
+    {
+      "id": "job_1778877313895_engfl",
+      "name": "Generate Dataset",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-15T20:35:13.896Z",
+      "startedAt": "2026-05-15T20:35:13.896Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/chemistry_instructor.json",
+        "--technique",
+        "onyx",
+        "--model",
+        "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": [
+            "[STDOUT][job_1778877313895_engfl] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+            "[STDOUT][job_1778877313895_engfl] Generating dataset for: ChemistryInstructor",
+            "[STDOUT][job_1778877313895_engfl] Subject: General chemistry: atoms, molecules, elements, the periodic table, chemical reactions, stoichiometry, acids and bases",
+            "[STDOUT][job_1778877313895_engfl] Generating 8 Onyx-grounded examples for 'identity'...",
+            "[STDOUT][job_1778877313895_engfl] Progress: 5/72",
+            "[STDOUT][job_1778877313895_engfl] Generating 32 Onyx-grounded examples for 'teaching'...",
+            "[STDOUT][job_1778877313895_engfl] Progress: 10/72",
+            "[STDOUT][job_1778877313895_engfl] Progress: 15/72",
+            "[STDOUT][job_1778877313895_engfl] Progress: 20/72",
+            "[STDOUT][job_1778877313895_engfl] Progress: 25/72",
+            "[STDOUT][job_1778877313895_engfl] Progress: 30/72",
+            "[STDOUT][job_1778877313895_engfl] Progress: 35/72",
+            "[STDOUT][job_1778877313895_engfl] Progress: 40/72",
+            "[STDOUT][job_1778877313895_engfl] Generating 16 Onyx-grounded examples for 'dialogue'...",
+            "[STDOUT][job_1778877313895_engfl] Progress: 45/72",
+            "[STDOUT][job_1778877313895_engfl] Progress: 50/72",
+            "[STDOUT][job_1778877313895_engfl] Progress: 55/72",
+            "[STDOUT][job_1778877313895_engfl] Generating 8 Onyx-grounded examples for 'quest'...",
+            "[STDOUT][job_1778877313895_engfl] Progress: 60/72",
+            "[STDOUT][job_1778877313895_engfl] Generating 8 Onyx-grounded examples for 'refusal'...",
+            "[STDOUT][job_1778877313895_engfl] Progress: 65/72",
+            "[STDOUT][job_1778877313895_engfl] Progress: 70/72",
+            "[STDOUT][job_1778877313895_engfl] Progress: 72/72",
+            "[STDOUT][job_1778877313895_engfl] {\"ts\": \"2026-05-15T20:35:16.004679+00:00\", \"event\": \"dataset_generated\", \"npc_key\": \"chemistry_instructor\", \"total\": 72, \"train\": 64, \"validation\": 8, \"train_path\": \"/home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl\", \"technique\": \"onyx\"}",
+            "[STDOUT][job_1778877313895_engfl] Total examples:  72",
+            "[STDOUT][job_1778877313895_engfl] Training:        64",
+            "[STDOUT][job_1778877313895_engfl] Validation:      8",
+            "[STDOUT][job_1778877313895_engfl] Categories:      {\"identity\": 8, \"teaching\": 32, \"dialogue\": 16, \"quest\": 8, \"refusal\": 8}",
+            "[STDOUT][job_1778877313895_engfl] Train path:      /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl",
+            "[STDOUT][job_1778877313895_engfl] Val path:        /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/validation.jsonl",
+            "[STDOUT][job_1778877313895_engfl] Dataset generation complete!"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[STDOUT][job_1778877313895_engfl] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+        "[STDOUT][job_1778877313895_engfl] Generating dataset for: ChemistryInstructor",
+        "[STDOUT][job_1778877313895_engfl] Subject: General chemistry: atoms, molecules, elements, the periodic table, chemical reactions, stoichiometry, acids and bases",
+        "[STDOUT][job_1778877313895_engfl] Generating 8 Onyx-grounded examples for 'identity'...",
+        "[STDOUT][job_1778877313895_engfl] Progress: 5/72",
+        "[STDOUT][job_1778877313895_engfl] Generating 32 Onyx-grounded examples for 'teaching'...",
+        "[STDOUT][job_1778877313895_engfl] Progress: 10/72",
+        "[STDOUT][job_1778877313895_engfl] Progress: 15/72",
+        "[STDOUT][job_1778877313895_engfl] Progress: 20/72",
+        "[STDOUT][job_1778877313895_engfl] Progress: 25/72",
+        "[STDOUT][job_1778877313895_engfl] Progress: 30/72",
+        "[STDOUT][job_1778877313895_engfl] Progress: 35/72",
+        "[STDOUT][job_1778877313895_engfl] Progress: 40/72",
+        "[STDOUT][job_1778877313895_engfl] Generating 16 Onyx-grounded examples for 'dialogue'...",
+        "[STDOUT][job_1778877313895_engfl] Progress: 45/72",
+        "[STDOUT][job_1778877313895_engfl] Progress: 50/72",
+        "[STDOUT][job_1778877313895_engfl] Progress: 55/72",
+        "[STDOUT][job_1778877313895_engfl] Generating 8 Onyx-grounded examples for 'quest'...",
+        "[STDOUT][job_1778877313895_engfl] Progress: 60/72",
+        "[STDOUT][job_1778877313895_engfl] Generating 8 Onyx-grounded examples for 'refusal'...",
+        "[STDOUT][job_1778877313895_engfl] Progress: 65/72",
+        "[STDOUT][job_1778877313895_engfl] Progress: 70/72",
+        "[STDOUT][job_1778877313895_engfl] Progress: 72/72",
+        "[STDOUT][job_1778877313895_engfl] {\"ts\": \"2026-05-15T20:35:16.004679+00:00\", \"event\": \"dataset_generated\", \"npc_key\": \"chemistry_instructor\", \"total\": 72, \"train\": 64, \"validation\": 8, \"train_path\": \"/home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl\", \"technique\": \"onyx\"}",
+        "[STDOUT][job_1778877313895_engfl] Total examples:  72",
+        "[STDOUT][job_1778877313895_engfl] Training:        64",
+        "[STDOUT][job_1778877313895_engfl] Validation:      8",
+        "[STDOUT][job_1778877313895_engfl] Categories:      {\"identity\": 8, \"teaching\": 32, \"dialogue\": 16, \"quest\": 8, \"refusal\": 8}",
+        "[STDOUT][job_1778877313895_engfl] Train path:      /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl",
+        "[STDOUT][job_1778877313895_engfl] Val path:        /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/validation.jsonl",
+        "[STDOUT][job_1778877313895_engfl] Dataset generation complete!"
+      ],
+      "exitCode": 0,
+      "finishedAt": "2026-05-15T20:35:16.025Z"
+    },
+    {
+      "id": "ext_proc_1883607",
+      "name": "External Process (1883607) chemistry_instructor",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chemistry_instructor",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T20:34:36.816Z",
+      "startedAt": "2026-05-15T20:34:36.816Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1883607] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1883607] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T20:34:41.608Z",
+      "exitCode": -15
+    },
+    {
+      "id": "job_1778877274558_myic4",
+      "name": "Generate Dataset",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-15T20:34:34.558Z",
+      "startedAt": "2026-05-15T20:34:34.558Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/chemistry_instructor.json",
+        "--technique",
+        "onyx",
+        "--model",
+        "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": [
+            "[STDOUT][job_1778877274558_myic4] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+            "[STDOUT][job_1778877274558_myic4] Generating dataset for: ChemistryInstructor",
+            "[STDOUT][job_1778877274558_myic4] Subject: General chemistry: atoms, molecules, elements, the periodic table, chemical reactions, stoichiometry, acids and bases",
+            "[STDOUT][job_1778877274558_myic4] Generating 8 Onyx-grounded examples for 'identity'...",
+            "[STDOUT][job_1778877274558_myic4] Progress: 5/72",
+            "[STDOUT][job_1778877274558_myic4] Generating 32 Onyx-grounded examples for 'teaching'...",
+            "[STDOUT][job_1778877274558_myic4] Progress: 10/72",
+            "[STDOUT][job_1778877274558_myic4] Progress: 15/72",
+            "[STDOUT][job_1778877274558_myic4] Progress: 20/72",
+            "[STDOUT][job_1778877274558_myic4] Progress: 25/72",
+            "[STDOUT][job_1778877274558_myic4] Progress: 30/72",
+            "[STDOUT][job_1778877274558_myic4] Progress: 35/72",
+            "[STDOUT][job_1778877274558_myic4] Progress: 40/72",
+            "[STDOUT][job_1778877274558_myic4] Generating 16 Onyx-grounded examples for 'dialogue'...",
+            "[STDOUT][job_1778877274558_myic4] Progress: 45/72",
+            "[STDOUT][job_1778877274558_myic4] Progress: 50/72",
+            "[STDOUT][job_1778877274558_myic4] Progress: 55/72",
+            "[STDOUT][job_1778877274558_myic4] Generating 8 Onyx-grounded examples for 'quest'...",
+            "[STDOUT][job_1778877274558_myic4] Progress: 60/72",
+            "[STDOUT][job_1778877274558_myic4] Generating 8 Onyx-grounded examples for 'refusal'...",
+            "[STDOUT][job_1778877274558_myic4] Progress: 65/72",
+            "[STDOUT][job_1778877274558_myic4] Progress: 70/72",
+            "[STDOUT][job_1778877274558_myic4] Progress: 72/72",
+            "[STDOUT][job_1778877274558_myic4] {\"ts\": \"2026-05-15T20:34:41.565789+00:00\", \"event\": \"dataset_generated\", \"npc_key\": \"chemistry_instructor\", \"total\": 72, \"train\": 64, \"validation\": 8, \"train_path\": \"/home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl\", \"technique\": \"onyx\"}",
+            "[STDOUT][job_1778877274558_myic4] Total examples:  72",
+            "[STDOUT][job_1778877274558_myic4] Training:        64",
+            "[STDOUT][job_1778877274558_myic4] Validation:      8",
+            "[STDOUT][job_1778877274558_myic4] Categories:      {\"identity\": 8, \"teaching\": 32, \"dialogue\": 16, \"quest\": 8, \"refusal\": 8}",
+            "[STDOUT][job_1778877274558_myic4] Train path:      /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl",
+            "[STDOUT][job_1778877274558_myic4] Val path:        /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/validation.jsonl",
+            "[STDOUT][job_1778877274558_myic4] Dataset generation complete!"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[STDOUT][job_1778877274558_myic4] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+        "[STDOUT][job_1778877274558_myic4] Generating dataset for: ChemistryInstructor",
+        "[STDOUT][job_1778877274558_myic4] Subject: General chemistry: atoms, molecules, elements, the periodic table, chemical reactions, stoichiometry, acids and bases",
+        "[STDOUT][job_1778877274558_myic4] Generating 8 Onyx-grounded examples for 'identity'...",
+        "[STDOUT][job_1778877274558_myic4] Progress: 5/72",
+        "[STDOUT][job_1778877274558_myic4] Generating 32 Onyx-grounded examples for 'teaching'...",
+        "[STDOUT][job_1778877274558_myic4] Progress: 10/72",
+        "[STDOUT][job_1778877274558_myic4] Progress: 15/72",
+        "[STDOUT][job_1778877274558_myic4] Progress: 20/72",
+        "[STDOUT][job_1778877274558_myic4] Progress: 25/72",
+        "[STDOUT][job_1778877274558_myic4] Progress: 30/72",
+        "[STDOUT][job_1778877274558_myic4] Progress: 35/72",
+        "[STDOUT][job_1778877274558_myic4] Progress: 40/72",
+        "[STDOUT][job_1778877274558_myic4] Generating 16 Onyx-grounded examples for 'dialogue'...",
+        "[STDOUT][job_1778877274558_myic4] Progress: 45/72",
+        "[STDOUT][job_1778877274558_myic4] Progress: 50/72",
+        "[STDOUT][job_1778877274558_myic4] Progress: 55/72",
+        "[STDOUT][job_1778877274558_myic4] Generating 8 Onyx-grounded examples for 'quest'...",
+        "[STDOUT][job_1778877274558_myic4] Progress: 60/72",
+        "[STDOUT][job_1778877274558_myic4] Generating 8 Onyx-grounded examples for 'refusal'...",
+        "[STDOUT][job_1778877274558_myic4] Progress: 65/72",
+        "[STDOUT][job_1778877274558_myic4] Progress: 70/72",
+        "[STDOUT][job_1778877274558_myic4] Progress: 72/72",
+        "[STDOUT][job_1778877274558_myic4] {\"ts\": \"2026-05-15T20:34:41.565789+00:00\", \"event\": \"dataset_generated\", \"npc_key\": \"chemistry_instructor\", \"total\": 72, \"train\": 64, \"validation\": 8, \"train_path\": \"/home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl\", \"technique\": \"onyx\"}",
+        "[STDOUT][job_1778877274558_myic4] Total examples:  72",
+        "[STDOUT][job_1778877274558_myic4] Training:        64",
+        "[STDOUT][job_1778877274558_myic4] Validation:      8",
+        "[STDOUT][job_1778877274558_myic4] Categories:      {\"identity\": 8, \"teaching\": 32, \"dialogue\": 16, \"quest\": 8, \"refusal\": 8}",
+        "[STDOUT][job_1778877274558_myic4] Train path:      /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl",
+        "[STDOUT][job_1778877274558_myic4] Val path:        /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/validation.jsonl",
+        "[STDOUT][job_1778877274558_myic4] Dataset generation complete!"
+      ],
+      "exitCode": 0,
+      "finishedAt": "2026-05-15T20:34:41.595Z"
+    },
+    {
+      "id": "ext_proc_1825459",
+      "name": "External Process (1825459) math_tutor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "math_tutor",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-15T20:02:30.747Z",
+      "startedAt": "2026-05-15T20:02:30.747Z",
+      "command": [
+        "external",
+        "python scripts/evaluate.py --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/math_tutor/math_tutor-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/math_tutor.json --num-questions 7 --report-html --track --feedback-json eval/results/feedback/math_tutor_comparison.json --output eval/results/math_tutor_comparison_report.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1825459] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1825459] discovered active process",
+        "python scripts/evaluate.py --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/math_tutor/math_tutor-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/math_tutor.json --num-questions 7 --report-html --track --feedback-json eval/results/feedback/math_tutor_comparison.json --output eval/results/math_tutor_comparison_report.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T20:03:02.772Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1825456",
+      "name": "External Process (1825456) math_tutor",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "math_tutor",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-15T20:02:30.747Z",
+      "startedAt": "2026-05-15T20:02:30.747Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && echo \"env ready\" && python scripts/evaluate.py \\   --baseline \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --candidate exports/math_tutor/math_tutor-lora-f16.gguf \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --spec subjects/math_tutor.json \\   --num-questions 7 \\   --report-html \\   --track \\   --feedback-json eval/results/feedback/math_tutor_comparison.json \\   --output eval/results/math_tutor_comparison_report.json 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[STATUS][export] substep=export_f16 state=running",
+            "[EXTERNAL][PID 1825456] Process no longer detected",
+            "[STATUS][export] substep=export_f16 state=running"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1825456] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && echo \"env ready\" && python scripts/evaluate.py \\   --baseline \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --candidate exports/math_tutor/math_tutor-lora-f16.gguf \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --spec subjects/math_tutor.json \\   --num-questions 7 \\   --report-html \\   --track \\   --feedback-json eval/results/feedback/math_tutor_comparison.json \\   --output eval/results/math_tutor_comparison_report.json 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T20:03:02.772Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1817339",
+      "name": "External Process (1817339) math_tutor",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "math_tutor",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-15T19:58:08.454Z",
+      "startedAt": "2026-05-15T19:58:08.454Z",
+      "command": [
+        "external",
+        "python scripts/evaluate.py --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/math_tutor/math_tutor-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/math_tutor.json --num-questions 10 --report-html --track --feedback-json eval/results/feedback/math_tutor_comparison.json --output eval/results/math_tutor_comparison_report.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1817339] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1817339] discovered active process",
+        "python scripts/evaluate.py --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/math_tutor/math_tutor-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/math_tutor.json --num-questions 10 --report-html --track --feedback-json eval/results/feedback/math_tutor_comparison.json --output eval/results/math_tutor_comparison_report.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T19:59:09.500Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1817336",
+      "name": "External Process (1817336) math_tutor",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "math_tutor",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-15T19:58:08.454Z",
+      "startedAt": "2026-05-15T19:58:08.454Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && python scripts/evaluate.py \\   --baseline \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --candidate exports/math_tutor/math_tutor-lora-f16.gguf \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --spec subjects/math_tutor.json \\   --num-questions 10 \\   --report-html \\   --track \\   --feedback-json eval/results/feedback/math_tutor_comparison.json \\   --output eval/results/math_tutor_comparison_report.json 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[STATUS][export] substep=export_f16 state=running",
+            "[EXTERNAL][PID 1817336] Process no longer detected",
+            "[STATUS][export] substep=export_f16 state=running"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1817336] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && python scripts/evaluate.py \\   --baseline \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --candidate exports/math_tutor/math_tutor-lora-f16.gguf \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --spec subjects/math_tutor.json \\   --num-questions 10 \\   --report-html \\   --track \\   --feedback-json eval/results/feedback/math_tutor_comparison.json \\   --output eval/results/math_tutor_comparison_report.json 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T19:59:09.500Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1778197",
+      "name": "External Process (1778197)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-15T19:36:31.149Z",
+      "startedAt": "2026-05-15T19:36:31.149Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-cc55ce5855ba.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && python scripts/export.py math_tutor --full-merge --quantization q4_k_m --resume 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-cc55ce5855ba.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-cc55ce5855ba.txt 2>/dev/null || true printf '\\n__HERMES_CWD_cc55ce5855ba__%s__HERMES_CWD_cc55ce5855ba__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1778197] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1778197] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-cc55ce5855ba.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && python scripts/export.py math_tutor --full-merge --quantization q4_k_m --resume 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-cc55ce5855ba.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-cc55ce5855ba.txt 2>/dev/null || true printf '\\n__HERMES_CWD_cc55ce5855ba__%s__HERMES_CWD_cc55ce5855ba__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T19:41:31.542Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_1753560",
       "name": "External Process (1753560)",
       "type": "Export",
       "commandId": "export",
-      "status": "running",
+      "status": "stopped",
       "progress": 88,
       "loss": null,
       "createdAt": "2026-05-15T19:23:09.013Z",
@@ -33,15 +583,19 @@
         },
         {
           "name": "Export",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1753560] Process no longer detected"
+          ]
         }
       ],
       "logs": [
         "[EXTERNAL][PID 1753560] discovered active process",
         "/usr/bin/bash -c source /tmp/hermes-snap-f6cddb6b287f.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && python scripts/export.py math_tutor --full-merge --quantization q4_k_m 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-f6cddb6b287f.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-f6cddb6b287f.txt 2>/dev/null || true printf '\\n__HERMES_CWD_f6cddb6b287f__%s__HERMES_CWD_f6cddb6b287f__\\n' \"$(pwd -P)\" exit $__hermes_ec"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T19:33:09.141Z",
+      "exitCode": -15
     },
     {
       "id": "ext_export_math_tutor_math_tutor-lora-f16.gguf",
@@ -27452,32 +28006,74 @@
     }
   ],
   "logs": [
-    "[2026-05-15T19:23:09.036Z] [SYNC] discovered running external process pid=1753560",
-    "[2026-05-15T19:22:06.012Z] [SYNC] imported external job ext_export_math_tutor_math_tutor-lora-f16.gguf",
-    "[2026-05-15T19:22:05.175Z] [SYNC] discovered running external process pid=1751392",
-    "[2026-05-15T19:20:17.225Z] [SYNC] discovered running external process pid=1747648",
-    "[2026-05-15T19:20:17.196Z] [SYNC] imported external job ext_train_math_tutor_20260515_default_001",
-    "[2026-05-15T19:19:53.213Z] [SYNC] imported external job ext_dataset_math_tutor_onyx",
-    "[2026-05-15T19:19:36.129Z] [SYNC] discovered running external process pid=1746483",
-    "[2026-05-15T19:00:33.071Z] [SYNC] discovered running external process pid=1717070",
-    "[2026-05-15T19:00:11.063Z] [SYNC] discovered running external process pid=1716099",
-    "[2026-05-15T18:56:17.065Z] [SYNC] discovered running external process pid=1710441",
-    "[2026-05-15T18:53:51.906Z] [SYNC] discovered running external process pid=1705812",
-    "[2026-05-15T18:23:53.049Z] [SYNC] discovered running external process pid=1658576",
-    "[2026-05-15T18:23:53.049Z] [SYNC] discovered running external process pid=1658573",
-    "[2026-05-15T18:14:35.725Z] [SYNC] discovered running external process pid=1641580",
-    "[2026-05-15T17:58:17.232Z] [SYNC] discovered running external process pid=1611733",
-    "[2026-05-15T17:58:03.509Z] [SYNC] discovered running external process pid=1611310",
-    "[2026-05-15T17:56:11.220Z] [SYNC] discovered running external process pid=1607982",
-    "[2026-05-15T17:56:00.842Z] [SYNC] discovered running external process pid=1607548",
-    "[2026-05-15T17:54:40.778Z] [SYNC] discovered running external process pid=1605099",
-    "[2026-05-15T17:54:24.757Z] [SYNC] discovered running external process pid=1604587",
-    "[2026-05-15T17:53:31.707Z] [SYNC] discovered running external process pid=1602644",
-    "[2026-05-15T17:53:26.697Z] [SYNC] discovered running external process pid=1602533",
-    "[2026-05-15T17:50:44.176Z] [SYNC] imported external job ext_dataset_biology_tutor_onyx",
-    "[2026-05-15T17:50:26.209Z] [SYNC] discovered running external process pid=1595940",
-    "[2026-05-15T17:50:22.916Z] [SYNC] imported external job ext_dataset_chemistry_instructor_onyx",
-    "[2026-05-15T17:50:08.202Z] [SYNC] discovered running external process pid=1595300"
+    "[2026-05-15T20:35:16.025Z] [SYSTEM] job job_1778877313895_engfl completed (exit 0)",
+    "[2026-05-15T20:35:16.004Z] [STDOUT][job_1778877313895_engfl] Dataset generation complete!",
+    "[2026-05-15T20:35:16.004Z] [STDOUT][job_1778877313895_engfl] Val path:        /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/validation.jsonl",
+    "[2026-05-15T20:35:16.004Z] [STDOUT][job_1778877313895_engfl] Train path:      /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl",
+    "[2026-05-15T20:35:16.004Z] [STDOUT][job_1778877313895_engfl] Categories:      {\"identity\": 8, \"teaching\": 32, \"dialogue\": 16, \"quest\": 8, \"refusal\": 8}",
+    "[2026-05-15T20:35:16.004Z] [STDOUT][job_1778877313895_engfl] Validation:      8",
+    "[2026-05-15T20:35:16.004Z] [STDOUT][job_1778877313895_engfl] Training:        64",
+    "[2026-05-15T20:35:16.004Z] [STDOUT][job_1778877313895_engfl] Total examples:  72",
+    "[2026-05-15T20:35:16.004Z] [STDOUT][job_1778877313895_engfl] {\"ts\": \"2026-05-15T20:35:16.004679+00:00\", \"event\": \"dataset_generated\", \"npc_key\": \"chemistry_instructor\", \"total\": 72, \"train\": 64, \"validation\": 8, \"train_path\": \"/home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl\", \"technique\": \"onyx\"}",
+    "[2026-05-15T20:35:16.003Z] [STDOUT][job_1778877313895_engfl] Progress: 72/72",
+    "[2026-05-15T20:35:16.003Z] [STDOUT][job_1778877313895_engfl] Progress: 70/72",
+    "[2026-05-15T20:35:16.002Z] [STDOUT][job_1778877313895_engfl] Progress: 65/72",
+    "[2026-05-15T20:35:15.965Z] [STDOUT][job_1778877313895_engfl] Generating 8 Onyx-grounded examples for 'refusal'...",
+    "[2026-05-15T20:35:15.942Z] [SYNC] discovered running external process pid=1885063",
+    "[2026-05-15T20:35:15.802Z] [STDOUT][job_1778877313895_engfl] Progress: 60/72",
+    "[2026-05-15T20:35:15.690Z] [STDOUT][job_1778877313895_engfl] Generating 8 Onyx-grounded examples for 'quest'...",
+    "[2026-05-15T20:35:15.650Z] [STDOUT][job_1778877313895_engfl] Progress: 55/72",
+    "[2026-05-15T20:35:15.469Z] [STDOUT][job_1778877313895_engfl] Progress: 50/72",
+    "[2026-05-15T20:35:15.313Z] [STDOUT][job_1778877313895_engfl] Progress: 45/72",
+    "[2026-05-15T20:35:15.108Z] [STDOUT][job_1778877313895_engfl] Generating 16 Onyx-grounded examples for 'dialogue'...",
+    "[2026-05-15T20:35:15.108Z] [STDOUT][job_1778877313895_engfl] Progress: 40/72",
+    "[2026-05-15T20:35:14.984Z] [STDOUT][job_1778877313895_engfl] Progress: 35/72",
+    "[2026-05-15T20:35:14.886Z] [STDOUT][job_1778877313895_engfl] Progress: 30/72",
+    "[2026-05-15T20:35:14.768Z] [STDOUT][job_1778877313895_engfl] Progress: 25/72",
+    "[2026-05-15T20:35:14.542Z] [STDOUT][job_1778877313895_engfl] Progress: 20/72",
+    "[2026-05-15T20:35:14.380Z] [STDOUT][job_1778877313895_engfl] Progress: 15/72",
+    "[2026-05-15T20:35:14.209Z] [STDOUT][job_1778877313895_engfl] Progress: 10/72",
+    "[2026-05-15T20:35:14.125Z] [STDOUT][job_1778877313895_engfl] Generating 32 Onyx-grounded examples for 'teaching'...",
+    "[2026-05-15T20:35:14.125Z] [STDOUT][job_1778877313895_engfl] Progress: 5/72",
+    "[2026-05-15T20:35:14.081Z] [STDOUT][job_1778877313895_engfl] Generating 8 Onyx-grounded examples for 'identity'...",
+    "[2026-05-15T20:35:14.081Z] [STDOUT][job_1778877313895_engfl] Subject: General chemistry: atoms, molecules, elements, the periodic table, chemical reactions, stoichiometry, acids and bases",
+    "[2026-05-15T20:35:14.081Z] [STDOUT][job_1778877313895_engfl] Generating dataset for: ChemistryInstructor",
+    "[2026-05-15T20:35:14.009Z] [STDOUT][job_1778877313895_engfl] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+    "[2026-05-15T20:35:13.896Z] [SYSTEM] starting job_1778877313895_engfl: ./ucore generate subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+    "[2026-05-15T20:34:41.595Z] [SYSTEM] job job_1778877274558_myic4 completed (exit 0)",
+    "[2026-05-15T20:34:41.565Z] [STDOUT][job_1778877274558_myic4] Dataset generation complete!",
+    "[2026-05-15T20:34:41.565Z] [STDOUT][job_1778877274558_myic4] Val path:        /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/validation.jsonl",
+    "[2026-05-15T20:34:41.565Z] [STDOUT][job_1778877274558_myic4] Train path:      /home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl",
+    "[2026-05-15T20:34:41.565Z] [STDOUT][job_1778877274558_myic4] Categories:      {\"identity\": 8, \"teaching\": 32, \"dialogue\": 16, \"quest\": 8, \"refusal\": 8}",
+    "[2026-05-15T20:34:41.565Z] [STDOUT][job_1778877274558_myic4] Validation:      8",
+    "[2026-05-15T20:34:41.565Z] [STDOUT][job_1778877274558_myic4] Training:        64",
+    "[2026-05-15T20:34:41.565Z] [STDOUT][job_1778877274558_myic4] Total examples:  72",
+    "[2026-05-15T20:34:41.565Z] [STDOUT][job_1778877274558_myic4] {\"ts\": \"2026-05-15T20:34:41.565789+00:00\", \"event\": \"dataset_generated\", \"npc_key\": \"chemistry_instructor\", \"total\": 72, \"train\": 64, \"validation\": 8, \"train_path\": \"/home/athar/Projects/Unsloth_Core/subjects/datasets/chemistry_instructor/onyx/train.jsonl\", \"technique\": \"onyx\"}",
+    "[2026-05-15T20:34:41.564Z] [STDOUT][job_1778877274558_myic4] Progress: 72/72",
+    "[2026-05-15T20:34:41.564Z] [STDOUT][job_1778877274558_myic4] Progress: 70/72",
+    "[2026-05-15T20:34:41.563Z] [STDOUT][job_1778877274558_myic4] Progress: 65/72",
+    "[2026-05-15T20:34:41.428Z] [STDOUT][job_1778877274558_myic4] Generating 8 Onyx-grounded examples for 'refusal'...",
+    "[2026-05-15T20:34:40.931Z] [STDOUT][job_1778877274558_myic4] Progress: 60/72",
+    "[2026-05-15T20:34:40.459Z] [STDOUT][job_1778877274558_myic4] Generating 8 Onyx-grounded examples for 'quest'...",
+    "[2026-05-15T20:34:40.327Z] [STDOUT][job_1778877274558_myic4] Progress: 55/72",
+    "[2026-05-15T20:34:39.807Z] [STDOUT][job_1778877274558_myic4] Progress: 50/72",
+    "[2026-05-15T20:34:39.259Z] [STDOUT][job_1778877274558_myic4] Progress: 45/72",
+    "[2026-05-15T20:34:38.546Z] [STDOUT][job_1778877274558_myic4] Generating 16 Onyx-grounded examples for 'dialogue'...",
+    "[2026-05-15T20:34:38.546Z] [STDOUT][job_1778877274558_myic4] Progress: 40/72",
+    "[2026-05-15T20:34:38.170Z] [STDOUT][job_1778877274558_myic4] Progress: 35/72",
+    "[2026-05-15T20:34:37.736Z] [STDOUT][job_1778877274558_myic4] Progress: 30/72",
+    "[2026-05-15T20:34:37.482Z] [STDOUT][job_1778877274558_myic4] Progress: 25/72",
+    "[2026-05-15T20:34:36.852Z] [SYNC] discovered running external process pid=1883607",
+    "[2026-05-15T20:34:36.734Z] [STDOUT][job_1778877274558_myic4] Progress: 20/72",
+    "[2026-05-15T20:34:36.122Z] [STDOUT][job_1778877274558_myic4] Progress: 15/72",
+    "[2026-05-15T20:34:35.554Z] [STDOUT][job_1778877274558_myic4] Progress: 10/72",
+    "[2026-05-15T20:34:35.028Z] [STDOUT][job_1778877274558_myic4] Generating 32 Onyx-grounded examples for 'teaching'...",
+    "[2026-05-15T20:34:35.027Z] [STDOUT][job_1778877274558_myic4] Progress: 5/72",
+    "[2026-05-15T20:34:34.831Z] [STDOUT][job_1778877274558_myic4] Generating 8 Onyx-grounded examples for 'identity'...",
+    "[2026-05-15T20:34:34.831Z] [STDOUT][job_1778877274558_myic4] Subject: General chemistry: atoms, molecules, elements, the periodic table, chemical reactions, stoichiometry, acids and bases",
+    "[2026-05-15T20:34:34.831Z] [STDOUT][job_1778877274558_myic4] Generating dataset for: ChemistryInstructor",
+    "[2026-05-15T20:34:34.699Z] [STDOUT][job_1778877274558_myic4] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+    "[2026-05-15T20:34:34.558Z] [SYSTEM] starting job_1778877274558_myic4: ./ucore generate subjects/chemistry_instructor.json --technique onyx --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

@@ -1666,6 +1666,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     const reports: Array<{ npcKey: string; files: Array<{ name: string; path: string }> }> = [];
     const comparisons: Array<{ name: string; path: string }> = [];
 
+    // Scan eval/reports/ (legacy structured per-NPC dirs)
     const reportsDir = path.join(evalRoot, "reports");
     if (fs.existsSync(reportsDir)) {
       for (const npcDir of fs.readdirSync(reportsDir)) {
@@ -1676,6 +1677,21 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
           path: `eval/reports/${npcDir}/${f}`,
         }));
         reports.push({ npcKey: npcDir, files });
+      }
+    }
+
+    // Also scan eval/results/ for HTML comparison reports
+    const resultsDir = path.join(evalRoot, "results");
+    if (fs.existsSync(resultsDir)) {
+      const resultFiles = fs.readdirSync(resultsDir)
+        .filter((f) => f.endsWith(".html") || f.endsWith(".htm"))
+        .map((f) => ({
+          name: f,
+          path: `eval/results/${f}`,
+        }));
+      if (resultFiles.length > 0) {
+        // Add under "results" pseudo-NPC key, filtered to only HTML reports
+        reports.push({ npcKey: "comparison-reports", files: resultFiles });
       }
     }
 
@@ -1693,20 +1709,78 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
 
   app.get("/api/eval-reports/file", (req, res) => {
     const requestedPath = String(req.query.path || "");
-    if (!requestedPath.startsWith("eval/reports/") || requestedPath.includes("..")) {
+    if (requestedPath.includes("..")) {
       return res.status(400).json({ error: "Invalid report path." });
     }
-
-    const reportsRoot = path.resolve(repoRoot, "eval", "reports");
+    // Allow serving from both eval/reports/ and eval/results/
+    const allowed = [
+      path.resolve(repoRoot, "eval", "reports") + path.sep,
+      path.resolve(repoRoot, "eval", "results") + path.sep,
+    ];
     const absolutePath = path.resolve(repoRoot, requestedPath);
-    if (!absolutePath.startsWith(`${reportsRoot}${path.sep}`)) {
-      return res.status(400).json({ error: "Report path is outside eval/reports." });
+    const isAllowed = allowed.some((prefix) => absolutePath.startsWith(prefix));
+    if (!isAllowed) {
+      return res.status(400).json({ error: "Report path is outside allowed eval directories." });
     }
     if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
       return res.status(404).json({ error: "Report file not found." });
     }
 
     return res.sendFile(absolutePath);
+  });
+
+  // --- Pipeline State API ---
+
+  app.get("/api/pipeline-state", (_req, res) => {
+    const statePath = path.join(repoRoot, "eval", "results", "pipeline_state.json");
+    if (!fs.existsSync(statePath)) {
+      return res.json({});
+    }
+    try {
+      const raw = fs.readFileSync(statePath, "utf8");
+      return res.json(JSON.parse(raw));
+    } catch {
+      return res.status(500).json({ error: "Failed to parse pipeline_state.json" });
+    }
+  });
+
+  // --- Feedback Results API ---
+
+  app.get("/api/feedback-results", (_req, res) => {
+    const feedbackDir = path.join(repoRoot, "eval", "results", "feedback");
+    if (!fs.existsSync(feedbackDir)) {
+      return res.json([]);
+    }
+    try {
+      const files = fs.readdirSync(feedbackDir)
+        .filter((f) => f.endsWith(".json"))
+        .map((f) => ({
+          name: f,
+          path: `eval/results/feedback/${f}`,
+          lastModified: fs.statSync(path.join(feedbackDir, f)).mtimeMs,
+        }))
+        .sort((a, b) => b.lastModified - a.lastModified);
+      return res.json(files);
+    } catch {
+      return res.status(500).json({ error: "Failed to list feedback results" });
+    }
+  });
+
+  app.get("/api/feedback-result/file", (req, res) => {
+    const requestedPath = String(req.query.path || "");
+    if (!requestedPath.startsWith("eval/results/feedback/") || requestedPath.includes("..")) {
+      return res.status(400).json({ error: "Invalid feedback result path." });
+    }
+    const absolutePath = path.resolve(repoRoot, requestedPath);
+    if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+      return res.status(404).json({ error: "Feedback result file not found." });
+    }
+    try {
+      const raw = fs.readFileSync(absolutePath, "utf8");
+      return res.json(JSON.parse(raw));
+    } catch {
+      return res.status(500).json({ error: "Failed to parse feedback result file." });
+    }
   });
 
   app.get("/api/run/:npcKey/:runId", (req, res) => {

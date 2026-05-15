@@ -54,9 +54,12 @@ The project follows a deterministic workflow to transform a subject spec into a 
 #### Stage 6 — Feedback Loop (Self-Improving Dataset Factory)
 The `ucore feedback` command closes the loop between evaluation and dataset generation:
 
-1. **Evaluate with structured output**: `./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/npc.json --feedback-json eval/results/feedback/npc.json`
+1. **Evaluate with structured output**: `./ucore evaluate --baseline /path/to/base.gguf --candidate exports/npc/npc-lora-f16.gguf --base-model /path/to/base.gguf --spec subjects/npc.json --report-html --feedback-json eval/results/feedback/npc.json`
+   - Uses `llama-server --lora` to evaluate adapter GGUFs without full-merge needed
+   - Works with the same base GGUF that LLMUnity loads at runtime (e.g. `Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf`)
    - Saves per-concept win rates, quality scores, and constraint violations
    - Groups results by category/concept for targeted analysis
+   - `--report-html` generates Chart.js comparison graphics with bar chart + scatter plot
 2. **Run feedback loop**: `./ucore feedback eval/results/feedback/npc.json`
    - Analyzes which concepts are weak (low win rate, poor quality, constraint violations)
    - Plans targeted dataset regeneration for weak areas
@@ -99,14 +102,15 @@ A local Supabase instance tracks everything:
 
 ## 🤖 AI Agent Best Practices
 - **Always use `ucore`**: Prefer the unified CLI over direct script calls when possible.
-- **Export mode**: `ucore export <npc_key>` defaults to adapter-only mode (fast, lightweight GGUF for Unity/LLMUnity). Use `ucore export <npc_key> --full-merge` for standalone merged GGUFs.
-- **Training + export**: `./ucore train ... --export-gguf` uses adapter mode automatically. Use `--full-merge-export` for full merged GGUF after training.
+- **Export mode**: `ucore export <npc_key>` defaults to adapter-only mode (fast, lightweight GGUF for Unity/LLMUnity). Use `ucore export <npc_key> --full-merge` for standalone merged GGUFs (note: full-merge may timeout on HF safetensor download).
+- **Evaluation**: Use `./ucore evaluate --base-model <base.gguf>` to evaluate adapter GGUFs directly — no full-merge needed. This uses `llama-server --lora` under the hood, the same mechanism as LLMUnity's runtime LoRA loading. The base GGUF is already at `Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf` (1.9 GB Q4_K_M).
+- **Training + export**: `./ucore train ... --export-gguf` uses adapter mode automatically. Use `--full-merge-export` for full merged GGUF after training (blocked on HF download).
 - **Preset Selection**:
   - Use `--preset smoke` for debugging/testing.
   - Use `--preset fast-3b` for standard NPC training.
   - Use `--preset safe-any` if CUDA OOM occurs.
   - Use `--preset wandb` (or `--wandb`) for W&B experiment tracking.
-- **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. Contains `llama-server` (inference), `llama-quantize` (fast local quantization from f16→q4_k_m etc.), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary. Used by: export (converter), smoke tests (server), eval (server), full-merge quantization.
+- **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. Contains `llama-server` (inference, supports `--lora` for adapter evaluation without full-merge), `llama-quantize` (fast local quantization from f16→q4_k_m etc.), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary. Used by: export (converter), smoke tests (server), eval (server, with `--base-model` for adapters), full-merge quantization.
 - **Context Awareness**: Before generating a dataset, read the `subjects/*.json` spec to ensure the generated data aligns with the NPC's `identity` and `teaching` style.
 - **Error Handling**: If training fails, check `outputs/{npc_key}/runs/` for TensorBoard logs or `eval/results/` for validation metrics. W&B run links appear in the dashboard Operations Matrix and in the console output.
 

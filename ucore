@@ -172,6 +172,8 @@ def main():
     eval_p.add_argument("--interactive", "-i", action="store_true", help="Interactive chat mode")
     eval_p.add_argument("--port", type=int, default=8888, help="llama-server port")
     eval_p.add_argument("--feedback-json", help="Save structured per-concept eval results for the feedback loop")
+    eval_p.add_argument("--base-model", help="Base GGUF path (required when --candidate is a LoRA adapter)")
+    eval_p.add_argument("--lora-weight", type=float, default=1.0, help="LoRA adapter weight (default: 1.0)")
 
     # Quick-eval
     qe_p = subparsers.add_parser("quick-eval", help="Quick local evaluation (llama-cpp-python)")
@@ -521,6 +523,8 @@ def main():
         if args.interactive: cmd.append("--interactive")
         if args.port: cmd.extend(["--port", str(args.port)])
         if args.feedback_json: cmd.extend(["--feedback-json", args.feedback_json])
+        if args.base_model: cmd.extend(["--base-model", args.base_model])
+        if args.lora_weight: cmd.extend(["--lora-weight", str(args.lora_weight)])
         run_cmd(cmd)
 
     elif args.command == "quick-eval":

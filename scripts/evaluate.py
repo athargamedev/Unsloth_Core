@@ -104,8 +104,10 @@ def quality_estimate(text):
 class LlamaServer:
     """Manage a llama.cpp server subprocess for model inference."""
 
-    def __init__(self, gguf_path, port=8888, host="127.0.0.1"):
+    def __init__(self, gguf_path, port=8888, host="127.0.0.1", lora_path=None, lora_weight=1.0):
         self.gguf_path = Path(gguf_path)
+        self.lora_path = Path(lora_path) if lora_path else None
+        self.lora_weight = lora_weight
         self.port = port
         self.host = host
         self.process = None
@@ -152,6 +154,10 @@ class LlamaServer:
             "-ngl", "99",  # Offload all layers to GPU
             "-c", "4096",   # Context size
         ]
+
+        if self.lora_path:
+            cmd.extend(["--lora", str(self.lora_path)])
+            print(f"[server] LoRA adapter: {self.lora_path}")
 
         print(f"[server] Starting: {' '.join(cmd)}")
         self.process = subprocess.Popen(
@@ -928,6 +934,11 @@ def main():
     # Feedback loop
     parser.add_argument("--feedback-json", help="Save structured per-concept eval results to this JSON file for the feedback loop")
 
+    # LoRA mode (evaluate adapter GGUFs without full-merge)
+    parser.add_argument("--base-model", help="Base GGUF model path (required when --candidate is a LoRA adapter)")
+    parser.add_argument("--lora-weight", type=float, default=1.0,
+                        help="LoRA adapter weight (default: 1.0)")
+
     args = parser.parse_args()
 
     # Training metrics mode
@@ -1009,7 +1020,20 @@ def main():
 
     # Start candidate server
     print("\n[3/4] Starting candidate server...")
-    candidate_server = LlamaServer(candidate_gguf, port=args.port + 1)
+    candidate_kwargs = dict(port=args.port + 1)
+    if args.base_model:
+        # LoRA mode: candidate is an adapter, start server with base model + --lora
+        base_model_path = Path(args.base_model)
+        if not base_model_path.exists():
+            print(f"Error: Base model not found: {args.base_model}")
+            sys.exit(1)
+        candidate_server = LlamaServer(
+            base_model_path, lora_path=candidate_gguf,
+            lora_weight=args.lora_weight, **candidate_kwargs
+        )
+        print(f"  (LoRA mode: base={base_model_path}, adapter={candidate_gguf})")
+    else:
+        candidate_server = LlamaServer(candidate_gguf, **candidate_kwargs)
     if not candidate_server.start():
         sys.exit(1)
 
