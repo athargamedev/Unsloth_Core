@@ -16,6 +16,9 @@ skills-lock.json
 
 # Generated data (regenerable)
 datasets/
+!datasets/*/
+!datasets/*/*/reference_doc/
+!datasets/*/*/reference_doc/**
 !datasets/**/.gitkeep
 outputs/
 !outputs/**/.gitkeep
