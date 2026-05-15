@@ -1415,12 +1415,16 @@ async function startServer() {
   try {
     const agentsMd = fs.readFileSync(path.join(repoRoot, "AGENTS.md"), "utf8");
     const cliRef = fs.readFileSync(path.join(repoRoot, "docs/reference/CLI_REFERENCE.md"), "utf8");
+    const npcCreationWorkflow = fs.readFileSync(path.join(repoRoot, "docs/NPC_CREATION_WORKFLOW.md"), "utf8");
     assistantContext = `
 PROJECT CONTEXT (AGENTS.md):
 ${agentsMd}
 
 CLI REFERENCE:
 ${cliRef}
+
+NPC CREATION WORKFLOW:
+${npcCreationWorkflow}
     `;
   } catch (err) {
     console.warn("Failed to load assistant context files:", err);

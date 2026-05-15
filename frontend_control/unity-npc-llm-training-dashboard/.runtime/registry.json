@@ -2,6 +2,335 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_1047970",
+      "name": "External Process (1047970) star_navigator",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "star_navigator",
+      "status": "running",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-15T13:09:01.513Z",
+      "startedAt": "2026-05-15T13:09:01.513Z",
+      "command": [
+        "external",
+        "/bin/bash -c ./ucore train subjects/star_navigator.json --preset fast-3b --from-spec --export-gguf 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "running",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 1047970] Process still running (re-classified as Training)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 1047970] Process still running (re-classified as Training)"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1047970] discovered active process",
+        "/bin/bash -c ./ucore train subjects/star_navigator.json --preset fast-3b --from-spec --export-gguf 2>&1"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_train_star_navigator_20260515_default_002",
+      "name": "External Train (star_navigator/20260515_default_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "star_navigator",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-15T13:09:01.139Z",
+      "startedAt": "2026-05-15T13:09:01.139Z",
+      "finishedAt": "2026-05-15T13:09:01.139Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/star_navigator.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/star_navigator/runs/20260515_default_002/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_1047564",
+      "name": "External Process (1047564)",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T13:08:46.974Z",
+      "startedAt": "2026-05-15T13:08:46.974Z",
+      "command": [
+        "external",
+        "/bin/bash -c ./ucore --help 2>&1 | head -40"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1047564] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1047564] discovered active process",
+        "/bin/bash -c ./ucore --help 2>&1 | head -40"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T13:08:48.975Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1040259",
+      "name": "External Process (1040259) star_navigator",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "star_navigator",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-15T13:04:43.366Z",
+      "startedAt": "2026-05-15T13:04:43.366Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore train subjects/star_navigator.json --preset smoke --from-spec 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1040259] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1040259] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore train subjects/star_navigator.json --preset smoke --from-spec 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T13:05:50.542Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_star_navigator_20260515_default_001",
+      "name": "External Train (star_navigator/20260515_default_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "star_navigator",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-15T13:04:41.106Z",
+      "startedAt": "2026-05-15T13:04:41.106Z",
+      "finishedAt": "2026-05-15T13:04:41.106Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/star_navigator.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/star_navigator/runs/20260515_default_001/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_972041",
+      "name": "External Process (972041) star_navigator",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "star_navigator",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T12:50:36.021Z",
+      "startedAt": "2026-05-15T12:50:36.021Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore generate subjects/star_navigator.json \\   --technique onyx \\   --onyx-check \\   --onyx-queries 3 \\   --onyx-min-score 0.0 \\   --onyx-min-coverage 0.0 \\   --onyx-use-llm \\   --model llama3.1-3060-rag:latest 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 972041] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 972041] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore generate subjects/star_navigator.json \\   --technique onyx \\   --onyx-check \\   --onyx-queries 3 \\   --onyx-min-score 0.0 \\   --onyx-min-coverage 0.0 \\   --onyx-use-llm \\   --model llama3.1-3060-rag:latest 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T12:53:50.086Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_960672",
+      "name": "External Process (960672) star_navigator",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "star_navigator",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-15T12:48:12.050Z",
+      "startedAt": "2026-05-15T12:48:12.050Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore generate subjects/star_navigator.json \\   --technique onyx \\   --onyx-check \\   --onyx-queries 3 \\   --onyx-min-score 0.0 \\   --onyx-min-coverage 0.0 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 960672] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 960672] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore generate subjects/star_navigator.json \\   --technique onyx \\   --onyx-check \\   --onyx-queries 3 \\   --onyx-min-score 0.0 \\   --onyx-min-coverage 0.0 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-15T12:48:19.343Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_899318",
       "name": "External Process (899318) star_navigator",
       "type": "Dataset",
@@ -25482,12 +25811,7 @@
     }
   ],
   "logs": [
-    "[2026-05-15T12:32:57.101Z] [SYNC] discovered running external process pid=899318",
-    "[2026-05-15T11:58:55.013Z] [SYNC] imported external job ext_sanitize_star_navigator_onyx",
-    "[2026-05-15T11:58:53.979Z] [SYNC] discovered running external process pid=834961",
-    "[2026-05-15T11:58:47.525Z] [SYNC] imported external job ext_dataset_star_navigator_onyx",
-    "[2026-05-15T11:56:45.111Z] [SYNC] discovered running external process pid=831267",
-    "[2026-05-15T11:53:41.534Z] [SYNC] discovered running external process pid=825794"
+    "[2026-05-15T13:25:35.515Z] [SYSTEM] reconciled ext_proc_1047970 to failed (server_restarted)"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []
