@@ -123,7 +123,7 @@ export default function App() {
     alpha: 32,
     baseModel: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
     wandb: false,
-    technique: 'notebooklm',
+    technique: 'onyx',
   });
 
   const {

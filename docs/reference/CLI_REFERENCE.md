@@ -28,14 +28,21 @@ Reviews subject specs before generation or training.
 ### `generate`
 Generates training data from a subject spec.
 - `spec`: Path to JSON spec.
-- `--technique`: `notebooklm` (default), `docs`, `ollama`, `openai`, `anthropic`, `template`.
+- `--technique`: `onyx` (default), `docs`, `ollama`, `openai`, `anthropic`, `template`.
 - `--ollama`: Shortcut for `--technique ollama`.
 - `--docs-manifest`: Optional manifest override for the dedicated `docs` technique.
+- `--onyx-url`, `--onyx-api-key`, `--onyx-max-results`, `--onyx-max-context-chars`: Local Onyx retrieval settings for resource-conscious grounded generation.
 
 The `docs` technique is the canonical path for `subjects/workflow_assistant.json`. It reads a curated checked-in corpus manifest instead of calling an LLM:
 
 ```bash
 ./ucore generate subjects/workflow_assistant.json --technique docs
+```
+
+The `onyx` technique retrieves from the local Onyx index and writes provenance-rich ChatML with bounded local resource use:
+
+```bash
+./ucore generate subjects/my_npc.json --technique onyx --onyx-max-results 3 --onyx-max-context-chars 1200
 ```
 
 ### `sanitize`
@@ -59,7 +66,7 @@ Starts a LoRA fine-tuning session.
 - `--no-wandb`: Disable W&B even if enabled in config.
 - `--export-gguf`: Automatically export to GGUF after training completes.
 
-For the Workflow Assistant, pair `--technique docs` with the sanitized dataset under `datasets/workflow_assistant/docs/`.
+For the Workflow Assistant, pair `--technique docs` with the sanitized dataset under `datasets/workflow_assistant/docs/`. For Onyx-grounded datasets, train with `--technique onyx` so `train.py` prefers `datasets/{npc_key}/onyx/train_clean.jsonl` and falls back to `train.jsonl`.
 
 **W&B convenience preset:**
 ```bash

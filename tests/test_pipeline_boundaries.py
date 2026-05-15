@@ -23,11 +23,11 @@ def minimal_spec():
     }
 
 
-def test_dataset_technique_priority_prefers_notebooklm(monkeypatch, tmp_path):
+def test_dataset_technique_priority_prefers_onyx(monkeypatch, tmp_path):
     from _config import paths
 
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
-    for technique in ("notebooklm", "ollama"):
+    for technique in ("onyx", "ollama"):
         write_jsonl(paths.dataset_train_path("demo_npc", technique), [{"messages": []}])
         write_jsonl(paths.dataset_val_path("demo_npc", technique), [{"messages": []}])
 
@@ -35,34 +35,11 @@ def test_dataset_technique_priority_prefers_notebooklm(monkeypatch, tmp_path):
 
     assert "openai" in paths.DATASET_TECHNIQUES
     assert "anthropic" in paths.DATASET_TECHNIQUES
-    assert technique == "notebooklm"
-    assert train_path == paths.dataset_train_path("demo_npc", "notebooklm")
-    assert val_path == paths.dataset_val_path("demo_npc", "notebooklm")
+    assert "onyx" in paths.DATASET_TECHNIQUES
+    assert technique == "onyx"
+    assert train_path == paths.dataset_train_path("demo_npc", "onyx")
+    assert val_path == paths.dataset_val_path("demo_npc", "onyx")
 
-
-def test_notebooklm_import_accepts_question_answer_jsonl(tmp_path):
-    from scripts.generate_dataset import load_notebooklm_examples, write_examples_with_validation
-
-    input_path = tmp_path / "notebooklm.jsonl"
-    write_jsonl(input_path, [{"question": "Who are you?", "answer": "I am DemoNpc."}])
-
-    examples = load_notebooklm_examples(input_path, minimal_spec())
-    result = write_examples_with_validation(examples, tmp_path / "datasets/demo/notebooklm/train.jsonl", include_validation=False)
-
-    assert examples[0]["messages"][0]["role"] == "system"
-    assert examples[0]["metadata"]["source"] == "notebooklm"
-    assert result["train"] == 1
-    assert Path(result["train_path"]).exists()
-
-
-def test_notebooklm_import_fails_loudly_for_invalid_shape(tmp_path):
-    from scripts.generate_dataset import load_notebooklm_examples
-
-    input_path = tmp_path / "bad.json"
-    input_path.write_text(json.dumps([{"text": "not a qa pair"}]))
-
-    with pytest.raises(ValueError, match="messages or user/question"):
-        load_notebooklm_examples(input_path, minimal_spec())
 
 
 def test_ollama_generator_output_shape_is_chatml(tmp_path):
@@ -81,6 +58,101 @@ def test_ollama_generator_output_shape_is_chatml(tmp_path):
     assert result["train"] == 1
     assert [m["role"] for m in first["messages"]] == ["system", "user", "assistant"]
     assert first["metadata"]["source"].startswith("ollama:")
+
+
+def test_onyx_search_normalizes_local_search_response():
+    from scripts.onyx_client import OnyxClient
+
+    class FakeSession:
+        def post(self, url, json, headers, timeout):
+            assert url == "http://onyx.local/api/search"
+            assert json["query"] == "demo topic"
+            assert json["skip_query_expansion"] is True
+            assert headers["Authorization"] == "Bearer test-token"
+
+            class Response:
+                status_code = 200
+                text = "ok"
+
+                def raise_for_status(self):
+                    pass
+
+                def json(self):
+                    return {
+                        "results": [
+                            {
+                                "citation_id": 7,
+                                "title": "Demo Source",
+                                "content": "Demo content from the index.",
+                                "link": "file://demo.md",
+                                "source_type": "file",
+                                "updated_at": "2026-05-15",
+                            }
+                        ]
+                    }
+
+            return Response()
+
+    client = OnyxClient(base_url="http://onyx.local", api_key="test-token", search_mode="search", session=FakeSession())
+
+    results = client.search("demo topic", max_results=3)
+
+    assert results == [
+        {
+            "document_id": "citation:7",
+            "chunk_ind": None,
+            "title": "Demo Source",
+            "content": "Demo content from the index.",
+            "link": "file://demo.md",
+            "source_type": "file",
+            "score": None,
+        }
+    ]
+
+
+def test_onyx_dataset_generation_uses_retrieval_context_without_llm(tmp_path):
+    from scripts.generate_dataset import generate_onyx_dataset
+
+    spec = minimal_spec()
+    spec["dataset"] = {"examples_per_category": {"teaching": 2}}
+
+    class FakeOnyxClient:
+        def __init__(self):
+            self.queries = []
+
+        def search(self, query, max_results=4, document_sets=None, tags=None):
+            self.queries.append(query)
+            return [
+                {
+                    "document_id": "doc-1",
+                    "chunk_ind": 0,
+                    "title": "Demo Source",
+                    "content": "Demo studies explains demo concepts with local indexed notes.",
+                    "link": "file://demo.md",
+                    "source_type": "file",
+                    "score": 0.91,
+                }
+            ]
+
+    output_path = tmp_path / "datasets" / "demo_npc" / "onyx" / "train.jsonl"
+    result = generate_onyx_dataset(
+        spec,
+        output_path,
+        onyx_client=FakeOnyxClient(),
+        include_validation=False,
+        max_context_chunks=1,
+        max_context_chars=220,
+    )
+    first = json.loads(output_path.read_text().splitlines()[0])
+
+    assert result["train"] == 2
+    assert result["categories"] == {"teaching": 2}
+    assert first["metadata"]["source"] == "onyx"
+    assert first["metadata"]["onyx_document_ids"] == ["doc-1"]
+    assert first["metadata"]["onyx_context_chunks"] == 1
+    assert "Demo Source" in first["metadata"]["onyx_titles"]
+    assert "demo" in first["messages"][1]["content"].lower()
+    assert "indexed notes" in first["messages"][2]["content"]
 
 
 def test_smoke_custom_prompts_and_tracking_timestamp(monkeypatch, tmp_path, capsys):

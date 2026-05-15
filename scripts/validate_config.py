@@ -27,11 +27,11 @@ def _is_canonical_dataset_path(path_str: str) -> bool:
     if not p.is_absolute():
         p = (PROJECT_ROOT / p).resolve()
     try:
-        rel = p.relative_to((PROJECT_ROOT / "datasets").resolve())
+        rel = p.relative_to(paths.dataset_root().resolve())
     except Exception:
         return False
     parts = rel.parts
-    return len(parts) >= 3 and parts[2] == "train.jsonl"
+    return len(parts) >= 3 and parts[2] in {"train.jsonl", "train_clean.jsonl"}
 
 
 def _extract_dataset_info(path_str: str):
@@ -39,7 +39,7 @@ def _extract_dataset_info(path_str: str):
     if not p.is_absolute():
         p = (PROJECT_ROOT / p).resolve()
     try:
-        rel = p.relative_to((PROJECT_ROOT / "datasets").resolve())
+        rel = p.relative_to(paths.dataset_root().resolve())
         parts = rel.parts
         if len(parts) >= 3:
             return parts[0], parts[1], parts[2]
@@ -62,7 +62,7 @@ def validate(args):
         with open(spec_path) as f:
             spec = json.load(f)
         npc_key = spec.get("npc_key") or spec_path.stem
-        config_path = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"
+        config_path = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"  # TODO: use paths.config_root() when available
     else:
         npc_key = args.npc_key
         config_path = Path(args.config)
@@ -103,7 +103,7 @@ def validate(args):
         warnings.append("No training data path provided and could not auto-detect from npc_key.")
     else:
         if not _is_canonical_dataset_path(data_path):
-            msg = f"Non-canonical data path: {data_path} (expected datasets/{{npc_key}}/{{technique}}/train.jsonl)"
+            msg = f"Non-canonical data path: {data_path} (expected datasets/{{npc_key}}/{{technique}}/{{train.jsonl|train_clean.jsonl}})"
             if args.require_canonical:
                 errors.append(msg)
             else:
@@ -118,17 +118,22 @@ def validate(args):
             warnings.append(
                 f"Technique '{d_technique}' selected. For production training of '{npc_key}', {recommended_technique} is recommended."
             )
-        if d_file and d_file != "train.jsonl":
-            warnings.append(f"Dataset file should be train.jsonl, got {d_file}.")
+        if d_file and d_file not in {"train.jsonl", "train_clean.jsonl"}:
+            warnings.append(f"Dataset file should be train.jsonl or train_clean.jsonl, got {d_file}.")
 
-    out_dir = Path(config.get("training", {}).get("output_dir", ""))
-    if not out_dir:
-        errors.append("Resolved config.training.output_dir is empty.")
+    raw_output_dir = (
+        config.get("training", {}).get("output_dir")
+        or config.get("output_dir")
+        or str(paths.output_dir(npc_key or "unknown"))
+    )
+    out_dir = Path(raw_output_dir)
+    if not raw_output_dir:
+        errors.append("Resolved output_dir is empty.")
     else:
         if not out_dir.is_absolute():
             out_dir = PROJECT_ROOT / out_dir
         try:
-            out_dir.resolve().relative_to((PROJECT_ROOT / "outputs").resolve())
+            out_dir.resolve().relative_to(paths.output_root().resolve())
         except Exception:
             warnings.append(f"Output dir '{out_dir}' is outside project outputs/.")
 

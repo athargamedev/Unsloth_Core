@@ -36,9 +36,14 @@ def main():
     gen_p = subparsers.add_parser("generate", help="Generate dataset from spec")
     gen_p.add_argument("spec", help="Path to subject spec JSON")
     gen_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
-    gen_p.add_argument("--technique", default="notebooklm", choices=["docs", "notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
-    gen_p.add_argument("--notebooklm-input", help="NotebookLM export JSON/JSONL path")
+    gen_p.add_argument("--technique", default="onyx", choices=["docs", "onyx", "ollama", "template", "openai", "anthropic"], help="Generation technique")
     gen_p.add_argument("--docs-manifest", help="Docs corpus manifest override for --technique docs")
+    gen_p.add_argument("--onyx-url", help="Local Onyx base URL for --technique onyx")
+    gen_p.add_argument("--onyx-api-key", help="Optional Onyx bearer token")
+    gen_p.add_argument("--onyx-max-results", type=int, help="Max Onyx chunks per retrieval query")
+    gen_p.add_argument("--onyx-max-context-chars", type=int, help="Max Onyx context chars per example")
+    gen_p.add_argument("--onyx-document-set", action="append", dest="onyx_document_sets", help="Limit Onyx retrieval to a document set; repeatable")
+    gen_p.add_argument("--onyx-use-llm", action="store_true", help="Use Ollama to rewrite retrieved Onyx context into examples")
     gen_p.add_argument("--model", help="LLM model name (for ollama/openai/anthropic)")
 
     # Sanitize
@@ -52,7 +57,7 @@ def main():
     train_p.add_argument("config_or_spec", help="Path to config YAML or subject spec")
     train_p.add_argument("--from-spec", action="store_true", help="Train directly from spec")
     train_p.add_argument("--preset", help="Training preset")
-    train_p.add_argument("--technique", choices=["docs", "notebooklm", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
+    train_p.add_argument("--technique", choices=["docs", "onyx", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
     train_p.add_argument("--model", help="Base model ID/path override")
     train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training")
     train_p.add_argument("--wandb", action="store_true", default=None,
@@ -188,9 +193,14 @@ def main():
     pipe_p.add_argument("spec", help="Path to subject spec JSON")
     pipe_p.add_argument("--preset", default="fast-3b", help="Training preset")
     pipe_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
-    pipe_p.add_argument("--technique", default="notebooklm", choices=["docs", "notebooklm", "ollama", "template", "openai", "anthropic"], help="Generation technique")
-    pipe_p.add_argument("--notebooklm-input", help="NotebookLM export JSON/JSONL path")
+    pipe_p.add_argument("--technique", default="onyx", choices=["docs", "onyx", "ollama", "template", "openai", "anthropic"], help="Generation technique")
     pipe_p.add_argument("--docs-manifest", help="Docs corpus manifest override for --technique docs")
+    pipe_p.add_argument("--onyx-url", help="Local Onyx base URL for --technique onyx")
+    pipe_p.add_argument("--onyx-api-key", help="Optional Onyx bearer token")
+    pipe_p.add_argument("--onyx-max-results", type=int, help="Max Onyx chunks per retrieval query")
+    pipe_p.add_argument("--onyx-max-context-chars", type=int, help="Max Onyx context chars per example")
+    pipe_p.add_argument("--onyx-document-set", action="append", dest="onyx_document_sets", help="Limit Onyx retrieval to a document set; repeatable")
+    pipe_p.add_argument("--onyx-use-llm", action="store_true", help="Use Ollama to rewrite retrieved Onyx context into examples")
     pipe_p.add_argument("--track", action="store_true", help="Track results in Supabase")
     pipe_p.add_argument("--wandb", action="store_true", help="Enable W&B logging during training")
 
@@ -239,10 +249,21 @@ def main():
         cmd.extend(["--technique", technique])
         if technique == "ollama":
             cmd.append("--ollama")
-        if args.notebooklm_input:
-            cmd.extend(["--notebooklm-input", args.notebooklm_input])
         if args.docs_manifest:
             cmd.extend(["--docs-manifest", args.docs_manifest])
+        if args.onyx_url:
+            cmd.extend(["--onyx-url", args.onyx_url])
+        if args.onyx_api_key:
+            cmd.extend(["--onyx-api-key", args.onyx_api_key])
+        if args.onyx_max_results is not None:
+            cmd.extend(["--onyx-max-results", str(args.onyx_max_results)])
+        if args.onyx_max_context_chars is not None:
+            cmd.extend(["--onyx-max-context-chars", str(args.onyx_max_context_chars)])
+        if args.onyx_document_sets:
+            for document_set in args.onyx_document_sets:
+                cmd.extend(["--onyx-document-set", document_set])
+        if args.onyx_use_llm:
+            cmd.append("--onyx-use-llm")
         if args.model:
             cmd.extend(["--model", args.model])
         run_cmd(cmd)
@@ -427,10 +448,21 @@ def main():
         gen_cmd.extend(["--technique", technique])
         if technique == "ollama":
             gen_cmd.append("--ollama")
-        if args.notebooklm_input:
-            gen_cmd.extend(["--notebooklm-input", args.notebooklm_input])
         if args.docs_manifest:
             gen_cmd.extend(["--docs-manifest", args.docs_manifest])
+        if args.onyx_url:
+            gen_cmd.extend(["--onyx-url", args.onyx_url])
+        if args.onyx_api_key:
+            gen_cmd.extend(["--onyx-api-key", args.onyx_api_key])
+        if args.onyx_max_results is not None:
+            gen_cmd.extend(["--onyx-max-results", str(args.onyx_max_results)])
+        if args.onyx_max_context_chars is not None:
+            gen_cmd.extend(["--onyx-max-context-chars", str(args.onyx_max_context_chars)])
+        if args.onyx_document_sets:
+            for document_set in args.onyx_document_sets:
+                gen_cmd.extend(["--onyx-document-set", document_set])
+        if args.onyx_use_llm:
+            gen_cmd.append("--onyx-use-llm")
         run_cmd(gen_cmd)
 
         # Determine paths

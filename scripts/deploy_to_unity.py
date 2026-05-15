@@ -85,7 +85,7 @@ def find_unity_project(project_path: Path | None) -> Path | None:
 
 def find_subject_spec(npc_key: str) -> dict | None:
     """Find and load a subject JSON spec by npc_key."""
-    subjects_dir = PROJECT_ROOT / "subjects"
+    subjects_dir = paths.subjects_root()
     candidates = [
         subjects_dir / f"{npc_key}.json",
         subjects_dir / f"{npc_key.replace('_', '-')}.json",

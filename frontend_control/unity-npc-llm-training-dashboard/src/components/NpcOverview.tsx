@@ -49,7 +49,7 @@ interface NpcOverviewProps {
 }
 
 const TECHNIQUE_LABELS: Record<string, string> = {
-  notebooklm: 'NotebookLM',
+  onyx: 'Onyx',
   ollama: 'Ollama',
   template: 'Template',
 };

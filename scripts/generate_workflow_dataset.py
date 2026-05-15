@@ -14,9 +14,12 @@ import argparse
 import json
 import random
 import re
+import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+from _config import paths
 DEFAULT_MANIFEST = PROJECT_ROOT / "docs" / "corpora" / "workflow_assistant_docs.json"
 
 WORKFLOW_SYSTEM_PROMPT = (
@@ -86,10 +89,20 @@ def extract_commands(text: str) -> list[str]:
     commands: list[str] = []
     code_blocks = re.findall(r"```(?:bash|sh|shell|python)?\n(.*?)```", text, re.DOTALL)
     for block in code_blocks:
-        for raw_line in block.splitlines():
-            line = raw_line.strip()
-            if line.startswith(("./ucore", "python ", "npm ", "source ")):
-                commands.append(line)
+        lines = [line.rstrip() for line in block.splitlines()]
+        index = 0
+        while index < len(lines):
+            line = lines[index].strip()
+            if not line.startswith(("./ucore", "python ", "npm ", "source ")):
+                index += 1
+                continue
+            command_lines = [line.rstrip("\\").rstrip()]
+            while line.endswith("\\") and index + 1 < len(lines):
+                index += 1
+                line = lines[index].strip()
+                command_lines.append(line.rstrip("\\").rstrip())
+            commands.append(" ".join(part for part in command_lines if part))
+            index += 1
     for match in re.findall(r"`([^`]+)`", text):
         inline = match.strip()
         if inline.startswith(("./ucore", "python ", "npm ")):
@@ -108,12 +121,16 @@ def extract_bullets(text: str) -> list[str]:
 
 def extract_table_facts(text: str) -> list[str]:
     facts: list[str] = []
+    generic_headers = {"field", "type", "description", "stage", "script", "input", "output", "function", "returns", "technique", "quality", "speed", "dependencies", "best for", "command", "flag", "short"}
     for line in text.splitlines():
         stripped = line.strip()
         if not stripped.startswith("|") or set(stripped.replace("|", "").strip()) <= {":", "-", " "}:
             continue
         cells = [cell.strip() for cell in stripped.strip("|").split("|")]
         if len(cells) < 2:
+            continue
+        lowered_cells = [cell.lower() for cell in cells]
+        if all(cell in generic_headers for cell in lowered_cells if cell):
             continue
         if cells[0].lower() in {"field", "function", "stage", "technique", "preset", "flag"} and len(cells) >= 3:
             facts.append(normalize_sentence(f"{cells[0]} `{cells[1]}`: {cells[2]}"))
@@ -167,10 +184,19 @@ def select_sections(sections: list[tuple[str, str]], section_hints: list[str] | 
 
 def build_answer(source_path: str, sections: list[tuple[str, str]], question_config: dict, fallback_max_sentences: int = 5) -> str:
     max_sentences = int(question_config.get("max_sentences") or fallback_max_sentences)
-    summary_budget = max(1, max_sentences - 1)
+    summary_budget = 1 if question_config.get("include_commands") else min(2, max(1, max_sentences - 2))
     joined_text = "\n\n".join(body for _, body in sections)
+    prompt = str(question_config.get("prompt", "")).lower()
 
-    facts = extract_bullets(joined_text) + extract_table_facts(joined_text) + extract_prose_sentences(joined_text)
+    prose = extract_prose_sentences(joined_text)
+    bullets = extract_bullets(joined_text)
+    tables = extract_table_facts(joined_text)
+    if any(token in prompt for token in ["field", "schema", "examples_per_category", "path", "directory", "layout", "record"]):
+        facts = tables + bullets + prose
+    elif question_config.get("include_commands"):
+        facts = prose + bullets + tables
+    else:
+        facts = bullets + prose + tables
     facts = dedupe([fact for fact in facts if fact])
     summary_parts = facts[:summary_budget]
 
@@ -345,9 +371,9 @@ def generate_workflow_dataset_from_manifest(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate WorkflowAssistant dataset from a curated corpus manifest")
-    parser.add_argument("--spec", default=str(PROJECT_ROOT / "subjects" / "workflow_assistant.json"), help="Path to workflow assistant subject spec")
+    parser.add_argument("--spec", default=str(paths.subjects_root() / "workflow_assistant.json"), help="Path to workflow assistant subject spec")
     parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST), help="Path to corpus manifest JSON")
-    parser.add_argument("--output", default=str(PROJECT_ROOT / "datasets" / "workflow_assistant" / "docs" / "train.jsonl"), help="Output train.jsonl path")
+    parser.add_argument("--output", default=str(paths.dataset_train_path("workflow_assistant", "docs")), help="Output train.jsonl path")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--no-validation", action="store_true", help="Skip validation split")
     parser.add_argument("--val-split", type=float, default=0.12, help="Validation split ratio")

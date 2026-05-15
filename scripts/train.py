@@ -42,7 +42,7 @@ from _config import paths
 # Effective batch size = batch_size * gradient_accumulation_steps.
 # Target: 16 for stable convergence (per QLoRA paper), adjusted for 6GB VRAM.
 # Presets are loaded from configs/presets/ as override-only YAML files.
-PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"
+PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"  # TODO: consider centralizing
 
 
 def deep_merge(base, override):
@@ -191,7 +191,7 @@ def get_config_from_spec(spec_path, preset=None, overrides=None):
     npc_key = spec_path.stem
 
     # Determine technique from spec or default
-    technique = spec.get("technique", spec.get("dataset", {}).get("technique", "notebooklm"))
+    technique = spec.get("technique", spec.get("dataset", {}).get("technique", "onyx"))
 
     # Base model from spec (model_id) or spec.llm.model_name
     model_id = (
@@ -203,13 +203,12 @@ def get_config_from_spec(spec_path, preset=None, overrides=None):
     )
 
     # Dataset path
-    datasets_root = PROJECT_ROOT / "datasets" / npc_key / technique
-    train_path = datasets_root / "train_clean.jsonl"
+    train_path = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
     if not train_path.exists():
-        train_path = datasets_root / "train.jsonl"
+        train_path = paths.dataset_dir(npc_key) / technique / "train.jsonl"
 
     # Output dir
-    output_dir = PROJECT_ROOT / "outputs" / npc_key
+    output_dir = paths.output_dir(npc_key)
 
     config = {
         "npc_key": npc_key,
@@ -348,32 +347,19 @@ def count_training_examples(path):
 
 
 def get_run_output_path(output_dir):
-    """Create a run-specific output directory with an auto-incrementing run ID.
+    """Create a run-specific output directory using canonical run ID.
 
-    Returns (run_dir_path, run_id) where run_id is like 'run_001'.
+    Returns (run_dir_path, run_id) where run_id follows the canonical
+    {YYYYMMDD}_{preset}_{sequential_number} format.
     """
+    from _config.paths import generate_run_id
     output_dir = Path(output_dir)
-    runs_dir = output_dir / "runs"
-    runs_dir.mkdir(parents=True, exist_ok=True)
-
-    # Find highest existing run number
-    existing_runs = [
-        d for parent in (output_dir, runs_dir) if parent.exists()
-        for d in parent.iterdir() if d.is_dir() and d.name.startswith("run_")
-    ]
-    max_num = 0
-    for d in existing_runs:
-        try:
-            num = int(d.name.split("_")[1])
-            max_num = max(max_num, num)
-        except (IndexError, ValueError):
-            pass
-
-    run_id = max_num + 1
-    run_dir = runs_dir / f"run_{run_id:03d}"
+    npc_key = output_dir.name
+    preset_name = "default"
+    run_id = generate_run_id(npc_key, preset_name)
+    run_dir = output_dir / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-
-    return str(run_dir), f"run_{run_id:03d}"
+    return str(run_dir), run_id
 
 
 def get_model_and_tokenizer(config):
@@ -477,7 +463,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
     import torch
 
     training = config.get("training", {})
-    output_dir = training.get("output_dir", str(PROJECT_ROOT / "outputs" / "default"))
+    output_dir = training.get("output_dir", str(paths.output_dir("default")))
     print(f"  Output: {os.path.relpath(output_dir, PROJECT_ROOT)}")
     os.makedirs(output_dir, exist_ok=True)
 
@@ -624,7 +610,7 @@ def main():
                         help="Path to YAML config or subject spec (with --from-spec)")
     parser.add_argument("--from-spec", action="store_true",
                         help="Interpret config_or_spec as a subject spec JSON")
-    parser.add_argument("--technique", choices=["docs", "notebooklm", "ollama", "template", "openai", "anthropic"],
+    parser.add_argument("--technique", choices=["docs", "onyx", "ollama", "template", "openai", "anthropic"],
                         help="Override dataset technique when training from spec")
 
     # Logging / output
@@ -716,8 +702,8 @@ def main():
     if args.technique:
         config["technique"] = args.technique
         npc_for_path = config.get("npc_key", Path(config_path).stem)
-        clean_path = PROJECT_ROOT / "datasets" / npc_for_path / args.technique / "train_clean.jsonl"
-        raw_path = PROJECT_ROOT / "datasets" / npc_for_path / args.technique / "train.jsonl"
+        clean_path = paths.dataset_dir(npc_for_path) / args.technique / "train_clean.jsonl"
+        raw_path = paths.dataset_dir(npc_for_path) / args.technique / "train.jsonl"
         config["dataset_path"] = str(clean_path if clean_path.exists() else raw_path)
 
     if args.no_tensorboard:
@@ -759,7 +745,7 @@ def main():
     if output_dir:
         run_dir, run_id = get_run_output_path(output_dir)
     else:
-        run_dir, run_id = get_run_output_path(str(PROJECT_ROOT / "outputs" / npc_key))
+        run_dir, run_id = get_run_output_path(str(paths.output_dir(npc_key)))
 
     config.setdefault("training", {})["output_dir"] = run_dir
     config["run_id"] = run_id
@@ -778,8 +764,8 @@ def main():
     if not dataset_path or not os.path.exists(dataset_path):
         # Try to derive dataset path
         technique = config.get("technique", "template")
-        clean_candidate = PROJECT_ROOT / "datasets" / npc_key / technique / "train_clean.jsonl"
-        raw_candidate = PROJECT_ROOT / "datasets" / npc_key / technique / "train.jsonl"
+        clean_candidate = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
+        raw_candidate = paths.dataset_dir(npc_key) / technique / "train.jsonl"
         dataset_path = str(clean_candidate if clean_candidate.exists() else raw_candidate)
 
     dataset = load_dataset_from_jsonl(dataset_path, tokenizer, config)
@@ -800,7 +786,7 @@ def main():
     if promotion_passed:
         print("  ✓ Promotion rules passed")
         # Create/update 'best' symlink to this run
-        best_link = Path(output_dir or PROJECT_ROOT / "outputs" / npc_key) / "best"
+        best_link = Path(output_dir or paths.output_dir(npc_key)) / "best"
         if best_link.exists() or best_link.is_symlink():
             best_link.unlink()
         try:
@@ -814,7 +800,7 @@ def main():
             print(f"    - {failure}")
 
     # Always update 'latest' symlink regardless of promotion result
-    latest_link = Path(output_dir or PROJECT_ROOT / "outputs" / npc_key) / "latest"
+    latest_link = Path(output_dir or paths.output_dir(npc_key)) / "latest"
     if latest_link.exists() or latest_link.is_symlink():
         latest_link.unlink()
     try:
@@ -867,7 +853,7 @@ def main():
     print(f"  Run ID:  {run_id}")
     print(f"  Output:  {run_dir}")
     if args.export_gguf:
-        exports_dir = PROJECT_ROOT / "exports" / npc_key
+        exports_dir = paths.export_dir(npc_key)
         print(f"  Exports: {exports_dir}")
     print(f"{'='*60}\n")
 

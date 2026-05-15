@@ -15,6 +15,7 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from _config import paths
 from _config.paths import SNAKE_CASE_PATTERN
 
 GENERATOR_SUPPORTED_DATASET_CATEGORIES = {"identity", "teaching", "dialogue", "quest", "refusal"}
@@ -260,7 +261,7 @@ def validate_spec(spec_path: Path) -> SpecResult:
 
 
 def find_subject_specs() -> list[Path]:
-    return sorted((PROJECT_ROOT / "subjects").glob("*.json"))
+    return sorted(paths.subjects_root().glob("*.json"))
 
 
 def print_human_results(results: list[SpecResult]) -> None:

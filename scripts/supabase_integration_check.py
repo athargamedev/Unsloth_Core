@@ -26,7 +26,7 @@ from _config import paths
 
 
 def load_spec(npc_key: str) -> dict:
-    spec_path = PROJECT_ROOT / "subjects" / f"{npc_key}.json"
+    spec_path = paths.subjects_root() / f"{npc_key}.json"
     if not spec_path.exists():
         raise FileNotFoundError(f"Subject spec not found: {spec_path}")
     with open(spec_path) as f:

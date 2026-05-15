@@ -11,10 +11,11 @@ This directory contains the detailed technical documentation for the Unsloth_Cor
 - [DATASET_STRUCTURE_AND_LOGIC.md](DATASET_STRUCTURE_AND_LOGIC.md): Comprehensive dataset lifecycle — format, generation techniques, sanitization, training flow, and minimum requirements.
 
 ### 🛠️ Workflows
+- [TRAINING_WORKFLOW_CONTEXT.md](TRAINING_WORKFLOW_CONTEXT.md): High-signal AI-agent context for the end-to-end training workflow, contracts, pitfalls, and source map.
 - [TRAINING_WORKFLOW.md](TRAINING_WORKFLOW.md): How to train a new model from scratch.
 - [WORKFLOW_ASSISTANT_WORKFLOW.md](WORKFLOW_ASSISTANT_WORKFLOW.md): Dedicated docs-backed dataset and training path for the frontend Workflow Assistant.
 - [SUBJECT_SPEC_REVIEW_WORKFLOW.md](SUBJECT_SPEC_REVIEW_WORKFLOW.md): Checklist for reviewing `subjects/*.json` before generation/training.
-- [NOTEBOOKLM_WORKFLOW.md](NOTEBOOKLM_WORKFLOW.md): Using NotebookLM for high-quality dataset generation.
+- [ONYX_WORKFLOW.md](ONYX_WORKFLOW.md): Local Onyx retrieval-backed dataset generation with resource-conscious defaults.
 - [OLLAMA_WORKFLOW.md](OLLAMA_WORKFLOW.md): Local-only generation and evaluation using Ollama.
 - [EXPORT_WORKFLOW.md](EXPORT_WORKFLOW.md): Quantization and GGUF export for Unity.
 - [EVALUATION_WORKFLOW.md](EVALUATION_WORKFLOW.md): Comparing models and tracking quality.
@@ -33,4 +34,5 @@ This directory contains the detailed technical documentation for the Unsloth_Cor
 ## 🚀 Getting Started
 1. Start with the [README.md](../README.md) for the quick start guide.
 2. Read [AGENTS.md](../AGENTS.md) if you are an AI assistant.
-3. Consult the [TRAINING_WORKFLOW.md](TRAINING_WORKFLOW.md) for your first fine-tuning run.
+3. Read [TRAINING_WORKFLOW_CONTEXT.md](TRAINING_WORKFLOW_CONTEXT.md) for concise training-workflow context before making code or pipeline changes.
+4. Consult the [TRAINING_WORKFLOW.md](TRAINING_WORKFLOW.md) for your first fine-tuning run.

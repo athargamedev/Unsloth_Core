@@ -167,7 +167,7 @@ def write_manifest(npc_key: str, model_id: str, quantizations: list[str],
     }
 
     # Try to get npc_name from subject spec
-    subjects_dir = PROJECT_ROOT / "subjects"
+    subjects_dir = paths.subjects_root()
     spec_path = subjects_dir / f"{npc_key}.json"
     if spec_path.exists():
         try:

@@ -110,7 +110,7 @@ def main():
     # Auto-detect spec
     spec_path = args.spec
     if not spec_path:
-        spec_guess = PROJECT_ROOT / "subjects" / f"{args.npc_key}.json"
+        spec_guess = paths.subjects_root() / f"{args.npc_key}.json"
         if spec_guess.exists():
             spec_path = str(spec_guess)
             print(f"Auto-detected spec: {spec_path}")

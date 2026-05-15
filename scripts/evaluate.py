@@ -763,16 +763,17 @@ new Chart(document.getElementById('qualityChart'), {
 
 def extract_training_metrics(runs_dir=None, npc_key=None):
     """Extract training loss from TensorBoard event files.
-    
-    If npc_key is provided, looks in outputs/{npc_key}/runs/.
-    Otherwise uses runs_dir or defaults to PROJECT_ROOT / 'runs'.
+
+    Provide either a runs_dir directly, or an npc_key to look in
+    outputs/{npc_key}/runs/.
     """
     if runs_dir is not None:
         runs_dir = Path(runs_dir)
     elif npc_key is not None:
         runs_dir = paths.output_dir(npc_key) / "runs"
     else:
-        runs_dir = PROJECT_ROOT / "runs"
+        print("Error: provide --npc-key or a runs directory to extract training metrics")
+        return
 
     if not runs_dir.exists():
         print(f"No runs directory found at {runs_dir}")

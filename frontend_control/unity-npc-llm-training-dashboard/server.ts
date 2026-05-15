@@ -523,15 +523,6 @@ const parsedValData = (payload: StartCommandPayload): string => {
   );
 };
 
-const parsedNotebooklmInput = (inputPath: string): string => {
-  return resolvePathWithinRoots(
-    inputPath,
-    "notebooklmInput",
-    [path.join(repoRoot, "datasets"), path.join(repoRoot, "subjects"), path.join(repoRoot, "docs")],
-  );
-};
-
-
 const commandDefinitions: CommandDefinition[] = [
   {
     id: "dataset-generate",
@@ -544,10 +535,8 @@ const commandDefinitions: CommandDefinition[] = [
       const args = ["./ucore", "generate", parsedSpec(payload)];
       const technique = String(optionValue(payload, "technique") || "").trim();
       const model = String(optionValue(payload, "model") || optionValue(payload, "modelId") || "").trim();
-      const notebooklmInput = String(optionValue(payload, "notebooklmInput") || "").trim();
       if (technique) args.push("--technique", sanitizeToken(technique, "technique"));
       if (model) args.push("--model", sanitizeToken(model, "model"));
-      if (notebooklmInput) args.push("--notebooklm-input", parsedNotebooklmInput(notebooklmInput));
       if (technique === "ollama") args.push("--ollama");
       return args;
     },
@@ -595,12 +584,10 @@ const commandDefinitions: CommandDefinition[] = [
       const cmd = ["./ucore", "pipeline", parsedSpec(payload)];
       const preset = String(payload.preset || "").trim();
       const technique = String(optionValue(payload, "technique") || "").trim();
-      const notebooklmInput = String(optionValue(payload, "notebooklmInput") || "").trim();
       const track = String(optionValue(payload, "track") || "").trim().toLowerCase();
       const wandb = String(optionValue(payload, "wandb") || "").trim().toLowerCase();
       if (preset) cmd.push("--preset", sanitizeToken(preset, "preset"));
       if (technique) cmd.push("--technique", sanitizeToken(technique, "technique"));
-      if (notebooklmInput) cmd.push("--notebooklm-input", parsedNotebooklmInput(notebooklmInput));
       if (track === "true" || track === "1") cmd.push("--track");
       if (wandb === "true" || wandb === "1") cmd.push("--wandb");
       return cmd;
@@ -1239,6 +1226,30 @@ async function startServer() {
   syncExternalArtifactsToRegistry(registry);
   discoverActiveExternalProcesses(registry);
 
+  // ── Jobs cache: avoid filesystem scan on every /api/jobs request ──
+  const CACHE_TTL_MS = 2000;
+  let jobsCache: { jobs: Job[]; timestamp: number } | null = null;
+
+  const invalidateJobsCache = () => { jobsCache = null; };
+
+  const refreshJobsCacheIfStale = () => {
+    const now = Date.now();
+    if (jobsCache && now - jobsCache.timestamp < CACHE_TTL_MS) return jobsCache.jobs;
+    syncExternalArtifactsToRegistry(registry);
+    discoverActiveExternalProcesses(registry);
+    jobsCache = { jobs: registry.jobs, timestamp: now };
+    return jobsCache.jobs;
+  };
+
+  // Background sync: keep external artifacts and processes in sync without blocking API requests
+  setInterval(() => {
+    const changedArtifacts = syncExternalArtifactsToRegistry(registry);
+    const procResult = discoverActiveExternalProcesses(registry);
+    if (changedArtifacts || procResult.changed) {
+      invalidateJobsCache();
+    }
+  }, 3000);
+
   app.use(express.json());
 
   // ── Security middleware: block path traversal ──
@@ -1324,9 +1335,8 @@ async function startServer() {
 
   // API Routes
   app.get("/api/jobs", (_req, res) => {
-    syncExternalArtifactsToRegistry(registry);
-    discoverActiveExternalProcesses(registry);
-    res.json(registry.jobs);
+    const jobs = refreshJobsCacheIfStale();
+    res.json(jobs);
   });
   app.get("/api/logs", (_req, res) => res.json(registry.logs));
 
@@ -1927,7 +1937,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     try {
       const spec = String(req.body?.spec || "").trim();
       const preset = String(req.body?.preset || "").trim();
-      const technique = String(req.body?.technique || "notebooklm").trim();
+      const technique = String(req.body?.technique || "onyx").trim();
       if (!spec) return res.status(400).json({ error: "spec is required" });
 
       const npcKey = spec.replace(/^subjects\//, "").replace(/\.json$/, "");
@@ -2076,6 +2086,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
         updateStagesFromTruth(job);
         globalLog(registry, `[SYSTEM] ${job.id} ${job.status} (exit ${code})`);
         flushPersist(registry);
+        invalidateJobsCache();
         broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
 
         // Chain to next step
@@ -2176,6 +2187,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
                 updateStagesFromTruth(nextJob);
                 globalLog(registry, `[SYSTEM] ${nextJob.id} ${nextJob.status} (exit ${nextCode})`);
                 flushPersist(registry);
+                invalidateJobsCache();
                 broadcast("job_update", { id: nextJob.id, status: nextJob.status, loss: nextJob.loss, progress: nextJob.progress });
               });
             } catch (chainErr) {
@@ -2183,6 +2195,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
               workflow.overallStatus = "failed";
               workflow.finishedAt = isoNow();
               flushPersist(registry);
+              invalidateJobsCache();
             }
           }
         }
@@ -2222,10 +2235,10 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     const baseDefaultsByCommand: Record<string, Record<string, FieldSchema>> = {
       "dataset-generate": {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json", description: "Subject spec path" },
-        "options.technique": { type: "string", required: false, default: "notebooklm", enum: ["notebooklm", "ollama", "template", "openai", "anthropic"] },
+        "options.technique": { type: "string", required: false, default: "onyx", enum: ["onyx", "ollama", "template", "openai", "anthropic"] },
       },
       "dataset-sanitize": {
-        "options.datasetPath": { type: "string", required: true, default: "datasets/chemistry_instructor/notebooklm/train.jsonl", description: "Train dataset path" },
+        "options.datasetPath": { type: "string", required: true, default: "datasets/chemistry_instructor/onyx/train.jsonl", description: "Train dataset path" },
       },
       train: {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
@@ -2240,7 +2253,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
       pipeline: {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
         preset: { type: "string", required: false, default: "llama-1b-fast", ...(presetOptions.length ? { enum: presetOptions } : {}) },
-        "options.technique": { type: "string", required: false, default: "notebooklm", enum: ["notebooklm", "ollama", "template", "openai", "anthropic"] },
+        "options.technique": { type: "string", required: false, default: "onyx", enum: ["onyx", "ollama", "template", "openai", "anthropic"] },
         "options.track": { type: "boolean", required: false, default: false },
         "options.wandb": { type: "boolean", required: false, default: false },
       },
@@ -2339,6 +2352,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
       updateStagesFromTruth(job);
 
       registry.jobs.unshift(job);
+      invalidateJobsCache();
       globalLog(registry, `[SYSTEM] starting ${job.id}: ${command.join(" ")}`);
       persistRegistry(registry);
       broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
@@ -2405,6 +2419,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
         updateStagesFromTruth(job);
         globalLog(registry, `[SYSTEM] job ${job.id} ${job.status} (exit ${code})`);
         flushPersist(registry);
+        invalidateJobsCache();
         broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
       });
 
@@ -2450,6 +2465,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
 
     globalLog(registry, `[SYSTEM] stop requested ${id}`);
     flushPersist(registry);
+    invalidateJobsCache();
     return res.json({ status: "stop_requested", id });
   });
 
@@ -2461,6 +2477,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     if (job.status === "running") return res.status(409).json({ error: "Cannot delete a running job" });
 
     registry.jobs.splice(index, 1);
+    invalidateJobsCache();
     globalLog(registry, `[SYSTEM] dismissed job ${id}`);
     flushPersist(registry);
     broadcast("job_deleted", { id });
@@ -2470,6 +2487,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
   app.post("/api/jobs/sync", (_req, res) => {
     const changedArtifacts = syncExternalArtifactsToRegistry(registry);
     const proc = discoverActiveExternalProcesses(registry);
+    invalidateJobsCache();
     return res.json({
       synced: true,
       changed: changedArtifacts || proc.changed,

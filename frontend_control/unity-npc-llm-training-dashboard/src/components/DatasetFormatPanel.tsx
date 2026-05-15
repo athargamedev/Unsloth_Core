@@ -108,7 +108,7 @@ export const DatasetFormatPanel = ({ subjects, datasets, trainingConfig, onGener
               <div className="flex flex-col">
                 <span className="text-[8px] uppercase text-ink/40 font-bold">Generation Strategy</span>
                 <span className="text-[11px] font-mono text-accent">
-                  {selectedTechnique === 'notebooklm' ? 'External Import' : selectedTechnique === 'template' ? 'Heuristic Template' : 'LLM Synthesis'}
+                  {selectedTechnique === 'onyx' ? 'Retrieval-Grounded' : selectedTechnique === 'template' ? 'Heuristic Template' : 'LLM Synthesis'}
                 </span>
               </div>
               <div className="flex flex-col">

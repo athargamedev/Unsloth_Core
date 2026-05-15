@@ -115,7 +115,7 @@ export const TrainingSuite = ({
               >
                 <option value="docs">docs</option>
                 <option value="template">template</option>
-                <option value="notebooklm">notebooklm</option>
+                <option value="onyx">onyx</option>
                 <option value="ollama">ollama</option>
                 <option value="openai">openai</option>
                 <option value="anthropic">anthropic</option>

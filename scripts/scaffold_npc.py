@@ -20,9 +20,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from _config import paths
 from _config.paths import SNAKE_CASE_PATTERN
 
-TECHNIQUES = ["notebooklm", "ollama", "template", "openai", "anthropic"]
+TECHNIQUES = ["docs", "notebooklm", "ollama", "template", "openai", "anthropic"]
 
 DEFAULT_SPEC = {
     "npc_key": "{npc_key}",
@@ -110,7 +111,7 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
 
     # ── 1. Subject spec ──────────────────────────────────────────────────────
     if not skip_spec:
-        spec_path = PROJECT_ROOT / "subjects" / f"{npc_key}.json"
+        spec_path = paths.subjects_root() / f"{npc_key}.json"
         spec_path.parent.mkdir(parents=True, exist_ok=True)
 
         if not spec_path.exists() or force:
@@ -149,7 +150,7 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
 
     # ── 2. Dataset folders ──────────────────────────────────────────────────
     for tech in TECHNIQUES:
-        tech_dir = PROJECT_ROOT / "datasets" / npc_key / tech
+        tech_dir = paths.dataset_dir(npc_key) / tech
         if force or not tech_dir.exists():
             tech_dir.mkdir(parents=True, exist_ok=True)
             (tech_dir / ".gitkeep").touch()
@@ -158,7 +159,7 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
             skipped_dirs.append(f"datasets/{npc_key}/{tech}/ (already exists)")
 
     # ── 3. Outputs dir (training) ───────────────────────────────────────────
-    output_dir = PROJECT_ROOT / "outputs" / npc_key
+    output_dir = paths.output_dir(npc_key)
     runs_dir = output_dir / "runs"
     if force or not output_dir.exists():
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -170,7 +171,7 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
         skipped_dirs.append(f"outputs/{npc_key}/ (already exists)")
 
     # ── 4. Exports dir (GGUF) ──────────────────────────────────────────────
-    export_dir = PROJECT_ROOT / "exports" / npc_key
+    export_dir = paths.export_dir(npc_key)
     if force or not export_dir.exists():
         export_dir.mkdir(parents=True, exist_ok=True)
         created_dirs.append(f"exports/{npc_key}/")

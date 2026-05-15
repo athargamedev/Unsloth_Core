@@ -57,7 +57,7 @@ def model_short_name(model_id: str) -> str:
 
 # ── Datasets ─────────────────────────────────────────────────────────────────
 
-DATASET_TECHNIQUES = ("docs", "notebooklm", "ollama", "openai", "anthropic", "template")
+DATASET_TECHNIQUES = ("docs", "onyx", "ollama", "openai", "anthropic", "template")
 
 
 def dataset_root() -> Path:
@@ -69,12 +69,12 @@ def dataset_dir(npc_key: str) -> Path:
     return dataset_root() / npc_key
 
 
-def dataset_train_path(npc_key: str, technique: str = "notebooklm") -> Path:
+def dataset_train_path(npc_key: str, technique: str = "onyx") -> Path:
     """Return datasets/{npc_key}/{technique}/train.jsonl"""
     return dataset_dir(npc_key) / technique / "train.jsonl"
 
 
-def dataset_val_path(npc_key: str, technique: str = "notebooklm") -> Path:
+def dataset_val_path(npc_key: str, technique: str = "onyx") -> Path:
     """Return datasets/{npc_key}/{technique}/validation.jsonl"""
     return dataset_dir(npc_key) / technique / "validation.jsonl"
 
@@ -83,7 +83,7 @@ def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
     """Auto-detect the best available dataset technique for an NPC.
 
     Returns (technique, train_path, val_path) or None if none found.
-    Preference order: docs > notebooklm > ollama > API-generated > template.
+    Preference order: docs > onyx > ollama > API-generated > template.
     """
     for technique in DATASET_TECHNIQUES:
         train = dataset_train_path(npc_key, technique)
@@ -128,6 +128,13 @@ def infer_validation_path(train_path: str | Path) -> Path:
     return p.parent / "validation.jsonl"
 
 
+# ── Subjects (NPC spec files) ────────────────────────────────────────────────
+
+def subjects_root() -> Path:
+    """Return subjects/ directory root."""
+    return PROJECT_ROOT / "subjects"
+
+
 # ── Outputs (LoRA adapters + checkpoints, NO GGUF) ──────────────────────────
 
 def output_root() -> Path:
@@ -137,11 +144,6 @@ def output_root() -> Path:
 def output_dir(npc_key: str) -> Path:
     """Return outputs/{npc_key}/"""
     return output_root() / npc_key
-
-
-def output_colab_dir(npc_key: str) -> Path:
-    """Return outputs/colab/{npc_key}/ for Colab-trained variants."""
-    return output_root() / "colab" / npc_key
 
 
 # ── Exports (GGUF only — deployable artifacts) ──────────────────────────────

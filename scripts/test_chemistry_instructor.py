@@ -10,15 +10,18 @@ Tests the LoRA adapter by checking:
 
 import json
 import re
+import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+from _config import paths
 
 
 def load_training_data():
     """Load training and validation data."""
-    train_path = PROJECT_ROOT / "datasets" / "chemistry_instructor" / "notebooklm" / "train.jsonl"
-    val_path = PROJECT_ROOT / "datasets" / "chemistry_instructor" / "notebooklm" / "validation.jsonl"
+    train_path = paths.dataset_train_path("chemistry_instructor", "notebooklm")
+    val_path = paths.dataset_val_path("chemistry_instructor", "notebooklm")
     
     train_data = []
     if train_path.exists():

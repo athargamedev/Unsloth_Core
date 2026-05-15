@@ -240,7 +240,7 @@ def convert_adapter(adapter_path, outtype="f16", output_path=None, clean_config_
 
 def find_all_adapters():
     """Find all PEFT adapter directories under outputs/."""
-    outputs_dir = PROJECT_ROOT / "outputs"
+    outputs_dir = paths.output_root()
     if not outputs_dir.exists():
         print(f"Error: {outputs_dir} does not exist")
         return []

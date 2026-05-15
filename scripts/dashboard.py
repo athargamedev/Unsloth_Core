@@ -128,7 +128,7 @@ def get_available_configs() -> List[Dict]:
 
 
 def get_subject_specs() -> List[Dict]:
-    subjects_path = PROJECT_ROOT / "subjects"
+    subjects_path = paths.subjects_root()
     specs = []
     for json_file in sorted(subjects_path.glob("*.json")):
         specs.append({

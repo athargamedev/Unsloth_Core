@@ -10,11 +10,13 @@
         {
           "prompt": "How do I run the main Unsloth_Core workflow from the repo root?",
           "category": "teaching",
+          "target_headings": ["Quick Start", "Unified CLI"],
           "include_commands": true
         },
         {
           "prompt": "Which top-level folders matter most when I am tracing the training pipeline?",
-          "category": "dialogue"
+          "category": "dialogue",
+          "target_headings": ["Project Structure"]
         }
       ]
     },
@@ -25,11 +27,13 @@
       "questions": [
         {
           "prompt": "What is the canonical 4-stage pipeline in this repository?",
-          "category": "teaching"
+          "category": "teaching",
+          "target_headings": ["The 4-Stage Pipeline"]
         },
         {
           "prompt": "Which quick commands should I run before I start a long NPC training session?",
           "category": "quest",
+          "target_headings": ["Quick Start for Agents"],
           "include_commands": true
         }
       ]
@@ -40,7 +44,8 @@
       "questions": [
         {
           "prompt": "Where should I look first in the docs for CLI usage, training, export, or frontend dashboard details?",
-          "category": "dialogue"
+          "category": "dialogue",
+          "target_headings": ["Workflows", "Reference", "Integrations"]
         }
       ]
     },
@@ -52,16 +57,19 @@
         {
           "prompt": "Which command validates a subject spec before generation or training?",
           "category": "teaching",
+          "target_headings": ["`validate-spec`"],
           "include_commands": true
         },
         {
           "prompt": "How do I run generate, sanitize, train, and smoke test from `./ucore`?",
           "category": "teaching",
+          "target_headings": ["`generate`", "`sanitize`", "`train`", "`smoke`"],
           "include_commands": true
         },
         {
           "prompt": "How do I compare or evaluate trained models from the CLI?",
           "category": "dialogue",
+          "target_headings": ["`evaluate`", "`compare-runs`"],
           "include_commands": true
         }
       ]
@@ -72,11 +80,13 @@
       "questions": [
         {
           "prompt": "What fields must a valid `subjects/*.json` spec contain?",
-          "category": "teaching"
+          "category": "teaching",
+          "target_headings": ["Top-Level Fields"]
         },
         {
           "prompt": "How should `dataset.examples_per_category` be shaped in a subject spec?",
-          "category": "dialogue"
+          "category": "dialogue",
+          "target_headings": ["`dataset` Object"]
         }
       ]
     },
@@ -87,15 +97,18 @@
       "questions": [
         {
           "prompt": "Where do `train.jsonl`, `validation.jsonl`, and `train_clean.jsonl` live in the canonical dataset layout?",
-          "category": "teaching"
+          "category": "teaching",
+          "target_headings": ["Canonical Filesystem Layout"]
         },
         {
           "prompt": "What does one ChatML training record look like in this project?",
-          "category": "dialogue"
+          "category": "dialogue",
+          "target_headings": ["ChatML Record Format"]
         },
         {
           "prompt": "When should I use `docs`, `notebooklm`, `ollama`, or `template` for dataset generation?",
-          "category": "quest"
+          "category": "quest",
+          "target_headings": ["Technique comparison"]
         }
       ]
     },
@@ -107,11 +120,13 @@
         {
           "prompt": "How do I train from a subject spec with a preset?",
           "category": "teaching",
+          "target_headings": ["Basic: Subject Spec + Preset"],
           "include_commands": true
         },
         {
           "prompt": "How do I validate the resolved training config before running a job?",
           "category": "dialogue",
+          "target_headings": ["Validate Effective Config"],
           "include_commands": true
         }
       ]
@@ -122,11 +137,13 @@
       "questions": [
         {
           "prompt": "What does `validate-config` check before training starts?",
-          "category": "teaching"
+          "category": "teaching",
+          "target_headings": ["Why this exists", "Canonical path expectations", "Integration recommendation"]
         },
         {
           "prompt": "When should I require canonical dataset paths during validation?",
           "category": "dialogue",
+          "target_headings": ["Canonical path expectations", "Command (recommended)"],
           "include_commands": true
         }
       ]
@@ -138,6 +155,7 @@
         {
           "prompt": "What does the `notebooklm` technique require before dataset generation can succeed?",
           "category": "teaching",
+          "target_headings": ["Basic Dataset Generation", "Technique Comparison", "Troubleshooting"],
           "include_commands": true
         }
       ]
@@ -148,7 +166,8 @@
       "questions": [
         {
           "prompt": "When should I choose the `ollama` technique instead of a docs-backed or NotebookLM-backed dataset?",
-          "category": "dialogue"
+          "category": "dialogue",
+          "target_headings": ["Overview", "Why This is Better", "Technical Requirements"]
         }
       ]
     },
@@ -159,6 +178,7 @@
         {
           "prompt": "How do I export a trained adapter to GGUF and where does it land?",
           "category": "teaching",
+          "target_headings": ["Full GGUF Export", "Usage", "Output", "Output Structure Summary"],
           "include_commands": true
         }
       ]
@@ -170,6 +190,7 @@
         {
           "prompt": "How do I compare a candidate model against a baseline in this repo?",
           "category": "teaching",
+          "target_headings": ["Side-by-Side Comparison", "Run-vs-Run Comparison by Run ID"],
           "include_commands": true
         }
       ]
@@ -181,11 +202,13 @@
         {
           "prompt": "How do I start the frontend dashboard and what does it orchestrate?",
           "category": "teaching",
+          "target_headings": ["Runbook", "Architecture"],
           "include_commands": true
         },
         {
           "prompt": "What reliability guarantees does the frontend dashboard provide for workflow jobs?",
-          "category": "dialogue"
+          "category": "dialogue",
+          "target_headings": ["Major Reliability Improvements", "Deterministic stage/progress truth model", "WebSocket replay + heartbeat resilience"]
         }
       ]
     },
@@ -195,7 +218,8 @@
       "questions": [
         {
           "prompt": "What are the key components of the Unity NPC LLM Training Dashboard?",
-          "category": "dialogue"
+          "category": "dialogue",
+          "target_headings": ["Key Components"]
         }
       ]
     },
@@ -205,7 +229,8 @@
       "questions": [
         {
           "prompt": "Which frontend dashboard files should I inspect first when debugging workflow execution?",
-          "category": "quest"
+          "category": "quest",
+          "target_headings": ["Files to know"]
         }
       ]
     },
@@ -215,11 +240,13 @@
       "questions": [
         {
           "prompt": "What changed in the dashboard stage-marker and stop behavior hardening?",
-          "category": "teaching"
+          "category": "teaching",
+          "target_headings": ["Stage marker hardening", "Stop reliability fix"]
         },
         {
           "prompt": "Why can a pipeline fail early at the dataset stage without falsely advancing later stages?",
-          "category": "dialogue"
+          "category": "dialogue",
+          "target_headings": ["Stage marker hardening", "Green-path marker validation"]
         }
       ]
     }

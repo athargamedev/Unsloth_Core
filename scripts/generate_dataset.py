@@ -3,10 +3,10 @@
 generate_dataset.py — Synthetic NPC Dataset Generator
 
 This script transforms an NPC subject specification into a ChatML-formatted
-JSONL training dataset using various techniques (NotebookLM, Ollama, OpenAI).
+JSONL training dataset using various techniques (Onyx, Ollama, OpenAI).
 
 Usage:
-    ./ucore generate subjects/chemistry_instructor.json --technique notebooklm
+    ./ucore generate subjects/chemistry_instructor.json --technique onyx
     python scripts/generate_dataset.py subjects/chemistry_instructor.json --ollama
 
 Technical Details:
@@ -34,6 +34,7 @@ from scripts.generate_workflow_dataset import (
     default_manifest_path,
     generate_workflow_dataset_from_manifest,
 )
+from scripts.onyx_client import OnyxClient
 
 # ── Category templates ──────────────────────────────────────────────────────
 # Each category defines how to generate examples. In production, these would
@@ -145,69 +146,6 @@ def load_subject_spec(path):
         spec = json.load(f)
     spec["_path"] = Path(path).stem
     return spec
-
-
-def _coerce_notebooklm_record(record, spec):
-    """Parse one NotebookLM-exported record into ChatML or fail loudly."""
-    system_prompt = spec["system_prompt"]
-    if isinstance(record, dict) and isinstance(record.get("messages"), list):
-        messages = record["messages"]
-        roles = {m.get("role") for m in messages if isinstance(m, dict)}
-        if {"user", "assistant"}.issubset(roles):
-            if "system" not in roles:
-                messages = [{"role": "system", "content": system_prompt}] + messages
-            return {"messages": messages, "metadata": {**record.get("metadata", {}), "source": "notebooklm"}}
-
-    if not isinstance(record, dict):
-        raise ValueError("NotebookLM records must be JSON objects")
-
-    user_message = record.get("user") or record.get("question") or record.get("prompt")
-    assistant_response = record.get("assistant") or record.get("answer") or record.get("response")
-    if not user_message or not assistant_response:
-        raise ValueError("NotebookLM record must contain messages or user/question plus assistant/answer")
-
-    return {
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": str(user_message)},
-            {"role": "assistant", "content": str(assistant_response)},
-        ],
-        "metadata": {"npc_key": spec["npc_key"], "source": "notebooklm"},
-    }
-
-
-def load_notebooklm_examples(input_path, spec):
-    """Load NotebookLM CLI/import output from JSONL or JSON into ChatML examples."""
-    input_path = Path(input_path)
-    if not input_path.exists():
-        raise FileNotFoundError(f"NotebookLM input not found: {input_path}")
-
-    raw_text = input_path.read_text().strip()
-    if not raw_text:
-        raise ValueError(f"NotebookLM input is empty: {input_path}")
-
-    if input_path.suffix.lower() == ".jsonl":
-        records = [json.loads(line) for line in raw_text.splitlines() if line.strip()]
-    else:
-        parsed = json.loads(raw_text)
-        if isinstance(parsed, list):
-            records = parsed
-        elif isinstance(parsed, dict):
-            records = parsed.get("examples")
-            if records is None:
-                records = parsed.get("items")
-            if records is None:
-                records = parsed
-        else:
-            records = None
-
-    if not isinstance(records, list):
-        raise ValueError("NotebookLM JSON import must be a list or contain an examples/items list")
-
-    examples = [_coerce_notebooklm_record(record, spec) for record in records]
-    if not examples:
-        raise ValueError("NotebookLM import produced zero examples")
-    return examples
 
 
 def write_examples_with_validation(examples, output_path, seed=42, include_validation=True, val_split=0.12):
@@ -324,6 +262,227 @@ def generate_refusal_response(spec):
         f"Great curiosity! However, my expertise is in {subject}. Shall we dive into that?",
     ]
     return random.choice(templates)
+
+
+def _first_sentence(text, max_chars=220):
+    cleaned = " ".join(str(text).split())
+    if not cleaned:
+        return "the indexed source material"
+    match = re.search(r"(.+?[.!?])(?:\s|$)", cleaned)
+    sentence = match.group(1) if match else cleaned
+    return sentence[:max_chars].rstrip()
+
+
+def _format_onyx_context(results, max_context_chunks=4, max_context_chars=1800):
+    selected = []
+    remaining = max_context_chars
+    for result in results[:max_context_chunks]:
+        content = " ".join(str(result.get("content", "")).split())
+        if not content:
+            continue
+        title = result.get("title") or result.get("document_id") or "Onyx source"
+        chunk = f"Source: {title}\n{content}"
+        if len(chunk) > remaining:
+            chunk = chunk[:remaining].rstrip()
+        selected.append({**result, "context_text": chunk})
+        remaining -= len(chunk)
+        if remaining <= 0:
+            break
+    return selected
+
+
+def _onyx_query_for_category(spec, category, concept):
+    subject = spec.get("subject", "")
+    npc_name = spec.get("npc_name", spec.get("npc_key", "NPC"))
+    category_guidance = {
+        "identity": f"{npc_name} identity persona teaching style {subject}",
+        "teaching": f"explain {concept} for a beginner in {subject}",
+        "dialogue": f"student confusion follow up questions about {concept} in {subject}",
+        "quest": f"quiz challenge practice problem about {concept} in {subject}",
+        "refusal": f"scope boundaries safe refusal policy for {npc_name} teaching {subject}",
+    }
+    return category_guidance.get(category, f"{subject} {concept}")
+
+
+def _fallback_onyx_example(spec, category, concept, retrieval_query, context_results):
+    context = _format_onyx_context(context_results, max_context_chunks=1, max_context_chars=700)
+    top = context[0] if context else {}
+    title = top.get("title") or "the local Onyx index"
+    source_sentence = _first_sentence(top.get("content", ""))
+    npc_name = spec["npc_name"]
+
+    user_templates = {
+        "identity": f"Who are you, and what can you help me learn about {spec['subject']}?",
+        "teaching": f"Can you explain {concept} using what our notes say?",
+        "dialogue": f"I am confused about {concept}. Can you connect it to the source material?",
+        "quest": f"Give me a quick practice question about {concept}.",
+        "refusal": "Can you help me with something unrelated to this subject?",
+    }
+    assistant_templates = {
+        "identity": f"I am {npc_name}, your guide for {spec['subject'].lower()}. I use our local course notes to keep answers grounded and helpful.",
+        "teaching": f"From {title}: {source_sentence} Think of that as our anchor point, then we can build the idea step by step.",
+        "dialogue": f"Good question — our indexed notes say: {source_sentence} Let us use that as the clue and unpack it together.",
+        "quest": f"Try this: based on {title}, how would you explain why {concept} matters? Use this clue: {source_sentence}",
+        "refusal": f"I should stay focused on {spec['subject'].lower()}. If you want, I can use our local notes to help with a question in that area.",
+    }
+
+    return {
+        "messages": [
+            {"role": "system", "content": spec["system_prompt"]},
+            {"role": "user", "content": user_templates.get(category, f"What should I know about {concept}?")},
+            {"role": "assistant", "content": assistant_templates.get(category, f"The local notes point to this: {source_sentence}")},
+        ],
+        "metadata": _onyx_metadata(spec, category, concept, retrieval_query, context_results),
+    }
+
+
+def _onyx_metadata(spec, category, concept, retrieval_query, context_results):
+    return {
+        "npc_key": spec["npc_key"],
+        "category": category,
+        "source": "onyx",
+        "concept": concept,
+        "onyx_query": retrieval_query,
+        "onyx_document_ids": [r.get("document_id") for r in context_results if r.get("document_id")],
+        "onyx_titles": [r.get("title") for r in context_results if r.get("title")],
+        "onyx_links": [r.get("link") for r in context_results if r.get("link")],
+        "onyx_scores": [r.get("score") for r in context_results if r.get("score") is not None],
+        "onyx_context_chunks": len(context_results),
+    }
+
+
+def generate_onyx_example(
+    spec,
+    category,
+    concept,
+    onyx_client,
+    generator=None,
+    temperature=0.5,
+    max_context_chunks=4,
+    max_context_chars=1800,
+    document_sets=None,
+    tags=None,
+):
+    """Generate one source-grounded example from local Onyx retrieval."""
+    retrieval_query = _onyx_query_for_category(spec, category, concept)
+    results = onyx_client.search(
+        retrieval_query,
+        max_results=max_context_chunks,
+        document_sets=document_sets,
+        tags=tags,
+    )
+    context_results = _format_onyx_context(results, max_context_chunks=max_context_chunks, max_context_chars=max_context_chars)
+
+    if generator and context_results:
+        context_text = "\n\n".join(r["context_text"] for r in context_results)
+        prompt = f"""
+You are generating source-grounded ChatML training data for {spec['npc_name']}.
+NPC system prompt: {spec['system_prompt']}
+Category: {category}
+Concept: {concept}
+Retrieval query: {retrieval_query}
+
+Use ONLY this local Onyx context as factual support:
+{context_text}
+
+Return ONLY JSON with this exact shape:
+{{"user":"realistic learner question","assistant":"1-3 short sentences, in character, grounded in the context","thought":"brief source-grounding note"}}
+"""
+        raw_res = generator.generate(
+            "You create compact source-grounded NPC fine-tuning examples. Output valid JSON only.",
+            prompt,
+            temperature=temperature,
+            json_format=True,
+        )
+        if raw_res:
+            try:
+                parsed = json.loads(raw_res)
+                return {
+                    "messages": [
+                        {"role": "system", "content": spec["system_prompt"]},
+                        {"role": "user", "content": str(parsed.get("user", "What should I know?"))},
+                        {"role": "assistant", "content": str(parsed.get("assistant", "Let us use the source material as our guide."))},
+                    ],
+                    "metadata": {
+                        **_onyx_metadata(spec, category, concept, retrieval_query, context_results),
+                        "thought": parsed.get("thought", ""),
+                        "onyx_generation_mode": f"llm:{generator.__class__.__name__}",
+                    },
+                }
+            except Exception as exc:
+                print(f"  [warn] Onyx-grounded LLM response parse failed: {exc}")
+
+    return _fallback_onyx_example(spec, category, concept, retrieval_query, context_results)
+
+
+def generate_onyx_dataset(
+    spec,
+    output_path,
+    seed=42,
+    include_validation=True,
+    val_split=0.12,
+    onyx_client=None,
+    generator=None,
+    temperature=0.5,
+    max_context_chunks=4,
+    max_context_chars=1800,
+    document_sets=None,
+    tags=None,
+):
+    """Generate a dataset using local Onyx retrieval as the grounding layer.
+
+    Designed for modest local resources: small top-k, bounded context chars, no
+    indexing, and deterministic no-LLM fallback when a generator is not supplied.
+    """
+    random.seed(seed)
+    onyx_client = onyx_client or OnyxClient()
+    concepts = concept_pool_for_subject(spec)
+    examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
+    examples = []
+    total_count = sum(examples_per_category.values())
+    current = 0
+    search_cache = {}
+
+    class CachedOnyxClient:
+        def search(self, query, max_results=4, document_sets=None, tags=None):
+            key = (query, max_results, tuple(document_sets or []), tuple((t.get("tag_key"), t.get("tag_value")) for t in (tags or [])))
+            if key not in search_cache:
+                search_cache[key] = onyx_client.search(query, max_results=max_results, document_sets=document_sets, tags=tags)
+            return search_cache[key]
+
+    cached_client = CachedOnyxClient()
+
+    for category, count in examples_per_category.items():
+        if category not in CATEGORY_TEMPLATES:
+            print(f"  [warn] Unknown category '{category}', skipping")
+            continue
+        print(f"  Generating {count} Onyx-grounded examples for '{category}'...")
+        for _ in range(count):
+            concept = random.choice(concepts)
+            example = generate_onyx_example(
+                spec,
+                category,
+                concept,
+                cached_client,
+                generator=generator,
+                temperature=temperature,
+                max_context_chunks=max_context_chunks,
+                max_context_chars=max_context_chars,
+                document_sets=document_sets,
+                tags=tags,
+            )
+            examples.append(example)
+            current += 1
+            if current % 5 == 0 or current == total_count:
+                print(f"    Progress: {current}/{total_count}")
+
+    return write_examples_with_validation(
+        examples,
+        output_path,
+        seed=seed,
+        include_validation=include_validation,
+        val_split=val_split,
+    ) | {"categories": dict(examples_per_category), "onyx_searches": len(search_cache)}
 
 
 # ── Ollama Generation ────────────────────────────────────────────────────────
@@ -728,13 +887,23 @@ def main():
     parser.add_argument("--url", default="http://localhost:11434/api/chat", help="Ollama API URL")
     parser.add_argument("--multi-turn-ratio", type=float, default=0.2, help="Ratio of multi-turn dialogues (0.0 to 1.0)")
     parser.add_argument("--temperature", type=float, default=0.8, help="Generation temperature")
-    parser.add_argument("--technique", default="notebooklm",
-                        choices=["template", "ollama", "notebooklm", "openai", "anthropic", "docs"],
-                        help="Generation technique subdirectory (default: notebooklm)")
-    parser.add_argument("--notebooklm-input", default=os.environ.get("NOTEBOOKLM_INPUT"),
-                        help="NotebookLM export JSON/JSONL to import (or NOTEBOOKLM_INPUT env var)")
+    parser.add_argument("--technique", default="onyx",
+                        choices=["template", "ollama", "openai", "anthropic", "docs", "onyx"],
+                        help="Generation technique subdirectory (default: onyx)")
     parser.add_argument("--docs-manifest", default=None,
                         help="Curated corpus manifest for --technique docs (defaults to spec dataset.corpus_manifest)")
+    parser.add_argument("--onyx-url", default=os.environ.get("ONYX_BASE_URL", "http://localhost"),
+                        help="Local Onyx base URL for --technique onyx (default: ONYX_BASE_URL or http://localhost)")
+    parser.add_argument("--onyx-api-key", default=os.environ.get("ONYX_API_KEY"),
+                        help="Optional Onyx bearer token (default: ONYX_API_KEY)")
+    parser.add_argument("--onyx-max-results", type=int, default=4,
+                        help="Max Onyx chunks per retrieval query; keep low for local resources (default: 4)")
+    parser.add_argument("--onyx-max-context-chars", type=int, default=1800,
+                        help="Max retrieved context chars per example before generation (default: 1800)")
+    parser.add_argument("--onyx-document-set", action="append", dest="onyx_document_sets",
+                        help="Limit Onyx retrieval to a document set; repeatable")
+    parser.add_argument("--onyx-use-llm", action="store_true",
+                        help="Use the selected --model generator to rewrite Onyx-grounded examples; default is retrieval-only to save local resources")
     args = parser.parse_args()
 
     # Import re for JSON extraction
@@ -746,6 +915,9 @@ def main():
     generator = None
     if args.technique == "ollama":
         print(f"Initializing Ollama generator ({args.model})...")
+        generator = OllamaGenerator(model=args.model, url=args.url)
+    elif args.technique == "onyx" and args.onyx_use_llm:
+        print(f"Initializing resource-bounded Onyx + Ollama generator ({args.model})...")
         generator = OllamaGenerator(model=args.model, url=args.url)
     elif args.technique == "openai":
         print(f"Initializing OpenAI generator ({args.model})...")
@@ -784,22 +956,25 @@ def main():
         except Exception as exc:
             print(f"Error: docs manifest generation failed: {exc}")
             sys.exit(2)
-    elif args.technique == "notebooklm":
-        if not args.notebooklm_input:
-            print("Error: --technique notebooklm requires --notebooklm-input or NOTEBOOKLM_INPUT.")
-            print("       Export NotebookLM Q&A as JSONL/JSON with messages or question/answer fields.")
-            sys.exit(2)
+    elif args.technique == "onyx":
         try:
-            examples = load_notebooklm_examples(args.notebooklm_input, spec)
-            result = write_examples_with_validation(
-                examples,
+            onyx_client = OnyxClient(base_url=args.onyx_url, api_key=args.onyx_api_key)
+            result = generate_onyx_dataset(
+                spec,
                 output_path,
                 seed=args.seed,
                 include_validation=not args.no_validation,
                 val_split=args.val_split,
+                onyx_client=onyx_client,
+                generator=generator,
+                temperature=args.temperature,
+                max_context_chunks=args.onyx_max_results,
+                max_context_chars=args.onyx_max_context_chars,
+                document_sets=args.onyx_document_sets,
             )
         except Exception as exc:
-            print(f"Error: NotebookLM import failed: {exc}")
+            print(f"Error: Onyx retrieval generation failed: {exc}")
+            print("       Check ONYX_BASE_URL/ONYX_API_KEY, local Onyx auth, and that source documents are indexed.")
             sys.exit(2)
     else:
         result = generate_dataset(

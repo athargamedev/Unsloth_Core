@@ -48,7 +48,7 @@ project_root/
 │       │   ├── train.jsonl
 │       │   ├── train_clean.jsonl
 │       │   └── validation.jsonl
-│       ├── notebooklm/                # Production default — NotebookLM-sourced data
+│       ├── onyx/                      # Production default — Onyx retrieval-grounded data
 │       │   ├── train.jsonl
 │       │   ├── train_clean.jsonl
 │       │   └── validation.jsonl
@@ -119,9 +119,9 @@ All path construction is centralized in `_config/paths.py`. Key function signatu
 | `export_dir(npc_key)` | `exports/{npc_key}/` |
 | `export_gguf_path(npc_key, model_id, quant)` | `exports/{npc_key}/{npc_key}-{model_short}-{quant}.gguf` |
 
-Valid techniques: `docs`, `notebooklm`, `ollama`, `openai`, `anthropic`, `template` (declared in `DATASET_TECHNIQUES`).
+Valid techniques: `docs`, `onyx`, `ollama`, `openai`, `anthropic`, `template` (declared in `DATASET_TECHNIQUES`).
 
-The `is_canonical_train_path()` function validates a path against the `datasets/{npc_key}/{technique}/train.jsonl` pattern. The `autodetect_dataset()` function auto-discovers the best available dataset by checking techniques in priority order: `docs` > `notebooklm` > `ollama` > `openai` > `anthropic` > `template`.
+The `is_canonical_train_path()` function validates a path against the `datasets/{npc_key}/{technique}/train.jsonl` pattern. The `autodetect_dataset()` function auto-discovers the best available dataset by checking techniques in priority order: `docs` > `onyx` > `ollama` > `openai` > `anthropic` > `template`.
 
 ---
 
