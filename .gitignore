@@ -4,8 +4,6 @@ __pycache__/
 *.pyo
 *.egg-info/
 *.egg
-dist/
-build/
 
 # Virtual environment
 unsloth_env/
@@ -18,10 +16,15 @@ skills-lock.json
 
 # Generated data (regenerable)
 datasets/
+!datasets/**/.gitkeep
 outputs/
+!outputs/**/.gitkeep
 exports/
+!exports/**/.gitkeep
 eval/
+!eval/**/.gitkeep
 runs/
+!runs/**/.gitkeep
 *.gguf
 
 # Heavy local/vendor caches
@@ -43,6 +46,31 @@ _unsloth_sentencepiece_temp/
 # OS
 .DS_Store
 Thumbs.db
+
+# W&B local runs (keep wandb/ dir but ignore run folders)
+wandb/run-*
+wandb/**/.gitkeep
+
+# Morph (code analysis tool)
+.morph/
+
+# Onyx data (generated)
+onyx_data/
+
+# Build artifacts
+dist/
+build/
+*.dist
+*.egg
+he directories
+.pytest_cache/
+.cache/
+*.cache
+
+# Frontend
+frontend_control/**/node_modules/
+frontend_control/**/dist/
+frontend_control/**/.next/
 
 # Secrets
 .env
