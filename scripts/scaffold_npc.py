@@ -158,6 +158,15 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
         else:
             skipped_dirs.append(f"datasets/{npc_key}/{tech}/ (already exists)")
 
+        if tech == "onyx":
+            ref_dir = tech_dir / "reference_doc"
+            if force or not ref_dir.exists():
+                ref_dir.mkdir(parents=True, exist_ok=True)
+                (ref_dir / ".gitkeep").touch()
+                created_dirs.append(f"datasets/{npc_key}/onyx/reference_doc/")
+            else:
+                skipped_dirs.append(f"datasets/{npc_key}/onyx/reference_doc/ (already exists)")
+
     # ── 3. Outputs dir (training) ───────────────────────────────────────────
     output_dir = paths.output_dir(npc_key)
     runs_dir = output_dir / "runs"

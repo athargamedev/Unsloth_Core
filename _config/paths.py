@@ -79,6 +79,11 @@ def dataset_val_path(npc_key: str, technique: str = "onyx") -> Path:
     return dataset_dir(npc_key) / technique / "validation.jsonl"
 
 
+def dataset_reference_dir(npc_key: str, technique: str = "onyx") -> Path:
+    """Return datasets/{npc_key}/{technique}/reference_doc/"""
+    return dataset_dir(npc_key) / technique / "reference_doc"
+
+
 def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
     """Auto-detect the best available dataset technique for an NPC.
 

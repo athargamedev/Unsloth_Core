@@ -97,6 +97,7 @@ project_root/
 ### Key directory explanations
 
 - **`datasets/{npc_key}/{technique}/`** — Each technique gets its own subdirectory. The `technique` directory name matches the generation method used. This keeps provenance clear and allows side-by-side comparison.
+- **`datasets/{npc_key}/onyx/reference_doc/`** — NPC-specific grounding content and source documents for Onyx retrieval.
 - **`train.jsonl`** — Raw generated data (Stage 1 output).
 - **`train_clean.jsonl`** — Sanitized data ready for training (Stage 2 output).
 - **`validation.jsonl`** — Held-out set for evaluation during training. Generated simultaneously with the training split.
@@ -114,6 +115,7 @@ All path construction is centralized in `_config/paths.py`. Key function signatu
 | `dataset_dir(npc_key)` | `datasets/{npc_key}/` |
 | `dataset_train_path(npc_key, technique)` | `datasets/{npc_key}/{technique}/train.jsonl` |
 | `dataset_val_path(npc_key, technique)` | `datasets/{npc_key}/{technique}/validation.jsonl` |
+| `dataset_reference_dir(npc_key, technique)` | `datasets/{npc_key}/{technique}/reference_doc/` |
 | `output_dir(npc_key)` | `outputs/{npc_key}/` |
 | `run_dir(npc_key, run_id)` | `outputs/{npc_key}/runs/{run_id}/` |
 | `export_dir(npc_key)` | `exports/{npc_key}/` |

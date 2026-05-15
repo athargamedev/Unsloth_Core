@@ -74,14 +74,15 @@ def load_env() -> dict[str, str]:
     return values
 
 
-def iter_files(globs: Iterable[str], max_bytes: int) -> list[Path]:
+def iter_files(globs: Iterable[str], max_bytes: int, skip_default: bool = True) -> list[Path]:
     files: dict[Path, None] = {}
+    skip_parts = SKIP_PARTS if skip_default else set()
     for pattern in globs:
         for path in PROJECT_ROOT.glob(pattern):
             if not path.is_file():
                 continue
             rel = path.relative_to(PROJECT_ROOT)
-            if any(part in SKIP_PARTS for part in rel.parts):
+            if any(part in skip_parts for part in rel.parts):
                 continue
             if path.stat().st_size > max_bytes:
                 continue
@@ -188,7 +189,8 @@ def main() -> int:
         print("Error: ONYX_API_KEY is required. Put it in .env or export it.", file=sys.stderr)
         return 2
 
-    files = iter_files(args.globs or DEFAULT_GLOBS, max_bytes=args.max_file_kb * 1024)
+    skip_default = args.globs is None
+    files = iter_files(args.globs or DEFAULT_GLOBS, max_bytes=args.max_file_kb * 1024, skip_default=skip_default)
     if args.limit:
         files = files[: args.limit]
     document_sets = normalize_document_sets(args.document_sets, npc_key=args.npc_key)

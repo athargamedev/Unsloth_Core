@@ -471,11 +471,12 @@ def _repo_relative_glob(path_or_glob):
         return None
 
 
-def _onyx_prep_globs(spec_path, extra_docs=None):
+def _onyx_prep_globs(spec_path, npc_key, extra_docs=None):
     """Build targeted repo-relative globs for Onyx prep indexing."""
     globs = []
     seen = set()
-    for candidate in [spec_path, "docs/ONYX_WORKFLOW.md", *(extra_docs or [])]:
+    reference_glob = paths.dataset_reference_dir(npc_key, "onyx") / "**" / "*"
+    for candidate in [spec_path, "docs/ONYX_WORKFLOW.md", reference_glob, *(extra_docs or [])]:
         rel_glob = _repo_relative_glob(candidate)
         if not rel_glob or rel_glob in seen:
             continue
@@ -486,7 +487,7 @@ def _onyx_prep_globs(spec_path, extra_docs=None):
 
 def run_onyx_prep_index(spec_path, npc_key, document_sets, extra_docs=None, sleep_seconds=2.0):
     """Index targeted subject/repo context into Onyx before generation."""
-    globs = _onyx_prep_globs(spec_path, extra_docs=extra_docs)
+    globs = _onyx_prep_globs(spec_path, npc_key, extra_docs=extra_docs)
     if not globs:
         raise RuntimeError("No repo-local files or globs were available for Onyx prep indexing.")
 

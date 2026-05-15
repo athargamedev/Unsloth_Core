@@ -375,22 +375,23 @@ Done! The `space_explorer` NPC is trained, exported, and ready for Unity integra
 
 ## Advanced: Custom Reference Documents
 
-If you want to ground your NPC in **custom content** (e.g., astronomy PDFs, company docs), you can index them into Onyx:
+If you want to ground your NPC in **custom content** (e.g., astronomy PDFs, company docs), keep the reference content with the NPC dataset and index it into Onyx:
 
-1. Create a reference doc: `docs/my_npc_reference.md`
+1. Create a reference doc under the NPC dataset folder, for example:
+   `datasets/my_npc/onyx/reference_doc/my_npc_reference.md`
 2. Index it:
    ```bash
    python scripts/onyx_index_repo.py \
      --npc-key my_npc \
      --document-set my_npc \
-     docs/my_npc_reference.md
+     datasets/my_npc/onyx/reference_doc/**/*.md
    ```
-3. Generate with scoped retrieval:
+3. Generate with scoped retrieval and Onyx prep:
    ```bash
-   ./ucore generate subjects/my_npc.json --technique onyx
+   ./ucore generate subjects/my_npc.json --technique onyx --onyx-prep
    ```
 
-Onyx will now ground generation in your custom content, ensuring factual, domain-specific answers.
+If the NPC has `datasets/{npc_key}/onyx/reference_doc/` files, `--onyx-prep` now automatically includes them during indexing.
 
 ---
 
