@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unsloth-core.local/schemas/datasets/rl_reward_rollout_record.schema.json",
+  "title": "RL Reward Rollout Record",
+  "type": "object",
+  "required": ["prompt", "response", "scores"],
+  "properties": {
+    "prompt": { "type": "string", "minLength": 1 },
+    "response": { "type": "string", "minLength": 1 },
+    "scores": {
+      "type": "object",
+      "required": ["overall"],
+      "properties": {
+        "persona": { "type": "number", "minimum": 0, "maximum": 1 },
+        "factuality": { "type": "number", "minimum": 0, "maximum": 1 },
+        "safety": { "type": "number", "minimum": 0, "maximum": 1 },
+        "instruction_following": { "type": "number", "minimum": 0, "maximum": 1 },
+        "overall": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "npc_key": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "rubric_version": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

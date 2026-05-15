@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unsloth-core.local/schemas/datasets/rl_preferences_record.schema.json",
+  "title": "RL Preference Pair Record",
+  "type": "object",
+  "required": ["prompt", "chosen", "rejected"],
+  "properties": {
+    "prompt": { "type": "string", "minLength": 1 },
+    "chosen": { "type": "string", "minLength": 1 },
+    "rejected": { "type": "string", "minLength": 1 },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "npc_key": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "policy_axis": { "type": "string" },
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
