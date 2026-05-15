@@ -90,10 +90,6 @@ def main():
                          help="Validate GGUF file structure (no inference)")
     smoke_p.add_argument("--track", action="store_true", help="Track results in Supabase")
 
-    # Dashboard
-    dash_p = subparsers.add_parser("dashboard", help="Start the monitoring dashboard")
-    dash_p.add_argument("--port", type=int, default=8000, help="Port")
-
     # Validate config
     val_p = subparsers.add_parser("validate-config", help="Resolve and validate effective training config")
     val_p.add_argument("--spec", help="Path to subject spec JSON")
@@ -128,6 +124,10 @@ def main():
     export_p.add_argument("--skip-f16", action="store_true", help="In full-merge mode: skip f16 variant")
     export_p.add_argument("--outtype", default="f16", choices=["f32", "f16", "bf16", "q8_0"],
                           help="Adapter output format (default: f16)")
+    export_p.add_argument("--maximum-memory", type=float, default=None,
+                          help="Max memory (GB) for save_pretrained_gguf (full-merge mode)")
+    export_p.add_argument("--resume", action="store_true",
+                          help="Resume: skip GGUFs that already exist")
 
     # Export resume
     exr_p = subparsers.add_parser("export-resume", help="Resume/continue GGUF export for an NPC")
@@ -227,6 +227,12 @@ def main():
     pipe_p.add_argument("--model", help="LLM model name for the generation stage (ollama/openai/anthropic/Onyx LLM rewrite)")
     pipe_p.add_argument("--track", action="store_true", help="Track results in Supabase")
     pipe_p.add_argument("--wandb", action="store_true", help="Enable W&B logging during training")
+    pipe_p.add_argument("--full-merge-export", action="store_true",
+                        help="Full merge export after training (slower, standalone GGUF)")
+    pipe_p.add_argument("--skip-smoke", action="store_true", help="Skip smoke test phase")
+    pipe_p.add_argument("--skip-eval", action="store_true", help="Skip evaluation phase")
+    pipe_p.add_argument("--num-eval-questions", type=int, default=5,
+                        help="Number of evaluation questions (default: 5)")
 
     # Plan execution placement
     plan_p = subparsers.add_parser("plan-execution", help="Recommend local vs remote (Colab) for generation/training")
@@ -367,14 +373,6 @@ def main():
         if args.indent: cmd.extend(["--indent", str(args.indent)])
         run_cmd(cmd)
 
-    elif args.command == "dashboard":
-        print("[DEPRECATED] This FastAPI dashboard is deprecated.")
-        print("  The React+Express SPA at http://localhost:3100 is the current dashboard.")
-        print("  Deploy it from frontend_control/unity-npc-llm-training-dashboard/.")
-        print("  Starting legacy dashboard anyway...\n")
-        cmd = [PYTHON, str(SCRIPTS_DIR / "dashboard.py"), "--port", str(args.port)]
-        run_cmd(cmd)
-
     elif args.command == "validate-config":
         cmd = [PYTHON, str(SCRIPTS_DIR / "validate_config.py")]
         if args.spec:
@@ -426,6 +424,8 @@ def main():
         if args.full_merge: cmd.append("--full-merge")
         if args.skip_f16: cmd.append("--skip-f16")
         if args.outtype: cmd.extend(["--outtype", args.outtype])
+        if args.maximum_memory is not None: cmd.extend(["--maximum-memory", str(args.maximum_memory)])
+        if args.resume: cmd.append("--resume")
         run_cmd(cmd)
 
     elif args.command == "export-resume":
@@ -573,25 +573,59 @@ def main():
 
         print("[STAGE] training")
         print(f"\n--- Phase 3: Training Model ---")
-        # Note: train.py --export-gguf will eventually produce a .gguf in exports/{npc_key}/
-        train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--from-spec", "--technique", technique, "--preset", args.preset, "--export-gguf"]
+        train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--from-spec",
+                     "--technique", technique, "--preset", args.preset]
+        if args.full_merge_export:
+            train_cmd.append("--full-merge-export")
+        else:
+            train_cmd.append("--export-gguf")
         if args.wandb:
             train_cmd.append("--wandb")
         run_cmd(train_cmd)
 
-        print("[STAGE] export")
-        print("[STAGE] evaluation")
-        print(f"\n--- Phase 4: Smoke Testing ---")
-        # Find the generated GGUF
+        # Determine paths for GGUF output
         export_dir = PROJECT_ROOT / "exports" / npc_key
-        ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
+        ggufs = list(export_dir.glob("*.gguf")) if export_dir.exists() else []
         if ggufs:
-            smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
-            if args.track:
-                smoke_cmd.append("--track")
-            run_cmd(smoke_cmd)
-        else:
-            print("Warning: No GGUF found for smoke testing")
+            ggufs.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+
+        print("[STAGE] export")
+        if not args.skip_smoke:
+            print(f"\n--- Phase 4: Smoke Testing ---")
+            if ggufs:
+                smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
+                if args.track:
+                    smoke_cmd.append("--track")
+                run_cmd(smoke_cmd)
+            else:
+                print("Warning: No GGUF found for smoke testing")
+
+        if not args.skip_eval:
+            print(f"\n--- Phase 5: Evaluation ---")
+            # Re-scan for GGUFs if not already found
+            if not ggufs and export_dir.exists():
+                ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
+            if ggufs:
+                model_path = ggufs[0]
+                print(f"  Model: {model_path}")
+                print(f"  Running persona validation prompts...")
+                # Deeper persona check with custom prompts
+                eval_cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), str(model_path),
+                            "--spec", args.spec, "--prompt", "Who are you?",
+                            "--prompt", f"What is your area of expertise?"]
+                if args.track:
+                    eval_cmd.append("--track")
+                run_cmd(eval_cmd)
+
+                # Look for previous runs to enable comparison
+                prev_results = list((PROJECT_ROOT / "eval" / "results").glob(f"{npc_key}_*.jsonl"))
+                if prev_results:
+                    print(f"  {len(prev_results)} previous evaluation result(s) found.")
+                    print(f"  Compare runs: ./ucore compare-runs {npc_key} --baseline-run <id> --candidate-run <id>")
+                else:
+                    print(f"  Baseline established. Run pipeline again to compare iterations.")
+            else:
+                print("  Warning: No GGUF found — skipping evaluation")
 
         print("[STAGE] complete")
         print(f"\n--- Pipeline Complete! ---")

@@ -26,6 +26,8 @@ A professional, "agent-first" pipeline for building NPC dialogue models with Uns
 - `ucore`: The unified CLI entry point.
 - `subjects/`: NPC identity and knowledge specifications (.json).
 - `subjects/datasets/`: Generated training and validation data (.jsonl).
+- `subjects/schemas/`: JSON Schema validators for training data format.
+- `subjects/reference_docs/`: Reference materials for NotebookLM dataset generation.
 - `scripts/`: Core Python implementation of the 4-stage pipeline.
 - `configs/`: YAML presets for different hardware and model targets.
 - `outputs/`: LoRA adapters and training logs.

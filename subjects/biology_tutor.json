@@ -23,6 +23,20 @@
       "Introduction to Biology and Life Sciences"
     ]
   },
+  "quest": {
+    "scenarios": [
+      {"name": "cell_structure", "description": "Student asks about the structure and function of cell organelles"},
+      {"name": "photosynthesis", "description": "Student wants to understand the process of photosynthesis step by step"}
+    ]
+  },
+  "refusal": {
+    "boundaries": [
+      "Will not provide medical advice or diagnoses",
+      "Will not help with unethical biology experiments",
+      "Will not provide information on genetic engineering for human enhancement"
+    ],
+    "redirect_policy": "Redirects to safe biology topics within standard curriculum"
+  },
   "research_queries": [
     {
       "query": "Fundamentals of Biology and Life Sciences",

@@ -487,7 +487,7 @@ const parsedDatasetPath = (payload: StartCommandPayload): string => {
   return resolvePathWithinRoots(
     requireString(optionValue(payload, "datasetPath"), "datasetPath"),
     "datasetPath",
-    [path.join(repoRoot, "datasets")],
+    [path.join(repoRoot, "subjects")],
   );
 };
 
@@ -519,7 +519,7 @@ const parsedValData = (payload: StartCommandPayload): string => {
   return resolvePathWithinRoots(
     requireString(optionValue(payload, "valData"), "valData"),
     "valData",
-    [path.join(repoRoot, "datasets")],
+    [path.join(repoRoot, "subjects")],
   );
 };
 
@@ -934,8 +934,7 @@ const ensureExternalJob = (
 const syncExternalArtifactsToRegistry = (registry: Registry) => {
   let changed = false;
 
-  const datasetsRoot = path.join(repoRoot, "datasets");
-  if (fs.existsSync(datasetsRoot)) {
+  const datasetsRoot = path.join(repoRoot, "subjects", "datasets");
     for (const npcKey of fs.readdirSync(datasetsRoot)) {
       const npcDir = path.join(datasetsRoot, npcKey);
       if (!fs.statSync(npcDir).isDirectory()) continue;
@@ -1284,7 +1283,7 @@ async function startServer() {
   });
 
   const listDatasets = () => {
-    const datasetsRoot = path.join(repoRoot, "datasets");
+    const datasetsRoot = path.join(repoRoot, "subjects", "datasets");
     if (!fs.existsSync(datasetsRoot)) return [];
     return fs.readdirSync(datasetsRoot).map((npcKey) => {
       const npcPath = path.join(datasetsRoot, npcKey);
@@ -1488,7 +1487,7 @@ ${npcCreationWorkflow}
     try {
       const onyxContextPayload = await fetchOnyxAssistantContext(message, 4);
       if (onyxContextPayload?.context) {
-        onyxContextText = `\n\nLOCAL ONYX CONTEXT:\n${onyxContextPayload.context}\n\nUse the retrieved sources above to ground answers whenever relevant.`;
+        onyxContextText = `\n\nLOCAL ONYX CONTEXT (Ground truth from indexed docs):\n${onyxContextPayload.context}\n\nUse the retrieved sources above to ground answers whenever relevant.`;
       }
     } catch {
       // Ignore Onyx fetch failures; assistant still works with repo docs.
@@ -1498,12 +1497,17 @@ ${npcCreationWorkflow}
       const messages: Array<{ role: string; content: string }> = [
         {
           role: "system",
-          content: `You are a high-level specialist in Unity NPC LLM integration and the Unsloth_Core pipeline.
+          content: `You are WorkflowAssistant, a high-level specialist in the Unsloth_Core pipeline.
+Your goal is to help users manage NPC training, dataset generation, and model export.
+You are "self-improving" because you were trained using the very pipeline you assist with.
 Keep responses concise and actionable. Use the following context for your knowledge:
 
 ${assistantContext}${onyxContextText}
 
-If the user asks to run a command, you can suggest the exact ./ucore command.
+ACTIONABLE COMMANDS:
+Whenever you suggest a command, format it clearly using markdown code blocks starting with ./ucore.
+The user can execute these commands directly from your interface.
+Suggest commands for dataset generation, training (especially for the workflow_assistant itself if relevant), and evaluation.
 You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is set.`,
         },
         ...history.slice(-10),
@@ -1583,6 +1587,37 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     }
   });
 
+  app.post("/api/assistant/execute", (req, res) => {
+    const commandStr = typeof req.body?.command === "string" ? req.body.command.trim() : "";
+    if (!commandStr || !commandStr.startsWith("./ucore")) {
+      return res.status(400).json({ error: "Only ./ucore commands are allowed for execution." });
+    }
+
+    try {
+      const tokens = tokenizeProcessArgs(commandStr);
+      // Basic security: don't allow shell injection or path traversal beyond what tokenize handles
+      
+      const job: Job = {
+        id: makeId(),
+        name: `Assistant: ${commandStr.length > 40 ? commandStr.slice(0, 37) + "..." : commandStr}`,
+        type: "Assistant",
+        status: "running",
+        progress: 5,
+        loss: null,
+        createdAt: isoNow(),
+        startedAt: isoNow(),
+        command: tokens,
+        stages: defaultStages(),
+        logs: [],
+      };
+      
+      const startedJob = launchJob(job);
+      res.json(startedJob);
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Failed to execute assistant command." });
+    }
+  });
+
   app.get("/api/dataset/:npcKey/:technique", (req, res) => {
     const { npcKey, technique } = req.params;
     const n = Math.min(Math.max(parseInt(String(req.query.n || "10"), 10) || 10, 1), 100);
@@ -1592,7 +1627,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
       return res.status(400).json({ error: "Invalid path" });
     }
 
-    const trainPath = path.join(repoRoot, "datasets", npcKey, technique, "train.jsonl");
+    const trainPath = path.join(repoRoot, "subjects", "datasets", npcKey, technique, "train.jsonl");
     if (!fs.existsSync(trainPath)) {
       return res.status(404).json({ error: `Dataset ${npcKey}/${technique} not found. Run generation first.` });
     }
@@ -1752,7 +1787,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
     const coreChecks = {
       ucoreExists: fs.existsSync(path.join(repoRoot, "ucore")),
       subjectsDir: fs.existsSync(path.join(repoRoot, "subjects")),
-      datasetsDir: fs.existsSync(path.join(repoRoot, "datasets")),
+      datasetsDir: fs.existsSync(path.join(repoRoot, "subjects", "datasets")),
       outputsDir: fs.existsSync(path.join(repoRoot, "outputs")),
       exportsDir: fs.existsSync(path.join(repoRoot, "exports")),
     };
@@ -2452,81 +2487,9 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
         stages: defaultStages(),
         logs: [],
       };
-      updateStagesFromTruth(job);
-
-      registry.jobs.unshift(job);
-      invalidateJobsCache();
-      globalLog(registry, `[SYSTEM] starting ${job.id}: ${command.join(" ")}`);
-      persistRegistry(registry);
-      broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
-
-      unloadGemmaModel();
-      const child = spawn(command[0], command.slice(1), { cwd: repoRoot, shell: false, detached: true });
-      runningProcesses.set(job.id, child);
-      terminalJobState.set(job.id, { stopRequested: false, terminal: false });
-
-      const consume = (chunk: Buffer, source: "stdout" | "stderr") => {
-        const lines = chunk.toString().split("\n").map((line) => line.trim()).filter(Boolean);
-        for (const line of lines) {
-          const prefixed = `[${source.toUpperCase()}][${job.id}] ${line}`;
-          job.logs.push(prefixed);
-          job.logs = job.logs.slice(-MAX_LOG_LINES);
-          appendStageLog(job, prefixed);
-          globalLog(registry, prefixed);
-
-          // Extract W&B run URL from wandb output
-          const wandbMatch = line.match(/https:\/\/wandb\.ai\/[-a-zA-Z0-9./_?=&#%~]+\/runs\/([a-z0-9]+)/i);
-          if (wandbMatch) {
-            const wandbUrl = wandbMatch[0];
-            if (!job.wandbUrl) {
-              job.wandbUrl = wandbUrl;
-              globalLog(registry, `[WANDB] captured run URL: ${wandbUrl}`);
-              broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress, wandbUrl });
-            }
-          }
-
-          const parsedLoss = parseLoss(line);
-          if (parsedLoss !== null) {
-            job.loss = parsedLoss;
-            broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
-          }
-          updateStagesFromTruth(job);
-        }
-        persistRegistry(registry);
-      };
-
-      child.stdout.on("data", (chunk) => consume(chunk, "stdout"));
-      child.stderr.on("data", (chunk) => consume(chunk, "stderr"));
-      child.on("close", (code) => {
-        const terminalState = terminalJobState.get(job.id);
-        const escalationTimer = stopEscalationTimers.get(job.id);
-        if (escalationTimer) {
-          clearTimeout(escalationTimer);
-          stopEscalationTimers.delete(job.id);
-        }
-        runningProcesses.delete(job.id);
-        terminalJobState.delete(job.id);
-
-        if (terminalState?.terminal) {
-          return;
-        }
-
-        job.exitCode = code ?? -1;
-        job.finishedAt = isoNow();
-        if (terminalState?.stopRequested || job.stopRequested) {
-          job.status = "stopped";
-          job.terminalReason = "user_requested_stop";
-        } else {
-          job.status = code === 0 ? "completed" : "failed";
-        }
-        updateStagesFromTruth(job);
-        globalLog(registry, `[SYSTEM] job ${job.id} ${job.status} (exit ${code})`);
-        flushPersist(registry);
-        invalidateJobsCache();
-        broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
-      });
-
-      res.json(job);
+      
+      const startedJob = launchJob(job);
+      res.json(startedJob);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to start command.";
       res.status(400).json({ error: message });
@@ -2739,3 +2702,77 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
 }
 
 startServer();
+
+// Helper for launching jobs (shared by /api/commands/start and /api/assistant/execute)
+const launchJob = (job: Job) => {
+  updateStagesFromTruth(job);
+  registry.jobs.unshift(job);
+  invalidateJobsCache();
+  globalLog(registry, `[SYSTEM] starting ${job.id}: ${job.command.join(" ")}`);
+  persistRegistry(registry);
+  broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+
+  unloadGemmaModel();
+  const child = spawn(job.command[0], job.command.slice(1), { cwd: repoRoot, shell: false, detached: true });
+  runningProcesses.set(job.id, child);
+  terminalJobState.set(job.id, { stopRequested: false, terminal: false });
+
+  const consume = (chunk: Buffer, source: "stdout" | "stderr") => {
+    const lines = chunk.toString().split("\n").map((line) => line.trim()).filter(Boolean);
+    for (const line of lines) {
+      const prefixed = `[${source.toUpperCase()}][${job.id}] ${line}`;
+      job.logs.push(prefixed);
+      job.logs = job.logs.slice(-MAX_LOG_LINES);
+      appendStageLog(job, prefixed);
+      globalLog(registry, prefixed);
+
+      const wandbMatch = line.match(/https:\/\/wandb\.ai\/[-a-zA-Z0-9./_?=&#%~]+\/runs\/([a-z0-9]+)/i);
+      if (wandbMatch) {
+        const wandbUrl = wandbMatch[0];
+        if (!job.wandbUrl) {
+          job.wandbUrl = wandbUrl;
+          broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress, wandbUrl });
+        }
+      }
+
+      const parsedLossValue = parseLoss(line);
+      if (parsedLossValue !== null) {
+        job.loss = parsedLossValue;
+        broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+      }
+      updateStagesFromTruth(job);
+    }
+    persistRegistry(registry);
+  };
+
+  child.stdout.on("data", (chunk) => consume(chunk, "stdout"));
+  child.stderr.on("data", (chunk) => consume(chunk, "stderr"));
+  child.on("close", (code) => {
+    const terminalState = terminalJobState.get(job.id);
+    const escalationTimer = stopEscalationTimers.get(job.id);
+    if (escalationTimer) {
+      clearTimeout(escalationTimer);
+      stopEscalationTimers.delete(job.id);
+    }
+    runningProcesses.delete(job.id);
+    terminalJobState.delete(job.id);
+
+    if (terminalState?.terminal) return;
+
+    job.exitCode = code ?? -1;
+    job.finishedAt = isoNow();
+    if (terminalState?.stopRequested || job.stopRequested) {
+      job.status = "stopped";
+      job.terminalReason = "user_requested_stop";
+    } else {
+      job.status = code === 0 ? "completed" : "failed";
+    }
+    updateStagesFromTruth(job);
+    globalLog(registry, `[SYSTEM] job ${job.id} ${job.status} (exit ${code})`);
+    flushPersist(registry);
+    invalidateJobsCache();
+    broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+  });
+  
+  return job;
+};

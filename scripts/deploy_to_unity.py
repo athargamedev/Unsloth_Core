@@ -131,9 +131,14 @@ def scan_npcs(skip_export: bool = False, export_only: bool = False) -> list[dict
         preferred = [f for f in gguf_files if "q4_k_m" in f.name]
         gguf_path = preferred[0] if preferred else gguf_files[0]
 
-        # Look for associated adapter in outputs/
+        # Look for associated adapter in outputs/ using paths.py resolution chain
+        has_adapter = False
         adapter_dir = paths.output_dir(npc_key)
-        has_adapter = (adapter_dir / "adapter_config.json").exists()
+        try:
+            resolved_key, adapter_dir = paths.resolve_adapter_dir(npc_key)
+            has_adapter = True
+        except FileNotFoundError:
+            pass
 
         # Load subject spec for metadata
         subject_spec = find_subject_spec(npc_key)

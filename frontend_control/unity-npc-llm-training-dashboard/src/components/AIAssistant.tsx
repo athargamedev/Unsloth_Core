@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, BookOpen, Send, User, Bot, Command, Power, PowerOff } from 'lucide-react';
+import { Sparkles, BookOpen, Send, User, Bot, Command, Power, PowerOff, Play } from 'lucide-react';
 import { fetchOptionalJson, type AssistantMessage } from '../api';
 import ReactMarkdown from 'react-markdown';
 
@@ -86,6 +86,25 @@ How can I help with your workflow today?`,
     } catch {}
   };
 
+  const handleExecuteCommand = async (command: string) => {
+    try {
+      setMessages((prev) => [...prev, { role: 'assistant', content: `_Executing: \`${command}\`..._` }]);
+      const response = await fetch('/api/assistant/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command }),
+      });
+      if (!response.ok) {
+        const payload = await response.json();
+        throw new Error(payload.error || 'Execution failed.');
+      }
+      setMessages((prev) => [...prev, { role: 'assistant', content: `_Job started. Check the Operations Matrix for progress._` }]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Execution failed.';
+      setMessages((prev) => [...prev, { role: 'assistant', content: `**Error:** ${message}` }]);
+    }
+  };
+
   return (
     <aside className="w-80 border-r border-line bg-surface flex flex-col overflow-hidden shadow-2xl">
       {/* Header */}
@@ -146,6 +165,13 @@ How can I help with your workflow today?`,
                                 <Command className="w-2 h-2" />
                                 ACTIONABLE COMMAND
                               </span>
+                              <button 
+                                onClick={() => handleExecuteCommand(content)}
+                                className="text-[8px] font-bold bg-accent hover:bg-accent-bright text-white px-2 py-0.5 rounded transition-colors flex items-center gap-1"
+                              >
+                                <Play className="w-2 h-2" />
+                                RUN
+                              </button>
                             </div>
                             <code className="block p-2 text-accent-bright font-mono whitespace-pre-wrap">
                               {content}

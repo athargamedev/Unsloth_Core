@@ -84,6 +84,32 @@ def _download_converter(target_dir: Path | None = None) -> Path | None:
         return None
 
 
+def _validate_tokenizer(tokenizer, model_id: str, npc_key: str) -> None:
+    """Validate tokenizer configuration before export.
+
+    Checks chat_template presence and EOS token configuration.
+    Warns about common misconfigurations that cause gibberish output.
+    """
+    if not hasattr(tokenizer, "chat_template") or not tokenizer.chat_template:
+        print(f"  [WARN] Tokenizer has no chat_template set.")
+        print(f"  Without a chat template, the model may produce gibberish in Unity.")
+        print(f"  Set tokenizer.chat_template before export or verify in the base model.")
+    else:
+        print(f"  [OK]   Chat template: {repr(tokenizer.chat_template[:60])}...")
+
+    eos = tokenizer.eos_token
+    eos_id = tokenizer.eos_token_id
+    pad = tokenizer.pad_token
+    if not eos:
+        print(f"  [WARN] No EOS token set. Inference may produce infinite generation.")
+    else:
+        print(f"  [OK]   EOS token: {repr(eos)} (id={eos_id})")
+    if not pad:
+        print(f"  [NOTE] No pad token set — setting to EOS for export.")
+        tokenizer.pad_token = eos
+        tokenizer.pad_token_id = eos_id
+
+
 def _get_clean_config(adapter_path) -> str | None:
     """Get clean config.json from adapter's base model (strips bitsandbytes keys).
 
@@ -284,7 +310,7 @@ def _heartbeat(stop_event: threading.Event, npc_key: str, substep: str, interval
         )
 
 
-def _export_gguf_file(model, tokenizer, model_id, quantization, output_path, *, npc_key: str, substep_timeout: int | None = None):
+def _export_gguf_file(model, tokenizer, model_id, quantization, output_path, *, npc_key: str, substep_timeout: int | None = None, maximum_memory: float | None = None):
     """Export to GGUF using a temp dir, then move the generated file to output_path.
     
     Unsloth's save_pretrained_gguf creates a directory; this helper
@@ -305,6 +331,7 @@ def _export_gguf_file(model, tokenizer, model_id, quantization, output_path, *, 
                     tmpdir,
                     tokenizer=tokenizer,
                     quantization_method=quantization,
+                    maximum_memory_usage=maximum_memory,
                 )
         finally:
             hb_stop.set()
@@ -463,6 +490,10 @@ def main():
         help="Per-variant export timeout in seconds (default: 5400)",
     )
     parser.add_argument(
+        "--maximum-memory", type=float, default=None,
+        help="Maximum memory (GB) for save_pretrained_gguf. Reduces OOM risk on large models.",
+    )
+    parser.add_argument(
         "--outtype", default="f16",
         choices=["f32", "f16", "bf16", "q8_0"],
         help="LoRA adapter output format (default: f16). Only used in adapter mode.",
@@ -570,6 +601,9 @@ def main():
             load_in_4bit=True,
         )
 
+        # ── Validate tokenizer configuration ────────────────────────────────
+        _validate_tokenizer(tokenizer, model_id, npc_key)
+
         # ── Load LoRA adapter ──────────────────────────────────────────────
         adapter_path = output_dir / "adapter_config.json"
         if adapter_path.exists():
@@ -589,6 +623,7 @@ def main():
                 f16_path,
                 npc_key=npc_key,
                 substep_timeout=args.timeout_seconds,
+                maximum_memory=args.maximum_memory,
             )
 
         # ── Quantize to target format via llama-quantize (fast) ─────────────

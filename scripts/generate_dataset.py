@@ -31,6 +31,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from _config import constants as C
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.generate_workflow_dataset import (
     default_manifest_path,
@@ -150,7 +151,7 @@ def load_subject_spec(path):
     return spec
 
 
-def write_examples_with_validation(examples, output_path, seed=42, include_validation=True, val_split=0.12):
+def write_examples_with_validation(examples, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT):
     """Write imported examples to train/validation JSONL using the standard layout."""
     random.seed(seed)
     shuffled = list(examples)
@@ -276,7 +277,7 @@ def _first_sentence(text, max_chars=220):
     return sentence[:max_chars].rstrip()
 
 
-def _format_onyx_context(results, max_context_chunks=4, max_context_chars=1800):
+def _format_onyx_context(results, max_context_chunks=C.DEFAULT_ONYX_CHUNKS, max_context_chars=1800):
     selected = []
     remaining = max_context_chars
     for result in results[:max_context_chunks]:
@@ -691,12 +692,12 @@ def generate_onyx_example(
     concept,
     onyx_client,
     generator=None,
-    temperature=0.5,
-    max_context_chunks=4,
-    max_context_chars=1800,
+    temperature=C.ONYX_TEMPERATURE,
+    max_context_chunks=C.DEFAULT_ONYX_CHUNKS,
+    max_context_chars=C.DEFAULT_ONYX_CONTEXT_CHARS,
     document_sets=None,
     tags=None,
-    max_queries=1,
+    max_queries=C.ONYX_CATEGORY_QUERIES,
 ):
     """Generate one source-grounded example from local Onyx retrieval."""
     retrieval_queries = _onyx_queries_for_category(spec, category, concept, max_queries=max_queries)
@@ -853,17 +854,17 @@ def _format_onyx_under_generation(category_targets, quality_stats):
 def generate_onyx_dataset(
     spec,
     output_path,
-    seed=42,
+    seed=C.DEFAULT_SEED,
     include_validation=True,
-    val_split=0.12,
+    val_split=C.DEFAULT_VAL_SPLIT,
     onyx_client=None,
     generator=None,
-    temperature=0.5,
-    max_context_chunks=4,
-    max_context_chars=1800,
+    temperature=C.ONYX_TEMPERATURE,
+    max_context_chunks=C.DEFAULT_ONYX_CHUNKS,
+    max_context_chars=C.DEFAULT_ONYX_CONTEXT_CHARS,
     document_sets=None,
     tags=None,
-    max_queries=1,
+    max_queries=C.ONYX_CATEGORY_QUERIES,
     min_quality_score=0.0,
     allow_partial=False,
 ):
@@ -987,7 +988,7 @@ class OllamaGenerator:
         self.model = model
         self.url = url
 
-    def generate(self, system_prompt, user_prompt, temperature=0.8, json_format=False):
+    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
         """Generate a response using local Ollama."""
         payload = {
             "model": self.model,
@@ -1021,7 +1022,7 @@ class OpenAIGenerator:
         if not self.api_key:
             print("  [warn] OPENAI_API_KEY not found in environment")
 
-    def generate(self, system_prompt, user_prompt, temperature=0.8, json_format=False):
+    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
         """Generate a response using OpenAI API."""
         if not self.api_key:
             return None
@@ -1056,7 +1057,7 @@ class AnthropicGenerator:
         self.model = model
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
 
-    def generate(self, system_prompt, user_prompt, temperature=0.8, json_format=False):
+    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
         """Generate a response using Anthropic API."""
         if not self.api_key:
             print("  [warn] ANTHROPIC_API_KEY not found in environment")
@@ -1230,7 +1231,7 @@ Return ONLY a JSON object with this exact structure:
     }
 
 
-def generate_multi_turn_example(spec, concepts, generator, temperature=0.8, num_turns=3):
+def generate_multi_turn_example(spec, concepts, generator, temperature=C.LLM_GENERATOR_TEMPERATURE, num_turns=3):
     """Generate a multi-turn realistic conversation using LLM."""
     npc_name = spec["npc_name"]
     system_prompt = spec["system_prompt"]
@@ -1286,7 +1287,7 @@ Return ONLY a JSON object with this structure:
     return None
 
 
-def generate_dataset(spec, output_path, seed=42, include_validation=True, val_split=0.12, generator=None, multi_turn_ratio=0.2, temperature=0.8):
+def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.8):
     """Generate a complete dataset from a subject spec."""
     random.seed(seed)
     concepts = concept_pool_for_subject(spec)
@@ -1376,7 +1377,7 @@ def main():
     parser.add_argument("--no-validation", action="store_true",
                         help="Skip validation split")
     parser.add_argument("--val-split", type=float, default=0.12,
-                        help="Validation split ratio (default: 0.12)")
+                        help="Validation split fraction (default: C.DEFAULT_VAL_SPLIT)")
     parser.add_argument("--ollama", action="store_true", help="Use local Ollama for generation")
     parser.add_argument("--model", default="llama3.1:latest", help="Ollama model to use")
     parser.add_argument("--url", default="http://localhost:11434/api/chat", help="Ollama API URL")

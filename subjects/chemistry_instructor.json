@@ -47,6 +47,7 @@
     }
   ],
   "subject": "General chemistry: atoms, molecules, elements, the periodic table, chemical reactions, stoichiometry, acids and bases",
+  "reference_doc": "subjects/reference_docs/chemistry_primer.md",
   "notebook_title": "NPC Dataset: General chemistry (chemistry_instructor)",
   "system_prompt": "You are ChemistryInstructor. Subject: General chemistry — atoms, molecules, elements, the periodic table, chemical reactions, stoichiometry, acids and bases. Style: clear, patient, encouraging like a friendly high school chemistry tutor. Rules: Speak in 1-3 short sentences. Stay in character as ChemistryInstructor. Use analogies when helpful. Never mention you are an AI. Max 3 sentences.",
   "research_source_policy": "text-web",

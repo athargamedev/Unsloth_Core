@@ -15,6 +15,8 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 | **Core Scripts** | `scripts/` | Python implementation of the pipeline stages. |
 | **NPC Specs** | `subjects/` | JSON files defining NPC identity and knowledge. |
 | **Datasets** | `subjects/datasets/` | Generated training and validation data (JSONL). |
+| **Reference Docs** | `subjects/reference_docs/` | Centralized reference materials for NotebookLM generation. |
+| **Schemas** | `subjects/schemas/` | JSON Schema validators for training data format. |
 | **Training Configs**| `configs/` | YAML base configs and presets. |
 | **LoRA Adapters** | `outputs/` | Checkpoints and final adapters from training. |
 | **GGUF Exports** | `exports/` | Quantized models (full-merge) or LoRA adapters (default) for Unity. |
@@ -23,7 +25,7 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 | **Frontend** | `frontend_control/` | Monitoring dashboard and React controls. |
 | **llama.cpp** | `~/.unsloth/llama.cpp/` | Prebuilt binaries: llama-server, llama-quantize, convert_lora_to_gguf.py. |
 
-## 🛠️ The 4-Stage Pipeline
+## 🛠️ The 5-Stage Pipeline
 The project follows a deterministic workflow to transform a subject spec into a playable NPC:
 
 1.  **Generation**: `scripts/generate_dataset.py`
@@ -36,11 +38,16 @@ The project follows a deterministic workflow to transform a subject spec into a 
     - Uses Unsloth SFTTrainer with LoRA for efficient fine-tuning.
     - Supports hierarchical configs (Base YAML < Preset < CLI).
     - Use `./ucore plan-execution --spec ... --preset ...` before long runs to choose local vs remote_colab.
+    - Training automatically exports to GGUF (adapter-only mode by default, use `--full-merge-export` for standalone GGUF).
     - Output: `outputs/{npc_key}/` (LoRA adapter).
-4.  **Export & Validation**: `scripts/export.py`
-    - **Default (adapter)**: Converts LoRA to lightweight GGUF via `export_adapter.py`/`convert_lora_to_gguf.py` — fast, no base model loading (MBs, for Unity/LLMUnity).
-    - **Full-merge** (`--full-merge`): Exports f16 GGUF via unsloth once, then uses `llama-quantize` from `~/.unsloth/` for additional quant levels. Much faster than unsloth's double-export.
-    - **Validation**: `scripts/smoke_test.py` validates persona adherence via automated smoke tests (uses `llama-server` from `~/.unsloth/`).
+4.  **Export & Smoke Test**: `scripts/export.py` → `scripts/smoke_test.py`
+    - **Default (adapter)**: Converts LoRA to lightweight GGUF via `convert_lora_to_gguf.py` — fast, no base model loading (MBs, for Unity/LLMUnity).
+    - **Full-merge** (`--full-merge-export`): Exports f16 GGUF via unsloth once, then uses `llama-quantize` from `~/.unsloth/` for additional quant levels.
+    - **Validation**: `scripts/smoke_test.py` validates persona adherence via automated smoke tests.
+5.  **Evaluation** (new): `scripts/track_eval_results.py` + `scripts/compare_runs.py`
+    - Tracks results in `eval/results/` for baseline comparison.
+    - Compares iterations with `./ucore compare-runs`.
+    - The `ucore pipeline` command now runs all 5 stages and supports `--skip-smoke`, `--skip-eval`, `--full-merge-export`.
 
 ## 💾 Supabase Integration
 A local Supabase instance tracks everything:
@@ -76,10 +83,12 @@ Weights & Biases tracks every training run with:
 
 **Dashboard integration:**
 - All training runs launched with `--wandb` get a clickable W&B link in the frontend Operations Matrix.
-- The Training Suite has a toggle to enable/disable W&B tracking before launching.
-- W&B run URLs are auto-extracted from stdout and surfaced immediately — no polling delay.
-
-**Dual logging**: W&B and TensorBoard coexist simultaneously (configurable via `report_to` in `train.py`).
+- The frontend SPA (`frontend_control/unity-npc-llm-training-dashboard/`) runs on localhost:3100 and provides:
+  - Operations Matrix with pipeline control
+  - Training Suite hyperparameter panel
+  - TensorBoard charts and W&B links
+  - GPU telemetry and system monitoring
+- The legacy `ucore dashboard` command has been removed. Use the React SPA at localhost:3100 instead.
 
 ## 🖥️ Frontend Dashboard
 The dashboard at `http://localhost:3100` provides:

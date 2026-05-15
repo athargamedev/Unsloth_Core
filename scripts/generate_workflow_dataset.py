@@ -20,6 +20,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
+from _config import constants as C
 DEFAULT_MANIFEST = PROJECT_ROOT / "docs" / "corpora" / "workflow_assistant_docs.json"
 
 WORKFLOW_SYSTEM_PROMPT = (
@@ -278,9 +279,9 @@ def generate_workflow_dataset_from_manifest(
     manifest_path: str | Path,
     output_path: str | Path,
     *,
-    seed: int = 42,
+    seed: int = C.DEFAULT_SEED,
     include_validation: bool = True,
-    val_split: float = 0.12,
+    val_split: float = C.DEFAULT_VAL_SPLIT,
 ) -> dict:
     random.seed(seed)
     system_prompt = spec.get("system_prompt") or WORKFLOW_SYSTEM_PROMPT
@@ -336,7 +337,7 @@ def generate_workflow_dataset_from_manifest(
         source_counts[relative_path] = generated_here
 
     random.shuffle(rows)
-    if include_validation and len(rows) > 5:
+    if include_validation and len(rows) > C.MIN_EXAMPLES_FOR_VALIDATION:
         split = max(1, int(len(rows) * val_split))
         validation_rows = rows[:split]
         train_rows = rows[split:]
