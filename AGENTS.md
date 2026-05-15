@@ -87,7 +87,7 @@ The dashboard at `http://localhost:3100` provides:
 ## 📜 Conventions
 - **NPC Keys**: Always `snake_case` (e.g., `bible_instructor`).
 - **GGUF Naming**: `{npc_key}-{model_short}-{quant}.gguf`.
-|- **Quantization**: Default to `q4_k_m`.
+- **Quantization**: Default to `q4_k_m`.
 
 ---
 
