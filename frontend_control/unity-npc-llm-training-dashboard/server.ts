@@ -1494,6 +1494,16 @@ ${npcCreationWorkflow}
       // Ignore Onyx fetch failures; assistant still works with repo docs.
     }
 
+    const activeSubjects = listSubjects();
+    const activeJobs = registry.jobs.filter(j => j.status === "running");
+    const liveStateContext = `
+CURRENT WORKSPACE STATE (Runtime data):
+- Total NPCs (Subjects): ${activeSubjects.length} (${activeSubjects.map(s => s.id).join(", ")})
+- Active Running Jobs: ${activeJobs.length}
+- Available Datasets: ${listDatasets().length}
+- Exported Models (GGUF): ${listExports().length}
+`;
+
     try {
       const messages: Array<{ role: string; content: string }> = [
         {
@@ -1504,6 +1514,7 @@ You are "self-improving" because you were trained using the very pipeline you as
 Keep responses concise and actionable. Use the following context for your knowledge:
 
 ${assistantContext}${onyxContextText}
+${liveStateContext}
 
 ACTIONABLE COMMANDS:
 Whenever you suggest a command, format it clearly using markdown code blocks starting with ./ucore.
