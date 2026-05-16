@@ -16,6 +16,7 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -145,6 +146,8 @@ def upsert_document(
     if npc_key:
         metadata["npc_key"] = npc_key
 
+    doc_updated_at = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     payload = {
         "document": {
             "id": doc_id,
@@ -153,6 +156,7 @@ def upsert_document(
             "semantic_identifier": rel_path,
             "metadata": metadata,
             "title": rel_path,
+            "doc_updated_at": doc_updated_at,
             "from_ingestion_api": True,
         }
     }

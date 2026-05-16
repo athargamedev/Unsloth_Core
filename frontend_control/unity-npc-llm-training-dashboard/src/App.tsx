@@ -567,6 +567,10 @@ export default function App() {
     setActiveTab('eval');
   };
 
+  const handleQuickStartOpenFeedback = () => {
+    setActiveTab('feedback');
+  };
+
   const handleQuickStartOpenDeployOps = () => {
     setActiveTab('jobs');
   };
@@ -680,7 +684,7 @@ export default function App() {
     eval: 'Step 3 · Eval',
     feedback: 'Step 4 · Feedback',
     analytics: 'TensorBoard',
-    jobs: 'Step 5 · Deploy/Run Ops',
+    jobs: 'Deploy/Run Ops',
     compare: 'Model Comparison',
     datasets: 'Dataset Browser',
     logs: 'System Console',
@@ -768,7 +772,7 @@ export default function App() {
               { id: 'training', label: '2) Train', shortLabel: 'Train' },
               { id: 'eval', label: '3) Eval', shortLabel: 'Eval' },
               { id: 'feedback', label: '4) Feedback', shortLabel: 'FB' },
-              { id: 'jobs', label: '5) Ops', shortLabel: 'Ops' },
+              { id: 'jobs', label: 'Ops', shortLabel: 'Ops' },
               { id: 'analytics', label: 'TensorBoard', shortLabel: 'TB' },
               { id: 'compare', label: 'Compare', shortLabel: 'Cmp' },
               { id: 'datasets', label: 'Datasets', shortLabel: 'DS' },
@@ -823,7 +827,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
                   <button
                     onClick={handleQuickStartOpenPrepareData}
                     className="p-3 border border-accent/30 bg-accent/5 rounded-sm text-left hover:bg-accent/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
@@ -852,10 +856,19 @@ export default function App() {
                   </button>
 
                   <button
+                    onClick={handleQuickStartOpenFeedback}
+                    className="p-3 border border-accent/30 bg-accent/5 rounded-sm text-left hover:bg-accent/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    <div className="text-[12px] font-bold text-accent uppercase tracking-wider">Step 4</div>
+                    <div className="text-sm font-semibold text-ink-bright mt-1">Feedback Loop</div>
+                    <div className="text-[12px] text-ink/60 mt-1">Analyze eval results and run targeted data regeneration.</div>
+                  </button>
+
+                  <button
                     onClick={handleQuickStartOpenDeployOps}
                     className="p-3 border border-line bg-surface rounded-sm text-left hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                   >
-                    <div className="text-[12px] font-bold text-ink/70 uppercase tracking-wider">Step 4</div>
+                    <div className="text-[12px] font-bold text-ink/70 uppercase tracking-wider">Ops</div>
                     <div className="text-sm font-semibold text-ink-bright mt-1">Deploy / Run Ops</div>
                     <div className="text-[12px] text-ink/60 mt-1">Track jobs, stop failures, open logs, and verify completion.</div>
                   </button>
@@ -864,15 +877,31 @@ export default function App() {
                 <div className="flex flex-wrap gap-2 items-center">
                   <button
                     onClick={handleGenerateDataset}
-                    className="px-3 py-1.5 bg-accent text-bg text-[12px] font-bold rounded-sm hover:brightness-110 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                    disabled={isRemoteMode}
+                    className="px-3 py-1.5 bg-accent text-bg text-[12px] font-bold rounded-sm hover:brightness-110 disabled:opacity-40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                   >
                     Run Step 1 Now
                   </button>
                   <button
                     onClick={handleLaunchTraining}
-                    className="px-3 py-1.5 bg-success text-bg text-[12px] font-bold rounded-sm hover:brightness-110 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/60"
+                    disabled={isRemoteMode}
+                    className="px-3 py-1.5 bg-success text-bg text-[12px] font-bold rounded-sm hover:brightness-110 disabled:opacity-40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success/60"
                   >
                     Run Step 2 Now
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('eval')}
+                    disabled={isRemoteMode}
+                    className="px-3 py-1.5 bg-warning text-bg text-[12px] font-bold rounded-sm hover:brightness-110 disabled:opacity-40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning/60"
+                  >
+                    Run Step 3 Now
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('feedback')}
+                    disabled={isRemoteMode}
+                    className="px-3 py-1.5 bg-accent text-bg text-[12px] font-bold rounded-sm hover:brightness-110 disabled:opacity-40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    Run Step 4 Now
                   </button>
                   <button
                     onClick={() => setActiveTab('compare')}

@@ -1410,135 +1410,81 @@ async function startServer() {
     res.json(listPresets());
   });
 
-
-  let assistantContext = "";
-  try {
-    const agentsMd = fs.readFileSync(path.join(repoRoot, "AGENTS.md"), "utf8");
-    const cliRef = fs.readFileSync(path.join(repoRoot, "docs/reference/CLI_REFERENCE.md"), "utf8");
-    const npcCreationWorkflow = fs.readFileSync(path.join(repoRoot, "docs/NPC_CREATION_WORKFLOW.md"), "utf8");
-    assistantContext = `
-PROJECT CONTEXT (AGENTS.md):
-${agentsMd}
-
-CLI REFERENCE:
-${cliRef}
-
-NPC CREATION WORKFLOW:
-${npcCreationWorkflow}
-    `;
-  } catch (err) {
-    console.warn("Failed to load assistant context files:", err);
-  }
-
   const onyxBaseUrl = process.env.ONYX_BASE_URL || "http://localhost";
   const onyxApiKey = process.env.ONYX_API_KEY;
-  const onyxSearchMode = (process.env.ONYX_SEARCH_MODE || "admin").toLowerCase();
-  const onyxSearchPath = onyxSearchMode === "search" ? "/api/search" : "/api/admin/search";
 
-  const truncateText = (text: string, maxLength: number) =>
-    text.length > maxLength ? `${text.slice(0, maxLength - 3).trim()}...` : text;
+  async function syncLiveStateToOnyx() {
+    const activeSubjects = listSubjects();
+    const activeJobs = registry.jobs.filter(j => j.status === "running");
+    
+    const text = `CURRENT WORKSPACE STATE (Runtime data):
+- Total NPCs (Subjects): ${activeSubjects.length} (${activeSubjects.map(s => s.id).join(", ")})
+- Active Running Jobs: ${activeJobs.length}
+- Available Datasets: ${listDatasets().length}
+- Exported Models (GGUF): ${listExports().length}
 
-  async function fetchOnyxAssistantContext(query: string, maxResults = 4) {
+ACTIONABLE COMMANDS:
+Whenever you suggest a command, format it clearly using markdown code blocks starting with ./ucore.
+The user can execute these commands directly from your interface.`;
+
+    const payload = {
+      document: {
+        id: "unsloth_core:live_state",
+        semantic_identifier: "Live Workspace State",
+        title: "Live Workspace State (NPCs, Jobs, Datasets)",
+        sections: [
+          {
+            text: text,
+            link: "http://localhost:3100"
+          }
+        ],
+        source: "ingestion_api",
+        metadata: {
+          category: "system_state",
+          tags: ["live-state", "system", "workspace"]
+        },
+        doc_updated_at: new Date().toISOString(),
+        from_ingestion_api: true
+      }
+    };
+
     try {
-      const payload: Record<string, unknown> =
-        onyxSearchMode === "admin"
-          ? { query, filters: {} }
-          : { query, skip_query_expansion: true };
-
-      const response = await fetch(`${onyxBaseUrl}${onyxSearchPath}`, {
+      await fetch(`${onyxBaseUrl}/api/onyx-api/ingestion`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(onyxApiKey ? { Authorization: `Bearer ${onyxApiKey}` } : {}),
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
-      if (!response.ok) return null;
-
-      const data = (await response.json()) as Record<string, unknown>;
-      const rawResults = (data.results as any[]) || (data.documents as any[]) || [];
-      const results = (rawResults as any[]).slice(0, maxResults).map((item, index) => {
-        const title = item.title || item.semantic_identifier || item.document_id || `source-${index + 1}`;
-        const content = truncateText(item.content || item.blurb || "", 900);
-        return {
-          title,
-          document_id: item.document_id || item.citation_id || `source-${index + 1}`,
-          content,
-          score: item.score,
-        };
-      });
-      if (!results.length) return null;
-
-      const context = results
-        .map((item) => `Source: ${item.title} (${item.document_id})\n${item.content}`)
-        .join("\n\n");
-      return { results, context };
     } catch (err) {
-      console.warn("Onyx assistant context fetch failed:", err);
-      return null;
+      // Ignore background sync errors
     }
   }
 
+  // Run the sync every 15 seconds to keep Onyx updated
+  setInterval(syncLiveStateToOnyx, 15000);
+  syncLiveStateToOnyx();
+
   app.post("/api/assistant", async (req, res) => {
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
-    const history = Array.isArray(req.body?.history) ? req.body.history : [];
     if (!message) return res.status(400).json({ error: "message is required" });
 
-    let onyxContextText = "";
     try {
-      const onyxContextPayload = await fetchOnyxAssistantContext(message, 4);
-      if (onyxContextPayload?.context) {
-        onyxContextText = `\n\nLOCAL ONYX CONTEXT (Ground truth from indexed docs):\n${onyxContextPayload.context}\n\nUse the retrieved sources above to ground answers whenever relevant.`;
-      }
-    } catch {
-      // Ignore Onyx fetch failures; assistant still works with repo docs.
-    }
-
-    const activeSubjects = listSubjects();
-    const activeJobs = registry.jobs.filter(j => j.status === "running");
-    const liveStateContext = `
-CURRENT WORKSPACE STATE (Runtime data):
-- Total NPCs (Subjects): ${activeSubjects.length} (${activeSubjects.map(s => s.id).join(", ")})
-- Active Running Jobs: ${activeJobs.length}
-- Available Datasets: ${listDatasets().length}
-- Exported Models (GGUF): ${listExports().length}
-`;
-
-    try {
-      const messages: Array<{ role: string; content: string }> = [
-        {
-          role: "system",
-          content: `You are WorkflowAssistant, a high-level specialist in the Unsloth_Core pipeline.
-Your goal is to help users manage NPC training, dataset generation, and model export.
-You are "self-improving" because you were trained using the very pipeline you assist with.
-Keep responses concise and actionable. Use the following context for your knowledge:
-
-${assistantContext}${onyxContextText}
-${liveStateContext}
-
-ACTIONABLE COMMANDS:
-Whenever you suggest a command, format it clearly using markdown code blocks starting with ./ucore.
-The user can execute these commands directly from your interface.
-Suggest commands for dataset generation, training (especially for the workflow_assistant itself if relevant), and evaluation.
-You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is set.`,
-        },
-        ...history.slice(-10),
-        { role: "user", content: message },
-      ];
-
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60_000);
       let response: Response;
 
       try {
-        response = await fetch("http://127.0.0.1:11434/api/chat", {
+        response = await fetch(`${onyxBaseUrl}/api/chat/send-chat-message`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(onyxApiKey ? { Authorization: `Bearer ${onyxApiKey}` } : {}),
+          },
           body: JSON.stringify({
-            model: "gemma4:e2b",
-            messages,
-            stream: false,
-            options: { temperature: 0.7, num_predict: 2048 },
+            message: message,
+            persona_id: 0, // Search Agent
           }),
           signal: controller.signal,
         });
@@ -1548,15 +1494,11 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
 
       if (!response.ok) {
         const text = await response.text();
-        return res.status(502).json({ error: `Ollama request failed: ${text}` });
+        return res.status(502).json({ error: `Onyx request failed: ${text}` });
       }
 
-      const body = await response.json() as {
-        message?: { content?: string };
-        done?: boolean;
-      };
-      const content = body.message?.content?.trim();
-      return res.json({ content: content || "No assistant response generated." });
+      const data = await response.json() as { answer?: string };
+      return res.json({ content: data.answer || "No assistant response generated." });
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         return res.status(504).json({ error: "Assistant request timed out after 60 seconds.", timeout: true });
@@ -1564,24 +1506,24 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
       const messageText = error instanceof Error ? error.message : "Assistant request failed.";
       if (messageText.includes("ECONNREFUSED") || messageText.includes("fetch failed")) {
         return res.json({
-          content: "**Ollama is not running.** Start it with `ollama serve` or `ollama run gemma4:e2b`, then try again.",
+          content: "**Onyx Server is not running.** Ensure the Onyx backend is available, then try again.",
         });
       }
       return res.status(500).json({ error: messageText });
     }
   });
 
-  const unloadGemmaModel = () => {
+  const unloadAssistantModel = () => {
     try {
-      require("child_process").execSync("ollama stop gemma4:e2b", { stdio: "ignore", timeout: 5000 });
-      globalLog(registry, "[SYSTEM] Unloaded gemma4:e2b to free GPU memory");
+      require("child_process").execSync("ollama stop llama3.1:latest", { stdio: "ignore", timeout: 5000 });
+      globalLog(registry, "[SYSTEM] Unloaded llama3.1:latest to free GPU memory");
     } catch {
       // ignore
     }
   };
 
   app.post("/api/assistant/unload", (_req, res) => {
-    unloadGemmaModel();
+    unloadAssistantModel();
     res.json({ success: true, message: "Model unloaded" });
   });
 
@@ -1591,7 +1533,7 @@ You also have access to an E2B sandbox for filesystem analysis if E2B_API_KEY is
       await fetch("http://127.0.0.1:11434/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "gemma4:e2b", keep_alive: "5m" })
+        body: JSON.stringify({ model: "llama3.1:latest", keep_alive: "5m" })
       });
       res.json({ success: true, message: "Model loading requested" });
     } catch (e) {

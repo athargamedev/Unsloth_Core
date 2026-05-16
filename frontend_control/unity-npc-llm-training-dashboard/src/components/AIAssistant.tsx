@@ -75,13 +75,13 @@ How can I help with your workflow today?`,
   const handleUnloadModel = async () => {
     try {
       await fetch('/api/assistant/unload', { method: 'POST' });
-      setMessages((prev) => [...prev, { role: 'assistant', content: '_Requested Ollama assistant model unload (gemma4:e2b) to free GPU memory._' }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: '_Requested Ollama assistant model unload (llama3.1) to free GPU memory._' }]);
     } catch {}
   };
 
   const handleLoadModel = async () => {
     try {
-      setMessages((prev) => [...prev, { role: 'assistant', content: '_Requesting Ollama assistant model load (gemma4:e2b)..._' }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: '_Requesting Ollama assistant model load (llama3.1)..._' }]);
       await fetch('/api/assistant/load', { method: 'POST' });
     } catch {}
   };
@@ -114,10 +114,10 @@ How can I help with your workflow today?`,
           <h2 className="text-[11px] font-bold text-ink-bright uppercase tracking-widest">Workflow Assistant Tool</h2>
         </div>
         <div className="flex gap-2">
-          <button aria-label="Load assistant model" onClick={handleLoadModel} title="Load the Ollama assistant model (gemma4:e2b), not an NPC GGUF model" className="p-1 hover:bg-white/10 rounded text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
+          <button aria-label="Load assistant model" onClick={handleLoadModel} title="Load the Ollama assistant model (llama3.1), not an NPC GGUF model" className="p-1 hover:bg-white/10 rounded text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
             <Power className="w-3 h-3" />
           </button>
-          <button aria-label="Unload assistant model" onClick={handleUnloadModel} title="Unload the Ollama assistant model (gemma4:e2b) only" className="p-1 hover:bg-white/10 rounded text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/60">
+          <button aria-label="Unload assistant model" onClick={handleUnloadModel} title="Unload the Ollama assistant model (llama3.1) only" className="p-1 hover:bg-white/10 rounded text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/60">
             <PowerOff className="w-3 h-3" />
           </button>
         </div>
