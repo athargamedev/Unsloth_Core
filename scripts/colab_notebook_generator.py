@@ -41,10 +41,23 @@ def build_notebook(
     dataset_location: str,
     drive_repo_dir: str,
     plan_payload: dict[str, Any],
+    repo_url: str | None = None,
 ) -> dict[str, Any]:
     ds_train = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
     ds_clean = f"subjects/datasets/{npc_key}/{technique}/train_clean.jsonl"
     spec_name = Path(spec_relpath).name
+
+    # Auto-detect repo URL from local git remote if not provided
+    if repo_url is None:
+        try:
+            import subprocess as _sp
+            result = _sp.run(
+                ["git", "remote", "get-url", "origin"],
+                capture_output=True, text=True, check=False, timeout=5,
+            )
+            repo_url = (result.stdout or "").strip() or "https://github.com/athargamedev/Unsloth_Core.git"
+        except Exception:
+            repo_url = "https://github.com/athargamedev/Unsloth_Core.git"
 
     markdown = f"""
 # Unsloth Core Colab Runner: {npc_key}
@@ -73,7 +86,7 @@ drive.mount('/content/drive')
 # Clone/pull repository in Drive-backed workspace
 if not os.path.exists(DRIVE_REPO_DIR):
     os.makedirs(os.path.dirname(DRIVE_REPO_DIR), exist_ok=True)
-    subprocess.run(['git', 'clone', 'https://github.com/andreathar/Unsloth_Core.git', DRIVE_REPO_DIR], check=True)
+    subprocess.run(['git', 'clone', {repo_url!r}, DRIVE_REPO_DIR], check=True)
 
 os.chdir(DRIVE_REPO_DIR)
 subprocess.run(['git', 'pull'], check=False)
