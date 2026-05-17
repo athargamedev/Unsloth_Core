@@ -74,26 +74,73 @@ The commands below use the same `ucore`/`scripts` workflow as local runs.
 """
 
     setup_code = f"""
-from google.colab import drive
 import os
+import sys
 import subprocess
+from pathlib import Path
 
+REPO_URL = {repo_url!r}
 DRIVE_REPO_DIR = {drive_repo_dir!r}
+FALLBACK_REPO_DIR = '/content/Unsloth_Core'
 
-# Mount Drive
-drive.mount('/content/drive')
+# Detect if we are running in Google Colab (remote cloud runtime)
+is_colab = False
+try:
+    import google.colab
+    is_colab = True
+except ImportError:
+    pass
 
-# Clone/pull repository in Drive-backed workspace
-if not os.path.exists(DRIVE_REPO_DIR):
-    os.makedirs(os.path.dirname(DRIVE_REPO_DIR), exist_ok=True)
-    subprocess.run(['git', 'clone', {repo_url!r}, DRIVE_REPO_DIR], check=True)
+is_remote_colab = is_colab and os.path.exists('/content')
 
-os.chdir(DRIVE_REPO_DIR)
-subprocess.run(['git', 'pull'], check=False)
+if is_remote_colab:
+    print("Running in remote Google Colab runtime.")
+    repo_dir = DRIVE_REPO_DIR
+    try:
+        from google.colab import drive
+        drive.mount('/content/drive')
+        print('Drive mounted, using persistent storage:', repo_dir)
+    except Exception as e:
+        repo_dir = FALLBACK_REPO_DIR
+        print(f'Drive mount unavailable ({{e}}), using ephemeral storage:', repo_dir)
 
-# Colab already has torch+CUDA pre-installed — install only missing deps
-subprocess.run(['pip', 'install', '-q', 'unsloth', 'bitsandbytes', 'trl', 'peft', 'accelerate', 'datasets', 'transformers'], check=True)
-print('Repo ready at:', os.getcwd())
+    # Clone/pull repository
+    if not os.path.exists(repo_dir):
+        os.makedirs(os.path.dirname(repo_dir), exist_ok=True)
+        subprocess.run(['git', 'clone', REPO_URL, repo_dir], check=True)
+    else:
+        # Ensure it's a git repo before pulling
+        git_dir = os.path.join(repo_dir, '.git')
+        if os.path.exists(git_dir) and os.path.isdir(git_dir):
+            orig = os.getcwd()
+            os.chdir(repo_dir)
+            subprocess.run(['git', 'pull'], check=False)
+            os.chdir(orig)
+
+    os.chdir(repo_dir)
+
+    # Colab already has torch+CUDA pre-installed — install only missing deps using official fast wheels
+    print("Installing Unsloth and dependencies (pre-compiled wheels for Colab)...")
+    subprocess.run(['pip', 'install', '--no-deps', '-q', 'trl<0.9.0', 'peft', 'accelerate', 'bitsandbytes'], check=True)
+    subprocess.run(['pip', 'install', '-q', 'unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git'], check=True)
+else:
+    print("Running locally in the editor/workspace.")
+    # Find local repo root by looking for ucore and scripts
+    curr = Path(os.getcwd()).resolve()
+    repo_dir = None
+    for parent in [curr] + list(curr.parents):
+        if (parent / "ucore").exists() and (parent / "scripts").exists():
+            repo_dir = parent
+            break
+    
+    if repo_dir:
+        print("Detected local repository root at:", repo_dir)
+        os.chdir(repo_dir)
+    else:
+        print("Error: Could not find local repository root containing ucore!")
+        sys.exit(1)
+
+print('Current working directory:', os.getcwd())
 """
 
     dataset_code = f"""
@@ -120,12 +167,49 @@ subprocess.run(['bash', '-c', sanitize_cmd], check=True)
 """
 
     train_code = f"""
+import os
 import subprocess
+import urllib.request
+import json
+import torch
 
 spec = {spec_name!r}
 preset = {preset!r}
 
-train_cmd = f"./ucore train subjects/{{spec}} --from-spec --preset {{preset}}"
+# Detect VRAM and adjust preset if running locally on a lower-end GPU
+vram_gb = torch.cuda.get_device_properties(0).total_memory / 1024**3 if torch.cuda.is_available() else 0
+print(f"Detected GPU VRAM: {{vram_gb:.2f}} GB")
+
+effective_preset = preset
+is_colab = False
+try:
+    import google.colab
+    is_colab = True
+except ImportError:
+    pass
+
+is_remote_colab = is_colab and os.path.exists('/content')
+
+# If running locally on low VRAM, automatically downgrade to 'safe-any' to prevent OOM
+if not is_remote_colab and vram_gb > 0 and vram_gb < 10.0 and preset == 'fast-3b':
+    print("Local VRAM is low (< 10GB). Overriding preset to 'safe-any' to prevent Out-Of-Memory crashes.")
+    effective_preset = 'safe-any'
+
+# Unload Ollama models to free up VRAM if running locally
+if not is_remote_colab:
+    print("Attempting to unload local Ollama models to free up GPU memory...")
+    try:
+        req = urllib.request.Request(
+            "http://localhost:11434/api/generate",
+            data=json.dumps({{"model": "llama3.1:latest", "keep_alive": 0}}).encode("utf-8"),
+            headers={{"Content-Type": "application/json"}}
+        )
+        with urllib.request.urlopen(req, timeout=3) as response:
+            print("Successfully requested Ollama to unload models.")
+    except Exception as e:
+        print("Ollama is not running or no models were active.")
+
+train_cmd = f"./ucore train subjects/{{spec}} --from-spec --preset {{effective_preset}}"
 print('Running:', train_cmd)
 subprocess.run(['bash', '-c', train_cmd], check=True)
 
