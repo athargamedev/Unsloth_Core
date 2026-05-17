@@ -2,6 +2,325 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_3161946",
+      "name": "External Process (3161946) history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "running",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T08:34:12.489Z",
+      "startedAt": "2026-05-17T08:34:12.489Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/evaluate.py --baseline exports/history_guide/history_guide-lora-f16.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec /home/athar/Projects/Unsloth_Core/subjects/history_guide.json --feedback-json /home/athar/Projects/Unsloth_Core/eval/results/feedback/history_guide_post_retrain.json --num-questions 10"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3161946] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/evaluate.py --baseline exports/history_guide/history_guide-lora-f16.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec /home/athar/Projects/Unsloth_Core/subjects/history_guide.json --feedback-json /home/athar/Projects/Unsloth_Core/eval/results/feedback/history_guide_post_retrain.json --num-questions 10"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_3161783",
+      "name": "External Process (3161783)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T08:34:05.302Z",
+      "startedAt": "2026-05-17T08:34:05.302Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/history_guide"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3161783] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3161783] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/history_guide"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:34:09.333Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3158805",
+      "name": "External Process (3158805) history_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T08:31:27.195Z",
+      "startedAt": "2026-05-17T08:31:27.195Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py /home/athar/Projects/Unsloth_Core/subjects/history_guide.json --from-spec --technique onyx --preset fast-3b --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3158805] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3158805] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py /home/athar/Projects/Unsloth_Core/subjects/history_guide.json --from-spec --technique onyx --preset fast-3b --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:34:12.489Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_history_guide_20260517_default_002",
+      "name": "External Train (history_guide/20260517_default_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T08:31:25.261Z",
+      "startedAt": "2026-05-17T08:31:25.261Z",
+      "finishedAt": "2026-05-17T08:31:25.261Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260517_default_002/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_3158604",
+      "name": "External Process (3158604) history_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T08:31:12.187Z",
+      "startedAt": "2026-05-17T08:31:12.187Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py /home/athar/Projects/Unsloth_Core/subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus dialogue --concept-focus identity --concept-focus teaching"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3158604] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3158604] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py /home/athar/Projects/Unsloth_Core/subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus dialogue --concept-focus identity --concept-focus teaching"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:31:27.195Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3158586",
+      "name": "External Process (3158586)",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "running",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T08:31:10.334Z",
+      "startedAt": "2026-05-17T08:31:10.334Z",
+      "command": [
+        "external",
+        "bash -c source unsloth_env/bin/activate && ./ucore feedback eval/results/feedback/hg_v2_feedback.json \\   --auto \\   --auto-retrain \\   --train-preset fast-3b \\   --baseline exports/history_guide/history_guide-lora-f16.gguf \\   --save-gaps eval/results/gaps/hg_v2_gaps.json 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3158586] discovered active process",
+        "bash -c source unsloth_env/bin/activate && ./ucore feedback eval/results/feedback/hg_v2_feedback.json \\   --auto \\   --auto-retrain \\   --train-preset fast-3b \\   --baseline exports/history_guide/history_guide-lora-f16.gguf \\   --save-gaps eval/results/gaps/hg_v2_gaps.json 2>&1"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_3156926",
+      "name": "External Process (3156926) history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T08:29:26.277Z",
+      "startedAt": "2026-05-17T08:29:26.277Z",
+      "command": [
+        "external",
+        "bash -c source unsloth_env/bin/activate && mkdir -p eval/results/feedback && ./ucore evaluate \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --baseline \"exports/history_guide/round1/history_guide-lora-f16.gguf\" \\   --candidate \"exports/history_guide/history_guide-lora-f16.gguf\" \\   --spec subjects/history_guide.json \\   --report-html \\   --feedback-json eval/results/feedback/hg_v2_feedback.json \\   --track 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3156926] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3156926] discovered active process",
+        "bash -c source unsloth_env/bin/activate && mkdir -p eval/results/feedback && ./ucore evaluate \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --baseline \"exports/history_guide/round1/history_guide-lora-f16.gguf\" \\   --candidate \"exports/history_guide/history_guide-lora-f16.gguf\" \\   --spec subjects/history_guide.json \\   --report-html \\   --feedback-json eval/results/feedback/hg_v2_feedback.json \\   --track 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:29:57.181Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_3133247",
       "name": "External Process (3133247)",
       "type": "Export",
@@ -32182,6 +32501,13 @@
     }
   ],
   "logs": [
+    "[2026-05-17T08:34:12.513Z] [SYNC] discovered running external process pid=3161946",
+    "[2026-05-17T08:34:05.326Z] [SYNC] discovered running external process pid=3161783",
+    "[2026-05-17T08:31:27.225Z] [SYNC] discovered running external process pid=3158805",
+    "[2026-05-17T08:31:27.187Z] [SYNC] imported external job ext_train_history_guide_20260517_default_002",
+    "[2026-05-17T08:31:12.224Z] [SYNC] discovered running external process pid=3158604",
+    "[2026-05-17T08:31:10.358Z] [SYNC] discovered running external process pid=3158586",
+    "[2026-05-17T08:29:26.302Z] [SYNC] discovered running external process pid=3156926",
     "[2026-05-17T08:13:27.152Z] [SYNC] discovered running external process pid=3133247",
     "[2026-05-17T08:10:55.620Z] [SYNC] discovered running external process pid=3129860",
     "[2026-05-17T08:10:54.185Z] [SYNC] imported external job ext_train_history_guide_20260517_default_001",
