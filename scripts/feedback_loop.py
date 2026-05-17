@@ -245,7 +245,7 @@ def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_pat
         print(f"  [dry-run] Would execute: {' '.join(cmd)}")
         return True
     print(f"  Running generation with concept focus...")
-    ok, stdout, stderr = run_cmd(cmd, timeout=300)
+    ok, stdout, stderr = run_cmd(cmd, timeout=1800)
     if ok:
         print(f"  Done!")
         for line in stdout.strip().split("\n")[-4:]:
