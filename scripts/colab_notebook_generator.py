@@ -217,11 +217,28 @@ if not is_remote_colab:
     except Exception as e:
         print("Ollama is not running or no models were active.")
 
-train_cmd = f"{{python_bin}} ucore train subjects/{{spec}} --from-spec --preset {{effective_preset}}"
+train_cmd = f"{{python_bin}} ucore train subjects/{{spec}} --from-spec --preset {{effective_preset}} --export-gguf"
 print('Running:', train_cmd)
 subprocess.run(['bash', '-c', train_cmd], check=True)
 
-print('Training complete. Optional next steps: {{python_bin}} ucore export <npc_key> and {{python_bin}} ucore smoke <gguf> --spec subjects/<spec>.json')
+print('Training + GGUF export complete!')
+print('Download the GGUF using the download cell below.')
+"""
+
+    download_code = f"""
+from google.colab import files
+import os, glob
+
+# Find and download the exported GGUF
+gguf_dir = 'exports/{npc_key}'
+ggufs = glob.glob(os.path.join(gguf_dir, '*-lora-f16.gguf'))
+if ggufs:
+    # Download the most recent one
+    latest = max(ggufs, key=os.path.getmtime)
+    print(f'Downloading: {{latest}}')
+    files.download(latest)
+else:
+    print(f'No GGUF found in {{gguf_dir}}')
 """
 
     plan_json = json.dumps(plan_payload, indent=2)
@@ -238,6 +255,7 @@ print(json.dumps(PLAN, indent=2))
         _code_cell(plan_cell),
         _code_cell(dataset_code),
         _code_cell(train_code),
+        _code_cell(download_code),
     ]
 
     return {

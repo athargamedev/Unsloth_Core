@@ -2,6 +2,145 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_7879",
+      "name": "External Process (7879)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T11:54:35.099Z",
+      "startedAt": "2026-05-17T11:54:35.099Z",
+      "command": [
+        "external",
+        "python scripts/export.py chef_assistant"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 7879] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 7879] discovered active process",
+        "python scripts/export.py chef_assistant"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T11:54:38.100Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_6593",
+      "name": "External Process (6593)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T11:53:32.091Z",
+      "startedAt": "2026-05-17T11:53:32.091Z",
+      "command": [
+        "external",
+        "python scripts/export.py chef_assistant"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 6593] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 6593] discovered active process",
+        "python scripts/export.py chef_assistant"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T11:53:41.092Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chef_assistant_20260517_default_008",
+      "name": "External Train (chef_assistant/20260517_default_008)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": 0.982559992869695,
+      "createdAt": "2026-05-17T11:50:57.443Z",
+      "startedAt": "2026-05-17T11:50:57.443Z",
+      "finishedAt": "2026-05-17T11:50:57.443Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260517_default_008/training_metrics.json",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_proc_4135651",
       "name": "External Process (4135651)",
       "type": "Export",
@@ -34610,6 +34749,9 @@
     }
   ],
   "logs": [
+    "[2026-05-17T11:54:35.122Z] [SYNC] discovered running external process pid=7879",
+    "[2026-05-17T11:53:32.115Z] [SYNC] discovered running external process pid=6593",
+    "[2026-05-17T11:50:59.046Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_008",
     "[2026-05-17T10:23:24.752Z] [SYNC] discovered running external process pid=4135651",
     "[2026-05-17T10:20:27.596Z] [SYNC] discovered running external process pid=4132085",
     "[2026-05-17T10:20:27.552Z] [SYNC] imported external job ext_train_history_guide_20260517_default_003",
