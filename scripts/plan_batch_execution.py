@@ -78,6 +78,7 @@ def generate_colab_notebooks(
     *,
     output_dir: Path,
     drive_repo_dir: str,
+    repo_url: str | None = None,
 ) -> list[str]:
     written: list[str] = []
 
@@ -96,6 +97,7 @@ def generate_colab_notebooks(
             dataset_location=dataset_location,
             drive_repo_dir=drive_repo_dir,
             plan_payload=entry,
+            repo_url=repo_url,
         )
         out = output_dir / f"{npc_key}__{preset}__remote_colab.ipynb"
         write_notebook(notebook, out)

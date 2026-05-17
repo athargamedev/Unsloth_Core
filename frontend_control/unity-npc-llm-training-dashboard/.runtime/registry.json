@@ -2,12 +2,102 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_4132085",
+      "name": "External Process (4132085) history_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "running",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T10:20:27.564Z",
+      "startedAt": "2026-05-17T10:20:27.564Z",
+      "command": [
+        "external",
+        "python3 ./ucore train subjects/history_guide.json --technique onyx --preset safe-any --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 4132085] discovered active process",
+        "python3 ./ucore train subjects/history_guide.json --technique onyx --preset safe-any --export-gguf"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_train_history_guide_20260517_default_003",
+      "name": "External Train (history_guide/20260517_default_003)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T10:20:26.842Z",
+      "startedAt": "2026-05-17T10:20:26.842Z",
+      "finishedAt": "2026-05-17T10:20:26.842Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260517_default_003/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_proc_3956892",
       "name": "External Process (3956892) history_guide",
       "type": "Dataset",
       "commandId": "dataset-generate",
       "npcKey": "history_guide",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-17T10:07:33.029Z",
@@ -19,8 +109,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3956892] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -42,14 +134,16 @@
         "[EXTERNAL][PID 3956892] discovered active process",
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py /home/athar/Projects/Unsloth_Core/subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --onyx-use-llm --model llama3.1:latest --concept-focus dialogue --concept-focus identity --concept-focus teaching"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T10:20:21.552Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_3956848",
       "name": "External Process (3956848)",
       "type": "Pipeline",
       "commandId": "pipeline",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-17T10:07:30.978Z",
@@ -61,8 +155,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3956848] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -84,7 +180,9 @@
         "[EXTERNAL][PID 3956848] discovered active process",
         "python3 ./ucore feedback eval/results/feedback/hg_v3_feedback.json --auto --train-preset safe-any"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T10:20:21.552Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_3956567",
@@ -34462,6 +34560,8 @@
     }
   ],
   "logs": [
+    "[2026-05-17T10:20:27.596Z] [SYNC] discovered running external process pid=4132085",
+    "[2026-05-17T10:20:27.552Z] [SYNC] imported external job ext_train_history_guide_20260517_default_003",
     "[2026-05-17T10:07:33.058Z] [SYNC] discovered running external process pid=3956892",
     "[2026-05-17T10:07:31.015Z] [SYNC] discovered running external process pid=3956848",
     "[2026-05-17T10:07:12.008Z] [SYNC] discovered running external process pid=3956567",
