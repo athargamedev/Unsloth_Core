@@ -2,10 +2,12 @@
 
 ## Overview
 
-The Unsloth Core training pipeline transforms an NPC subject specification into a playable GGUF-quantized LoRA model ready for Unity deployment. The pipeline follows four deterministic stages:
+The Unsloth Core training pipeline transforms an NPC subject specification into a playable GGUF-quantized LoRA model ready for Unity deployment. The pipeline follows six stages:
 
 ```
-Subject Spec (JSON) → [Generate] → [Sanitize] → [Train] → [Export & Validate] → GGUF
+Subject Spec (JSON) → [Generate] → [Sanitize] → [Train] → [Export] → [Evaluate] → GGUF
+                                                                           ↓
+                                                              [Feedback Loop] —→ retrain
 ```
 
 ---
@@ -23,25 +25,42 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 
 | Technique | Description | When to use |
 |-----------|-------------|-------------|
-| `onyx` | Default. Retrieves relevant context from local Onyx knowledge base, then generates Q&A via Ollama or direct prompt | Production: when Onyx is indexed with docs from the subject domain |
-| `docs` | Reads a manifest of local markdown/text files and generates from those | Docs are available but not in Onyx |
-| `ollama` | Uses Ollama to generate from model knowledge (no RAG context) | Quick prototyping |
-| `template` | Simple template-based generation (smoke test only - NOT production) | Testing pipeline mechanics only |
-| `openai` / `anthropic` | Uses OpenAI/Anthropic API to generate | Higher quality, costs money |
+| `onyx` | **Default.** Retrieves relevant context from local Onyx knowledge base, then generates grounded Q&A | Production: when Onyx is indexed with reference docs from the subject domain |
+| `template` | Simple template-based generation | Smoke tests and pipeline testing only |
+
+Techniques removed from active use: `docs`, `ollama`, `openai`, `anthropic`. Onyx is the only production technique; template is for smoke testing.
 
 **Output:** `subjects/datasets/{npc_key}/{technique}/train.jsonl`
 
-**Important constraints:**
-- Onyx technique: chunk limit 10-12, 10s+ delays between calls (15-20 asks then rate block)
-- Template technique is for smoke-test only; never train a production LoRA on template data
+**Onyx generation (v2):**
+- Uses natural conversation templates with deterministic variant selection via `_pick_variant()` (hash-based)
+- Variants per category: teaching (3), dialogue (3), identity (2), quest (2), refusal (2)
+- Content cleaner strips markdown headings, bold markers, list prefixes
+- Reference docs indexed at `subjects/reference_docs/` (centralized, per-NPC primer files)
+- ~72 examples per NPC: 8 identity + 32 teaching + 16 dialogue + 8 quest + 8 refusal
 
 **Key CLI flags:**
 ```bash
-./ucore generate subjects/chemistry_instructor.json
-./ucore generate subjects/chemistry_instructor.json --technique onyx
-./ucore generate subjects/chemistry_instructor.json --technique onyx --onyx-prep
-./ucore generate subjects/chemistry_instructor.json --technique ollama --model llama3.1
-./ucore generate subjects/chemistry_instructor.json --technique docs --docs-manifest docs/manifests/chemistry.json
+./ucore generate subjects/history_guide.json
+./ucore generate subjects/history_guide.json --technique onyx --onyx-prep
+./ucore generate subjects/history_guide.json --technique template
+./ucore generate subjects/history_guide.json --technique onyx --onyx-use-llm --model llama3.1
+```
+
+**Example output metadata:**
+```json
+{
+  "source": "onyx",
+  "onyx_query": "explain Roman Empire for a beginner",
+  "onyx_document_sets": ["history_guide"],
+  "onyx_queries": ["explain Roman Empire", "define Roman Republic with examples"],
+  "onyx_query_count": 2,
+  "onyx_document_ids": ["doc-id"],
+  "onyx_titles": ["history_primer.md"],
+  "onyx_scores": [0.91],
+  "onyx_context_chunks": 1,
+  "onyx_quality_score": 0.86
+}
 ```
 
 ### Stage 2: Sanitize Dataset
@@ -80,82 +99,144 @@ Base config → Preset override → CLI override
 
 **Output:** `outputs/{npc_key}/` (LoRA adapter weights)
 
-**Running locally vs remotely:**
-Before a long training run:
-```bash
-./ucore plan-execution --spec subjects/chemistry_instructor.json --preset fast-3b
-```
-This checks GPU VRAM, model size, and recommends local or Colab-based training.
-
-**Training config files:**
-- `configs/lora-sft-fast-3b.yaml` — Base 3B model config
-- `configs/lora-sft-smoke.yaml` — Base 1B smoke config
-- `configs/presets/fast-3b.yaml` — Training hyperparameter preset
-- `configs/presets/smoke.yaml` — Smoke-test preset
-- `configs/presets/safe-any.yaml` — Conservative fallback preset
-- `configs/presets/wandb.yaml` — W&B tracking preset (--wandb alias)
+**GPU:** RTX 3060 Laptop 6GB → `fast-3b` tuned with `packing: true`, `batch_size: 1`, `gradient_accumulation_steps: 8`.
 
 **Checkpointing:**
-- Intermediate checkpoints saved to `outputs/{npc_key}/runs/`
+- Intermediate checkpoints saved to `outputs/{npc_key}/runs/{run_id}/`
 - TensorBoard logs also in `outputs/{npc_key}/runs/`
 
-### Stage 4: Export & Validate
+**Export flag:**
+- `--export-gguf` exports adapter GGUF automatically after training (no separate export step needed)
+- Output: `exports/{npc_key}/{npc_key}-lora-f16.gguf`
 
-**Entry point:** `./ucore export <lora_path> --base-model <model>`
-**Scripts:** `scripts/export.py`, `scripts/smoke_test.py`
+### Stage 4: Export
 
-**Export (scripts/export.py):**
-- Merges LoRA adapter with base model
-- Quantizes to GGUF format (default: q4_k_m)
-- Output: `exports/{npc_key}-{model_short}-{quant}.gguf`
+**Entry point:** `./ucore export <npc_key>`
+**Scripts:** `scripts/export.py`
 
-**Smoke test (scripts/smoke_test.py):**
-- Loads exported GGUF
-- Runs persona-adherence prompts from the subject spec
-- Validates output quality and identity preservation
-- Generates a report at `eval/results/{npc_key}/`
+**Adapter mode (default):**
+- Converts LoRA adapter to lightweight f16 GGUF via `convert_lora_to_gguf.py`
+- Fast, no base model loading (~30 seconds)
+- Output: `exports/{npc_key}/{npc_key}-lora-f16.gguf` (~47 MB)
+- **This is what Unity/LLMUnity loads at runtime** (base model stays in StreamingAssets)
+
+**Full-merge mode (`--full-merge`):**
+- Merges LoRA into base model, then quantizes
+- Output: `exports/{npc_key}/{npc_key}-{model}-{quant}.gguf`
+- Note: May timeout on HF safetensor download
+
+### Stage 5: Evaluation
+
+**Entry point:** `./ucore evaluate <args>`
+**Scripts:** `scripts/evaluate.py`
+
+Compares two models (baseline vs candidate) or measures standalone:
+
+```bash
+# Side-by-side comparison
+./ucore evaluate \
+  --baseline exports/history_guide/round1/history_guide-lora-f16.gguf \
+  --candidate exports/history_guide/history_guide-lora-f16.gguf \
+  --base-model /path/to/llama-3.2-3b-instruct-q4_k_m.gguf \
+  --spec subjects/history_guide.json \
+  --report-html \
+  --feedback-json eval/results/feedback/history_guide_round2.json
+
+# Standalone measurement (no comparison)
+./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf \
+  --spec subjects/history_guide.json --report-html
+```
+
+**Key details:**
+- Starts two `llama-server` instances (baseline on 8888, candidate on 8889) with `--lora`
+- Both baseline and candidate can be LoRA adapters loaded on top of `--base-model`
+- Same mechanism as LLMUnity runtime: base GGUF + LoRA via llama.cpp
+- Validates responses on: sentence count ≤ max, name mention, AI disclaimers, think tags
+- Quality metrics: lexical diversity (TTR), repetition rate, response length
+- Optional Ollama LLM judge for semantic comparison (falls back to heuristic)
+
+**Output:**
+- HTML report with Chart.js (bar chart + scatter plot)
+- Markdown per-question breakdown
+- Structured feedback JSON with per-concept win rates, quality scores, constraint violations
+
+### Stage 6: Feedback Loop
+
+**Entry point:** `./ucore feedback <feedback.json>`
+**Scripts:** `scripts/feedback_loop.py`, `scripts/evaluate.py --feedback-json`
+
+Closes the loop between evaluation and dataset generation:
+
+1. Analyze feedback JSON → identify weak concepts (win_rate < 0.5, quality > 25, violations > 1)
+2. Query Onyx for each weak concept → determine gap type:
+   - **training_density**: Onyx has relevant docs → regenerate more examples
+   - **knowledge_gap**: Onyx returns nothing → add reference doc, re-index
+3. Regenerate targeted dataset → sanitize → retrain → re-evaluate
+4. CI mode: `--auto-retrain` chains the whole cycle in one command
 
 ---
 
 ## 2. Subject Spec Format
 
-Located in `subjects/*.json`. Structure:
+Located in `subjects/*.json`. Structure (using history_guide as example):
 
 ```json
 {
-  "npc_key": "chemistry_instructor",          // snake_case key for the NPC
-  "npc_name": "ChemistryInstructor",           // Display name
+  "npc_key": "history_guide",
+  "npc_name": "HistoryGuide",
   "identity": {
-    "personality": "Friendly, patient...",     // Personality description
-    "backstory": "...",                        // NPC background
-    "role": "high school chemistry teacher"    // Role definition
+    "personality": "Patient, enthusiastic storyteller who brings historical events to life",
+    "background": "Expert in world history with focus on ancient civilizations",
+    "mannerisms": "Uses timelines and cause-effect reasoning; connects past to present"
   },
   "teaching": {
-    "subjects": ["stoichiometry", "periodic table", ...],
-    "style": "Socratic",                       // Teaching approach
-    "difficulty_level": "high_school",
-    "max_explanations": 3,
-    "use_analogies": true
+    "expertise": ["ancient civilizations", "Roman Empire", "medieval period", "world wars"],
+    "approach": "Connects events through narrative storytelling",
+    "difficulty_levels": ["beginner", "intermediate"]
   },
-  "knowledge_sources": [                       // Reference sources for generation
-    {"name": "...", "path": "docs/..."}
+  "dialogue": {
+    "conversation_style": "Narrative and engaging with clear chronological framing",
+    "max_sentences": 3,
+    "example_topics": ["What caused the fall of Rome?", "Tell me about daily life in ancient Egypt"]
+  },
+  "quest": {
+    "scenarios": [
+      {"name": "timeline_analysis", "description": "Student needs cause-effect relationships"}
+    ]
+  },
+  "refusal": {
+    "boundaries": ["Will not promote historical misinformation or conspiracy theories"],
+    "redirect_policy": "Redirects to verified historical sources and scholarly consensus"
+  },
+  "subject": "World history: ancient civilizations, classical antiquity, medieval period...",
+  "reference_doc": "subjects/reference_docs/history_primer.md",
+  "system_prompt": "## IDENTITY\nName: HistoryGuide | Role: engaging world history storyteller\n\n## VOICE\n...\n\n## KNOWLEDGE\nAncient civilizations, Roman Empire, medieval period...\n\n## RULES\nNEVER speculate without labeling | NEVER promote misinformation...",
+  "research_queries": [
+    {"query": "key events and causes of the fall of the Roman Empire", "mode": "fast"},
+    {"query": "daily life in ancient Egypt explained simply", "mode": "fast"}
   ],
-  "generation": {
-    "num_examples": 100,                       // Target dataset size
-    "max_turns": 6,                            // Max dialog turns per example
-    "language": "en"
-  },
-  "evaluation_criteria": {
-    "persona_accuracy": 0.85,                  // Minimum persona adherence
-    "knowledge_correctness": 0.90              // Minimum factual accuracy
+  "dataset": {
+    "examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    }
   }
 }
 ```
 
+**Key fields:**
+- `reference_doc`: Path to the primer file in `subjects/reference_docs/` — used for Onyx indexing
+- `system_prompt`: 4-section IDENTITY|VOICE|KNOWLEDGE|RULES format for LLMUnity compatibility
+- `examples_per_category`: Onyx-optimized distribution (72 total)
+- `research_queries`: Domain-specific queries used for Onyx coverage checking (no `from: "web"` needed)
+
 **Conventions:**
 - `npc_key` always `snake_case`
-- GGUF naming: `{npc_key}-{model_short}-{quant}.gguf`
-- Default quantization: `q4_k_m`
+- GGUF naming: `{npc_key}-lora-f16.gguf` (adapter) or `{npc_key}-{model}-{quant}.gguf` (full-merge)
+- Default quantization: `q4_k_m` for full-merge, `f16` for adapter mode
 
 ---
 
@@ -165,21 +246,36 @@ Located in `subjects/*.json`. Structure:
 # 1. Activate
 source unsloth_env/bin/activate
 
-# 2. Quick smoke test of the whole pipeline
-./ucore pipeline subjects/chemistry_instructor.json --preset smoke
+# 2. Scaffold a new NPC
+./ucore init new_npc --subject "Topic description"
 
-# 3. Full production pipeline
-./ucore generate subjects/chemistry_instructor.json --technique onyx
-./ucore sanitize subjects/datasets/chemistry_instructor/onyx/train.jsonl
-./ucore train subjects/chemistry_instructor.json --preset fast-3b
-./ucore export outputs/chemistry_instructor/lora_model --base-model llama3.2-3b
-./ucore smoke exports/chemistry_instructor-llama3.2-3b-q4_k_m.gguf --spec subjects/chemistry_instructor.json
+# 3. Index reference docs into Onyx
+python scripts/onyx_index_repo.py --npc-key new_npc \
+  --glob subjects/new_npc.json \
+  --glob subjects/reference_docs/new_npc_primer.md
 
-# 4. W&B tracking
-./ucore train subjects/chemistry_instructor.json --preset wandb --preset fast-3b
+# 4. Quick smoke test
+./ucore pipeline subjects/new_npc.json --preset smoke
 
-# 5. Onyx-enabled generation with prep (index repo docs first)
-./ucore generate subjects/chemistry_instructor.json --technique onyx --onyx-prep
+# 5. Full production pipeline
+./ucore generate subjects/new_npc.json --technique onyx
+./ucore sanitize subjects/datasets/new_npc/onyx/train.jsonl
+./ucore train subjects/new_npc.json --technique onyx --preset fast-3b --export-gguf
+./ucore evaluate --baseline exports/new_npc/new_npc-lora-f16.gguf \
+  --spec subjects/new_npc.json --report-html
+
+# 6. W&B tracking
+./ucore train subjects/new_npc.json --technique onyx --preset fast-3b --wandb --export-gguf
+
+# 7. Compare two rounds
+./ucore evaluate \
+  --baseline exports/new_npc/round1/new_npc-lora-f16.gguf \
+  --candidate exports/new_npc/new_npc-lora-f16.gguf \
+  --base-model Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf \
+  --spec subjects/new_npc.json --report-html
+
+# 8. Feedback loop
+./ucore feedback eval/results/feedback/new_npc_round2.json --dry-run
 ```
 
 ---
@@ -190,40 +286,45 @@ source unsloth_env/bin/activate
 |-------|-------------|--------|
 | Generate | `subjects/datasets/{npc_key}/{technique}/train.jsonl` | JSONL (ChatML) |
 | Sanitize | `subjects/datasets/{npc_key}/{technique}/train_clean.jsonl` | JSONL (cleaned) |
-| Train | `outputs/{npc_key}/` | LoRA adapter (SafeTensors) |
-| Export | `exports/{npc_key}-{model}-{quant}.gguf` | GGUF (quantized) |
-| Validate | `eval/results/{npc_key}/` | HTML/MD report |
+| Train | `outputs/{npc_key}/runs/{run_id}/` | LoRA adapter (SafeTensors) |
+| Export | `exports/{npc_key}/{npc_key}-lora-f16.gguf` | GGUF (adapter) |
+| Evaluate | `eval/reports/{npc_key}/eval_*.html` | HTML (Chart.js) |
+| Evaluate | `eval/results/feedback/{npc_key}_*.json` | JSON (per-concept) |
+| Feedback | `eval/results/gaps/{npc_key}.json` | JSON (gap analysis) |
 
 ---
 
 ## 5. Data Flow Diagram
 
 ```
-subjects/chemistry_instructor.json
+subjects/{npc_key}.json ──── subjects/reference_docs/{npc_key}_primer.md
           │
           ▼
-  scripts/generate_dataset.py ───────► Onyx (local RAG)
-          │                                │
-          ▼                                ▼
-  subjects/datasets/chemistry_instructor/     docs/ (indexed source)
+  scripts/onyx_index_repo.py ──► Onyx (vector DB)
           │
           ▼
-  scripts/sanitize_dataset.py ─────► train_clean.jsonl
+  scripts/generate_dataset.py ──► Onyx retrieval
           │
           ▼
-  scripts/train.py ─────► configs/lora-sft-*.yaml
-          │                    └─ presets/*.yaml
-          ▼
-  outputs/chemistry_instructor/ (LoRA adapter)
+  subjects/datasets/{npc_key}/onyx/train.jsonl
           │
           ▼
-  scripts/export.py ─────► exports/chemistry_instructor-*.gguf
+  scripts/sanitize_dataset.py ──► train_clean.jsonl
           │
           ▼
-  scripts/smoke_test.py ──► eval/results/chemistry_instructor/
+  scripts/train.py ──► configs/*.yaml + presets/*.yaml
           │
           ▼
-  Unity StreamingAssets/Models/
+  outputs/{npc_key}/runs/{run_id}/  (LoRA adapter)
+          │
+          ▼
+  scripts/export.py ──► exports/{npc_key}/{npc_key}-lora-f16.gguf
+          │
+          ▼
+  scripts/evaluate.py ──► eval/reports/ + eval/results/feedback/
+          │
+          ▼
+  Unity StreamingAssets/Models/{npc_key}-lora-f16.gguf
 ```
 
 ---
@@ -238,7 +339,7 @@ Training configs use a layered merge:
 
 Multiple presets can be stacked:
 ```bash
-./ucore train subjects/chemistry_instructor.json \
+./ucore train subjects/history_guide.json \
   --preset fast-3b \
   --preset wandb
 ```
@@ -266,33 +367,28 @@ save_steps: 50
 Onyx is a local RAG knowledge base. The pipeline uses it to:
 
 **During generation:**
-- Retrieve relevant context chunks from indexed docs
-- Feed context to LLM for accurate Q&A generation
-- Support document-set scoping per subject
+- Retrieve relevant context chunks from indexed reference docs
+- Feed context to deterministic template for grounded Q&A generation
+- Support document-set scoping per NPC
+- Natural conversation templates (v2) with hash-based variant selection
 
-**Configuration:**
+**Indexing reference docs:**
 ```bash
-# .env
-ONYX_BASE_URL=http://localhost
-ONYX_API_KEY=onyx_pat_...
-```
-
-**Indexing repo content:**
-```bash
-python scripts/onyx_index_repo.py     # index project docs/specs/configs
-python scripts/onyx_index_repo.py --dry-run  # preview without indexing
+python scripts/onyx_index_repo.py     # index project-wide
+python scripts/onyx_index_repo.py --npc-key history_guide \
+  --glob subjects/history_guide.json \
+  --glob subjects/reference_docs/history_primer.md
+python scripts/onyx_index_repo.py --dry-run  # preview
 ```
 
 **Onyx-backed generation:**
 ```bash
-./ucore generate subjects/chemistry_instructor.json \
+./ucore generate subjects/history_guide.json \
   --technique onyx \
   --onyx-max-results 3 \
   --onyx-max-context-chars 1200 \
   --onyx-prep
 ```
-
-The `--onyx-prep` flag indexes targeted subject context and checks coverage before generation.
 
 ---
 

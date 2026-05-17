@@ -3,10 +3,12 @@
 scaffold_npc.py — Initialize directory structure and spec for a new NPC.
 
 Creates:
-  subjects/{npc_key}.json   — validated subject spec
-  subjects/datasets/{npc_key}/...    — per-technique dataset folders
-  outputs/{npc_key}/        — training output dir (runs/)
-  exports/{npc_key}/        — GGUF export dir
+  subjects/{npc_key}.json                         — validated subject spec
+  subjects/reference_docs/{npc_key}_primer.md      — stub reference doc for Onyx indexing
+  subjects/datasets/{npc_key}/onyx/               — Onyx-grounded dataset dir
+  subjects/datasets/{npc_key}/template/            — fast/smoke dataset dir
+  outputs/{npc_key}/runs/                         — training output dir
+  exports/{npc_key}/                              — GGUF export dir
 """
 
 from __future__ import annotations
@@ -23,20 +25,21 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from _config.paths import SNAKE_CASE_PATTERN
 
-TECHNIQUES = ["docs", "onyx", "ollama", "template", "openai", "anthropic"]
+# Only the techniques we use — Onyx (production) and template (smoke/fast)
+TECHNIQUES = ["onyx", "template"]
 
-DEFAULT_SPEC = {
+DEFAULT_SPEC: dict = {
     "npc_key": "{npc_key}",
     "npc_name": "{npc_name}",
     "identity": {
         "personality": "Helpful, clear, and professional.",
         "background": "Expert in {subject}.",
-        "mannerisms": "Speaks in short, clear sentences."
+        "mannerisms": "Speaks in short, clear sentences.",
     },
     "teaching": {
         "expertise": ["basics", "advanced topics"],
         "approach": "Direct and clear explanations.",
-        "difficulty_levels": ["beginner"]
+        "difficulty_levels": ["beginner"],
     },
     "dialogue": {
         "conversation_style": "Informative",
@@ -44,14 +47,14 @@ DEFAULT_SPEC = {
         "example_topics": [
             "Introduction to {subject}",
             "Common misconceptions about {subject}",
-            "How to get started with {subject}"
-        ]
+            "How to get started with {subject}",
+        ],
     },
     "quest": {
         "scenarios": [
             {
                 "name": "introduction_scenario",
-                "description": "Learner asks an introductory question about {subject}"
+                "description": "Learner asks an introductory question about {subject}",
             }
         ]
     },
@@ -59,36 +62,68 @@ DEFAULT_SPEC = {
         "boundaries": [
             "Will not provide harmful, illegal, or unsafe instructions",
             "Will not present unverified claims as factual",
-            "Will not role-play as a real person or authority figure without disclaimers"
+            "Will not role-play as a real person or authority figure without disclaimers",
         ],
-        "redirect_policy": "Redirects to safe educational content about the NPC's subject domain."
+        "redirect_policy": "Redirects to safe educational content about the NPC's subject domain.",
     },
+    # Onyx-relevant research queries (no 'from: web' — Onyx indexes local docs)
     "research_queries": [
         {
-            "query": "Fundamentals of {subject} core concepts beginner guide",
+            "query": "Core concepts and fundamentals of {subject}",
             "mode": "fast",
-            "from": "web",
-            "source_policy": "text-web"
         },
         {
-            "query": "{subject} key topics examples and real-world applications",
+            "query": "Key topics, examples, and real-world applications of {subject}",
             "mode": "fast",
-            "from": "web",
-            "source_policy": "text-web"
-        }
+        },
     ],
     "subject": "{subject}",
-    "system_prompt": "You are {npc_name}. Subject: {subject}. Style: clear and professional. Rules: Speak in 1-3 short sentences. Stay in character as {npc_name}. Never mention you are an AI. Max 3 sentences.",
+    # Path to the NPC's reference doc primer (created as a stub during scaffold)
+    "reference_doc": "subjects/reference_docs/{npc_key}_primer.md",
+    # 4-section system prompt format used by LLMUnity runtime
+    "system_prompt": (
+        "## IDENTITY\n"
+        "Name: {npc_name} | Role: expert guide in {subject}\n"
+        "\n"
+        "## VOICE\n"
+        "Clear and professional | Speak in 1-3 short sentences\n"
+        "\n"
+        "## KNOWLEDGE\n"
+        "{subject}\n"
+        "\n"
+        "## RULES\n"
+        "Stay in character as {npc_name} | Never mention you are an AI | "
+        "Max 3 sentences | Redirect off-topic questions to {subject}"
+    ),
     "dataset": {
+        # Onyx-optimized distribution: 72 total examples
         "examples_per_category": {
-            "identity": 5,
-            "teaching": 10,
-            "dialogue": 10,
-            "quest": 5,
-            "refusal": 5
+            "identity": 8,
+            "teaching": 32,
+            "dialogue": 16,
+            "quest": 8,
+            "refusal": 8,
         }
-    }
+    },
 }
+
+PRIMER_TEMPLATE = """# {npc_name} Primer — Quick Reference for {subject}
+
+## Core Concepts
+-
+
+## Key Facts
+-
+
+## Common Misconceptions
+-
+
+## Examples & Scenarios
+-
+
+## References
+-
+"""
 
 
 def validate_npc_key(npc_key: str) -> None:
@@ -97,8 +132,13 @@ def validate_npc_key(npc_key: str) -> None:
         raise ValueError(npc_key)
 
 
-def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
-             force: bool = False, skip_spec: bool = False) -> None:
+def scaffold(
+    npc_key: str,
+    subject: str | None = None,
+    name: str | None = None,
+    force: bool = False,
+    skip_spec: bool = False,
+) -> None:
     validate_npc_key(npc_key)
 
     npc_name = name or npc_key.replace("_", " ").title().replace(" ", "")
@@ -116,39 +156,56 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
 
         if not spec_path.exists() or force:
             spec = copy.deepcopy(DEFAULT_SPEC)
+
+            def _fill(t: str) -> str:
+                return (
+                    t.replace("{npc_key}", npc_key)
+                    .replace("{npc_name}", npc_name)
+                    .replace("{subject}", subject_text)
+                )
+
             spec["npc_key"] = npc_key
             spec["npc_name"] = npc_name
             spec["subject"] = subject_text
-            spec["system_prompt"] = (
-                f"You are {npc_name}. Subject: {subject_text}. "
-                "Style: clear and professional. Rules: Speak in 1-3 short sentences. "
-                f"Stay in character as {npc_name}. Never mention you are an AI. Max 3 sentences."
-            )
-            spec["identity"]["background"] = f"Expert in {subject_text}."
+            spec["reference_doc"] = _fill(spec["reference_doc"])
+            spec["system_prompt"] = _fill(spec["system_prompt"])
+            spec["identity"]["background"] = _fill(spec["identity"]["background"])
             spec["dialogue"]["example_topics"] = [
-                f"Introduction to {subject_text}",
-                f"Common misconceptions about {subject_text}",
-                f"How to get started with {subject_text}",
+                _fill(t) for t in spec["dialogue"]["example_topics"]
             ]
-            spec["quest"]["scenarios"][0]["description"] = (
-                f"Learner asks an introductory question about {subject_text}"
+            spec["quest"]["scenarios"][0]["description"] = _fill(
+                spec["quest"]["scenarios"][0]["description"]
             )
-            spec["research_queries"][0]["query"] = (
-                f"Fundamentals of {subject_text} core concepts beginner guide"
-            )
-            spec["research_queries"][1]["query"] = (
-                f"{subject_text} key topics examples and real-world applications"
-            )
+            for rq in spec["research_queries"]:
+                rq["query"] = _fill(rq["query"])
 
             with open(spec_path, "w", encoding="utf-8") as f:
                 json.dump(spec, f, indent=2, ensure_ascii=False)
             created_files.append(f"subjects/{npc_key}.json")
         else:
-            skipped_files.append(f"subjects/{npc_key}.json (use --force to overwrite)")
+            skipped_files.append(
+                f"subjects/{npc_key}.json (use --force to overwrite)"
+            )
     else:
         skipped_files.append("subjects/ (--skip-spec)")
 
-    # ── 2. Dataset folders ──────────────────────────────────────────────────
+    # ── 2. Reference doc primer stub ─────────────────────────────────────────
+    primer_dir = paths.subjects_root() / "reference_docs"
+    primer_dir.mkdir(parents=True, exist_ok=True)
+    primer_path = primer_dir / f"{npc_key}_primer.md"
+    if force or not primer_path.exists():
+        content = PRIMER_TEMPLATE.format(
+            npc_name=npc_name, subject=subject_text
+        )
+        with open(primer_path, "w", encoding="utf-8") as f:
+            f.write(content.lstrip("\n"))
+        created_files.append(f"subjects/reference_docs/{npc_key}_primer.md")
+    else:
+        skipped_files.append(
+            f"subjects/reference_docs/{npc_key}_primer.md (already exists — edit to fill in content)"
+        )
+
+    # ── 3. Dataset folders (onyx + template only) ────────────────────────────
     for tech in TECHNIQUES:
         tech_dir = paths.dataset_dir(npc_key) / tech
         if force or not tech_dir.exists():
@@ -156,18 +213,11 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
             (tech_dir / ".gitkeep").touch()
             created_dirs.append(f"subjects/datasets/{npc_key}/{tech}/")
         else:
-            skipped_dirs.append(f"subjects/datasets/{npc_key}/{tech}/ (already exists)")
+            skipped_dirs.append(
+                f"subjects/datasets/{npc_key}/{tech}/ (already exists)"
+            )
 
-        if tech == "onyx":
-            ref_dir = tech_dir / "reference_doc"
-            if force or not ref_dir.exists():
-                ref_dir.mkdir(parents=True, exist_ok=True)
-                (ref_dir / ".gitkeep").touch()
-                created_dirs.append(f"subjects/datasets/{npc_key}/onyx/reference_doc/")
-            else:
-                skipped_dirs.append(f"subjects/datasets/{npc_key}/onyx/reference_doc/ (already exists)")
-
-    # ── 3. Outputs dir (training) ───────────────────────────────────────────
+    # ── 4. Outputs dir (training) ───────────────────────────────────────────
     output_dir = paths.output_dir(npc_key)
     runs_dir = output_dir / "runs"
     if force or not output_dir.exists():
@@ -179,7 +229,7 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
     else:
         skipped_dirs.append(f"outputs/{npc_key}/ (already exists)")
 
-    # ── 4. Exports dir (GGUF) ──────────────────────────────────────────────
+    # ── 5. Exports dir (GGUF) ──────────────────────────────────────────────
     export_dir = paths.export_dir(npc_key)
     if force or not export_dir.exists():
         export_dir.mkdir(parents=True, exist_ok=True)
@@ -188,8 +238,7 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
         skipped_dirs.append(f"exports/{npc_key}/ (already exists)")
 
     # ── Summary ─────────────────────────────────────────────────────────────
-    print(f"\nNPC '{npc_key}' scaffolded successfully.")
-    print()
+    print(f"\nNPC '{npc_key}' scaffolded successfully.\n")
 
     if created_files:
         print("  Created files:")
@@ -210,28 +259,46 @@ def scaffold(npc_key: str, subject: str | None = None, name: str | None = None,
 
     print()
     if skip_spec:
-        print("  Next steps (spec was skipped — create or edit subjects/{npc_key}.json manually):")
-        print(f"    ./ucore validate-spec subjects/{npc_key}.json")
-        print(f"    ./ucore generate subjects/{npc_key}.json --technique template")
-        print(f"    ./ucore sanitize subjects/datasets/{npc_key}/template/train.jsonl")
-        print(f"    ./ucore validate-config --spec subjects/{npc_key}.json --preset smoke"
-              f" --data subjects/datasets/{npc_key}/template/train_clean.jsonl")
+        print(
+            "  Next steps (spec was skipped — create or edit"
+            f" subjects/{npc_key}.json manually):"
+        )
     else:
         print("  Next steps:")
-        print(f"    ./ucore validate-spec subjects/{npc_key}.json")
-        print(f"    ./ucore generate subjects/{npc_key}.json --technique template")
-        print(f"    ./ucore sanitize subjects/datasets/{npc_key}/template/train.jsonl")
-        print(f"    ./ucore validate-config --spec subjects/{npc_key}.json --preset smoke"
-              f" --data subjects/datasets/{npc_key}/template/train_clean.jsonl")
+    print(f"    1. Edit subjects/reference_docs/{npc_key}_primer.md"
+          f" with actual domain content")
+    print(f"    2. Index into Onyx: python scripts/onyx_index_repo.py"
+          f" subjects/{npc_key}.json --npc-key {npc_key}")
+    print(f"    3. Validate spec:  ./ucore validate-spec subjects/{npc_key}.json")
+    print(f"    4. Generate (smoke): ./ucore generate subjects/{npc_key}.json"
+          f" --technique template")
+    print(f"    5. Generate (prod):  ./ucore generate subjects/{npc_key}.json"
+          f" --technique onyx")
+    print(f"    6. Sanitize:       ./ucore sanitize"
+          f" subjects/datasets/{npc_key}/onyx/train.jsonl")
+    print(f"    7. Train & export: ./ucore train subjects/{npc_key}.json"
+          f" --technique onyx --preset fast-3b --export-gguf")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Scaffold a new NPC (folders + spec template)")
+    parser = argparse.ArgumentParser(
+        description="Scaffold a new NPC (folders + spec template)"
+    )
     parser.add_argument("npc_key", help="NPC key (snake_case)")
-    parser.add_argument("--subject", help="Subject description (default: auto-derived from npc_key)")
-    parser.add_argument("--name", help="NPC display name (default: auto-derived from npc_key)")
-    parser.add_argument("--force", action="store_true", help="Overwrite existing spec")
-    parser.add_argument("--skip-spec", action="store_true", help="Only create folders, skip spec file")
+    parser.add_argument(
+        "--subject", help="Subject description (default: auto-derived from npc_key)"
+    )
+    parser.add_argument(
+        "--name", help="NPC display name (default: auto-derived from npc_key)"
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Overwrite existing spec"
+    )
+    parser.add_argument(
+        "--skip-spec",
+        action="store_true",
+        help="Only create folders, skip spec file",
+    )
 
     args = parser.parse_args()
     try:

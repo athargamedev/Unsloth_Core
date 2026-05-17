@@ -39,26 +39,37 @@ export ONYX_API_KEY=...
 
 `./ucore` also reads these from the repo-root `.env` file, which is gitignored. On this machine, `/api/search` authenticated successfully but timed out during Onyx LLM context selection, so the default is `admin` search to keep dataset generation lightweight and avoid competing with training resources.
 
-## Generate an Onyx-Grounded Dataset
+## Indexing Reference Docs
 
-First connect/update this repo in Onyx using the ingestion helper:
+Reference docs are centralized at `subjects/reference_docs/`. Each active NPC has a markdown primer there. Index them into Onyx before generation:
 
 ```bash
+# Index a specific NPC's spec + primer
+python scripts/onyx_index_repo.py --npc-key history_guide \
+  --glob subjects/history_guide.json \
+  --glob subjects/reference_docs/history_primer.md
+
+# Or index project-wide
 python scripts/onyx_index_repo.py
+
+# Preview without indexing
+python scripts/onyx_index_repo.py --dry-run
 ```
 
-That helper indexes docs, subject specs, configs, and key workflow scripts only; it skips generated datasets, outputs, exports, venvs, frontend runtime blobs, and model artifacts. Use `--dry-run` to preview, or `--glob 'docs/**/*.md' --limit 10` for a smaller test.
+When creating a new NPC, `./ucore init <npc_key>` creates a stub primer at `subjects/reference_docs/{npc_key}_primer.md`. Fill it with domain content, then index.
 
-For a new subject, you can opt into targeted prep indexing before generation. This indexes the subject spec plus core Onyx workflow docs into the NPC DocumentSet, checks coverage, and only proceeds once the requested threshold is met:
+## Generate an Onyx-Grounded Dataset
+
+For a new subject, you can opt into targeted prep indexing before generation:
 
 ```bash
-./ucore generate subjects/new_subject.json --technique onyx --onyx-prep --onyx-min-coverage 0.5 --onyx-queries 3
+./ucore generate subjects/history_guide.json --technique onyx --onyx-prep --onyx-min-coverage 0.5 --onyx-queries 3
 ```
 
 Retrieval-only, lowest resource cost:
 
 ```bash
-./ucore generate subjects/chemistry_instructor.json \
+./ucore generate subjects/history_guide.json \
   --technique onyx \
   --onyx-url http://localhost \
   --onyx-max-results 3 \
@@ -77,9 +88,9 @@ Each example includes provenance metadata:
 ```json
 {
   "source": "onyx",
-  "onyx_query": "explain atoms for a beginner in chemistry",
-  "onyx_document_sets": ["chemistry_instructor"],
-  "onyx_queries": ["explain atoms for a beginner", "define atoms with examples"],
+  "onyx_query": "explain Rome for a beginner in history",
+  "onyx_document_sets": ["history_guide"],
+  "onyx_queries": ["explain Roman Empire", "define Roman Republic with examples"],
   "onyx_query_count": 2,
   "onyx_document_ids": ["doc-id"],
   "onyx_titles": ["Source Title"],
@@ -89,12 +100,25 @@ Each example includes provenance metadata:
 }
 ```
 
+## Natural Conversation Templates (v2)
+
+Onyx generation v2 uses natural conversation templates instead of robotic "Based on our material:" framing. Templates are selected deterministically per concept×category via `_pick_variant()` using `hash(f"{concept}:{category}")`, ensuring reproducibility across regeneration runs.
+
+**Teaching variants** (3 variants, e.g.):
+- "Great question about {concept}. Here's the thing: {content} That's what really matters here."
+- "Let me break down {concept} for you. The key point is: {content} Make sense?"
+- "Ah, {concept} — a fascinating topic. So here's what you should know: {content}"
+
+**Dialogue variants** (3 variants), **Identity** (2), **Quest** (2), **Refusal** (2).
+
+Content is cleaned before insertion: all markdown headings (`#+`), bold markers (`**`), and bullet list prefixes (`-`, `*`) are stripped, and whitespace is collapsed.
+
 ## Optional Onyx + Ollama Rewrite
 
 Use this when you want better natural language examples and have enough spare CPU/GPU:
 
 ```bash
-./ucore generate subjects/chemistry_instructor.json \
+./ucore generate subjects/history_guide.json \
   --technique onyx \
   --onyx-use-llm \
   --model llama3.1:latest \
@@ -110,9 +134,9 @@ Preflight:
 
 ```bash
 ./ucore validate-config \
-  --spec subjects/chemistry_instructor.json \
+  --spec subjects/history_guide.json \
   --preset fast-3b \
-  --data subjects/datasets/chemistry_instructor/onyx/train.jsonl \
+  --data subjects/datasets/history_guide/onyx/train.jsonl \
   --require-canonical \
   --strict
 ```
@@ -120,13 +144,13 @@ Preflight:
 Smoke train first:
 
 ```bash
-./ucore train subjects/chemistry_instructor.json --technique onyx --preset smoke
+./ucore train subjects/history_guide.json --technique onyx --preset smoke
 ```
 
 Then normal training:
 
 ```bash
-./ucore train subjects/chemistry_instructor.json \
+./ucore train subjects/history_guide.json \
   --technique onyx \
   --preset fast-3b \
   --wandb \
@@ -136,7 +160,7 @@ Then normal training:
 ## Full Pipeline
 
 ```bash
-./ucore pipeline subjects/chemistry_instructor.json \
+./ucore pipeline subjects/history_guide.json \
   --technique onyx \
   --preset fast-3b \
   --onyx-max-results 3 \
@@ -147,11 +171,11 @@ Then normal training:
 
 ## Why Onyx is the Default
 
-Onyx is now the default dataset generation technique. It uses local retrieval-augmented generation (RAG) from indexed source material, producing provenance-rich, grounded ChatML data without rate limits or external API dependencies. Use `onyx --onyx-use-llm` when you want more natural examples with an Ollama rewrite pass, and fall back to `template` only for scaffolding or smoke tests.
+Onyx is the default dataset generation technique. It uses local retrieval-augmented generation (RAG) from indexed source material, producing provenance-rich, grounded ChatML data without rate limits or external API dependencies. Use `--onyx-use-llm` when you want more natural examples with an Ollama rewrite pass, and fall back to `template` only for scaffolding or smoke tests.
 
 ## Debugging
 
 - `403 Access denied`: set `ONYX_API_KEY` or log in/configure local Onyx API access.
-- Empty results: index source docs in Onyx first, reduce document-set filters, or broaden `subjects/*.json` research terms.
+- Empty results: index source docs in Onyx first, reduce document-set filters, or broaden subject research terms.
 - Slow generation: lower `--onyx-max-results`, lower `--onyx-max-context-chars`, omit `--onyx-use-llm`.
-- Weak examples: index better source docs or enable `--onyx-use-llm` for rewrite quality.
+- Weak examples: enable `--onyx-use-llm` for rewrite quality, or use v2 natural templates which are built into `generate_dataset.py` by default.
