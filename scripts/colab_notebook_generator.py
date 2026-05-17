@@ -145,6 +145,7 @@ print('Current working directory:', os.getcwd())
 
     dataset_code = f"""
 import os
+import sys
 import subprocess
 
 spec = {spec_name!r}
@@ -152,22 +153,26 @@ technique = {technique!r}
 train_jsonl = {ds_train!r}
 clean_jsonl = {ds_clean!r}
 
+# Use active Python executable to run ucore to avoid permission denied (exit 126) on mounted filesystems
+python_bin = sys.executable
+
 # If dataset is planned remote or missing, generate in Colab.
 needs_generate = ({dataset_location!r} != 'local') or (not os.path.exists(train_jsonl))
 if needs_generate:
-    cmd = f"./ucore generate subjects/{{spec}} --technique {{technique}}"
+    cmd = f"{{python_bin}} ucore generate subjects/{{spec}} --technique {{technique}}"
     print('Running:', cmd)
     subprocess.run(['bash', '-c', cmd], check=True)
 else:
     print('Using existing dataset:', train_jsonl)
 
-sanitize_cmd = f"./ucore sanitize {{train_jsonl}} --output {{clean_jsonl}} --strict-canonical"
+sanitize_cmd = f"{{python_bin}} ucore sanitize {{train_jsonl}} --output {{clean_jsonl}} --strict-canonical"
 print('Running:', sanitize_cmd)
 subprocess.run(['bash', '-c', sanitize_cmd], check=True)
 """
 
     train_code = f"""
 import os
+import sys
 import subprocess
 import urllib.request
 import json
@@ -175,6 +180,9 @@ import torch
 
 spec = {spec_name!r}
 preset = {preset!r}
+
+# Use active Python executable to run ucore to avoid permission denied (exit 126) on mounted filesystems
+python_bin = sys.executable
 
 # Detect VRAM and adjust preset if running locally on a lower-end GPU
 vram_gb = torch.cuda.get_device_properties(0).total_memory / 1024**3 if torch.cuda.is_available() else 0
@@ -209,11 +217,11 @@ if not is_remote_colab:
     except Exception as e:
         print("Ollama is not running or no models were active.")
 
-train_cmd = f"./ucore train subjects/{{spec}} --from-spec --preset {{effective_preset}}"
+train_cmd = f"{{python_bin}} ucore train subjects/{{spec}} --from-spec --preset {{effective_preset}}"
 print('Running:', train_cmd)
 subprocess.run(['bash', '-c', train_cmd], check=True)
 
-print('Training complete. Optional next steps: ./ucore export <npc_key> and ./ucore smoke <gguf> --spec subjects/<spec>.json')
+print('Training complete. Optional next steps: {{python_bin}} ucore export <npc_key> and {{python_bin}} ucore smoke <gguf> --spec subjects/<spec>.json')
 """
 
     plan_json = json.dumps(plan_payload, indent=2)
