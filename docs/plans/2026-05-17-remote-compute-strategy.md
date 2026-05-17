@@ -200,6 +200,10 @@ Medium — ART is cutting-edge (GRPO), but not directly applicable to our Llama 
 ## Implementation Status
 
 ### Completed (this session)
+- ✅ **Automated Onyx-LLM Feedback Loop Fix** — Repaired bug where Ollama flag overrode Onyx generation technique, allowing the pipeline to correctly rewrite Onyx context into multi-turn JSONL examples.
+- ✅ **VRAM Workaround for Feedback Loop** — Defined the sequential pipeline strategy for 6GB GPUs: generated dataset via `ucore feedback --auto`, manually unloaded `llama3.1:latest` (`curl ... keep_alive: 0`), then trained.
+- ✅ **Round 5 Chef Assistant Retraining** — Addressed 8 weak concepts, dropping training loss to 1.0746. Evaluated with 100% tie/win rate vs previous v2 baseline. Exported updated `chef_assistant-lora-f16.gguf` to LLMUnity.
+- ✅ **Round 3 History Guide Retraining** — Addressed 9 weak concepts, achieving training loss of 1.1444. Exported updated `history_guide-lora-f16.gguf` to LLMUnity.
 - ✅ **evaluate.py --wandb** — Added W&B Table logging with per-question breakdown, per-category win rates, and improved run metadata. Replaced flat per-step logging with structured Table.
 - ✅ **Updated CLI reference** — Documented all evaluate flags (--wandb, --wandb-project, --wandb-entity, --judge, --report-html, --track, --feedback-json)
 - ✅ **Fixed llama-server readiness** — Server now probes HTTP `/v1/models` endpoint instead of just TCP socket, preventing 503/HTTP timeout errors during eval.

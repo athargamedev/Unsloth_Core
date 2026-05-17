@@ -61,6 +61,7 @@ Transforms a subject spec into a playable NPC:
       - `training_density`: Onyx has docs, model didn't learn → regenerate more examples
       - `knowledge_gap`: Onyx has no relevant docs → add primer, re-index
     - Auto-retrain mode: `./ucore feedback npc.json --auto-retrain --baseline ...`
+    - **CRITICAL NOTE (6GB VRAM)**: Do NOT use `--auto-retrain` if doing LLM-grounded generation on an RTX 3060 6GB. Run generation (`--auto`) first, unload Ollama from memory, then manually run training to avoid OOM crashes.
     - Groups results by category/concept for targeted analysis.
 
 ### 🔍 Knowledge Gap Detection
@@ -116,7 +117,7 @@ A local Supabase instance can track:
 - **Preset Selection**:
   - `--preset smoke` for debugging/testing.
   - `--preset fast-3b` for standard NPC training (tuned for RTX 3060 6GB).
-  - `--preset safe-any` if CUDA OOM occurs.
+  - `--preset safe-any` if CUDA OOM occurs. Use this if Ollama is running in the background, or manually unload Ollama first with `curl http://localhost:11434/api/generate -d '{"model": "llama3.1:latest", "keep_alive": 0}'`.
   - `--wandb` for W&B experiment tracking.
 - **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. `llama-server` (inference with `--lora` support), `llama-quantize` (fast local quantization), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary.
 - **Onyx Generation v2**: Uses natural conversation templates (not "Based on our material:" framing). Deterministic variant selection via `_pick_variant()` using `hash(f"{concept}:{category}")`. Content cleaner strips all markdown headings, bold markers, list prefixes.
@@ -140,8 +141,8 @@ Weights & Biases tracks every training run with:
 ## 🖥️ Active NPCs
 | NPC | Key | Subject | Loss (Onyx v2) | Eval vs Template |
 |-----|-----|---------|----------------|-----------------|
-| History Guide | `history_guide` | World history | 1.771 | 25% win rate |
-| Chef Assistant | `chef_assistant` | Culinary arts | 1.768 | 12% win rate |
+| History Guide | `history_guide` | World history | 1.144 (v4) | Candidate 100% tie/win vs v2 |
+| Chef Assistant | `chef_assistant` | Culinary arts | 1.075 (v4) | Candidate 100% tie/win vs v2 |
 
 Active focus is now the two simple NPC datasets above. Space Guide was removed from `subjects/`, `outputs/`, and `exports/` to keep the project focused.
 

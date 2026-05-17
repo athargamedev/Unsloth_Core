@@ -91,9 +91,8 @@ if not os.path.exists(DRIVE_REPO_DIR):
 os.chdir(DRIVE_REPO_DIR)
 subprocess.run(['git', 'pull'], check=False)
 
-# Setup Python env + deps (idempotent)
-subprocess.run(['python3', '-m', 'venv', 'unsloth_env'], check=False)
-subprocess.run(['bash', '-c', 'source unsloth_env/bin/activate && pip install --upgrade pip && pip install -r requirements.txt'], check=True)
+# Colab already has torch+CUDA pre-installed — install only missing deps
+subprocess.run(['pip', 'install', '-q', 'unsloth', 'bitsandbytes', 'trl', 'peft', 'accelerate', 'datasets', 'transformers'], check=True)
 print('Repo ready at:', os.getcwd())
 """
 
@@ -109,13 +108,13 @@ clean_jsonl = {ds_clean!r}
 # If dataset is planned remote or missing, generate in Colab.
 needs_generate = ({dataset_location!r} != 'local') or (not os.path.exists(train_jsonl))
 if needs_generate:
-    cmd = f"source unsloth_env/bin/activate && ./ucore generate subjects/{{spec}} --technique {{technique}}"
+    cmd = f"./ucore generate subjects/{{spec}} --technique {{technique}}"
     print('Running:', cmd)
     subprocess.run(['bash', '-c', cmd], check=True)
 else:
     print('Using existing dataset:', train_jsonl)
 
-sanitize_cmd = f"source unsloth_env/bin/activate && ./ucore sanitize {{train_jsonl}} --output {{clean_jsonl}} --strict-canonical"
+sanitize_cmd = f"./ucore sanitize {{train_jsonl}} --output {{clean_jsonl}} --strict-canonical"
 print('Running:', sanitize_cmd)
 subprocess.run(['bash', '-c', sanitize_cmd], check=True)
 """
@@ -126,7 +125,7 @@ import subprocess
 spec = {spec_name!r}
 preset = {preset!r}
 
-train_cmd = f"source unsloth_env/bin/activate && ./ucore train subjects/{{spec}} --from-spec --preset {{preset}}"
+train_cmd = f"./ucore train subjects/{{spec}} --from-spec --preset {{preset}}"
 print('Running:', train_cmd)
 subprocess.run(['bash', '-c', train_cmd], check=True)
 
