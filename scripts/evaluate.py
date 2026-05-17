@@ -1010,7 +1010,19 @@ def main():
 
     # Start baseline server
     print("\n[1/4] Starting baseline server...")
-    baseline_server = LlamaServer(baseline_gguf, port=args.port)
+    baseline_kwargs = dict(port=args.port)
+    if args.base_model:
+        base_model_path = Path(args.base_model)
+        if not base_model_path.exists():
+            print(f"Error: Base model not found: {args.base_model}")
+            sys.exit(1)
+        baseline_server = LlamaServer(
+            base_model_path, lora_path=baseline_gguf,
+            lora_weight=args.lora_weight, **baseline_kwargs
+        )
+        print(f"  (LoRA mode: base={base_model_path}, adapter={baseline_gguf})")
+    else:
+        baseline_server = LlamaServer(baseline_gguf, **baseline_kwargs)
     if not baseline_server.start():
         sys.exit(1)
 

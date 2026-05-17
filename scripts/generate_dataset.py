@@ -276,8 +276,14 @@ def _first_sentence(text, max_chars=220):
 
     # Strip "Repository path: ..." prefix added by onyx_index_repo.py
     cleaned = re.sub(r"\ARepository path: [\w./\-]+\.\w+\s*", "", cleaned).strip()
-    # Strip leading markdown headings (# ...)
-    cleaned = re.sub(r"^#+\s+", "", cleaned).strip()
+    # Strip ALL markdown heading levels
+    cleaned = re.sub(r"#+\s+[^#\n]*", "", cleaned).strip()
+    # Strip bold markers
+    cleaned = cleaned.replace("**", "")
+    # Strip leading bullet/list markers
+    cleaned = re.sub(r"^\s*[-\*]\s+", "", cleaned).strip()
+    # Collapse whitespace
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
 
     match = re.search(r"(.+?[.!?])(?:\s|$)", cleaned)
     sentence = match.group(1) if match else cleaned
@@ -592,30 +598,67 @@ def _fallback_onyx_example(spec, category, concept, retrieval_query, context_res
     source_sentence = _first_sentence(best.get("content", ""))
     npc_name = spec["npc_name"]
 
+    def _pick_variant(variants, seed_str):
+        """Deterministically pick from variants using a hash seed."""
+        idx = abs(hash(seed_str)) % len(variants)
+        return variants[idx]
+
     user_templates = {
-        "identity": f"Who are you, and what can you help me learn about {spec['subject']}?",
-        "teaching": f"Can you explain {concept} using what our notes say?",
-        "dialogue": f"I am confused about {concept}. Can you connect it to the source material?",
+        "identity": f"So who are you, and what can you tell me about {spec['subject']}?",
+        "teaching": f"Can you help me understand {concept}?",
+        "dialogue": f"I'm confused about {concept}. Can you walk me through it?",
         "quest": f"Give me a quick practice question about {concept}.",
         "refusal": "Can you help me with something unrelated to this subject?",
     }
 
     if best and source_sentence and len(source_sentence) > 30:
+        seed_key = f"{concept}:{category}"
+        teaching_variants = [
+            f"Great question about {concept}. Here's the thing: {source_sentence} That's what really matters here -- once you see that, everything else starts to click.",
+            f"Let me break {concept} down for you. {source_sentence} Keep that in mind as the foundation, and we can build from there.",
+            f"Happy to explain {concept}. {source_sentence} It's one of those concepts where the core idea is simple but leads to fascinating places.",
+        ]
+        dialogue_variants = [
+            f"I get why {concept} can be confusing. {source_sentence} When you think about it that way, the whole picture gets clearer.",
+            f"You're asking the right question about {concept}. {source_sentence} It's actually a really cool topic once you dig into the details.",
+            f"Great question about {concept}. {source_sentence} That's the key piece -- understanding this unlocks so much more.",
+        ]
+        identity_variants = [
+            f"I'm {npc_name}, your guide for {spec['subject'].lower()}. I'll help you understand the ideas clearly and connect the dots along the way.",
+            f"Call me {npc_name}. I help people explore {spec['subject'].lower()} -- breaking down the complex stuff into things that actually make sense.",
+        ]
+        quest_variants = [
+            f"Here's something to think about: how would you explain why {concept} matters to someone who has never heard of it? What's the one thing they absolutely need to know?",
+            f"Try this out: imagine you're teaching {concept} to a friend. What example would you use to make it click for them?",
+        ]
+        refusal_variants = [
+            f"That's outside my area -- I focus on {spec['subject'].lower()}. If you have a question about that, I'd love to help!",
+            f"I can't really help with that, sorry. My expertise is in {spec['subject'].lower()}. Got a question in that space?",
+        ]
         assistant_templates = {
-            "identity": f"I am {npc_name}, your guide for {spec['subject'].lower()}. I draw from our reference material to keep answers clear and grounded.",
-            "teaching": f"Based on our material: {source_sentence} Think of that as our starting point, then we can build from there.",
-            "dialogue": f"Our reference material puts it this way: {source_sentence} Let us use that as the clue and unpack it together.",
-            "quest": f"Try this quick challenge based on our reference material: how would you explain why {concept} matters?",
-            "refusal": f"I should stay focused on {spec['subject'].lower()}. If you have a question in that area, I would be happy to help using our reference notes.",
+            "identity": _pick_variant(identity_variants, f"{seed_key}:identity"),
+            "teaching": _pick_variant(teaching_variants, f"{seed_key}:teaching"),
+            "dialogue": _pick_variant(dialogue_variants, f"{seed_key}:dialogue"),
+            "quest": _pick_variant(quest_variants, f"{seed_key}:quest"),
+            "refusal": _pick_variant(refusal_variants, f"{seed_key}:refusal"),
         }
     else:
         # Fall back to natural template responses when Onyx content isn't useful
+        fallback_variants_teach = [
+            f"Great question about {concept}! Let me walk you through it. Every topic in {spec['subject'].lower()} has a story behind it -- once you see the story, the details make sense.",
+            f"Happy to explain {concept}. Think of it as a piece of a bigger puzzle -- once you understand this part, the rest starts to fall into place naturally.",
+        ]
+        fallback_variants_dialogue = [
+            f"I can see why {concept} might be confusing. Let's break it down step by step -- it's easier to grasp when you look at the pieces one at a time.",
+            f"You're asking about {concept}? That's a great place to start. Let me explain it in a way that makes the core ideas really clear.",
+        ]
+        fallback_seed = f"{concept}:{category}"
         assistant_templates = {
-            "identity": f"I am {npc_name}, your guide for {spec['subject'].lower()}. I am here to help make the concepts clear and approachable.",
-            "teaching": f"Great question about {concept}! Think of it this way: every complex topic in {spec['subject'].lower()} can be understood by breaking it into smaller pieces. Let me help you do that.",
-            "dialogue": f"I am glad you asked about {concept}. This is one of those topics where understanding the basics really helps everything else fall into place.",
-            "quest": f"Here is a question to test your understanding: how would you explain {concept} to someone who is just starting to learn about it?",
-            "refusal": f"I should stay focused on {spec['subject'].lower()}. That is where I can be most helpful to you!",
+            "identity": f"I'm {npc_name}. I help people understand {spec['subject'].lower()} -- I'll explain things clearly and connect the dots for you.",
+            "teaching": _pick_variant(fallback_variants_teach, f"{fallback_seed}:teaching"),
+            "dialogue": _pick_variant(fallback_variants_dialogue, f"{fallback_seed}:dialogue"),
+            "quest": f"Here's something to think about: how would you explain {concept} to someone who knows nothing about it?",
+            "refusal": f"That's outside what I cover -- I focus on {spec['subject'].lower()}. If you have a question in that area, I'm happy to help!",
         }
 
     return {
