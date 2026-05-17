@@ -2,6 +2,52 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_76101",
+      "name": "External Process (76101)",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T13:28:37.451Z",
+      "startedAt": "2026-05-17T13:28:37.451Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore plan-batch --generate-colab-notebooks --colab-output-dir colab/outputs"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 76101] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 76101] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore plan-batch --generate-colab-notebooks --colab-output-dir colab/outputs"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T13:28:39.180Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_52417",
       "name": "External Process (52417) chef_assistant",
       "type": "Pipeline",
@@ -34889,70 +34935,7 @@
     }
   ],
   "logs": [
-    "[2026-05-17T12:57:09.319Z] [SYNC] discovered running external process pid=52417",
-    "[2026-05-17T12:56:53.322Z] [SYNC] discovered running external process pid=52204",
-    "[2026-05-17T12:21:03.319Z] [SYNC] discovered running external process pid=27387",
-    "[2026-05-17T11:54:35.122Z] [SYNC] discovered running external process pid=7879",
-    "[2026-05-17T11:53:32.115Z] [SYNC] discovered running external process pid=6593",
-    "[2026-05-17T11:50:59.046Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_008",
-    "[2026-05-17T10:23:24.752Z] [SYNC] discovered running external process pid=4135651",
-    "[2026-05-17T10:20:27.596Z] [SYNC] discovered running external process pid=4132085",
-    "[2026-05-17T10:20:27.552Z] [SYNC] imported external job ext_train_history_guide_20260517_default_003",
-    "[2026-05-17T10:07:33.058Z] [SYNC] discovered running external process pid=3956892",
-    "[2026-05-17T10:07:31.015Z] [SYNC] discovered running external process pid=3956848",
-    "[2026-05-17T10:07:12.008Z] [SYNC] discovered running external process pid=3956567",
-    "[2026-05-17T10:04:29.829Z] [SYNC] discovered running external process pid=3953991",
-    "[2026-05-17T10:04:29.792Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_007",
-    "[2026-05-17T09:50:03.084Z] [SYNC] discovered running external process pid=3760715",
-    "[2026-05-17T09:49:48.775Z] [SYNC] discovered running external process pid=3760589",
-    "[2026-05-17T09:44:47.031Z] [SYNC] discovered running external process pid=3754747",
-    "[2026-05-17T09:41:43.939Z] [SYNC] discovered running external process pid=3751164",
-    "[2026-05-17T09:39:16.773Z] [SYNC] discovered running external process pid=3748582",
-    "[2026-05-17T09:39:16.731Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_006",
-    "[2026-05-17T09:38:11.316Z] [SYNC] discovered running external process pid=3747153",
-    "[2026-05-17T09:38:11.274Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_005",
-    "[2026-05-17T09:36:17.236Z] [SYNC] discovered running external process pid=3744790",
-    "[2026-05-17T09:36:17.039Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_004",
-    "[2026-05-17T09:23:50.573Z] [SYNC] discovered running external process pid=3558606",
-    "[2026-05-17T09:23:47.569Z] [SYNC] discovered running external process pid=3558590",
-    "[2026-05-17T09:23:07.489Z] [SYNC] discovered running external process pid=3557814",
-    "[2026-05-17T09:23:01.572Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_003",
-    "[2026-05-17T09:23:01.266Z] [SYNC] imported external job ext_dataset_chef_assistant_ollama",
-    "[2026-05-17T09:03:41.882Z] [SYNC] discovered running external process pid=3258512",
-    "[2026-05-17T09:03:41.882Z] [SYNC] discovered running external process pid=3258495",
-    "[2026-05-17T08:58:18.848Z] [SYNC] discovered running external process pid=3186776",
-    "[2026-05-17T08:58:17.330Z] [SYNC] discovered running external process pid=3186734",
-    "[2026-05-17T08:48:27.381Z] [SYNC] discovered running external process pid=3177489",
-    "[2026-05-17T08:45:57.029Z] [SYNC] discovered running external process pid=3174816",
-    "[2026-05-17T08:45:48.767Z] [SYNC] discovered running external process pid=3174685",
-    "[2026-05-17T08:43:30.769Z] [SYNC] discovered running external process pid=3171952",
-    "[2026-05-17T08:43:30.733Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_002",
-    "[2026-05-17T08:43:18.772Z] [SYNC] discovered running external process pid=3171764",
-    "[2026-05-17T08:43:16.720Z] [SYNC] discovered running external process pid=3171704",
-    "[2026-05-17T08:43:06.658Z] [SYNC] imported external job ext_export_chef_assistant_chef_assistant_v2-lora-f16.gguf",
-    "[2026-05-17T08:43:01.687Z] [SYNC] discovered running external process pid=3171353",
-    "[2026-05-17T08:40:53.588Z] [SYNC] discovered running external process pid=3168980",
-    "[2026-05-17T08:40:24.642Z] [SYNC] discovered running external process pid=3168426",
-    "[2026-05-17T08:38:37.472Z] [SYNC] discovered running external process pid=3166290",
-    "[2026-05-17T08:38:37.439Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_001",
-    "[2026-05-17T08:38:30.538Z] [SYNC] discovered running external process pid=3166170",
-    "[2026-05-17T08:38:21.459Z] [SYNC] discovered running external process pid=3165985",
-    "[2026-05-17T08:37:51.532Z] [SYNC] discovered running external process pid=3165393",
-    "[2026-05-17T08:37:42.507Z] [SYNC] imported external job ext_export_history_guide_history_guide_v2-lora-f16.gguf",
-    "[2026-05-17T08:37:39.362Z] [SYNC] discovered running external process pid=3165189",
-    "[2026-05-17T08:34:12.513Z] [SYNC] discovered running external process pid=3161946",
-    "[2026-05-17T08:34:05.326Z] [SYNC] discovered running external process pid=3161783",
-    "[2026-05-17T08:31:27.225Z] [SYNC] discovered running external process pid=3158805",
-    "[2026-05-17T08:31:27.187Z] [SYNC] imported external job ext_train_history_guide_20260517_default_002",
-    "[2026-05-17T08:31:12.224Z] [SYNC] discovered running external process pid=3158604",
-    "[2026-05-17T08:31:10.358Z] [SYNC] discovered running external process pid=3158586",
-    "[2026-05-17T08:29:26.302Z] [SYNC] discovered running external process pid=3156926",
-    "[2026-05-17T08:13:27.152Z] [SYNC] discovered running external process pid=3133247",
-    "[2026-05-17T08:10:55.620Z] [SYNC] discovered running external process pid=3129860",
-    "[2026-05-17T08:10:54.185Z] [SYNC] imported external job ext_train_history_guide_20260517_default_001",
-    "[2026-05-17T08:10:10.210Z] [SYNC] discovered running external process pid=3129135",
-    "[2026-05-17T06:50:49.994Z] [SYNC] discovered running external process pid=3006946",
-    "[2026-05-17T06:50:28.202Z] [SYNC] discovered running external process pid=3005770"
+    "[2026-05-17T13:28:37.476Z] [SYNC] discovered running external process pid=76101"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

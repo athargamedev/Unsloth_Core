@@ -2,8 +2,8 @@
 # Fine-tunes the highly intelligent Llama 3.1 8B Instruct base model.
 model: "unsloth/meta-llama-3.1-8B-Instruct-bnb-4bit"
 training:
-  batch_size: 4
-  gradient_accumulation_steps: 4
+  batch_size: 1
+  gradient_accumulation_steps: 16
   learning_rate: 2e-4
   warmup_steps: 20
 lora:
