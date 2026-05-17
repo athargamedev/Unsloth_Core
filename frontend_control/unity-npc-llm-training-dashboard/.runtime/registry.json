@@ -2,12 +2,106 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_3744790",
+      "name": "External Process (3744790) chef_assistant",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T09:36:17.210Z",
+      "startedAt": "2026-05-17T09:36:17.210Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py /home/athar/Projects/Unsloth_Core/subjects/chef_assistant.json --from-spec --technique onyx --preset fast-3b --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3744790] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3744790] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py /home/athar/Projects/Unsloth_Core/subjects/chef_assistant.json --from-spec --technique onyx --preset fast-3b --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T09:37:28.043Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chef_assistant_20260517_default_004",
+      "name": "External Train (chef_assistant/20260517_default_004)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T09:36:15.157Z",
+      "startedAt": "2026-05-17T09:36:15.157Z",
+      "finishedAt": "2026-05-17T09:36:15.157Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260517_default_004/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_proc_3558606",
       "name": "External Process (3558606) chef_assistant",
       "type": "Dataset",
       "commandId": "dataset-generate",
       "npcKey": "chef_assistant",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-17T09:23:50.541Z",
@@ -19,8 +113,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3558606] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -42,14 +138,16 @@
         "[EXTERNAL][PID 3558606] discovered active process",
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset.py /home/athar/Projects/Unsloth_Core/subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --onyx-use-llm --model llama3.1:latest --concept-focus dialogue --concept-focus identity --concept-focus teaching"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T09:36:17.210Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_3558590",
       "name": "External Process (3558590)",
       "type": "Pipeline",
       "commandId": "pipeline",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-17T09:23:47.540Z",
@@ -61,8 +159,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3558590] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -84,7 +184,9 @@
         "[EXTERNAL][PID 3558590] discovered active process",
         "python3 ./ucore feedback eval/results/feedback/ca_v3_feedback.json --auto --auto-retrain --train-preset fast-3b --baseline exports/chef_assistant/chef_assistant_v2-lora-f16.gguf"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T09:37:28.043Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_3557814",
@@ -33761,6 +33863,8 @@
     }
   ],
   "logs": [
+    "[2026-05-17T09:36:17.236Z] [SYNC] discovered running external process pid=3744790",
+    "[2026-05-17T09:36:17.039Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_004",
     "[2026-05-17T09:23:50.573Z] [SYNC] discovered running external process pid=3558606",
     "[2026-05-17T09:23:47.569Z] [SYNC] discovered running external process pid=3558590",
     "[2026-05-17T09:23:07.489Z] [SYNC] discovered running external process pid=3557814",

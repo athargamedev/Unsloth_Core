@@ -167,14 +167,14 @@ def recommend(spec: dict[str, Any], preset: str | None, local_vram_gb: float | N
     margin = float(policy.get("safety", {}).get("training_vram_safety_margin", 1.25))
     required = round(est_vram * margin, 1)
 
-    training_location = "safe-any_or_remote_gpu"
+    training_location = "remote_colab"
     training_reason = f"No local VRAM detected; required ~{required}GB with safety margin"
     if local_vram_gb is not None:
         if local_vram_gb >= required:
             training_location = "local"
             training_reason = f"Local VRAM {local_vram_gb}GB >= required {required}GB"
         else:
-            training_location = "safe-any_or_remote_gpu"
+            training_location = "remote_colab"
             training_reason = f"Local VRAM {local_vram_gb}GB < required {required}GB"
 
     return {
