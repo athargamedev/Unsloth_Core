@@ -40,7 +40,6 @@ def build_notebook(
     technique: str,
     dataset_location: str,
     drive_repo_dir: str,
-    drive_datasets_dir: str,
     plan_payload: dict[str, Any],
 ) -> dict[str, Any]:
     ds_train = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
@@ -67,7 +66,6 @@ import os
 import subprocess
 
 DRIVE_REPO_DIR = {drive_repo_dir!r}
-DRIVE_DATASETS_DIR = {drive_datasets_dir!r}
 
 # Mount Drive
 drive.mount('/content/drive')
@@ -82,7 +80,7 @@ subprocess.run(['git', 'pull'], check=False)
 
 # Setup Python env + deps (idempotent)
 subprocess.run(['python3', '-m', 'venv', 'unsloth_env'], check=False)
-subprocess.run(['bash', '-lc', 'source unsloth_env/bin/activate && pip install --upgrade pip && pip install -r requirements.txt'], check=True)
+subprocess.run(['bash', '-c', 'source unsloth_env/bin/activate && pip install --upgrade pip && pip install -r requirements.txt'], check=True)
 print('Repo ready at:', os.getcwd())
 """
 
@@ -100,13 +98,13 @@ needs_generate = ({dataset_location!r} != 'local') or (not os.path.exists(train_
 if needs_generate:
     cmd = f"source unsloth_env/bin/activate && ./ucore generate subjects/{{spec}} --technique {{technique}}"
     print('Running:', cmd)
-    subprocess.run(['bash', '-lc', cmd], check=True)
+    subprocess.run(['bash', '-c', cmd], check=True)
 else:
     print('Using existing dataset:', train_jsonl)
 
 sanitize_cmd = f"source unsloth_env/bin/activate && ./ucore sanitize {{train_jsonl}} --output {{clean_jsonl}} --strict-canonical"
 print('Running:', sanitize_cmd)
-subprocess.run(['bash', '-lc', sanitize_cmd], check=True)
+subprocess.run(['bash', '-c', sanitize_cmd], check=True)
 """
 
     train_code = f"""
@@ -117,13 +115,14 @@ preset = {preset!r}
 
 train_cmd = f"source unsloth_env/bin/activate && ./ucore train subjects/{{spec}} --from-spec --preset {{preset}}"
 print('Running:', train_cmd)
-subprocess.run(['bash', '-lc', train_cmd], check=True)
+subprocess.run(['bash', '-c', train_cmd], check=True)
 
 print('Training complete. Optional next steps: ./ucore export <npc_key> and ./ucore smoke <gguf> --spec subjects/<spec>.json')
 """
 
     plan_json = json.dumps(plan_payload, indent=2)
     plan_cell = f"""
+import json
 # Planner payload for traceability
 PLAN = {plan_json}
 print(json.dumps(PLAN, indent=2))

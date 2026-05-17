@@ -4,7 +4,7 @@ plan_execution.py
 
 Compute a deterministic recommendation for where to run:
 - dataset generation: local vs remote
-High-level training plan for local or remote GPU (colab, etc.)
+- training: local vs remote_colab
 
 Usage:
   python scripts/plan_execution.py --spec subjects/chemistry_instructor.json --preset fast-3b --json

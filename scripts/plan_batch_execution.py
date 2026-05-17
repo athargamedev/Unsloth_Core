@@ -78,7 +78,6 @@ def generate_colab_notebooks(
     *,
     output_dir: Path,
     drive_repo_dir: str,
-    drive_datasets_dir: str,
 ) -> list[str]:
     written: list[str] = []
 
@@ -96,12 +95,11 @@ def generate_colab_notebooks(
             technique=technique,
             dataset_location=dataset_location,
             drive_repo_dir=drive_repo_dir,
-            drive_datasets_dir=drive_datasets_dir,
             plan_payload=entry,
         )
         out = output_dir / f"{npc_key}__{preset}__remote_colab.ipynb"
         write_notebook(notebook, out)
-        written.append(str(out))
+        written.append(str(out.relative_to(PROJECT_ROOT)))
 
     return written
 
@@ -117,7 +115,7 @@ def main() -> int:
     ap.add_argument("--generate-colab-notebooks", action="store_true", help="Generate notebooks for remote_colab queue")
     ap.add_argument("--colab-output-dir", default="colab/outputs", help="Notebook output dir")
     ap.add_argument("--drive-repo-dir", default="/content/drive/MyDrive/Unsloth_Core", help="Colab Drive repo dir")
-    ap.add_argument("--drive-datasets-dir", default="/content/drive/MyDrive/Unsloth/datasets", help="Colab Drive datasets dir")
+    # note: --drive-datasets-dir removed as DRIVE_DATASETS_DIR was unused
     args = ap.parse_args()
 
     specs = _resolve_specs(args.spec_glob, args.specs)
@@ -140,7 +138,6 @@ def main() -> int:
             batch_plan,
             output_dir=output_dir,
             drive_repo_dir=args.drive_repo_dir,
-            drive_datasets_dir=args.drive_datasets_dir,
         )
         batch_plan["generated_colab_notebooks"] = notebook_paths
 

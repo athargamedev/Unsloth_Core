@@ -70,7 +70,7 @@ After training:
 ## Notes
 - Colab runtime disconnects after ~12 hours of inactivity
 - Keep the browser tab active during training
-- If runtime disconnects: Runtime → Restart runtime (the reconnect option appears in the disconnected banner at the top)
+- If runtime disconnects: click the "Connect" button in the yellow disconnected banner at the top of the notebook
 - Each training run takes ~20-40 minutes on T4 GPU
 - W&B tracking works automatically (`wandb.init()` in training script)
 - Download GGUF before closing the notebook

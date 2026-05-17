@@ -77,7 +77,7 @@
     }
   ],
   "generated_colab_notebooks": [
-    "/home/athar/Projects/Unsloth_Core/colab/outputs/chef_assistant__fast-3b__remote_colab.ipynb",
-    "/home/athar/Projects/Unsloth_Core/colab/outputs/history_guide__fast-3b__remote_colab.ipynb"
+    "colab/outputs/chef_assistant__fast-3b__remote_colab.ipynb",
+    "colab/outputs/history_guide__fast-3b__remote_colab.ipynb"
   ]
 }
