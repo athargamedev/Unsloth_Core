@@ -46,6 +46,21 @@ def build_notebook(
     ds_train = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
     ds_clean = f"subjects/datasets/{npc_key}/{technique}/train_clean.jsonl"
     spec_name = Path(spec_relpath).name
+    project_root = Path(__file__).resolve().parent.parent
+
+    # Read local preset content
+    preset_yaml_content = ""
+    preset_path = project_root / "configs" / "presets" / f"{preset}.yaml"
+    if preset_path.exists():
+        with open(preset_path, "r", encoding="utf-8") as f:
+            preset_yaml_content = f.read()
+
+    # Read local subject spec content
+    spec_json_content = ""
+    local_spec_path = project_root / spec_relpath
+    if local_spec_path.exists():
+        with open(local_spec_path, "r", encoding="utf-8") as f:
+            spec_json_content = f.read()
 
     # Auto-detect repo URL from local git remote if not provided
     if repo_url is None:
@@ -141,6 +156,24 @@ else:
         sys.exit(1)
 
 print('Current working directory:', os.getcwd())
+
+# Ensure preset and spec files are perfectly synchronized
+preset_name = {preset!r}
+preset_content = {preset_yaml_content!r}
+if preset_content:
+    presets_dir = Path("configs") / "presets"
+    presets_dir.mkdir(parents=True, exist_ok=True)
+    preset_file = presets_dir / f"{{preset_name}}.yaml"
+    preset_file.write_text(preset_content)
+    print(f"Synchronized preset config file: {{preset_file}}")
+
+spec_relpath = {spec_relpath!r}
+spec_content = {spec_json_content!r}
+if spec_content:
+    spec_file = Path(spec_relpath)
+    spec_file.parent.mkdir(parents=True, exist_ok=True)
+    spec_file.write_text(spec_content)
+    print(f"Synchronized subject spec file: {{spec_file}}")
 """
 
     dataset_code = f"""

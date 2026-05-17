@@ -2,6 +2,100 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_52417",
+      "name": "External Process (52417) chef_assistant",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T12:57:09.294Z",
+      "startedAt": "2026-05-17T12:57:09.294Z",
+      "command": [
+        "external",
+        "bash -c ./ucore plan-batch --spec subjects/chef_assistant.json --presets premium-3b,premium-8b --generate-colab-notebooks --local-vram-gb 4.0 && ./ucore plan-batch --spec subjects/history_guide.json --presets premium-3b,premium-8b --generate-colab-notebooks --local-vram-gb 4.0"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 52417] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 52417] discovered active process",
+        "bash -c ./ucore plan-batch --spec subjects/chef_assistant.json --presets premium-3b,premium-8b --generate-colab-notebooks --local-vram-gb 4.0 && ./ucore plan-batch --spec subjects/history_guide.json --presets premium-3b,premium-8b --generate-colab-notebooks --local-vram-gb 4.0"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T12:57:11.297Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_52204",
+      "name": "External Process (52204) chef_assistant",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T12:56:53.293Z",
+      "startedAt": "2026-05-17T12:56:53.293Z",
+      "command": [
+        "external",
+        "bash -c ./ucore plan-batch --spec subjects/chef_assistant.json --presets premium-3b,premium-8b --generate-colab-notebooks --local-vram-gb 4.0 && ./ucore plan-batch --spec subjects/history_guide.json --presets premium-3b,premium-8b --generate-colab-notebooks --local-vram-gb 4.0"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 52204] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 52204] discovered active process",
+        "bash -c ./ucore plan-batch --spec subjects/chef_assistant.json --presets premium-3b,premium-8b --generate-colab-notebooks --local-vram-gb 4.0 && ./ucore plan-batch --spec subjects/history_guide.json --presets premium-3b,premium-8b --generate-colab-notebooks --local-vram-gb 4.0"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T12:56:53.392Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_27387",
       "name": "External Process (27387)",
       "type": "Pipeline",
@@ -34795,6 +34889,8 @@
     }
   ],
   "logs": [
+    "[2026-05-17T12:57:09.319Z] [SYNC] discovered running external process pid=52417",
+    "[2026-05-17T12:56:53.322Z] [SYNC] discovered running external process pid=52204",
     "[2026-05-17T12:21:03.319Z] [SYNC] discovered running external process pid=27387",
     "[2026-05-17T11:54:35.122Z] [SYNC] discovered running external process pid=7879",
     "[2026-05-17T11:53:32.115Z] [SYNC] discovered running external process pid=6593",
