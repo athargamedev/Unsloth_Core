@@ -234,7 +234,6 @@ def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_pat
         "--onyx-queries", "3",
         "--onyx-allow-partial",
         "--onyx-use-llm",
-        "--ollama",
         "--model", "llama3.1:latest",
     ]
     for cat in sorted(focus_categories):
