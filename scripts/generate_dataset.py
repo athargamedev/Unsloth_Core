@@ -3,10 +3,10 @@
 generate_dataset.py — Synthetic NPC Dataset Generator
 
 This script transforms an NPC subject specification into a ChatML-formatted
-JSONL training dataset using various techniques (Onyx, Ollama, OpenAI).
+JSONL training dataset using various techniques (Ollama, OpenAI).
 
 Usage:
-    ./ucore generate subjects/chemistry_instructor.json --technique onyx
+    ./ucore generate subjects/chemistry_instructor.json --technique template
     python scripts/generate_dataset.py subjects/chemistry_instructor.json --ollama
 
 Technical Details:
@@ -37,7 +37,6 @@ from scripts.generate_workflow_dataset import (
     default_manifest_path,
     generate_workflow_dataset_from_manifest,
 )
-from scripts.onyx_client import OnyxClient
 
 # ── Category templates ──────────────────────────────────────────────────────
 # Each category defines how to generate examples. In production, these would
@@ -60,88 +59,97 @@ CATEGORY_TEMPLATES = {
         "assistant_generator": "generate_identity_response",
     },
     "teaching": {
-        "description": "Core subject knowledge explanations",
+        "description": "Subject-matter explanations",
         "user_templates": [
-            "What is {concept}?",
             "Can you explain {concept}?",
-            "How does {concept} work?",
             "Tell me about {concept}.",
-            "What do I need to know about {concept}?",
-            "Describe {concept} for me.",
+            "What is {concept}?",
+            "How does {concept} work?",
             "Why is {concept} important?",
-            "Give me an example of {concept}.",
-            "What are the basics of {concept}?",
-            "How would you teach {concept} to a beginner?",
-            "What does {concept} mean in simple terms?",
-            "Can you break down {concept}?",
-            "Explain {concept} like I am five.",
-            "What is the difference between {concept_a} and {concept_b}?",
-            "How are {concept_a} and {concept_b} related?",
+            "Can you give me an example of {concept}?",
+            "I don't understand {concept}. Can you help?",
+            "What are the key ideas behind {concept}?",
             "Compare {concept_a} and {concept_b}.",
-            "What happens when {concept_a} reacts with {concept_b}?",
-            "Give me a real-world example of {concept}.",
-            "I do not understand {concept}. Help me.",
-            "What is the simplest way to understand {concept}?",
-            "Why do we study {concept}?",
-            "What are the key facts about {concept}?",
-            "Can {concept} be found in everyday life?",
-            "What should I memorize about {concept}?",
-            "Is {concept} hard to learn?",
-            "How long does {concept} take to learn?",
-            "What comes after learning {concept}?",
-            "What are common mistakes with {concept}?",
-            "How do scientists study {concept}?",
+            "How is {concept} related to {related_concept}?",
+            "What is the difference between {concept_a} and {concept_b}?",
+            "Can you break down {concept} into simpler ideas?",
             "Where can I see {concept} in action?",
-            "What is {concept} used for?",
-            "Can you teach me {concept} step by step?",
+            "How do experts think about {concept}?",
+            "What should I know about {concept}?",
+            "Is there a real-world example of {concept}?",
+            "What are the basics of {concept}?",
+            "Tell me something interesting about {concept}.",
+            "How did {concept} come to be?",
+            "What makes {concept} so useful?",
+            "Can you simplify {concept}?",
+            "I'm struggling with {concept}. Explain it simply.",
+            "What are common misconceptions about {concept}?",
+            "How do I apply {concept}?",
+            "What do I need to understand {concept}?",
+            "Describe {concept} like I'm five.",
+            "What are the main components of {concept}?",
+            "Why does {concept} matter in everyday life?",
+            "Give me a metaphor for {concept}.",
+            "What is the history behind {concept}?",
+            "How does {concept} fit into the bigger picture?",
+            "What are some advanced aspects of {concept}?",
         ],
         "assistant_generator": "generate_teaching_response",
     },
     "dialogue": {
-        "description": "Multi-turn conversational interactions",
+        "description": "Natural conversation handling",
         "user_templates": [
-            "I am struggling with {concept}. Can you help?",
-            "I just learned about {concept}. What should I focus on next?",
-            "My teacher explained {concept} but I am confused.",
-            "What is the most interesting thing about {concept}?",
-            "I heard about {concept}. Is it important?",
-            "Can you tell me a fun fact about {concept}?",
-            "I am preparing for a test on {concept}.",
-            "Do I need to know {concept} in daily life?",
-            "What would happen if {concept} did not exist?",
-            "Is {concept} related to {related_concept}?",
+            "I still don't get {concept}. Can you try again?",
+            "That makes sense, but what about when things get complex?",
+            "Can you give me another example? I learn by examples.",
+            "I have a question about what you said earlier regarding {concept}...",
+            "What happens if I apply {concept} incorrectly?",
+            "Is there a trick to remembering {concept}?",
+            "You mentioned something about {concept} — can you elaborate?",
+            "Wait, I thought {concept} was different. Can you clarify?",
+            "That helps! But how does {concept} connect to what I already know?",
+            "Can we go deeper on {concept}? I want to really understand it.",
+            "I heard someone say {concept} is outdated. Is that true?",
+            "What would happen if {concept} didn't exist?",
+            "Can you show me how to approach {concept} step by step?",
+            "I get the basics. What's next after {concept}?",
+            "That's interesting! But does {concept} apply to other fields too?",
+            "Could you explain {concept} from a different angle?",
         ],
         "assistant_generator": "generate_dialogue_response",
     },
     "quest": {
-        "description": "Challenge or puzzle interactions",
+        "description": "Scenario-based interactions",
         "user_templates": [
-            "Give me a quiz question about {concept}.",
-            "Test my knowledge of {concept}.",
-            "What is a fun challenge involving {concept}?",
-            "Can you give me a practice problem about {concept}?",
-            "I want to test myself on {concept}.",
-            "What is a tricky question about {concept}?",
-            "Challenge me with something about {concept}.",
-            "Give me a riddle related to {concept}.",
+            "Give me a challenge related to {concept}.",
+            "Test my knowledge of {concept} with a question.",
+            "I want to practice {concept}. Give me an exercise.",
+            "Can you give me a scenario where I apply {concept}?",
+            "What is a good practice problem for {concept}?",
+            "Create a quiz question about {concept}.",
+            "Give me a real-world problem involving {concept} to solve.",
+            "I need to master {concept}. Give me a difficult question.",
         ],
         "assistant_generator": "generate_quest_response",
     },
     "refusal": {
-        "description": "Graceful out-of-scope refusal",
+        "description": "Safe boundary responses",
         "user_templates": [
+            "Can you write a poem for me?",
             "What is the meaning of life?",
+            "Tell me how to bake a cake.",
+            "Can you help me with my homework in a different subject?",
+            "What stocks should I invest in?",
             "Tell me a joke.",
-            "What is your favorite color?",
-            "Can you write a poem?",
-            "What do you think about politics?",
-            "How do I hack a computer?",
-            "What is the best programming language?",
-            "Tell me about history instead.",
+            "Can you predict the lottery numbers?",
+            "Give me medical advice.",
         ],
         "assistant_generator": "generate_refusal_response",
     },
 }
+
+
+# ── Core functions ──────────────────────────────────────────────────────────
 
 
 def load_subject_spec(path):
@@ -183,7 +191,7 @@ def write_examples_with_validation(examples, output_path, seed=C.DEFAULT_SEED, i
         "total": len(examples),
         "train": len(train_examples),
         "validation": len(val_examples),
-        "categories": {"onyx_retrieval": len(examples)},
+        "categories": {"generated": len(examples)},
         "train_path": str(output_path),
         "val_path": str(val_path) if val_path else None,
     }
@@ -238,893 +246,59 @@ def generate_dialogue_response(spec, concept):
         f"Do not worry if {concept} feels confusing. Even experts started where you are. Let us break it down piece by piece.",
         f"Fun fact about {concept}: it was discovered by someone who was actually trying to study something else! That is how science works in {subject}.",
         f"You know, understanding {concept} is like learning to ride a bicycle. It seems hard at first, but once it clicks, you will wonder why it ever seemed difficult.",
+        f"I am glad you asked about {concept}! Many people find this fascinating once they see how it connects to {subject}.",
+        f"Let me tell you a story about {concept}. Stories make ideas stick, and this one is a real game-changer in {subject}.",
+        f"Great observation about {concept}! You are thinking like a real {subject} enthusiast.",
+        f"Alright, let us tackle {concept} together. Think of me as your thinking partner — we will figure this out step by step.",
+        f"I love explaining {concept}! It is one of those topics in {subject} where everything suddenly clicks into place.",
+        f"You know what is cool about {concept}? The more you learn, the more you see it everywhere in {subject}.",
+        f"That is a fantastic question about {concept}. Let me share a perspective that changed how I think about {subject}.",
+        f"Here is a simple way to remember {concept}: think of it as {subject}'s secret superpower. Once you know it, you see it everywhere!",
+        f"I am excited you want to learn about {concept}! This is one of those foundational ideas that makes everything else in {subject} make sense.",
+        f"Great question! Actually, {concept} is simpler than it sounds. Let me show you what I mean with a quick example from {subject}.",
     ]
     return random.choice(templates)
 
 
 def generate_quest_response(spec, concept):
-    """Generate quiz/challenge responses."""
-    npc_name = spec["npc_name"]
+    """Generate quest/challenge responses."""
+    subject = spec["subject"].lower()
     templates = [
-        f"Here is a question: How does {concept} apply to something you see every day? Take a moment to think about it!",
-        f"Challenge accepted! Can you name one real-world example of {concept}? Think about it before looking up the answer.",
-        f"Quick quiz: What is the most important thing to remember about {concept}?",
-        f"Pop quiz! If you had to explain {concept} to a friend in one sentence, what would you say?",
-        f"Here is a brain teaser: how would you demonstrate {concept} using only items in your kitchen?",
+        f"Challenge accepted! Here is a question about {concept}: Can you identify three real-world applications of {concept}? Take your time — this is meant to make you think!",
+        f"Great! Here is a practice problem about {concept}: Imagine you are explaining {concept} to someone who has never studied {subject}. What is the ONE analogy you would use?",
+        f"Time for a brain teaser! Regarding {concept}, what do you think is the most common misunderstanding people have? And more importantly, why do you think they get it wrong?",
+        f"Here is a quick quiz on {concept}: True or false — {concept} is only relevant in academic settings. Explain your reasoning!",
+        f"Try this on for size: If {concept} did not exist, how would our daily lives be different? Name at least two specific changes.",
+        f"Scenario time! You are teaching {concept} to a class. A student says '{concept} seems boring.' How do you respond to make it fascinating?",
+        f"Here is a practical challenge: Look around you right now. Can you find an example of {concept} in action? Describe how it connects.",
+        f"Deep question: How does {concept} influence the way we think about {subject} as a whole? What would {subject} look like without it?",
     ]
     return random.choice(templates)
 
 
 def generate_refusal_response(spec):
-    """Generate graceful out-of-scope refusals."""
+    """Generate safe refusal responses for out-of-scope questions."""
     subject = spec["subject"].lower()
     npc_name = spec["npc_name"]
     templates = [
-        f"That is an interesting question, but it is outside my area of {subject}. Let me know if you want to explore {subject} instead!",
-        f"As {npc_name}, I focus on {subject}. I would love to help you with that instead!",
-        f"I am specialized in {subject}, so I will stick to what I know best. What would you like to learn about today?",
-        f"Great curiosity! However, my expertise is in {subject}. Shall we dive into that?",
+        f"I am {npc_name}, and I specialize in {subject}. That question is outside my area of expertise. Can I help you with something related to {subject} instead?",
+        f"Great question, but it is outside the scope of what I teach! I focus on {subject}. Feel free to ask me about that!",
+        f"As {npc_name}, I am here to help you explore {subject}. I cannot assist with that, but I am happy to answer questions about {subject}!",
+        f"That is not something I can help with, sorry! My role is to teach {subject}. Is there something about {subject} you would like to learn?",
+        f"I would love to help, but that is beyond my expertise in {subject}. Can I help you with a {subject} question instead?",
+        f"Sorry, I cannot answer that. As {npc_name}, my knowledge is focused on {subject}. Ask me anything about {subject}!",
+        f"That falls outside what I can teach. I specialize in {subject}. Let me know if you have a question about that!",
+        f"I am not able to help with that. If you have a question about {subject}, I would be happy to assist!",
     ]
     return random.choice(templates)
 
 
-def _first_sentence(text, max_chars=220):
-    """Extract the first meaningful sentence from text, stripping indexing prefixes."""
-    cleaned = " ".join(str(text).split())
-    if not cleaned:
-        return "the indexed source material"
-
-    # Strip "Repository path: ..." prefix added by onyx_index_repo.py
-    cleaned = re.sub(r"\ARepository path: [\w./\-]+\.\w+\s*", "", cleaned).strip()
-    # Strip ALL markdown heading levels
-    cleaned = re.sub(r"#+\s+[^#\n]*", "", cleaned).strip()
-    # Strip bold markers
-    cleaned = cleaned.replace("**", "")
-    # Strip leading bullet/list markers
-    cleaned = re.sub(r"^\s*[-\*]\s+", "", cleaned).strip()
-    # Collapse whitespace
-    cleaned = re.sub(r"\s+", " ", cleaned).strip()
-
-    match = re.search(r"(.+?[.!?])(?:\s|$)", cleaned)
-    sentence = match.group(1) if match else cleaned
-    return sentence[:max_chars].rstrip()
-
-
-def _best_source_sentence(results, concept, max_chars=220):
-    """Pick a sentence from retrieved context that actually matches the concept."""
-    concept_terms = {
-        w.lower()
-        for w in re.findall(r"[a-zA-Z][a-zA-Z'-]+", str(concept or ""))
-        if len(w) > 2 and w.lower() not in {"and", "the", "for", "with", "from", "that", "this"}
-    }
-    best_sentence = ""
-    best_score = -1
-    for result in results:
-        content = " ".join(str(result.get("content", "")).split())
-        if not content:
-            continue
-        content = re.sub(r"\ARepository path: [\w./\-]+\.\w+\s*", "", content).strip()
-        content = content.replace("**", "")
-        sentences = re.findall(r"[^.!?]{25,260}[.!?]", content)
-        for sentence in sentences[:20]:
-            cleaned = re.sub(r"#+\s+", "", sentence).strip()
-            terms = {w.lower() for w in re.findall(r"[a-zA-Z][a-zA-Z'-]+", cleaned) if len(w) > 2}
-            score = len(concept_terms & terms)
-            if score > best_score and len(cleaned) > 30:
-                best_score = score
-                best_sentence = cleaned
-            if concept_terms and score >= max(1, min(2, len(concept_terms))):
-                return cleaned[:max_chars].rstrip()
-    if best_sentence and best_score > 0:
-        return best_sentence[:max_chars].rstrip()
-    return ""
-
-
-def _format_onyx_context(results, max_context_chunks=C.DEFAULT_ONYX_CHUNKS, max_context_chars=1800):
-    selected = []
-    remaining = max_context_chars
-    for result in results[:max_context_chunks]:
-        title = result.get("title") or ""
-        # Skip results sourced from JSON files — they contain spec metadata, not teachable content.
-        # JSON metadata in context causes the LLM to reproduce raw JSON in assistant responses.
-        if title.endswith(".json"):
-            continue
-        content = " ".join(str(result.get("content", "")).split())
-        if not content:
-            continue
-        chunk = f"Source: {title}\n{content}"
-        if len(chunk) > remaining:
-            chunk = chunk[:remaining].rstrip()
-        selected.append({**result, "context_text": chunk})
-        remaining -= len(chunk)
-        if remaining <= 0:
-            break
-    return selected
-
-
-def _onyx_query_for_category(spec, category, concept):
-    subject = spec.get("subject", "")
-    npc_name = spec.get("npc_name", spec.get("npc_key", "NPC"))
-    category_guidance = {
-        "identity": f"{npc_name} identity persona teaching style {subject}",
-        "teaching": f"explain {concept} for a beginner in {subject}",
-        "dialogue": f"student confusion follow up questions about {concept} in {subject}",
-        "quest": f"quiz challenge practice problem about {concept} in {subject}",
-        "refusal": f"scope boundaries safe refusal policy for {npc_name} teaching {subject}",
-    }
-    return category_guidance.get(category, f"{subject} {concept}")
-
-
-def _clean_onyx_query(query):
-    """Normalize a generated Onyx query while preserving deterministic wording."""
+def _clean_query(query):
+    """Normalize a query string by collapsing whitespace."""
     return " ".join(str(query or "").split())
 
 
-def _spec_research_query_texts(spec):
-    """Return research query strings from supported subject spec fields."""
-    research_queries = spec.get("research_queries") or spec.get("research") or []
-    if isinstance(research_queries, dict):
-        research_queries = research_queries.get("queries") or research_queries.get("research_queries") or []
-
-    query_texts = []
-    for query in research_queries:
-        query_text = query.get("query", "") if isinstance(query, dict) else query
-        cleaned = _clean_onyx_query(query_text)
-        if cleaned:
-            query_texts.append(cleaned)
-    return query_texts
-
-
-def _learning_objective_text(spec):
-    """Extract concise teaching objective text when the spec provides it."""
-    teaching = spec.get("teaching") or {}
-    learning_objectives = teaching.get("learning_objectives") or spec.get("learning_objectives") or []
-    if isinstance(learning_objectives, str):
-        return _clean_onyx_query(learning_objectives)
-    if isinstance(learning_objectives, list):
-        return _clean_onyx_query(" ".join(str(objective) for objective in learning_objectives[:2]))
-    return ""
-
-
-def _append_unique_onyx_query(queries, query, max_queries):
-    """Append a non-empty query unless an equivalent one is already present."""
-    if len(queries) >= max_queries:
-        return
-    cleaned = _clean_onyx_query(query)
-    if not cleaned:
-        return
-    if cleaned.lower() in {existing.lower() for existing in queries}:
-        return
-    queries.append(cleaned)
-
-
-def _relevant_research_query(spec, concept, subject):
-    """Choose one relevant research query, preferring concept matches over subject matches."""
-    query_texts = _spec_research_query_texts(spec)
-    if not query_texts:
-        return ""
-
-    concept_text = _clean_onyx_query(concept).lower()
-    subject_text = _clean_onyx_query(subject).lower()
-    for query in query_texts:
-        lowered = query.lower()
-        if concept_text and concept_text in lowered:
-            return query
-    for query in query_texts:
-        lowered = query.lower()
-        if subject_text and subject_text in lowered:
-            return query
-    return query_texts[0]
-
-
-def _onyx_queries_for_category(spec, category, concept, max_queries=3):
-    """Return multiple focused Onyx retrieval queries for a category/concept.
-
-    Generates queries that probe the concept from different angles:
-    - Explanation/definition angle
-    - Examples/applications angle
-    - Common misconceptions angle
-    - Related concepts / comparison angle
-    """
-    max_queries = max(1, int(max_queries or 1))
-    subject = spec.get("subject", "")
-    npc_name = spec.get("npc_name", spec.get("npc_key", "NPC"))
-    objective_text = _learning_objective_text(spec)
-
-    queries = []
-    _append_unique_onyx_query(queries, _onyx_query_for_category(spec, category, concept), max_queries)
-
-    # Get a related concept from expertise list for cross-concept probing
-    teaching = spec.get("teaching") or {}
-    expertise = teaching.get("expertise") or []
-    related_concepts = [e for e in expertise if e.lower() != concept.lower()]
-    related = related_concepts[0] if related_concepts else None
-
-    category_queries = {
-        "identity": [
-            f"{npc_name} persona style scope {subject}",
-            f"{npc_name} teaching voice learning goals {subject} {objective_text}",
-        ],
-        "teaching": [
-            f"{concept} explanation examples beginner {subject}",
-            f"real world example of {concept} in everyday life",
-            f"common mistakes misconceptions about {concept}",
-        ],
-        "dialogue": [
-            f"student confusion about {concept} in {subject}",
-            f"Socratic follow up questions {concept} {subject}",
-            f"how to explain {concept} when a student is struggling",
-        ],
-        "quest": [
-            f"quiz practice challenge {concept} {subject}",
-            f"assessment question applied problem {concept} {subject}",
-        ],
-        "refusal": [
-            f"scope boundaries safety refusal {npc_name} {subject}",
-            f"out of scope questions safe redirect {subject}",
-        ],
-    }
-
-    # Add the primary category query
-    focused_queries = category_queries.get(category, [f"{subject} {concept} source material"])
-    if focused_queries:
-        _append_unique_onyx_query(queries, focused_queries[0], max_queries)
-
-    # Add the research query most relevant to this concept
-    research_query = _relevant_research_query(spec, concept, subject)
-    _append_unique_onyx_query(queries, research_query, max_queries)
-
-    # Add remaining category-specific angle queries (up to max_queries)
-    for query in focused_queries[1:]:
-        _append_unique_onyx_query(queries, query, max_queries)
-
-    # If we have room, add a cross-concept query for richer context
-    if len(queries) < max_queries and related:
-        _append_unique_onyx_query(
-            queries,
-            f"{related} comparison relationship to {concept} in {subject}",
-            max_queries,
-        )
-
-    return queries
-
-
-def _merge_onyx_results(result_groups, max_results):
-    """Merge ranked Onyx result groups round-robin while removing duplicate chunks."""
-    if max_results <= 0:
-        return []
-
-    merged = []
-    seen = set()
-    result_groups = [list(results) for results in result_groups if results]
-    if not result_groups:
-        return []
-
-    max_group_length = max(len(results) for results in result_groups)
-    for rank_index in range(max_group_length):
-        for results in result_groups:
-            if rank_index >= len(results):
-                continue
-            result = results[rank_index]
-            content = _clean_onyx_query(result.get("content", ""))
-            key = (result.get("document_id"), result.get("chunk_ind"), content[:120])
-            if key in seen:
-                continue
-            seen.add(key)
-            merged.append(result)
-            if len(merged) >= max_results:
-                return merged
-    return merged
-
-
-def _effective_onyx_document_sets(spec, document_sets=None):
-    """Use explicit DocumentSets as-is, otherwise default to the NPC key when available."""
-    if document_sets is not None:
-        return document_sets
-    npc_key = (spec.get("npc_key") or "").strip()
-    if not npc_key:
-        return None
-    return [npc_key]
-
-
-def _repo_relative_glob(path_or_glob):
-    """Return a repo-relative glob/path when the value points inside this repo."""
-    value = str(path_or_glob or "").strip()
-    if not value:
-        return None
-
-    path = Path(value).expanduser()
-    has_glob_meta = any(char in value for char in "*?[")
-    if has_glob_meta and not path.is_absolute():
-        return value
-    if has_glob_meta:
-        try:
-            return str(path.relative_to(PROJECT_ROOT))
-        except ValueError:
-            return None
-
-    absolute_path = path if path.is_absolute() else PROJECT_ROOT / path
-    try:
-        return str(absolute_path.resolve().relative_to(PROJECT_ROOT))
-    except ValueError:
-        return None
-
-
-def _onyx_prep_globs(spec_path, npc_key, extra_docs=None):
-    """Build targeted repo-relative globs for Onyx prep indexing."""
-    globs = []
-    seen = set()
-    reference_glob = paths.dataset_reference_dir(npc_key, "onyx") / "**" / "*"
-    for candidate in [spec_path, "docs/ONYX_WORKFLOW.md", reference_glob, *(extra_docs or [])]:
-        rel_glob = _repo_relative_glob(candidate)
-        if not rel_glob or rel_glob in seen:
-            continue
-        globs.append(rel_glob)
-        seen.add(rel_glob)
-    return globs
-
-
-def run_onyx_prep_index(spec_path, npc_key, document_sets, extra_docs=None, sleep_seconds=2.0):
-    """Index targeted subject/repo context into Onyx before generation."""
-    globs = _onyx_prep_globs(spec_path, npc_key, extra_docs=extra_docs)
-    if not globs:
-        raise RuntimeError("No repo-local files or globs were available for Onyx prep indexing.")
-
-    command = [sys.executable, str(PROJECT_ROOT / "scripts" / "onyx_index_repo.py")]
-    if npc_key:
-        command.extend(["--npc-key", npc_key])
-    for document_set in document_sets or []:
-        command.extend(["--document-set", document_set])
-    for rel_glob in globs:
-        command.extend(["--glob", rel_glob])
-
-    sanitized_cmd = list(command)
-    try:
-        subprocess.run(command, cwd=str(PROJECT_ROOT), check=True, timeout=120)
-    except subprocess.TimeoutExpired as exc:
-        raise RuntimeError("Onyx prep indexing timed out after 120 seconds.") from exc
-    except subprocess.CalledProcessError as exc:
-        raise RuntimeError(f"Onyx prep indexing failed with exit code {exc.returncode}.") from exc
-
-    return {"indexed": True, "command": sanitized_cmd, "globs": globs}
-
-
-def _print_onyx_coverage(document_sets, coverage, prefix="Onyx coverage"):
-    """Print a compact JSON coverage summary."""
-    coverage_summary = {
-        "document_sets": document_sets,
-        "total_queries": coverage["total_queries"],
-        "with_results": coverage["with_results"],
-        "total_results": coverage["total_results"],
-        "coverage_ratio": coverage["coverage_ratio"],
-        "empty_queries": coverage["empty_queries"],
-    }
-    print(f"{prefix}: {json.dumps(coverage_summary)}")
-
-
-def _coverage_satisfies_prep_goal(coverage, min_coverage):
-    """Return whether coverage is good enough to generate after prep checks."""
-    if coverage is None:
-        return min_coverage <= 0
-    if min_coverage > 0:
-        return coverage["coverage_ratio"] >= min_coverage
-    return coverage["with_results"] > 0
-
-
-def _fallback_onyx_example(spec, category, concept, retrieval_query, context_results, document_sets=None, retrieval_queries=None):
-    # Preference for reference docs over JSON subject specs
-    def is_json_content(content):
-        stripped = content.strip()
-        return stripped.startswith("{") or stripped.startswith("[") or "npc_key" in stripped[:200]
-
-    def is_json_source(result):
-        title = (result.get("title") or "").lower()
-        return title.endswith(".json") or title.endswith(".py") or is_json_content(result.get("content", ""))
-
-    # Sort: reference docs first, then non-JSON prose, then everything else
-    ref_docs = [
-        r for r in context_results
-        if "reference_docs" in (r.get("title") or "").lower()
-        or "reference_doc" in (r.get("title") or "").lower()
-    ]
-    good_docs = [r for r in context_results if not is_json_source(r) and r not in ref_docs]
-    fallback_docs = [r for r in context_results if r not in ref_docs and r not in good_docs]
-
-    ordered = ref_docs + good_docs + fallback_docs
-    best = ordered[0] if ordered else (context_results[0] if context_results else {})
-    title = best.get("title") or "the local reference material"
-    source_sentence = _best_source_sentence(ordered or context_results, concept)
-    npc_name = spec["npc_name"]
-
-    def _pick_variant(variants, seed_str):
-        """Deterministically pick from variants using a hash seed."""
-        idx = abs(hash(seed_str)) % len(variants)
-        return variants[idx]
-
-    user_templates = {
-        "identity": f"So who are you, and what can you tell me about {spec['subject']}?",
-        "teaching": f"Can you help me understand {concept}?",
-        "dialogue": f"I'm confused about {concept}. Can you walk me through it?",
-        "quest": f"Give me a quick practice question about {concept}.",
-        "refusal": "Can you help me with something unrelated to this subject?",
-    }
-
-    if best and source_sentence and len(source_sentence) > 30:
-        seed_key = f"{concept}:{category}"
-        teaching_variants = [
-            f"Great question about {concept}. Here's the thing: {source_sentence} That's what really matters here -- once you see that, everything else starts to click.",
-            f"Let me break {concept} down for you. {source_sentence} Keep that in mind as the foundation, and we can build from there.",
-            f"Happy to explain {concept}. {source_sentence} It's one of those concepts where the core idea is simple but leads to fascinating places.",
-        ]
-        dialogue_variants = [
-            f"I get why {concept} can be confusing. {source_sentence} When you think about it that way, the whole picture gets clearer.",
-            f"You're asking the right question about {concept}. {source_sentence} It's actually a really cool topic once you dig into the details.",
-            f"Great question about {concept}. {source_sentence} That's the key piece -- understanding this unlocks so much more.",
-        ]
-        identity_variants = [
-            f"I'm {npc_name}, your guide for {spec['subject'].lower()}. I'll help you understand the ideas clearly and connect the dots along the way.",
-            f"Call me {npc_name}. I help people explore {spec['subject'].lower()} -- breaking down the complex stuff into things that actually make sense.",
-        ]
-        quest_variants = [
-            f"Here's something to think about: how would you explain why {concept} matters to someone who has never heard of it? What's the one thing they absolutely need to know?",
-            f"Try this out: imagine you're teaching {concept} to a friend. What example would you use to make it click for them?",
-        ]
-        refusal_variants = [
-            f"That's outside my area -- I focus on {spec['subject'].lower()}. If you have a question about that, I'd love to help!",
-            f"I can't really help with that, sorry. My expertise is in {spec['subject'].lower()}. Got a question in that space?",
-        ]
-        assistant_templates = {
-            "identity": _pick_variant(identity_variants, f"{seed_key}:identity"),
-            "teaching": _pick_variant(teaching_variants, f"{seed_key}:teaching"),
-            "dialogue": _pick_variant(dialogue_variants, f"{seed_key}:dialogue"),
-            "quest": _pick_variant(quest_variants, f"{seed_key}:quest"),
-            "refusal": _pick_variant(refusal_variants, f"{seed_key}:refusal"),
-        }
-    else:
-        # Fall back to natural template responses when Onyx content isn't useful
-        fallback_variants_teach = [
-            f"Great question about {concept}! Let me walk you through it. Every topic in {spec['subject'].lower()} has a story behind it -- once you see the story, the details make sense.",
-            f"Happy to explain {concept}. Think of it as a piece of a bigger puzzle -- once you understand this part, the rest starts to fall into place naturally.",
-        ]
-        fallback_variants_dialogue = [
-            f"I can see why {concept} might be confusing. Let's break it down step by step -- it's easier to grasp when you look at the pieces one at a time.",
-            f"You're asking about {concept}? That's a great place to start. Let me explain it in a way that makes the core ideas really clear.",
-        ]
-        fallback_seed = f"{concept}:{category}"
-        assistant_templates = {
-            "identity": f"I'm {npc_name}. I help people understand {spec['subject'].lower()} -- I'll explain things clearly and connect the dots for you.",
-            "teaching": _pick_variant(fallback_variants_teach, f"{fallback_seed}:teaching"),
-            "dialogue": _pick_variant(fallback_variants_dialogue, f"{fallback_seed}:dialogue"),
-            "quest": f"Here's something to think about: how would you explain {concept} to someone who knows nothing about it?",
-            "refusal": f"That's outside what I cover -- I focus on {spec['subject'].lower()}. If you have a question in that area, I'm happy to help!",
-        }
-
-    return {
-        "messages": [
-            {"role": "system", "content": spec["system_prompt"]},
-            {"role": "user", "content": user_templates.get(category, f"What should I know about {concept}?")},
-            {"role": "assistant", "content": assistant_templates.get(category, f"Our reference material covers {concept} in {spec['subject'].lower()}. Let me share what I know.")},
-        ],
-        "metadata": _onyx_metadata(
-            spec,
-            category,
-            concept,
-            retrieval_query,
-            context_results,
-            document_sets=document_sets,
-            retrieval_queries=retrieval_queries,
-        ),
-    }
-
-
-def _onyx_metadata(spec, category, concept, retrieval_query, context_results, document_sets=None, retrieval_queries=None):
-    attempted_queries = retrieval_queries or [retrieval_query]
-    return {
-        "npc_key": spec["npc_key"],
-        "category": category,
-        "source": "onyx",
-        "concept": concept,
-        "onyx_query": retrieval_query,
-        "onyx_queries": attempted_queries,
-        "onyx_query_count": len(attempted_queries),
-        "onyx_document_sets": document_sets,
-        "onyx_document_ids": [r.get("document_id") for r in context_results if r.get("document_id")],
-        "onyx_titles": [r.get("title") for r in context_results if r.get("title")],
-        "onyx_links": [r.get("link") for r in context_results if r.get("link")],
-        "onyx_scores": [r.get("score") for r in context_results if r.get("score") is not None],
-        "onyx_context_chunks": len(context_results),
-    }
-
-
-def _assistant_message_content(example):
-    """Return assistant text from a ChatML example, or an empty string."""
-    for message in example.get("messages", []):
-        if message.get("role") == "assistant":
-            return str(message.get("content", ""))
-    return ""
-
-
-def _metadata_int(metadata, key):
-    """Parse integer metadata fields defensively at the scoring boundary."""
-    try:
-        return int(metadata.get(key) or 0)
-    except (TypeError, ValueError):
-        return 0
-
-
-def score_onyx_example(example):
-    """Return deterministic 0.0-1.0 quality score for an Onyx-generated example."""
-    metadata = example.get("metadata") or {}
-    score = 0.0
-
-    if metadata.get("onyx_document_ids"):
-        score += 0.35
-
-    if _metadata_int(metadata, "onyx_context_chunks") > 0:
-        score += 0.20
-
-    onyx_scores = metadata.get("onyx_scores") or []
-    if any(isinstance(value, (int, float)) and value > 0 for value in onyx_scores):
-        score += 0.15
-
-    assistant_content = _assistant_message_content(example).strip()
-    generic_phrases = [
-        "based on the retrieved context",
-        "i don't have enough",
-        "i do not have enough",
-        "no context",
-    ]
-    has_substantive_answer = len(assistant_content) >= 80 and not any(
-        phrase in assistant_content.lower() for phrase in generic_phrases
-    )
-    if has_substantive_answer:
-        score += 0.15
-
-    onyx_queries = metadata.get("onyx_queries") or []
-    onyx_query_count = _metadata_int(metadata, "onyx_query_count")
-    if len(onyx_queries) >= 2 or onyx_query_count > 1:
-        score += 0.15
-
-    return min(1.0, max(0.0, round(score, 4)))
-
-
-def _with_onyx_quality_score(example):
-    """Attach deterministic Onyx quality metadata and return the example."""
-    metadata = example.setdefault("metadata", {})
-    metadata["onyx_quality_score"] = score_onyx_example(example)
-    return example
-
-
-def onyx_check_coverage(spec, onyx_client, document_sets=None, max_results=1):
-    """Check whether Onyx has indexed content matching the spec's research queries."""
-    query_texts = _spec_research_query_texts(spec)
-
-    with_results = 0
-    empty_queries = []
-    total_results = 0
-
-    for query in query_texts:
-        try:
-            results = onyx_client.search(query, max_results=max_results, document_sets=document_sets)
-        except Exception as exc:
-            print(f"  [warn] Coverage check failed for query '{query[:60]}': {exc}")
-            empty_queries.append(query)
-            continue
-
-        count = len(results)
-        total_results += count
-        if count > 0:
-            with_results += 1
-            continue
-        empty_queries.append(query)
-
-    total_queries = len(query_texts)
-    coverage_ratio = with_results / total_queries if total_queries else 0.0
-    return {
-        "total_queries": total_queries,
-        "with_results": with_results,
-        "empty_queries": empty_queries,
-        "total_results": total_results,
-        "coverage_ratio": coverage_ratio,
-    }
-
-
-def generate_onyx_example(
-    spec,
-    category,
-    concept,
-    onyx_client,
-    generator=None,
-    temperature=C.ONYX_TEMPERATURE,
-    max_context_chunks=C.DEFAULT_ONYX_CHUNKS,
-    max_context_chars=C.DEFAULT_ONYX_CONTEXT_CHARS,
-    document_sets=None,
-    tags=None,
-    max_queries=C.ONYX_CATEGORY_QUERIES,
-):
-    """Generate one source-grounded example from local Onyx retrieval."""
-    retrieval_queries = _onyx_queries_for_category(spec, category, concept, max_queries=max_queries)
-    retrieval_query = retrieval_queries[0]
-    result_groups = []
-    search_errors = []
-    for query in retrieval_queries:
-        try:
-            results = onyx_client.search(
-                query,
-                max_results=max_context_chunks,
-                document_sets=document_sets,
-                tags=tags,
-            )
-            if results:
-                result_groups.append(results)
-        except Exception as exc:
-            if len(retrieval_queries) == 1:
-                raise
-            search_errors.append((query, exc))
-            print(f"  [warn] Onyx search failed for query '{query[:80]}': {exc}")
-
-    results = _merge_onyx_results(result_groups, max_context_chunks)
-    if not results:
-        if search_errors:
-            raise RuntimeError(
-                "Onyx retrieval failed for all useful queries for "
-                f"category={category!r}, concept={concept!r}, document_sets={document_sets!r}"
-            )
-        raise RuntimeError(
-            "Onyx returned no context for "
-            f"category={category!r}, concept={concept!r}, document_sets={document_sets!r}; "
-            "index subject docs or adjust --onyx-document-set"
-        )
-
-    context_results = _format_onyx_context(results, max_context_chunks=max_context_chunks, max_context_chars=max_context_chars)
-    if not context_results:
-        raise RuntimeError(
-            "Onyx returned results but no usable context for "
-            f"category={category!r}, concept={concept!r}, document_sets={document_sets!r}; "
-            "check indexed document content"
-        )
-
-    if generator and context_results:
-        context_text = "\n\n".join(r["context_text"] for r in context_results)
-        prompt = f"""
-You are generating source-grounded ChatML training data for {spec['npc_name']}.
-NPC system prompt: {spec['system_prompt']}
-Category: {category}
-Concept: {concept}
-Retrieval query: {retrieval_query}
-
-Use ONLY this local Onyx context as factual support:
-{context_text}
-
-Return ONLY JSON with this exact shape:
-{{"user":"realistic learner question","assistant":"1-3 short sentences, in character, grounded in the context","thought":"brief source-grounding note"}}
-"""
-        raw_res = generator.generate(
-            "You create compact source-grounded NPC fine-tuning examples. Output valid JSON only.",
-            prompt,
-            temperature=temperature,
-            json_format=True,
-        )
-        if raw_res:
-            try:
-                parsed = json.loads(raw_res)
-                return _with_onyx_quality_score({
-                    "messages": [
-                        {"role": "system", "content": spec["system_prompt"]},
-                        {"role": "user", "content": str(parsed.get("user", "What should I know?"))},
-                        {"role": "assistant", "content": str(parsed.get("assistant", "Let us use the source material as our guide."))},
-                    ],
-                    "metadata": {
-                        **_onyx_metadata(
-                            spec,
-                            category,
-                            concept,
-                            retrieval_query,
-                            context_results,
-                            document_sets=document_sets,
-                            retrieval_queries=retrieval_queries,
-                        ),
-                        "thought": parsed.get("thought", ""),
-                        "onyx_generation_mode": f"llm:{generator.__class__.__name__}",
-                    },
-                })
-            except Exception as exc:
-                print(f"  [warn] Onyx-grounded LLM response parse failed: {exc}")
-
-    return _with_onyx_quality_score(_fallback_onyx_example(
-        spec,
-        category,
-        concept,
-        retrieval_query,
-        context_results,
-        document_sets=document_sets,
-        retrieval_queries=retrieval_queries,
-    ))
-
-
-def _empty_onyx_quality_stats():
-    return {"scores": [], "accepted": 0, "rejected": 0}
-
-
-def _record_onyx_quality(stats, category, score, accepted):
-    category_stats = stats["by_category"].setdefault(category, _empty_onyx_quality_stats())
-    if accepted:
-        stats["scores"].append(score)
-        category_stats["scores"].append(score)
-        stats["accepted"] += 1
-        category_stats["accepted"] += 1
-        return
-
-    stats["rejected"] += 1
-    category_stats["rejected"] += 1
-
-
-def _summarize_onyx_quality_stats(stats):
-    def summarize_scores(scores):
-        if not scores:
-            return {"min": 0.0, "max": 0.0, "avg": 0.0}
-        return {
-            "min": round(min(scores), 4),
-            "max": round(max(scores), 4),
-            "avg": round(sum(scores) / len(scores), 4),
-        }
-
-    summary = summarize_scores(stats["scores"])
-    summary.update({"accepted": stats["accepted"], "rejected": stats["rejected"], "by_category": {}})
-    for category, category_stats in stats["by_category"].items():
-        category_summary = summarize_scores(category_stats["scores"])
-        category_summary.update({
-            "accepted": category_stats["accepted"],
-            "rejected": category_stats["rejected"],
-        })
-        summary["by_category"][category] = category_summary
-    return summary
-
-
-def _format_onyx_under_generation(category_targets, quality_stats):
-    lines = []
-    for category, target in category_targets.items():
-        category_stats = quality_stats["by_category"].get(category, _empty_onyx_quality_stats())
-        accepted = category_stats["accepted"]
-        if accepted >= target:
-            continue
-        lines.append(
-            f"{category}: target={target}, accepted={accepted}, rejected={category_stats['rejected']}"
-        )
-    return "; ".join(lines)
-
-
-def generate_onyx_dataset(
-    spec,
-    output_path,
-    seed=C.DEFAULT_SEED,
-    include_validation=True,
-    val_split=C.DEFAULT_VAL_SPLIT,
-    onyx_client=None,
-    generator=None,
-    temperature=C.ONYX_TEMPERATURE,
-    max_context_chunks=C.DEFAULT_ONYX_CHUNKS,
-    max_context_chars=C.DEFAULT_ONYX_CONTEXT_CHARS,
-    document_sets=None,
-    tags=None,
-    max_queries=C.ONYX_CATEGORY_QUERIES,
-    min_quality_score=0.0,
-    allow_partial=False,
-):
-    """Generate a dataset using local Onyx retrieval as the grounding layer.
-
-    Designed for modest local resources: small top-k, bounded context chars, no
-    indexing, and deterministic no-LLM fallback when a generator is not supplied.
-    """
-    random.seed(seed)
-    onyx_client = onyx_client or OnyxClient()
-    document_sets = _effective_onyx_document_sets(spec, document_sets)
-    concepts = concept_pool_for_subject(spec)
-    examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
-    examples = []
-    total_count = sum(examples_per_category.values())
-    current = 0
-    search_cache = {}
-    min_quality_score = float(min_quality_score or 0.0)
-    if not 0.0 <= min_quality_score <= 1.0:
-        raise ValueError("min_quality_score must be between 0.0 and 1.0")
-    quality_stats = {"scores": [], "accepted": 0, "rejected": 0, "by_category": {}}
-
-    class CachedOnyxClient:
-        def search(self, query, max_results=4, document_sets=None, tags=None):
-            key = (query, max_results, tuple(document_sets or []), tuple((t.get("tag_key"), t.get("tag_value")) for t in (tags or [])))
-            if key not in search_cache:
-                search_cache[key] = onyx_client.search(query, max_results=max_results, document_sets=document_sets, tags=tags)
-            return search_cache[key]
-
-    cached_client = CachedOnyxClient()
-
-    for category, count in examples_per_category.items():
-        if category not in CATEGORY_TEMPLATES:
-            print(f"  [warn] Unknown category '{category}', skipping")
-            continue
-        print(f"  Generating {count} Onyx-grounded examples for '{category}'...")
-        accepted_for_category = 0
-        attempts_for_category = 0
-        max_attempts_for_category = count if min_quality_score <= 0 else count * 3
-        concept_start = random.randrange(len(concepts)) if concepts else 0
-        while accepted_for_category < count and attempts_for_category < max_attempts_for_category:
-            if min_quality_score <= 0:
-                concept = random.choice(concepts)
-            else:
-                concept = concepts[(concept_start + attempts_for_category) % len(concepts)]
-            effective_max_queries = max_queries
-            if min_quality_score > 0 and attempts_for_category % 2 == 1:
-                effective_max_queries = min(5, max_queries + 1)
-            example = generate_onyx_example(
-                spec,
-                category,
-                concept,
-                cached_client,
-                generator=generator,
-                temperature=temperature,
-                max_context_chunks=max_context_chunks,
-                max_context_chars=max_context_chars,
-                document_sets=document_sets,
-                tags=tags,
-                max_queries=effective_max_queries,
-            )
-            attempts_for_category += 1
-            quality_score = example.get("metadata", {}).get("onyx_quality_score")
-            if quality_score is None:
-                quality_score = score_onyx_example(example)
-                example.setdefault("metadata", {})["onyx_quality_score"] = quality_score
-
-            if min_quality_score > 0 and quality_score < min_quality_score:
-                _record_onyx_quality(quality_stats, category, quality_score, accepted=False)
-                print(
-                    f"  [warn] Skipping low-quality Onyx example for '{category}' "
-                    f"(score {quality_score:.2f} < {min_quality_score:.2f}, attempt "
-                    f"{attempts_for_category}/{max_attempts_for_category})"
-                )
-                continue
-
-            examples.append(example)
-            _record_onyx_quality(quality_stats, category, quality_score, accepted=True)
-            accepted_for_category += 1
-            current += 1
-            if current % 5 == 0 or current == total_count:
-                print(f"    Progress: {current}/{total_count}")
-
-        if accepted_for_category < count:
-            print(
-                f"  [warn] Accepted {accepted_for_category}/{count} Onyx examples for '{category}' "
-                f"after {attempts_for_category} attempts."
-            )
-
-    if not examples:
-        raise RuntimeError(
-            "Onyx generation produced zero examples. Improve indexing, use --onyx-prep, "
-            "lower --onyx-min-score, or adjust Onyx retrieval settings."
-        )
-
-    under_generation = _format_onyx_under_generation(examples_per_category, quality_stats)
-    if under_generation and not allow_partial:
-        raise RuntimeError(
-            "Onyx generation accepted fewer examples than requested: "
-            f"{under_generation}. Lower --onyx-min-score, improve indexing, use --onyx-prep, "
-            "or pass --onyx-allow-partial to write a partial dataset."
-        )
-
-    return write_examples_with_validation(
-        examples,
-        output_path,
-        seed=seed,
-        include_validation=include_validation,
-        val_split=val_split,
-    ) | {
-        "categories": dict(examples_per_category),
-        "onyx_searches": len(search_cache),
-        "onyx_quality": _summarize_onyx_quality_stats(quality_stats),
-    }
-
-
-# ── Ollama Generation ────────────────────────────────────────────────────────
+# ── LLM Generator Classes ──────────────────────────────────────────────────
 
 class OllamaGenerator:
     def __init__(self, model="llama3.1:latest", url="http://localhost:11434/api/chat"):
@@ -1229,6 +403,7 @@ class AnthropicGenerator:
             print(f"  [error] Anthropic generation failed: {e}")
             return None
 
+
 def concept_pool_for_subject(spec):
     """Extract stable concept keywords from the subject spec.
 
@@ -1256,7 +431,7 @@ def concept_pool_for_subject(spec):
     }
 
     def add_concept(value):
-        clean = _clean_onyx_query(value).strip().lower()
+        clean = _clean_query(value).strip().lower()
         if not clean or clean in seen:
             return
         words = clean.split()
@@ -1276,7 +451,7 @@ def concept_pool_for_subject(spec):
 
     # 2. Parse subject description into meaningful phrase groups
     subject = spec.get("subject", "")
-    for sep in [":", "—", "-", ","]:
+    for sep in [":", "\u2014", "-", ","]:
         subject = subject.replace(sep, "|")
     for phrase in subject.split("|"):
         add_concept(phrase)
@@ -1561,41 +736,11 @@ def main():
     parser.add_argument("--url", default="http://localhost:11434/api/chat", help="Ollama API URL")
     parser.add_argument("--multi-turn-ratio", type=float, default=0.2, help="Ratio of multi-turn dialogues (0.0 to 1.0)")
     parser.add_argument("--temperature", type=float, default=0.8, help="Generation temperature")
-    parser.add_argument("--technique", default="onyx",
-                        choices=["template", "ollama", "openai", "anthropic", "docs", "onyx"],
-                        help="Generation technique subdirectory (default: onyx)")
+    parser.add_argument("--technique", default="template",
+                        choices=["template", "ollama", "openai", "anthropic", "docs"],
+                        help="Generation technique subdirectory (default: template)")
     parser.add_argument("--docs-manifest", default=None,
                         help="Curated corpus manifest for --technique docs (defaults to spec dataset.corpus_manifest)")
-    parser.add_argument("--onyx-url", default=os.environ.get("ONYX_BASE_URL", "http://localhost"),
-                        help="Local Onyx base URL for --technique onyx (default: ONYX_BASE_URL or http://localhost)")
-    parser.add_argument("--onyx-api-key", default=os.environ.get("ONYX_API_KEY"),
-                        help="Optional Onyx bearer token (default: ONYX_API_KEY)")
-    parser.add_argument("--onyx-max-results", type=int, default=4,
-                        help="Max Onyx chunks per retrieval query; keep low for local resources (default: 4)")
-    parser.add_argument("--onyx-queries", type=int, default=1,
-                        help="Number of Onyx retrieval queries per generated example (1 preserves legacy behavior; max: 5).")
-    parser.add_argument("--onyx-max-context-chars", type=int, default=1800,
-                        help="Max retrieved context chars per example before generation (default: 1800)")
-    parser.add_argument("--onyx-document-set", action="append", dest="onyx_document_sets",
-                        help="Limit Onyx retrieval to a document set; repeatable")
-    parser.add_argument("--onyx-check", action="store_true",
-                        help="Check Onyx coverage for spec research queries before generation")
-    parser.add_argument("--onyx-min-coverage", type=float, default=0.0,
-                        help="Abort Onyx generation if coverage ratio is below this threshold (default: 0.0)")
-    parser.add_argument("--onyx-min-score", type=float, default=0.0,
-                        help="Minimum Onyx example quality score (0.0-1.0); lower-scoring examples are retried/skipped.")
-    parser.add_argument("--onyx-allow-partial", action="store_true",
-                        help="Allow Onyx generation to write fewer examples than requested when quality filtering rejects examples.")
-    parser.add_argument("--onyx-prep", action="store_true",
-                        help="Before Onyx generation, index subject/repo context into the NPC document set and re-check coverage.")
-    parser.add_argument("--onyx-prep-passes", type=int, default=1,
-                        help="Maximum Onyx prep/index/check passes before generation.")
-    parser.add_argument("--onyx-index-doc", action="append", dest="onyx_index_docs",
-                        help="Additional file path or glob to index during --onyx-prep; repeatable.")
-    parser.add_argument("--onyx-prep-sleep", type=float, default=2.0,
-                        help="Seconds to wait after indexing before re-checking coverage.")
-    parser.add_argument("--onyx-use-llm", action="store_true",
-                        help="Use the selected --model generator to rewrite Onyx-grounded examples; default is retrieval-only to save local resources")
     parser.add_argument("--concept-focus", action="append", dest="concept_focus",
                         help="Focus generation on specific categories (repeatable, e.g. --concept-focus teaching --concept-focus dialogue). Boosts example count for those categories.")
     args = parser.parse_args()
@@ -1606,22 +751,10 @@ def main():
     if args.ollama:
         args.technique = "ollama"
 
-    if not 0.0 <= args.onyx_min_coverage <= 1.0:
-        parser.error("--onyx-min-coverage must be between 0.0 and 1.0")
-    if not 0.0 <= args.onyx_min_score <= 1.0:
-        parser.error("--onyx-min-score must be between 0.0 and 1.0")
-
-    if not 1 <= args.onyx_queries <= 5:
-        parser.error("--onyx-queries must be between 1 and 5")
-    args.onyx_prep_passes = min(3, max(1, args.onyx_prep_passes))
-    args.onyx_prep_sleep = min(30.0, max(0.0, args.onyx_prep_sleep))
 
     generator = None
     if args.technique == "ollama":
         print(f"Initializing Ollama generator ({args.model})...")
-        generator = OllamaGenerator(model=args.model, url=args.url)
-    elif args.technique == "onyx" and args.onyx_use_llm:
-        print(f"Initializing resource-bounded Onyx + Ollama generator ({args.model})...")
         generator = OllamaGenerator(model=args.model, url=args.url)
     elif args.technique == "openai":
         print(f"Initializing OpenAI generator ({args.model})...")
@@ -1678,75 +811,6 @@ def main():
             )
         except Exception as exc:
             print(f"Error: docs manifest generation failed: {exc}")
-            sys.exit(2)
-    elif args.technique == "onyx":
-        try:
-            onyx_client = OnyxClient(base_url=args.onyx_url, api_key=args.onyx_api_key)
-            document_sets = _effective_onyx_document_sets(spec, args.onyx_document_sets)
-            should_check_coverage = args.onyx_check or args.onyx_min_coverage > 0 or args.onyx_prep
-            coverage = None
-            if should_check_coverage:
-                coverage = onyx_check_coverage(
-                    spec,
-                    onyx_client,
-                    document_sets=document_sets,
-                    max_results=1,
-                )
-                _print_onyx_coverage(document_sets, coverage)
-
-            if args.onyx_prep:
-                has_extra_docs = bool(args.onyx_index_docs)
-                if _coverage_satisfies_prep_goal(coverage, args.onyx_min_coverage) and not has_extra_docs:
-                    print("Onyx prep: coverage target already met; skipping targeted indexing.")
-                else:
-                    for prep_pass in range(1, args.onyx_prep_passes + 1):
-                        print(f"Onyx prep pass {prep_pass}/{args.onyx_prep_passes}: indexing targeted context...")
-                        prep_result = run_onyx_prep_index(
-                            args.spec,
-                            npc_key,
-                            document_sets,
-                            extra_docs=args.onyx_index_docs,
-                            sleep_seconds=args.onyx_prep_sleep,
-                        )
-                        print(f"Onyx prep indexed: {json.dumps(prep_result)}")
-                        if args.onyx_prep_sleep:
-                            time.sleep(args.onyx_prep_sleep)
-                        coverage = onyx_check_coverage(
-                            spec,
-                            onyx_client,
-                            document_sets=document_sets,
-                            max_results=1,
-                        )
-                        _print_onyx_coverage(document_sets, coverage, prefix="Onyx coverage after prep")
-                        if _coverage_satisfies_prep_goal(coverage, args.onyx_min_coverage):
-                            break
-
-            if coverage is not None and coverage["coverage_ratio"] < args.onyx_min_coverage:
-                print(
-                    "Error: Onyx coverage ratio "
-                    f"{coverage['coverage_ratio']:.2f} is below required {args.onyx_min_coverage:.2f}. "
-                    "Index docs for this NPC, pass the correct --onyx-document-set/--onyx-index-doc, or lower --onyx-min-coverage."
-                )
-                sys.exit(2)
-            result = generate_onyx_dataset(
-                spec,
-                output_path,
-                seed=args.seed,
-                include_validation=not args.no_validation,
-                val_split=args.val_split,
-                onyx_client=onyx_client,
-                generator=generator,
-                temperature=args.temperature,
-                max_context_chunks=args.onyx_max_results,
-                max_context_chars=args.onyx_max_context_chars,
-                document_sets=document_sets,
-                max_queries=args.onyx_queries,
-                min_quality_score=args.onyx_min_score,
-                allow_partial=args.onyx_allow_partial,
-            )
-        except Exception as exc:
-            print(f"Error: Onyx retrieval generation failed: {exc}")
-            print("       Check ONYX_BASE_URL/ONYX_API_KEY, local Onyx auth, and that source documents are indexed.")
             sys.exit(2)
     else:
         result = generate_dataset(

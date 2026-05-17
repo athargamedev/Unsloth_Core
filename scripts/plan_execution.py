@@ -112,7 +112,7 @@ def load_resolved_config(spec: dict[str, Any], preset_name: str | None) -> dict[
     base = parse_yaml(BASE_CONFIG_PATH)
 
     # Spec-derived defaults
-    technique = spec.get("technique") or spec.get("dataset", {}).get("technique") or "onyx"
+    technique = spec.get("technique") or spec.get("dataset", {}).get("technique") or "template"
     model_id = (
         spec.get("model")
         or spec.get("model_id")
@@ -149,7 +149,7 @@ def recommend(spec: dict[str, Any], preset: str | None, local_vram_gb: float | N
     policy = parse_yaml(POLICY_PATH)
     config = load_resolved_config(spec, preset)
 
-    technique = str(config.get("dataset", {}).get("technique", "onyx"))
+    technique = str(config.get("dataset", {}).get("technique", "template"))
     examples = sum_examples(spec)
 
     # Dataset generation decision

@@ -6,7 +6,7 @@ This script validates ChatML structure, removes common AI artifacts,
 and ensures conversational constraints (length, role sequence) are met.
 
 Usage:
-    ./ucore sanitize subjects/datasets/my_npc/onyx/train.jsonl
+    ./ucore sanitize subjects/datasets/my_npc/template/train.jsonl
     python scripts/sanitize_dataset.py subjects/datasets/my_npc/ollama/train.jsonl --strict-canonical
 
 Technical Details:

@@ -57,7 +57,7 @@ def model_short_name(model_id: str) -> str:
 
 # ── Datasets ─────────────────────────────────────────────────────────────────
 
-DATASET_TECHNIQUES = ("docs", "onyx", "ollama", "openai", "anthropic", "template")
+DATASET_TECHNIQUES = ("docs", "ollama", "openai", "anthropic", "template")
 
 
 def dataset_root() -> Path:
@@ -70,17 +70,17 @@ def dataset_dir(npc_key: str) -> Path:
     return dataset_root() / npc_key
 
 
-def dataset_train_path(npc_key: str, technique: str = "onyx") -> Path:
+def dataset_train_path(npc_key: str, technique: str = "template") -> Path:
     """Return subjects/datasets/{npc_key}/{technique}/train.jsonl"""
     return dataset_dir(npc_key) / technique / "train.jsonl"
 
 
-def dataset_val_path(npc_key: str, technique: str = "onyx") -> Path:
+def dataset_val_path(npc_key: str, technique: str = "template") -> Path:
     """Return subjects/datasets/{npc_key}/{technique}/validation.jsonl"""
     return dataset_dir(npc_key) / technique / "validation.jsonl"
 
 
-def dataset_reference_dir(npc_key: str, technique: str = "onyx") -> Path:
+def dataset_reference_dir(npc_key: str, technique: str = "template") -> Path:
     """Return subjects/datasets/{npc_key}/{technique}/reference_doc/"""
     return dataset_dir(npc_key) / technique / "reference_doc"
 
@@ -89,7 +89,7 @@ def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
     """Auto-detect the best available dataset technique for an NPC.
 
     Returns (technique, train_path, val_path) or None if none found.
-    Preference order: docs > onyx > ollama > API-generated > template.
+    Preference order: docs > ollama > API-generated > template.
     """
     for technique in DATASET_TECHNIQUES:
         train = dataset_train_path(npc_key, technique)

@@ -87,7 +87,7 @@ def generate_colab_notebooks(
     for entry in all_variants:
         npc_key = str(entry["npc_key"])
         preset = str(entry["preset"])
-        technique = str(entry.get("technique") or "onyx")
+        technique = str(entry.get("technique") or "template")
         dataset_location = str(entry.get("dataset_generation", {}).get("location") or "local")
         spec_path = str(entry["spec_path"])
 

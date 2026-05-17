@@ -2,6 +2,708 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_794714",
+      "name": "External Process (794714) fitness_coach",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "fitness_coach",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T22:06:08.302Z",
+      "startedAt": "2026-05-17T22:06:08.302Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && python scripts/evaluate.py \\   --baseline /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf \\   --candidate exports/fitness_coach/fitness_coach-lora-f16.gguf \\   --spec subjects/fitness_coach.json \\   --num-questions 10 \\   --base-model /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf \\   --port 8890 --gpu-layers 99 --max-tokens 256 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 794714] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 794714] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && python scripts/evaluate.py \\   --baseline /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf \\   --candidate exports/fitness_coach/fitness_coach-lora-f16.gguf \\   --spec subjects/fitness_coach.json \\   --num-questions 10 \\   --base-model /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf \\   --port 8890 --gpu-layers 99 --max-tokens 256 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T22:06:47.310Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_793562",
+      "name": "External Process (793562) astronomy_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T22:05:26.298Z",
+      "startedAt": "2026-05-17T22:05:26.298Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && python scripts/evaluate.py \\   --baseline /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf \\   --candidate exports/astronomy_guide/astronomy_guide-lora-f16.gguf \\   --spec subjects/astronomy_guide.json \\   --num-questions 10 \\   --base-model /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf \\   --port 8888 --gpu-layers 99 --max-tokens 256 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 793562] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 793562] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && python scripts/evaluate.py \\   --baseline /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf \\   --candidate exports/astronomy_guide/astronomy_guide-lora-f16.gguf \\   --spec subjects/astronomy_guide.json \\   --num-questions 10 \\   --base-model /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf \\   --port 8888 --gpu-layers 99 --max-tokens 256 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T22:06:02.301Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_792939",
+      "name": "External Process (792939)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T22:05:05.297Z",
+      "startedAt": "2026-05-17T22:05:05.297Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/fitness_coach"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 792939] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 792939] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/fitness_coach"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T22:05:08.297Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_787457",
+      "name": "External Process (787457) fitness_coach",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "fitness_coach",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T22:02:23.301Z",
+      "startedAt": "2026-05-17T22:02:23.301Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && python scripts/train.py subjects/fitness_coach.json --from-spec --technique onyx --preset fast-3b --export-gguf 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 787457] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 787457] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && python scripts/train.py subjects/fitness_coach.json --from-spec --technique onyx --preset fast-3b --export-gguf 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T22:05:11.297Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_fitness_coach_20260517_fast-3b_llama3.2-3b_003",
+      "name": "External Train (fitness_coach/20260517_fast-3b_llama3.2-3b_003)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "fitness_coach",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T22:02:21.783Z",
+      "startedAt": "2026-05-17T22:02:21.783Z",
+      "finishedAt": "2026-05-17T22:02:21.783Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/fitness_coach.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/fitness_coach/runs/20260517_fast-3b_llama3.2-3b_003/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_787140",
+      "name": "External Process (787140)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T22:02:11.251Z",
+      "startedAt": "2026-05-17T22:02:11.251Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/astronomy_guide"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 787140] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 787140] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/astronomy_guide"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T22:02:14.252Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_781476",
+      "name": "External Process (781476) astronomy_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T21:59:26.193Z",
+      "startedAt": "2026-05-17T21:59:26.193Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && python scripts/train.py subjects/astronomy_guide.json --from-spec --technique onyx --preset fast-3b --export-gguf 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 781476] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 781476] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && python scripts/train.py subjects/astronomy_guide.json --from-spec --technique onyx --preset fast-3b --export-gguf 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T22:02:17.252Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260517_fast-3b_llama3.2-3b_003",
+      "name": "External Train (astronomy_guide/20260517_fast-3b_llama3.2-3b_003)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T21:59:25.977Z",
+      "startedAt": "2026-05-17T21:59:25.977Z",
+      "finishedAt": "2026-05-17T21:59:25.977Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260517_fast-3b_llama3.2-3b_003/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_777325",
+      "name": "External Process (777325) fitness_coach",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "fitness_coach",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T21:57:04.414Z",
+      "startedAt": "2026-05-17T21:57:04.414Z",
+      "command": [
+        "external",
+        "python scripts/generate_dataset.py subjects/fitness_coach.json --technique onyx"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 777325] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 777325] discovered active process",
+        "python scripts/generate_dataset.py subjects/fitness_coach.json --technique onyx"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T21:57:08.183Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_777019",
+      "name": "External Process (777019) astronomy_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T21:56:53.183Z",
+      "startedAt": "2026-05-17T21:56:53.183Z",
+      "command": [
+        "external",
+        "python scripts/generate_dataset.py subjects/astronomy_guide.json --technique onyx"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 777019] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 777019] discovered active process",
+        "python scripts/generate_dataset.py subjects/astronomy_guide.json --technique onyx"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T21:56:59.183Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_747050",
+      "name": "External Process (747050) fitness_coach",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "fitness_coach",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T21:48:44.164Z",
+      "startedAt": "2026-05-17T21:48:44.164Z",
+      "command": [
+        "external",
+        "python3 ./ucore evaluate --baseline /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/fitness_coach/fitness_coach-lora-f16.gguf --spec subjects/fitness_coach.json --num-questions 10 --judge --base-model /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf --lora-weight 1.0 --port 8888 --gpu-layers 99 --max-tokens 256"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 747050] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 747050] discovered active process",
+        "python3 ./ucore evaluate --baseline /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/fitness_coach/fitness_coach-lora-f16.gguf --spec subjects/fitness_coach.json --num-questions 10 --judge --base-model /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf --lora-weight 1.0 --port 8888 --gpu-layers 99 --max-tokens 256"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T21:50:08.172Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_715475",
+      "name": "External Process (715475) astronomy_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T21:39:37.894Z",
+      "startedAt": "2026-05-17T21:39:37.894Z",
+      "command": [
+        "external",
+        "python /home/athar/Projects/Unsloth_Core/scripts/evaluate.py --baseline /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --spec /home/athar/Projects/Unsloth_Core/subjects/astronomy_guide.json --num-questions 10 --judge --base-model /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf --lora-weight 1.0 --port 8888 --gpu-layers 99 --max-tokens 256"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 715475] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 715475] discovered active process",
+        "python /home/athar/Projects/Unsloth_Core/scripts/evaluate.py --baseline /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --spec /home/athar/Projects/Unsloth_Core/subjects/astronomy_guide.json --num-questions 10 --judge --base-model /home/athar/.config/LLMUnity/models/llama-3.2-3b-instruct-q4_k_m.gguf --lora-weight 1.0 --port 8888 --gpu-layers 99 --max-tokens 256"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T21:41:12.638Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_706413",
+      "name": "External Process (706413)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T21:34:08.006Z",
+      "startedAt": "2026-05-17T21:34:08.006Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/fitness_coach"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 706413] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 706413] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/fitness_coach"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T21:34:12.305Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_700997",
+      "name": "External Process (700997) fitness_coach",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "fitness_coach",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T21:31:30.831Z",
+      "startedAt": "2026-05-17T21:31:30.831Z",
+      "command": [
+        "external",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore train subjects/fitness_coach.json --technique onyx --preset fast-3b --export-gguf 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 700997] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 700997] discovered active process",
+        "/bin/bash -c source unsloth_env/bin/activate && ./ucore train subjects/fitness_coach.json --technique onyx --preset fast-3b --export-gguf 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T21:34:14.006Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_fitness_coach_20260517_fast-3b_llama3.2-3b_002",
+      "name": "External Train (fitness_coach/20260517_fast-3b_llama3.2-3b_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "fitness_coach",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T21:31:30.676Z",
+      "startedAt": "2026-05-17T21:31:30.676Z",
+      "finishedAt": "2026-05-17T21:31:30.676Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/fitness_coach.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/fitness_coach/runs/20260517_fast-3b_llama3.2-3b_002/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_proc_695576",
       "name": "External Process (695576)",
       "type": "Export",
@@ -37781,6 +38483,21 @@
     }
   ],
   "logs": [
+    "[2026-05-17T22:06:08.327Z] [SYNC] discovered running external process pid=794714",
+    "[2026-05-17T22:05:26.320Z] [SYNC] discovered running external process pid=793562",
+    "[2026-05-17T22:05:05.321Z] [SYNC] discovered running external process pid=792939",
+    "[2026-05-17T22:02:23.323Z] [SYNC] discovered running external process pid=787457",
+    "[2026-05-17T22:02:23.254Z] [SYNC] imported external job ext_train_fitness_coach_20260517_fast-3b_llama3.2-3b_003",
+    "[2026-05-17T22:02:11.276Z] [SYNC] discovered running external process pid=787140",
+    "[2026-05-17T21:59:26.219Z] [SYNC] discovered running external process pid=781476",
+    "[2026-05-17T21:59:26.182Z] [SYNC] imported external job ext_train_astronomy_guide_20260517_fast-3b_llama3.2-3b_003",
+    "[2026-05-17T21:57:04.454Z] [SYNC] discovered running external process pid=777325",
+    "[2026-05-17T21:56:53.208Z] [SYNC] discovered running external process pid=777019",
+    "[2026-05-17T21:48:44.196Z] [SYNC] discovered running external process pid=747050",
+    "[2026-05-17T21:39:37.920Z] [SYNC] discovered running external process pid=715475",
+    "[2026-05-17T21:34:08.033Z] [SYNC] discovered running external process pid=706413",
+    "[2026-05-17T21:31:30.855Z] [SYNC] discovered running external process pid=700997",
+    "[2026-05-17T21:31:30.821Z] [SYNC] imported external job ext_train_fitness_coach_20260517_fast-3b_llama3.2-3b_002",
     "[2026-05-17T21:28:08.233Z] [SYNC] discovered running external process pid=695576",
     "[2026-05-17T21:25:16.272Z] [SYNC] discovered running external process pid=689996",
     "[2026-05-17T21:25:16.233Z] [SYNC] imported external job ext_train_astronomy_guide_20260517_fast-3b_llama3.2-3b_002",

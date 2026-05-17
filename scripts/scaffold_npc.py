@@ -4,8 +4,7 @@ scaffold_npc.py — Initialize directory structure and spec for a new NPC.
 
 Creates:
   subjects/{npc_key}.json                         — validated subject spec
-  subjects/reference_docs/{npc_key}_primer.md      — stub reference doc for Onyx indexing
-  subjects/datasets/{npc_key}/onyx/               — Onyx-grounded dataset dir
+  subjects/reference_docs/{npc_key}_primer.md      — stub reference doc for indexing
   subjects/datasets/{npc_key}/template/            — fast/smoke dataset dir
   outputs/{npc_key}/runs/                         — training output dir
   exports/{npc_key}/                              — GGUF export dir
@@ -25,8 +24,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from _config.paths import SNAKE_CASE_PATTERN
 
-# Only the techniques we use — Onyx (production) and template (smoke/fast)
-TECHNIQUES = ["onyx", "template"]
+# Only the techniques we use — template (smoke/fast) and others
+TECHNIQUES = ["template"]
 
 DEFAULT_SPEC: dict = {
     "npc_key": "{npc_key}",
@@ -66,7 +65,7 @@ DEFAULT_SPEC: dict = {
         ],
         "redirect_policy": "Redirects to safe educational content about the NPC's subject domain.",
     },
-    # Onyx-relevant research queries (no 'from: web' — Onyx indexes local docs)
+    # Research queries for knowledge retrieval
     "research_queries": [
         {
             "query": "Core concepts and fundamentals of {subject}",
@@ -96,7 +95,7 @@ DEFAULT_SPEC: dict = {
         "Max 3 sentences | Redirect off-topic questions to {subject}"
     ),
     "dataset": {
-        # Onyx-optimized distribution: 72 total examples
+        # Dataset distribution: 72 total examples
         "examples_per_category": {
             "identity": 8,
             "teaching": 32,
@@ -205,7 +204,7 @@ def scaffold(
             f"subjects/reference_docs/{npc_key}_primer.md (already exists — edit to fill in content)"
         )
 
-    # ── 3. Dataset folders (onyx + template only) ────────────────────────────
+    # ── 3. Dataset folders ──────────────────────────────────────────────────────
     for tech in TECHNIQUES:
         tech_dir = paths.dataset_dir(npc_key) / tech
         if force or not tech_dir.exists():
@@ -267,17 +266,13 @@ def scaffold(
         print("  Next steps:")
     print(f"    1. Edit subjects/reference_docs/{npc_key}_primer.md"
           f" with actual domain content")
-    print(f"    2. Index into Onyx: python scripts/onyx_index_repo.py"
-          f" subjects/{npc_key}.json --npc-key {npc_key}")
-    print(f"    3. Validate spec:  ./ucore validate-spec subjects/{npc_key}.json")
-    print(f"    4. Generate (smoke): ./ucore generate subjects/{npc_key}.json"
+    print(f"    2. Validate spec:  ./ucore validate-spec subjects/{npc_key}.json")
+    print(f"    3. Generate:       ./ucore generate subjects/{npc_key}.json"
           f" --technique template")
-    print(f"    5. Generate (prod):  ./ucore generate subjects/{npc_key}.json"
-          f" --technique onyx")
-    print(f"    6. Sanitize:       ./ucore sanitize"
-          f" subjects/datasets/{npc_key}/onyx/train.jsonl")
-    print(f"    7. Train & export: ./ucore train subjects/{npc_key}.json"
-          f" --technique onyx --preset fast-3b --export-gguf")
+    print(f"    4. Sanitize:       ./ucore sanitize"
+          f" subjects/datasets/{npc_key}/template/train.jsonl")
+    print(f"    5. Train & export: ./ucore train subjects/{npc_key}.json"
+          f" --technique template --preset fast-3b --export-gguf")
 
 
 def main() -> None:

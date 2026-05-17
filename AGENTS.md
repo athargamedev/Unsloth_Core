@@ -6,7 +6,7 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 1.  **Activate Env**: `source unsloth_env/bin/activate`
 2.  **Verify Setup**: `./ucore audit check`
 3.  **Smoke Test Pipeline**: `./ucore pipeline subjects/history_guide.json --preset smoke`
-4.  **Production Train**: `./ucore train subjects/history_guide.json --technique onyx --preset fast-3b --export-gguf`
+4.  **Production Train**: `./ucore train subjects/history_guide.json --technique template --preset fast-3b --export-gguf`
 5.  **Evaluate**: `./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf --spec subjects/history_guide.json --report-html`
 
 ## 📂 Project Logic Map (Where things live)
@@ -15,8 +15,8 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 | **Unified CLI** | `ucore` | Main entry point for all operations. |
 | **Core Scripts** | `scripts/` | Python implementation of the pipeline stages. |
 | **NPC Specs** | `subjects/` | JSON files defining NPC identity and knowledge. |
-| **Datasets** | `subjects/datasets/{npc}/{technique}/` | Generated training/validation data (JSONL). `onyx/` = production, `template/` = smoke. |
-| **Reference Docs** | `subjects/reference_docs/` | Centralized primer files for Onyx indexing and RAG generation. |
+| **Datasets** | `subjects/datasets/{npc}/{technique}/` | Generated training/validation data (JSONL). `template/` = default dataset directory. |
+| **Reference Docs** | `subjects/reference_docs/` | Centralized primer files for grounding dataset generation. |
 | **Schemas** | `subjects/schemas/` | JSON Schema validators for training data format. |
 | **Training Configs**| `configs/` | YAML base configs and presets. |
 | **LoRA Adapters** | `outputs/` | Checkpoints and final adapters from training. |
@@ -31,8 +31,8 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 Transforms a subject spec into a playable NPC:
 
 1.  **Generation**: `scripts/generate_dataset.py`
-    - **Onyx** (production): Retrieves context from indexed reference docs via local Onyx server, generates grounded Q&A pairs. Natural conversation templates (v2) with deterministic variant selection via `_pick_variant()`.
-    - **Template** (smoke only): Fast deterministic generation for pipeline testing. Never train production LoRAs on template data.
+    - **Template** (default): Fast deterministic generation for pipeline testing.
+    - **Ollama / OpenAI / Anthropic**: Available for production-quality generation using LLM-driven synthetic data.
     - Output: `subjects/datasets/{npc_key}/{technique}/train.jsonl`.
 
 2.  **Sanitization**: `scripts/sanitize_dataset.py`
@@ -58,31 +58,30 @@ Transforms a subject spec into a playable NPC:
 
 6.  **Feedback Loop**: `scripts/feedback_loop.py` + `scripts/evaluate.py --feedback-json`
     - Analyzes eval results → identifies weak concepts → determines gap type:
-      - `training_density`: Onyx has docs, model didn't learn → regenerate more examples
-      - `knowledge_gap`: Onyx has no relevant docs → add primer, re-index
+      - `training_density`: Model didn't learn the topic → regenerate more examples
+      - `knowledge_gap`: No relevant reference material → add primer, re-index
     - Auto-retrain mode: `./ucore feedback npc.json --auto-retrain --baseline ...`
     - **CRITICAL NOTE (6GB VRAM)**: Do NOT use `--auto-retrain` if doing LLM-grounded generation on an RTX 3060 6GB. Run generation (`--auto`) first, unload Ollama from memory, then manually run training to avoid OOM crashes.
     - Groups results by category/concept for targeted analysis.
 
 ### 🔍 Knowledge Gap Detection
-| Gap Type | Onyx Has Docs? | Cause | Fix |
-|----------|---------------|-------|-----|
-| `training_density` | Yes | Not enough training examples | Regenerate with `--concept-focus` |
-| `knowledge_gap` | No | Missing reference material | Add reference docs + re-index |
+| Gap Type | Cause | Fix |
+|----------|-------|-----|
+| `training_density` | Not enough training examples | Regenerate with `--concept-focus` |
+| `knowledge_gap` | Missing reference material | Add reference docs + re-index |
 
 ## 🏗️ NPC Scaffold Structure
 When creating a new NPC with `./ucore init <npc_key> --subject <subject>`:
 
 ```
 subjects/{npc_key}.json                          — spec with 4-section system prompt
-subjects/reference_docs/{npc_key}_primer.md       — stub primer for Onyx indexing
-subjects/datasets/{npc_key}/onyx/                 — production Onyx-grounded datasets
+subjects/reference_docs/{npc_key}_primer.md       — stub primer for indexing
 subjects/datasets/{npc_key}/template/             — smoke/fast datasets only
 outputs/{npc_key}/runs/                           — training checkpoints
 exports/{npc_key}/                                — GGUF exports
 ```
 
-Only `onyx` and `template` technique directories are created. Reference docs are centralized at `subjects/reference_docs/` (not per-NPC).
+Only `template` technique directory is created. Reference docs are centralized at `subjects/reference_docs/` (not per-NPC).
 
 ## 📜 Conventions
 - **NPC Keys**: Always `snake_case` (e.g., `history_guide`).
@@ -97,7 +96,7 @@ Only `onyx` and `template` technique directories are created. Reference docs are
   | dialogue | 16 | Natural conversation handling |
   | quest | 8 | Scenario-based interactions |
   | refusal | 8 | Safe boundary responses |
-  **Total: 72 examples** per NPC (Onyx production dataset).
+  **Total: 72 examples** per NPC.
 
 ## 💾 Supabase Integration (optional)
 A local Supabase instance can track:
@@ -120,7 +119,6 @@ A local Supabase instance can track:
   - `--preset safe-any` if CUDA OOM occurs. Use this if Ollama is running in the background, or manually unload Ollama first with `curl http://localhost:11434/api/generate -d '{"model": "llama3.1:latest", "keep_alive": 0}'`.
   - `--wandb` for W&B experiment tracking.
 - **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. `llama-server` (inference with `--lora` support), `llama-quantize` (fast local quantization), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary.
-- **Onyx Generation v2**: Uses natural conversation templates (not "Based on our material:" framing). Deterministic variant selection via `_pick_variant()` using `hash(f"{concept}:{category}")`. Content cleaner strips all markdown headings, bold markers, list prefixes.
 - **Error Handling**: Check `outputs/{npc_key}/runs/` for TensorBoard logs, `eval/results/` for validation metrics.
 - **Before generating a dataset**: Read the `subjects/*.json` spec and the `subjects/reference_docs/*.md` primer to understand content grounding.
 
@@ -139,7 +137,7 @@ Weights & Biases tracks every training run with:
 - GPU telemetry and system monitoring
 
 ## 🖥️ Active NPCs
-| NPC | Key | Subject | Loss (Onyx v2) | Eval vs Template |
+| NPC | Key | Subject | Loss | Eval vs Template |
 |-----|-----|---------|----------------|-----------------|
 | History Guide | `history_guide` | World history | 1.144 (v4) | Candidate 100% tie/win vs v2 |
 | Chef Assistant | `chef_assistant` | Culinary arts | 1.075 (v4) | Candidate 100% tie/win vs v2 |
@@ -154,8 +152,7 @@ The two active NPCs are deployed as LoRA GGUFs to Unity StreamingAssets. Base mo
 
 | Document | Purpose |
 |----------|---------|
-| `docs/TRAINING_WORKFLOW_CONTEXT.md` | Full training pipeline detail — stages, presets, flags, data flow, Onyx integration |
-| `docs/ONYX_WORKFLOW.md` | Onyx setup, indexing, and RAG-based generation workflow |
+| `docs/TRAINING_WORKFLOW_CONTEXT.md` | Full training pipeline detail — stages, presets, flags, data flow |
 | `README.md` | Project overview and quick start |
 | `AGENTS.md` | (this file) Quick-reference for AI agents |
 

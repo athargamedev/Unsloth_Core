@@ -3,7 +3,7 @@
 validate_config.py — Resolve and validate effective training config without running training.
 
 Usage:
-  python scripts/validate_config.py --spec subjects/chemistry_instructor.json --preset fast-3b --data subjects/datasets/chemistry_instructor/onyx/train.jsonl
+  python scripts/validate_config.py --spec subjects/chemistry_instructor.json --preset fast-3b --data subjects/datasets/chemistry_instructor/template/train.jsonl
   python scripts/validate_config.py --config configs/lora-sft-base.yaml --preset quality-1.7b
 """
 
@@ -113,7 +113,7 @@ def validate(args):
             warnings.append(f"Dataset npc_key '{d_npc}' differs from target npc_key '{npc_key}'.")
         if d_technique and d_technique not in paths.DATASET_TECHNIQUES:
             warnings.append(f"Dataset technique '{d_technique}' is not in {paths.DATASET_TECHNIQUES}.")
-        recommended_technique = "docs" if npc_key == "workflow_assistant" else "onyx"
+        recommended_technique = "docs" if npc_key == "workflow_assistant" else "template"
         if d_technique and d_technique != recommended_technique:
             warnings.append(
                 f"Technique '{d_technique}' selected. For production training of '{npc_key}', {recommended_technique} is recommended."

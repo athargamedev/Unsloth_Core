@@ -54,24 +54,9 @@ def main():
     gen_p = subparsers.add_parser("generate", help="Generate dataset from spec")
     gen_p.add_argument("spec", help="Path to subject spec JSON")
     gen_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
-    gen_p.add_argument("--technique", default="onyx", choices=["docs", "onyx", "ollama", "template", "openai", "anthropic"], help="Generation technique")
+    gen_p.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"], help="Generation technique")
     gen_p.add_argument("--docs-manifest", help="Docs corpus manifest override for --technique docs")
-    gen_p.add_argument("--onyx-url", help="Local Onyx base URL for --technique onyx")
-    gen_p.add_argument("--onyx-api-key", help="Optional Onyx bearer token")
-    gen_p.add_argument("--onyx-max-results", type=int, help="Max Onyx chunks per retrieval query")
-    gen_p.add_argument("--onyx-queries", type=int, help="Number of Onyx retrieval queries per generated example")
-    gen_p.add_argument("--onyx-max-context-chars", type=int, help="Max Onyx context chars per example")
-    gen_p.add_argument("--onyx-document-set", action="append", dest="onyx_document_sets", help="Limit Onyx retrieval to a document set; repeatable")
-    gen_p.add_argument("--onyx-check", action="store_true", help="Check Onyx coverage before generation")
-    gen_p.add_argument("--onyx-min-coverage", type=float, default=None, help="Abort Onyx generation below this coverage ratio")
-    gen_p.add_argument("--onyx-min-score", type=float, default=None, help="Minimum Onyx example quality score; lower-scoring examples are retried/skipped")
-    gen_p.add_argument("--onyx-allow-partial", action="store_true", help="Allow Onyx generation to write fewer examples than requested when quality filtering rejects examples")
-    gen_p.add_argument("--onyx-prep", action="store_true", help="Index targeted subject/repo context before Onyx generation and re-check coverage")
-    gen_p.add_argument("--onyx-prep-passes", type=int, help="Maximum Onyx prep/index/check passes before generation")
-    gen_p.add_argument("--onyx-index-doc", action="append", dest="onyx_index_docs", help="Additional file path or glob to index during --onyx-prep; repeatable")
-    gen_p.add_argument("--onyx-prep-sleep", type=float, help="Seconds to wait after indexing before re-checking coverage")
-    gen_p.add_argument("--onyx-use-llm", action="store_true", help="Use Ollama to rewrite retrieved Onyx context into examples")
-    gen_p.add_argument("--model", help="LLM model name for ollama/openai/anthropic or Onyx LLM rewrite")
+    gen_p.add_argument("--model", help="LLM model name for ollama/openai/anthropic")
     gen_p.add_argument("--concept-focus", action="append", dest="concept_focus",
                         help="Focus on specific categories (repeatable, boosts example count)")
 
@@ -86,7 +71,7 @@ def main():
     train_p.add_argument("config_or_spec", help="Path to config YAML or subject spec")
     train_p.add_argument("--from-spec", action="store_true", help="Train directly from spec")
     train_p.add_argument("--preset", help="Training preset")
-    train_p.add_argument("--technique", choices=["docs", "onyx", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
+    train_p.add_argument("--technique", choices=["docs", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
     train_p.add_argument("--model", help="Base model ID/path override")
     train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training (adapter mode for Unity)")
     train_p.add_argument("--full-merge-export", action="store_true",
@@ -222,7 +207,7 @@ def main():
     cr_p.add_argument("--judge", action="store_true", help="Use local Ollama judge")
 
     # Feedback (Self-Improving Dataset Factory)
-    fb_p = subparsers.add_parser("feedback", help="Run the Onyx-powered self-improving feedback loop")
+    fb_p = subparsers.add_parser("feedback", help="Run the self-improving feedback loop")
     fb_p.add_argument("feedback_json", help="Path to feedback JSON from evaluate --feedback-json")
     fb_p.add_argument("--win-rate-threshold", type=float, default=0.5, help="Min win rate (default: 0.5)")
     fb_p.add_argument("--quality-threshold", type=float, default=25.0, help="Max quality score, lower=better (default: 25)")
@@ -230,7 +215,7 @@ def main():
     fb_p.add_argument("--dry-run", action="store_true", help="Analyze without regenerating")
     fb_p.add_argument("--auto", "-y", action="store_true", help="Auto-accept all suggestions")
     fb_p.add_argument("--skip-gap-detection", action="store_true",
-                       help="Skip Onyx knowledge coverage check")
+                       help="Skip knowledge coverage check")
     fb_p.add_argument("--save-gaps", help="Save knowledge gap report to JSON file")
     fb_p.add_argument("--json", action="store_true",
                        help="Output machine-readable JSON summary")
@@ -251,24 +236,9 @@ def main():
     pipe_p.add_argument("spec", help="Path to subject spec JSON")
     pipe_p.add_argument("--preset", default="fast-3b", help="Training preset")
     pipe_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
-    pipe_p.add_argument("--technique", default="onyx", choices=["docs", "onyx", "ollama", "template", "openai", "anthropic"], help="Generation technique")
+    pipe_p.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"], help="Generation technique")
     pipe_p.add_argument("--docs-manifest", help="Docs corpus manifest override for --technique docs")
-    pipe_p.add_argument("--onyx-url", help="Local Onyx base URL for --technique onyx")
-    pipe_p.add_argument("--onyx-api-key", help="Optional Onyx bearer token")
-    pipe_p.add_argument("--onyx-max-results", type=int, help="Max Onyx chunks per retrieval query")
-    pipe_p.add_argument("--onyx-queries", type=int, help="Number of Onyx retrieval queries per generated example")
-    pipe_p.add_argument("--onyx-max-context-chars", type=int, help="Max Onyx context chars per example")
-    pipe_p.add_argument("--onyx-document-set", action="append", dest="onyx_document_sets", help="Limit Onyx retrieval to a document set; repeatable")
-    pipe_p.add_argument("--onyx-check", action="store_true", help="Check Onyx coverage before generation")
-    pipe_p.add_argument("--onyx-min-coverage", type=float, default=None, help="Abort Onyx generation below this coverage ratio")
-    pipe_p.add_argument("--onyx-min-score", type=float, default=None, help="Minimum Onyx example quality score; lower-scoring examples are retried/skipped")
-    pipe_p.add_argument("--onyx-allow-partial", action="store_true", help="Allow Onyx generation to write fewer examples than requested when quality filtering rejects examples")
-    pipe_p.add_argument("--onyx-prep", action="store_true", help="Index targeted subject/repo context before Onyx generation and re-check coverage")
-    pipe_p.add_argument("--onyx-prep-passes", type=int, help="Maximum Onyx prep/index/check passes before generation")
-    pipe_p.add_argument("--onyx-index-doc", action="append", dest="onyx_index_docs", help="Additional file path or glob to index during --onyx-prep; repeatable")
-    pipe_p.add_argument("--onyx-prep-sleep", type=float, help="Seconds to wait after indexing before re-checking coverage")
-    pipe_p.add_argument("--onyx-use-llm", action="store_true", help="Use Ollama to rewrite retrieved Onyx context into examples")
-    pipe_p.add_argument("--model", help="LLM model name for the generation stage (ollama/openai/anthropic/Onyx LLM rewrite)")
+    pipe_p.add_argument("--model", help="LLM model name for the generation stage (ollama/openai/anthropic)")
     pipe_p.add_argument("--track", action="store_true", help="Track results in Supabase")
     pipe_p.add_argument("--wandb", action="store_true", help="Enable W&B logging during training")
     pipe_p.add_argument("--full-merge-export", action="store_true",
@@ -366,38 +336,6 @@ def main():
             cmd.append("--ollama")
         if args.docs_manifest:
             cmd.extend(["--docs-manifest", args.docs_manifest])
-        if args.onyx_url:
-            cmd.extend(["--onyx-url", args.onyx_url])
-        if args.onyx_api_key:
-            cmd.extend(["--onyx-api-key", args.onyx_api_key])
-        if args.onyx_max_results is not None:
-            cmd.extend(["--onyx-max-results", str(args.onyx_max_results)])
-        if args.onyx_queries is not None:
-            cmd.extend(["--onyx-queries", str(args.onyx_queries)])
-        if args.onyx_max_context_chars is not None:
-            cmd.extend(["--onyx-max-context-chars", str(args.onyx_max_context_chars)])
-        if args.onyx_document_sets:
-            for document_set in args.onyx_document_sets:
-                cmd.extend(["--onyx-document-set", document_set])
-        if args.onyx_check:
-            cmd.append("--onyx-check")
-        if args.onyx_min_coverage is not None:
-            cmd.extend(["--onyx-min-coverage", str(args.onyx_min_coverage)])
-        if args.onyx_min_score is not None:
-            cmd.extend(["--onyx-min-score", str(args.onyx_min_score)])
-        if args.onyx_allow_partial:
-            cmd.append("--onyx-allow-partial")
-        if args.onyx_prep:
-            cmd.append("--onyx-prep")
-        if args.onyx_prep_passes is not None:
-            cmd.extend(["--onyx-prep-passes", str(args.onyx_prep_passes)])
-        if args.onyx_index_docs:
-            for index_doc in args.onyx_index_docs:
-                cmd.extend(["--onyx-index-doc", index_doc])
-        if args.onyx_prep_sleep is not None:
-            cmd.extend(["--onyx-prep-sleep", str(args.onyx_prep_sleep)])
-        if args.onyx_use_llm:
-            cmd.append("--onyx-use-llm")
         if args.model:
             cmd.extend(["--model", args.model])
         if args.concept_focus:
@@ -631,38 +569,6 @@ def main():
             gen_cmd.append("--ollama")
         if args.docs_manifest:
             gen_cmd.extend(["--docs-manifest", args.docs_manifest])
-        if args.onyx_url:
-            gen_cmd.extend(["--onyx-url", args.onyx_url])
-        if args.onyx_api_key:
-            gen_cmd.extend(["--onyx-api-key", args.onyx_api_key])
-        if args.onyx_max_results is not None:
-            gen_cmd.extend(["--onyx-max-results", str(args.onyx_max_results)])
-        if args.onyx_queries is not None:
-            gen_cmd.extend(["--onyx-queries", str(args.onyx_queries)])
-        if args.onyx_max_context_chars is not None:
-            gen_cmd.extend(["--onyx-max-context-chars", str(args.onyx_max_context_chars)])
-        if args.onyx_document_sets:
-            for document_set in args.onyx_document_sets:
-                gen_cmd.extend(["--onyx-document-set", document_set])
-        if args.onyx_check:
-            gen_cmd.append("--onyx-check")
-        if args.onyx_min_coverage is not None:
-            gen_cmd.extend(["--onyx-min-coverage", str(args.onyx_min_coverage)])
-        if args.onyx_min_score is not None:
-            gen_cmd.extend(["--onyx-min-score", str(args.onyx_min_score)])
-        if args.onyx_allow_partial:
-            gen_cmd.append("--onyx-allow-partial")
-        if args.onyx_prep:
-            gen_cmd.append("--onyx-prep")
-        if args.onyx_prep_passes is not None:
-            gen_cmd.extend(["--onyx-prep-passes", str(args.onyx_prep_passes)])
-        if args.onyx_index_docs:
-            for index_doc in args.onyx_index_docs:
-                gen_cmd.extend(["--onyx-index-doc", index_doc])
-        if args.onyx_prep_sleep is not None:
-            gen_cmd.extend(["--onyx-prep-sleep", str(args.onyx_prep_sleep)])
-        if args.onyx_use_llm:
-            gen_cmd.append("--onyx-use-llm")
         if args.model:
             gen_cmd.extend(["--model", args.model])
         run_cmd(gen_cmd)

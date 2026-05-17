@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-feedback_loop.py — Onyx-Powered Self-Improving Feedback Loop
+feedback_loop.py — Self-Improving Feedback Loop
 
 Ingests structured evaluation results from evaluate.py's --feedback-json output,
 identifies weak concepts (low win rate, poor quality, constraint violations),
@@ -149,73 +149,9 @@ def print_analysis(feedback_data, weak_concepts):
         print(f"\nNo weak concepts found. Model is performing well across all areas.")
 
 
-# ── Knowledge Gap Detection ─────────────────────────────────────────────────
-
-def detect_knowledge_gaps(feedback_data, weak_concepts, onyx_client=None, npc_key=None):
-    if onyx_client is None:
-        from scripts.onyx_client import OnyxClient
-        onyx_client = OnyxClient()
-
-    results = []
-    for wc in weak_concepts:
-        concept = wc["concept"]
-        concept_name = concept.split("/")[1] if "/" in concept else concept
-        category = concept.split("/")[0] if "/" in concept else "general"
-        query = f"{concept_name} {category} education teaching"
-        doc_sets = [npc_key] if npc_key else None
-        onyx_results = []
-        try:
-            raw_results = onyx_client.search(query, max_results=5, document_sets=doc_sets)
-            onyx_results = [
-                {"title": r.get("title", ""), "source": r.get("source_type", ""), "score": r.get("score")}
-                for r in raw_results
-            ]
-        except Exception as e:
-            print(f"  [gap] Onyx query failed for '{concept}': {e}")
-
-        if len(onyx_results) == 0:
-            gap_type = "knowledge_gap"
-            recommendation = (
-                f"Add reference docs for '{concept_name}' to subjects/reference_docs/ "
-                f"(e.g., a markdown primer with explanations, examples, and common misconceptions), "
-                f"then re-index with onyx_index_repo.py"
-            )
-        else:
-            gap_type = "training_density"
-            recommendation = (
-                f"Onyx has {len(onyx_results)} relevant docs for '{concept_name}'. "
-                f"Generate more training examples with --concept-focus {category}"
-            )
-        results.append({
-            "concept": concept, "reasons": wc["reasons"],
-            "gap_type": gap_type, "onyx_results_count": len(onyx_results),
-            "onyx_results": onyx_results[:3],
-            "recommendation": recommendation,
-        })
-    return results
 
 
-def print_gap_report(gap_results):
-    print(f"\n{'=' * 60}")
-    print(f"  KNOWLEDGE GAP ANALYSIS")
-    print(f"{'=' * 60}")
-    knowledge_gaps = [g for g in gap_results if g["gap_type"] == "knowledge_gap"]
-    density_gaps = [g for g in gap_results if g["gap_type"] == "training_density"]
-    if knowledge_gaps:
-        print(f"\n  Knowledge Gaps ({len(knowledge_gaps)}):")
-        print(f"  ─────────────────────────────────────────────────────")
-        for g in knowledge_gaps:
-            print(f"  - {g['concept']}\n    {g['recommendation']}")
-    if density_gaps:
-        print(f"\n  Training Density Issues ({len(density_gaps)}):")
-        print(f"  ─────────────────────────────────────────────────────")
-        for g in density_gaps:
-            print(f"  - {g['concept']}\n    Onyx has {g['onyx_results_count']} relevant docs\n    {g['recommendation']}")
-    if not knowledge_gaps and not density_gaps:
-        print(f"\n  All concepts well-covered. No issues detected.")
-    else:
-        print(f"\n  Summary: {len(knowledge_gaps)} knowledge gaps, {len(density_gaps)} training density issues")
-    return gap_results
+
 
 
 # ── Regeneration ────────────────────────────────────────────────────────────
@@ -230,10 +166,7 @@ def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_pat
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "generate_dataset.py"),
         str(spec_path),
-        "--technique", "onyx",
-        "--onyx-queries", "3",
-        "--onyx-allow-partial",
-        "--onyx-use-llm",
+        "--technique", "template",
         "--model", "llama3.1:latest",
     ]
     for cat in sorted(focus_categories):
@@ -258,7 +191,7 @@ def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_pat
 
 # ── Auto-Retrain ────────────────────────────────────────────────────────────
 
-def run_sanitize(npc_key, technique="onyx", dry_run=False):
+def run_sanitize(npc_key, technique="template", dry_run=False):
     """Sanitize the regenerated dataset."""
     dataset_path = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
     clean_path = f"subjects/datasets/{npc_key}/{technique}/train_clean.jsonl"
@@ -280,7 +213,7 @@ def run_sanitize(npc_key, technique="onyx", dry_run=False):
         return True
 
 
-def run_training(npc_key, preset, technique="onyx", dry_run=False):
+def run_training(npc_key, preset, technique="template", dry_run=False):
     """Train a new model with the regenerated dataset."""
     spec_path = PROJECT_ROOT / "subjects" / f"{npc_key}.json"
     if not spec_path.exists():
@@ -388,7 +321,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       save_gaps=None, json_output=False,
                       auto_retrain=False, train_preset=DEFAULT_TRAIN_PRESET,
                       baseline_gguf=None):
-    """Full feedback loop: analyze → knowledge gap detection → regenerate → optionally retrain."""
+    """Full feedback loop: analyze → regenerate → optionally retrain."""
     # Capture human-readable output for --json mode
     tee = Tee() if json_output else None
 
@@ -435,9 +368,8 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
     gap_results = []
     if not skip_gap_detection:
         print(f"\n{'─' * 40}")
-        print("  Checking Onyx knowledge coverage for weak concepts...")
-        gap_results = detect_knowledge_gaps(feedback_data, weak_concepts, npc_key=npc_key)
-        print_gap_report(gap_results)
+        print("  Checking knowledge coverage for weak concepts...")
+        print("  (gap detection requires external service — skipping)")
         result["gap_results"] = gap_results
 
         if save_gaps:
@@ -541,8 +473,6 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
         "status": "regenerated",
         "weak_concepts_count": len(weak_concepts),
         "focus_categories": focus_categories,
-        "knowledge_gaps": len([g for g in gap_results if g["gap_type"] == "knowledge_gap"]),
-        "training_density_issues": len([g for g in gap_results if g["gap_type"] == "training_density"]),
         "last_feedback": datetime.now(timezone.utc).isoformat(),
         "auto_retrain_complete": auto_retrain and trained_gguf is not None,
     }
@@ -579,7 +509,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Onyx-Powered Self-Improving Feedback Loop",
+        description="Self-Improving Feedback Loop",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -593,7 +523,7 @@ def main():
     # Behavior
     parser.add_argument("--dry-run", action="store_true", help="Analyze and plan without executing")
     parser.add_argument("--auto", "-y", action="store_true", help="Auto-accept all suggestions")
-    parser.add_argument("--skip-gap-detection", action="store_true", help="Skip Onyx coverage check")
+    parser.add_argument("--skip-gap-detection", action="store_true", help="Skip knowledge coverage check")
     parser.add_argument("--save-gaps", help="Save gap analysis to JSON file")
     parser.add_argument("--json", action="store_true", help="Output machine-readable JSON summary")
 

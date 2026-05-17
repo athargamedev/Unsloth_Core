@@ -232,7 +232,7 @@ def get_config_from_spec(spec_path, preset=None, overrides=None):
     npc_key = spec_path.stem
 
     # Determine technique from spec or default
-    technique = spec.get("technique", spec.get("dataset", {}).get("technique", "onyx"))
+    technique = spec.get("technique", spec.get("dataset", {}).get("technique", "template"))
 
     # Base model from spec (model_id) or spec.llm.model_name
     model_id = (
@@ -594,7 +594,7 @@ def main():
                         help="Path to YAML config or subject spec (with --from-spec)")
     parser.add_argument("--from-spec", action="store_true",
                         help="Interpret config_or_spec as a subject spec JSON")
-    parser.add_argument("--technique", choices=["docs", "onyx", "ollama", "template", "openai", "anthropic"],
+    parser.add_argument("--technique", choices=["docs", "ollama", "template", "openai", "anthropic"],
                         help="Override dataset technique when training from spec")
 
     # Logging / output

@@ -25,10 +25,8 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 
 | Technique | Description | When to use |
 |-----------|-------------|-------------|
-| `onyx` | **Default.** Retrieves relevant context from local Onyx knowledge base, then generates grounded Q&A | Production: when Onyx is indexed with reference docs from the subject domain |
-| `template` | Simple template-based generation | Smoke tests and pipeline testing only |
-
-Techniques removed from active use: `docs`, `ollama`, `openai`, `anthropic`. Onyx is the only production technique; template is for smoke testing.
+| `template` | **Default.** Fast deterministic generation for pipeline testing. | Smoke tests and pipeline testing |
+| `ollama` / `openai` / `anthropic` | LLM-driven synthetic data generation | Production-quality datasets using external LLMs |
 
 **Output:** `subjects/datasets/{npc_key}/{technique}/train.jsonl`
 
@@ -42,25 +40,8 @@ Techniques removed from active use: `docs`, `ollama`, `openai`, `anthropic`. Ony
 **Key CLI flags:**
 ```bash
 ./ucore generate subjects/history_guide.json
-./ucore generate subjects/history_guide.json --technique onyx --onyx-prep
 ./ucore generate subjects/history_guide.json --technique template
-./ucore generate subjects/history_guide.json --technique onyx --onyx-use-llm --model llama3.1
-```
-
-**Example output metadata:**
-```json
-{
-  "source": "onyx",
-  "onyx_query": "explain Roman Empire for a beginner",
-  "onyx_document_sets": ["history_guide"],
-  "onyx_queries": ["explain Roman Empire", "define Roman Republic with examples"],
-  "onyx_query_count": 2,
-  "onyx_document_ids": ["doc-id"],
-  "onyx_titles": ["history_primer.md"],
-  "onyx_scores": [0.91],
-  "onyx_context_chunks": 1,
-  "onyx_quality_score": 0.86
-}
+./ucore generate subjects/history_guide.json --technique ollama --model llama3.1
 ```
 
 ### Stage 2: Sanitize Dataset

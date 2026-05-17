@@ -99,7 +99,7 @@ def main():
         name="NPC Knowledge Evaluator",
         system_prompt="""You are an expert evaluator assessing how well an NPC (non-player character) has learned domain-specific knowledge during fine-tuning. Rate each response on Factual Accuracy, Completeness, Clarity, and Persona Adherence on a 1-5 scale.""",
         description="Evaluator persona for assessing NPC LoRA fine-tuning quality",
-        tags=["npc-evaluation", "onyx-feedback-loop"]
+        tags=["npc-evaluation"]
     )
     print(f"✓ System prompt ID: {system_prompt_id}")
 
