@@ -2,6 +2,801 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2594839",
+      "name": "External Process (2594839) history_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "running",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T01:56:34.727Z",
+      "startedAt": "2026-05-17T01:56:34.727Z",
+      "command": [
+        "external",
+        "python3 ./ucore train subjects/history_guide.json --preset fast-3b --technique onyx"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2594839] discovered active process",
+        "python3 ./ucore train subjects/history_guide.json --preset fast-3b --technique onyx"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_train_history_guide_20260516_default_001",
+      "name": "External Train (history_guide/20260516_default_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T01:56:34.131Z",
+      "startedAt": "2026-05-17T01:56:34.131Z",
+      "finishedAt": "2026-05-17T01:56:34.131Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260516_default_001/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_space_guide_onyx",
+      "name": "External Dataset Sanitize (space_guide/onyx)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "space_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T01:56:23.074Z",
+      "startedAt": "2026-05-17T01:56:23.074Z",
+      "finishedAt": "2026-05-17T01:56:23.074Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/space_guide/onyx/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/space_guide/onyx/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_history_guide_onyx",
+      "name": "External Dataset Sanitize (history_guide/onyx)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T01:56:23.010Z",
+      "startedAt": "2026-05-17T01:56:23.010Z",
+      "finishedAt": "2026-05-17T01:56:23.010Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/history_guide/onyx/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/history_guide/onyx/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_chef_assistant_onyx",
+      "name": "External Dataset Sanitize (chef_assistant/onyx)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T01:56:23.043Z",
+      "startedAt": "2026-05-17T01:56:23.043Z",
+      "finishedAt": "2026-05-17T01:56:23.043Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/chef_assistant/onyx/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/chef_assistant/onyx/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_space_guide_onyx",
+      "name": "External Dataset Generate (space_guide/onyx)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "space_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T01:56:13.694Z",
+      "startedAt": "2026-05-17T01:56:13.694Z",
+      "finishedAt": "2026-05-17T01:56:13.694Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/space_guide.json",
+        "--technique",
+        "onyx"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/space_guide/onyx/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2593854",
+      "name": "External Process (2593854) space_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "space_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T01:56:07.556Z",
+      "startedAt": "2026-05-17T01:56:07.556Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate python scripts/generate_dataset.py subjects/space_guide.json \\   --technique onyx --onyx-check 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2593854] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2593854] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate python scripts/generate_dataset.py subjects/space_guide.json \\   --technique onyx --onyx-check 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T01:56:13.724Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_dataset_chef_assistant_onyx",
+      "name": "External Dataset Generate (chef_assistant/onyx)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T01:56:03.738Z",
+      "startedAt": "2026-05-17T01:56:03.738Z",
+      "finishedAt": "2026-05-17T01:56:03.738Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/chef_assistant.json",
+        "--technique",
+        "onyx"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/chef_assistant/onyx/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2593504",
+      "name": "External Process (2593504) chef_assistant",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T01:55:58.575Z",
+      "startedAt": "2026-05-17T01:55:58.575Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate python scripts/generate_dataset.py subjects/chef_assistant.json \\   --technique onyx --onyx-check 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2593504] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2593504] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate python scripts/generate_dataset.py subjects/chef_assistant.json \\   --technique onyx --onyx-check 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T01:56:04.725Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_dataset_history_guide_onyx",
+      "name": "External Dataset Generate (history_guide/onyx)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T01:55:19.947Z",
+      "startedAt": "2026-05-17T01:55:19.947Z",
+      "finishedAt": "2026-05-17T01:55:19.947Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/history_guide.json",
+        "--technique",
+        "onyx"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/history_guide/onyx/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2591923",
+      "name": "External Process (2591923) history_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T01:55:14.442Z",
+      "startedAt": "2026-05-17T01:55:14.442Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate python scripts/generate_dataset.py subjects/history_guide.json \\   --technique onyx --onyx-check 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2591923] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2591923] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate python scripts/generate_dataset.py subjects/history_guide.json \\   --technique onyx --onyx-check 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T01:55:22.450Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2589100",
+      "name": "External Process (2589100) space_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "space_guide",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T01:53:45.340Z",
+      "startedAt": "2026-05-17T01:53:45.340Z",
+      "command": [
+        "external",
+        "python scripts/evaluate.py --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/space_guide/space_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/space_guide.json --report-html --feedback-json eval/results/feedback/space_guide_baseline.json --num-questions 7"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2589100] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2589100] discovered active process",
+        "python scripts/evaluate.py --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/space_guide/space_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/space_guide.json --report-html --feedback-json eval/results/feedback/space_guide_baseline.json --num-questions 7"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T01:54:06.387Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2589096",
+      "name": "External Process (2589096) space_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "space_guide",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T01:53:45.340Z",
+      "startedAt": "2026-05-17T01:53:45.340Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate BASE_MODEL=\"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\"  mkdir -p eval/results/feedback eval/reports/space_guide  python scripts/evaluate.py \\   --baseline \"$BASE_MODEL\" \\   --candidate exports/space_guide/space_guide-lora-f16.gguf \\   --base-model \"$BASE_MODEL\" \\   --spec subjects/space_guide.json \\   --report-html \\   --feedback-json eval/results/feedback/space_guide_baseline.json \\   --num-questions 7 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[STATUS][export] substep=adapter_done state=completed",
+            "[EXTERNAL][PID 2589096] Process no longer detected",
+            "[STATUS][export] substep=adapter_done state=completed"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2589096] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate BASE_MODEL=\"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\"  mkdir -p eval/results/feedback eval/reports/space_guide  python scripts/evaluate.py \\   --baseline \"$BASE_MODEL\" \\   --candidate exports/space_guide/space_guide-lora-f16.gguf \\   --base-model \"$BASE_MODEL\" \\   --spec subjects/space_guide.json \\   --report-html \\   --feedback-json eval/results/feedback/space_guide_baseline.json \\   --num-questions 7 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T01:54:06.387Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2588150",
+      "name": "External Process (2588150) chef_assistant",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T01:53:17.267Z",
+      "startedAt": "2026-05-17T01:53:17.267Z",
+      "command": [
+        "external",
+        "python scripts/evaluate.py --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/chef_assistant.json --report-html --feedback-json eval/results/feedback/chef_assistant_baseline.json --num-questions 7"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2588150] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2588150] discovered active process",
+        "python scripts/evaluate.py --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/chef_assistant.json --report-html --feedback-json eval/results/feedback/chef_assistant_baseline.json --num-questions 7"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T01:53:40.715Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2588146",
+      "name": "External Process (2588146) chef_assistant",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T01:53:17.267Z",
+      "startedAt": "2026-05-17T01:53:17.267Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate BASE_MODEL=\"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\"  mkdir -p eval/results/feedback eval/reports/chef_assistant  python scripts/evaluate.py \\   --baseline \"$BASE_MODEL\" \\   --candidate exports/chef_assistant/chef_assistant-lora-f16.gguf \\   --base-model \"$BASE_MODEL\" \\   --spec subjects/chef_assistant.json \\   --report-html \\   --feedback-json eval/results/feedback/chef_assistant_baseline.json \\   --num-questions 7 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[STATUS][export] substep=adapter_done state=completed",
+            "[EXTERNAL][PID 2588146] Process no longer detected",
+            "[STATUS][export] substep=adapter_done state=completed"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2588146] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate BASE_MODEL=\"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\"  mkdir -p eval/results/feedback eval/reports/chef_assistant  python scripts/evaluate.py \\   --baseline \"$BASE_MODEL\" \\   --candidate exports/chef_assistant/chef_assistant-lora-f16.gguf \\   --base-model \"$BASE_MODEL\" \\   --spec subjects/chef_assistant.json \\   --report-html \\   --feedback-json eval/results/feedback/chef_assistant_baseline.json \\   --num-questions 7 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T01:53:40.715Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2587098",
+      "name": "External Process (2587098) history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T01:52:44.133Z",
+      "startedAt": "2026-05-17T01:52:44.133Z",
+      "command": [
+        "external",
+        "python scripts/evaluate.py --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/history_guide/history_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/history_guide.json --report-html --feedback-json eval/results/feedback/history_guide_baseline.json --num-questions 7"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2587098] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2587098] discovered active process",
+        "python scripts/evaluate.py --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/history_guide/history_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/history_guide.json --report-html --feedback-json eval/results/feedback/history_guide_baseline.json --num-questions 7"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T01:53:09.155Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2587094",
+      "name": "External Process (2587094) history_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T01:52:44.133Z",
+      "startedAt": "2026-05-17T01:52:44.133Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate BASE_MODEL=\"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\"  mkdir -p eval/results/feedback eval/reports/history_guide  python scripts/evaluate.py \\   --baseline \"$BASE_MODEL\" \\   --candidate exports/history_guide/history_guide-lora-f16.gguf \\   --base-model \"$BASE_MODEL\" \\   --spec subjects/history_guide.json \\   --report-html \\   --feedback-json eval/results/feedback/history_guide_baseline.json \\   --num-questions 7 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[STATUS][export] substep=adapter_done state=completed",
+            "[EXTERNAL][PID 2587094] Process no longer detected",
+            "[STATUS][export] substep=adapter_done state=completed"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2587094] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate BASE_MODEL=\"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\"  mkdir -p eval/results/feedback eval/reports/history_guide  python scripts/evaluate.py \\   --baseline \"$BASE_MODEL\" \\   --candidate exports/history_guide/history_guide-lora-f16.gguf \\   --base-model \"$BASE_MODEL\" \\   --spec subjects/history_guide.json \\   --report-html \\   --feedback-json eval/results/feedback/history_guide_baseline.json \\   --num-questions 7 2>&1' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T01:53:09.155Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_export_space_guide_space_guide-lora-f16.gguf",
       "name": "External Export (space_guide/space_guide-lora-f16.gguf)",
       "type": "Export",
@@ -28989,6 +29784,23 @@
     }
   ],
   "logs": [
+    "[2026-05-17T01:56:34.751Z] [SYNC] discovered running external process pid=2594839",
+    "[2026-05-17T01:56:34.716Z] [SYNC] imported external job ext_train_history_guide_20260516_default_001",
+    "[2026-05-17T01:56:23.575Z] [SYNC] imported external job ext_sanitize_space_guide_onyx",
+    "[2026-05-17T01:56:23.574Z] [SYNC] imported external job ext_sanitize_history_guide_onyx",
+    "[2026-05-17T01:56:23.574Z] [SYNC] imported external job ext_sanitize_chef_assistant_onyx",
+    "[2026-05-17T01:56:13.716Z] [SYNC] imported external job ext_dataset_space_guide_onyx",
+    "[2026-05-17T01:56:07.579Z] [SYNC] discovered running external process pid=2593854",
+    "[2026-05-17T01:56:04.716Z] [SYNC] imported external job ext_dataset_chef_assistant_onyx",
+    "[2026-05-17T01:55:58.613Z] [SYNC] discovered running external process pid=2593504",
+    "[2026-05-17T01:55:22.440Z] [SYNC] imported external job ext_dataset_history_guide_onyx",
+    "[2026-05-17T01:55:14.466Z] [SYNC] discovered running external process pid=2591923",
+    "[2026-05-17T01:53:45.369Z] [SYNC] discovered running external process pid=2589100",
+    "[2026-05-17T01:53:45.369Z] [SYNC] discovered running external process pid=2589096",
+    "[2026-05-17T01:53:17.293Z] [SYNC] discovered running external process pid=2588150",
+    "[2026-05-17T01:53:17.293Z] [SYNC] discovered running external process pid=2588146",
+    "[2026-05-17T01:52:44.158Z] [SYNC] discovered running external process pid=2587098",
+    "[2026-05-17T01:52:44.158Z] [SYNC] discovered running external process pid=2587094",
     "[2026-05-16T02:32:45.230Z] [SYNC] imported external job ext_export_space_guide_space_guide-lora-f16.gguf",
     "[2026-05-16T02:32:42.567Z] [SYNC] discovered running external process pid=2367000",
     "[2026-05-16T02:31:05.769Z] [SYNC] imported external job ext_train_space_guide_20260515_default_002",
