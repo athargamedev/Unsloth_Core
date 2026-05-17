@@ -88,6 +88,31 @@ def get_preset_description(preset_name):
     return ""
 
 
+def ensure_wandb_noninteractive(config: dict) -> None:
+    """Prevent W&B-enabled presets from crashing unattended Colab runs.
+
+    HuggingFace Trainer initializes W&B at train start. If a preset enables W&B
+    but Colab has no API key configured, wandb raises UsageError instead of
+    prompting cleanly inside subprocess output capture. Fall back to offline mode
+    so training and GGUF export complete; users can `wandb sync` later.
+    """
+    if not config.get("wandb", {}).get("enabled", False):
+        return
+
+    mode = (os.environ.get("WANDB_MODE") or "").strip().lower()
+    if mode in {"offline", "disabled", "dryrun"}:
+        return
+
+    if os.environ.get("WANDB_API_KEY"):
+        return
+
+    if (Path.home() / ".netrc").exists():
+        return
+
+    os.environ["WANDB_MODE"] = "offline"
+    print("  [WARN] W&B enabled but no WANDB_API_KEY or ~/.netrc was found; using WANDB_MODE=offline so training will not crash.")
+
+
 def check_promotion_rules(training_loss: float, config: dict, num_train_examples: int) -> tuple[bool, list[str]]:
     """Check if the model meets minimum quality thresholds for promotion to 'best'.
 
@@ -675,6 +700,8 @@ def main():
     elif args.disable_wandb:
         config["wandb"] = config.get("wandb", {})
         config["wandb"]["enabled"] = False
+
+    ensure_wandb_noninteractive(config)
 
     # Forward WANDB_RUN_GROUP to HF Trainer so training runs are grouped
     # with the pipeline's eval runs in the W&B UI.

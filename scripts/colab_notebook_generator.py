@@ -316,6 +316,20 @@ if not is_remote_colab:
     except Exception as e:
         print("Ollama is not running or no models were active.")
 
+if is_remote_colab and not os.environ.get("WANDB_API_KEY"):
+    try:
+        from google.colab import userdata
+        wandb_key = userdata.get("WANDB_API_KEY")
+        if wandb_key:
+            os.environ["WANDB_API_KEY"] = wandb_key
+            print("Loaded WANDB_API_KEY from Colab secrets.")
+    except Exception:
+        pass
+
+if not os.environ.get("WANDB_API_KEY") and not os.path.exists(os.path.expanduser("~/.netrc")):
+    os.environ.setdefault("WANDB_MODE", "offline")
+    print("W&B API key not found; using WANDB_MODE=offline so training will not crash. Sync later with `wandb sync` if needed.")
+
 train_cmd = f"{{python_bin}} ucore train subjects/{{spec}} --from-spec --preset {{effective_preset}} --export-gguf"
 print('Running:', train_cmd)
 result = subprocess.run(['bash', '-c', train_cmd], capture_output=True, text=True)
