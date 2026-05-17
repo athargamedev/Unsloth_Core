@@ -148,9 +148,11 @@ def estimate_vram(config: dict) -> tuple[float, str]:
     Returns (estimated_gb, notes).
     """
     model_name = config.get("model", "unknown")
-    lora_r = config.get("lora_r", config.get("lora", {}).get("r", config.get("lora", {}).get("lora_r", 16)))
-    max_seq = config.get("max_seq_length", 2048)
-    packing = config.get("packing", True)
+    lora_cfg = config.get("lora", {}) if isinstance(config, dict) else {}
+    training_cfg = config.get("training", {}) if isinstance(config, dict) else {}
+    lora_r = config.get("lora_r", lora_cfg.get("r", lora_cfg.get("lora_r", 16)))
+    max_seq = config.get("max_seq_length", training_cfg.get("max_seq_length", 2048))
+    packing = config.get("packing", training_cfg.get("packing", True))
 
     # Rough per-parameter-size VRAM factors (bnb-4bit)
     estimated_gb = 8.0  # baseline for 1.7B-3B models
