@@ -82,7 +82,9 @@ def generate_colab_notebooks(
 ) -> list[str]:
     written: list[str] = []
 
-    for entry in batch_plan.get("remote_colab_queue", []):
+    # Generate notebooks for all variants so the user has full cloud training choices
+    all_variants = batch_plan.get("remote_colab_queue", []) + batch_plan.get("local_queue", [])
+    for entry in all_variants:
         npc_key = str(entry["npc_key"])
         preset = str(entry["preset"])
         technique = str(entry.get("technique") or "onyx")

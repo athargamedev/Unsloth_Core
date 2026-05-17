@@ -2,6 +2,52 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_78318",
+      "name": "External Process (78318)",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T13:31:37.453Z",
+      "startedAt": "2026-05-17T13:31:37.453Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore plan-batch --presets fast-3b,premium-3b,premium-8b,safe-any --generate-colab-notebooks --colab-output-dir colab/outputs"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 78318] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 78318] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore plan-batch --presets fast-3b,premium-3b,premium-8b,safe-any --generate-colab-notebooks --colab-output-dir colab/outputs"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T13:31:39.180Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_76101",
       "name": "External Process (76101)",
       "type": "Pipeline",
@@ -34935,6 +34981,7 @@
     }
   ],
   "logs": [
+    "[2026-05-17T13:31:37.480Z] [SYNC] discovered running external process pid=78318",
     "[2026-05-17T13:28:37.476Z] [SYNC] discovered running external process pid=76101"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",

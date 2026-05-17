@@ -62,6 +62,26 @@ def build_notebook(
         with open(local_spec_path, "r", encoding="utf-8") as f:
             spec_json_content = f.read()
 
+    # Read local dataset files if they exist to embed them directly in the notebook
+    train_jsonl_content = ""
+    local_train_path = project_root / ds_train
+    if local_train_path.exists():
+        with open(local_train_path, "r", encoding="utf-8") as f:
+            train_jsonl_content = f.read()
+
+    clean_jsonl_content = ""
+    local_clean_path = project_root / ds_clean
+    if local_clean_path.exists():
+        with open(local_clean_path, "r", encoding="utf-8") as f:
+            clean_jsonl_content = f.read()
+
+    val_jsonl_content = ""
+    ds_val = f"subjects/datasets/{npc_key}/{technique}/validation.jsonl"
+    local_val_path = project_root / ds_val
+    if local_val_path.exists():
+        with open(local_val_path, "r", encoding="utf-8") as f:
+            val_jsonl_content = f.read()
+
     # Auto-detect repo URL from local git remote if not provided
     if repo_url is None:
         try:
@@ -136,7 +156,7 @@ if is_remote_colab:
 
     # Colab already has torch+CUDA pre-installed — install only missing deps using official fast wheels
     print("Installing Unsloth and dependencies (pre-compiled wheels for Colab)...")
-    subprocess.run(['pip', 'install', '--no-deps', '-q', 'trl<0.9.0', 'peft', 'accelerate', 'bitsandbytes'], check=True)
+    subprocess.run(['pip', 'install', '--no-deps', '-q', 'trl<0.9.0', 'peft', 'accelerate', 'bitsandbytes', 'xformers'], check=True)
     subprocess.run(['pip', 'install', '-q', 'unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git'], check=True)
     subprocess.run(['pip', 'install', '-q', 'gguf', 'sentencepiece'], check=True)
 else:
@@ -181,27 +201,52 @@ if spec_content:
 import os
 import sys
 import subprocess
+from pathlib import Path
 
 spec = {spec_name!r}
 technique = {technique!r}
 train_jsonl = {ds_train!r}
 clean_jsonl = {ds_clean!r}
+ds_val = f"subjects/datasets/{npc_key}/{technique}/validation.jsonl"
 
-# Use active Python executable to run ucore to avoid permission denied (exit 126) on mounted filesystems
-python_bin = sys.executable
+train_content = {train_jsonl_content!r}
+clean_content = {clean_jsonl_content!r}
+val_content = {val_jsonl_content!r}
 
-# If dataset is planned remote or missing, generate in Colab.
-needs_generate = ({dataset_location!r} != 'local') or (not os.path.exists(train_jsonl))
-if needs_generate:
-    cmd = f"{{python_bin}} ucore generate subjects/{{spec}} --technique {{technique}}"
+# 1. Synchronize embedded datasets
+if train_content:
+    p = Path(train_jsonl)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(train_content, encoding="utf-8")
+    print(f"Synchronized raw training dataset: {{train_jsonl}}")
+
+if clean_content:
+    p = Path(clean_jsonl)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(clean_content, encoding="utf-8")
+    print(f"Synchronized clean training dataset: {{clean_jsonl}}")
+
+if val_content:
+    p = Path(ds_val)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(val_content, encoding="utf-8")
+    print(f"Synchronized validation dataset: {{ds_val}}")
+
+# 2. Fallback to generating template dataset if both are missing
+if not os.path.exists(clean_jsonl) and not os.path.exists(train_jsonl):
+    python_bin = sys.executable
+    print("Warning: Embedded dataset not found. Attempting template dataset generation fallback...")
+    fallback_tech = "template"
+    cmd = f"{{python_bin}} ucore generate subjects/{{spec}} --technique {{fallback_tech}}"
     print('Running:', cmd)
     subprocess.run(['bash', '-c', cmd], check=True)
+    
+    fallback_raw = f"subjects/datasets/{npc_key}/{{fallback_tech}}/train.jsonl"
+    sanitize_cmd = f"{{python_bin}} ucore sanitize {{fallback_raw}} --output {{clean_jsonl}} --strict-canonical"
+    print('Running:', sanitize_cmd)
+    subprocess.run(['bash', '-c', sanitize_cmd], check=True)
 else:
-    print('Using existing dataset:', train_jsonl)
-
-sanitize_cmd = f"{{python_bin}} ucore sanitize {{train_jsonl}} --output {{clean_jsonl}} --strict-canonical"
-print('Running:', sanitize_cmd)
-subprocess.run(['bash', '-c', sanitize_cmd], check=True)
+    print("Dataset setup completed successfully.")
 """
 
     train_code = f"""
@@ -265,7 +310,7 @@ import os, glob
 
 # Find and download the exported GGUF
 gguf_dir = 'exports/{npc_key}'
-ggufs = glob.glob(os.path.join(gguf_dir, '*-lora-f16.gguf'))
+ggufs = glob.glob(os.path.join(gguf_dir, '*.gguf'))
 if ggufs:
     # Download the most recent one
     latest = max(ggufs, key=os.path.getmtime)
