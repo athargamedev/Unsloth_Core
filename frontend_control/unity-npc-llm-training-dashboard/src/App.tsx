@@ -35,6 +35,7 @@ import { TrainingSuite } from './components/TrainingSuite';
 import { SystemHub } from './components/SystemHub';
 import { NpcOverview } from './components/NpcOverview';
 import { Card } from './components/Card';
+import { ColabNotebooksPanel } from './components/ColabNotebooksPanel';
 
 import { DatasetFactory } from './components/DatasetFactory';
 const PipelineFlowPanel = lazy(() => import('./components/PipelineFlowPanel').then(m => ({ default: m.PipelineFlowPanel })));
@@ -50,7 +51,7 @@ const UnityDeployPanel = lazy(() => import('./components/UnityDeployPanel').then
 const RemoteConfigPanel = lazy(() => import('./components/RemoteConfigPanel').then((m) => ({ default: m.RemoteConfigPanel })));
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands' | 'colab'>('overview');
   const [logs, setLogs] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<Array<{ step: number; loss: number; acc: number; lr: number }>>([]);
   const [tensorBoardData, setTensorBoardData] = useState<TensorBoardData | null>(null);
@@ -689,6 +690,7 @@ export default function App() {
     datasets: 'Dataset Browser',
     logs: 'System Console',
     commands: 'Advanced',
+    colab: 'Colab Notebook Center',
   };
   const activeWorkflowStep = workflowStepByTab[activeTab] || 'Quick Start';
   const isRemoteMode = status?.executionMode === 'remote';
@@ -772,6 +774,7 @@ export default function App() {
               { id: 'training', label: '2) Train', shortLabel: 'Train' },
               { id: 'eval', label: '3) Eval', shortLabel: 'Eval' },
               { id: 'feedback', label: '4) Feedback', shortLabel: 'FB' },
+              { id: 'colab', label: 'Cloud (Colab)', shortLabel: 'Colab' },
               { id: 'jobs', label: 'Ops', shortLabel: 'Ops' },
               { id: 'analytics', label: 'TensorBoard', shortLabel: 'TB' },
               { id: 'compare', label: 'Compare', shortLabel: 'Cmp' },
@@ -1229,6 +1232,21 @@ export default function App() {
                   )}
                 </div>
               </Suspense>
+            )}
+
+            {activeTab === 'colab' && (
+              <ColabNotebooksPanel
+                onTriggerCommand={async (payload) => {
+                  await triggerCommand({
+                    commandId: payload.commandId,
+                    type: payload.type,
+                    spec: 'subjects/chef_assistant.json',
+                    preset: 'fast-3b',
+                    options: payload.options
+                  });
+                }}
+                jobs={jobs}
+              />
             )}
           </AnimatePresence>
 

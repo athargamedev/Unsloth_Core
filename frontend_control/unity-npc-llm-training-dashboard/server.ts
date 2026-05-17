@@ -700,6 +700,28 @@ const commandDefinitions: CommandDefinition[] = [
       return args;
     },
   },
+  {
+    id: "plan-batch",
+    label: "Generate Colab Notebooks",
+    icon: "book-open",
+    color: "success",
+    type: "Pipeline",
+    requiredFields: [],
+    build: (payload) => {
+      const args = ["./ucore", "plan-batch", "--generate-colab-notebooks"];
+      
+      const specGlob = String(payload.options?.specGlob || "subjects/*.json").trim();
+      if (specGlob) args.push("--spec-glob", specGlob);
+
+      const presets = String(payload.options?.presets || "fast-3b,premium-3b,premium-8b,safe-any").trim();
+      if (presets) args.push("--presets", presets);
+
+      const localVram = String(payload.options?.localVram || "4.0").trim();
+      if (localVram) args.push("--local-vram-gb", localVram);
+
+      return args;
+    },
+  },
 ];
 
 const commandMap = new Map(commandDefinitions.map((cmd) => [cmd.id, cmd]));
@@ -1408,6 +1430,55 @@ async function startServer() {
 
   app.get("/api/config/presets", (_req, res) => {
     res.json(listPresets());
+  });
+
+  app.get("/api/colab/notebooks", (_req, res) => {
+    const colabDir = path.join(repoRoot, "colab", "outputs");
+    if (!fs.existsSync(colabDir)) return res.json([]);
+    try {
+      const files = fs.readdirSync(colabDir)
+        .filter((f) => f.endsWith(".ipynb"))
+        .map((f) => {
+          const filePath = path.join(colabDir, f);
+          const stat = fs.statSync(filePath);
+          
+          let npcKey = "";
+          let preset = "";
+          try {
+            const content = JSON.parse(fs.readFileSync(filePath, "utf8"));
+            const meta = content.metadata?.unsloth_core || {};
+            npcKey = meta.npc_key || "";
+            preset = meta.preset || "";
+          } catch {
+            // ignore
+          }
+
+          return {
+            name: f,
+            path: `colab/outputs/${f}`,
+            npcKey,
+            preset,
+            size: `${Math.max(1, Math.round(stat.size / 1024))}KB`,
+            lastModified: stat.mtime.toISOString(),
+          };
+        })
+        .sort((a, b) => b.lastModified.localeCompare(a.lastModified));
+      return res.json(files);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to list Colab notebooks" });
+    }
+  });
+
+  app.get("/api/colab/download", (req, res) => {
+    const requestedPath = String(req.query.path || "");
+    if (!requestedPath.startsWith("colab/outputs/") || requestedPath.includes("..")) {
+      return res.status(400).json({ error: "Invalid notebook path." });
+    }
+    const absolutePath = path.resolve(repoRoot, requestedPath);
+    if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+      return res.status(404).json({ error: "Notebook file not found." });
+    }
+    return res.download(absolutePath);
   });
 
   const onyxBaseUrl = process.env.ONYX_BASE_URL || "http://localhost";
