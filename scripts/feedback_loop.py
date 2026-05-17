@@ -541,7 +541,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
         "focus_categories": focus_categories,
         "knowledge_gaps": len([g for g in gap_results if g["gap_type"] == "knowledge_gap"]),
         "training_density_issues": len([g for g in gap_results if g["gap_type"] == "training_density"]),
-        "last_feedback": datetime.utcnow().isoformat(),
+        "last_feedback": datetime.now(timezone.utc).isoformat(),
         "auto_retrain_complete": auto_retrain and trained_gguf is not None,
     }
     if trained_gguf:
