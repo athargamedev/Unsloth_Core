@@ -362,17 +362,22 @@ def count_training_examples(path):
         return 0
 
 
-def get_run_output_path(output_dir):
+def get_run_output_path(output_dir, preset_name="default", model_name=None):
     """Create a run-specific output directory using canonical run ID.
 
     Returns (run_dir_path, run_id) where run_id follows the canonical
-    {YYYYMMDD}_{preset}_{sequential_number} format.
+    {YYYYMMDD}_{preset}_{model_short}_{sequential_number} format.
     """
-    from _config.paths import generate_run_id
+    from _config.paths import generate_run_id, model_short_name
     output_dir = Path(output_dir)
     npc_key = output_dir.name
-    preset_name = "default"
-    run_id = generate_run_id(npc_key, preset_name)
+    
+    track_name = preset_name
+    if model_name:
+        short = model_short_name(model_name)
+        track_name = f"{preset_name}_{short}"
+        
+    run_id = generate_run_id(npc_key, track_name)
     run_dir = output_dir / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     return str(run_dir), run_id
@@ -701,11 +706,13 @@ def main():
     print(f"{'='*60}\n")
 
     # ── Resolve output paths ───────────────────────────────────────────
+    preset_name = args.preset or "default"
+    model_name = config.get("model")
     output_dir = config.get("output_dir")
     if output_dir:
-        run_dir, run_id = get_run_output_path(output_dir)
+        run_dir, run_id = get_run_output_path(output_dir, preset_name=preset_name, model_name=model_name)
     else:
-        run_dir, run_id = get_run_output_path(str(paths.output_dir(npc_key)))
+        run_dir, run_id = get_run_output_path(str(paths.output_dir(npc_key)), preset_name=preset_name, model_name=model_name)
 
     config.setdefault("training", {})["output_dir"] = run_dir
     config["run_id"] = run_id

@@ -2,6 +2,52 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_27387",
+      "name": "External Process (27387)",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T12:21:03.293Z",
+      "startedAt": "2026-05-17T12:21:03.293Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore audit check"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 27387] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 27387] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore audit check"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T12:21:13.288Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_7879",
       "name": "External Process (7879)",
       "type": "Export",
@@ -34749,6 +34795,7 @@
     }
   ],
   "logs": [
+    "[2026-05-17T12:21:03.319Z] [SYNC] discovered running external process pid=27387",
     "[2026-05-17T11:54:35.122Z] [SYNC] discovered running external process pid=7879",
     "[2026-05-17T11:53:32.115Z] [SYNC] discovered running external process pid=6593",
     "[2026-05-17T11:50:59.046Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_008",

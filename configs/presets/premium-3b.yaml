@@ -1,0 +1,11 @@
+# Premium 3B preset optimized for 15GB+ VRAM (Colab T4/L4)
+# Enhances LoRA capacity and uses larger batch sizes for highly stable optimization gradients.
+training:
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 2e-4
+  warmup_steps: 20
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.05

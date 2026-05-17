@@ -122,7 +122,7 @@ if is_remote_colab:
     # Colab already has torch+CUDA pre-installed — install only missing deps using official fast wheels
     print("Installing Unsloth and dependencies (pre-compiled wheels for Colab)...")
     subprocess.run(['pip', 'install', '--no-deps', '-q', 'trl<0.9.0', 'peft', 'accelerate', 'bitsandbytes'], check=True)
-    subprocess.run(['pip', 'install', '-q', 'unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git'], check=True)
+    subprocess.run(['pip', 'install', '-q', 'unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git', 'gguf', 'sentencepiece'], check=True)
 else:
     print("Running locally in the editor/workspace.")
     # Find local repo root by looking for ucore and scripts
