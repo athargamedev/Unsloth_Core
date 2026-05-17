@@ -6,6 +6,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 
@@ -38,28 +39,24 @@ def load_peerlm_result(path: Path) -> dict:
     Parses at the boundary: returns a trusted dict with guaranteed run.resultsSummary key.
     """
     if not path.exists():
-        print(f"Error: input file not found: {path}", file=sys.stderr)
-        sys.exit(1)
+        raise FileNotFoundError(f"input file not found: {path}")
 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
-        print(f"Error: invalid JSON in {path}: {e}", file=sys.stderr)
-        sys.exit(1)
+    except json.JSONDecodeError:
+        raise
 
     run = data.get("run")
     if run is None:
-        print(f"Error: missing 'run' key in {path}", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f"missing 'run' key in {path}")
 
     if "resultsSummary" not in run:
-        print(f"Error: missing 'resultsSummary' in run data", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f"missing 'resultsSummary' in run data")
 
     return data
 
 
-def build_leaderboard_table(overall: list[dict]) -> "wandb.Table":
+def build_leaderboard_table(overall: list[dict]):
     """Build a W&B Table from the overall leaderboard entries.
 
     Columns: model, rank, overall_score, total_cost_usd, plus one column per criteria.
@@ -92,7 +89,10 @@ def build_leaderboard_table(overall: list[dict]) -> "wandb.Table":
 
 def _safe_id(model_id: str) -> str:
     """Convert a model ID like 'qwen/qwen3-30b-a3b' to a safe W&B metric prefix."""
-    return re.sub(r"[^a-zA-Z0-9_-]", "_", model_id)
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "_", model_id).strip("_")
+    if not safe:
+        safe = f"model_{abs(hash(model_id))}"
+    return safe
 
 
 def _parse_timestamp(iso_string: str) -> str:
@@ -103,9 +103,7 @@ def _parse_timestamp(iso_string: str) -> str:
     if not iso_string:
         return ""
     try:
-        from datetime import datetime as _dt
-
-        parsed = _dt.fromisoformat(iso_string.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(iso_string.replace("Z", "+00:00"))
         return parsed.strftime("%Y%m%d-%H%M")
     except (ValueError, TypeError):
         return ""
@@ -149,7 +147,17 @@ def main(argv: list[str] | None = None) -> int:
     input_path = Path(args.input)
 
     # --- Parse input at boundary ---
-    data = load_peerlm_result(input_path)
+    try:
+        data = load_peerlm_result(input_path)
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except json.JSONDecodeError as e:
+        print(f"Error: invalid JSON in {input_path}: {e}", file=sys.stderr)
+        return 1
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
     run_info = data["run"]
     summary = run_info["resultsSummary"]
     overall = summary.get("overall", [])

@@ -607,8 +607,9 @@ def main():
         npc_key = Path(args.spec).stem
         wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
         # Set on the base environment so all child processes inherit it
-        os.environ["WANDB_GROUP"] = wandb_group
-        os.environ["WANDB_RUN_GROUP"] = wandb_group
+        if args.wandb:
+            os.environ["WANDB_GROUP"] = wandb_group
+            os.environ["WANDB_RUN_GROUP"] = wandb_group
 
         print("[STAGE] dataset")
         print(f"--- Phase 1: Generating Dataset ---")
@@ -656,7 +657,6 @@ def main():
         run_cmd(gen_cmd)
 
         # Determine paths
-        npc_key = Path(args.spec).stem
         dataset_path = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
 
         print("[STAGE] dataset")

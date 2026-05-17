@@ -1244,26 +1244,29 @@ def main():
         ties = comparison["ties"]
         win_rate = cw / total if total > 0 else 0
 
+        wandb_group_env = os.environ.get("WANDB_GROUP")
+        config = {
+            "npc_key": npc_key,
+            "baseline": baseline_name,
+            "candidate": candidate_name,
+            "num_questions": total,
+            "judge": args.judge,
+            "judge_model": args.judge_model,
+            "baseline_model_path": args.baseline,
+            "candidate_model_path": args.candidate,
+            "categories": list(set(
+                q.get("metadata", {}).get("category", "general")
+                for q in questions
+            )),
+        }
+        if wandb_group_env:
+            config["wandb_group"] = wandb_group_env
         wandb.init(
             project=args.wandb_project or "unsloth-core",
             entity=args.wandb_entity,
             group=os.environ.get("WANDB_GROUP"),
             job_type=os.environ.get("WANDB_JOB_TYPE", "eval"),
-            config={
-                "npc_key": npc_key,
-                "baseline": baseline_name,
-                "candidate": candidate_name,
-                "num_questions": total,
-                "judge": args.judge,
-                "judge_model": args.judge_model,
-                "baseline_model_path": args.baseline,
-                "candidate_model_path": args.candidate,
-                "categories": list(set(
-                    q.get("metadata", {}).get("category", "general")
-                    for q in questions
-                )),
-                "wandb_group": os.environ.get("WANDB_GROUP"),
-            },
+            config=config,
             name=f"eval-{npc_key}-{baseline_name}-vs-{candidate_name}",
             tags=["eval", npc_key, baseline_name, candidate_name],
         )
