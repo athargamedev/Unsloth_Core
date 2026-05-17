@@ -503,7 +503,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
         per_device_train_batch_size=training.get("batch_size", 1),
         gradient_accumulation_steps=training.get("gradient_accumulation_steps", 8),
         warmup_steps=training.get("warmup_steps", 10),
-        learning_rate=training.get("learning_rate", 2e-4),
+        learning_rate=float(training.get("learning_rate", 2e-4)),
         lr_scheduler_type=training.get("lr_scheduler_type", "cosine"),
         weight_decay=training.get("weight_decay", 0.01),
         neftune_noise_alpha=training.get("neftune_noise_alpha", None),

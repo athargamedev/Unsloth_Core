@@ -298,7 +298,16 @@ if not is_remote_colab:
 
 train_cmd = f"{{python_bin}} ucore train subjects/{{spec}} --from-spec --preset {{effective_preset}} --export-gguf"
 print('Running:', train_cmd)
-subprocess.run(['bash', '-c', train_cmd], check=True)
+result = subprocess.run(['bash', '-c', train_cmd], capture_output=True, text=True)
+if result.returncode != 0:
+    print("=== TRAINING COMMAND FAILED ===")
+    print("STDOUT:")
+    print(result.stdout)
+    print("STDERR:")
+    print(result.stderr)
+    raise subprocess.CalledProcessError(result.returncode, train_cmd, output=result.stdout, stderr=result.stderr)
+else:
+    print(result.stdout)
 
 print('Training + GGUF export complete!')
 print('Download the GGUF using the download cell below.')
