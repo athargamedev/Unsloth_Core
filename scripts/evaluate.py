@@ -29,7 +29,7 @@ import requests
 import urllib.request
 import urllib.error
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -166,17 +166,33 @@ class LlamaServer:
             stderr=subprocess.DEVNULL,
         )
 
-        # Wait for server to be ready
+        # Wait for server to be ready — probe HTTP endpoint, not just TCP
         import socket
+        import urllib.request
         start = time.time()
+        health_url = f"http://{self.host}:{self.port}/v1/models"
         while time.time() - start < timeout:
             try:
                 with socket.create_connection((self.host, self.port), timeout=2):
-                    print(f"[server] Ready on {self.host}:{self.port}")
-                    time.sleep(1)  # Give it one more second
-                    return True
+                    # TCP is open — now wait for HTTP handler
+                    pass
             except (ConnectionRefusedError, OSError):
                 time.sleep(1)
+                continue
+            # Probe the HTTP endpoint until it responds
+            probe_start = time.time()
+            while time.time() - probe_start < 30:
+                try:
+                    with urllib.request.urlopen(
+                        urllib.request.Request(health_url), timeout=5
+                    ) as resp:
+                        if resp.status == 200:
+                            print(f"[server] Ready on {self.host}:{self.port}")
+                            return True
+                except (urllib.error.HTTPError, urllib.error.URLError, OSError):
+                    pass
+                time.sleep(2)
+            break  # Probe timeout — give up
 
         print(f"[server] Timeout waiting for server on {self.host}:{self.port}")
         self.stop()
@@ -468,7 +484,7 @@ def generate_report(comparison_result, baseline_name="baseline", candidate_name=
                     spec=None, output_path=None):
     """Generate a markdown evaluation report."""
     output = []
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     output.append("# NPC Evaluation Report\n")
     output.append(f"- **Date:** {now}")
@@ -581,7 +597,7 @@ def generate_report(comparison_result, baseline_name="baseline", candidate_name=
 def generate_html_report(comparison_result, baseline_name="baseline", candidate_name="candidate",
                          spec=None, output_path=None):
     """Generate an HTML evaluation report with embedded loss curves."""
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     npc_name = spec.get("npc_name", "Unknown") if spec else "Unknown"
     
     # Aggregate metrics
@@ -1062,8 +1078,18 @@ def main():
 
     comparison = compare_models(baseline_results, candidate_results, spec, judge=judge)
 
-    baseline_name = Path(args.baseline).stem if not "*" in args.baseline else Path(str(baseline_gguf)).stem
-    candidate_name = Path(args.candidate).stem if not "*" in args.candidate else Path(str(candidate_gguf)).stem
+    if not "*" in args.baseline:
+        baseline_path = Path(args.baseline)
+        baseline_name = f"{baseline_path.parent.name}/{baseline_path.stem}"
+    else:
+        baseline_path = Path(str(baseline_gguf))
+        baseline_name = f"{baseline_path.parent.name}/{baseline_path.stem}"
+    if not "*" in args.candidate:
+        candidate_path = Path(args.candidate)
+        candidate_name = f"{candidate_path.parent.name}/{candidate_path.stem}"
+    else:
+        candidate_path = Path(str(candidate_gguf))
+        candidate_name = f"{candidate_path.parent.name}/{candidate_path.stem}"
 
     report = generate_report(
         comparison,
@@ -1197,7 +1223,7 @@ def main():
                 concept for concept, data in per_concept.items()
                 if data["win_rate"] < 0.5 or data["avg_candidate_quality"] < 20 or data["constraint_violations"] > 0
             ],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         with open(feedback_path, "w") as f:
@@ -1228,9 +1254,15 @@ def main():
                 "num_questions": total,
                 "judge": args.judge,
                 "judge_model": args.judge_model,
+                "baseline_model_path": args.baseline,
+                "candidate_model_path": args.candidate,
+                "categories": list(set(
+                    q.get("metadata", {}).get("category", "general")
+                    for q in questions
+                )),
             },
             name=f"eval-{npc_key}-{baseline_name}-vs-{candidate_name}",
-            tags=["eval"],
+            tags=["eval", npc_key, baseline_name, candidate_name],
         )
         # Log comparison summary
         wandb.log({
@@ -1240,16 +1272,54 @@ def main():
             "eval/total": total,
             "eval/win_rate": win_rate,
         })
-        # Log per-question quality scores
-        for i, comp in enumerate(comparison.get("comparisons", [])):
+        # Build a W&B Table for structured per-question results
+        table_data = []
+        for comp in comparison.get("comparisons", []):
+            meta = comp.get("metadata", {})
+            category = meta.get("category", "general")
+            concept = meta.get("concept", "general")
+            table_data.append([
+                comp["question"],
+                category,
+                concept,
+                comp["baseline_metrics"].get("quality", 0),
+                comp["candidate_metrics"].get("quality", 0),
+                comp["baseline_metrics"].get("length", 0),
+                comp["candidate_metrics"].get("length", 0),
+                comp["baseline_metrics"].get("sentences", 0),
+                comp["candidate_metrics"].get("sentences", 0),
+                comp["baseline_metrics"].get("sentences_ok", True),
+                comp["candidate_metrics"].get("sentences_ok", True),
+                comp["baseline_metrics"].get("no_ai_disclaimer", True),
+                comp["candidate_metrics"].get("no_ai_disclaimer", True),
+                comp["winner"],
+            ])
+        eval_table = wandb.Table(
+            columns=[
+                "question", "category", "concept",
+                "baseline_quality", "candidate_quality",
+                "baseline_words", "candidate_words",
+                "baseline_sentences", "candidate_sentences",
+                "baseline_sentences_ok", "candidate_sentences_ok",
+                "baseline_no_ai", "candidate_no_ai",
+                "winner",
+            ],
+            data=table_data,
+        )
+        wandb.log({"eval/comparison_table": eval_table})
+        # Aggregate metrics per category
+        from collections import defaultdict
+        by_category = defaultdict(list)
+        for row in table_data:
+            by_category[row[1]].append(row)  # row[1] = category
+        for cat, rows in by_category.items():
+            cat_wins = sum(1 for r in rows if r[-1] == "candidate")
+            cat_total = len(rows)
             wandb.log({
-                f"q/{i}/question": comp["question"],
-                f"q/{i}/winner": comp["winner"],
-                f"q/{i}/baseline_quality": comp["baseline_metrics"].get("quality", 0),
-                f"q/{i}/candidate_quality": comp["candidate_metrics"].get("quality", 0),
-                f"q/{i}/baseline_words": comp["baseline_metrics"].get("length", 0),
-                f"q/{i}/candidate_words": comp["candidate_metrics"].get("length", 0),
-            }, step=i)
+                f"eval/category/{cat}/win_rate": cat_wins / cat_total if cat_total > 0 else 0,
+                f"eval/category/{cat}/total": cat_total,
+                f"eval/category/{cat}/wins": cat_wins,
+            })
         # Log report as artifact
         if args.output and os.path.exists(args.output):
             try:

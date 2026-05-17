@@ -90,6 +90,13 @@ Deep side-by-side comparison of two models.
 - `--baseline`: Path to original GGUF.
 - `--candidate`: Path to new GGUF.
 - `--base-model`: Path to base model GGUF (required for LoRA adapter evaluation).
+- `--wandb`: Log results to W&B — comparison table, per-category win rates, and report artifact.
+- `--wandb-project`: W&B project name (default: `unsloth-core`).
+- `--wandb-entity`: W&B entity (default: auto-detect from login).
+- `--judge`: Use local Ollama LLM judge for scoring.
+- `--report-html`: Generate HTML report with Chart.js visualizations.
+- `--track`: Save results to `eval/results/eval_results.jsonl`.
+- `--feedback-json`: Save structured per-concept eval results for the feedback loop.
 
 ### `compare-runs`
 Compares two training runs using their specific `run_id`.
