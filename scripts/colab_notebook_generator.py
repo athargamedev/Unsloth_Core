@@ -131,26 +131,46 @@ is_remote_colab = is_colab and os.path.exists('/content')
 if is_remote_colab:
     print("Running in remote Google Colab runtime.")
     repo_dir = DRIVE_REPO_DIR
+    use_persistent = True
     try:
         from google.colab import drive
         drive.mount('/content/drive')
-        print('Drive mounted, using persistent storage:', repo_dir)
+        # Check if the mounted filesystem actually works to prevent Transport endpoint is not connected errors
+        if os.path.exists('/content/drive/MyDrive'):
+            print('Drive mounted and accessible, using persistent storage:', repo_dir)
+        else:
+            raise OSError("Google Drive mounted but MyDrive is not accessible.")
     except Exception as e:
         repo_dir = FALLBACK_REPO_DIR
+        use_persistent = False
         print(f'Drive mount unavailable ({{e}}), using ephemeral storage:', repo_dir)
 
-    # Clone/pull repository
-    if not os.path.exists(repo_dir):
-        os.makedirs(os.path.dirname(repo_dir), exist_ok=True)
-        subprocess.run(['git', 'clone', REPO_URL, repo_dir], check=True)
-    else:
-        # Ensure it's a git repo before pulling
-        git_dir = os.path.join(repo_dir, '.git')
-        if os.path.exists(git_dir) and os.path.isdir(git_dir):
-            orig = os.getcwd()
-            os.chdir(repo_dir)
-            subprocess.run(['git', 'pull'], check=False)
-            os.chdir(orig)
+    # Wrap the entire clone/pull setup in a robust try-except to handle filesystem transport disconnects
+    try:
+        if not os.path.exists(repo_dir):
+            os.makedirs(os.path.dirname(repo_dir), exist_ok=True)
+            subprocess.run(['git', 'clone', REPO_URL, repo_dir], check=True)
+        else:
+            # Ensure it's a git repo before pulling
+            git_dir = os.path.join(repo_dir, '.git')
+            if os.path.exists(git_dir) and os.path.isdir(git_dir):
+                orig = os.getcwd()
+                os.chdir(repo_dir)
+                subprocess.run(['git', 'pull'], check=False)
+                os.chdir(orig)
+            else:
+                # If the folder exists but is not a git repo, clone fresh
+                import shutil
+                shutil.rmtree(repo_dir)
+                subprocess.run(['git', 'clone', REPO_URL, repo_dir], check=True)
+    except OSError as e:
+        print(f"FileSystem Error during persistent storage access: {{e}}")
+        if use_persistent:
+            print("Falling back immediately to ephemeral storage to prevent crash...")
+            repo_dir = FALLBACK_REPO_DIR
+            if not os.path.exists(repo_dir):
+                os.makedirs(os.path.dirname(repo_dir), exist_ok=True)
+                subprocess.run(['git', 'clone', REPO_URL, repo_dir], check=True)
 
     os.chdir(repo_dir)
 
