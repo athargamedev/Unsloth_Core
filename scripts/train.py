@@ -671,6 +671,12 @@ def main():
         config["wandb"] = config.get("wandb", {})
         config["wandb"]["enabled"] = False
 
+    # Forward WANDB_RUN_GROUP to HF Trainer so training runs are grouped
+    # with the pipeline's eval runs in the W&B UI.
+    wandb_group = os.environ.get("WANDB_GROUP")
+    if wandb_group:
+        os.environ["WANDB_RUN_GROUP"] = wandb_group
+
     # Print config summary
     npc_key = config.get("npc_key", "unknown")
     model_name = config.get("model", "unknown")

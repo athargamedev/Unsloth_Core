@@ -10,6 +10,7 @@ import argparse
 import os
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -17,12 +18,22 @@ SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 VENV_PYTHON = PROJECT_ROOT / "unsloth_env" / "bin" / "python"
 PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
 
-def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True):
-    """Run a shell command and print its output."""
+def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
+    """Run a shell command and print its output.
+
+    Args:
+        cmd: Command list to execute.
+        cwd: Working directory.
+        announce: Whether to print the command before running.
+        extra_env: Optional dict of extra environment variables merged into the current env.
+    """
     if announce:
         print(f"Running: {' '.join(cmd)}", flush=True)
+    env = os.environ.copy()
+    if extra_env:
+        env.update(extra_env)
     try:
-        subprocess.run(cmd, cwd=str(cwd), check=True)
+        subprocess.run(cmd, cwd=str(cwd), check=True, env=env)
     except subprocess.CalledProcessError as e:
         if announce:
             print(f"Error: Command failed with return code {e.returncode}")
@@ -297,6 +308,14 @@ def main():
     init_p.add_argument("--name", help="NPC display name")
     init_p.add_argument("--force", action="store_true", help="Overwrite existing spec")
     init_p.add_argument("--skip-spec", action="store_true", help="Only create folders, skip spec file")
+
+    # Run PeerLM compact eval for a specific NPC
+    rpe_p = subparsers.add_parser("run-peerlm-eval", help="Trigger a PeerLM compact eval run for an NPC")
+    rpe_p.add_argument("npc_key", help="NPC key (e.g., chef_assistant, history_guide)")
+    rpe_p.add_argument("--compact", action="store_true", help="Use compact_suites.json (default behaviour)")
+    rpe_p.add_argument("--resources", default="peerlm/compact_suites.json",
+                        help="Path to suites resource JSON (default: peerlm/compact_suites.json)")
+    rpe_p.add_argument("--estimate-only", action="store_true", help="Estimate credit cost without triggering a run")
 
     # Audit
     audit_p = subparsers.add_parser("audit", help="Health check and context audit")
@@ -583,6 +602,14 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "pipeline":
+        # ── Shared W&B pipeline identity ───────────────────────────────
+        pipeline_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        npc_key = Path(args.spec).stem
+        wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
+        # Set on the base environment so all child processes inherit it
+        os.environ["WANDB_GROUP"] = wandb_group
+        os.environ["WANDB_RUN_GROUP"] = wandb_group
+
         print("[STAGE] dataset")
         print(f"--- Phase 1: Generating Dataset ---")
         gen_cmd = [PYTHON, str(SCRIPTS_DIR / "generate_dataset.py"), args.spec]
@@ -648,7 +675,8 @@ def main():
             train_cmd.append("--export-gguf")
         if args.wandb:
             train_cmd.append("--wandb")
-        run_cmd(train_cmd)
+        train_env = {"WANDB_JOB_TYPE": "train"}
+        run_cmd(train_cmd, extra_env=train_env)
 
         # Determine paths for GGUF output
         export_dir = PROJECT_ROOT / "exports" / npc_key
@@ -672,25 +700,25 @@ def main():
             # Re-scan for GGUFs if not already found
             if not ggufs and export_dir.exists():
                 ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
-            if ggufs:
-                model_path = ggufs[0]
-                print(f"  Model: {model_path}")
-                print(f"  Running persona validation prompts...")
-                # Deeper persona check with custom prompts
-                eval_cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), str(model_path),
-                            "--spec", args.spec, "--prompt", "Who are you?",
-                            "--prompt", f"What is your area of expertise?"]
-                if args.track:
-                    eval_cmd.append("--track")
-                run_cmd(eval_cmd)
-
-                # Look for previous runs to enable comparison
-                prev_results = list((PROJECT_ROOT / "eval" / "results").glob(f"{npc_key}_*.jsonl"))
-                if prev_results:
-                    print(f"  {len(prev_results)} previous evaluation result(s) found.")
-                    print(f"  Compare runs: ./ucore compare-runs {npc_key} --baseline-run <id> --candidate-run <id>")
-                else:
-                    print(f"  Baseline established. Run pipeline again to compare iterations.")
+            if len(ggufs) >= 2:
+                # Candidate = newest GGUF (just exported), Baseline = previous export
+                candidate_path = ggufs[0]
+                baseline_path = ggufs[1]
+                print(f"  Candidate (new): {candidate_path.name}")
+                print(f"  Baseline (prev): {baseline_path.name}")
+                print(f"  Running side-by-side evaluation...")
+                eval_cmd = [PYTHON, str(SCRIPTS_DIR / "evaluate.py"),
+                            "--baseline", str(baseline_path),
+                            "--candidate", str(candidate_path),
+                            "--spec", args.spec,
+                            "--track"]
+                if args.wandb:
+                    eval_cmd.append("--wandb")
+                eval_env = {"WANDB_JOB_TYPE": "eval"}
+                run_cmd(eval_cmd, extra_env=eval_env)
+            elif len(ggufs) == 1:
+                print(f"  Only one GGUF export found ({ggufs[0].name}) — no baseline to compare against.")
+                print(f"  Run pipeline again after a future training to get a side-by-side evaluation.")
             else:
                 print("  Warning: No GGUF found — skipping evaluation")
 
@@ -727,6 +755,42 @@ def main():
         if args.drive_datasets_dir:
             cmd.extend(["--drive-datasets-dir", args.drive_datasets_dir])
         run_cmd(cmd)
+
+    elif args.command == "run-peerlm-eval":
+        import json as _json
+        resources_path = PROJECT_ROOT / args.resources
+        if not resources_path.exists():
+            print(f"Error: {resources_path} not found. Run compact suite creation first.")
+            sys.exit(1)
+        data = _json.loads(resources_path.read_text())
+        items = data.get("resources", [])
+        match = [i for i in items if i["npc_key"] == args.npc_key]
+        if not match:
+            available = [i["npc_key"] for i in items]
+            print(f"Error: NPC '{args.npc_key}' not found in {resources_path}.")
+            print(f"  Available: {available}")
+            sys.exit(1)
+        item = match[0]
+        suite_id = item["suite_id"]
+        suite_name = item.get("suite_name", suite_id)
+        print(f"PeerLM compact eval — NPC: {args.npc_key}")
+        print(f"  Suite: {suite_name}")
+        print(f"  Suite ID: {suite_id}")
+        # Use the MCP peerlm tool via a thin Python wrapper that calls run_suites.py logic
+        try:
+            result = mcp_peerlm_run_eval(suite_id)
+            print(f"  Run triggered: {result}")
+        except Exception:
+            # Fallback: delegate to run_suites.py via subprocess
+            run_script = SCRIPTS_DIR / "peerlm" / "run_suites.py"
+            # Write a temporary single-item resources file for this NPC
+            import tempfile, json as _json2
+            tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+            _json2.dump({"resources": [item]}, tmp)
+            tmp.flush()
+            cmd = [PYTHON, str(run_script), "--resources", tmp.name, "--run"]
+            run_cmd(cmd, cwd=SCRIPTS_DIR / "peerlm")
+        sys.exit(0)
 
     else:
         parser.print_help()

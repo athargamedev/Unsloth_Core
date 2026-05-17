@@ -1247,6 +1247,8 @@ def main():
         wandb.init(
             project=args.wandb_project or "unsloth-core",
             entity=args.wandb_entity,
+            group=os.environ.get("WANDB_GROUP"),
+            job_type=os.environ.get("WANDB_JOB_TYPE", "eval"),
             config={
                 "npc_key": npc_key,
                 "baseline": baseline_name,
@@ -1260,6 +1262,7 @@ def main():
                     q.get("metadata", {}).get("category", "general")
                     for q in questions
                 )),
+                "wandb_group": os.environ.get("WANDB_GROUP"),
             },
             name=f"eval-{npc_key}-{baseline_name}-vs-{candidate_name}",
             tags=["eval", npc_key, baseline_name, candidate_name],

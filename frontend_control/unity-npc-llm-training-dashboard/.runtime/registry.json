@@ -2,6 +2,332 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_3133247",
+      "name": "External Process (3133247)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T08:13:27.124Z",
+      "startedAt": "2026-05-17T08:13:27.124Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/history_guide"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3133247] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3133247] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/history_guide"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:13:38.021Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3129860",
+      "name": "External Process (3129860) history_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T08:10:55.597Z",
+      "startedAt": "2026-05-17T08:10:55.597Z",
+      "command": [
+        "external",
+        "bash -c source unsloth_env/bin/activate && ./ucore train subjects/history_guide.json \\   --technique onyx \\   --preset fast-3b \\   --export-gguf 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3129860] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3129860] discovered active process",
+        "bash -c source unsloth_env/bin/activate && ./ucore train subjects/history_guide.json \\   --technique onyx \\   --preset fast-3b \\   --export-gguf 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:13:42.135Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_history_guide_20260517_default_001",
+      "name": "External Train (history_guide/20260517_default_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T08:10:52.949Z",
+      "startedAt": "2026-05-17T08:10:52.949Z",
+      "finishedAt": "2026-05-17T08:10:52.949Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260517_default_001/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_3129135",
+      "name": "External Process (3129135) history_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T08:10:10.185Z",
+      "startedAt": "2026-05-17T08:10:10.185Z",
+      "command": [
+        "external",
+        "bash -c source unsloth_env/bin/activate && ./ucore generate subjects/history_guide.json \\   --technique onyx \\   --concept-focus identity \\   --concept-focus natural_conversation 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3129135] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3129135] discovered active process",
+        "bash -c source unsloth_env/bin/activate && ./ucore generate subjects/history_guide.json \\   --technique onyx \\   --concept-focus identity \\   --concept-focus natural_conversation 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:10:40.433Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3006946",
+      "name": "External Process (3006946)",
+      "type": "Training",
+      "commandId": "train",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T06:50:49.940Z",
+      "startedAt": "2026-05-17T06:50:49.940Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && echo '\\''=== available presets (scripts/train.py) ==='\\'' && python scripts/train.py --help 2>/dev/null | grep -A1 -- '\\''--preset'\\'' && echo '\\''=== available presets (filesystem) ==='\\'' && find configs/presets -maxdepth 1 -type f -name '\\''*.yaml'\\'' -printf '\\''%f\\n'\\'' | sort && echo '\\''=== clean generated pycache ==='\\'' && rm -rf scripts/__pycache__ && echo done && echo '\\''=== frontend build check ==='\\'' && cd frontend_control/unity-npc-llm-training-dashboard && npm run build' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3006946] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3006946] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && echo '\\''=== available presets (scripts/train.py) ==='\\'' && python scripts/train.py --help 2>/dev/null | grep -A1 -- '\\''--preset'\\'' && echo '\\''=== available presets (filesystem) ==='\\'' && find configs/presets -maxdepth 1 -type f -name '\\''*.yaml'\\'' -printf '\\''%f\\n'\\'' | sort && echo '\\''=== clean generated pycache ==='\\'' && rm -rf scripts/__pycache__ && echo done && echo '\\''=== frontend build check ==='\\'' && cd frontend_control/unity-npc-llm-training-dashboard && npm run build' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T06:50:58.944Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3005770",
+      "name": "External Process (3005770) history_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T06:50:28.175Z",
+      "startedAt": "2026-05-17T06:50:28.175Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && echo '\\''=== yaml/json parse ==='\\'' && python - <<'\\''PY'\\'' from pathlib import Path import yaml, json for p in sorted(Path('\\''configs'\\'').glob('\\''**/*.yaml'\\'')):     yaml.safe_load(p.read_text())     print('\\''OK'\\'', p) for p in sorted(Path('\\''configs'\\'').glob('\\''**/*.json'\\'')):     json.loads(p.read_text())     print('\\''OK'\\'', p) PY  echo '\\''=== script syntax ==='\\'' && python -m py_compile scripts/train.py scripts/plan_execution.py scripts/validate_config.py  echo '\\''=== available presets ==='\\'' && python scripts/train.py --help | grep -- '\\''--preset'\\'' -A1  echo '\\''=== validate effective config ==='\\'' && python scripts/validate_config.py --spec subjects/history_guide.json --preset fast-3b --format yaml | sed -n '\\''1,80p'\\''  echo '\\''=== plan execution ==='\\'' && python scripts/plan_execution.py --spec subjects/history_guide.json --preset fast-3b --json | python -m json.tool  echo '\\''=== stale preset references ==='\\'' && grep -R \"llama-1b-fast\\|fast-1.7b\\|quality-1.7b\\|quality-7b\\|lora-sft-fast\\|space_guide\" -n --exclude-dir=unsloth_env --exclude-dir=.git --exclude-dir=dist . | head -60 || true' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3005770] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3005770] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'cd /home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && echo '\\''=== yaml/json parse ==='\\'' && python - <<'\\''PY'\\'' from pathlib import Path import yaml, json for p in sorted(Path('\\''configs'\\'').glob('\\''**/*.yaml'\\'')):     yaml.safe_load(p.read_text())     print('\\''OK'\\'', p) for p in sorted(Path('\\''configs'\\'').glob('\\''**/*.json'\\'')):     json.loads(p.read_text())     print('\\''OK'\\'', p) PY  echo '\\''=== script syntax ==='\\'' && python -m py_compile scripts/train.py scripts/plan_execution.py scripts/validate_config.py  echo '\\''=== available presets ==='\\'' && python scripts/train.py --help | grep -- '\\''--preset'\\'' -A1  echo '\\''=== validate effective config ==='\\'' && python scripts/validate_config.py --spec subjects/history_guide.json --preset fast-3b --format yaml | sed -n '\\''1,80p'\\''  echo '\\''=== plan execution ==='\\'' && python scripts/plan_execution.py --spec subjects/history_guide.json --preset fast-3b --json | python -m json.tool  echo '\\''=== stale preset references ==='\\'' && grep -R \"llama-1b-fast\\|fast-1.7b\\|quality-1.7b\\|quality-7b\\|lora-sft-fast\\|space_guide\" -n --exclude-dir=unsloth_env --exclude-dir=.git --exclude-dir=dist . | head -60 || true' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T06:50:39.198Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2982180",
+      "name": "External Process (2982180)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T06:46:06.389Z",
+      "startedAt": "2026-05-17T06:46:06.389Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'sed -n '\\''120,199p'\\'' '\\''/home/athar/Projects/Unsloth_Core/scripts/export.py'\\''' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2982180] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2982180] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6d5646a0c83e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'sed -n '\\''120,199p'\\'' '\\''/home/athar/Projects/Unsloth_Core/scripts/export.py'\\''' __hermes_ec=$? export -p > /tmp/hermes-snap-6d5646a0c83e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6d5646a0c83e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6d5646a0c83e__%s__HERMES_CWD_6d5646a0c83e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T06:46:09.390Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_2923124",
       "name": "External Process (2923124) chef_assistant",
       "type": "Evaluation",
@@ -31856,88 +32182,12 @@
     }
   ],
   "logs": [
-    "[2026-05-17T05:59:49.177Z] [SYNC] discovered running external process pid=2923124",
-    "[2026-05-17T05:58:58.158Z] [SYNC] discovered running external process pid=2920739",
-    "[2026-05-17T05:57:42.241Z] [SYNC] discovered running external process pid=2917870",
-    "[2026-05-17T05:57:30.234Z] [SYNC] discovered running external process pid=2917370",
-    "[2026-05-17T05:57:13.154Z] [SYNC] discovered running external process pid=2916558",
-    "[2026-05-17T05:57:10.154Z] [SYNC] discovered running external process pid=2916226",
-    "[2026-05-17T05:56:00.241Z] [SYNC] discovered running external process pid=2913406",
-    "[2026-05-17T05:56:00.241Z] [SYNC] discovered running external process pid=2913403",
-    "[2026-05-17T05:55:43.155Z] [SYNC] discovered running external process pid=2912569",
-    "[2026-05-17T05:55:43.155Z] [SYNC] discovered running external process pid=2912566",
-    "[2026-05-17T02:14:23.711Z] [SYNC] discovered running external process pid=2656938",
-    "[2026-05-17T02:14:03.126Z] [SYNC] discovered running external process pid=2655806",
-    "[2026-05-17T02:13:10.660Z] [SYNC] discovered running external process pid=2653969",
-    "[2026-05-17T02:13:10.660Z] [SYNC] discovered running external process pid=2653966",
-    "[2026-05-17T02:12:48.106Z] [SYNC] discovered running external process pid=2653092",
-    "[2026-05-17T02:11:13.446Z] [SYNC] imported external job ext_train_space_guide_20260516_default_002",
-    "[2026-05-17T02:11:12.716Z] [SYNC] discovered running external process pid=2642848",
-    "[2026-05-17T02:11:03.262Z] [SYNC] discovered running external process pid=2642392",
-    "[2026-05-17T02:09:36.715Z] [SYNC] discovered running external process pid=2638608",
-    "[2026-05-17T02:09:36.684Z] [SYNC] imported external job ext_train_chef_assistant_20260516_default_002",
-    "[2026-05-17T02:09:24.711Z] [SYNC] discovered running external process pid=2638154",
-    "[2026-05-17T02:07:41.028Z] [SYNC] imported external job ext_train_history_guide_20260516_default_003",
-    "[2026-05-17T02:07:40.922Z] [SYNC] discovered running external process pid=2627682",
-    "[2026-05-17T02:07:25.919Z] [SYNC] discovered running external process pid=2627137",
-    "[2026-05-17T02:07:24.823Z] [SYNC] discovered running external process pid=2627039",
-    "[2026-05-17T02:07:24.823Z] [SYNC] discovered running external process pid=2627035",
-    "[2026-05-17T02:06:37.791Z] [SYNC] discovered running external process pid=2625178",
-    "[2026-05-17T02:06:34.908Z] [SYNC] discovered running external process pid=2625084",
-    "[2026-05-17T02:06:34.798Z] [SYNC] discovered running external process pid=2624997",
-    "[2026-05-17T02:06:34.798Z] [SYNC] discovered running external process pid=2624993",
-    "[2026-05-17T02:04:25.702Z] [SYNC] discovered running external process pid=2620477",
-    "[2026-05-17T02:04:25.701Z] [SYNC] discovered running external process pid=2620474",
-    "[2026-05-17T02:04:16.898Z] [SYNC] discovered running external process pid=2620134",
-    "[2026-05-17T02:02:58.131Z] [SYNC] discovered running external process pid=2617566",
-    "[2026-05-17T02:02:58.131Z] [SYNC] discovered running external process pid=2617563",
-    "[2026-05-17T02:02:40.929Z] [SYNC] discovered running external process pid=2616997",
-    "[2026-05-17T02:01:07.452Z] [SYNC] imported external job ext_train_space_guide_20260516_default_001",
-    "[2026-05-17T02:01:06.842Z] [SYNC] discovered running external process pid=2606805",
-    "[2026-05-17T02:00:57.472Z] [SYNC] discovered running external process pid=2606383",
-    "[2026-05-17T01:59:22.887Z] [SYNC] discovered running external process pid=2602364",
-    "[2026-05-17T01:59:22.845Z] [SYNC] imported external job ext_train_chef_assistant_20260516_default_001",
-    "[2026-05-17T01:59:14.870Z] [SYNC] discovered running external process pid=2601715",
-    "[2026-05-17T01:58:49.851Z] [SYNC] discovered running external process pid=2600165",
-    "[2026-05-17T01:58:49.820Z] [SYNC] imported external job ext_train_history_guide_20260516_default_002",
-    "[2026-05-17T01:56:34.751Z] [SYNC] discovered running external process pid=2594839",
-    "[2026-05-17T01:56:34.716Z] [SYNC] imported external job ext_train_history_guide_20260516_default_001",
-    "[2026-05-17T01:56:23.575Z] [SYNC] imported external job ext_sanitize_space_guide_onyx",
-    "[2026-05-17T01:56:23.574Z] [SYNC] imported external job ext_sanitize_history_guide_onyx",
-    "[2026-05-17T01:56:23.574Z] [SYNC] imported external job ext_sanitize_chef_assistant_onyx",
-    "[2026-05-17T01:56:13.716Z] [SYNC] imported external job ext_dataset_space_guide_onyx",
-    "[2026-05-17T01:56:07.579Z] [SYNC] discovered running external process pid=2593854",
-    "[2026-05-17T01:56:04.716Z] [SYNC] imported external job ext_dataset_chef_assistant_onyx",
-    "[2026-05-17T01:55:58.613Z] [SYNC] discovered running external process pid=2593504",
-    "[2026-05-17T01:55:22.440Z] [SYNC] imported external job ext_dataset_history_guide_onyx",
-    "[2026-05-17T01:55:14.466Z] [SYNC] discovered running external process pid=2591923",
-    "[2026-05-17T01:53:45.369Z] [SYNC] discovered running external process pid=2589100",
-    "[2026-05-17T01:53:45.369Z] [SYNC] discovered running external process pid=2589096",
-    "[2026-05-17T01:53:17.293Z] [SYNC] discovered running external process pid=2588150",
-    "[2026-05-17T01:53:17.293Z] [SYNC] discovered running external process pid=2588146",
-    "[2026-05-17T01:52:44.158Z] [SYNC] discovered running external process pid=2587098",
-    "[2026-05-17T01:52:44.158Z] [SYNC] discovered running external process pid=2587094",
-    "[2026-05-16T02:32:45.230Z] [SYNC] imported external job ext_export_space_guide_space_guide-lora-f16.gguf",
-    "[2026-05-16T02:32:42.567Z] [SYNC] discovered running external process pid=2367000",
-    "[2026-05-16T02:31:05.769Z] [SYNC] imported external job ext_train_space_guide_20260515_default_002",
-    "[2026-05-16T02:31:04.670Z] [SYNC] discovered running external process pid=2350442",
-    "[2026-05-16T02:30:46.744Z] [SYNC] imported external job ext_export_chef_assistant_chef_assistant-lora-f16.gguf",
-    "[2026-05-16T02:30:44.655Z] [SYNC] discovered running external process pid=2349208",
-    "[2026-05-16T02:29:03.201Z] [SYNC] imported external job ext_train_space_guide_20260515_default_001",
-    "[2026-05-16T02:29:02.336Z] [SYNC] discovered running external process pid=2332620",
-    "[2026-05-16T02:29:02.335Z] [SYNC] discovered running external process pid=2332295",
-    "[2026-05-16T02:29:02.301Z] [SYNC] imported external job ext_train_chef_assistant_20260515_default_001",
-    "[2026-05-16T02:28:53.295Z] [SYNC] imported external job ext_export_history_guide_history_guide-lora-f16.gguf",
-    "[2026-05-16T02:28:51.043Z] [SYNC] discovered running external process pid=2331824",
-    "[2026-05-16T02:27:20.687Z] [SYNC] discovered running external process pid=2327548",
-    "[2026-05-16T02:27:20.653Z] [SYNC] imported external job ext_train_history_guide_20260515_default_002",
-    "[2026-05-16T02:26:35.114Z] [SYNC] imported external job ext_train_history_guide_20260515_default_001",
-    "[2026-05-16T02:26:33.262Z] [SYNC] discovered running external process pid=2320301",
-    "[2026-05-16T02:26:19.228Z] [SYNC] imported external job ext_dataset_space_guide_template",
-    "[2026-05-16T02:26:19.228Z] [SYNC] imported external job ext_dataset_history_guide_template",
-    "[2026-05-16T02:26:19.228Z] [SYNC] imported external job ext_dataset_chef_assistant_template",
-    "[2026-05-16T01:40:36.954Z] [SYNC] discovered running external process pid=2132601",
-    "[2026-05-16T01:31:43.234Z] [SYNC] discovered running external process pid=2099594"
+    "[2026-05-17T08:13:27.152Z] [SYNC] discovered running external process pid=3133247",
+    "[2026-05-17T08:10:55.620Z] [SYNC] discovered running external process pid=3129860",
+    "[2026-05-17T08:10:54.185Z] [SYNC] imported external job ext_train_history_guide_20260517_default_001",
+    "[2026-05-17T08:10:10.210Z] [SYNC] discovered running external process pid=3129135",
+    "[2026-05-17T06:50:49.994Z] [SYNC] discovered running external process pid=3006946",
+    "[2026-05-17T06:50:28.202Z] [SYNC] discovered running external process pid=3005770"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []
