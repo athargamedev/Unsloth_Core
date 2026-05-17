@@ -1,0 +1,73 @@
+{
+  "created_at": "2026-05-17T07:10:36.244994+00:00",
+  "resources": [
+    {
+      "npc_key": "history_guide",
+      "system_id": "35b20a19-43cd-4dc0-9569-865a53c48e0f",
+      "test_prompt_ids": [
+        "5fed05a1-b354-47c2-b9e6-c1196d13d565",
+        "cefc8158-293f-4212-b47d-d763f0efe545",
+        "cbf838cf-cfb6-4cdc-8259-21c939c691a8",
+        "216985a1-2c4c-4a9a-bce1-b290eb87b182",
+        "08caf54e-cb6c-46b4-97c6-6b2ca0c17939",
+        "5192bc97-c86b-4ff8-baa6-075cd2060f14",
+        "9d8e39f0-1cfc-46ba-8491-aad8de88e499",
+        "9b0ecba9-3ba4-4d37-bd1c-db616e489066",
+        "f332619f-13c0-42c3-a2b8-fd8922952e95",
+        "c4bac662-5ee9-4afd-ba76-fa3f9c8a8a58",
+        "7d52b9f7-0270-46dd-8ff6-d71d625f5dd4",
+        "715863c1-c7a7-4ce8-81a7-773377c0555b",
+        "6b3f36f1-92bd-4bba-b45d-0ba8e870f342",
+        "e7365b09-c023-496e-9386-fac526ea4b2f",
+        "453f7bb1-dfa5-43f2-965c-51352c7cbf73",
+        "dabd6bc5-1e83-48a5-bafc-1420a44e425a",
+        "1ad634cc-0a04-4dfb-b5ab-2e77a8cf1bb7",
+        "ece55521-b72e-4503-88bc-bde11db9684e",
+        "48bbe635-d46d-41f0-ac26-c2e091881957",
+        "add0956d-6d19-40f6-98fe-65f996b3e2c8",
+        "1334286c-c835-41b4-ab4a-4327f509041f",
+        "ef3ec983-ae98-43e2-a085-4a16417fe7fe",
+        "a93f9af4-c768-453e-abef-b74384926087",
+        "f7b229b7-af52-4d43-b1d2-ca98d96d5d20",
+        "52528ae3-9bee-4e03-87de-077432edebd1"
+      ],
+      "suite_id": "0c7a470e-a6a8-4d65-b22b-23690966c36e",
+      "suite_name": "Unsloth_Core HistoryGuide 20260517-0710 Blind Eval",
+      "suite_id_extracted_wrong": "3ef1a873-e76c-4bc9-a4c9-93ecb625e029"
+    },
+    {
+      "npc_key": "chef_assistant",
+      "system_id": "5f5567a4-92b9-40fc-b8d8-e33a1218a0e9",
+      "test_prompt_ids": [
+        "9861228d-0efa-488f-b2f2-f808164243db",
+        "86609bd2-c5d5-4bbe-8993-565d079bb1d7",
+        "457e9d8a-b8b6-420c-a88a-7012ef694d95",
+        "03a627af-b0f1-4fe1-94bb-ff66c184a3fa",
+        "b693eb50-8c6c-47b1-b741-7ea0f4e13994",
+        "1ad98860-0617-44ee-bc4f-9ff3d4b8685c",
+        "308bd8c3-8523-4b9f-8a1e-a6e4666af4b7",
+        "976f2240-d2ec-4432-8a5d-05903caa83d4",
+        "85745425-048b-40d0-9231-d2f97c6de0d1",
+        "bcb2da45-3866-47ee-9b4a-34e186772417",
+        "a78e6c0a-d679-4d83-92c2-6d50c71b0f71",
+        "a9b6c3ca-66b4-4c24-a379-63e67f88b1ac",
+        "c433be7e-14cb-4d40-9f7d-53059502f00a",
+        "1ac36d0a-ca9a-4a9f-9b69-5ce9eb65b2ca",
+        "bb46347a-b46e-43f8-99cc-1f475054222d",
+        "20d0489e-d009-4ae5-85de-317e120c4a07",
+        "6e83d1d2-d83b-4742-a8f4-2be493f3c79a",
+        "842fec28-7f7f-43fa-9022-a7b136731433",
+        "14dc1f91-fea7-408b-b99e-ad126720d3f1",
+        "f0f19329-2913-4460-a6a0-779e14390912",
+        "5067d0cf-e542-4e60-9b34-bd1c41b879c8",
+        "46e5816b-9144-4191-9b0c-b9c14f856c00",
+        "555a194d-c814-48ba-8915-f56f9d45ed4e",
+        "a575be66-3bb0-4122-9694-1631ef5d9174",
+        "7a43a750-ef2f-4360-aa6b-0f113c2bd2ab"
+      ],
+      "suite_id": "9854d623-7dd9-4e2a-9cea-ab3226e7c06d",
+      "suite_name": "Unsloth_Core ChefAssistant 20260517-0710 Blind Eval",
+      "suite_id_extracted_wrong": "072c7ee9-30d9-4772-8ac5-d25704c50635"
+    }
+  ]
+}

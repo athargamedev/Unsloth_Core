@@ -27,7 +27,20 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
-def fetch_eval_runs(entity, project, npc_key=None, limit=3):
+def active_npc_keys():
+    """Return currently active NPC keys from subjects/*.json."""
+    keys = []
+    for path in sorted((PROJECT_ROOT / "subjects").glob("*.json")):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                spec = json.load(f)
+            keys.append(spec.get("npc_key") or path.stem)
+        except Exception:
+            keys.append(path.stem)
+    return set(keys)
+
+
+def fetch_eval_runs(entity, project, npc_key=None, limit=3, active_only=True):
     """Fetch the most recent W&B eval runs."""
     import wandb
 
@@ -37,17 +50,20 @@ def fetch_eval_runs(entity, project, npc_key=None, limit=3):
         filters["tags"] = {"$in": ["eval", npc_key]}
         filters["config.npc_key"] = npc_key
     try:
-        runs = api.runs(f"{entity}/{project}", filters=filters, per_page=limit)
-        return list(runs)
+        runs = list(api.runs(f"{entity}/{project}", filters=filters, per_page=limit))
     except Exception as e:
         print(f"Error fetching runs: {e}")
         # Fall back: just get any runs with eval tag
         try:
-            runs = api.runs(f"{entity}/{project}", per_page=limit)
-            return [r for r in runs if "eval" in (r.tags or [])][:limit]
+            runs = [r for r in api.runs(f"{entity}/{project}", per_page=limit) if "eval" in (r.tags or [])]
         except Exception as e2:
             print(f"Fallback also failed: {e2}")
             return []
+
+    if active_only and not npc_key:
+        active_keys = active_npc_keys()
+        runs = [r for r in runs if r.config.get("npc_key") in active_keys]
+    return runs[:limit]
 
 
 def format_win_rate(win_rate, total):
