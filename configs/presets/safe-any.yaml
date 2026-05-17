@@ -5,5 +5,5 @@ training:
   max_seq_length: 1024
   warmup_steps: 5
 lora:
-  lora_r: 8
-  lora_alpha: 16
+  r: 8
+  alpha: 16

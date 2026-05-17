@@ -53,7 +53,7 @@ Moves legacy flat datasets into the new canonical structure.
 Starts a LoRA fine-tuning session.
 - `config_or_spec`: Path to spec or YAML config.
 - `--from-spec`: Optional for `.json` subject files; `ucore train` auto-detects them.
-- `--preset`: Choose from `configs/presets/` (e.g., `smoke`, `fast-3b`, `quality-7b`).
+- `--preset`: Choose from `configs/presets/` (`fast-3b`, `safe-any`, `smoke`, `wandb`).
 - `--wandb`: Enable Weights & Biases experiment tracking (logs config, metrics, dataset/LoRA/GGUF artifacts).
 - `--no-wandb`: Disable W&B even if enabled in config.
 - `--export-gguf`: Automatically export to GGUF after training completes.

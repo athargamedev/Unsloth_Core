@@ -2407,8 +2407,8 @@ The user can execute these commands directly from your interface.`;
         "options.datasetPath": { type: "string", required: true, default: "subjects/datasets/chemistry_instructor/onyx/train.jsonl", description: "Train dataset path" },
       },
       train: {
-        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
-        preset: { type: "string", required: false, default: "llama-1b-fast", ...(presetOptions.length ? { enum: presetOptions } : {}) },
+        spec: { type: "string", required: true, default: "subjects/history_guide.json" },
+        preset: { type: "string", required: false, default: "fast-3b", ...(presetOptions.length ? { enum: presetOptions } : {}) },
         "options.learningRate": { type: "string", required: false, default: "2e-4" },
         "options.batchSize": { type: "number", required: false, default: 1 },
         "options.epochs": { type: "number", required: false, default: 3 },
@@ -2417,8 +2417,8 @@ The user can execute these commands directly from your interface.`;
         "options.baseModel": { type: "string", required: false, default: "unsloth/Llama-3.2-3B-Instruct-bnb-4bit" },
       },
       pipeline: {
-        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
-        preset: { type: "string", required: false, default: "llama-1b-fast", ...(presetOptions.length ? { enum: presetOptions } : {}) },
+        spec: { type: "string", required: true, default: "subjects/history_guide.json" },
+        preset: { type: "string", required: false, default: "fast-3b", ...(presetOptions.length ? { enum: presetOptions } : {}) },
         "options.technique": { type: "string", required: false, default: "onyx", enum: ["onyx", "ollama", "template", "openai", "anthropic"] },
         "options.track": { type: "boolean", required: false, default: false },
         "options.wandb": { type: "boolean", required: false, default: false },

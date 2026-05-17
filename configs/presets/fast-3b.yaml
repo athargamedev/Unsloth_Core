@@ -3,5 +3,5 @@ training:
   batch_size: 1
   gradient_accumulation_steps: 8
 lora:
-  lora_r: 16
-  lora_alpha: 32
+  r: 16
+  alpha: 32

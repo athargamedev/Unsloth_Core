@@ -142,9 +142,10 @@ Weights & Biases tracks every training run with:
 |-----|-----|---------|----------------|-----------------|
 | History Guide | `history_guide` | World history | 1.771 | 25% win rate |
 | Chef Assistant | `chef_assistant` | Culinary arts | 1.768 | 12% win rate |
-| Space Guide | `space_guide` | Astronomy/space | 1.782 | 38% win rate |
 
-All deployed as LoRA GGUFs to Unity StreamingAssets. Base model: `llama-3.2-3b-instruct-q4_k_m.gguf` (1.9 GB). Runtime loads base once + all LoRAs simultaneously; switching is instant via system prompt + adapter swap in `NPCLoraAgent`.
+Active focus is now the two simple NPC datasets above. Space Guide was removed from `subjects/`, `outputs/`, and `exports/` to keep the project focused.
+
+The two active NPCs are deployed as LoRA GGUFs to Unity StreamingAssets. Base model: `llama-3.2-3b-instruct-q4_k_m.gguf` (1.9 GB). Runtime loads base once + LoRAs; switching is instant via system prompt + adapter swap in `NPCLoraAgent`.
 
 ---
 

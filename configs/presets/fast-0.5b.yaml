@@ -1,7 +1,0 @@
-# Fast preset for 0.5B models on 6GB VRAM
-training:
-  batch_size: 8
-  gradient_accumulation_steps: 2
-lora:
-  lora_r: 32
-  lora_alpha: 64

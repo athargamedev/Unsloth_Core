@@ -4,7 +4,7 @@ plan_execution.py
 
 Compute a deterministic recommendation for where to run:
 - dataset generation: local vs remote
-- training: local vs remote_colab
+- training: local vs remote_gpu/safe-any fallback
 
 Usage:
   python scripts/plan_execution.py --spec subjects/chemistry_instructor.json --preset fast-3b --json
@@ -95,7 +95,7 @@ def estimate_training_vram_gb(config: dict[str, Any], policy: dict[str, Any]) ->
     bucket = infer_model_bucket(model)
     baseline = float(policy.get("model_vram_baseline_gb", {}).get(bucket, 8.0))
 
-    lora_r = float(lora.get("lora_r", 16))
+    lora_r = float(lora.get("r", lora.get("lora_r", 16)))
     max_seq = float(training.get("max_seq_length", 2048))
     packing = bool(training.get("packing", True))
 
@@ -167,14 +167,14 @@ def recommend(spec: dict[str, Any], preset: str | None, local_vram_gb: float | N
     margin = float(policy.get("safety", {}).get("training_vram_safety_margin", 1.25))
     required = round(est_vram * margin, 1)
 
-    training_location = "remote_colab"
+    training_location = "safe-any_or_remote_gpu"
     training_reason = f"No local VRAM detected; required ~{required}GB with safety margin"
     if local_vram_gb is not None:
         if local_vram_gb >= required:
             training_location = "local"
             training_reason = f"Local VRAM {local_vram_gb}GB >= required {required}GB"
         else:
-            training_location = "remote_colab"
+            training_location = "safe-any_or_remote_gpu"
             training_reason = f"Local VRAM {local_vram_gb}GB < required {required}GB"
 
     return {

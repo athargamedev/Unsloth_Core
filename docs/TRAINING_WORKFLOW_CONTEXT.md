@@ -331,33 +331,27 @@ subjects/{npc_key}.json ──── subjects/reference_docs/{npc_key}_primer.md
 
 ## 6. Config Hierarchy
 
-Training configs use a layered merge:
+Training configs are intentionally simple now:
 
-1. **Base config** (`configs/lora-sft-{model}.yaml`) defines model, dataset path template, LoRA hyperparams
-2. **Preset** (`configs/presets/{name}.yaml`) overrides training-specific settings (epochs, LR, batch size)
-3. **CLI flags** (`--lr`, `--epochs`, etc.) override everything above
+1. **Spec-derived base**: `scripts/train.py` builds the effective config from `subjects/{npc}.json`, the detected canonical dataset path, and the default Llama 3.2 3B model.
+2. **Preset** (`configs/presets/{name}.yaml`) overrides hyperparameters. Current active presets are `fast-3b`, `safe-any`, `smoke`, and `wandb`.
+3. **CLI flags** (`--lr`, `--epochs`, `--wandb`, etc.) override everything above.
 
-Multiple presets can be stacked:
+Use one training preset plus `--wandb` as a flag:
 ```bash
-./ucore train subjects/history_guide.json \
-  --preset fast-3b \
-  --preset wandb
+./ucore train subjects/history_guide.json --preset fast-3b --wandb --export-gguf
 ```
+
+`configs/lora-sft-base.yaml` remains as the canonical base config for validation/planning tools (`validate_config.py`, `plan_execution.py`). Duplicate top-level model configs and old Qwen/0.5B/1B presets were removed to avoid drift.
 
 Example preset (`fast-3b.yaml`):
 ```yaml
-model_name: "unsloth/Llama-3.2-3B-Instruct"
-lora_r: 16
-lora_alpha: 32
-lora_dropout: 0.05
-per_device_train_batch_size: 4
-gradient_accumulation_steps: 4
-learning_rate: 2e-4
-num_train_epochs: 5
-max_seq_length: 2048
-warmup_steps: 10
-logging_steps: 1
-save_steps: 50
+training:
+  batch_size: 1
+  gradient_accumulation_steps: 8
+lora:
+  lora_r: 16
+  lora_alpha: 32
 ```
 
 ---

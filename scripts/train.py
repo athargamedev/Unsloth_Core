@@ -101,15 +101,28 @@ def check_promotion_rules(training_loss: float, config: dict, num_train_examples
     with open(rules_path) as f:
         rules = yaml.safe_load(f) or {}
 
+    rules_block = rules.get("thresholds", rules)
+
     failures = []
-    loss_threshold = rules.get("max_training_loss", None)
+    loss_threshold = rules_block.get("max_training_loss", None)
     if loss_threshold is not None:
         if training_loss > loss_threshold:
             failures.append(
                 f"Training loss {training_loss:.4f} exceeds threshold {loss_threshold:.4f}"
             )
 
-    min_examples = rules.get("min_train_examples", None)
+    min_eff_batch = rules_block.get("min_eff_batch_size", None)
+    if min_eff_batch is not None:
+        training_cfg = config.get("training", {}) if isinstance(config, dict) else {}
+        batch_size = int(training_cfg.get("batch_size", 1) or 1)
+        grad_accum = int(training_cfg.get("gradient_accumulation_steps", 1) or 1)
+        eff_batch = batch_size * grad_accum
+        if eff_batch < int(min_eff_batch):
+            failures.append(
+                f"Effective batch size {eff_batch} is below minimum {int(min_eff_batch)}"
+            )
+
+    min_examples = rules_block.get("min_train_examples", None)
     if min_examples is not None:
         if num_train_examples < min_examples:
             failures.append(
@@ -135,7 +148,7 @@ def estimate_vram(config: dict) -> tuple[float, str]:
     Returns (estimated_gb, notes).
     """
     model_name = config.get("model", "unknown")
-    lora_r = config.get("lora_r", 16)
+    lora_r = config.get("lora_r", config.get("lora", {}).get("r", config.get("lora", {}).get("lora_r", 16)))
     max_seq = config.get("max_seq_length", 2048)
     packing = config.get("packing", True)
 
