@@ -104,10 +104,12 @@ def quality_estimate(text):
 class LlamaServer:
     """Manage a llama.cpp server subprocess for model inference."""
 
-    def __init__(self, gguf_path, port=8888, host="127.0.0.1", lora_path=None, lora_weight=1.0):
+    def __init__(self, gguf_path, port=8888, host="127.0.0.1", lora_path=None, lora_weight=1.0, gpu_layers=99, max_tokens=256):
         self.gguf_path = Path(gguf_path)
         self.lora_path = Path(lora_path) if lora_path else None
         self.lora_weight = lora_weight
+        self.gpu_layers = gpu_layers
+        self.max_tokens = max_tokens
         self.port = port
         self.host = host
         self.process = None
@@ -151,7 +153,7 @@ class LlamaServer:
             "-m", str(self.gguf_path),
             "--host", self.host,
             "--port", str(self.port),
-            "-ngl", "99",  # Offload all layers to GPU
+            "-ngl", str(self.gpu_layers),  # GPU layers to offload (0 = CPU-only)
             "-c", "4096",   # Context size
         ]
 
@@ -198,8 +200,10 @@ class LlamaServer:
         self.stop()
         return False
 
-    def query(self, messages, max_tokens=256, temperature=0.7):
+    def query(self, messages, max_tokens=None, temperature=0.7):
         """Send a chat completion request to the running server."""
+        if max_tokens is None:
+            max_tokens = self.max_tokens
         payload = json.dumps({
             "model": "default",
             "messages": messages,
@@ -937,6 +941,10 @@ def main():
                         help="llama-server port (default: 8888)")
     parser.add_argument("--host", default="127.0.0.1",
                         help="llama-server host (default: 127.0.0.1)")
+    parser.add_argument("--gpu-layers", type=int, default=99,
+                        help="Number of model layers to offload to GPU for llama-server; use 0 for CPU-only fallback (default: 99)")
+    parser.add_argument("--max-tokens", type=int, default=256,
+                        help="Maximum generated tokens per eval answer (default: 256)")
     
     # Judge
     parser.add_argument("--judge", action="store_true", help="Use local Ollama judge")
@@ -1026,17 +1034,21 @@ def main():
 
     # Start baseline server
     print("\n[1/4] Starting baseline server...")
-    baseline_kwargs = dict(port=args.port)
+    baseline_kwargs = dict(port=args.port, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens)
     if args.base_model:
         base_model_path = Path(args.base_model)
         if not base_model_path.exists():
             print(f"Error: Base model not found: {args.base_model}")
             sys.exit(1)
-        baseline_server = LlamaServer(
-            base_model_path, lora_path=baseline_gguf,
-            lora_weight=args.lora_weight, **baseline_kwargs
-        )
-        print(f"  (LoRA mode: base={base_model_path}, adapter={baseline_gguf})")
+        if baseline_gguf.resolve() == base_model_path.resolve():
+            baseline_server = LlamaServer(base_model_path, **baseline_kwargs)
+            print(f"  (LoRA mode: baseline is base-only: {base_model_path})")
+        else:
+            baseline_server = LlamaServer(
+                base_model_path, lora_path=baseline_gguf,
+                lora_weight=args.lora_weight, **baseline_kwargs
+            )
+            print(f"  (LoRA mode: base={base_model_path}, adapter={baseline_gguf})")
     else:
         baseline_server = LlamaServer(baseline_gguf, **baseline_kwargs)
     if not baseline_server.start():
@@ -1048,7 +1060,7 @@ def main():
 
     # Start candidate server
     print("\n[3/4] Starting candidate server...")
-    candidate_kwargs = dict(port=args.port + 1)
+    candidate_kwargs = dict(port=args.port + 1, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens)
     if args.base_model:
         # LoRA mode: candidate is an adapter, start server with base model + --lora
         base_model_path = Path(args.base_model)

@@ -1,0 +1,83 @@
+{
+  "local_vram_gb": 4.0,
+  "total_specs": 2,
+  "total_presets": 1,
+  "total_plan_variants": 2,
+  "local_queue": [],
+  "remote_colab_queue": [
+    {
+      "npc_key": "chef_assistant",
+      "spec_path": "subjects/chef_assistant.json",
+      "preset": "remote-3b-quality",
+      "technique": "onyx",
+      "dataset_generation": {
+        "location": "local",
+        "reason": "Default local orchestration"
+      },
+      "training": {
+        "location": "remote_colab",
+        "reason": "Local VRAM 4.0GB < required 10.4GB"
+      }
+    },
+    {
+      "npc_key": "history_guide",
+      "spec_path": "subjects/history_guide.json",
+      "preset": "remote-3b-quality",
+      "technique": "onyx",
+      "dataset_generation": {
+        "location": "local",
+        "reason": "Default local orchestration"
+      },
+      "training": {
+        "location": "remote_colab",
+        "reason": "Local VRAM 4.0GB < required 10.4GB"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "npc_key": "chef_assistant",
+      "preset": "remote-3b-quality",
+      "technique": "onyx",
+      "dataset_examples_total": 132,
+      "local_vram_gb": 4.0,
+      "estimated_training_vram_gb": 8.3,
+      "required_training_vram_with_margin_gb": 10.4,
+      "recommendation": {
+        "dataset_generation": {
+          "location": "local",
+          "reason": "Default local orchestration"
+        },
+        "training": {
+          "location": "remote_colab",
+          "reason": "Local VRAM 4.0GB < required 10.4GB"
+        }
+      },
+      "spec_path": "subjects/chef_assistant.json"
+    },
+    {
+      "npc_key": "history_guide",
+      "preset": "remote-3b-quality",
+      "technique": "onyx",
+      "dataset_examples_total": 132,
+      "local_vram_gb": 4.0,
+      "estimated_training_vram_gb": 8.3,
+      "required_training_vram_with_margin_gb": 10.4,
+      "recommendation": {
+        "dataset_generation": {
+          "location": "local",
+          "reason": "Default local orchestration"
+        },
+        "training": {
+          "location": "remote_colab",
+          "reason": "Local VRAM 4.0GB < required 10.4GB"
+        }
+      },
+      "spec_path": "subjects/history_guide.json"
+    }
+  ],
+  "generated_colab_notebooks": [
+    "colab/outputs/chef_assistant__remote-3b-quality__remote_colab.ipynb",
+    "colab/outputs/history_guide__remote-3b-quality__remote_colab.ipynb"
+  ]
+}

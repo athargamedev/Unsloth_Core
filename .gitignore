@@ -34,6 +34,7 @@ _unsloth_sentencepiece_temp/
 # Backups and archives
 *.bak
 *.backup
+archive/
 
 # IDE
 .vscode/

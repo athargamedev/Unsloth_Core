@@ -2,6 +2,1128 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_393126",
+      "name": "External Process (393126) chef_assistant",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:31:55.785Z",
+      "startedAt": "2026-05-17T18:31:55.785Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 393126] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 393126] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:32:00.779Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_393079",
+      "name": "External Process (393079)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:31:54.890Z",
+      "startedAt": "2026-05-17T18:31:54.890Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 393079] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 393079] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:31:55.785Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_392872",
+      "name": "External Process (392872) history_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:31:51.781Z",
+      "startedAt": "2026-05-17T18:31:51.781Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-48d9636b306c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -e STAMP=$(date +%Y%m%d_%H%M%S) ARCHIVE=\"archive/datasets_research_bigrams_$STAMP\" mkdir -p \"$ARCHIVE/subjects/datasets\" for npc in history_guide chef_assistant; do   if [ -d \"subjects/datasets/$npc\" ]; then     mv \"subjects/datasets/$npc\" \"$ARCHIVE/subjects/datasets/$npc\"     echo \"archived research-bigram dataset $npc -> $ARCHIVE/subjects/datasets/$npc\"   fi done python -m py_compile scripts/generate_dataset.py ./ucore generate subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl --strict-canonical python - <<'\\''PY'\\'' import json, collections, pathlib bad=[] for npc in ['\\''history_guide'\\'','\\''chef_assistant'\\'']:  print('\\''\\n'\\''+npc)  for split in ['\\''train_clean'\\'','\\''validation'\\'']:   p=pathlib.Path(f'\\''subjects/datasets/{npc}/onyx/{split}.jsonl'\\'')   cats=collections.Counter(); concepts=collections.Counter(); samples=[]   for line in p.open():    ex=json.loads(line); md=ex.get('\\''metadata'\\'',{})    cats[md.get('\\''category'\\'','\\''?'\\'')]+=1; concepts[md.get('\\''concept'\\'','\\''?'\\'')]+=1    content=ex['\\''messages'\\''][-1]['\\''content'\\'']    if '\\''Led to labor shortages'\\'' in content or '\\''Gluten: Protein network'\\'' in content:     bad.append((npc, split, md.get('\\''concept'\\''), content[:120]))    if len(samples)<3: samples.append((md.get('\\''concept'\\''), content[:160].replace('\\''\\n'\\'','\\'' '\\'')))   print(split, sum(cats.values()), dict(cats), '\\''top'\\'', concepts.most_common(12))   print('\\''samples'\\'', samples) print('\\''\\nbad_repeated_source_count'\\'', len(bad)) PY' __hermes_ec=$? export -p > /tmp/hermes-snap-48d9636b306c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-48d9636b306c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_48d9636b306c__%s__HERMES_CWD_48d9636b306c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 392872] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 392872] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-48d9636b306c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -e STAMP=$(date +%Y%m%d_%H%M%S) ARCHIVE=\"archive/datasets_research_bigrams_$STAMP\" mkdir -p \"$ARCHIVE/subjects/datasets\" for npc in history_guide chef_assistant; do   if [ -d \"subjects/datasets/$npc\" ]; then     mv \"subjects/datasets/$npc\" \"$ARCHIVE/subjects/datasets/$npc\"     echo \"archived research-bigram dataset $npc -> $ARCHIVE/subjects/datasets/$npc\"   fi done python -m py_compile scripts/generate_dataset.py ./ucore generate subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl --strict-canonical python - <<'\\''PY'\\'' import json, collections, pathlib bad=[] for npc in ['\\''history_guide'\\'','\\''chef_assistant'\\'']:  print('\\''\\n'\\''+npc)  for split in ['\\''train_clean'\\'','\\''validation'\\'']:   p=pathlib.Path(f'\\''subjects/datasets/{npc}/onyx/{split}.jsonl'\\'')   cats=collections.Counter(); concepts=collections.Counter(); samples=[]   for line in p.open():    ex=json.loads(line); md=ex.get('\\''metadata'\\'',{})    cats[md.get('\\''category'\\'','\\''?'\\'')]+=1; concepts[md.get('\\''concept'\\'','\\''?'\\'')]+=1    content=ex['\\''messages'\\''][-1]['\\''content'\\'']    if '\\''Led to labor shortages'\\'' in content or '\\''Gluten: Protein network'\\'' in content:     bad.append((npc, split, md.get('\\''concept'\\''), content[:120]))    if len(samples)<3: samples.append((md.get('\\''concept'\\''), content[:160].replace('\\''\\n'\\'','\\'' '\\'')))   print(split, sum(cats.values()), dict(cats), '\\''top'\\'', concepts.most_common(12))   print('\\''samples'\\'', samples) print('\\''\\nbad_repeated_source_count'\\'', len(bad)) PY' __hermes_ec=$? export -p > /tmp/hermes-snap-48d9636b306c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-48d9636b306c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_48d9636b306c__%s__HERMES_CWD_48d9636b306c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:32:00.779Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_391471",
+      "name": "External Process (391471)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:31:09.746Z",
+      "startedAt": "2026-05-17T18:31:09.746Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl --strict-canonical"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 391471] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 391471] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl --strict-canonical"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:31:09.891Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_391279",
+      "name": "External Process (391279) chef_assistant",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:31:06.775Z",
+      "startedAt": "2026-05-17T18:31:06.775Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 391279] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 391279] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:31:09.746Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_391230",
+      "name": "External Process (391230)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:31:04.757Z",
+      "startedAt": "2026-05-17T18:31:04.757Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 391230] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 391230] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:31:06.775Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_390993",
+      "name": "External Process (390993) history_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:31:00.754Z",
+      "startedAt": "2026-05-17T18:31:00.754Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-48d9636b306c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -e STAMP=$(date +%Y%m%d_%H%M%S) ARCHIVE=\"archive/datasets_poor_sentence_match_$STAMP\" mkdir -p \"$ARCHIVE/subjects/datasets\" for npc in history_guide chef_assistant; do   if [ -d \"subjects/datasets/$npc\" ]; then     mv \"subjects/datasets/$npc\" \"$ARCHIVE/subjects/datasets/$npc\"     echo \"archived poor sentence-match dataset $npc -> $ARCHIVE/subjects/datasets/$npc\"   fi done python -m py_compile scripts/generate_dataset.py ./ucore generate subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl --strict-canonical python - <<'\\''PY'\\'' import json, collections, pathlib bad=[] for npc in ['\\''history_guide'\\'','\\''chef_assistant'\\'']:  print('\\''\\n'\\''+npc)  for split in ['\\''train_clean'\\'','\\''validation'\\'']:   p=pathlib.Path(f'\\''subjects/datasets/{npc}/onyx/{split}.jsonl'\\'')   cats=collections.Counter(); concepts=collections.Counter(); samples=[]   for line in p.open():    ex=json.loads(line); md=ex.get('\\''metadata'\\'',{})    cats[md.get('\\''category'\\'','\\''?'\\'')]+=1; concepts[md.get('\\''concept'\\'','\\''?'\\'')]+=1    content=ex['\\''messages'\\''][-1]['\\''content'\\'']    if '\\''Led to labor shortages'\\'' in content or '\\''Gluten: Protein network'\\'' in content:     bad.append((npc, split, md.get('\\''concept'\\''), content[:120]))    if len(samples)<3: samples.append((md.get('\\''concept'\\''), content[:160].replace('\\''\\n'\\'','\\'' '\\'')))   print(split, sum(cats.values()), dict(cats), '\\''top'\\'', concepts.most_common(10))   print('\\''samples'\\'', samples) print('\\''\\nbad_repeated_source_count'\\'', len(bad)) for b in bad[:5]: print(b) PY' __hermes_ec=$? export -p > /tmp/hermes-snap-48d9636b306c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-48d9636b306c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_48d9636b306c__%s__HERMES_CWD_48d9636b306c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 390993] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 390993] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-48d9636b306c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -e STAMP=$(date +%Y%m%d_%H%M%S) ARCHIVE=\"archive/datasets_poor_sentence_match_$STAMP\" mkdir -p \"$ARCHIVE/subjects/datasets\" for npc in history_guide chef_assistant; do   if [ -d \"subjects/datasets/$npc\" ]; then     mv \"subjects/datasets/$npc\" \"$ARCHIVE/subjects/datasets/$npc\"     echo \"archived poor sentence-match dataset $npc -> $ARCHIVE/subjects/datasets/$npc\"   fi done python -m py_compile scripts/generate_dataset.py ./ucore generate subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl --strict-canonical python - <<'\\''PY'\\'' import json, collections, pathlib bad=[] for npc in ['\\''history_guide'\\'','\\''chef_assistant'\\'']:  print('\\''\\n'\\''+npc)  for split in ['\\''train_clean'\\'','\\''validation'\\'']:   p=pathlib.Path(f'\\''subjects/datasets/{npc}/onyx/{split}.jsonl'\\'')   cats=collections.Counter(); concepts=collections.Counter(); samples=[]   for line in p.open():    ex=json.loads(line); md=ex.get('\\''metadata'\\'',{})    cats[md.get('\\''category'\\'','\\''?'\\'')]+=1; concepts[md.get('\\''concept'\\'','\\''?'\\'')]+=1    content=ex['\\''messages'\\''][-1]['\\''content'\\'']    if '\\''Led to labor shortages'\\'' in content or '\\''Gluten: Protein network'\\'' in content:     bad.append((npc, split, md.get('\\''concept'\\''), content[:120]))    if len(samples)<3: samples.append((md.get('\\''concept'\\''), content[:160].replace('\\''\\n'\\'','\\'' '\\'')))   print(split, sum(cats.values()), dict(cats), '\\''top'\\'', concepts.most_common(10))   print('\\''samples'\\'', samples) print('\\''\\nbad_repeated_source_count'\\'', len(bad)) for b in bad[:5]: print(b) PY' __hermes_ec=$? export -p > /tmp/hermes-snap-48d9636b306c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-48d9636b306c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_48d9636b306c__%s__HERMES_CWD_48d9636b306c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:31:09.891Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_388993",
+      "name": "External Process (388993) chef_assistant",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:30:03.747Z",
+      "startedAt": "2026-05-17T18:30:03.747Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 388993] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 388993] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:30:13.710Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_388560",
+      "name": "External Process (388560) history_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:29:53.721Z",
+      "startedAt": "2026-05-17T18:29:53.721Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-48d9636b306c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -e STAMP=$(date +%Y%m%d_%H%M%S) ARCHIVE=\"archive/datasets_noisy_concepts_$STAMP\" mkdir -p \"$ARCHIVE/subjects/datasets\" for npc in history_guide chef_assistant; do   if [ -d \"subjects/datasets/$npc\" ]; then     mv \"subjects/datasets/$npc\" \"$ARCHIVE/subjects/datasets/$npc\"     echo \"archived noisy dataset $npc -> $ARCHIVE/subjects/datasets/$npc\"   fi done python -m py_compile scripts/generate_dataset.py ./ucore generate subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl --strict-canonical python - <<'\\''PY'\\'' import json, collections, pathlib for npc in ['\\''history_guide'\\'','\\''chef_assistant'\\'']:  print('\\''\\n'\\''+npc)  for split in ['\\''train_clean'\\'','\\''validation'\\'']:   p=pathlib.Path(f'\\''subjects/datasets/{npc}/onyx/{split}.jsonl'\\'')   cats=collections.Counter(); concepts=collections.Counter(); samples=[]   for line in p.open():    ex=json.loads(line); md=ex.get('\\''metadata'\\'',{})    cats[md.get('\\''category'\\'','\\''?'\\'')]+=1; concepts[md.get('\\''concept'\\'','\\''?'\\'')]+=1    if len(samples)<2: samples.append(ex['\\''messages'\\''][-1]['\\''content'\\''][:150].replace('\\''\\n'\\'','\\'' '\\''))   print(split, sum(cats.values()), dict(cats), '\\''top'\\'', concepts.most_common(10))   print('\\''samples'\\'', samples) PY' __hermes_ec=$? export -p > /tmp/hermes-snap-48d9636b306c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-48d9636b306c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_48d9636b306c__%s__HERMES_CWD_48d9636b306c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 388560] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 388560] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-48d9636b306c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -e STAMP=$(date +%Y%m%d_%H%M%S) ARCHIVE=\"archive/datasets_noisy_concepts_$STAMP\" mkdir -p \"$ARCHIVE/subjects/datasets\" for npc in history_guide chef_assistant; do   if [ -d \"subjects/datasets/$npc\" ]; then     mv \"subjects/datasets/$npc\" \"$ARCHIVE/subjects/datasets/$npc\"     echo \"archived noisy dataset $npc -> $ARCHIVE/subjects/datasets/$npc\"   fi done python -m py_compile scripts/generate_dataset.py ./ucore generate subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl --strict-canonical python - <<'\\''PY'\\'' import json, collections, pathlib for npc in ['\\''history_guide'\\'','\\''chef_assistant'\\'']:  print('\\''\\n'\\''+npc)  for split in ['\\''train_clean'\\'','\\''validation'\\'']:   p=pathlib.Path(f'\\''subjects/datasets/{npc}/onyx/{split}.jsonl'\\'')   cats=collections.Counter(); concepts=collections.Counter(); samples=[]   for line in p.open():    ex=json.loads(line); md=ex.get('\\''metadata'\\'',{})    cats[md.get('\\''category'\\'','\\''?'\\'')]+=1; concepts[md.get('\\''concept'\\'','\\''?'\\'')]+=1    if len(samples)<2: samples.append(ex['\\''messages'\\''][-1]['\\''content'\\''][:150].replace('\\''\\n'\\'','\\'' '\\''))   print(split, sum(cats.values()), dict(cats), '\\''top'\\'', concepts.most_common(10))   print('\\''samples'\\'', samples) PY' __hermes_ec=$? export -p > /tmp/hermes-snap-48d9636b306c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-48d9636b306c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_48d9636b306c__%s__HERMES_CWD_48d9636b306c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:30:15.846Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_383966",
+      "name": "External Process (383966) chef_assistant",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:27:27.734Z",
+      "startedAt": "2026-05-17T18:27:27.734Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 383966] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 383966] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:27:45.751Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_382303",
+      "name": "External Process (382303) history_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:26:32.439Z",
+      "startedAt": "2026-05-17T18:26:32.439Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-48d9636b306c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -e STAMP=$(date +%Y%m%d_%H%M%S) ARCHIVE=\"archive/datasets_before_remote3b_$STAMP\" mkdir -p \"$ARCHIVE/subjects/datasets\" for npc in history_guide chef_assistant; do   if [ -d \"subjects/datasets/$npc\" ]; then     mkdir -p \"$ARCHIVE/subjects/datasets\"     mv \"subjects/datasets/$npc\" \"$ARCHIVE/subjects/datasets/$npc\"     echo \"archived subjects/datasets/$npc -> $ARCHIVE/subjects/datasets/$npc\"   fi done ./ucore generate subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl --strict-canonical python - <<'\\''PY'\\'' from pathlib import Path for p in sorted(Path('\\''subjects/datasets'\\'').glob('\\''*/*/*.jsonl'\\'')):     print(f'\\''{sum(1 for _ in p.open()):5} {p}'\\'') PY' __hermes_ec=$? export -p > /tmp/hermes-snap-48d9636b306c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-48d9636b306c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_48d9636b306c__%s__HERMES_CWD_48d9636b306c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 382303] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 382303] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-48d9636b306c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -e STAMP=$(date +%Y%m%d_%H%M%S) ARCHIVE=\"archive/datasets_before_remote3b_$STAMP\" mkdir -p \"$ARCHIVE/subjects/datasets\" for npc in history_guide chef_assistant; do   if [ -d \"subjects/datasets/$npc\" ]; then     mkdir -p \"$ARCHIVE/subjects/datasets\"     mv \"subjects/datasets/$npc\" \"$ARCHIVE/subjects/datasets/$npc\"     echo \"archived subjects/datasets/$npc -> $ARCHIVE/subjects/datasets/$npc\"   fi done ./ucore generate subjects/history_guide.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/history_guide/onyx/train.jsonl --output subjects/datasets/history_guide/onyx/train_clean.jsonl --strict-canonical ./ucore generate subjects/chef_assistant.json --technique onyx --onyx-queries 3 --onyx-allow-partial --concept-focus identity --concept-focus teaching --concept-focus dialogue ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl --strict-canonical python - <<'\\''PY'\\'' from pathlib import Path for p in sorted(Path('\\''subjects/datasets'\\'').glob('\\''*/*/*.jsonl'\\'')):     print(f'\\''{sum(1 for _ in p.open()):5} {p}'\\'') PY' __hermes_ec=$? export -p > /tmp/hermes-snap-48d9636b306c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-48d9636b306c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_48d9636b306c__%s__HERMES_CWD_48d9636b306c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:27:45.751Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_381659",
+      "name": "External Process (381659)",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:26:13.235Z",
+      "startedAt": "2026-05-17T18:26:13.235Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore feedback eval/results/feedback/chef_assistant_3b_vs_base_feedback.json --dry-run --save-gaps eval/results/gaps/chef_assistant_remote3b_gap_analysis.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 381659] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 381659] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore feedback eval/results/feedback/chef_assistant_3b_vs_base_feedback.json --dry-run --save-gaps eval/results/gaps/chef_assistant_remote3b_gap_analysis.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:26:15.497Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_381110",
+      "name": "External Process (381110)",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T18:25:54.208Z",
+      "startedAt": "2026-05-17T18:25:54.208Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore feedback eval/results/feedback/history_guide_3b_vs_base_feedback.json --dry-run --save-gaps eval/results/gaps/history_guide_remote3b_gap_analysis.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 381110] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 381110] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore feedback eval/results/feedback/history_guide_3b_vs_base_feedback.json --dry-run --save-gaps eval/results/gaps/history_guide_remote3b_gap_analysis.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:26:12.497Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_381108",
+      "name": "External Process (381108)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T18:25:54.208Z",
+      "startedAt": "2026-05-17T18:25:54.208Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-48d9636b306c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore feedback eval/results/feedback/history_guide_3b_vs_base_feedback.json --dry-run --save-gaps eval/results/gaps/history_guide_remote3b_gap_analysis.json && ./ucore feedback eval/results/feedback/chef_assistant_3b_vs_base_feedback.json --dry-run --save-gaps eval/results/gaps/chef_assistant_remote3b_gap_analysis.json' __hermes_ec=$? export -p > /tmp/hermes-snap-48d9636b306c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-48d9636b306c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_48d9636b306c__%s__HERMES_CWD_48d9636b306c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 381108] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 381108] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-48d9636b306c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore feedback eval/results/feedback/history_guide_3b_vs_base_feedback.json --dry-run --save-gaps eval/results/gaps/history_guide_remote3b_gap_analysis.json && ./ucore feedback eval/results/feedback/chef_assistant_3b_vs_base_feedback.json --dry-run --save-gaps eval/results/gaps/chef_assistant_remote3b_gap_analysis.json' __hermes_ec=$? export -p > /tmp/hermes-snap-48d9636b306c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-48d9636b306c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_48d9636b306c__%s__HERMES_CWD_48d9636b306c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:26:15.497Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_344976",
+      "name": "External Process (344976) chef_assistant",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T18:02:53.204Z",
+      "startedAt": "2026-05-17T18:02:53.204Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/chef_assistant.json --num-questions 10 --max-tokens 96 --gpu-layers 99 --port 8928 --report-html --track --output eval/reports/chef_assistant/chef_assistant_3b_vs_base_eval.json --feedback-json eval/results/feedback/chef_assistant_3b_vs_base_feedback.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 344976] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 344976] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/chef_assistant.json --num-questions 10 --max-tokens 96 --gpu-layers 99 --port 8928 --report-html --track --output eval/reports/chef_assistant/chef_assistant_3b_vs_base_eval.json --feedback-json eval/results/feedback/chef_assistant_3b_vs_base_feedback.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:03:16.815Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_343321",
+      "name": "External Process (343321) history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T18:02:10.588Z",
+      "startedAt": "2026-05-17T18:02:10.588Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/history_guide/history_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/history_guide.json --num-questions 10 --max-tokens 96 --gpu-layers 99 --port 8918 --report-html --track --output eval/reports/history_guide/history_guide_3b_vs_base_eval.json --feedback-json eval/results/feedback/history_guide_3b_vs_base_feedback.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 343321] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 343321] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate exports/history_guide/history_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/history_guide.json --num-questions 10 --max-tokens 96 --gpu-layers 99 --port 8918 --report-html --track --output eval/reports/history_guide/history_guide_3b_vs_base_eval.json --feedback-json eval/results/feedback/history_guide_3b_vs_base_feedback.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:02:44.204Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_337808",
+      "name": "External Process (337808) chef_assistant",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T17:59:19.674Z",
+      "startedAt": "2026-05-17T17:59:19.674Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf --candidate exports/chef_assistant/chef_assistant-llama31-8b-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf --spec subjects/chef_assistant.json --num-questions 10 --max-tokens 96 --gpu-layers 16 --port 8908 --report-html --track --output eval/reports/chef_assistant/chef_assistant_8b_vs_base_eval.json --feedback-json eval/results/feedback/chef_assistant_8b_vs_base_feedback.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 337808] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 337808] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf --candidate exports/chef_assistant/chef_assistant-llama31-8b-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf --spec subjects/chef_assistant.json --num-questions 10 --max-tokens 96 --gpu-layers 16 --port 8908 --report-html --track --output eval/reports/chef_assistant/chef_assistant_8b_vs_base_eval.json --feedback-json eval/results/feedback/chef_assistant_8b_vs_base_feedback.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T18:01:30.972Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_333161",
+      "name": "External Process (333161) history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T17:56:50.393Z",
+      "startedAt": "2026-05-17T17:56:50.393Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; ./ucore evaluate \\   --baseline \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf\" \\   --candidate exports/history_guide/history_guide-llama31-8b-lora-f16.gguf \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf\" \\   --spec subjects/history_guide.json \\   --num-questions 3 \\   --max-tokens 96 \\   --gpu-layers 16 \\   --port 8898 \\   --report-html --track \\   --output eval/reports/history_guide/history_guide_8b_vs_base_eval.json \\   --feedback-json eval/results/feedback/history_guide_8b_vs_base_feedback.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 333161] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 333161] discovered active process",
+        "/usr/bin/bash -lic set +m; ./ucore evaluate \\   --baseline \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf\" \\   --candidate exports/history_guide/history_guide-llama31-8b-lora-f16.gguf \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf\" \\   --spec subjects/history_guide.json \\   --num-questions 3 \\   --max-tokens 96 \\   --gpu-layers 16 \\   --port 8898 \\   --report-html --track \\   --output eval/reports/history_guide/history_guide_8b_vs_base_eval.json \\   --feedback-json eval/results/feedback/history_guide_8b_vs_base_feedback.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T17:58:55.676Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_317906",
+      "name": "External Process (317906) history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T17:48:27.588Z",
+      "startedAt": "2026-05-17T17:48:27.588Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf --candidate exports/history_guide/history_guide-llama31-8b-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf --spec subjects/history_guide.json --num-questions 5 --gpu-layers 0 --port 8898 --report-html --track --output eval/reports/history_guide/history_guide_8b_vs_base_eval.json --feedback-json eval/results/feedback/history_guide_8b_vs_base_feedback.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 317906] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 317906] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf --candidate exports/history_guide/history_guide-llama31-8b-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf --spec subjects/history_guide.json --num-questions 5 --gpu-layers 0 --port 8898 --report-html --track --output eval/reports/history_guide/history_guide_8b_vs_base_eval.json --feedback-json eval/results/feedback/history_guide_8b_vs_base_feedback.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T17:54:46.984Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_317903",
+      "name": "External Process (317903) history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T17:48:24.683Z",
+      "startedAt": "2026-05-17T17:48:24.683Z",
+      "command": [
+        "external",
+        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- ./ucore evaluate \\   --baseline \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf\" \\   --candidate exports/history_guide/history_guide-llama31-8b-lora-f16.gguf \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf\" \\   --spec subjects/history_guide.json \\   --num-questions 5 \\   --gpu-layers 0 \\   --port 8898 \\   --report-html --track \\   --output eval/reports/history_guide/history_guide_8b_vs_base_eval.json \\   --feedback-json eval/results/feedback/history_guide_8b_vs_base_feedback.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 317903] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 317903] discovered active process",
+        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- ./ucore evaluate \\   --baseline \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf\" \\   --candidate exports/history_guide/history_guide-llama31-8b-lora-f16.gguf \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf\" \\   --spec subjects/history_guide.json \\   --num-questions 5 \\   --gpu-layers 0 \\   --port 8898 \\   --report-html --track \\   --output eval/reports/history_guide/history_guide_8b_vs_base_eval.json \\   --feedback-json eval/results/feedback/history_guide_8b_vs_base_feedback.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T17:48:25.584Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_export_history_guide_history_guide-llama31-8b-lora-f16.gguf",
+      "name": "External Export (history_guide/history_guide-llama31-8b-lora-f16.gguf)",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T17:42:45.939Z",
+      "startedAt": "2026-05-17T17:42:45.939Z",
+      "finishedAt": "2026-05-17T17:42:45.939Z",
+      "command": [
+        "./ucore",
+        "export",
+        "history_guide"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "completed",
+          "logs": [
+            "[STATUS][export] substep=adapter_done state=completed"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] GGUF artifact detected: exports/history_guide/history_guide-llama31-8b-lora-f16.gguf"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_export_chef_assistant_chef_assistant-llama31-8b-lora-f16.gguf",
+      "name": "External Export (chef_assistant/chef_assistant-llama31-8b-lora-f16.gguf)",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T17:42:42.152Z",
+      "startedAt": "2026-05-17T17:42:42.152Z",
+      "finishedAt": "2026-05-17T17:42:42.152Z",
+      "command": [
+        "./ucore",
+        "export",
+        "chef_assistant"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "completed",
+          "logs": [
+            "[STATUS][export] substep=adapter_done state=completed"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] GGUF artifact detected: exports/chef_assistant/chef_assistant-llama31-8b-lora-f16.gguf"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_history_guide_20260517_premium-8b_meta-llama3.1-8b_001",
+      "name": "External Train (history_guide/20260517_premium-8b_meta-llama3.1-8b_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T17:34:11.326Z",
+      "startedAt": "2026-05-17T17:34:11.326Z",
+      "finishedAt": "2026-05-17T17:34:11.326Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260517_premium-8b_meta-llama3.1-8b_001/adapter_config.json",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_chef_assistant_20260517_premium-8b_meta-llama3.1-8b_001",
+      "name": "External Train (chef_assistant/20260517_premium-8b_meta-llama3.1-8b_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T17:13:59.128Z",
+      "startedAt": "2026-05-17T17:13:59.128Z",
+      "finishedAt": "2026-05-17T17:13:59.128Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260517_premium-8b_meta-llama3.1-8b_001/adapter_config.json",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_proc_78318",
       "name": "External Process (78318)",
       "type": "Pipeline",
@@ -34981,6 +36103,30 @@
     }
   ],
   "logs": [
+    "[2026-05-17T18:31:55.814Z] [SYNC] discovered running external process pid=393126",
+    "[2026-05-17T18:31:54.914Z] [SYNC] discovered running external process pid=393079",
+    "[2026-05-17T18:31:51.806Z] [SYNC] discovered running external process pid=392872",
+    "[2026-05-17T18:31:09.771Z] [SYNC] discovered running external process pid=391471",
+    "[2026-05-17T18:31:06.803Z] [SYNC] discovered running external process pid=391279",
+    "[2026-05-17T18:31:04.781Z] [SYNC] discovered running external process pid=391230",
+    "[2026-05-17T18:31:00.778Z] [SYNC] discovered running external process pid=390993",
+    "[2026-05-17T18:30:03.779Z] [SYNC] discovered running external process pid=388993",
+    "[2026-05-17T18:29:53.756Z] [SYNC] discovered running external process pid=388560",
+    "[2026-05-17T18:27:27.759Z] [SYNC] discovered running external process pid=383966",
+    "[2026-05-17T18:26:32.462Z] [SYNC] discovered running external process pid=382303",
+    "[2026-05-17T18:26:13.260Z] [SYNC] discovered running external process pid=381659",
+    "[2026-05-17T18:25:54.233Z] [SYNC] discovered running external process pid=381110",
+    "[2026-05-17T18:25:54.233Z] [SYNC] discovered running external process pid=381108",
+    "[2026-05-17T18:02:53.228Z] [SYNC] discovered running external process pid=344976",
+    "[2026-05-17T18:02:10.613Z] [SYNC] discovered running external process pid=343321",
+    "[2026-05-17T17:59:19.700Z] [SYNC] discovered running external process pid=337808",
+    "[2026-05-17T17:56:50.417Z] [SYNC] discovered running external process pid=333161",
+    "[2026-05-17T17:48:27.613Z] [SYNC] discovered running external process pid=317906",
+    "[2026-05-17T17:48:24.708Z] [SYNC] discovered running external process pid=317903",
+    "[2026-05-17T17:42:45.942Z] [SYNC] imported external job ext_export_history_guide_history_guide-llama31-8b-lora-f16.gguf",
+    "[2026-05-17T17:42:42.592Z] [SYNC] imported external job ext_export_chef_assistant_chef_assistant-llama31-8b-lora-f16.gguf",
+    "[2026-05-17T17:34:12.182Z] [SYNC] imported external job ext_train_history_guide_20260517_premium-8b_meta-llama3.1-8b_001",
+    "[2026-05-17T17:13:59.971Z] [SYNC] imported external job ext_train_chef_assistant_20260517_premium-8b_meta-llama3.1-8b_001",
     "[2026-05-17T13:31:37.480Z] [SYNC] discovered running external process pid=78318",
     "[2026-05-17T13:28:37.476Z] [SYNC] discovered running external process pid=76101"
   ],

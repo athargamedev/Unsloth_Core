@@ -290,6 +290,36 @@ def _first_sentence(text, max_chars=220):
     return sentence[:max_chars].rstrip()
 
 
+def _best_source_sentence(results, concept, max_chars=220):
+    """Pick a sentence from retrieved context that actually matches the concept."""
+    concept_terms = {
+        w.lower()
+        for w in re.findall(r"[a-zA-Z][a-zA-Z'-]+", str(concept or ""))
+        if len(w) > 2 and w.lower() not in {"and", "the", "for", "with", "from", "that", "this"}
+    }
+    best_sentence = ""
+    best_score = -1
+    for result in results:
+        content = " ".join(str(result.get("content", "")).split())
+        if not content:
+            continue
+        content = re.sub(r"\ARepository path: [\w./\-]+\.\w+\s*", "", content).strip()
+        content = content.replace("**", "")
+        sentences = re.findall(r"[^.!?]{25,260}[.!?]", content)
+        for sentence in sentences[:20]:
+            cleaned = re.sub(r"#+\s+", "", sentence).strip()
+            terms = {w.lower() for w in re.findall(r"[a-zA-Z][a-zA-Z'-]+", cleaned) if len(w) > 2}
+            score = len(concept_terms & terms)
+            if score > best_score and len(cleaned) > 30:
+                best_score = score
+                best_sentence = cleaned
+            if concept_terms and score >= max(1, min(2, len(concept_terms))):
+                return cleaned[:max_chars].rstrip()
+    if best_sentence and best_score > 0:
+        return best_sentence[:max_chars].rstrip()
+    return ""
+
+
 def _format_onyx_context(results, max_context_chunks=C.DEFAULT_ONYX_CHUNKS, max_context_chars=1800):
     selected = []
     remaining = max_context_chars
@@ -588,14 +618,18 @@ def _fallback_onyx_example(spec, category, concept, retrieval_query, context_res
         return title.endswith(".json") or title.endswith(".py") or is_json_content(result.get("content", ""))
 
     # Sort: reference docs first, then non-JSON prose, then everything else
-    ref_docs = [r for r in context_results if "reference_doc" in (r.get("title") or "")]
+    ref_docs = [
+        r for r in context_results
+        if "reference_docs" in (r.get("title") or "").lower()
+        or "reference_doc" in (r.get("title") or "").lower()
+    ]
     good_docs = [r for r in context_results if not is_json_source(r) and r not in ref_docs]
     fallback_docs = [r for r in context_results if r not in ref_docs and r not in good_docs]
 
     ordered = ref_docs + good_docs + fallback_docs
     best = ordered[0] if ordered else (context_results[0] if context_results else {})
     title = best.get("title") or "the local reference material"
-    source_sentence = _first_sentence(best.get("content", ""))
+    source_sentence = _best_source_sentence(ordered or context_results, concept)
     npc_name = spec["npc_name"]
 
     def _pick_variant(variants, seed_str):
@@ -1192,50 +1226,61 @@ class AnthropicGenerator:
             return None
 
 def concept_pool_for_subject(spec):
-    """Extract concept keywords from the subject spec.
+    """Extract stable concept keywords from the subject spec.
 
     Priority order:
       1. teaching.expertise (structured concept list)
-      2. Subject description (split into phrase groups)
-      3. Research query phrases (extract meaningful 2-4 word groups)
+      2. Subject description phrase groups
+      3. Research query phrases only when they are clean noun-like phrases
+
+    Avoid noisy adjacent-word bigrams like "and causes", "the printing",
+    "should know", or "every home" because those pollute metadata, feedback,
+    prompts, and portfolio reports.
     """
     concepts = []
     seen = set()
 
+    banned_starts = {
+        "a", "an", "and", "are", "as", "basic", "can", "common", "does",
+        "every", "for", "from", "how", "in", "key", "major", "of", "should",
+        "some", "the", "to", "what", "when", "where", "why", "with",
+    }
+    banned_ends = {
+        "and", "are", "as", "be", "can", "does", "every", "for", "from",
+        "how", "in", "of", "should", "some", "the", "to", "what", "when",
+        "where", "why", "with",
+    }
+
+    def add_concept(value):
+        clean = _clean_onyx_query(value).strip().lower()
+        if not clean or clean in seen:
+            return
+        words = clean.split()
+        if len(clean) < 4 or len(words) > 5:
+            return
+        if words[0] in banned_starts or words[-1] in banned_ends:
+            return
+        if all(w in banned_starts or w in banned_ends for w in words):
+            return
+        concepts.append(clean)
+        seen.add(clean)
+
     # 1. Use structured expertise list (most reliable)
     teaching = spec.get("teaching") or {}
-    expertise = teaching.get("expertise") or []
-    for exp in expertise:
-        clean = str(exp).strip().lower()
-        if clean and clean not in seen:
-            concepts.append(clean)
-            seen.add(clean)
+    for exp in teaching.get("expertise") or []:
+        add_concept(exp)
 
     # 2. Parse subject description into meaningful phrase groups
     subject = spec.get("subject", "")
     for sep in [":", "—", "-", ","]:
         subject = subject.replace(sep, "|")
     for phrase in subject.split("|"):
-        phrase = phrase.strip()
-        if phrase and phrase.lower() not in seen and len(phrase) > 3:
-            concepts.append(phrase)
-            seen.add(phrase.lower())
+        add_concept(phrase)
 
-    # 3. Extract meaningful multi-word phrases from research queries
-    research = spec.get("research_queries") or spec.get("research", [])
-    for r in research:
-        if not isinstance(r, dict):
-            continue
-        q = r.get("query", "")
-        if not q:
-            continue
-        # Split on common query separators and keep 2-4 word phrases
-        words = q.replace("?", "").replace(",", "").split()
-        for i in range(len(words) - 1):
-            phrase = " ".join(words[i:i+2]).lower()
-            if phrase not in seen and all(len(w) > 2 for w in words[i:i+2]):
-                concepts.append(words[i] + " " + words[i+1])
-                seen.add(phrase)
+    # 3. Keep research queries for retrieval only, not as training concept labels.
+    # Query-derived sliding windows caused noisy concepts such as "and causes",
+    # "should know", and "the printing". Stable concept labels produce cleaner
+    # metadata, feedback reports, and portfolio eval tables.
 
     if not concepts:
         concepts = ["this topic"]

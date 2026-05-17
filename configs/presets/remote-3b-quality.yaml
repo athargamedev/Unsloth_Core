@@ -1,0 +1,30 @@
+# Remote 3B quality preset for Colab T4/L4/A100.
+# Keeps the Unity runtime base at Llama 3.2 3B, but uses more VRAM than local RTX 3060 can safely spare.
+# Goal: stronger 3B-compatible LoRA, not an 8B runtime model.
+model: unsloth/Llama-3.2-3B-Instruct-bnb-4bit
+training:
+  max_seq_length: 2048
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  num_epochs: 5
+  learning_rate: 0.00015
+  lr_scheduler_type: cosine
+  warmup_steps: 30
+  weight_decay: 0.01
+  save_steps: 25
+  eval_steps: 25
+  packing: true
+  train_on_responses_only: true
+lora:
+  r: 64
+  alpha: 128
+  dropout: 0.05
+  target_modules: "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj"
+wandb:
+  enabled: true
+  project: unsloth-core
+  entity: andreabenathar-twl-games
+  tags:
+    - remote-3b-quality
+    - portfolio
+    - onyx-feedback
