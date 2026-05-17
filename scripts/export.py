@@ -44,9 +44,9 @@ CONVERTER = LLAMA_CPP_DIR / "convert_lora_to_gguf.py"
 LLAMA_QUANTIZE = LLAMA_CPP_DIR / "build" / "bin" / "llama-quantize"
 
 CONVERTER_CANDIDATES = [
-    PROJECT_ROOT / "scripts" / "convert_lora_to_gguf.py",
     CONVERTER,
     LLAMA_CPP_DIR / "convert" / "convert_lora_to_gguf.py",
+    PROJECT_ROOT / "scripts" / "convert_lora_to_gguf.py",
     Path.home() / "llama.cpp" / "convert_lora_to_gguf.py",
     Path("/usr/local/lib/llama.cpp/convert_lora_to_gguf.py"),
 ]

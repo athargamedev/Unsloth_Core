@@ -324,10 +324,14 @@ def _format_onyx_context(results, max_context_chunks=C.DEFAULT_ONYX_CHUNKS, max_
     selected = []
     remaining = max_context_chars
     for result in results[:max_context_chunks]:
+        title = result.get("title") or ""
+        # Skip results sourced from JSON files — they contain spec metadata, not teachable content.
+        # JSON metadata in context causes the LLM to reproduce raw JSON in assistant responses.
+        if title.endswith(".json"):
+            continue
         content = " ".join(str(result.get("content", "")).split())
         if not content:
             continue
-        title = result.get("title") or result.get("document_id") or "Onyx source"
         chunk = f"Source: {title}\n{content}"
         if len(chunk) > remaining:
             chunk = chunk[:remaining].rstrip()

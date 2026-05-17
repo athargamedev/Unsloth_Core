@@ -28,7 +28,8 @@ DEFAULT_GLOBS = [
     "AGENTS.md",
     "ucore",
     "docs/**/*.md",
-    "subjects/*.json",
+    # NOT "subjects/*.json" — subject specs are JSON metadata, not teachable content.
+    # Indexing them as Onyx context causes the LLM to reproduce raw JSON in training data.
     "configs/**/*.yaml",
     "scripts/generate_dataset.py",
     "scripts/onyx_client.py",
