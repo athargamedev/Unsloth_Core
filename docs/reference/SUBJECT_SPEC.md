@@ -1,6 +1,6 @@
 # Subject Specification Schema (subjects/*.json)
 
-> **Cross-reference**: For the complete dataset lifecycle, generation techniques, sanitization rules, training data flow, and minimum requirements, see [`docs/DATASET_STRUCTURE_AND_LOGIC.md`](../DATASET_STRUCTURE_AND_LOGIC.md).
+> **Cross-reference**: For the complete dataset lifecycle, generation techniques, sanitization rules, training data flow, and minimum requirements, see [`TRAINING_WORKFLOW_CONTEXT.md`](../TRAINING_WORKFLOW_CONTEXT.md).
 
 The `subjects/` directory contains JSON files that define the identity, knowledge, and behavior of an NPC. These files are the primary input for the dataset generation pipeline.
 
@@ -15,10 +15,9 @@ The `subjects/` directory contains JSON files that define the identity, knowledg
 | `dialogue` | `object` | Conversational rules and styles. |
 | `quest` | `object` | Interactive scenarios for the NPC. |
 | `refusal` | `object` | Safety boundaries and redirect policies. |
-| `research_queries` | `array` | Queries used by NotebookLM/Ollama to gather data. |
-| `system_prompt` | `string` | The final system message used during inference. |
+| `research_queries` | `array` | Queries used by Onyx to retrieve grounded context from the knowledge index. |
+| `system_prompt` | `string` | The final system message used during inference (4-section IDENTITY|VOICE|KNOWLEDGE|RULES format). |
 | `dataset` | `object` | Configuration for dataset balancing. |
-| `technique` | `string` | Optional preferred dataset technique for this subject (for example `docs` for the Workflow Assistant). |
 
 ---
 
@@ -46,13 +45,11 @@ Critical for safety and boundary handling.
 - `redirect_policy`: How to steer the user back to valid topics.
 
 ## 🔍 `research_queries` Array
-Used by the generation stage to find source material.
+Used by Onyx generation stage to retrieve grounded context from the knowledge index.
 ```json
 {
   "query": "The history of alchemy in the 16th century",
-  "mode": "fast",
-  "from": "web",
-  "source_policy": "text-web"
+  "concept": "alchemy_history"
 }
 ```
 
@@ -60,8 +57,6 @@ Used by the generation stage to find source material.
 Controls the distribution of examples in the generated `.jsonl` file.
 ```json
 "dataset": {
-  "technique": "docs",
-  "corpus_manifest": "docs/corpora/workflow_assistant_docs.json",
   "examples_per_category": {
     "identity": 8,
     "teaching": 32,
@@ -72,8 +67,7 @@ Controls the distribution of examples in the generated `.jsonl` file.
 }
 ```
 
-- `technique`: Optional preferred dataset technique for this spec.
-- `corpus_manifest`: Optional curated manifest used by the `docs` technique.
+(both onyx and template techniques use the same example distribution)
 
 ---
 
@@ -81,4 +75,3 @@ Controls the distribution of examples in the generated `.jsonl` file.
 1. **Consistency**: Ensure the `system_prompt` incorporates elements from `identity` and `dialogue`.
 2. **Specific Queries**: Use detailed queries to avoid generic or repetitive training data.
 3. **Small Steps**: For complex NPCs, start with a small `examples_per_category` count to verify the generation quality before scaling up.
-4. **Curated corpus**: Use `dataset.corpus_manifest` only for checked-in docs and structured reports; avoid logs, outputs, secrets, or machine-local state.

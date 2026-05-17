@@ -22,7 +22,7 @@ graph TD
 **Outputs**: `subjects/datasets/{npc_key}/{technique}/train.jsonl`
 
 Using the `research_queries` defined in the subject spec, the generator fetches domain knowledge and synthesizes Q&A pairs.
-- **Techniques**: `onyx` (default), `ollama` (local), `openai` (cloud).
+- **Techniques**: `onyx` (default) for production datasets, `template` for smoke tests only.
 - **Format**: All data is generated in **ChatML** format to ensure compatibility with modern instruct models.
 
 ---
@@ -56,7 +56,8 @@ The heart of the project. It uses **Unsloth** for extremely memory-efficient fin
 **Inputs**: LoRA Adapter + Base Model  
 **Outputs**: `exports/*.gguf`
 
-The final stage merges the LoRA weights back into the base model and quantizes it for local execution.
-- **Quantization**: Usually `q4_k_m` (4-bit), balancing size and intelligence.
+The final stage converts the LoRA adapter to a lightweight GGUF (adapter mode, ~50 MB) or optionally full-merges it into the base model.
+- **Default**: Adapter-only GGUF via `convert_lora_to_gguf.py` — no base model needed, loads via `llama-server --lora` (same as LLMUnity runtime).
+- **Full-merge** (`--full-merge-export`): Merges + quantizes via `llama-quantize` (usually `q4_k_m`).
 - **Smoke Testing**: Automated inference runs to verify the NPC still knows their name and expertise.
 - **Supabase Tracking**: Metrics (Loss, Eval Score, VRAM) are pushed to the database for historical analysis.

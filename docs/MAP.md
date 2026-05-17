@@ -1,38 +1,44 @@
 # Documentation Map: Unsloth_Core
 
-This directory contains the detailed technical documentation for the Unsloth_Core project. Use this map to navigate the resources.
+This directory contains the structured documentation for the Unsloth_Core project. Use this map to navigate.
 
-## 📂 Directory Structure
+## 📂 Directory Layout
 
-### 🏛️ Architecture & Core Concepts
-- [PIPELINE_FLOW.md](architecture/PIPELINE_FLOW.md): Detailed breakdown of the 4-stage pipeline.
-- [SUPABASE_SCHEMA.md](architecture/SUPABASE_SCHEMA.md): Database tables, functions, and memory retrieval logic.
-- [NPC_LORA_WORKFLOW_ANALYSIS.md](NPC_LORA_WORKFLOW_ANALYSIS.md): Deep dive into LoRA adaptation for NPCs.
-- [DATASET_STRUCTURE_AND_LOGIC.md](DATASET_STRUCTURE_AND_LOGIC.md): Comprehensive dataset lifecycle — format, generation techniques, sanitization, training flow, and minimum requirements.
+```
+docs/
+├── MAP.md                              ← (this file)
+├── ONYX_WORKFLOW.md                    ← Onyx RAG setup, indexing, dataset generation
+├── TRAINING_WORKFLOW_CONTEXT.md        ← End-to-end pipeline reference (primary AI-agent context)
+├── architecture/
+│   ├── PIPELINE_FLOW.md                ← 4-stage pipeline: Spec → GGUF
+│   └── SUPABASE_SCHEMA.md              ← Database tables, functions, memory retrieval
+├── integration/
+│   └── FRONTEND_DASHBOARD.md           ← Orchestration UI for pipeline management
+├── reference/
+│   ├── CLI_REFERENCE.md                ← Full `./ucore` command reference
+│   └── SUBJECT_SPEC.md                 ← Schema definition for subjects/*.json
+└── plans/
+    └── 2026-05-16-self-improving-pipeline.md  ← Pipeline roadmap
+```
 
-### 🛠️ Workflows
-- [TRAINING_WORKFLOW_CONTEXT.md](TRAINING_WORKFLOW_CONTEXT.md): High-signal AI-agent context for the end-to-end training workflow, contracts, pitfalls, and source map.
-- [TRAINING_WORKFLOW.md](TRAINING_WORKFLOW.md): How to train a new model from scratch.
-- [WORKFLOW_ASSISTANT_WORKFLOW.md](WORKFLOW_ASSISTANT_WORKFLOW.md): Dedicated local Workflow Assistant tool path, with docs-backed artifact generation and Onyx integration.
-- [SUBJECT_SPEC_REVIEW_WORKFLOW.md](SUBJECT_SPEC_REVIEW_WORKFLOW.md): Checklist for reviewing `subjects/*.json` before generation/training.
-- [ONYX_WORKFLOW.md](ONYX_WORKFLOW.md): Local Onyx retrieval-backed dataset generation with resource-conscious defaults.
-- [OLLAMA_WORKFLOW.md](OLLAMA_WORKFLOW.md): Local-only generation and evaluation using Ollama.
-- [EXPORT_WORKFLOW.md](EXPORT_WORKFLOW.md): Quantization and GGUF export for Unity.
-- [EVALUATION_WORKFLOW.md](EVALUATION_WORKFLOW.md): Comparing models and tracking quality.
+## 📖 Document Quick Reference
 
-### 📚 Reference
-- [CLI_REFERENCE.md](reference/CLI_REFERENCE.md): Full manual for the `./ucore` unified CLI.
-- [SUBJECT_SPEC.md](reference/SUBJECT_SPEC.md): Schema definition for `subjects/*.json` files.
-- [DATASET_CONTRACT_WORKFLOW.md](DATASET_CONTRACT_WORKFLOW.md): Specifications for ChatML and JSONL structures.
-- [CONFIG_VALIDATION_WORKFLOW.md](CONFIG_VALIDATION_WORKFLOW.md): How training configurations are resolved.
-
-### 🔗 Integrations
-- [LLAMA_UNITY_PROFILE.md](LLAMA_UNITY_PROFILE.md): Setting up NPCs in the Unity game engine.
-- [FRONTEND_DASHBOARD.md](integration/FRONTEND_DASHBOARD.md): Orchestration UI for pipeline management.
-- [SUPABASE_INTEGRATION_CHECKLIST.md](SUPABASE_INTEGRATION_CHECKLIST.md): Verifying your local Supabase setup.
+| Document | What it covers |
+|:---------|:---------------|
+| [`ONYX_WORKFLOW.md`](ONYX_WORKFLOW.md) | Onyx RAG generation v2 — indexing documents, running Onyx queries, natural conversation templates, variant selection |
+| [`TRAINING_WORKFLOW_CONTEXT.md`](TRAINING_WORKFLOW_CONTEXT.md) | Primary AI-agent context: full pipeline, presets, flags, data flow, evaluation patterns, common pitfalls |
+| [`architecture/PIPELINE_FLOW.md`](architecture/PIPELINE_FLOW.md) | 4-stage pipeline flow: Generation → Sanitization → Training → Export & Validation |
+| [`architecture/SUPABASE_SCHEMA.md`](architecture/SUPABASE_SCHEMA.md) | Local Supabase schema: npc_profiles, dialogue_sessions, npc_memories, test_results |
+| [`integration/FRONTEND_DASHBOARD.md`](integration/FRONTEND_DASHBOARD.md) | React dashboard: pipeline orchestration, job table, realtime metrics |
+| [`reference/CLI_REFERENCE.md`](reference/CLI_REFERENCE.md) | Full `./ucore` command reference with examples |
+| [`reference/SUBJECT_SPEC.md`](reference/SUBJECT_SPEC.md) | JSON schema for `subjects/*.json` — identity, teaching, dialogue, quest, refusal |
+| [`plans/2026-05-16-self-improving-pipeline.md`](plans/2026-05-16-self-improving-pipeline.md) | Roadmap for feedback loop, Onyx-driven self-improvement, and knowledge gap detection |
 
 ## 🚀 Getting Started
+
 1. Start with the [README.md](../README.md) for the quick start guide.
 2. Read [AGENTS.md](../AGENTS.md) if you are an AI assistant.
 3. Read [TRAINING_WORKFLOW_CONTEXT.md](TRAINING_WORKFLOW_CONTEXT.md) for concise training-workflow context before making code or pipeline changes.
-4. Consult the [TRAINING_WORKFLOW.md](TRAINING_WORKFLOW.md) for your first fine-tuning run.
+4. Set up Onyx with [ONYX_WORKFLOW.md](ONYX_WORKFLOW.md), then index your NPC reference documents.
+5. Generate a dataset with `./ucore generate subjects/<npc>.json --technique onyx`.
+6. Train with `./ucore train subjects/<npc>.json --preset fast-3b --export-gguf`.

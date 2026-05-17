@@ -21,23 +21,15 @@ Reviews subject specs before generation or training.
 - `--strict`: Exit nonzero on warnings as well as errors.
 
 ```bash
-./ucore validate-spec subjects/chemistry_instructor.json
+./ucore validate-spec subjects/history_guide.json
 ./ucore validate-spec --all --json
 ```
 
 ### `generate`
 Generates training data from a subject spec.
 - `spec`: Path to JSON spec.
-- `--technique`: `onyx` (default), `docs`, `ollama`, `openai`, `anthropic`, `template`.
-- `--ollama`: Shortcut for `--technique ollama`.
-- `--docs-manifest`: Optional manifest override for the dedicated `docs` technique.
+- `--technique`: `onyx` (default) for production datasets, `template` for smoke tests only.
 - `--onyx-url`, `--onyx-api-key`, `--onyx-max-results`, `--onyx-max-context-chars`: Local Onyx retrieval settings for resource-conscious grounded generation.
-
-The `docs` technique is the canonical path for `subjects/workflow_assistant.json`, which is a special local workflow tool artifact path. It reads a curated checked-in corpus manifest instead of calling an LLM, and it is intended for offline audit and tooling support rather than Unity NPC export:
-
-```bash
-./ucore generate subjects/workflow_assistant.json --technique docs
-```
 
 The `onyx` technique retrieves from the local Onyx index and writes provenance-rich ChatML with bounded local resource use:
 
@@ -97,7 +89,7 @@ Rapidly tests a GGUF model for persona adherence.
 Deep side-by-side comparison of two models.
 - `--baseline`: Path to original GGUF.
 - `--candidate`: Path to new GGUF.
-- `--judge`: Use an LLM (via Ollama) to score the responses.
+- `--base-model`: Path to base model GGUF (required for LoRA adapter evaluation).
 
 ### `compare-runs`
 Compares two training runs using their specific `run_id`.
