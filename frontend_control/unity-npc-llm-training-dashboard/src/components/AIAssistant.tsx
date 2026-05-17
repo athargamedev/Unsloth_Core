@@ -76,14 +76,14 @@ How can I help with your workflow today?`,
     try {
       await fetch('/api/assistant/unload', { method: 'POST' });
       setMessages((prev) => [...prev, { role: 'assistant', content: '_Requested Ollama assistant model unload (llama3.1) to free GPU memory._' }]);
-    } catch {}
+    } catch { }
   };
 
   const handleLoadModel = async () => {
     try {
       setMessages((prev) => [...prev, { role: 'assistant', content: '_Requesting Ollama assistant model load (llama3.1)..._' }]);
       await fetch('/api/assistant/load', { method: 'POST' });
-    } catch {}
+    } catch { }
   };
 
   const handleExecuteCommand = async (command: string) => {
@@ -124,7 +124,7 @@ How can I help with your workflow today?`,
       </div>
 
       {/* Messages Area */}
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth"
       >
@@ -143,20 +143,19 @@ How can I help with your workflow today?`,
                 </>
               )}
             </div>
-            <div className={`max-w-[90%] p-3 rounded-2xl text-[11px] leading-relaxed shadow-sm ${
-              msg.role === 'user' 
-                ? 'bg-accent text-white rounded-tr-none' 
+            <div className={`max-w-[90%] p-3 rounded-2xl text-[11px] leading-relaxed shadow-sm ${msg.role === 'user'
+                ? 'bg-accent text-white rounded-tr-none'
                 : 'bg-bg border border-line rounded-tl-none prose prose-invert prose-xs'
-            }`}>
+              }`}>
               {msg.role === 'assistant' ? (
-                <ReactMarkdown 
+                <ReactMarkdown
                   components={{
                     code({ className, children, ...props }) {
                       const match = /language-(\w+)/.exec(className || '');
                       const content = String(children).replace(/\n$/, '');
                       const isInline = !content.includes('\n');
                       const isCommand = content.includes('./ucore');
-                      
+
                       if (!isInline && isCommand) {
                         return (
                           <div className="my-2 border border-accent/30 rounded bg-black/40 overflow-hidden">
@@ -165,7 +164,7 @@ How can I help with your workflow today?`,
                                 <Command className="w-2 h-2" />
                                 ACTIONABLE COMMAND
                               </span>
-                              <button 
+                              <button
                                 onClick={() => handleExecuteCommand(content)}
                                 className="text-[8px] font-bold bg-accent hover:bg-accent-bright text-white px-2 py-0.5 rounded transition-colors flex items-center gap-1"
                               >
@@ -214,13 +213,13 @@ How can I help with your workflow today?`,
           <div className="mb-4 space-y-2">
             <div className="text-[9px] font-bold text-ink/30 uppercase tracking-widest mb-1">Quick Actions</div>
             <div className="flex flex-wrap gap-2">
-              <button 
+              <button
                 onClick={() => askAI(undefined, 'How do I run a smoke test?')}
                 className="text-[10px] bg-bg border border-line px-2 py-1 rounded hover:border-accent transition-colors"
               >
                 Smoke Test Help
               </button>
-              <button 
+              <button
                 onClick={() => askAI(undefined, 'Explain the 4-stage pipeline')}
                 className="text-[10px] bg-bg border border-line px-2 py-1 rounded hover:border-accent transition-colors"
               >
@@ -238,7 +237,7 @@ How can I help with your workflow today?`,
             className="w-full h-20 bg-bg border border-line rounded-xl p-3 text-[11px] focus:outline-none focus:border-accent transition-all resize-none shadow-inner pr-10"
             placeholder="Ask assistant about workflow..."
           />
-          <button 
+          <button
             type="submit"
             disabled={!query.trim() || loading}
             className="absolute right-3 bottom-3 p-1.5 bg-accent rounded-lg text-white disabled:opacity-30 transition-opacity"
