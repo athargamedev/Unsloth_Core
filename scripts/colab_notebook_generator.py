@@ -327,10 +327,34 @@ import json
 PLAN = {plan_json}
 print(json.dumps(PLAN, indent=2))
 """
+    hf_login_code = f"""
+# @title 🔑 Hugging Face Authentication (Optional/Recommended for Gated Models)
+# @markdown Many models (like Llama 3.1 & 3.2) are gated and require Meta's license agreement.
+# @markdown Visit the model page on Hugging Face to accept terms: https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct
+# @markdown Create a Read access token at https://huggingface.co/settings/tokens and paste it below:
+
+HF_TOKEN = "" # @param {{type:"string"}}
+
+if HF_TOKEN:
+    import os
+    os.environ["HF_TOKEN"] = HF_TOKEN
+    print("Token set as HF_TOKEN environment variable.")
+    try:
+        from huggingface_hub import login
+        login(token=HF_TOKEN, add_to_git_credential=True)
+        print("Successfully authenticated with Hugging Face Hub.")
+    except ImportError:
+        print("huggingface_hub library not found, but environment variable is set.")
+    except Exception as e:
+        print(f"Hugging Face login failed: {{e}}")
+else:
+    print("No token provided. If you get 401 Unauthorized errors during training, please obtain a token and re-run this cell.")
+"""
 
     cells = [
         _md_cell(markdown),
         _code_cell(setup_code),
+        _code_cell(hf_login_code),
         _code_cell(plan_cell),
         _code_cell(dataset_code),
         _code_cell(train_code),

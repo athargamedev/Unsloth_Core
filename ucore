@@ -13,10 +13,17 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+is_colab = False
+try:
+    import google.colab
+    is_colab = True
+except ImportError:
+    pass
+
 PROJECT_ROOT = Path(__file__).resolve().parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 VENV_PYTHON = PROJECT_ROOT / "unsloth_env" / "bin" / "python"
-PYTHON = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
+PYTHON = str(VENV_PYTHON) if (VENV_PYTHON.exists() and not is_colab) else sys.executable
 
 def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
     """Run a shell command and print its output.
