@@ -2,12 +2,58 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_4135651",
+      "name": "External Process (4135651)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T10:23:24.726Z",
+      "startedAt": "2026-05-17T10:23:24.726Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/history_guide"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 4135651] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 4135651] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/history_guide"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T10:23:27.948Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_4132085",
       "name": "External Process (4132085) history_guide",
       "type": "Training",
       "commandId": "train",
       "npcKey": "history_guide",
-      "status": "running",
+      "status": "stopped",
       "progress": 38,
       "loss": null,
       "createdAt": "2026-05-17T10:20:27.564Z",
@@ -24,8 +70,10 @@
         },
         {
           "name": "Training",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 4132085] Process no longer detected"
+          ]
         },
         {
           "name": "Evaluation",
@@ -42,7 +90,9 @@
         "[EXTERNAL][PID 4132085] discovered active process",
         "python3 ./ucore train subjects/history_guide.json --technique onyx --preset safe-any --export-gguf"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T10:23:30.948Z",
+      "exitCode": -15
     },
     {
       "id": "ext_train_history_guide_20260517_default_003",
@@ -34560,6 +34610,7 @@
     }
   ],
   "logs": [
+    "[2026-05-17T10:23:24.752Z] [SYNC] discovered running external process pid=4135651",
     "[2026-05-17T10:20:27.596Z] [SYNC] discovered running external process pid=4132085",
     "[2026-05-17T10:20:27.552Z] [SYNC] imported external job ext_train_history_guide_20260517_default_003",
     "[2026-05-17T10:07:33.058Z] [SYNC] discovered running external process pid=3956892",
