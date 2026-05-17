@@ -2,12 +2,474 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_3171353",
+      "name": "External Process (3171353)",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "running",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T08:43:01.660Z",
+      "startedAt": "2026-05-17T08:43:01.660Z",
+      "command": [
+        "external",
+        "python3 ./ucore export-adapter outputs/chef_assistant/runs/20260517_default_001 --outfile exports/chef_assistant/chef_assistant_v2-lora-f16.gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3171353] discovered active process",
+        "python3 ./ucore export-adapter outputs/chef_assistant/runs/20260517_default_001 --outfile exports/chef_assistant/chef_assistant_v2-lora-f16.gguf"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_3168980",
+      "name": "External Process (3168980) chef_assistant",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T08:40:53.563Z",
+      "startedAt": "2026-05-17T08:40:53.563Z",
+      "command": [
+        "external",
+        "bash -c source unsloth_env/bin/activate && ./ucore evaluate \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --baseline \"exports/chef_assistant/round1/chef_assistant-lora-f16.gguf\" \\   --candidate \"exports/chef_assistant/chef_assistant-lora-f16.gguf\" \\   --spec subjects/chef_assistant.json \\   --report-html \\   --feedback-json eval/results/feedback/ca_v2_feedback.json \\   --track 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3168980] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3168980] discovered active process",
+        "bash -c source unsloth_env/bin/activate && ./ucore evaluate \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --baseline \"exports/chef_assistant/round1/chef_assistant-lora-f16.gguf\" \\   --candidate \"exports/chef_assistant/chef_assistant-lora-f16.gguf\" \\   --spec subjects/chef_assistant.json \\   --report-html \\   --feedback-json eval/results/feedback/ca_v2_feedback.json \\   --track 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:41:09.586Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3168426",
+      "name": "External Process (3168426)",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-17T08:40:24.613Z",
+      "startedAt": "2026-05-17T08:40:24.613Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/chef_assistant"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3168426] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3168426] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/export.py /home/athar/Projects/Unsloth_Core/outputs/chef_assistant"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:40:30.539Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3166290",
+      "name": "External Process (3166290) chef_assistant",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 38,
+      "loss": null,
+      "createdAt": "2026-05-17T08:38:37.447Z",
+      "startedAt": "2026-05-17T08:38:37.447Z",
+      "command": [
+        "external",
+        "bash -c source unsloth_env/bin/activate && ./ucore train subjects/chef_assistant.json \\   --technique onyx \\   --preset fast-3b \\   --export-gguf 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3166290] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3166290] discovered active process",
+        "bash -c source unsloth_env/bin/activate && ./ucore train subjects/chef_assistant.json \\   --technique onyx \\   --preset fast-3b \\   --export-gguf 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:40:33.540Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chef_assistant_20260517_default_001",
+      "name": "External Train (chef_assistant/20260517_default_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T08:38:37.212Z",
+      "startedAt": "2026-05-17T08:38:37.212Z",
+      "finishedAt": "2026-05-17T08:38:37.212Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260517_default_001/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_3166170",
+      "name": "External Process (3166170)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T08:38:30.514Z",
+      "startedAt": "2026-05-17T08:38:30.514Z",
+      "command": [
+        "external",
+        "bash -c source unsloth_env/bin/activate && ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3166170] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3166170] discovered active process",
+        "bash -c source unsloth_env/bin/activate && ./ucore sanitize subjects/datasets/chef_assistant/onyx/train.jsonl --output subjects/datasets/chef_assistant/onyx/train_clean.jsonl 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:38:31.334Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3165985",
+      "name": "External Process (3165985) chef_assistant",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T08:38:21.435Z",
+      "startedAt": "2026-05-17T08:38:21.435Z",
+      "command": [
+        "external",
+        "bash -c source unsloth_env/bin/activate && ./ucore generate subjects/chef_assistant.json \\   --technique onyx \\   --concept-focus identity \\   --concept-focus natural_conversation 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3165985] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3165985] discovered active process",
+        "bash -c source unsloth_env/bin/activate && ./ucore generate subjects/chef_assistant.json \\   --technique onyx \\   --concept-focus identity \\   --concept-focus natural_conversation 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:38:27.312Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3165393",
+      "name": "External Process (3165393) history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 63,
+      "loss": null,
+      "createdAt": "2026-05-17T08:37:51.507Z",
+      "startedAt": "2026-05-17T08:37:51.507Z",
+      "command": [
+        "external",
+        "bash -c source unsloth_env/bin/activate && ./ucore evaluate \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --baseline \"exports/history_guide/history_guide_v2-lora-f16.gguf\" \\   --candidate \"exports/history_guide/history_guide-lora-f16.gguf\" \\   --spec subjects/history_guide.json \\   --report-html \\   --feedback-json eval/results/feedback/hg_v3_feedback.json \\   --track 2>&1"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3165393] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3165393] discovered active process",
+        "bash -c source unsloth_env/bin/activate && ./ucore evaluate \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --baseline \"exports/history_guide/history_guide_v2-lora-f16.gguf\" \\   --candidate \"exports/history_guide/history_guide-lora-f16.gguf\" \\   --spec subjects/history_guide.json \\   --report-html \\   --feedback-json eval/results/feedback/hg_v3_feedback.json \\   --track 2>&1"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:38:09.508Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_export_history_guide_history_guide_v2-lora-f16.gguf",
+      "name": "External Export (history_guide/history_guide_v2-lora-f16.gguf)",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-17T08:37:41.151Z",
+      "startedAt": "2026-05-17T08:37:41.151Z",
+      "finishedAt": "2026-05-17T08:37:41.151Z",
+      "command": [
+        "./ucore",
+        "export",
+        "history_guide"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "completed",
+          "logs": [
+            "[STATUS][export] substep=adapter_done state=completed"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] GGUF artifact detected: exports/history_guide/history_guide_v2-lora-f16.gguf"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_3165189",
+      "name": "External Process (3165189)",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-17T08:37:39.338Z",
+      "startedAt": "2026-05-17T08:37:39.338Z",
+      "command": [
+        "external",
+        "python3 ./ucore export-adapter outputs/history_guide/runs/20260517_default_001 --outfile exports/history_guide/history_guide_v2-lora-f16.gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3165189] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3165189] discovered active process",
+        "python3 ./ucore export-adapter outputs/history_guide/runs/20260517_default_001 --outfile exports/history_guide/history_guide_v2-lora-f16.gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:37:42.514Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_3161946",
       "name": "External Process (3161946) history_guide",
       "type": "Evaluation",
       "commandId": "evaluate",
       "npcKey": "history_guide",
-      "status": "running",
+      "status": "stopped",
       "progress": 63,
       "loss": null,
       "createdAt": "2026-05-17T08:34:12.489Z",
@@ -29,8 +491,10 @@
         },
         {
           "name": "Evaluation",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3161946] Process no longer detected"
+          ]
         },
         {
           "name": "Export",
@@ -42,7 +506,9 @@
         "[EXTERNAL][PID 3161946] discovered active process",
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/evaluate.py --baseline exports/history_guide/history_guide-lora-f16.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec /home/athar/Projects/Unsloth_Core/subjects/history_guide.json --feedback-json /home/athar/Projects/Unsloth_Core/eval/results/feedback/history_guide_post_retrain.json --num-questions 10"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:35:12.493Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_3161783",
@@ -236,7 +702,7 @@
       "name": "External Process (3158586)",
       "type": "Pipeline",
       "commandId": "pipeline",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-17T08:31:10.334Z",
@@ -248,8 +714,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3158586] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -271,7 +739,9 @@
         "[EXTERNAL][PID 3158586] discovered active process",
         "bash -c source unsloth_env/bin/activate && ./ucore feedback eval/results/feedback/hg_v2_feedback.json \\   --auto \\   --auto-retrain \\   --train-preset fast-3b \\   --baseline exports/history_guide/history_guide-lora-f16.gguf \\   --save-gaps eval/results/gaps/hg_v2_gaps.json 2>&1"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-17T08:35:12.493Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_3156926",
@@ -32501,6 +32971,16 @@
     }
   ],
   "logs": [
+    "[2026-05-17T08:43:01.687Z] [SYNC] discovered running external process pid=3171353",
+    "[2026-05-17T08:40:53.588Z] [SYNC] discovered running external process pid=3168980",
+    "[2026-05-17T08:40:24.642Z] [SYNC] discovered running external process pid=3168426",
+    "[2026-05-17T08:38:37.472Z] [SYNC] discovered running external process pid=3166290",
+    "[2026-05-17T08:38:37.439Z] [SYNC] imported external job ext_train_chef_assistant_20260517_default_001",
+    "[2026-05-17T08:38:30.538Z] [SYNC] discovered running external process pid=3166170",
+    "[2026-05-17T08:38:21.459Z] [SYNC] discovered running external process pid=3165985",
+    "[2026-05-17T08:37:51.532Z] [SYNC] discovered running external process pid=3165393",
+    "[2026-05-17T08:37:42.507Z] [SYNC] imported external job ext_export_history_guide_history_guide_v2-lora-f16.gguf",
+    "[2026-05-17T08:37:39.362Z] [SYNC] discovered running external process pid=3165189",
     "[2026-05-17T08:34:12.513Z] [SYNC] discovered running external process pid=3161946",
     "[2026-05-17T08:34:05.326Z] [SYNC] discovered running external process pid=3161783",
     "[2026-05-17T08:31:27.225Z] [SYNC] discovered running external process pid=3158805",
