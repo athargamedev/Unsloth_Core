@@ -236,6 +236,14 @@ def _concept_detail(spec, concept):
     return _capitalize_first(f"{concept} in {subject}")
 
 
+def _concept_detail_lower(concept, spec):
+    """Return a concrete detail/example starting with lowercase for mid-sentence use."""
+    result = _concept_detail(spec, concept)
+    if result and len(result) > 1:
+        return result[0].lower() + result[1:]
+    return result
+
+
 def _concept_anchor(concept: str, spec) -> str:
     concept_l = concept.lower()
     subject = _subject_focus(spec)
@@ -332,6 +340,10 @@ def generate_identity_response(spec):
     templates.append(f"Hi, I'm {npc_name}. Ask me anything about {subject_short}.")
     templates.append(f"I'm {npc_name}, your guide to {subject_short}.")
 
+    # Explicit "What do you teach?" templates using full subject
+    templates.append(f"I teach {subject}. I cover topics like {expertise_snippet} with clear examples." if expertise_snippet else f"I teach {subject}.")
+    templates.append(f"My focus is on {subject}. I help learners understand key concepts and practical applications.")
+
     if personality_short:
         templates.append(f"I'm {npc_name}, a {personality_short.lower()} expert in {subject_short}.")
         templates.append(f"I'm {npc_name}, a {personality_short.lower()} with a passion for teaching {subject_short}.")
@@ -397,8 +409,8 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
             ]
         else:
             templates = [
-                f"Here is an advanced look at {concept_a}. The standard view explains the basics, but one limitation reveals deeper nuance. Consider {detail_a} as an example.",
-                f"To really understand {concept_a}, look at a case where the usual explanation falls short. Consider {detail_a} as a test.",
+                f"Here is an advanced look at {concept_a}. The standard view explains the basics, but one limitation reveals deeper nuance. Consider {_concept_detail_lower(concept_a, spec)} as an example.",
+                f"To really understand {concept_a}, look at a case where the usual explanation falls short. Consider {_concept_detail_lower(concept_a, spec)} as a test.",
             ]
     return random.choice(templates)
 
@@ -416,8 +428,9 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive"):
         ]
     elif dialogue_type == "deep_dive":
         templates = [
-            f"Going deeper on {concept}... {detail} shows you what this looks like in practice.",
-            f"The key to {concept} is seeing how it works in practice. {detail} keeps it grounded.",
+            f"Going deeper on {concept}: {detail}. Try starting with one small step, then build up from there.",
+            f"Here is a practical walkthrough of {concept}. First, {_concept_detail_lower(concept, spec)}. That is the core idea to focus on.",
+            f"The key to {concept} is seeing how it works step by step. {detail} shows where to begin.",
         ]
     elif dialogue_type == "application":
         templates = [
@@ -463,11 +476,9 @@ def generate_quest_response(spec, concept, scenario_name=None):
 
     # Fallback to generic quest templates
     templates = [
-        f"Here's a challenge: Explain how {concept} works using {detail} as your example.",
-        f"Practice problem: Identify the key elements of {concept} and explain why {detail} matters.",
-        f"Quick quiz: What is one real-world application of {concept} based on {detail}?",
-        f"Try this: If you had to teach {concept} to someone new, what would you say about {detail}?",
-        f"Practice prompt: explain {concept} through one concrete example like {detail}.",
+        f"Challenge: {detail}. Explain how this connects to {concept} and what principle it demonstrates.",
+        f"Here is a problem to solve: {detail}. Describe the key factors that make this work and what could go wrong.",
+        f"Let me give you a real scenario: {detail}. What would you do differently and why in the context of {concept}?",
     ]
     return random.choice(templates)
 
@@ -494,8 +505,8 @@ def generate_refusal_response(spec, boundary=None):
             ]
         elif "medical" in boundary_lower or "dietary" in boundary_lower:
             templates = [
-                f"I can't give personalized medical or dietary advice. I can stay within {subject} basics and suggest asking a qualified professional.",
-                f"That is outside my role as {npc_name}. I can help with general {subject} techniques, not personal health decisions.",
+                f"I cannot give personalized medical or dietary advice. A strict diet plan for a medical condition is outside my scope. For general wellness, a balanced approach with vegetables, lean protein, and whole grains supports most people.",
+                f"That is outside my role as {npc_name}. I cannot prescribe diets or treatment plans. For general nutrition, focusing on whole foods and staying hydrated is a good starting point.",
             ]
         elif "unsafe" in boundary_lower or "food preparation" in boundary_lower:
             templates = [
