@@ -19,6 +19,18 @@ from _config import paths
 from _config.paths import SNAKE_CASE_PATTERN
 
 GENERATOR_SUPPORTED_DATASET_CATEGORIES = {"identity", "teaching", "dialogue", "quest", "refusal"}
+MIN_DATASET_EXAMPLES_PER_CATEGORY = {
+    "identity": 8,
+    "teaching": 32,
+    "dialogue": 16,
+    "quest": 8,
+    "refusal": 8,
+}
+REFERENCE_DOC_MIN_WORDS = 250
+REFERENCE_DOC_MIN_H2_SECTIONS = 5
+REFERENCE_DOC_MIN_BULLETS = 20
+REFERENCE_DOC_QUALITY_PATTERN = re.compile(r"\b(boundar(?:y|ies)|refusal|safety|misconception|myth)\b", re.IGNORECASE)
+PLACEHOLDER_PATTERN = re.compile(r"\b(TODO|TBD|FIXME|stub|placeholder)\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -127,10 +139,21 @@ def validate_research_queries(spec: dict[str, Any], errors: list[str], warnings:
             errors.append(f"Research entry {index} has invalid `mode` \"{mode}\"; expected one of: {', '.join(sorted(VALID_MODES))}.")
 
 
-def validate_reference_docs(spec: dict[str, Any], errors: list[str], warnings: list[str], *, require_reference_docs: bool = False) -> None:
+def validate_reference_docs(
+    spec: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+    *,
+    require_reference_docs: bool = False,
+    require_reference_contract: bool = False,
+) -> None:
     reference_doc = spec.get("reference_doc")
     if not is_non_empty_string(reference_doc):
-        warnings.append("No `reference_doc` field; consider adding a reference primer for grounding.")
+        msg = "No `reference_doc` field; add a reference primer for grounded dataset generation."
+        if require_reference_docs or require_reference_contract:
+            errors.append(msg)
+        else:
+            warnings.append(msg)
         return
 
     doc_path = PROJECT_ROOT / reference_doc
@@ -140,6 +163,58 @@ def validate_reference_docs(spec: dict[str, Any], errors: list[str], warnings: l
             errors.append(msg)
         else:
             warnings.append(msg)
+        return
+
+    try:
+        text = doc_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"Could not read `reference_doc` {reference_doc}: {exc}")
+        return
+
+    contract_errors: list[str] = []
+    contract_warnings: list[str] = []
+
+    if not str(reference_doc).startswith("subjects/reference_docs/"):
+        contract_errors.append("`reference_doc` must live under subjects/reference_docs/.")
+
+    if doc_path.suffix.lower() != ".md":
+        contract_errors.append("`reference_doc` must be a Markdown file.")
+
+    if not re.search(r"^#\s+\S+", text, re.MULTILINE):
+        contract_errors.append("Reference doc must start with one H1 title.")
+
+    h2_count = len(re.findall(r"^##\s+\S+", text, re.MULTILINE))
+    if h2_count < REFERENCE_DOC_MIN_H2_SECTIONS:
+        contract_errors.append(
+            f"Reference doc must have at least {REFERENCE_DOC_MIN_H2_SECTIONS} H2 sections; found {h2_count}."
+        )
+
+    bullet_count = len(re.findall(r"^\s*(?:[-*]|\d+\.)\s+\S+", text, re.MULTILINE))
+    if bullet_count < REFERENCE_DOC_MIN_BULLETS:
+        contract_errors.append(
+            f"Reference doc must have at least {REFERENCE_DOC_MIN_BULLETS} concrete bullets; found {bullet_count}."
+        )
+
+    word_count = len(re.findall(r"\b[\w'-]+\b", text))
+    if word_count < REFERENCE_DOC_MIN_WORDS:
+        contract_errors.append(
+            f"Reference doc must have at least {REFERENCE_DOC_MIN_WORDS} words; found {word_count}."
+        )
+
+    if PLACEHOLDER_PATTERN.search(text):
+        contract_errors.append("Reference doc contains placeholder/TODO language.")
+
+    if not REFERENCE_DOC_QUALITY_PATTERN.search(text):
+        contract_warnings.append(
+            "Reference doc should include safety, refusal, boundary, or misconception notes for better refusal/dialogue data."
+        )
+
+    if require_reference_contract:
+        errors.extend(f"`reference_doc` contract: {msg}" for msg in contract_errors)
+        errors.extend(f"`reference_doc` contract: {msg}" for msg in contract_warnings)
+    else:
+        warnings.extend(f"`reference_doc` contract: {msg}" for msg in contract_errors)
+        warnings.extend(f"`reference_doc` contract: {msg}" for msg in contract_warnings)
 
 
 def validate_difficulty_levels(spec: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
@@ -183,7 +258,14 @@ def validate_system_prompt(spec: dict[str, Any], npc_name: str | None, max_sente
     warnings.append(f"`system_prompt` should include a sentence limit consistent with dialogue.max_sentences={max_sentences}.")
 
 
-def validate_dataset(spec: dict[str, Any], errors: list[str], warnings: list[str], *, require_all_categories: bool = False) -> None:
+def validate_dataset(
+    spec: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+    *,
+    require_all_categories: bool = False,
+    require_dataset_minimums: bool = False,
+) -> None:
     dataset = spec.get("dataset")
     if not isinstance(dataset, dict):
         errors.append("Missing or invalid `dataset` object.")
@@ -233,6 +315,20 @@ def validate_dataset(spec: dict[str, Any], errors: list[str], warnings: list[str
                     f"(got {count})."
                 )
 
+    for category, minimum in MIN_DATASET_EXAMPLES_PER_CATEGORY.items():
+        count = examples_per_category.get(category, 0)
+        if not isinstance(count, int) or isinstance(count, bool):
+            continue
+        if count < minimum:
+            msg = (
+                f"`dataset.examples_per_category.{category}` should be at least {minimum} "
+                f"for generation-ready SFT data (got {count})."
+            )
+            if require_dataset_minimums:
+                errors.append(msg)
+            else:
+                warnings.append(msg)
+
     if not has_positive_supported_category:
         errors.append(
             "`dataset.examples_per_category` must request at least one example in a generator-supported category "
@@ -246,7 +342,14 @@ def validate_dataset(spec: dict[str, Any], errors: list[str], warnings: list[str
         warnings.append("Quest examples are requested, but optional `quest.scenarios` is empty or missing.")
 
 
-def validate_spec(spec_path: Path, *, require_reference_docs: bool = False, require_all_categories: bool = False) -> SpecResult:
+def validate_spec(
+    spec_path: Path,
+    *,
+    require_reference_docs: bool = False,
+    require_reference_contract: bool = False,
+    require_all_categories: bool = False,
+    require_dataset_minimums: bool = False,
+) -> SpecResult:
     errors: list[str] = []
     warnings: list[str] = []
     resolved_path = spec_path if spec_path.is_absolute() else PROJECT_ROOT / spec_path
@@ -312,9 +415,21 @@ def validate_spec(spec_path: Path, *, require_reference_docs: bool = False, requ
 
     validate_research_queries(spec, errors, warnings)
     validate_system_prompt(spec, npc_name, max_sentences, errors, warnings)
-    validate_reference_docs(spec, errors, warnings, require_reference_docs=require_reference_docs)
+    validate_reference_docs(
+        spec,
+        errors,
+        warnings,
+        require_reference_docs=require_reference_docs,
+        require_reference_contract=require_reference_contract,
+    )
     validate_difficulty_levels(spec, errors, warnings)
-    validate_dataset(spec, errors, warnings, require_all_categories=require_all_categories)
+    validate_dataset(
+        spec,
+        errors,
+        warnings,
+        require_all_categories=require_all_categories,
+        require_dataset_minimums=require_dataset_minimums,
+    )
 
     return SpecResult(path=display_path, npc_key=npc_key, errors=errors, warnings=warnings)
 
@@ -358,7 +473,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     parser.add_argument("--strict", action="store_true", help="Exit nonzero on warnings as well as errors")
     parser.add_argument("--require-reference-docs", action="store_true", help="Fail if reference_doc file does not exist on disk")
+    parser.add_argument("--require-reference-contract", action="store_true", help="Fail unless reference_doc meets minimum generation-readiness contract")
     parser.add_argument("--require-all-categories", action="store_true", help="Fail unless all 5 dataset categories have positive counts")
+    parser.add_argument("--require-dataset-minimums", action="store_true", help="Fail unless all dataset categories meet minimum SFT counts")
+    parser.add_argument("--generation-ready", action="store_true", help="Shortcut for reference docs, reference contract, all categories, and dataset minimums")
     args = parser.parse_args()
 
     if args.all and args.spec:
@@ -374,8 +492,10 @@ def main() -> None:
     results = [
         validate_spec(
             path,
-            require_reference_docs=args.require_reference_docs,
-            require_all_categories=args.require_all_categories,
+            require_reference_docs=args.require_reference_docs or args.generation_ready,
+            require_reference_contract=args.require_reference_contract or args.generation_ready,
+            require_all_categories=args.require_all_categories or args.generation_ready,
+            require_dataset_minimums=args.require_dataset_minimums or args.generation_ready,
         )
         for path in spec_paths
     ]

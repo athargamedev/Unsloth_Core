@@ -5,12 +5,13 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 ## 🚀 Quick Start for Agents
 1.  **Activate Env**: `source unsloth_env/bin/activate`
 2.  **Verify Setup**: `./ucore audit check`
-3.  **Generate Dataset**: `./ucore generate subjects/history_guide.json --technique template`
-4.  **Sanitize Dataset**: `./ucore sanitize subjects/datasets/history_guide/template/train.jsonl --output subjects/datasets/history_guide/template/train_clean.jsonl --strict-canonical`
-5.  **Dataset Quality Gate**: `./ucore dataset-eval subjects/history_guide.json --technique template --judge-model qwen2.5:7b`
-6.  **Smoke Test Pipeline**: `./ucore pipeline subjects/history_guide.json --preset smoke`
-7.  **Production Train**: `./ucore train subjects/history_guide.json --technique template --preset fast-3b --export-gguf`
-8.  **Evaluate Model**: `./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf --spec subjects/history_guide.json --report-html`
+3.  **Validate Generation Inputs**: `./ucore validate-spec subjects/history_guide.json --generation-ready`
+4.  **Generate Dataset**: `./ucore generate subjects/history_guide.json --technique template`
+5.  **Sanitize Dataset**: `./ucore sanitize subjects/datasets/history_guide/template/train.jsonl --output subjects/datasets/history_guide/template/train_clean.jsonl --strict-canonical --require-complete-metadata`
+6.  **Dataset Quality Gate**: `./ucore dataset-eval subjects/history_guide.json --technique template --judge-model qwen2.5:7b`
+7.  **Smoke Test Pipeline**: `./ucore pipeline subjects/history_guide.json --preset smoke`
+8.  **Production Train**: `./ucore train subjects/history_guide.json --technique template --preset fast-3b --export-gguf`
+9.  **Evaluate Model**: `./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf --spec subjects/history_guide.json --report-html`
 
 ## 📂 Project Logic Map (Where things live)
 | Component | Directory / File | Description |
@@ -112,6 +113,7 @@ Only `template` technique directory is created. Reference docs are centralized a
   **Total: 132 examples** per NPC.
 - **Active SFT techniques**: `template`, `docs`, `ollama`, `openai`, `anthropic`.
 - **RL data state**: RL preference-pair and reward-rollout schemas exist in `subjects/schemas/`, with the contract in `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md`. Treat RL dataset generation as planned/contracted unless a concrete generator exists in `ucore`.
+- **Generation readiness**: `./ucore validate-spec <spec> --generation-ready` must pass before creating new datasets. This enforces reference-doc location/shape, all five categories, and minimum SFT counts.
 
 ## 💾 Supabase Integration (optional)
 A local Supabase instance can track:
@@ -126,6 +128,7 @@ A local Supabase instance can track:
 
 ## 🤖 AI Agent Best Practices
 - **Always use `ucore`**: Prefer the unified CLI over direct script calls.
+- **Reference-doc contract**: Use `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md` and `subjects/reference_docs/README.md`. A primer must have one H1, at least 5 H2 sections, at least 20 concrete bullets, at least 250 words, and safety/refusal/boundary/misconception notes.
 - **Dataset gate before training**: Run `./ucore dataset-eval <spec> --technique <technique>` after sanitize and before SFT. Use local Ollama `qwen2.5:7b` unless the user explicitly chooses another local judge.
 - **DeepEval artifacts**: `.deepeval/` is local runtime state and ignored. Dataset gate outputs `quality_summary.json` and `quality_failures.json` are regenerable and ignored.
 - **Export mode**: `ucore export <npc_key>` defaults to adapter-only mode. Use `--full-merge` for standalone merged GGUFs.

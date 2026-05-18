@@ -67,22 +67,28 @@ The project documentation is structured for both human developers and AI agents:
 
 DeepEval is the local build-loop gate before training:
 
-1. **Generate** a canonical dataset under `subjects/datasets/{npc}/{technique}/`.
-2. **Sanitize** to `train_clean.jsonl`.
-3. **Dataset-eval** with local Ollama `qwen2.5:7b`.
-4. **Fix generation** from `quality_failures.json`, then rerun before training.
+1. **Validate generation readiness** from the spec, reference doc, and dataset counts.
+2. **Generate** a canonical dataset under `subjects/datasets/{npc}/{technique}/`.
+3. **Sanitize** to `train_clean.jsonl` with complete metadata.
+4. **Dataset-eval** with local Ollama `qwen2.5:7b`.
+5. **Fix generation** from `quality_failures.json`, then rerun before training.
 
 ```bash
+./ucore validate-spec subjects/history_guide.json --generation-ready
 ./ucore generate subjects/history_guide.json --technique template
 ./ucore sanitize subjects/datasets/history_guide/template/train.jsonl \
   --output subjects/datasets/history_guide/template/train_clean.jsonl \
-  --strict-canonical
+  --strict-canonical \
+  --require-complete-metadata
 ./ucore dataset-eval subjects/history_guide.json --technique template --soft-fail
 ```
 
 Outputs:
 - `subjects/datasets/{npc}/{technique}/quality_summary.json`
 - `subjects/datasets/{npc}/{technique}/quality_failures.json`
+
+Generation contract:
+- `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md`
 
 ### Self-Improving Model Feedback Loop
 

@@ -110,3 +110,56 @@ def test_export_latest_resolution_keeps_npc_key(monkeypatch, tmp_path):
 
     assert npc_key == "demo_npc"
     assert adapter_dir == run_dir.resolve()
+
+
+def test_validate_spec_generation_ready_requires_reference_contract(monkeypatch, tmp_path):
+    from scripts import validate_subject_spec as validator
+
+    spec = minimal_spec()
+    spec["identity"] = {"personality": "patient", "background": "demo expert", "mannerisms": "clear"}
+    spec["teaching"] = {"expertise": ["demo concepts"], "approach": "explain simply", "difficulty_levels": ["beginner"]}
+    spec["dialogue"] = {"max_sentences": 3, "example_topics": ["What is demo?"]}
+    spec["quest"] = {"scenarios": [{"name": "demo", "description": "demo task"}]}
+    spec["refusal"] = {"boundaries": ["unsafe demo claims"], "redirect_policy": "redirect to evidence"}
+    spec["research_queries"] = [{"query": "demo facts", "mode": "fast"}]
+    spec["dataset"] = {"examples_per_category": {"identity": 1, "teaching": 1, "dialogue": 1, "quest": 1, "refusal": 1}}
+    spec["reference_doc"] = "subjects/reference_docs/demo_primer.md"
+
+    root = tmp_path
+    monkeypatch.setattr(validator, "PROJECT_ROOT", root)
+    spec_path = root / "subjects" / "demo_npc.json"
+    spec_path.parent.mkdir(parents=True)
+    spec_path.write_text(json.dumps(spec))
+    ref_path = root / spec["reference_doc"]
+    ref_path.parent.mkdir(parents=True)
+    ref_path.write_text("# Demo\n\n## Facts\n- one\n")
+
+    result = validator.validate_spec(
+        spec_path,
+        require_reference_docs=True,
+        require_reference_contract=True,
+        require_all_categories=True,
+        require_dataset_minimums=True,
+    )
+
+    assert result.errors
+    assert any("Reference doc must have at least" in error for error in result.errors)
+    assert any("dataset.examples_per_category.teaching" in error for error in result.errors)
+
+
+def test_all_current_specs_are_generation_ready():
+    from scripts.validate_subject_spec import find_subject_specs, validate_spec
+
+    results = [
+        validate_spec(
+            path,
+            require_reference_docs=True,
+            require_reference_contract=True,
+            require_all_categories=True,
+            require_dataset_minimums=True,
+        )
+        for path in find_subject_specs()
+    ]
+
+    failures = {result.path: result.errors for result in results if result.errors}
+    assert failures == {}

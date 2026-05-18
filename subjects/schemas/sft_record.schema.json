@@ -3,7 +3,7 @@
   "$id": "https://unsloth-core.local/subjects/schemas/sft_record.schema.json",
   "title": "SFT ChatML JSONL Record",
   "type": "object",
-  "required": ["messages"],
+  "required": ["messages", "metadata"],
   "properties": {
     "messages": {
       "type": "array",
@@ -24,15 +24,27 @@
     },
     "metadata": {
       "type": "object",
+      "required": [
+        "npc_key",
+        "technique",
+        "split",
+        "category",
+        "concept",
+        "difficulty",
+        "source",
+        "content_hash",
+        "generator_params",
+        "safety_tags"
+      ],
       "properties": {
         "npc_key": { "type": "string", "pattern": "^[a-z0-9_]+$" },
         "technique": { "type": "string", "enum": ["docs", "ollama", "template", "openai", "anthropic"] },
         "split": { "type": "string", "enum": ["train", "validation", "test"] },
-        "category": { "type": "string" },
-        "concept": { "type": "string" },
-        "difficulty": { "type": "string" },
-        "source": { "type": "string" },
-        "content_hash": { "type": "string" },
+        "category": { "type": "string", "enum": ["identity", "teaching", "dialogue", "quest", "refusal"] },
+        "concept": { "type": "string", "minLength": 1 },
+        "difficulty": { "type": "string", "enum": ["beginner", "intermediate", "advanced"] },
+        "source": { "type": "string", "minLength": 1 },
+        "content_hash": { "type": "string", "minLength": 16 },
         "generator_params": {
           "type": "object",
           "additionalProperties": true

@@ -46,3 +46,10 @@
 - **Exoplanets**: Planets around other stars. Discovery methods: transit (Kepler), radial velocity, direct imaging. 5000+ confirmed.
 - **Nuclear Fusion**: Sun fuses H→He in core at ~15M°C. Mass converted to energy via E=mc².
 - **Seasons**: Caused by Earth's axial tilt (23.5°), not distance from Sun.
+
+## Safety Boundaries & Misconceptions
+- **Astrology boundary**: AstronomyGuide explains astronomy as science and does not claim star signs predict personality, health, or future events.
+- **Conspiracy refusal**: Redirect Moon-landing denial, flat-Earth claims, and "NASA hiding evidence" claims toward observable evidence, missions, and measurement methods.
+- **Scale misconception**: Planets and stars are often shown too close together in diagrams; real solar system distances are much larger.
+- **Season misconception**: Seasons come from axial tilt, not Earth being closer or farther from the Sun.
+- **Black hole misconception**: Black holes do not vacuum up everything nearby; objects can orbit them like other massive bodies if outside the event horizon.

@@ -130,6 +130,11 @@ def main():
     spec_val_p.add_argument("--all", action="store_true", help="Validate every subjects/*.json spec")
     spec_val_p.add_argument("--json", action="store_true", help="Output JSON")
     spec_val_p.add_argument("--strict", action="store_true", help="Treat warnings as errors")
+    spec_val_p.add_argument("--require-reference-docs", action="store_true", help="Fail if reference_doc is missing or not readable")
+    spec_val_p.add_argument("--require-reference-contract", action="store_true", help="Fail unless reference_doc meets generation-readiness minimums")
+    spec_val_p.add_argument("--require-all-categories", action="store_true", help="Fail unless all 5 dataset categories have positive counts")
+    spec_val_p.add_argument("--require-dataset-minimums", action="store_true", help="Fail unless all dataset categories meet minimum SFT counts")
+    spec_val_p.add_argument("--generation-ready", action="store_true", help="Fail unless the spec is ready for fresh dataset generation")
 
     # Migrate datasets
     mig_p = subparsers.add_parser("migrate-datasets", help="Migrate legacy flat datasets to canonical structure")
@@ -452,6 +457,16 @@ def main():
             cmd.append("--json")
         if args.strict:
             cmd.append("--strict")
+        if args.require_reference_docs:
+            cmd.append("--require-reference-docs")
+        if args.require_reference_contract:
+            cmd.append("--require-reference-contract")
+        if args.require_all_categories:
+            cmd.append("--require-all-categories")
+        if args.require_dataset_minimums:
+            cmd.append("--require-dataset-minimums")
+        if args.generation_ready:
+            cmd.append("--generation-ready")
         run_cmd(cmd, announce=not args.json)
 
     elif args.command == "migrate-datasets":
