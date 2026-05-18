@@ -112,13 +112,51 @@ def validate_research_queries(spec: dict[str, Any], errors: list[str], warnings:
         errors.append("Missing or invalid research query array (`research_queries` preferred, `research` fallback allowed).")
         return
 
+    VALID_MODES = {"fast", "deep"}
+
     for index, entry in enumerate(research_queries):
         if not isinstance(entry, dict):
-            errors.append(f"Research entry {index} must be an object with a non-empty `query` string.")
+            errors.append(f"Research entry {index} must be an object with a non-empty `query` string and a `mode` (fast/deep).")
             continue
 
         if not is_non_empty_string(entry.get("query")):
             errors.append(f"Research entry {index} is missing a non-empty `query` string.")
+
+        mode = entry.get("mode")
+        if mode not in VALID_MODES:
+            errors.append(f"Research entry {index} has invalid `mode` \"{mode}\"; expected one of: {', '.join(sorted(VALID_MODES))}.")
+
+
+def validate_reference_docs(spec: dict[str, Any], errors: list[str], warnings: list[str], *, require_reference_docs: bool = False) -> None:
+    reference_doc = spec.get("reference_doc")
+    if not is_non_empty_string(reference_doc):
+        warnings.append("No `reference_doc` field; consider adding a reference primer for grounding.")
+        return
+
+    doc_path = PROJECT_ROOT / reference_doc
+    if not doc_path.exists():
+        msg = f"`reference_doc` file not found: {reference_doc}"
+        if require_reference_docs:
+            errors.append(msg)
+        else:
+            warnings.append(msg)
+
+
+def validate_difficulty_levels(spec: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
+    VALID_LEVELS = {"beginner", "intermediate", "advanced"}
+
+    teaching = spec.get("teaching")
+    if not isinstance(teaching, dict):
+        return  # teaching-level error is reported elsewhere
+
+    levels = teaching.get("difficulty_levels")
+    if not is_non_empty_list(levels):
+        warnings.append("Missing or empty `teaching.difficulty_levels`; expected at least one of: beginner, intermediate, advanced.")
+        return
+
+    for level in levels:
+        if level not in VALID_LEVELS:
+            warnings.append(f"Unknown difficulty level \"{level}\" in `teaching.difficulty_levels`; valid values are: {', '.join(sorted(VALID_LEVELS))}.")
 
 
 def validate_system_prompt(spec: dict[str, Any], npc_name: str | None, max_sentences: int | None, errors: list[str], warnings: list[str]) -> None:
@@ -145,7 +183,7 @@ def validate_system_prompt(spec: dict[str, Any], npc_name: str | None, max_sente
     warnings.append(f"`system_prompt` should include a sentence limit consistent with dialogue.max_sentences={max_sentences}.")
 
 
-def validate_dataset(spec: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
+def validate_dataset(spec: dict[str, Any], errors: list[str], warnings: list[str], *, require_all_categories: bool = False) -> None:
     dataset = spec.get("dataset")
     if not isinstance(dataset, dict):
         errors.append("Missing or invalid `dataset` object.")
@@ -157,11 +195,14 @@ def validate_dataset(spec: dict[str, Any], errors: list[str], warnings: list[str
         return
 
     has_positive_supported_category = False
+    present_categories: set[str] = set()
 
     for category, count in examples_per_category.items():
         if not isinstance(count, int) or isinstance(count, bool) or count < 0:
             errors.append(f"`dataset.examples_per_category.{category}` must be a non-negative integer.")
             continue
+
+        present_categories.add(category)
 
         if category in GENERATOR_SUPPORTED_DATASET_CATEGORIES:
             has_positive_supported_category = has_positive_supported_category or count > 0
@@ -176,6 +217,22 @@ def validate_dataset(spec: dict[str, Any], errors: list[str], warnings: list[str
 
         warnings.append(f"Unknown zero-count dataset category `{category}` ignored; remove it or add generator support before use.")
 
+    missing_categories = GENERATOR_SUPPORTED_DATASET_CATEGORIES - present_categories
+    if missing_categories:
+        warnings.append(
+            f"Missing dataset categories: {', '.join(sorted(missing_categories))}. "
+            f"All 5 categories are expected: {', '.join(sorted(GENERATOR_SUPPORTED_DATASET_CATEGORIES))}."
+        )
+
+    if require_all_categories:
+        for category in GENERATOR_SUPPORTED_DATASET_CATEGORIES:
+            count = examples_per_category.get(category, 0)
+            if not isinstance(count, int) or isinstance(count, bool) or count < 1:
+                errors.append(
+                    f"`dataset.examples_per_category.{category}` must be present with a positive count "
+                    f"(got {count})."
+                )
+
     if not has_positive_supported_category:
         errors.append(
             "`dataset.examples_per_category` must request at least one example in a generator-supported category "
@@ -189,7 +246,7 @@ def validate_dataset(spec: dict[str, Any], errors: list[str], warnings: list[str
         warnings.append("Quest examples are requested, but optional `quest.scenarios` is empty or missing.")
 
 
-def validate_spec(spec_path: Path) -> SpecResult:
+def validate_spec(spec_path: Path, *, require_reference_docs: bool = False, require_all_categories: bool = False) -> SpecResult:
     errors: list[str] = []
     warnings: list[str] = []
     resolved_path = spec_path if spec_path.is_absolute() else PROJECT_ROOT / spec_path
@@ -240,8 +297,8 @@ def validate_spec(spec_path: Path) -> SpecResult:
         value = dialogue.get("max_sentences")
         if isinstance(value, int) and not isinstance(value, bool) and value > 0:
             max_sentences = value
-            if value > 5:
-                warnings.append("`dialogue.max_sentences` is greater than 5; short NPC responses are recommended.")
+            if value > 3:
+                warnings.append("`dialogue.max_sentences` is greater than 3; short NPC responses of 1-3 sentences are recommended.")
         else:
             errors.append("Missing or invalid `dialogue.max_sentences` positive integer.")
         if not is_non_empty_list(dialogue.get("example_topics")):
@@ -255,7 +312,9 @@ def validate_spec(spec_path: Path) -> SpecResult:
 
     validate_research_queries(spec, errors, warnings)
     validate_system_prompt(spec, npc_name, max_sentences, errors, warnings)
-    validate_dataset(spec, errors, warnings)
+    validate_reference_docs(spec, errors, warnings, require_reference_docs=require_reference_docs)
+    validate_difficulty_levels(spec, errors, warnings)
+    validate_dataset(spec, errors, warnings, require_all_categories=require_all_categories)
 
     return SpecResult(path=display_path, npc_key=npc_key, errors=errors, warnings=warnings)
 
@@ -298,6 +357,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--all", action="store_true", help="Validate every subjects/*.json spec")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     parser.add_argument("--strict", action="store_true", help="Exit nonzero on warnings as well as errors")
+    parser.add_argument("--require-reference-docs", action="store_true", help="Fail if reference_doc file does not exist on disk")
+    parser.add_argument("--require-all-categories", action="store_true", help="Fail unless all 5 dataset categories have positive counts")
     args = parser.parse_args()
 
     if args.all and args.spec:
@@ -310,7 +371,14 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     spec_paths = find_subject_specs() if args.all else [Path(args.spec)]
-    results = [validate_spec(path) for path in spec_paths]
+    results = [
+        validate_spec(
+            path,
+            require_reference_docs=args.require_reference_docs,
+            require_all_categories=args.require_all_categories,
+        )
+        for path in spec_paths
+    ]
 
     if args.json:
         print(json.dumps(build_json_payload(results), indent=2))

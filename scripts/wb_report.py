@@ -96,7 +96,7 @@ def generate_report(entity, project, runs, output_path=None):
     lines.append(
         "This report summarizes the evaluation results of fine-tuned NPC dialogue models "
         "trained using the Unsloth_Core pipeline. Each NPC is a Llama 3.2 3B Instruct model "
-        "fine-tuned with LoRA on synthetic datasets generated via Onyx RAG.\n"
+        "fine-tuned with LoRA on synthetic datasets generated via template/Ollama.\n"
     )
 
     # Group runs by NPC
@@ -161,7 +161,7 @@ def generate_report(entity, project, runs, output_path=None):
     lines.append("""
 - **Base model:** [Llama 3.2 3B Instruct](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct)
 - **Fine-tuning:** LoRA adapters trained with Unsloth
-- **Dataset:** 64-72 synthetic ChatML examples per NPC, generated via Onyx RAG
+- **Dataset:** 64-72 synthetic ChatML examples per NPC, generated via template/Ollama
 - **Evaluation:** Side-by-side comparison using llama.cpp server
   - Heuristic scoring: sentence count, name adherence, AI disclaimer avoidance, lexical diversity
   - Per-category breakdown by NPC role (identity, teaching, dialogue, quest, refusal)

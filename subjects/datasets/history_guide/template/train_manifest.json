@@ -1,0 +1,44 @@
+{
+  "npc_key": "history_guide",
+  "technique": "template",
+  "generation": {
+    "date": "2026-05-18T15:40:28Z",
+    "seed": 42,
+    "generator_version": "improved-workflow-v1",
+    "sanitizer_version": "v1"
+  },
+  "statistics": {
+    "total": 132,
+    "train": 120,
+    "validation": 12,
+    "by_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "by_difficulty": {
+      "beginner": 22,
+      "advanced": 15,
+      "intermediate": 19
+    },
+    "by_concept": {
+      "world wars": 14,
+      "renaissance": 13,
+      "timeline analysis": 12,
+      "renaissance & reformation": 10,
+      "industrial revolution": 10,
+      "historical thinking skills": 10,
+      "modern era": 9,
+      "world history": 8,
+      "early modern era": 8,
+      "roman empire": 8,
+      "historical methodology": 7,
+      "ancient civilizations": 6,
+      "classical antiquity": 6,
+      "medieval period": 6,
+      "cause and effect": 5
+    }
+  }
+}

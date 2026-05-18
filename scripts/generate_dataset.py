@@ -24,8 +24,11 @@ import subprocess
 import sys
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
+from dataclasses import dataclass
+import hashlib
 from pathlib import Path
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -198,71 +201,144 @@ def write_examples_with_validation(examples, output_path, seed=C.DEFAULT_SEED, i
 
 
 def generate_identity_response(spec):
-    """Generate persona self-introduction responses."""
+    """Generate persona self-introduction responses using spec identity fields."""
+    identity = spec.get("identity", {})
+    personality = identity.get("personality", "helpful")
+    background = identity.get("background", "")
+    mannerisms = identity.get("mannerisms", "")
+    npc_name = spec["npc_name"]
+    subject = spec.get("subject", "").lower()
+
     templates = [
-        f"I am {spec['npc_name']}, your guide to {spec['subject'].lower()}.",
-        f"Hello! I am {spec['npc_name']}. I can help you learn about {spec['subject'].lower()}.",
-        f"Welcome! I am {spec['npc_name']}, here to teach you {spec['subject'].lower()} in a fun way.",
-        f"Hi there! I am {spec['npc_name']}. Think of me as your personal tutor for {spec['subject'].lower()}.",
-        f"Nice to meet you! I am {spec['npc_name']}. I specialize in explaining {spec['subject'].lower()} clearly.",
-        f"I am {spec['npc_name']}, your friendly instructor for all things related to {spec['subject'].lower()}.",
-        f"Call me {spec['npc_name']}! I am here to make {spec['subject'].lower()} easy and enjoyable.",
-        f"Hello, I am {spec['npc_name']}. Ready to explore {spec['subject'].lower()} together?",
+        f"Absolutely! I'm {npc_name}. {personality} — that's my style in a nutshell. {background}.",
+        f"That's me — {npc_name}! {personality} is my approach, and I love sharing {subject}.",
+        f"Hello there! I'm {npc_name}. {personality}. {background} How can I help you explore {subject} today?",
+        f"Great to meet you! I'm {npc_name}. {personality} — that's how I'd describe my teaching style. {mannerisms}",
+        f"You've found {npc_name}! I specialize in {subject}. {personality} — that's the key to how I teach.",
+        f"Hi! I'm {npc_name}, your guide to {subject}. {personality} {mannerisms} Ready to explore?",
+        f"I'm {npc_name}. Think of me as your personal {subject} expert. {background}",
+        f"Welcome! I'm {npc_name}. {personality} — that's how I bring {subject} to life. {mannerisms}",
     ]
     return random.choice(templates)
 
 
-def generate_teaching_response(spec, concept_a, concept_b=None):
-    """Generate teaching responses based on concepts."""
+def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="beginner"):
+    """Generate teaching responses based on concepts and difficulty tier."""
     subject = spec["subject"].lower()
     npc_name = spec["npc_name"]
 
-    if concept_b:
-        templates = [
-            f"Great question! {concept_a} and {concept_b} are closely related in {subject}. While {concept_a} focuses on the building blocks, {concept_b} shows how they interact.",
-            f"Think of {concept_a} as the foundation and {concept_b} as what you build on top. Both are essential for understanding {subject}.",
-            f"In {subject}, {concept_a} and {concept_b} work together. {concept_a} gives us the basic rules, while {concept_b} applies them in real scenarios.",
-        ]
-    else:
-        templates = [
-            f"Great question about {concept_a}! In {subject}, {concept_a} is like a key that unlocks many doors. Let me break it down simply.",
-            f"{concept_a} is one of the most important ideas in {subject}. Imagine it as a tool that helps us understand how things work.",
-            f"Think of {concept_a} like a recipe in cooking. Just as a recipe lists ingredients and steps, {concept_a} gives us the framework for understanding {subject}.",
-            f"Excellent! {concept_a} can be understood by looking at its parts. Each part plays a role, much like players on a sports team.",
-            f"Here is the simplest way to think about {concept_a}: it is nature's way of organizing {subject} into patterns we can recognize and predict.",
-            f"Good question! In {subject}, {concept_a} helps us make sense of the world around us. It is all about patterns and relationships.",
-        ]
+    if difficulty == "beginner":
+        if concept_b:
+            templates = [
+                f"Great question! {concept_a} and {concept_b} are closely related in {subject}. While {concept_a} focuses on the building blocks, {concept_b} shows how they interact.",
+                f"Think of {concept_a} as the foundation and {concept_b} as what you build on top. Both are essential for understanding {subject}.",
+                f"In {subject}, {concept_a} and {concept_b} work together. {concept_a} gives us the basic rules, while {concept_b} applies them in real scenarios.",
+            ]
+        else:
+            templates = [
+                f"Great question about {concept_a}! In {subject}, {concept_a} is like a key that unlocks many doors. Let me break it down simply.",
+                f"{concept_a} is one of the most important ideas in {subject}. Imagine it as a tool that helps us understand how things work.",
+                f"Think of {concept_a} like a recipe in cooking. Just as a recipe lists ingredients and steps, {concept_a} gives us the framework for understanding {subject}.",
+                f"Excellent! {concept_a} can be understood by looking at its parts. Each part plays a role, much like players on a sports team.",
+                f"Here is the simplest way to think about {concept_a}: it is nature's way of organizing {subject} into patterns we can recognize and predict.",
+                f"Good question! In {subject}, {concept_a} helps us make sense of the world around us. It is all about patterns and relationships.",
+            ]
+    elif difficulty == "intermediate":
+        if concept_b:
+            templates = [
+                f"Excellent question! The relationship between {concept_a} and {concept_b} reveals a lot about {subject}. {concept_a} provides the framework, while {concept_b} demonstrates its real-world application. Let me show you how they connect.",
+                f"To understand {subject}, you need both {concept_a} and {concept_b}. Think of {concept_a} as theory and {concept_b} as practice — they reinforce each other.",
+                f"Here is where {concept_a} and {concept_b} intersect in {subject}. Their relationship is like cause and effect — understanding one deepens your grasp of the other.",
+            ]
+        else:
+            templates = [
+                f"Let's go deeper into {concept_a}. In {subject}, this concept builds on several key principles. First, we need to understand the core mechanism, then see how it plays out in different contexts.",
+                f"{concept_a} becomes more fascinating when you look at the details. In {subject}, this concept involves interconnected ideas that together create a bigger picture. Let me walk you through them.",
+                f"Here is a more detailed look at {concept_a}. In {subject}, experts think of this as a framework with several layers. Each layer adds depth to our understanding.",
+                f"Building on the basics, {concept_a} in {subject} has some nuances worth exploring. The key is to see how the pieces fit together in different scenarios.",
+                f"Let me share a more detailed perspective on {concept_a}. In {subject}, this concept has deeper implications that aren't obvious at first glance.",
+            ]
+    elif difficulty == "advanced":
+        if concept_b:
+            templates = [
+                f"At an advanced level, the interplay between {concept_a} and {concept_b} in {subject} reveals fascinating nuances. Scholars debate whether {concept_a} precedes {concept_b} or vice versa. Let me outline both schools of thought.",
+                f"The relationship between {concept_a} and {concept_b} is more complex than it appears. In contemporary {subject}, researchers have identified edge cases where the traditional relationship breaks down.",
+            ]
+        else:
+            templates = [
+                f"Let's examine {concept_a} at an advanced level. In current {subject} research, there are several competing frameworks. The traditional view emphasizes structure, while newer approaches focus on dynamic interactions. Let me explain the key debates.",
+                f"{concept_a} is not as straightforward as it seems. Advanced study of {subject} reveals critical perspectives that challenge conventional wisdom. For instance, recent scholarship has questioned several long-held assumptions.",
+                f"At the frontiers of {subject}, {concept_a} is understood through multiple lenses. Some researchers argue it is primarily about patterns, while others emphasize its role in systems thinking. Both perspectives offer valuable insights.",
+                f"To truly master {concept_a}, we need to consider its limitations. In advanced {subject} theory, this concept is often criticized for oversimplifying complex realities. Let me share the critical perspective.",
+            ]
     return random.choice(templates)
 
 
-def generate_dialogue_response(spec, concept):
-    """Generate conversational responses."""
+def generate_dialogue_response(spec, concept, dialogue_type="deep_dive"):
+    """Generate conversational responses based on dialogue type."""
     npc_name = spec["npc_name"]
     subject = spec["subject"].lower()
-    templates = [
-        f"I completely understand! {concept} can be tricky at first. Let me share a simple way to think about it that helped many students before you.",
-        f"You are asking the right questions about {concept}! This is exactly how scientists first started exploring {subject}.",
-        f"I love talking about {concept}! Here is something most textbooks do not mention — it connects to so many everyday things.",
-        f"Do not worry if {concept} feels confusing. Even experts started where you are. Let us break it down piece by piece.",
-        f"Fun fact about {concept}: it was discovered by someone who was actually trying to study something else! That is how science works in {subject}.",
-        f"You know, understanding {concept} is like learning to ride a bicycle. It seems hard at first, but once it clicks, you will wonder why it ever seemed difficult.",
-        f"I am glad you asked about {concept}! Many people find this fascinating once they see how it connects to {subject}.",
-        f"Let me tell you a story about {concept}. Stories make ideas stick, and this one is a real game-changer in {subject}.",
-        f"Great observation about {concept}! You are thinking like a real {subject} enthusiast.",
-        f"Alright, let us tackle {concept} together. Think of me as your thinking partner — we will figure this out step by step.",
-        f"I love explaining {concept}! It is one of those topics in {subject} where everything suddenly clicks into place.",
-        f"You know what is cool about {concept}? The more you learn, the more you see it everywhere in {subject}.",
-        f"That is a fantastic question about {concept}. Let me share a perspective that changed how I think about {subject}.",
-        f"Here is a simple way to remember {concept}: think of it as {subject}'s secret superpower. Once you know it, you see it everywhere!",
-        f"I am excited you want to learn about {concept}! This is one of those foundational ideas that makes everything else in {subject} make sense.",
-        f"Great question! Actually, {concept} is simpler than it sounds. Let me show you what I mean with a quick example from {subject}.",
-    ]
+
+    if dialogue_type == "clarification":
+        templates = [
+            f"Let me explain that differently. {concept} is simpler than it sounds — think of it as a way to organize {subject} information. Here is a clearer way to look at it.",
+            f"I completely understand! {concept} can be tricky at first. Let me share a simple way to think about it that helped many students before you.",
+            f"Great question! Actually, {concept} is simpler than it sounds. Let me show you what I mean with a quick example from {subject}.",
+            f"Do not worry if {concept} feels confusing. Even experts started where you are. Let us break it down piece by piece.",
+        ]
+    elif dialogue_type == "deep_dive":
+        templates = [
+            f"You are asking the right questions about {concept}! This is exactly how scientists first started exploring {subject}.",
+            f"I love talking about {concept}! Here is something most textbooks do not mention — it connects to so many everyday things.",
+            f"That is a fantastic question about {concept}. Let me share a perspective that changed how I think about {subject}.",
+            f"I am excited you want to learn about {concept}! This is one of those foundational ideas that makes everything else in {subject} make sense.",
+        ]
+    elif dialogue_type == "application":
+        templates = [
+            f"Here is how you would see {concept} in practice. In real-world {subject}, this concept is used every day to solve problems and make decisions.",
+            f"Let me give you a concrete example of {concept}. Imagine you are working on a {subject} problem and need to apply this principle.",
+            f"You know, one of the best ways to understand {concept} is to see it in action. In {subject}, professionals use this constantly.",
+            f"The cool thing about {concept} is that it shows up everywhere. Here is a practical example from {subject} that will make it click.",
+        ]
+    elif dialogue_type == "misconception":
+        templates = [
+            f"That is a common misunderstanding about {concept}! Many people think that, but actually the truth is more interesting. Let me clear it up.",
+            f"I hear that a lot! The idea about {concept} that you mentioned is actually a popular myth in {subject}. Here is what really happens.",
+            f"Great observation — and it points to a widespread misconception about {concept}. Let me set the record straight with what experts actually know.",
+            f"You know, a lot of learners get confused about this aspect of {concept}. The key insight is that {subject} works differently than most people assume.",
+        ]
+
     return random.choice(templates)
 
 
-def generate_quest_response(spec, concept):
-    """Generate quest/challenge responses."""
+def generate_quest_response(spec, concept, scenario_name=None):
+    """Generate quest/challenge responses based on scenario."""
     subject = spec["subject"].lower()
+
+    if scenario_name:
+        scenario_templates = {
+            "timeline_analysis": [
+                f"Here is a timeline challenge about {concept}: Can you arrange these key events in chronological order and explain the cause-effect relationship between each pair? This will help you see the bigger picture in {subject}.",
+                f"Let's test your timeline skills! Regarding {concept}, I will give you three dates. Your task is to connect each event to the next, explaining how one led to another in {subject}.",
+            ],
+            "primary_source": [
+                f"Time to examine a primary source! Imagine you have found a firsthand account about {concept}. What questions would you ask to determine its reliability and what it reveals about {subject}?",
+                f"Here is a historian's challenge: If you discovered a document from the time of {concept}, what three clues would tell you it is authentic? How would historians in {subject} verify it?",
+            ],
+            "technique_mastery": [
+                f"Let's practice your technique! Regarding {concept}, I want you to break down the process step by step as if you were teaching a complete beginner. What is the first thing you would show them?",
+                f"Here is a technique challenge: Demonstrate your understanding of {concept} by explaining the most common mistake beginners make and how to avoid it in {subject}.",
+            ],
+            "meal_planning": [
+                f"Time for a practical challenge! Using {concept}, plan a balanced approach to a three-course meal. What principles from {subject} guide your choices?",
+                f"Here is a real-world scenario: You have limited ingredients but want to apply {concept}. What dishes would you prepare and why? This is a key skill in {subject}.",
+            ],
+        }
+        cat_templates = scenario_templates.get(scenario_name, [])
+        if cat_templates:
+            return random.choice(cat_templates)
+
+    # Fallback to generic quest templates
     templates = [
         f"Challenge accepted! Here is a question about {concept}: Can you identify three real-world applications of {concept}? Take your time — this is meant to make you think!",
         f"Great! Here is a practice problem about {concept}: Imagine you are explaining {concept} to someone who has never studied {subject}. What is the ONE analogy you would use?",
@@ -276,10 +352,41 @@ def generate_quest_response(spec, concept):
     return random.choice(templates)
 
 
-def generate_refusal_response(spec):
+def generate_refusal_response(spec, boundary=None):
     """Generate safe refusal responses for out-of-scope questions."""
     subject = spec["subject"].lower()
     npc_name = spec["npc_name"]
+
+    if boundary:
+        boundary_lower = boundary.lower()
+        if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
+            templates = [
+                f"As {npc_name}, I specialize in {subject}, but I want to be clear: that question involves counterfactual speculation. While historians do discuss 'what ifs,' I should note these are hypothetical exercises, not established history. Can I help you with documented historical events instead?",
+                f"I understand the curiosity about alternate scenarios! However, as a {subject} guide, I focus on what the evidence shows us. Counterfactual history can be fun to think about, but I want to keep our discussion grounded in verified sources. What would you like to learn about that actually happened?",
+            ]
+        elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
+            templates = [
+                f"I need to address something important. That claim does not match what the evidence shows. As {npc_name}, I rely on peer-reviewed scholarship and primary sources. Let me share what the evidence actually says about {subject}.",
+                f"I want to make sure we stick to accurate information. In {subject}, we verify claims through primary sources and scholarly consensus. What you're describing is not supported by the evidence. Would you like to learn about the documented history instead?",
+            ]
+        elif "medical" in boundary_lower or "dietary" in boundary_lower:
+            templates = [
+                f"As {npc_name}, I need to be careful here. I can share general information about {subject}, but specific medical or dietary advice is outside my role. Please consult a qualified professional for personalized guidance.",
+                f"I appreciate you asking, but I'm not qualified to give medical or dietary advice. My expertise is in {subject}. Let me know if you have a question about cooking techniques or ingredients instead!",
+            ]
+        elif "unsafe" in boundary_lower or "food preparation" in boundary_lower:
+            templates = [
+                f"I cannot recommend that preparation method — safety comes first in the kitchen! Let me suggest a safer approach that follows standard {subject} practices.",
+                f"That method isn't considered safe in professional {subject}. Here's the proper technique that ensures both safety and great results.",
+            ]
+        else:
+            templates = [
+                f"As {npc_name}, I need to be careful here. That question touches on an area where I must stay within my guidelines. Let me refocus on what I can help you with in {subject}.",
+                f"I appreciate your curiosity, but that falls outside what I can discuss. My role as {npc_name} is to teach {subject} based on established knowledge. Can I help you with something else in {subject}?",
+            ]
+        return random.choice(templates)
+
+    # Fallback to generic refusal templates
     templates = [
         f"I am {npc_name}, and I specialize in {subject}. That question is outside my area of expertise. Can I help you with something related to {subject} instead?",
         f"Great question, but it is outside the scope of what I teach! I focus on {subject}. Feel free to ask me about that!",
@@ -404,76 +511,171 @@ class AnthropicGenerator:
             return None
 
 
-def concept_pool_for_subject(spec):
-    """Extract stable concept keywords from the subject spec.
+# ── Concept Extraction ──────────────────────────────────────────────────────
+
+
+@dataclass
+class Concept:
+    """A structured concept extracted from the subject spec.
+
+    Attributes:
+        name: Canonical lowercase name.
+        difficulty: One of "beginner", "intermediate", "advanced".
+        source: Origin — "expertise", "subject", "research_query", or "reference_doc".
+        aliases: Alternative phrasings from other sources.
+    """
+    name: str
+    difficulty: str
+    source: str
+    aliases: list[str]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class ConceptExtractor:
+    """Extract structured Concept objects from a subject spec dict.
 
     Priority order:
-      1. teaching.expertise (structured concept list)
+      1. teaching.expertise (most reliable, structured concept list)
       2. Subject description phrase groups
-      3. Research query phrases only when they are clean noun-like phrases
+      3. Research query phrases (query values, noun-phrase filtered)
+      4. Reference doc section headings (NEW)
 
-    Avoid noisy adjacent-word bigrams like "and causes", "the printing",
-    "should know", or "every home" because those pollute metadata, feedback,
-    prompts, and portfolio reports.
+    Each source feeds the same filter pipeline (banned words, size limits,
+    dedup), producing a deduplicated list of Concept objects with inferred
+    difficulty ratings.
     """
-    concepts = []
-    seen = set()
 
-    banned_starts = {
+    BANNED_STARTS: frozenset[str] = frozenset({
         "a", "an", "and", "are", "as", "basic", "can", "common", "does",
         "every", "for", "from", "how", "in", "key", "major", "of", "should",
         "some", "the", "to", "what", "when", "where", "why", "with",
-    }
-    banned_ends = {
+    })
+    BANNED_ENDS: frozenset[str] = frozenset({
         "and", "are", "as", "be", "can", "does", "every", "for", "from",
         "how", "in", "of", "should", "some", "the", "to", "what", "when",
         "where", "why", "with",
-    }
+    })
 
-    def add_concept(value):
+    def __init__(self, spec: dict) -> None:
+        self.spec = spec
+
+    def extract(self) -> list[Concept]:
+        """Extract structured concepts from the spec.
+
+        Returns a deduplicated list of Concept objects, ordered by source
+        priority (expertise first, reference doc last).
+        """
+        concepts: dict[str, Concept] = {}
+        teaching = self.spec.get("teaching") or {}
+
+        # 1. Use structured expertise list (most reliable)
+        for exp in teaching.get("expertise") or []:
+            self._add_concept(concepts, exp, "expertise")
+
+        # 2. Parse subject description into meaningful phrase groups
+        subject_raw = self.spec.get("subject", "")
+        for sep in [":", "\u2014", "-", ","]:
+            subject_raw = subject_raw.replace(sep, "|")
+        for phrase in subject_raw.split("|"):
+            self._add_concept(concepts, phrase, "subject")
+
+        # 3. Research query phrases (noun-phrase filtered)
+        for rq in self.spec.get("research_queries") or []:
+            query = rq.get("query", "")
+            self._add_concept(concepts, query, "research_query")
+
+        # 4. Reference doc section headings
+        ref_doc = self.spec.get("reference_doc", "")
+        if ref_doc:
+            for heading in self._extract_headings(ref_doc):
+                self._add_concept(concepts, heading, "reference_doc")
+
+        # Fallback: guarantee at least one concept
+        if not concepts:
+            concepts["this topic"] = Concept("this topic", "beginner", "fallback", [])
+
+        return list(concepts.values())
+
+    def _add_concept(
+        self, concepts: dict[str, Concept], value: str, source: str
+    ) -> None:
+        """Parse, validate, and insert one concept into the accumulator dict."""
         clean = _clean_query(value).strip().lower()
-        if not clean or clean in seen:
+        if not clean or clean in concepts:
             return
         words = clean.split()
         if len(clean) < 4 or len(words) > 5:
             return
-        if words[0] in banned_starts or words[-1] in banned_ends:
+        if words[0] in self.BANNED_STARTS or words[-1] in self.BANNED_ENDS:
             return
-        if all(w in banned_starts or w in banned_ends for w in words):
+        if all(w in self.BANNED_STARTS or w in self.BANNED_ENDS for w in words):
             return
-        concepts.append(clean)
-        seen.add(clean)
+        difficulty = self._infer_difficulty(clean)
+        concepts[clean] = Concept(clean, difficulty, source, [])
 
-    # 1. Use structured expertise list (most reliable)
-    teaching = spec.get("teaching") or {}
-    for exp in teaching.get("expertise") or []:
-        add_concept(exp)
+    def _infer_difficulty(self, name: str) -> str:
+        """Infer concept difficulty using heuristics.
 
-    # 2. Parse subject description into meaningful phrase groups
-    subject = spec.get("subject", "")
-    for sep in [":", "\u2014", "-", ","]:
-        subject = subject.replace(sep, "|")
-    for phrase in subject.split("|"):
-        add_concept(phrase)
+        1. If ``teaching.difficulty_levels`` is a dict mapping concept keys
+           to levels, use that as an explicit override.
+        2. Short names (1-2 words, <15 chars) → ``"beginner"``.
+        3. Compound concepts (3+ words) → ``"intermediate"``.
+        4. Everything else → ``"advanced"`` (specialised / domain language).
+        """
+        teaching = self.spec.get("teaching") or {}
+        diff_levels = teaching.get("difficulty_levels")
+        if isinstance(diff_levels, dict):
+            for concept_key, level in diff_levels.items():
+                if concept_key.lower() in name:
+                    return level
 
-    # 3. Keep research queries for retrieval only, not as training concept labels.
-    # Query-derived sliding windows caused noisy concepts such as "and causes",
-    # "should know", and "the printing". Stable concept labels produce cleaner
-    # metadata, feedback reports, and portfolio eval tables.
+        words = name.split()
+        if len(words) <= 2 and len(name) < 15:
+            return "beginner"
+        if len(words) >= 3:
+            return "intermediate"
+        return "advanced"
 
-    if not concepts:
-        concepts = ["this topic"]
-    return concepts
+    def _extract_headings(self, ref_doc_path: str) -> list[str]:
+        """Extract ``##``-level Markdown headings from a reference doc."""
+        path = Path(ref_doc_path)
+        if not path.is_absolute():
+            path = PROJECT_ROOT / path
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (FileNotFoundError, OSError):
+            return []
+        headings = re.findall(r"^##\s+(.+)$", text, re.MULTILINE)
+        return [h.strip() for h in headings if h.strip()]
 
 
-def generate_example(spec, category, concepts, generator=None, temperature=0.8):
+def concept_pool_for_subject(spec: dict) -> list[str]:
+    """Backward-compatible wrapper returning flat concept name strings.
+
+    Prefer ``ConceptExtractor(spec).extract()`` for structured access.
+    """
+    return [c.name for c in ConceptExtractor(spec).extract()]
+
+
+def compute_content_hash(messages):
+    """Compute SHA256 hash of concatenated message content for dedup tracking."""
+    content_string = "".join(m["content"] for m in messages)
+    return hashlib.sha256(content_string.encode()).hexdigest()
+
+
+def generate_example(spec, category, concepts, generator=None, temperature=0.8,
+                     difficulty=None, dialogue_type=None, scenario_name=None,
+                     boundary=None, seed=None, technique="template"):
     """Generate one ChatML training example using templates or LLM."""
+    concept = random.choice(concepts)
+
     if generator:
         # ── LLM-powered generation ───────────────────────────────────────────
         npc_name = spec["npc_name"]
         system_prompt = spec["system_prompt"]
-        concept = random.choice(concepts)
-        
+
         category_prompts = {
             "identity": f"Create a natural user question asking who {npc_name} is, and a high-quality response.",
             "teaching": f"Create a student-like question about '{concept}' and a clear, helpful educational response.",
@@ -481,9 +683,9 @@ def generate_example(spec, category, concepts, generator=None, temperature=0.8):
             "quest": f"Create a user request for a challenge or quiz about '{concept}', and a creative response.",
             "refusal": "Create a user question that is completely out-of-scope for a chemistry tutor, and a polite refusal in character.",
         }
-        
+
         cat_guide = category_prompts.get(category, f"Create a dialogue turn about {concept}")
-        
+
         generation_prompt = f"""
 You are a synthetic data generator for training an NPC named {npc_name}.
 NPC System Prompt: {system_prompt}
@@ -508,27 +710,38 @@ Return ONLY a JSON object with this exact structure:
   "thought": "briefly explain how this follows the rules"
 }}
 """
-        
+
         raw_res = generator.generate("You are a training data generator. Output valid JSON.", generation_prompt, temperature=temperature, json_format=True)
-        
+
         if raw_res:
             try:
                 res_json = json.loads(raw_res)
                 user_message = res_json.get("user", "Hello!")
                 assistant_response = res_json.get("assistant", "Hi there!")
-                
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                    {"role": "assistant", "content": assistant_response},
+                ]
+
                 return {
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_message},
-                        {"role": "assistant", "content": assistant_response},
-                    ],
+                    "messages": messages,
                     "metadata": {
                         "npc_key": spec["npc_key"],
                         "category": category,
-                        "source": f"ollama:{generator.model}",
-                        "concept": concept,
-                        "thought": res_json.get("thought", "")
+                        "technique": technique,
+                        "source": f"llm:{generator.__class__.__name__}",
+                        "split": "train",
+                        "concept": str(concept),
+                        "difficulty": difficulty,
+                        "safety_tags": [],
+                        "content_hash": compute_content_hash(messages),
+                        "generator_params": {
+                            "seed": seed,
+                            "temperature": temperature,
+                            "multi_turn": False,
+                            "reference_doc": spec.get("reference_doc"),
+                        },
                     },
                 }
             except Exception as e:
@@ -538,53 +751,76 @@ Return ONLY a JSON object with this exact structure:
     category_data = CATEGORY_TEMPLATES[category]
     user_template = random.choice(category_data["user_templates"])
 
+    # Convert Concept objects to strings for template replacement
+    concept_str = str(concept)
+
     # Fill in concept placeholders
     if "{concept}" in user_template or "{concept_a}" in user_template:
-        c = random.choice(concepts)
-        user_message = user_template.replace("{concept}", c).replace("{concept_a}", c)
+        user_message = user_template.replace("{concept}", concept_str).replace("{concept_a}", concept_str)
     else:
-        c = random.choice(concepts)
         user_message = user_template
 
+    cb = None
     if "{concept_b}" in user_message:
-        remaining = [x for x in concepts if x != c]
-        cb = random.choice(remaining) if remaining else c
-        user_message = user_message.replace("{concept_b}", cb)
+        remaining = [str(x) for x in concepts if str(x) != concept_str]
+        cb_str = random.choice(remaining) if remaining else concept_str
+        user_message = user_message.replace("{concept_b}", cb_str)
     if "{related_concept}" in user_message:
-        remaining = [x for x in concepts if x != c]
-        rc = random.choice(remaining) if remaining else c
-        user_message = user_message.replace("{related_concept}", rc)
+        remaining = [str(x) for x in concepts if str(x) != concept_str]
+        rc_str = random.choice(remaining) if remaining else concept_str
+        user_message = user_message.replace("{related_concept}", rc_str)
 
-    # Generate assistant response
+    # Generate assistant response with appropriate parameters
     if category == "identity":
         assistant_response = generate_identity_response(spec)
     elif category == "refusal":
-        assistant_response = generate_refusal_response(spec)
+        assistant_response = generate_refusal_response(spec, boundary=boundary)
     elif category == "teaching":
-        cb_val = cb if "{concept_b}" in user_template else None
-        assistant_response = generate_teaching_response(spec, c, cb_val)
+        cb_val = cb_str if "{concept_b}" in user_template else None
+        assistant_response = generate_teaching_response(spec, concept_str, cb_val, difficulty=difficulty or "beginner")
     elif category == "dialogue":
-        assistant_response = generate_dialogue_response(spec, c)
+        assistant_response = generate_dialogue_response(spec, concept_str, dialogue_type=dialogue_type or "deep_dive")
     elif category == "quest":
-        assistant_response = generate_quest_response(spec, c)
+        assistant_response = generate_quest_response(spec, concept_str, scenario_name=scenario_name)
     else:
-        assistant_response = f"That is a wonderful question about {c}! Let me share what I know."
+        assistant_response = f"That is a wonderful question about {concept_str}! Let me share what I know."
+
+    messages = [
+        {"role": "system", "content": spec["system_prompt"]},
+        {"role": "user", "content": user_message},
+        {"role": "assistant", "content": assistant_response},
+    ]
+
+    # Build safety tags based on category and boundary
+    safety_tags = []
+    if category == "refusal":
+        safety_tags.append("boundary_enforcement")
+    if boundary:
+        safety_tags.append("specified_boundary")
 
     return {
-        "messages": [
-            {"role": "system", "content": spec["system_prompt"]},
-            {"role": "user", "content": user_message},
-            {"role": "assistant", "content": assistant_response},
-        ],
+        "messages": messages,
         "metadata": {
             "npc_key": spec["npc_key"],
             "category": category,
-            "source": "template",
+            "technique": technique,
+            "source": "template:generate_dataset.py",
+            "split": "train",
+            "concept": concept_str,
+            "difficulty": difficulty,
+            "safety_tags": safety_tags,
+            "content_hash": compute_content_hash(messages),
+            "generator_params": {
+                "seed": seed,
+                "temperature": 0.8,
+                "multi_turn": False,
+                "reference_doc": spec.get("reference_doc"),
+            },
         },
     }
 
 
-def generate_multi_turn_example(spec, concepts, generator, temperature=C.LLM_GENERATOR_TEMPERATURE, num_turns=3):
+def generate_multi_turn_example(spec, concepts, generator, temperature=C.LLM_GENERATOR_TEMPERATURE, num_turns=3, technique="template", seed=None):
     """Generate a multi-turn realistic conversation using LLM."""
     npc_name = spec["npc_name"]
     system_prompt = spec["system_prompt"]
@@ -618,21 +854,31 @@ Return ONLY a JSON object with this structure:
 }}
 """
     raw_res = generator.generate("You are a complex multi-turn dialogue generator. Output valid JSON.", generation_prompt, temperature=temperature, json_format=True)
-    
+
     if raw_res:
         try:
             res_json = json.loads(raw_res)
             turns = res_json.get("turns", [])
             messages = [{"role": "system", "content": system_prompt}] + turns
-            
+
             return {
                 "messages": messages,
                 "metadata": {
                     "npc_key": spec["npc_key"],
                     "category": "multi_turn",
+                    "technique": technique,
                     "source": f"llm:{generator.__class__.__name__}",
-                    "concept": concept,
-                    "thought": res_json.get("thought", "")
+                    "split": "train",
+                    "concept": str(concept),
+                    "difficulty": None,
+                    "safety_tags": [],
+                    "content_hash": compute_content_hash(messages),
+                    "generator_params": {
+                        "seed": seed,
+                        "temperature": temperature,
+                        "multi_turn": True,
+                        "reference_doc": spec.get("reference_doc"),
+                    },
                 },
             }
         except Exception as e:
@@ -640,30 +886,77 @@ Return ONLY a JSON object with this structure:
     return None
 
 
-def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.8):
+def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.8, technique="template"):
     """Generate a complete dataset from a subject spec."""
     random.seed(seed)
-    concepts = concept_pool_for_subject(spec)
+    concepts = ConceptExtractor(spec).extract()
     examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
 
     examples = []
     total_count = sum(examples_per_category.values())
     current = 0
 
+    # Pre-compute distribution parameters from spec
+    quest_spec = spec.get("quest", {})
+    quest_scenario_list = quest_spec.get("scenarios", [])
+    quest_scenarios = [s["name"] for s in quest_scenario_list] if quest_scenario_list else []
+
+    refusal_spec = spec.get("refusal", {})
+    refusal_boundaries = refusal_spec.get("boundaries", [])
+
     for category, count in examples_per_category.items():
         if category not in CATEGORY_TEMPLATES:
             print(f"  [warn] Unknown category '{category}', skipping")
             continue
+
+        # Build distribution lists for this category
+        difficulties = None
+        dialogue_types = None
+        scenario_names = None
+        boundaries = None
+
+        if category == "teaching":
+            # 40% beginner, 35% intermediate, 25% advanced
+            n_beg = int(count * 0.40)
+            n_int = int(count * 0.35)
+            n_adv = count - n_beg - n_int
+            difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+            random.shuffle(difficulties)
+        elif category == "dialogue":
+            # 20% clarification, 30% deep_dive, 30% application, 20% misconception
+            n_clar = int(count * 0.20)
+            n_dive = int(count * 0.30)
+            n_app = int(count * 0.30)
+            n_misc = count - n_clar - n_dive - n_app
+            dialogue_types = (["clarification"] * n_clar + ["deep_dive"] * n_dive
+                            + ["application"] * n_app + ["misconception"] * n_misc)
+            random.shuffle(dialogue_types)
+        elif category == "quest" and quest_scenarios:
+            # Distribute evenly across scenarios
+            scenario_names = [quest_scenarios[i % len(quest_scenarios)] for i in range(count)]
+            random.shuffle(scenario_names)
+        elif category == "refusal" and refusal_boundaries:
+            # Distribute evenly across boundaries
+            boundaries = [refusal_boundaries[i % len(refusal_boundaries)] for i in range(count)]
+            random.shuffle(boundaries)
+
         print(f"  Generating {count} examples for '{category}'...")
-        for _ in range(count):
+        for i in range(count):
+            diff = difficulties[i] if difficulties else None
+            dt = dialogue_types[i] if dialogue_types else None
+            sn = scenario_names[i] if scenario_names else None
+            bd = boundaries[i] if boundaries else None
+
             # If multi-turn is requested and category is dialogue/teaching, maybe do multi-turn
             if generator and multi_turn_ratio > 0 and category in ["teaching", "dialogue"] and random.random() < multi_turn_ratio:
-                example = generate_multi_turn_example(spec, concepts, generator, temperature=temperature)
+                example = generate_multi_turn_example(spec, concepts, generator, temperature=temperature, technique=technique, seed=seed)
                 if not example:
-                    example = generate_example(spec, category, concepts, generator=generator, temperature=temperature)
+                    example = generate_example(spec, category, concepts, generator=generator, temperature=temperature,
+                                               difficulty=diff, dialogue_type=dt, scenario_name=sn, boundary=bd, seed=seed, technique=technique)
             else:
-                example = generate_example(spec, category, concepts, generator=generator, temperature=temperature)
-            
+                example = generate_example(spec, category, concepts, generator=generator, temperature=temperature,
+                                           difficulty=diff, dialogue_type=dt, scenario_name=sn, boundary=bd, seed=seed, technique=technique)
+
             example["metadata"]["category"] = category
             examples.append(example)
             current += 1
@@ -672,7 +965,6 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
 
     # ── Split into train/validation (stratified by category) ─────────────
     if include_validation and len(examples) > 5:
-        # Group examples by category for stratified split
         from collections import defaultdict
         by_category = defaultdict(list)
         for ex in examples:
@@ -683,15 +975,22 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
         val_examples = []
         for cat, cat_examples in by_category.items():
             random.shuffle(cat_examples)
-            split = max(1, int(len(cat_examples) * val_split))
+            # Ensure at least 1 example for validation if count > 1
+            split = max(1, min(len(cat_examples) - 1, int(len(cat_examples) * val_split))) if len(cat_examples) > 1 else 0
             val_examples.extend(cat_examples[:split])
             train_examples.extend(cat_examples[split:])
 
         random.shuffle(train_examples)
         random.shuffle(val_examples)
     else:
-        train_examples = examples
+        train_examples = list(examples)
         val_examples = []
+
+    # Set split metadata on every example
+    for ex in train_examples:
+        ex["metadata"]["split"] = "train"
+    for ex in val_examples:
+        ex["metadata"]["split"] = "validation"
 
     # Write training set
     output_path = Path(output_path)
@@ -710,6 +1009,47 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
             for ex in val_examples:
                 f.write(json.dumps(ex) + "\n")
 
+    # ── Compute statistics for manifest ──
+    by_category = defaultdict(int)
+    by_difficulty = defaultdict(int)
+    by_concept = defaultdict(int)
+
+    for ex in examples:
+        meta = ex.get("metadata", {})
+        by_category[meta.get("category", "unknown")] += 1
+        diff = meta.get("difficulty")
+        if diff:
+            by_difficulty[diff] += 1
+        conc = meta.get("concept")
+        if conc:
+            by_concept[conc] += 1
+
+    # Write train_manifest.json
+    manifest = {
+        "npc_key": spec["npc_key"],
+        "technique": technique,
+        "generation": {
+            "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "seed": seed,
+            "generator_version": "improved-workflow-v1",
+            "sanitizer_version": "v1",
+        },
+        "statistics": {
+            "total": len(examples),
+            "train": len(train_examples),
+            "validation": len(val_examples),
+            "by_category": dict(by_category),
+            "by_difficulty": dict(by_difficulty),
+            "by_concept": dict(sorted(by_concept.items(), key=lambda x: -x[1])),
+        },
+    }
+
+    manifest_path = output_path.parent / "train_manifest.json"
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=2)
+
+    print(f"  Manifest:        {manifest_path}")
+
     return {
         "spec": spec["npc_key"],
         "total": len(examples),
@@ -718,6 +1058,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
         "categories": dict(examples_per_category),
         "train_path": str(train_path),
         "val_path": str(val_path) if val_path else None,
+        "manifest_path": str(manifest_path),
     }
 
 
@@ -821,7 +1162,8 @@ def main():
             val_split=args.val_split,
             generator=generator,
             multi_turn_ratio=args.multi_turn_ratio,
-            temperature=args.temperature
+            temperature=args.temperature,
+            technique=args.technique,
         )
 
     log_state("dataset_generated", npc_key=result.get("npc_key", spec.get("npc_key", "unknown")),
@@ -834,6 +1176,8 @@ def main():
     print(f"  Train path:      {result['train_path']}")
     if result["val_path"]:
         print(f"  Val path:        {result['val_path']}")
+    if result.get("manifest_path"):
+        print(f"  Manifest:        {result['manifest_path']}")
     print()
     print("Dataset generation complete!")
 

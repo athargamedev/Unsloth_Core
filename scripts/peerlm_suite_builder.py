@@ -152,8 +152,8 @@ def main():
     # Step 3: Create suite
     print("\nCreating evaluation suite...")
     suite_id = client.create_suite(
-        name="Onyx Self-Improving NPC Fine-Tune Evaluation",
-        description="Blind comparison of NPC LoRA adapters trained via Onyx-powered dataset generation",
+        name="NPC Fine-Tune Evaluation Suite",
+        description="Blind comparison of NPC LoRA adapters trained via template/Ollama dataset generation",
         generator_models=["anthropic/claude-haiku-4.5", "anthropic/claude-opus-4.1"],
         evaluator_models=["google/gemini-2.5-flash"],
         system_prompt_ids=[system_prompt_id],
