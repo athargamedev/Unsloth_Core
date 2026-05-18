@@ -57,7 +57,8 @@ def latest_deepeval_result() -> dict:
         latest = PROJECT_ROOT / ".deepeval" / ".latest_run_full.json"
     if not latest.exists():
         raise SystemExit("Error: DeepEval did not write .deepeval/.latest_test_run.json")
-    return load_json(latest)
+    result = load_json(latest)
+    return result.get("testRunData", result) if isinstance(result, dict) else result
 
 
 def metric_payload(metric: dict) -> dict:

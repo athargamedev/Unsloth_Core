@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
 from scripts.dataset_eval import summarize_deepeval_result
 
 
@@ -70,3 +76,22 @@ def test_dataset_eval_summary_extracts_metric_failures():
     assert len(failures) == 1
     assert failures[0]["metric"]["reason"] == "too generic"
     assert failures[0]["metadata"]["concept"] == "cause and effect"
+
+
+def test_dataset_eval_summary_accepts_latest_test_run_payload():
+    summary, failures = summarize_deepeval_result(
+        {
+            "testRunData": {
+                "identifier": "unit-run",
+                "testCases": [{"name": "case", "success": True, "metadata": {"category": "identity"}, "metricsData": []}],
+            }
+        }.get("testRunData"),
+        npc_key="history_guide",
+        technique="template",
+        judge_model="qwen2.5:7b",
+        command=["deepeval", "test", "run"],
+    )
+
+    assert summary["total"] == 1
+    assert summary["passed"] == 1
+    assert failures == []
