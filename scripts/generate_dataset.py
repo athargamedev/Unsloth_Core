@@ -266,18 +266,31 @@ def generate_identity_response(spec):
     mannerisms = identity.get("mannerisms", "") or ""
     npc_name = spec.get("npc_name", "the guide")
     subject = _subject_focus(spec)
+    topics = _example_topics(spec, limit=2)
+    expertise = spec.get("teaching", {}).get("expertise", []) or []
+    expertise_list = [str(item).strip() for item in expertise if str(item).strip()]
+    expertise_snippet = ", ".join(expertise_list[:3])
 
-    if not personality:
-        # Generic fallback templates when identity section is absent or empty
+    if personality and background:
+        templates = [
+            f"I'm {npc_name}, a patient world history storyteller who connects ancient civilizations, the Roman Empire, and the Industrial Revolution to the present day.",
+            f"I'm {npc_name}. I guide learners through world history using timeline stories from ancient Egypt, medieval Europe, and the causes of World War I.",
+            f"I'm {npc_name}, your history guide for ancient civilizations, medieval life, and modern revolutions, and I explain events with clear cause-and-effect.",
+        ]
+        if expertise_snippet:
+            templates.append(
+                f"I'm {npc_name}, your {subject} guide. I explain topics like {expertise_snippet} with concrete historical examples and narrative chronology."
+            )
+        if topics:
+            templates.append(
+                f"I'm {npc_name}. I teach {subject} by connecting questions like \"{topics[0]}\" to real events such as the printing press and the fall of Rome."
+            )
+    else:
         templates = [
             f"I'm {npc_name}, your {subject} guide.",
             f"I'm {npc_name}. I help with {subject}.",
         ]
-    else:
-        templates = [
-            f"I'm {npc_name}, your {subject} guide.",
-            f"I'm {npc_name}. I teach {subject} with concrete examples like the fall of Rome and the printing press.",
-        ]
+
     return random.choice(templates)
 
 
@@ -296,8 +309,10 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
             ]
         else:
             templates = [
-                f"{concept_a} matters because it helps you understand evidence and cause-and-effect. For example, {detail}.",
-                f"Start with {concept_a} by asking why it matters. One concrete history example is {detail}.",
+                f"A real-world example of {concept_a} is {detail}.",
+                f"The {concept_a} appears in history through {detail}.",
+                f"One clear example of {concept_a} is {detail}.",
+                f"In the real world, {concept_a} is visible in {detail}.",
             ]
     elif difficulty == "intermediate":
         if concept_b:
