@@ -64,6 +64,7 @@ he directories
 .pytest_cache/
 .cache/
 *.cache
+.deepeval/.latest_*.json
 
 # Frontend
 frontend_control/**/node_modules/

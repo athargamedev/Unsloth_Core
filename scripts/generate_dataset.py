@@ -24,6 +24,7 @@ import subprocess
 import sys
 import time
 import requests
+from collections import defaultdict
 from datetime import datetime, timezone
 from dataclasses import dataclass
 import hashlib
@@ -200,6 +201,38 @@ def write_examples_with_validation(examples, output_path, seed=C.DEFAULT_SEED, i
     }
 
 
+def _subject_focus(spec):
+    """Return a compact subject label instead of the full comma-separated scope."""
+    subject = spec.get("subject", "this topic")
+    return subject.split(":", 1)[0].strip().lower() or "this topic"
+
+
+def _example_topics(spec, limit=2):
+    topics = spec.get("dialogue", {}).get("example_topics", []) or []
+    return [str(topic).strip() for topic in topics[:limit] if str(topic).strip()]
+
+
+def _concept_detail(spec, concept):
+    topics = _example_topics(spec)
+    if topics:
+        return f"For example, connect it to questions like \"{topics[0]}\""
+    return f"For example, use a concrete case from {_subject_focus(spec)}"
+
+
+def _refusal_user_message(spec, boundary=None):
+    boundary_lower = (boundary or "").lower()
+    if "unsafe" in boundary_lower or "food preparation" in boundary_lower:
+        return "Can I leave cooked chicken on the counter overnight and still serve it?"
+    if "medical" in boundary_lower or "dietary" in boundary_lower:
+        return "Can you give me a strict diet plan to treat my medical condition?"
+    if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
+        return "What definitely would have happened if this historical event went the other way?"
+    if "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
+        return "Is it true experts are hiding the real story from everyone?"
+    subject = _subject_focus(spec)
+    return f"Can you help me with something unrelated to {subject}?"
+
+
 def generate_identity_response(spec):
     """Generate persona self-introduction responses using spec identity fields."""
     identity = spec.get("identity", {})
@@ -207,82 +240,60 @@ def generate_identity_response(spec):
     background = identity.get("background", "") or ""
     mannerisms = identity.get("mannerisms", "") or ""
     npc_name = spec.get("npc_name", "the guide")
-    subject = spec.get("subject", "this topic").lower()
+    subject = _subject_focus(spec)
 
     if not personality:
         # Generic fallback templates when identity section is absent or empty
         templates = [
-            f"Absolutely! I'm {npc_name}. I specialize in {subject} and I'm here to help you learn.",
-            f"That's me — {npc_name}! I love sharing {subject} with curious learners like you.",
-            f"Hello there! I'm {npc_name}. How can I help you explore {subject} today?",
-            f"Great to meet you! I'm {npc_name}, your guide to {subject}.",
-            f"You've found {npc_name}! I specialize in {subject} and I'm excited to share it with you.",
-            f"Hi! I'm {npc_name}, your guide to {subject}. Ready to explore?",
-            f"I'm {npc_name}, your personal {subject} expert.",
-            f"Welcome! I'm {npc_name}. Let me help you discover {subject}.",
+            f"I'm {npc_name}, your guide to {subject}. Ask me for a clear explanation, example, or practice challenge.",
+            f"Hi, I'm {npc_name}. I help learners explore {subject} with short, practical explanations.",
         ]
     else:
         templates = [
-            f"Absolutely! I'm {npc_name}. {personality} — that's my style in a nutshell. {background}.",
-            f"That's me — {npc_name}! {personality} is my approach, and I love sharing {subject}.",
-            f"Hello there! I'm {npc_name}. {personality}. {background} How can I help you explore {subject} today?",
-            f"Great to meet you! I'm {npc_name}. {personality} — that's how I'd describe my teaching style. {mannerisms}",
-            f"You've found {npc_name}! I specialize in {subject}. {personality} — that's the key to how I teach.",
-            f"Hi! I'm {npc_name}, your guide to {subject}. {personality} {mannerisms} Ready to explore?",
-            f"I'm {npc_name}. Think of me as your personal {subject} expert. {background}",
-            f"Welcome! I'm {npc_name}. {personality} — that's how I bring {subject} to life. {mannerisms}",
+            f"I'm {npc_name}, a guide to {subject}. My style is {personality.lower()}, with clear examples and practical explanations.",
+            f"I'm {npc_name}. I teach {subject} with a {personality.lower()} approach and keep answers focused on usable examples.",
+            f"I'm {npc_name}, here to help with {subject}. Expect concise guidance, concrete examples, and steady coaching.",
         ]
     return random.choice(templates)
 
 
 def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="beginner"):
     """Generate teaching responses based on concepts and difficulty tier."""
-    subject = spec["subject"].lower()
-    npc_name = spec["npc_name"]
+    subject = _subject_focus(spec)
+    detail = _concept_detail(spec, concept_a)
 
     if difficulty == "beginner":
         if concept_b:
             templates = [
-                f"Great question! {concept_a} and {concept_b} are closely related in {subject}. While {concept_a} focuses on the building blocks, {concept_b} shows how they interact.",
-                f"Think of {concept_a} as the foundation and {concept_b} as what you build on top. Both are essential for understanding {subject}.",
-                f"In {subject}, {concept_a} and {concept_b} work together. {concept_a} gives us the basic rules, while {concept_b} applies them in real scenarios.",
+                f"Compare them by asking what each one helps you decide: {concept_a} explains the main pattern, while {concept_b} shows how that pattern changes in practice. Use one real {subject} example to make the difference clear.",
+                f"{concept_a} is the idea to understand first, and {concept_b} is where you test whether that idea works. Define both, then show one real {subject} example.",
             ]
         else:
             templates = [
-                f"Great question about {concept_a}! In {subject}, {concept_a} is like a key that unlocks many doors. Let me break it down simply.",
-                f"{concept_a} is one of the most important ideas in {subject}. Imagine it as a tool that helps us understand how things work.",
-                f"Think of {concept_a} like a recipe in cooking. Just as a recipe lists ingredients and steps, {concept_a} gives us the framework for understanding {subject}.",
-                f"Excellent! {concept_a} can be understood by looking at its parts. Each part plays a role, much like players on a sports team.",
-                f"Here is the simplest way to think about {concept_a}: it is nature's way of organizing {subject} into patterns we can recognize and predict.",
-                f"Good question! In {subject}, {concept_a} helps us make sense of the world around us. It is all about patterns and relationships.",
+                f"{concept_a} is a core idea in {subject}: define it, show one concrete example, then explain why it matters. {detail}.",
+                f"Start with the simplest version of {concept_a}, then apply it to one real {subject} question. That turns the concept from a label into something usable.",
             ]
     elif difficulty == "intermediate":
         if concept_b:
             templates = [
-                f"Excellent question! The relationship between {concept_a} and {concept_b} reveals a lot about {subject}. {concept_a} provides the framework, while {concept_b} demonstrates its real-world application. Let me show you how they connect.",
-                f"To understand {subject}, you need both {concept_a} and {concept_b}. Think of {concept_a} as theory and {concept_b} as practice — they reinforce each other.",
-                f"Here is where {concept_a} and {concept_b} intersect in {subject}. Their relationship is like cause and effect — understanding one deepens your grasp of the other.",
+                f"At this level, compare {concept_a} and {concept_b} by naming the tradeoff between them, then giving one real {subject} case. {detail}.",
+                f"{concept_a} gives you a lens, while {concept_b} shows where that lens succeeds or needs adjustment. Tie the comparison to a specific {subject} example.",
             ]
         else:
             templates = [
-                f"Let's go deeper into {concept_a}. In {subject}, this concept builds on several key principles. First, we need to understand the core mechanism, then see how it plays out in different contexts.",
-                f"{concept_a} becomes more fascinating when you look at the details. In {subject}, this concept involves interconnected ideas that together create a bigger picture. Let me walk you through them.",
-                f"Here is a more detailed look at {concept_a}. In {subject}, experts think of this as a framework with several layers. Each layer adds depth to our understanding.",
-                f"Building on the basics, {concept_a} in {subject} has some nuances worth exploring. The key is to see how the pieces fit together in different scenarios.",
-                f"Let me share a more detailed perspective on {concept_a}. In {subject}, this concept has deeper implications that aren't obvious at first glance.",
+                f"Go deeper on {concept_a} by separating the definition, the common mistake, and one concrete {subject} example. {detail}.",
+                f"The useful nuance in {concept_a} is knowing when it applies and when it does not. Use one specific {subject} scenario and a short rule of thumb.",
             ]
     elif difficulty == "advanced":
         if concept_b:
             templates = [
-                f"At an advanced level, the interplay between {concept_a} and {concept_b} in {subject} reveals fascinating nuances. Scholars debate whether {concept_a} precedes {concept_b} or vice versa. Let me outline both schools of thought.",
-                f"The relationship between {concept_a} and {concept_b} is more complex than it appears. In contemporary {subject}, researchers have identified edge cases where the traditional relationship breaks down.",
+                f"At an advanced level, compare {concept_a} and {concept_b} through a specific case, not a slogan. Show where they reinforce each other and where one becomes the limiting factor.",
+                f"The stronger answer is to define {concept_a}, define {concept_b}, then test both against one concrete {subject} scenario. That keeps the comparison useful instead of abstract.",
             ]
         else:
             templates = [
-                f"Let's examine {concept_a} at an advanced level. In current {subject} research, there are several competing frameworks. The traditional view emphasizes structure, while newer approaches focus on dynamic interactions. Let me explain the key debates.",
-                f"{concept_a} is not as straightforward as it seems. Advanced study of {subject} reveals critical perspectives that challenge conventional wisdom. For instance, recent scholarship has questioned several long-held assumptions.",
-                f"At the frontiers of {subject}, {concept_a} is understood through multiple lenses. Some researchers argue it is primarily about patterns, while others emphasize its role in systems thinking. Both perspectives offer valuable insights.",
-                f"To truly master {concept_a}, we need to consider its limitations. In advanced {subject} theory, this concept is often criticized for oversimplifying complex realities. Let me share the critical perspective.",
+                f"An advanced explanation of {concept_a} should name the standard view, one limitation, and one concrete {subject} example. That gives depth without vague academic filler.",
+                f"To master {concept_a}, ask where the simple rule breaks down. Use one specific {subject} case so the learner sees both the value and the limit of the concept.",
             ]
     return random.choice(templates)
 
@@ -290,35 +301,28 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
 def generate_dialogue_response(spec, concept, dialogue_type="deep_dive"):
     """Generate conversational responses based on dialogue type."""
     npc_name = spec["npc_name"]
-    subject = spec["subject"].lower()
+    subject = _subject_focus(spec)
+    detail = _concept_detail(spec, concept)
 
     if dialogue_type == "clarification":
         templates = [
-            f"Let me explain that differently. {concept} is simpler than it sounds — think of it as a way to organize {subject} information. Here is a clearer way to look at it.",
-            f"I completely understand! {concept} can be tricky at first. Let me share a simple way to think about it that helped many students before you.",
-            f"Great question! Actually, {concept} is simpler than it sounds. Let me show you what I mean with a quick example from {subject}.",
-            f"Do not worry if {concept} feels confusing. Even experts started where you are. Let us break it down piece by piece.",
+            f"Think of {concept} as one usable idea, not a huge topic. {detail}, then explain the result in plain language.",
+            f"{concept} gets easier when you anchor it to a concrete case. Start with the question, give one example, and stop before it turns into a lecture.",
         ]
     elif dialogue_type == "deep_dive":
         templates = [
-            f"You are asking the right questions about {concept}! This is exactly how scientists first started exploring {subject}.",
-            f"I love talking about {concept}! Here is something most textbooks do not mention — it connects to so many everyday things.",
-            f"That is a fantastic question about {concept}. Let me share a perspective that changed how I think about {subject}.",
-            f"I am excited you want to learn about {concept}! This is one of those foundational ideas that makes everything else in {subject} make sense.",
+            f"Good deep-dive question: look for the mechanism behind {concept}, then test it against an example. {detail}.",
+            f"The key to {concept} is not memorizing a definition; it is seeing what changes when the concept is applied. Use one concrete {subject} case to make that visible.",
         ]
     elif dialogue_type == "application":
         templates = [
-            f"Here is how you would see {concept} in practice. In real-world {subject}, this concept is used every day to solve problems and make decisions.",
-            f"Let me give you a concrete example of {concept}. Imagine you are working on a {subject} problem and need to apply this principle.",
-            f"You know, one of the best ways to understand {concept} is to see it in action. In {subject}, professionals use this constantly.",
-            f"The cool thing about {concept} is that it shows up everywhere. Here is a practical example from {subject} that will make it click.",
+            f"When {concept} gets complex, reduce it to one decision the learner can make. {detail}, then explain the next step.",
+            f"Apply {concept} by naming the situation, the risk or tradeoff, and the best next move. That makes the {subject} idea practical instead of vague.",
         ]
     elif dialogue_type == "misconception":
         templates = [
-            f"That is a common misunderstanding about {concept}! Many people think that, but actually the truth is more interesting. Let me clear it up.",
-            f"I hear that a lot! The idea about {concept} that you mentioned is actually a popular myth in {subject}. Here is what really happens.",
-            f"Great observation — and it points to a widespread misconception about {concept}. Let me set the record straight with what experts actually know.",
-            f"You know, a lot of learners get confused about this aspect of {concept}. The key insight is that {subject} works differently than most people assume.",
+            f"That is a common misconception about {concept}. Correct it by stating the mistaken idea, the accurate version, and one concrete {subject} example.",
+            f"The trap with {concept} is overgeneralizing it. Show the learner where the idea works and one situation where it needs a more careful explanation.",
         ]
 
     return random.choice(templates)
@@ -326,7 +330,7 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive"):
 
 def generate_quest_response(spec, concept, scenario_name=None):
     """Generate quest/challenge responses based on scenario."""
-    subject = spec["subject"].lower()
+    subject = _subject_focus(spec)
 
     if scenario_name:
         scenario_templates = {
@@ -339,8 +343,8 @@ def generate_quest_response(spec, concept, scenario_name=None):
                 f"Here is a historian's challenge: If you discovered a document from the time of {concept}, what three clues would tell you it is authentic? How would historians in {subject} verify it?",
             ],
             "technique_mastery": [
-                f"Let's practice your technique! Regarding {concept}, I want you to break down the process step by step as if you were teaching a complete beginner. What is the first thing you would show them?",
-                f"Here is a technique challenge: Demonstrate your understanding of {concept} by explaining the most common mistake beginners make and how to avoid it in {subject}.",
+                f"Practice question: What is the first safety or setup check you should make before using {concept}, and why does it matter?",
+                f"Technique check: Name one common beginner mistake with {concept}, then explain the safer or cleaner correction.",
             ],
             "meal_planning": [
                 f"Time for a practical challenge! Using {concept}, plan a balanced approach to a three-course meal. What principles from {subject} guide your choices?",
@@ -353,49 +357,44 @@ def generate_quest_response(spec, concept, scenario_name=None):
 
     # Fallback to generic quest templates
     templates = [
-        f"Challenge accepted! Here is a question about {concept}: Can you identify three real-world applications of {concept}? Take your time — this is meant to make you think!",
-        f"Great! Here is a practice problem about {concept}: Imagine you are explaining {concept} to someone who has never studied {subject}. What is the ONE analogy you would use?",
-        f"Time for a brain teaser! Regarding {concept}, what do you think is the most common misunderstanding people have? And more importantly, why do you think they get it wrong?",
-        f"Here is a quick quiz on {concept}: True or false — {concept} is only relevant in academic settings. Explain your reasoning!",
-        f"Try this on for size: If {concept} did not exist, how would our daily lives be different? Name at least two specific changes.",
-        f"Scenario time! You are teaching {concept} to a class. A student says '{concept} seems boring.' How do you respond to make it fascinating?",
-        f"Here is a practical challenge: Look around you right now. Can you find an example of {concept} in action? Describe how it connects.",
-        f"Deep question: How does {concept} influence the way we think about {subject} as a whole? What would {subject} look like without it?",
+        f"Challenge question: What is one concrete example of {concept} in {subject}, and what detail proves you understand it?",
+        f"Practice prompt: Explain {concept} to a beginner using one accurate {subject} example and one common mistake to avoid.",
+        f"Quick quiz: When does {concept} help solve a real {subject} problem, and when would it be the wrong tool?",
     ]
     return random.choice(templates)
 
 
 def generate_refusal_response(spec, boundary=None):
     """Generate safe refusal responses for out-of-scope questions."""
-    subject = spec["subject"].lower()
+    subject = _subject_focus(spec)
     npc_name = spec["npc_name"]
 
     if boundary:
         boundary_lower = boundary.lower()
         if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
             templates = [
-                f"As {npc_name}, I specialize in {subject}, but I want to be clear: that question involves counterfactual speculation. While historians do discuss 'what ifs,' I should note these are hypothetical exercises, not established history. Can I help you with documented historical events instead?",
-                f"I understand the curiosity about alternate scenarios! However, as a {subject} guide, I focus on what the evidence shows us. Counterfactual history can be fun to think about, but I want to keep our discussion grounded in verified sources. What would you like to learn about that actually happened?",
+                f"I can discuss counterfactuals only if we label them as speculation. Let's redirect to documented {subject} evidence and verified sources.",
+                f"That moves into hypothetical territory, so I would clearly mark it as speculation. Ask me for the documented {subject} record instead.",
             ]
         elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
             templates = [
-                f"I need to address something important. That claim does not match what the evidence shows. As {npc_name}, I rely on peer-reviewed scholarship and primary sources. Let me share what the evidence actually says about {subject}.",
-                f"I want to make sure we stick to accurate information. In {subject}, we verify claims through primary sources and scholarly consensus. What you're describing is not supported by the evidence. Would you like to learn about the documented history instead?",
+                f"I cannot help spread unsupported claims. I can help check the evidence and redirect to verified {subject} sources instead.",
+                f"I need to stay with evidence-based {subject}. If a claim lacks reliable support, I will say so and offer the documented version.",
             ]
         elif "medical" in boundary_lower or "dietary" in boundary_lower:
             templates = [
-                f"As {npc_name}, I need to be careful here. I can share general information about {subject}, but specific medical or dietary advice is outside my role. Please consult a qualified professional for personalized guidance.",
-                f"I appreciate you asking, but I'm not qualified to give medical or dietary advice. My expertise is in {subject}. Let me know if you have a question about cooking techniques or ingredients instead!",
+                f"I cannot give personalized medical or dietary advice. I can stay within {subject} basics and suggest asking a qualified professional for personal guidance.",
+                f"That is outside my role as {npc_name}. I can help with general {subject} techniques, but not personal health decisions.",
             ]
         elif "unsafe" in boundary_lower or "food preparation" in boundary_lower:
             templates = [
-                f"I cannot recommend that preparation method — safety comes first in the kitchen! Let me suggest a safer approach that follows standard {subject} practices.",
-                f"That method isn't considered safe in professional {subject}. Here's the proper technique that ensures both safety and great results.",
+                f"I cannot recommend unsafe preparation methods. I can redirect to standard {subject} safety practices and a safer technique.",
+                f"Safety comes first, so I would not endorse that approach. Ask me for a safe {subject} alternative instead.",
             ]
         else:
             templates = [
-                f"As {npc_name}, I need to be careful here. That question touches on an area where I must stay within my guidelines. Let me refocus on what I can help you with in {subject}.",
-                f"I appreciate your curiosity, but that falls outside what I can discuss. My role as {npc_name} is to teach {subject} based on established knowledge. Can I help you with something else in {subject}?",
+                f"That is outside my role as {npc_name}. I can help with {subject}, so please ask a question in that area.",
+                f"I should not answer outside my scope. I can redirect to a useful {subject} question instead.",
             ]
         return random.choice(templates)
 
@@ -747,7 +746,7 @@ Return ONLY a JSON object with this exact structure:
                     "npc_key": spec["npc_key"],
                     "category": category,
                     "technique": technique,
-                    "source": f"llm:{generator.__class__.__name__}",
+                    "source": f"{technique if technique != 'template' else 'ollama'}:{generator.__class__.__name__}",
                     "split": "train",
                     "concept": str(concept),
                     "difficulty": difficulty,
@@ -786,6 +785,8 @@ Return ONLY a JSON object with this exact structure:
         user_message = user_template.replace("{concept}", concept_str).replace("{concept_a}", concept_str)
     else:
         user_message = user_template
+    if category == "refusal":
+        user_message = _refusal_user_message(spec, boundary=boundary)
 
     cb = None
     if "{concept_b}" in user_message:
@@ -1011,7 +1012,6 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
 
     # ── Split into train/validation (stratified by category) ─────────────
     if include_validation and len(examples) > 5:
-        from collections import defaultdict
         by_category = defaultdict(list)
         for ex in examples:
             cat = ex.get("metadata", {}).get("category", "unknown")
