@@ -43,7 +43,9 @@ except ImportError:
     aiohttp = None
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(SCRIPT_DIR))
 
 from _config import paths, constants as C
 from _config.log_setup import log_info, log_warn, log_error, log_state
@@ -67,6 +69,66 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
+GENERIC_FILLER_REPLACEMENTS = [
+    r"once you understand this, everything falls into place naturally\. ?",
+    r"once you understand this, everything falls into place\. ?",
+    r"the rest falls into place\. ?",
+    r"let me tell you something about it\. ?",
+]
+
+
+def build_category_generation_prompt(category: str, concept_str: str, npc_name: str) -> str:
+    """Return category-specific instructions for Ollama dataset generation."""
+    prompts = {
+        "identity": (
+            f"Create a natural user question asking who {npc_name} is and a response that names the NPC, "
+            "states their role, and gives one concrete subject area they can teach."
+        ),
+        "teaching": (
+            f"Create a student question about '{concept_str}' and a 1-3 sentence explanation with at least "
+            "one concrete, subject-specific fact. Avoid vague filler."
+        ),
+        "dialogue": (
+            f"Create a confused follow-up about '{concept_str}' and a helpful answer that directly resolves "
+            "the confusion using one concrete example."
+        ),
+        "quest": (
+            f"Create an interactive mini-task about '{concept_str}' with a concise scenario or practice question."
+        ),
+        "refusal": (
+            f"Create an out-of-scope or unsafe question related to '{concept_str}' and a polite refusal. "
+            "The assistant response must include explicit boundary-setting and a safe redirect to evidence-based, "
+            "in-scope help."
+        ),
+    }
+    return prompts.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
+
+
+def clean_generic_filler(text: str, concept: str = "this topic") -> str:
+    """Replace generic tutoring filler with a concept-specific sentence."""
+    cleaned = text or ""
+    for pattern in GENERIC_FILLER_REPLACEMENTS:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
+    if cleaned.strip() == (text or "").strip() and any(
+        phrase in cleaned.lower() for phrase in ["everything falls into place", "once you understand"]
+    ):
+        cleaned = re.sub(r"[^.!?]*(everything falls into place|once you understand)[^.!?]*[.!?]?", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    if len(cleaned.split()) < 8:
+        cleaned = f"For {concept}, focus on one concrete cause, effect, or example before connecting it to the bigger picture."
+    return cleaned
+
+
+def should_generate_multi_turn(category: str, index: int, ratio: float) -> bool:
+    """Deterministically choose whether a row should be multi-turn."""
+    if ratio <= 0:
+        return False
+    if ratio >= 1:
+        return True
+    bucket = int(hashlib.sha256(f"{category}:{index}".encode()).hexdigest()[:8], 16) % 10_000
+    return bucket < int(ratio * 10_000)
 
 
 class OllamaHealthCheck:
@@ -321,7 +383,8 @@ class OllamaDatasetGenerator:
     async def generate_example_llm(self, category: str, concept_str: str, 
                                    difficulty: str = None, dialogue_type: str = None,
                                    scenario_name: str = None, boundary: str = None,
-                                   session=None, executor=None, temperature: float = 0.7) -> dict | None:
+                                   session=None, executor=None, temperature: float = 0.7,
+                                   multi_turn: bool = False) -> dict | None:
         """Generate single example using LLM."""
         npc_name = self.spec["npc_name"]
         system_prompt = self.spec["system_prompt"]
@@ -332,26 +395,29 @@ class OllamaDatasetGenerator:
             if contexts:
                 grounding = "\nContext:\n" + "\n".join(contexts[:2])
         
-        category_prompts = {
-            "identity": f"Create a natural user question asking who {npc_name} is, and a natural response.",
-            "teaching": f"Create a student question about '{concept_str}' and a clear explanation.",
-            "dialogue": f"Create a conversation turn about '{concept_str}' (user curious, NPC helpful).",
-            "quest": f"Create a challenge request about '{concept_str}' and a scenario/quiz.",
-            "refusal": "Create an out-of-scope question and a polite refusal in character.",
-        }
+        category_prompt = build_category_generation_prompt(category, concept_str, npc_name)
+        turn_instruction = ""
+        json_shape = '  "user": "user message (1-2 sentences)",\n  "assistant": "NPC response (1-3 sentences, in character, no AI disclaimers)"'
+        if multi_turn:
+            turn_instruction = "\nMake this a two-turn exchange: first answer, then a brief follow-up question and answer."
+            json_shape = (
+                '  "user": "first user message",\n'
+                '  "assistant": "first NPC response (1-3 sentences)",\n'
+                '  "user2": "follow-up user message",\n'
+                '  "assistant2": "second NPC response (1-3 sentences)"'
+            )
         
         generation_prompt = f"""Generate a training dialogue in JSON format for NPC '{npc_name}'.
 
 System Prompt: {system_prompt}
 
-Task: {category_prompts.get(category, "Generate dialogue")}
+Task: {category_prompt}{turn_instruction}
 Category: {category}
 Concept: {concept_str}{grounding}
 
 Return JSON:
 {{
-  "user": "user message (1-2 sentences)",
-  "assistant": "NPC response (1-3 sentences, in character, no 'I am an AI' disclaimers)"
+{json_shape}
 }}
 """
         
@@ -378,7 +444,9 @@ Return JSON:
             
             res_json = json.loads(json_str.strip())
             user_msg = res_json.get("user", "").strip()
-            asst_msg = res_json.get("assistant", "").strip()
+            asst_msg = clean_generic_filler(res_json.get("assistant", "").strip(), concept_str)
+            user2_msg = res_json.get("user2", "").strip()
+            asst2_msg = clean_generic_filler(res_json.get("assistant2", "").strip(), concept_str) if res_json.get("assistant2") else ""
             
             if not user_msg or not asst_msg:
                 return None
@@ -394,6 +462,15 @@ Return JSON:
                 {"role": "user", "content": user_msg},
                 {"role": "assistant", "content": asst_msg}
             ]
+            if multi_turn and user2_msg and asst2_msg:
+                is_valid2, reason2 = self.guardrail.validate(asst2_msg, [grounding], npc_name)
+                if not is_valid2:
+                    logger.warning(f"Guardrail rejection: {reason2}")
+                    return None
+                messages.extend([
+                    {"role": "user", "content": user2_msg},
+                    {"role": "assistant", "content": asst2_msg},
+                ])
             
             content_hash = compute_content_hash(messages)
             metadata = {
@@ -409,7 +486,8 @@ Return JSON:
                 "generator_params": {
                     "temperature": temperature,
                     "model": self.generator.model,
-                    "multi_turn": False,
+                    "multi_turn": bool(multi_turn and user2_msg and asst2_msg),
+                    "turn_count": 2 if multi_turn and user2_msg and asst2_msg else 1,
                 },
             }
             
@@ -431,6 +509,7 @@ Return JSON:
     
     async def generate_dataset_async(self, examples_per_category: dict, 
                                     temperature: float = 0.7, max_workers: int = 4,
+                                    multi_turn_ratio: float = 0.25,
                                     session=None, executor=None) -> list[dict]:
         """Generate dataset asynchronously."""
         all_examples = []
@@ -439,13 +518,15 @@ Return JSON:
         
         semaphore = asyncio.Semaphore(max_workers)
         
-        async def gen_task(category: str, difficulty: str = None):
+        async def gen_task(category: str, index: int, difficulty: str = None):
             async with semaphore:
                 try:
                     concept = random.choice(self.concepts)
+                    multi_turn = should_generate_multi_turn(category, index, multi_turn_ratio)
                     example = await self.generate_example_llm(
                         category, str(concept), difficulty=difficulty,
-                        session=session, executor=executor, temperature=temperature
+                        session=session, executor=executor, temperature=temperature,
+                        multi_turn=multi_turn,
                     )
                     if example:
                         all_examples.append(example)
@@ -461,16 +542,17 @@ Return JSON:
                 for i in range(count):
                     diffs = ["beginner"] * int(count * 0.4) + ["intermediate"] * int(count * 0.35) + ["advanced"] * int(count * 0.25)
                     diff = diffs[i % len(diffs)] if diffs else None
-                    tasks.append(gen_task(category, diff))
+                    tasks.append(gen_task(category, i, diff))
             else:
                 for i in range(count):
-                    tasks.append(gen_task(category))
+                    tasks.append(gen_task(category, i))
         
         await asyncio.gather(*tasks)
         return all_examples
     
     def generate_dataset_sync(self, examples_per_category: dict, 
-                             temperature: float = 0.7) -> list[dict]:
+                             temperature: float = 0.7,
+                             multi_turn_ratio: float = 0.25) -> list[dict]:
         """Synchronous wrapper for async generation."""
         try:
             loop = asyncio.get_event_loop()
@@ -484,6 +566,7 @@ Return JSON:
                     examples_per_category,
                     temperature=temperature,
                     max_workers=self.batch_size,
+                    multi_turn_ratio=multi_turn_ratio,
                     executor=executor
                 )
             )
@@ -516,6 +599,8 @@ Examples:
                        help="Max retries per generation (default: 3)")
     parser.add_argument("--temperature", type=float, default=0.7,
                        help="Generation temperature (default: 0.7)")
+    parser.add_argument("--multi-turn-ratio", type=float, default=0.25,
+                       help="Fraction of rows to request as two-turn dialogues (default: 0.25)")
     parser.add_argument("--seed", type=int, default=42,
                        help="Random seed (default: 42)")
     parser.add_argument("--no-validation", action="store_true",
@@ -605,7 +690,11 @@ Examples:
     total_to_gen = sum(examples_per_category.values())
     logger.info(f"Generating {total_to_gen} examples with model '{args.model}'...")
     logger.info(f"This may take several minutes depending on hardware and model size\n")
-    examples = dataset_gen.generate_dataset_sync(examples_per_category, temperature=args.temperature)
+    examples = dataset_gen.generate_dataset_sync(
+        examples_per_category,
+        temperature=args.temperature,
+        multi_turn_ratio=args.multi_turn_ratio,
+    )
     
     logger.info(f"\n{'='*70}")
     logger.info(f"Generation complete: {len(examples)} examples")
@@ -662,6 +751,7 @@ Examples:
             "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "seed": args.seed,
             "temperature": args.temperature,
+            "multi_turn_ratio": args.multi_turn_ratio,
             "version": "ollama-v2",
         },
         "statistics": {

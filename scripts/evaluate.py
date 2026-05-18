@@ -54,6 +54,99 @@ def check_contains_name(text, name=None):
     return count > 0, count
 
 
+def identity_prompt_requires_name(question: str) -> bool:
+    """Return True when the user is explicitly asking for NPC identity/name.
+
+    Normal teaching/dialogue turns should not be forced to repeat the persona
+    name. The name check is only meaningful for self-introduction prompts.
+    """
+    q = (question or "").strip().lower()
+    identity_patterns = [
+        r"\bwho are you\b",
+        r"\bwhat is your name\b",
+        r"\bwhat's your name\b",
+        r"\btell me about yourself\b",
+        r"\bintroduce yourself\b",
+        r"\bwho do you teach\b",
+        r"\bwhat can you tell me about\b",
+    ]
+    return any(re.search(pattern, q) for pattern in identity_patterns)
+
+
+GENERIC_FILLER_PATTERNS = [
+    "once you understand",
+    "everything falls into place",
+    "let me tell you something about it",
+    "what i think is really important",
+    "the key to understanding",
+    "not that hard once you understand",
+    "that's the key piece",
+    "that's what really matters",
+]
+
+
+def _flatten_spec_terms(spec=None):
+    """Extract rough domain terms from an NPC spec for heuristic scoring."""
+    if not spec:
+        return set()
+    chunks = []
+    for key in ("subject", "system_prompt"):
+        value = spec.get(key)
+        if isinstance(value, str):
+            chunks.append(value)
+    for concept in spec.get("concepts", []) if isinstance(spec.get("concepts"), list) else []:
+        if isinstance(concept, dict):
+            chunks.append(str(concept.get("name", "")))
+            chunks.extend(str(alias) for alias in concept.get("aliases", []) if alias)
+        elif concept:
+            chunks.append(str(concept))
+    text = "\n".join(chunks).lower()
+    terms = set()
+    for token in re.findall(r"[a-z][a-z0-9'-]{3,}", text):
+        terms.add(token)
+    for phrase in re.findall(r"[a-z][a-z0-9'-]+(?:\s+[a-z][a-z0-9'-]+){1,3}", text):
+        if len(phrase) >= 8:
+            terms.add(phrase)
+    return terms
+
+
+def response_specificity_score(text: str, spec=None, expected: str | None = None) -> int:
+    """Estimate whether a response contains concrete, domain-specific content.
+
+    This is intentionally lightweight: it is only used as a fallback when the
+    LLM judge is absent or returns a tie. It rewards overlap with domain terms
+    and expected-answer terms, and penalizes generic tutoring filler.
+    """
+    normalized = (text or "").lower()
+    if not normalized.strip():
+        return -100
+
+    score = 0
+    terms = _flatten_spec_terms(spec)
+    if terms:
+        matches = sum(1 for term in terms if term in normalized)
+        score += min(matches, 6) * 2
+
+    if expected:
+        expected_terms = {
+            t for t in re.findall(r"[a-z][a-z0-9'-]{4,}", expected.lower())
+            if t not in {"about", "there", "their", "would", "could", "should"}
+        }
+        overlap = sum(1 for term in expected_terms if term in normalized)
+        score += min(overlap, 6)
+
+    if re.search(r"\b\d+(?:\.\d+)?\b", normalized):
+        score += 1
+    if any(marker in normalized for marker in ["because", "for example", "means", "causes", "allows", "helps"]):
+        score += 1
+    for filler in GENERIC_FILLER_PATTERNS:
+        if filler in normalized:
+            score -= 4
+    if len(normalized.split()) < 10:
+        score -= 2
+    return score
+
+
 def check_no_ai_disclaimer(text):
     """Check if the model claims to be an AI."""
     patterns = [
@@ -388,11 +481,12 @@ def evaluate_model(server, questions, spec=None):
         metrics["sentences"] = sent_count
         metrics["sentences_ok"] = sent_ok
 
-        if spec:
+        if spec and identity_prompt_requires_name(question):
             name_ok, name_count = check_contains_name(response, spec.get("npc_name"))
             metrics["name_mentions"] = name_count
             metrics["name_ok"] = name_ok
         else:
+            metrics["name_mentions"] = 0
             metrics["name_ok"] = True
 
         ai_ok, ai_pattern = check_no_ai_disclaimer(response)
@@ -431,6 +525,7 @@ def compare_models(baseline_results, candidate_results, spec=None, judge=None):
             "winner": "tie",
             "reasoning": "Heuristic match"
         }
+        expected = b.get("expected") or c.get("expected")
 
         # ── LLM Judge (if available) ────────────────────────────────────────
         judge_res = None
@@ -450,40 +545,33 @@ def compare_models(baseline_results, candidate_results, spec=None, judge=None):
         
         # ── Heuristic fallback/override if no judge or tie ──────────────────
         if comparison["winner"] == "tie":
-            # Determine winner based on constraints, style, and brevity.
+            # Determine winner based on hard constraints and subject specificity.
+            # Name mention is prompt-aware; normal teaching answers are not
+            # penalized for omitting the NPC name.
             b_score = 0
             c_score = 0
             
-            # Hard constraints: must obey NPC rule set and avoid AI artifacts.
-            if b["metrics"].get("sentences_ok", True): b_score += 2
-            if c["metrics"].get("sentences_ok", True): c_score += 2
+            if b["metrics"].get("sentences_ok", True): b_score += 1
+            if c["metrics"].get("sentences_ok", True): c_score += 1
             if b["metrics"].get("name_ok", True): b_score += 1
             if c["metrics"].get("name_ok", True): c_score += 1
-            if b["metrics"].get("no_ai_disclaimer", True): b_score += 2
-            if c["metrics"].get("no_ai_disclaimer", True): c_score += 2
-            if not b["metrics"].get("has_think_tags", False): b_score += 1
-            if not c["metrics"].get("has_think_tags", False): c_score += 1
+            if b["metrics"].get("no_ai_disclaimer", True): b_score += 1
+            if c["metrics"].get("no_ai_disclaimer", True): c_score += 1
 
-            # Prefer concise NPC-style replies when both sides are compliant.
-            b_len = b["metrics"].get("length", 0)
-            c_len = c["metrics"].get("length", 0)
-            if b["metrics"].get("sentences_ok", True) and c["metrics"].get("sentences_ok", True):
-                if b_len + 10 < c_len:
-                    b_score += 1
-                elif c_len + 10 < b_len:
-                    c_score += 1
-
-            # Relative quality preference: lower heuristic quality score is better.
-            if b["metrics"].get("quality") is not None and c["metrics"].get("quality") is not None:
-                if b["metrics"]["quality"] + 1 < c["metrics"]["quality"]:
-                    b_score += 1
-                elif c["metrics"]["quality"] + 1 < b["metrics"]["quality"]:
-                    c_score += 1
+            b_specificity = response_specificity_score(b["response"], spec=spec, expected=expected)
+            c_specificity = response_specificity_score(c["response"], spec=spec, expected=expected)
+            comparison["specificity_scores"] = {"baseline": b_specificity, "candidate": c_specificity}
+            if b_specificity - c_specificity >= 3:
+                b_score += 2
+            elif c_specificity - b_specificity >= 3:
+                c_score += 2
 
             if b_score > c_score:
                 comparison["winner"] = "baseline"
+                comparison["reasoning"] = "Heuristic: constraints plus stronger specificity"
             elif c_score > b_score:
                 comparison["winner"] = "candidate"
+                comparison["reasoning"] = "Heuristic: constraints plus stronger specificity"
 
         if comparison["winner"] == "baseline":
             baseline_wins += 1

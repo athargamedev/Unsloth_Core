@@ -552,6 +552,8 @@ def infer_npc_key_from_path(input_path):
 def infer_technique_from_path(input_path):
     """Infer technique from a path like subjects/datasets/.../{technique}/..."""
     path = Path(input_path)
+    if not path.is_absolute():
+        path = (paths.PROJECT_ROOT / path).resolve()
     try:
         rel = path.relative_to(paths.dataset_root().resolve())
         if len(rel.parts) >= 2 and rel.parts[1] in paths.DATASET_TECHNIQUES:
@@ -562,6 +564,39 @@ def infer_technique_from_path(input_path):
     # false positives (e.g. "template" matched inside "technique/template").
     # Callers should provide the technique explicitly instead.
     return None
+
+
+def count_jsonl_records(path):
+    """Count non-empty JSONL records if a file exists."""
+    p = Path(path)
+    if not p.exists():
+        return 0
+    with p.open("r", encoding="utf-8") as f:
+        return sum(1 for line in f if line.strip())
+
+
+def count_sibling_validation_examples(train_path):
+    """Count canonical sibling validation examples for a train JSONL path."""
+    return count_jsonl_records(paths.infer_validation_path(train_path))
+
+
+REFUSAL_BOUNDARY_MARKERS = [
+    "i can't", "i cannot", "i won’t", "i won't", "cannot confirm",
+    "can't confirm", "not safe", "outside what i cover", "outside my scope",
+    "not supported by evidence", "not supported by the evidence", "misleading",
+    "conspiracy", "astrology is not science",
+]
+
+REFUSAL_REDIRECT_MARKERS = [
+    "i can help with", "instead", "let's focus on", "we can focus on",
+    "what i can do", "a safer way", "evidence-based", "within the evidence",
+]
+
+
+def refusal_response_has_boundary(text):
+    """Return True if a refusal row includes boundary-setting or safe redirect."""
+    normalized = (text or "").lower()
+    return any(marker in normalized for marker in REFUSAL_BOUNDARY_MARKERS + REFUSAL_REDIRECT_MARKERS)
 
 
 def infer_category_from_messages(messages):
@@ -720,6 +755,10 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
             if sentence_count > max_sentences:
                 return None, None, meta_warnings, \
                     f"Assistant response too long ({sentence_count} sentences)"
+
+            if example.get("metadata", {}).get("category") == "refusal" and not refusal_response_has_boundary(content):
+                return None, None, meta_warnings, \
+                    "Refusal response lacks boundary-setting or safe redirect"
 
     # 4. Quality scoring
     quality = score_example(
@@ -1094,6 +1133,7 @@ def main():
     content_hashes = []
     total_train = 0
     total_validation = 0
+    sibling_validation_count = count_sibling_validation_examples(input_path)
 
     with open(output_path, "w") as fout:
         for example in unique_examples:
@@ -1192,7 +1232,7 @@ def main():
             total_input=total_input,
             total_output=kept,
             total_train=total_train,
-            total_validation=total_validation,
+            total_validation=max(total_validation, sibling_validation_count),
             quality_scores=quality_scores,
             discard_reasons=reasons,
             by_category=by_category,

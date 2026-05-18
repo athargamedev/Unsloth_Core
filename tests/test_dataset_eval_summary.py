@@ -4,7 +4,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.dataset_eval import summarize_deepeval_result
+from scripts.dataset_eval import DEFAULT_PRODUCTION_CASES_PER_CATEGORY, summarize_deepeval_result
 
 
 def test_dataset_eval_summary_extracts_metric_failures():
@@ -95,3 +95,7 @@ def test_dataset_eval_summary_accepts_latest_test_run_payload():
     assert summary["total"] == 1
     assert summary["passed"] == 1
     assert failures == []
+
+
+def test_dataset_eval_default_samples_five_cases_per_category():
+    assert DEFAULT_PRODUCTION_CASES_PER_CATEGORY == 5

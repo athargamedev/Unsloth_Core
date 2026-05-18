@@ -16,6 +16,7 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEEPEVAL_TEST = PROJECT_ROOT / "tests" / "evals" / "test_dataset_generation_quality.py"
+DEFAULT_PRODUCTION_CASES_PER_CATEGORY = 5
 
 
 def load_json(path: Path) -> Any:
@@ -218,7 +219,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--judge-model", default="qwen2.5:7b", help="Local Ollama judge model")
     parser.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
     parser.add_argument("--judge-temperature", type=float, default=0.0)
-    parser.add_argument("--cases-per-category", type=int, default=1)
+    parser.add_argument("--cases-per-category", type=int, default=DEFAULT_PRODUCTION_CASES_PER_CATEGORY)
     parser.add_argument("--categories", help="Comma-separated category filter")
     parser.add_argument("--identifier", help="DeepEval run identifier")
     parser.add_argument("--display", default="all", choices=["all", "failing", "passing"])

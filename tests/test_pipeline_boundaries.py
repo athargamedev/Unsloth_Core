@@ -124,6 +124,60 @@ def test_tracking_local_fallback_shape(tmp_path):
     assert record["metadata"]["test_type"] == "unit"
 
 
+def test_sanitizer_infers_relative_technique_and_counts_sibling_validation(monkeypatch, tmp_path):
+    from _config import paths
+    from scripts import sanitize_dataset
+
+    monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
+    train_path = paths.dataset_train_path("demo_npc", "ollama")
+    val_path = paths.dataset_val_path("demo_npc", "ollama")
+    train_path.parent.mkdir(parents=True)
+    write_jsonl(train_path, [{"messages": []}, {"messages": []}])
+    write_jsonl(val_path, [{"messages": []}, {"messages": []}, {"messages": []}])
+
+    relative_train_path = Path("subjects/datasets/demo_npc/ollama/train.jsonl")
+
+    assert sanitize_dataset.infer_technique_from_path(relative_train_path) == "ollama"
+    assert sanitize_dataset.count_sibling_validation_examples(relative_train_path) == 3
+
+
+def test_refusal_structural_check_requires_boundary_or_redirect():
+    from scripts.sanitize_dataset import refusal_response_has_boundary
+
+    assert refusal_response_has_boundary("I can't confirm that claim, but I can help with evidence from astronomy.")
+    assert not refusal_response_has_boundary("The possibility is exciting, so let's explore moons and asteroids that might support life.")
+
+
+def test_ollama_generation_refusal_prompt_demands_boundary_and_redirect():
+    from scripts.generate_dataset_ollama import build_category_generation_prompt
+
+    prompt = build_category_generation_prompt("refusal", "solar system", "AstronomyGuide")
+
+    assert "boundary" in prompt.lower()
+    assert "redirect" in prompt.lower()
+
+
+def test_ollama_cleaner_replaces_generic_filler():
+    from scripts.generate_dataset_ollama import clean_generic_filler
+
+    raw = "Great question. Once you understand this, everything falls into place naturally."
+    cleaned = clean_generic_filler(raw, concept="telescopes")
+
+    assert "everything falls into place" not in cleaned.lower()
+    assert "telescopes" in cleaned.lower()
+
+
+def test_ollama_multi_turn_selection_is_deterministic():
+    from scripts.generate_dataset_ollama import should_generate_multi_turn
+
+    first = [should_generate_multi_turn("teaching", i, 0.25) for i in range(12)]
+    second = [should_generate_multi_turn("teaching", i, 0.25) for i in range(12)]
+
+    assert first == second
+    assert any(first)
+    assert not all(first)
+
+
 def test_export_latest_resolution_keeps_npc_key(monkeypatch, tmp_path):
     from _config import paths
 

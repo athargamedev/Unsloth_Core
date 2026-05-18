@@ -1231,7 +1231,10 @@ Return ONLY a JSON object with this exact structure:
 """
         raw_res = None
         for attempt in range(3):
-            res = await generator.generate_async("You are a training data generator. Output valid JSON.", generation_prompt, temperature=temperature, json_format=True, session=session, executor=executor)
+            if hasattr(generator, "generate_async"):
+                res = await generator.generate_async("You are a training data generator. Output valid JSON.", generation_prompt, temperature=temperature, json_format=True, session=session, executor=executor)
+            else:
+                res = generator.generate("You are a training data generator. Output valid JSON.", generation_prompt, temperature=temperature, json_format=True)
             if res:
                 try:
                     res_json = json.loads(res)
