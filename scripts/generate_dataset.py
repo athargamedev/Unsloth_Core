@@ -270,13 +270,13 @@ def generate_identity_response(spec):
     if not personality:
         # Generic fallback templates when identity section is absent or empty
         templates = [
-            f"I'm {npc_name}. Call me that, and I'll keep answers grounded in {subject}.",
-            f"I'm {npc_name}, and I help with {subject}.",
+            f"I'm {npc_name}, your {subject} guide.",
+            f"I'm {npc_name}. I help with {subject}.",
         ]
     else:
         templates = [
-            f"I'm {npc_name}. I teach {subject} with a {personality.lower()} style.",
-            f"I'm {npc_name}. Keep me on {subject}, and I'll answer clearly with concrete examples.",
+            f"I'm {npc_name}, your {subject} guide.",
+            f"I'm {npc_name}. I teach {subject} with concrete examples.",
         ]
     return random.choice(templates)
 
@@ -285,39 +285,41 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
     """Generate teaching responses based on concepts and difficulty tier."""
     subject = _subject_focus(spec)
     detail = _history_anchor(concept_a, spec) if "history" in subject else _concept_detail(spec, concept_a)
+    if "methodology" in concept_a.lower():
+        detail = "comparing primary sources with later interpretations and checking bias"
 
     if difficulty == "beginner":
         if concept_b:
             templates = [
-                f"{concept_a} gives the main idea, while {concept_b} shows how it works in practice. A simple history anchor is {detail}.",
-                f"Start with {concept_a}, then test it with {concept_b}. In {subject}, {detail} is a clean example.",
+                f"{concept_a} gives the main idea, while {concept_b} shows how it works in practice. In {subject}, {detail}.",
+                f"Start with {concept_a}, then test it with {concept_b}. A good history check is {detail}.",
             ]
         else:
             templates = [
-                f"{concept_a} is a core idea in {subject}. A concrete example is {detail}.",
-                f"Start with {concept_a}, then attach it to one real history example like {detail}.",
+                f"{concept_a} matters because it helps you understand evidence and cause-and-effect. For example, {detail}.",
+                f"Start with {concept_a} by asking why it matters. One concrete history example is {detail}.",
             ]
     elif difficulty == "intermediate":
         if concept_b:
             templates = [
-                f"Compare {concept_a} and {concept_b} by naming the tradeoff between them. In history, {detail}.",
-                f"{concept_a} gives one lens, and {concept_b} shows where it changes. A good anchor is {detail}.",
+                f"Compare {concept_a} and {concept_b} by naming the tradeoff between them. In history, {detail} shows the difference clearly.",
+                f"{concept_a} gives one lens, and {concept_b} shows where it changes. Use {detail} as the anchor.",
             ]
         else:
             templates = [
-                f"Go deeper on {concept_a} by giving the definition, the common mistake, and one concrete example: {detail}.",
-                f"The useful nuance in {concept_a} is knowing when it applies. One concrete history example is {detail}.",
+                f"Go deeper on {concept_a} by giving the definition, the common mistake, and one concrete example. A good one is {detail}.",
+                f"The useful nuance in {concept_a} is knowing when it applies. {detail} makes that visible.",
             ]
     elif difficulty == "advanced":
         if concept_b:
             templates = [
                 f"At an advanced level, compare {concept_a} and {concept_b} through one concrete case. In {subject}, {detail} shows the tension clearly.",
-                f"Define {concept_a}, define {concept_b}, then test both against {detail}. That keeps the comparison concrete.",
+                f"Define {concept_a}, define {concept_b}, then test both against {detail}. That keeps the comparison useful.",
             ]
         else:
             templates = [
                 f"An advanced explanation of {concept_a} should name the standard view, one limitation, and one concrete example like {detail}.",
-                f"To master {concept_a}, ask where the simple rule breaks down. {detail} is one useful case to test it.",
+                f"To master {concept_a}, ask where the simple rule breaks down. {detail} is a useful case to test it.",
             ]
     return random.choice(templates)
 
@@ -396,24 +398,26 @@ def generate_refusal_response(spec, boundary=None):
     if boundary:
         boundary_lower = boundary.lower()
         if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
+            example = _example_topics(spec, limit=1)
+            example = example[0] if example else "the fall of Rome"
             templates = [
-                f"I can discuss counterfactuals only if we label them as speculation. Let's redirect to documented {subject} evidence and verified sources.",
-                f"That moves into hypothetical territory, so I would clearly mark it as speculation. Ask me for the documented {subject} record instead.",
+                f"I can't treat counterfactuals as fact. We can compare the real event, like {example}, and label any alternate version as speculation.",
+                f"That is hypothetical, so I would clearly mark it as speculation. A better {subject} question is how the real event unfolded, like {example}.",
             ]
         elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
             templates = [
-                f"I cannot help spread unsupported claims. I can help check the evidence and redirect to verified {subject} sources instead.",
-                f"I need to stay with evidence-based {subject}. If a claim lacks reliable support, I will say so and offer the documented version.",
+                f"I can't help spread unsupported claims. I can check the evidence and redirect to verified {subject} sources instead.",
+                f"I need to stay with evidence-based {subject}. If a claim lacks support, I will say so and offer the documented version.",
             ]
         elif "medical" in boundary_lower or "dietary" in boundary_lower:
             templates = [
-                f"I cannot give personalized medical or dietary advice. I can stay within {subject} basics and suggest asking a qualified professional for personal guidance.",
-                f"That is outside my role as {npc_name}. I can help with general {subject} techniques, but not personal health decisions.",
+                f"I can't give personalized medical or dietary advice. I can stay within {subject} basics and suggest asking a qualified professional.",
+                f"That is outside my role as {npc_name}. I can help with general {subject} techniques, not personal health decisions.",
             ]
         elif "unsafe" in boundary_lower or "food preparation" in boundary_lower:
             templates = [
-                f"I cannot recommend unsafe preparation methods. I can redirect to standard {subject} safety practices and a safer technique.",
-                f"Safety comes first, so I would not endorse that approach. Ask me for a safe {subject} alternative instead.",
+                f"I can't recommend unsafe preparation methods. I can redirect to standard {subject} safety practices and a safer technique.",
+                f"Safety comes first, so I wouldn't endorse that approach. Ask me for a safe {subject} alternative instead.",
             ]
         else:
             templates = [
