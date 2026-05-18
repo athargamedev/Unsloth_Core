@@ -203,22 +203,35 @@ def write_examples_with_validation(examples, output_path, seed=C.DEFAULT_SEED, i
 def generate_identity_response(spec):
     """Generate persona self-introduction responses using spec identity fields."""
     identity = spec.get("identity", {})
-    personality = identity.get("personality", "helpful")
-    background = identity.get("background", "")
-    mannerisms = identity.get("mannerisms", "")
-    npc_name = spec["npc_name"]
-    subject = spec.get("subject", "").lower()
+    personality = identity.get("personality", "") or ""
+    background = identity.get("background", "") or ""
+    mannerisms = identity.get("mannerisms", "") or ""
+    npc_name = spec.get("npc_name", "the guide")
+    subject = spec.get("subject", "this topic").lower()
 
-    templates = [
-        f"Absolutely! I'm {npc_name}. {personality} — that's my style in a nutshell. {background}.",
-        f"That's me — {npc_name}! {personality} is my approach, and I love sharing {subject}.",
-        f"Hello there! I'm {npc_name}. {personality}. {background} How can I help you explore {subject} today?",
-        f"Great to meet you! I'm {npc_name}. {personality} — that's how I'd describe my teaching style. {mannerisms}",
-        f"You've found {npc_name}! I specialize in {subject}. {personality} — that's the key to how I teach.",
-        f"Hi! I'm {npc_name}, your guide to {subject}. {personality} {mannerisms} Ready to explore?",
-        f"I'm {npc_name}. Think of me as your personal {subject} expert. {background}",
-        f"Welcome! I'm {npc_name}. {personality} — that's how I bring {subject} to life. {mannerisms}",
-    ]
+    if not personality:
+        # Generic fallback templates when identity section is absent or empty
+        templates = [
+            f"Absolutely! I'm {npc_name}. I specialize in {subject} and I'm here to help you learn.",
+            f"That's me — {npc_name}! I love sharing {subject} with curious learners like you.",
+            f"Hello there! I'm {npc_name}. How can I help you explore {subject} today?",
+            f"Great to meet you! I'm {npc_name}, your guide to {subject}.",
+            f"You've found {npc_name}! I specialize in {subject} and I'm excited to share it with you.",
+            f"Hi! I'm {npc_name}, your guide to {subject}. Ready to explore?",
+            f"I'm {npc_name}, your personal {subject} expert.",
+            f"Welcome! I'm {npc_name}. Let me help you discover {subject}.",
+        ]
+    else:
+        templates = [
+            f"Absolutely! I'm {npc_name}. {personality} — that's my style in a nutshell. {background}.",
+            f"That's me — {npc_name}! {personality} is my approach, and I love sharing {subject}.",
+            f"Hello there! I'm {npc_name}. {personality}. {background} How can I help you explore {subject} today?",
+            f"Great to meet you! I'm {npc_name}. {personality} — that's how I'd describe my teaching style. {mannerisms}",
+            f"You've found {npc_name}! I specialize in {subject}. {personality} — that's the key to how I teach.",
+            f"Hi! I'm {npc_name}, your guide to {subject}. {personality} {mannerisms} Ready to explore?",
+            f"I'm {npc_name}. Think of me as your personal {subject} expert. {background}",
+            f"Welcome! I'm {npc_name}. {personality} — that's how I bring {subject} to life. {mannerisms}",
+        ]
     return random.choice(templates)
 
 
@@ -661,7 +674,7 @@ def concept_pool_for_subject(spec: dict) -> list[str]:
 
 def compute_content_hash(messages):
     """Compute SHA256 hash of concatenated message content for dedup tracking."""
-    content_string = "".join(m["content"] for m in messages)
+    content_string = "".join(m.get("content", "") for m in messages)
     return hashlib.sha256(content_string.encode()).hexdigest()
 
 
@@ -669,7 +682,13 @@ def generate_example(spec, category, concepts, generator=None, temperature=0.8,
                      difficulty=None, dialogue_type=None, scenario_name=None,
                      boundary=None, seed=None, technique="template"):
     """Generate one ChatML training example using templates or LLM."""
-    concept = random.choice(concepts)
+    # Identity and refusal concepts come from their own parameters, not random pool
+    if category == "identity":
+        concept = spec.get("npc_key", "identity")
+    elif category == "refusal":
+        concept = boundary or "boundary_enforcement"
+    else:
+        concept = random.choice(concepts)
 
     if generator:
         # ── LLM-powered generation ───────────────────────────────────────────
@@ -724,25 +743,33 @@ Return ONLY a JSON object with this exact structure:
                     {"role": "assistant", "content": assistant_response},
                 ]
 
+                llm_metadata = {
+                    "npc_key": spec["npc_key"],
+                    "category": category,
+                    "technique": technique,
+                    "source": f"llm:{generator.__class__.__name__}",
+                    "split": "train",
+                    "concept": str(concept),
+                    "difficulty": difficulty,
+                    "safety_tags": [],
+                    "content_hash": compute_content_hash(messages),
+                    "generator_params": {
+                        "seed": seed,
+                        "temperature": temperature,
+                        "multi_turn": False,
+                        "reference_doc": spec.get("reference_doc"),
+                    },
+                }
+                if dialogue_type:
+                    llm_metadata["dialogue_type"] = dialogue_type
+                if scenario_name:
+                    llm_metadata["scenario_name"] = scenario_name
+                if boundary:
+                    llm_metadata["boundary"] = boundary
+
                 return {
                     "messages": messages,
-                    "metadata": {
-                        "npc_key": spec["npc_key"],
-                        "category": category,
-                        "technique": technique,
-                        "source": f"llm:{generator.__class__.__name__}",
-                        "split": "train",
-                        "concept": str(concept),
-                        "difficulty": difficulty,
-                        "safety_tags": [],
-                        "content_hash": compute_content_hash(messages),
-                        "generator_params": {
-                            "seed": seed,
-                            "temperature": temperature,
-                            "multi_turn": False,
-                            "reference_doc": spec.get("reference_doc"),
-                        },
-                    },
+                    "metadata": llm_metadata,
                 }
             except Exception as e:
                 print(f"  [warn] Failed to parse LLM response: {e}")
@@ -798,25 +825,34 @@ Return ONLY a JSON object with this exact structure:
     if boundary:
         safety_tags.append("specified_boundary")
 
+    # Build metadata with optional type-specific fields
+    metadata = {
+        "npc_key": spec["npc_key"],
+        "category": category,
+        "technique": technique,
+        "source": "template:generate_dataset.py",
+        "split": "train",
+        "concept": concept_str,
+        "difficulty": difficulty,
+        "safety_tags": safety_tags,
+        "content_hash": compute_content_hash(messages),
+        "generator_params": {
+            "seed": seed,
+            "temperature": 0.8,
+            "multi_turn": False,
+            "reference_doc": spec.get("reference_doc"),
+        },
+    }
+    if dialogue_type:
+        metadata["dialogue_type"] = dialogue_type
+    if scenario_name:
+        metadata["scenario_name"] = scenario_name
+    if boundary:
+        metadata["boundary"] = boundary
+
     return {
         "messages": messages,
-        "metadata": {
-            "npc_key": spec["npc_key"],
-            "category": category,
-            "technique": technique,
-            "source": "template:generate_dataset.py",
-            "split": "train",
-            "concept": concept_str,
-            "difficulty": difficulty,
-            "safety_tags": safety_tags,
-            "content_hash": compute_content_hash(messages),
-            "generator_params": {
-                "seed": seed,
-                "temperature": 0.8,
-                "multi_turn": False,
-                "reference_doc": spec.get("reference_doc"),
-            },
-        },
+        "metadata": metadata,
     }
 
 
@@ -886,7 +922,7 @@ Return ONLY a JSON object with this structure:
     return None
 
 
-def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.8, technique="template"):
+def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.8, technique="template", spec_path=None):
     """Generate a complete dataset from a subject spec."""
     random.seed(seed)
     concepts = ConceptExtractor(spec).extract()
@@ -931,14 +967,24 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
             dialogue_types = (["clarification"] * n_clar + ["deep_dive"] * n_dive
                             + ["application"] * n_app + ["misconception"] * n_misc)
             random.shuffle(dialogue_types)
+            # Dialogues also get difficulty distribution
+            n_beg = int(count * 0.40)
+            n_int = int(count * 0.35)
+            n_adv = count - n_beg - n_int
+            difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+            random.shuffle(difficulties)
         elif category == "quest" and quest_scenarios:
             # Distribute evenly across scenarios
             scenario_names = [quest_scenarios[i % len(quest_scenarios)] for i in range(count)]
             random.shuffle(scenario_names)
+            difficulties = ["intermediate"] * count
         elif category == "refusal" and refusal_boundaries:
             # Distribute evenly across boundaries
             boundaries = [refusal_boundaries[i % len(refusal_boundaries)] for i in range(count)]
             random.shuffle(boundaries)
+            difficulties = ["beginner"] * count
+        elif category == "identity":
+            difficulties = ["beginner"] * count
 
         print(f"  Generating {count} examples for '{category}'...")
         for i in range(count):
@@ -1024,6 +1070,16 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
         if conc:
             by_concept[conc] += 1
 
+    # Compute spec file hash for provenance tracking
+    spec_hash = None
+    if spec_path:
+        spec_path_resolved = Path(spec_path)
+        if spec_path_resolved.exists():
+            spec_bytes = spec_path_resolved.read_bytes()
+            spec_hash = "sha256:" + hashlib.sha256(spec_bytes).hexdigest()
+        else:
+            print(f"  [warn] Could not hash spec file {spec_path}: file not found")
+
     # Write train_manifest.json
     manifest = {
         "npc_key": spec["npc_key"],
@@ -1033,6 +1089,11 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
             "seed": seed,
             "generator_version": "improved-workflow-v1",
             "sanitizer_version": "v1",
+        },
+        "spec": {
+            "file": str(spec_path) if spec_path else None,
+            "hash": spec_hash,
+            "ref_doc": spec.get("reference_doc"),
         },
         "statistics": {
             "total": len(examples),
@@ -1164,6 +1225,7 @@ def main():
             multi_turn_ratio=args.multi_turn_ratio,
             temperature=args.temperature,
             technique=args.technique,
+            spec_path=args.spec,
         )
 
     log_state("dataset_generated", npc_key=result.get("npc_key", spec.get("npc_key", "unknown")),

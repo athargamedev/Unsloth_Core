@@ -19,6 +19,8 @@ bitsandbytes>=0.43.0
 
 # Metrics visualization
 tensorboard>=2.16.0
+deepeval>=4.0.2
+ollama>=0.6.2
 
 # HF Hub dataset upload (for Colab notebook generation)
 huggingface_hub>=0.20.0
