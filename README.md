@@ -54,19 +54,41 @@ The project documentation is structured for both human developers and AI agents:
 
 ```bash
 ./ucore generate subjects/workflow_assistant.json --technique docs
-./ucore generate subjects/subject.json --technique onyx
-./ucore sanitize subjects/datasets/subject/onyx/train.jsonl
+./ucore generate subjects/subject.json --technique template
+./ucore sanitize subjects/datasets/subject/template/train.jsonl --strict-canonical
+./ucore dataset-eval subjects/subject.json --technique template --judge-model qwen2.5:7b
 ./ucore train subjects/subject.json --preset fast-3b
 ./ucore smoke exports/subject/model.gguf
 ./ucore evaluate --baseline old.gguf --candidate new.gguf
 ./ucore feedback eval/results/feedback/subject.json --dry-run
 ```
 
-### Self-Improving Dataset Factory (Phases 1-3)
+### Local Dataset Quality Loop
 
-The Onyx-powered feedback loop closes the gap between evaluation and dataset generation:
+DeepEval is the local build-loop gate before training:
 
-1. **Generate** datasets with Onyx-grounded retrieval (`--technique onyx`, `--concept-focus`)
+1. **Generate** a canonical dataset under `subjects/datasets/{npc}/{technique}/`.
+2. **Sanitize** to `train_clean.jsonl`.
+3. **Dataset-eval** with local Ollama `qwen2.5:7b`.
+4. **Fix generation** from `quality_failures.json`, then rerun before training.
+
+```bash
+./ucore generate subjects/history_guide.json --technique template
+./ucore sanitize subjects/datasets/history_guide/template/train.jsonl \
+  --output subjects/datasets/history_guide/template/train_clean.jsonl \
+  --strict-canonical
+./ucore dataset-eval subjects/history_guide.json --technique template --soft-fail
+```
+
+Outputs:
+- `subjects/datasets/{npc}/{technique}/quality_summary.json`
+- `subjects/datasets/{npc}/{technique}/quality_failures.json`
+
+### Self-Improving Model Feedback Loop
+
+The model feedback loop closes the gap between trained model evaluation and dataset generation:
+
+1. **Generate** datasets with canonical local techniques (`template`, `docs`, `ollama`, `openai`, `anthropic`)
 2. **Evaluate** with structured output (`--feedback-json`)
 3. **Feedback** auto-detects weak concepts, classifies as training density vs knowledge gaps, and triggers targeted regeneration
 

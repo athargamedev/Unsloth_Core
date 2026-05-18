@@ -66,6 +66,22 @@ def main():
     san_p.add_argument("--output", "-o", help="Path to output JSONL")
     san_p.add_argument("--strict-canonical", action="store_true", help="Require canonical dataset path")
 
+    # Dataset quality eval (DeepEval, local-first)
+    de_p = subparsers.add_parser("dataset-eval", help="Run DeepEval quality checks on a generated dataset")
+    de_p.add_argument("spec", help="Path to subject spec JSON")
+    de_p.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"],
+                      help="Dataset technique to evaluate")
+    de_p.add_argument("--judge-model", default="qwen2.5:7b", help="Local Ollama judge model")
+    de_p.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
+    de_p.add_argument("--judge-temperature", type=float, default=0.0, help="Judge temperature")
+    de_p.add_argument("--cases-per-category", type=int, default=1, help="Rows sampled per category")
+    de_p.add_argument("--categories", help="Comma-separated category filter")
+    de_p.add_argument("--identifier", help="DeepEval run identifier")
+    de_p.add_argument("--display", default="all", choices=["all", "failing", "passing"], help="DeepEval display mode")
+    de_p.add_argument("--ignore-errors", action="store_true", help="Continue when individual metric calls error")
+    de_p.add_argument("--soft-fail", action="store_true", help="Write artifacts but return 0 even when metrics fail")
+    de_p.add_argument("--output", help="Quality summary JSON path")
+
     # Train
     train_p = subparsers.add_parser("train", help="Train a model")
     train_p.add_argument("config_or_spec", help="Path to config YAML or subject spec")
@@ -347,6 +363,21 @@ def main():
         cmd = [PYTHON, str(SCRIPTS_DIR / "sanitize_dataset.py"), args.input]
         if args.output: cmd.extend(["--output", args.output])
         if args.strict_canonical: cmd.append("--strict-canonical")
+        run_cmd(cmd)
+
+    elif args.command == "dataset-eval":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset_eval.py"), args.spec]
+        cmd.extend(["--technique", args.technique])
+        cmd.extend(["--judge-model", args.judge_model])
+        cmd.extend(["--ollama-base-url", args.ollama_base_url])
+        cmd.extend(["--judge-temperature", str(args.judge_temperature)])
+        cmd.extend(["--cases-per-category", str(args.cases_per_category)])
+        if args.categories: cmd.extend(["--categories", args.categories])
+        if args.identifier: cmd.extend(["--identifier", args.identifier])
+        if args.display: cmd.extend(["--display", args.display])
+        if args.ignore_errors: cmd.append("--ignore-errors")
+        if args.soft_fail: cmd.append("--soft-fail")
+        if args.output: cmd.extend(["--output", args.output])
         run_cmd(cmd)
 
     elif args.command == "train":

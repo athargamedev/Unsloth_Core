@@ -5,6 +5,7 @@ These JSON schemas are the machine-readable source of truth for dataset record f
 - sft_record.schema.json
   - For subjects/datasets/{npc_key}/{technique}/train.jsonl and validation.jsonl
   - Requires ChatML messages with at least one user and one assistant message
+  - Active techniques: template, docs, ollama, openai, anthropic
 
 - rl_preferences_record.schema.json
   - For subjects/datasets/{npc_key}/{technique}/rl/preferences.jsonl

@@ -57,7 +57,37 @@ Validates dataset integrity:
 
 **Output:** `{input_path}_clean.jsonl` (in same directory as input)
 
-### Stage 3: Training
+### Stage 3: Dataset Quality Eval
+
+**Entry point:** `./ucore dataset-eval <spec>`
+**Script:** `scripts/dataset_eval.py`
+
+Runs the committed DeepEval suite against the sanitized dataset before training.
+This is the local build-loop gate for dataset generation quality, not a final
+model validation step.
+
+```bash
+./ucore dataset-eval subjects/history_guide.json \
+  --technique template \
+  --judge-model qwen2.5:7b \
+  --cases-per-category 1
+```
+
+**Local defaults:**
+- Judge: `qwen2.5:7b` via Ollama, temperature 0.
+- Confident AI: disabled by default.
+- Dataset input: `subjects/datasets/{npc_key}/{technique}/train_clean.jsonl`.
+- Test suite: `tests/evals/test_dataset_generation_quality.py`.
+
+**Outputs:**
+- `subjects/datasets/{npc_key}/{technique}/quality_summary.json`
+- `subjects/datasets/{npc_key}/{technique}/quality_failures.json`
+
+Use `quality_failures.json` as the source of truth for what to regenerate or
+rewrite next. Do not lower metric thresholds or delete failing rows to make a
+run pass.
+
+### Stage 4: Training
 
 **Entry point:** `./ucore train <spec>`
 **Script:** `scripts/train.py`
@@ -90,7 +120,7 @@ Base config → Preset override → CLI override
 - `--export-gguf` exports adapter GGUF automatically after training (no separate export step needed)
 - Output: `exports/{npc_key}/{npc_key}-lora-f16.gguf`
 
-### Stage 4: Export
+### Stage 5: Export
 
 **Entry point:** `./ucore export <npc_key>`
 **Scripts:** `scripts/export.py`
@@ -106,7 +136,7 @@ Base config → Preset override → CLI override
 - Output: `exports/{npc_key}/{npc_key}-{model}-{quant}.gguf`
 - Note: May timeout on HF safetensor download
 
-### Stage 5: Evaluation
+### Stage 6: Model Evaluation
 
 **Entry point:** `./ucore evaluate <args>`
 **Scripts:** `scripts/evaluate.py`
@@ -141,7 +171,7 @@ Compares two models (baseline vs candidate) or measures standalone:
 - Markdown per-question breakdown
 - Structured feedback JSON with per-concept win rates, quality scores, constraint violations
 
-### Stage 6: Feedback Loop
+### Stage 7: Feedback Loop
 
 **Entry point:** `./ucore feedback <feedback.json>`
 **Scripts:** `scripts/feedback_loop.py`, `scripts/evaluate.py --feedback-json`
@@ -152,7 +182,7 @@ Closes the loop between evaluation and dataset generation:
 2. Query Onyx for each weak concept → determine gap type:
    - **training_density**: Onyx has relevant docs → regenerate more examples
    - **knowledge_gap**: Onyx returns nothing → add reference doc, re-index
-3. Regenerate targeted dataset → sanitize → retrain → re-evaluate
+3. Regenerate targeted dataset → sanitize → dataset-eval → retrain → re-evaluate
 4. CI mode: `--auto-retrain` chains the whole cycle in one command
 
 ---

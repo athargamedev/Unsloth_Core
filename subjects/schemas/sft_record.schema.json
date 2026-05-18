@@ -26,11 +26,17 @@
       "type": "object",
       "properties": {
         "npc_key": { "type": "string", "pattern": "^[a-z0-9_]+$" },
-        "technique": { "type": "string", "enum": ["notebooklm", "ollama", "template"] },
+        "technique": { "type": "string", "enum": ["docs", "ollama", "template", "openai", "anthropic"] },
         "split": { "type": "string", "enum": ["train", "validation", "test"] },
         "category": { "type": "string" },
+        "concept": { "type": "string" },
         "difficulty": { "type": "string" },
         "source": { "type": "string" },
+        "content_hash": { "type": "string" },
+        "generator_params": {
+          "type": "object",
+          "additionalProperties": true
+        },
         "safety_tags": { "type": "array", "items": { "type": "string" } }
       },
       "additionalProperties": true

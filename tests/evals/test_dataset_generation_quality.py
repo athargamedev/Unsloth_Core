@@ -24,6 +24,7 @@ from metrics import DATASET_QUALITY_METRICS
 
 DEFAULT_NPCS = ("history_guide", "chef_assistant")
 DEFAULT_CATEGORIES = ("identity", "teaching", "dialogue", "quest", "refusal")
+DEFAULT_TECHNIQUE = "template"
 
 
 def _csv_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
@@ -55,8 +56,8 @@ def _message(messages: list[dict], role: str) -> str:
     return ""
 
 
-def _iter_rows(npc_key: str) -> list[dict]:
-    path = PROJECT_ROOT / "subjects" / "datasets" / npc_key / "template" / "train_clean.jsonl"
+def _iter_rows(npc_key: str, technique: str) -> list[dict]:
+    path = PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique / "train_clean.jsonl"
     rows = []
     with path.open() as f:
         for line_number, line in enumerate(f, start=1):
@@ -70,6 +71,7 @@ def _iter_rows(npc_key: str) -> list[dict]:
 def _build_cases() -> list[LLMTestCase]:
     npc_keys = _csv_env("DEEPEVAL_DATASET_NPC_KEYS", DEFAULT_NPCS)
     categories = _csv_env("DEEPEVAL_DATASET_CATEGORIES", DEFAULT_CATEGORIES)
+    technique = os.getenv("DEEPEVAL_DATASET_TECHNIQUE", DEFAULT_TECHNIQUE)
     per_category = int(os.getenv("DEEPEVAL_DATASET_CASES_PER_CATEGORY", "1"))
     cases = []
 
@@ -78,7 +80,7 @@ def _build_cases() -> list[LLMTestCase]:
         reference_doc = _load_reference_doc(spec)
         selected_by_category = {category: 0 for category in categories}
 
-        for row in _iter_rows(npc_key):
+        for row in _iter_rows(npc_key, technique):
             metadata = row.get("metadata", {})
             category = metadata.get("category")
             if category not in selected_by_category:
