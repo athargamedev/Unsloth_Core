@@ -259,10 +259,11 @@ NPC CONTEXT:
 System Prompt/Rules: {system_prompt}
 
 EVALUATION CRITERIA:
-1. Persona Consistency: Does the response sound like {npc_name}?
-2. Goal Adherence: Did they answer the player's question correctly?
-3. Rule Adherence: Did they follow length limits (e.g. max 3 sentences) and avoid AI disclaimers?
-4. Engagement: Is the response encouraging and helpful?
+1. Persona Consistency: Which response best matches the NPC's system prompt, voice, tone, and character? This is the most important factor.
+2. Rule Adherence: Which response follows the NPC rules most closely, including the max sentence rule (typically 1-3 sentences), no AI disclaimers, no think tags, and a clear assistant voice?
+3. Goal Adherence: Which response answers the player's question correctly and directly?
+4. Style Preference: When both answers are factually acceptable, prefer the one that is concise, on-topic, and feels like a short NPC reply rather than a verbose generic answer.
+5. Engagement: Is the response encouraging and helpful without being overly wordy?
 
 EXCHANGE:
 Player Question: "{question}"
@@ -449,17 +450,35 @@ def compare_models(baseline_results, candidate_results, spec=None, judge=None):
         
         # ── Heuristic fallback/override if no judge or tie ──────────────────
         if comparison["winner"] == "tie":
-            # Determine winner based on constraints and quality
+            # Determine winner based on constraints, style, and brevity.
             b_score = 0
             c_score = 0
             
-            # (Existing heuristic logic...)
-            if b["metrics"].get("sentences_ok", True): b_score += 1
-            if c["metrics"].get("sentences_ok", True): c_score += 1
+            # Hard constraints: must obey NPC rule set and avoid AI artifacts.
+            if b["metrics"].get("sentences_ok", True): b_score += 2
+            if c["metrics"].get("sentences_ok", True): c_score += 2
             if b["metrics"].get("name_ok", True): b_score += 1
             if c["metrics"].get("name_ok", True): c_score += 1
-            if b["metrics"].get("no_ai_disclaimer", True): b_score += 1
-            if c["metrics"].get("no_ai_disclaimer", True): c_score += 1
+            if b["metrics"].get("no_ai_disclaimer", True): b_score += 2
+            if c["metrics"].get("no_ai_disclaimer", True): c_score += 2
+            if not b["metrics"].get("has_think_tags", False): b_score += 1
+            if not c["metrics"].get("has_think_tags", False): c_score += 1
+
+            # Prefer concise NPC-style replies when both sides are compliant.
+            b_len = b["metrics"].get("length", 0)
+            c_len = c["metrics"].get("length", 0)
+            if b["metrics"].get("sentences_ok", True) and c["metrics"].get("sentences_ok", True):
+                if b_len + 10 < c_len:
+                    b_score += 1
+                elif c_len + 10 < b_len:
+                    c_score += 1
+
+            # Relative quality preference: lower heuristic quality score is better.
+            if b["metrics"].get("quality") is not None and c["metrics"].get("quality") is not None:
+                if b["metrics"]["quality"] + 1 < c["metrics"]["quality"]:
+                    b_score += 1
+                elif c["metrics"]["quality"] + 1 < b["metrics"]["quality"]:
+                    c_score += 1
 
             if b_score > c_score:
                 comparison["winner"] = "baseline"
