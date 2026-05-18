@@ -292,6 +292,41 @@ export interface SupabaseStatus {
   error?: string;
 }
 
+// --- Manifest types ---
+
+export interface ManifestInfo {
+  name: string;
+  path: string;
+  manifest_name: string;
+  description: string;
+  version: string;
+  source_count: number;
+  total_questions: number;
+  lastModified: string;
+}
+
+export interface ManifestSource {
+  path: string;
+  kind?: string;
+  section_hints?: string[];
+  questions?: Array<{
+    prompt: string;
+    category?: string;
+    max_sentences?: number;
+    include_commands?: boolean;
+  }>;
+  exists?: boolean;
+  doc_size?: string;
+}
+
+export interface ManifestDetail {
+  manifest_name: string;
+  description: string;
+  version: string;
+  sources: ManifestSource[];
+  manifest_path: string;
+}
+
 // --- API helpers ---
 
 export const fetchJson = async <T,>(url: string): Promise<T> => {

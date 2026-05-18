@@ -1,0 +1,91 @@
+{
+  "manifest_name": "workflow_assistant_docs",
+  "description": "Curated corpus of checked-in documentation and structured guides for the Unsloth_Core repository workflow assistant",
+  "version": "1.0.0",
+  "sources": [
+    {
+      "path": "README.md",
+      "kind": "doc",
+      "section_hints": ["Quick Start", "Pipeline", "Features", "Installation", "Usage", "CLI"],
+      "questions": [
+        {"prompt": "What is the Unsloth_Core project about?", "category": "identity", "max_sentences": 2},
+        {"prompt": "How do I install the project dependencies and activate the environment?", "category": "teaching", "include_commands": true, "max_sentences": 3},
+        {"prompt": "What are the main stages of the NPC pipeline?", "category": "teaching", "max_sentences": 4},
+        {"prompt": "What CLI tool does this project use and how do I see available commands?", "category": "teaching", "include_commands": true, "max_sentences": 2},
+        {"prompt": "What LLM models are supported for training?", "category": "teaching", "max_sentences": 3}
+      ]
+    },
+    {
+      "path": "AGENTS.md",
+      "kind": "doc",
+      "section_hints": ["Quick Start", "Logic Map", "Pipeline", "Conventions", "Active NPCs", "Reference Documents"],
+      "questions": [
+        {"prompt": "Where do NPC subject specs live and what format are they in?", "category": "teaching", "max_sentences": 2},
+        {"prompt": "What are the 7 stages of the NPC training pipeline?", "category": "teaching", "max_sentences": 4},
+        {"prompt": "Which generation techniques are available for creating NPC datasets?", "category": "teaching", "max_sentences": 3},
+        {"prompt": "What is the difference between template, docs, and ollama generation techniques?", "category": "teaching", "max_sentences": 4},
+        {"prompt": "How should GGUF exports be named?", "category": "teaching", "max_sentences": 2},
+        {"prompt": "What are the 5 dataset categories and how many examples per category?", "category": "teaching", "max_sentences": 3},
+        {"prompt": "What training presets are available and when should I use each?", "category": "teaching", "max_sentences": 3},
+        {"prompt": "How do I validate generation inputs before creating a dataset?", "category": "teaching", "include_commands": true, "max_sentences": 2},
+        {"prompt": "What is a knowledge gap and how are training_density and knowledge_gap different?", "category": "teaching", "max_sentences": 3},
+        {"prompt": "Where can I find prebuilt CUDA binaries for llama.cpp?", "category": "teaching", "max_sentences": 2}
+      ]
+    },
+    {
+      "path": "docs/TRAINING_WORKFLOW_CONTEXT.md",
+      "kind": "doc",
+      "section_hints": ["Pipeline Stages", "Configuration", "Presets", "Flags", "Data Flow", "Training", "Export", "Evaluation"],
+      "questions": [
+        {"prompt": "Describe the full training pipeline from spec to GGUF export.", "category": "teaching", "max_sentences": 5},
+        {"prompt": "What configuration hierarchy does Unsloth_Core use?", "category": "teaching", "max_sentences": 2},
+        {"prompt": "What does the --from-spec flag do during training?", "category": "teaching", "max_sentences": 2},
+        {"prompt": "How do I run a full dataset quality gate evaluation with DeepEval?", "category": "teaching", "include_commands": true, "max_sentences": 3},
+        {"prompt": "What happens during the sanitization stage?", "category": "teaching", "max_sentences": 2},
+        {"prompt": "How does the feedback loop identify weak concepts and what gap types can it find?", "category": "teaching", "max_sentences": 4},
+        {"prompt": "What is the difference between adapter-only GGUF export and full-merge export?", "category": "teaching", "max_sentences": 3},
+        {"prompt": "How do I evaluate a model with --lora support using llama-server?", "category": "teaching", "include_commands": true, "max_sentences": 3}
+      ]
+    },
+    {
+      "path": "docs/MAP.md",
+      "kind": "doc",
+      "section_hints": ["Architecture", "Directory Layout", "Components", "Scripts", "Configuration"],
+      "questions": [
+        {"prompt": "What is the directory layout of the project?", "category": "teaching", "max_sentences": 4},
+        {"prompt": "Where are training outputs and exports stored?", "category": "teaching", "max_sentences": 2},
+        {"prompt": "What Python scripts are responsible for each pipeline stage?", "category": "teaching", "max_sentences": 4},
+        {"prompt": "How does the project handle configuration via YAML?", "category": "teaching", "max_sentences": 2}
+      ]
+    },
+    {
+      "path": "subjects/reference_docs/README.md",
+      "kind": "doc",
+      "section_hints": ["Purpose", "Format", "Standards", "Guidelines", "Minimum Requirements"],
+      "questions": [
+        {"prompt": "What is the purpose of reference docs in the NPC pipeline?", "category": "teaching", "max_sentences": 2},
+        {"prompt": "What are the minimum requirements for a valid reference document primer?", "category": "teaching", "max_sentences": 3},
+        {"prompt": "How should reference docs be structured and where do they live?", "category": "teaching", "max_sentences": 2}
+      ]
+    },
+    {
+      "path": "docs/NPC_DATA_RL_EXECUTION_CONTRACT.md",
+      "kind": "doc",
+      "section_hints": ["Data Contract", "Schema", "Reward", "Preference Pairs", "Rollout"],
+      "questions": [
+        {"prompt": "What RL dataset schemas exist but are not yet implemented?", "category": "teaching", "max_sentences": 3},
+        {"prompt": "What is the contract for preference pair data?", "category": "teaching", "max_sentences": 2}
+      ]
+    },
+    {
+      "path": "frontend_control/unity-npc-llm-training-dashboard/README.md",
+      "kind": "doc",
+      "section_hints": ["Dashboard", "Features", "Setup", "Run", "Configuration"],
+      "questions": [
+        {"prompt": "How do I start the frontend dashboard server?", "category": "teaching", "include_commands": true, "max_sentences": 2},
+        {"prompt": "What are the main features of the training dashboard?", "category": "teaching", "max_sentences": 3},
+        {"prompt": "How do I view real-time training logs in the dashboard?", "category": "teaching", "max_sentences": 2}
+      ]
+    }
+  ]
+}

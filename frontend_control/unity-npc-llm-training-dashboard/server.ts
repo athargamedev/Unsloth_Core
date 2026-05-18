@@ -722,6 +722,20 @@ const commandDefinitions: CommandDefinition[] = [
       return args;
     },
   },
+  {
+    id: "docs-manifest-generate",
+    label: "Generate Docs Manifest Dataset",
+    icon: "file-text",
+    color: "accent",
+    type: "Dataset",
+    requiredFields: ["spec"],
+    build: (payload) => {
+      const args = ["./ucore", "generate", parsedSpec(payload), "--technique", "docs"];
+      const manifest = String(optionValue(payload, "manifest") || "").trim();
+      if (manifest) args.push("--docs-manifest", sanitizeToken(manifest, "manifest"));
+      return args;
+    },
+  },
 ];
 
 const commandMap = new Map(commandDefinitions.map((cmd) => [cmd.id, cmd]));
@@ -1430,6 +1444,65 @@ async function startServer() {
 
   app.get("/api/config/presets", (_req, res) => {
     res.json(listPresets());
+  });
+
+  app.get("/api/manifests", (_req, res) => {
+    const corporaRoot = path.join(repoRoot, "docs", "corpora");
+    if (!fs.existsSync(corporaRoot)) return res.json([]);
+    try {
+      const manifests = fs.readdirSync(corporaRoot)
+        .filter((f) => f.endsWith(".json"))
+        .map((file) => {
+          const filePath = path.join(corporaRoot, file);
+          let manifestData: Record<string, unknown> = {};
+          try {
+            manifestData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+          } catch {
+            // skip malformed
+          }
+          const sources = (manifestData.sources as Array<{ path: string; kind?: string; questions?: unknown[] }>) || [];
+          return {
+            name: file,
+            path: `docs/corpora/${file}`,
+            manifest_name: manifestData.manifest_name || file.replace(".json", ""),
+            description: manifestData.description || "",
+            version: manifestData.version || "",
+            source_count: sources.length,
+            total_questions: sources.reduce((sum, s) => sum + (Array.isArray(s.questions) ? s.questions.length : 0), 0),
+            lastModified: fs.statSync(filePath).mtime.toISOString(),
+          };
+        })
+        .sort((a, b) => b.lastModified.localeCompare(a.lastModified));
+      return res.json(manifests);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to list manifests" });
+    }
+  });
+
+  app.get("/api/manifests/:name", (req, res) => {
+    const name = String(req.params.name || "").replace(/\.json$/i, "") + ".json";
+    const safePath = path.join(repoRoot, "docs", "corpora", name);
+    if (!safePath.startsWith(path.join(repoRoot, "docs", "corpora"))) {
+      return res.status(400).json({ error: "Invalid manifest name." });
+    }
+    if (!fs.existsSync(safePath)) {
+      return res.status(404).json({ error: `Manifest not found: ${name}` });
+    }
+    try {
+      const content = JSON.parse(fs.readFileSync(safePath, "utf8"));
+      const sources = (content.sources || []).map((source: { path: string; kind?: string; questions?: unknown[] }) => {
+        const sourcePath = path.join(repoRoot, source.path);
+        const exists = fs.existsSync(sourcePath);
+        return {
+          ...source,
+          exists,
+          doc_size: exists ? `${Math.max(1, Math.round(fs.statSync(sourcePath).size / 1024))}KB` : "N/A",
+        };
+      });
+      return res.json({ ...content, sources, manifest_path: `docs/corpora/${name}` });
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to load manifest" });
+    }
   });
 
   app.get("/api/colab/notebooks", (_req, res) => {
@@ -2472,7 +2545,7 @@ The user can execute these commands directly from your interface.`;
     const baseDefaultsByCommand: Record<string, Record<string, FieldSchema>> = {
       "dataset-generate": {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json", description: "Subject spec path" },
-        "options.technique": { type: "string", required: false, default: "onyx", enum: ["onyx", "ollama", "template", "openai", "anthropic"] },
+        "options.technique": { type: "string", required: false, default: "onyx", enum: ["onyx", "ollama", "template", "openai", "anthropic", "docs"] },
       },
       "dataset-sanitize": {
         "options.datasetPath": { type: "string", required: true, default: "subjects/datasets/chemistry_instructor/onyx/train.jsonl", description: "Train dataset path" },
@@ -2525,6 +2598,11 @@ The user can execute these commands directly from your interface.`;
         npcKey: { type: "string", required: true, default: "new_npc_key", description: "NPC Key (snake_case)" },
         "options.subject": { type: "string", required: false, default: "", description: "NPC Subject" },
         "options.name": { type: "string", required: false, default: "", description: "NPC Display Name" },
+      },
+      "docs-manifest-generate": {
+        spec: { type: "string", required: true, default: "subjects/workflow_assistant.json", description: "Subject spec path" },
+        manifest: { type: "string", required: false, default: "docs/corpora/workflow_assistant_docs.json", description: "Corpus manifest path" },
+        "options.technique": { type: "string", required: false, default: "docs", enum: ["docs"] },
       },
     };
 

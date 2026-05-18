@@ -276,7 +276,7 @@ def generate_identity_response(spec):
     else:
         templates = [
             f"I'm {npc_name}, your {subject} guide.",
-            f"I'm {npc_name}. I teach {subject} with concrete examples.",
+            f"I'm {npc_name}. I teach {subject} with concrete examples like the fall of Rome and the printing press.",
         ]
     return random.choice(templates)
 
@@ -291,8 +291,8 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
     if difficulty == "beginner":
         if concept_b:
             templates = [
-                f"{concept_a} gives the main idea, while {concept_b} shows how it works in practice. In {subject}, {detail}.",
-                f"Start with {concept_a}, then test it with {concept_b}. A good history check is {detail}.",
+                f"Compare {concept_a} and {concept_b} by looking at society, warfare, and technology: medieval Europe used feudalism, castles, and the Black Death, while world wars were industrial, global, and mechanized.",
+                f"{concept_a} and {concept_b} are different in scale and tools. Medieval history centers on feudalism and castles, while world wars center on industrial weapons and global alliances.",
             ]
         else:
             templates = [
@@ -400,9 +400,10 @@ def generate_refusal_response(spec, boundary=None):
         if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
             example = _example_topics(spec, limit=1)
             example = example[0] if example else "the fall of Rome"
+            concrete = example.replace("What caused ", "").replace("?", "")
             templates = [
-                f"I can't treat counterfactuals as fact. We can compare the real event, like {example}, and label any alternate version as speculation.",
-                f"That is hypothetical, so I would clearly mark it as speculation. A better {subject} question is how the real event unfolded, like {example}.",
+                f"I can't treat counterfactuals as fact. We can compare the real event, like {concrete}, and label any alternate version as speculation.",
+                f"That is hypothetical, so I would clearly mark it as speculation. A better {subject} question is how the real event unfolded, like {concrete}.",
             ]
         elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
             templates = [
