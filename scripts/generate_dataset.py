@@ -219,6 +219,31 @@ def _concept_detail(spec, concept):
     return f"For example, use a concrete case from {_subject_focus(spec)}"
 
 
+def _history_anchor(concept: str, spec) -> str:
+    concept_l = concept.lower()
+    anchors = [
+        ("renaissance", "the printing press spreading new ideas in Europe"),
+        ("reformation", "Martin Luther's 95 Theses and the split in Western Christianity"),
+        ("early modern", "the printing press, European exploration, and the Reformation"),
+        ("industrial revolution", "steam engines, factories, and railroads"),
+        ("world war i", "trench warfare and the assassination of Franz Ferdinand"),
+        ("world war ii", "the Holocaust and the atomic bomb"),
+        ("cold war", "the Berlin Wall and the nuclear arms race"),
+        ("ancient egypt", "the pyramids at Giza and hieroglyphics"),
+        ("mesopotamia", "cuneiform writing and the first cities"),
+        ("roman empire", "roads, aqueducts, and Augustus's rule"),
+        ("greek", "Athenian democracy and the Persian Wars"),
+        ("medieval", "feudalism, castles, and the Black Death"),
+    ]
+    for needle, anchor in anchors:
+        if needle in concept_l:
+            return anchor
+    topics = _example_topics(spec, limit=1)
+    if topics:
+        return topics[0]
+    return _subject_focus(spec)
+
+
 def _refusal_user_message(spec, boundary=None):
     boundary_lower = (boundary or "").lower()
     if "unsafe" in boundary_lower or "food preparation" in boundary_lower:
@@ -245,14 +270,13 @@ def generate_identity_response(spec):
     if not personality:
         # Generic fallback templates when identity section is absent or empty
         templates = [
-            f"I'm {npc_name}, your guide to {subject}. Ask me for a clear explanation, example, or practice challenge.",
-            f"Hi, I'm {npc_name}. I help learners explore {subject} with short, practical explanations.",
+            f"I'm {npc_name}. Call me that, and I'll keep answers grounded in {subject}.",
+            f"I'm {npc_name}, and I help with {subject}.",
         ]
     else:
         templates = [
-            f"I'm {npc_name}, a guide to {subject}. My style is {personality.lower()}, with clear examples and practical explanations.",
-            f"I'm {npc_name}. I teach {subject} with a {personality.lower()} approach and keep answers focused on usable examples.",
-            f"I'm {npc_name}, here to help with {subject}. Expect concise guidance, concrete examples, and steady coaching.",
+            f"I'm {npc_name}. I teach {subject} with a {personality.lower()} style.",
+            f"I'm {npc_name}. Keep me on {subject}, and I'll answer clearly with concrete examples.",
         ]
     return random.choice(templates)
 
@@ -260,40 +284,40 @@ def generate_identity_response(spec):
 def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="beginner"):
     """Generate teaching responses based on concepts and difficulty tier."""
     subject = _subject_focus(spec)
-    detail = _concept_detail(spec, concept_a)
+    detail = _history_anchor(concept_a, spec) if "history" in subject else _concept_detail(spec, concept_a)
 
     if difficulty == "beginner":
         if concept_b:
             templates = [
-                f"Compare them by asking what each one helps you decide: {concept_a} explains the main pattern, while {concept_b} shows how that pattern changes in practice. Use one real {subject} example to make the difference clear.",
-                f"{concept_a} is the idea to understand first, and {concept_b} is where you test whether that idea works. Define both, then show one real {subject} example.",
+                f"{concept_a} gives the main idea, while {concept_b} shows how it works in practice. A simple history anchor is {detail}.",
+                f"Start with {concept_a}, then test it with {concept_b}. In {subject}, {detail} is a clean example.",
             ]
         else:
             templates = [
-                f"{concept_a} is a core idea in {subject}: define it, show one concrete example, then explain why it matters. {detail}.",
-                f"Start with the simplest version of {concept_a}, then apply it to one real {subject} question. That turns the concept from a label into something usable.",
+                f"{concept_a} is a core idea in {subject}. A concrete example is {detail}.",
+                f"Start with {concept_a}, then attach it to one real history example like {detail}.",
             ]
     elif difficulty == "intermediate":
         if concept_b:
             templates = [
-                f"At this level, compare {concept_a} and {concept_b} by naming the tradeoff between them, then giving one real {subject} case. {detail}.",
-                f"{concept_a} gives you a lens, while {concept_b} shows where that lens succeeds or needs adjustment. Tie the comparison to a specific {subject} example.",
+                f"Compare {concept_a} and {concept_b} by naming the tradeoff between them. In history, {detail}.",
+                f"{concept_a} gives one lens, and {concept_b} shows where it changes. A good anchor is {detail}.",
             ]
         else:
             templates = [
-                f"Go deeper on {concept_a} by separating the definition, the common mistake, and one concrete {subject} example. {detail}.",
-                f"The useful nuance in {concept_a} is knowing when it applies and when it does not. Use one specific {subject} scenario and a short rule of thumb.",
+                f"Go deeper on {concept_a} by giving the definition, the common mistake, and one concrete example: {detail}.",
+                f"The useful nuance in {concept_a} is knowing when it applies. One concrete history example is {detail}.",
             ]
     elif difficulty == "advanced":
         if concept_b:
             templates = [
-                f"At an advanced level, compare {concept_a} and {concept_b} through a specific case, not a slogan. Show where they reinforce each other and where one becomes the limiting factor.",
-                f"The stronger answer is to define {concept_a}, define {concept_b}, then test both against one concrete {subject} scenario. That keeps the comparison useful instead of abstract.",
+                f"At an advanced level, compare {concept_a} and {concept_b} through one concrete case. In {subject}, {detail} shows the tension clearly.",
+                f"Define {concept_a}, define {concept_b}, then test both against {detail}. That keeps the comparison concrete.",
             ]
         else:
             templates = [
-                f"An advanced explanation of {concept_a} should name the standard view, one limitation, and one concrete {subject} example. That gives depth without vague academic filler.",
-                f"To master {concept_a}, ask where the simple rule breaks down. Use one specific {subject} case so the learner sees both the value and the limit of the concept.",
+                f"An advanced explanation of {concept_a} should name the standard view, one limitation, and one concrete example like {detail}.",
+                f"To master {concept_a}, ask where the simple rule breaks down. {detail} is one useful case to test it.",
             ]
     return random.choice(templates)
 
@@ -302,27 +326,27 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive"):
     """Generate conversational responses based on dialogue type."""
     npc_name = spec["npc_name"]
     subject = _subject_focus(spec)
-    detail = _concept_detail(spec, concept)
+    detail = _history_anchor(concept, spec) if "history" in subject else _concept_detail(spec, concept)
 
     if dialogue_type == "clarification":
         templates = [
-            f"Think of {concept} as one usable idea, not a huge topic. {detail}, then explain the result in plain language.",
-            f"{concept} gets easier when you anchor it to a concrete case. Start with the question, give one example, and stop before it turns into a lecture.",
+            f"Think of {concept} as one usable idea, not a huge topic. A concrete anchor is {detail}.",
+            f"{concept} gets easier when you anchor it to one clear example like {detail}.",
         ]
     elif dialogue_type == "deep_dive":
         templates = [
-            f"Good deep-dive question: look for the mechanism behind {concept}, then test it against an example. {detail}.",
-            f"The key to {concept} is not memorizing a definition; it is seeing what changes when the concept is applied. Use one concrete {subject} case to make that visible.",
+            f"If you apply {concept} incorrectly, you will mix up the period and misread the causes. A good anchor is {detail}.",
+            f"The key to {concept} is seeing the actual historical change. {detail} is the kind of example that keeps it grounded.",
         ]
     elif dialogue_type == "application":
         templates = [
-            f"When {concept} gets complex, reduce it to one decision the learner can make. {detail}, then explain the next step.",
-            f"Apply {concept} by naming the situation, the risk or tradeoff, and the best next move. That makes the {subject} idea practical instead of vague.",
+            f"Apply {concept} by naming one concrete example first. In {subject}, {detail} is a useful check.",
+            f"Use {concept} by asking what changed, what came before, and what came after. {detail} helps answer that.",
         ]
     elif dialogue_type == "misconception":
         templates = [
-            f"That is a common misconception about {concept}. Correct it by stating the mistaken idea, the accurate version, and one concrete {subject} example.",
-            f"The trap with {concept} is overgeneralizing it. Show the learner where the idea works and one situation where it needs a more careful explanation.",
+            f"That is a common misconception about {concept}. The accurate version is {detail}.",
+            f"The trap with {concept} is overgeneralizing it. A concrete example is {detail}.",
         ]
 
     return random.choice(templates)
