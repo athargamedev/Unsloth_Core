@@ -68,6 +68,8 @@ def main():
     gen_ollama_p.add_argument("--batch-size", type=int, default=4, help="Concurrent generation tasks")
     gen_ollama_p.add_argument("--max-retries", type=int, default=3, help="Max retries per generation")
     gen_ollama_p.add_argument("--temperature", type=float, default=0.7, help="Generation temperature")
+    gen_ollama_p.add_argument("--multi-turn-ratio", type=float, default=0.25,
+                              help="Fraction of rows to request as two-turn dialogues")
     gen_ollama_p.add_argument("--seed", type=int, default=42, help="Random seed")
     gen_ollama_p.add_argument("--output", "-o", help="Output JSONL path")
     gen_ollama_p.add_argument("--no-validation", action="store_true", help="Skip validation split")
@@ -90,7 +92,7 @@ def main():
     de_p.add_argument("--judge-model", default="qwen2.5:7b", help="Local Ollama judge model")
     de_p.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
     de_p.add_argument("--judge-temperature", type=float, default=0.0, help="Judge temperature")
-    de_p.add_argument("--cases-per-category", type=int, default=1, help="Rows sampled per category")
+    de_p.add_argument("--cases-per-category", type=int, default=5, help="Rows sampled per category")
     de_p.add_argument("--categories", help="Comma-separated category filter")
     de_p.add_argument("--identifier", help="DeepEval run identifier")
     de_p.add_argument("--display", default="all", choices=["all", "failing", "passing"], help="DeepEval display mode")
@@ -392,6 +394,8 @@ def main():
             cmd.extend(["--max-retries", str(args.max_retries)])
         if args.temperature and args.temperature != 0.7:
             cmd.extend(["--temperature", str(args.temperature)])
+        if args.multi_turn_ratio and args.multi_turn_ratio != 0.25:
+            cmd.extend(["--multi-turn-ratio", str(args.multi_turn_ratio)])
         if args.seed and args.seed != 42:
             cmd.extend(["--seed", str(args.seed)])
         if args.output:
