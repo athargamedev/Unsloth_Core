@@ -327,6 +327,52 @@ export interface ManifestDetail {
   manifest_path: string;
 }
 
+// --- Dataset Quality types ---
+
+export interface QualityMetric {
+  count: number;
+  average_score: number;
+  pass_rate: number;
+}
+
+export interface QualityCategory {
+  total: number;
+  passed: number;
+  pass_rate: number;
+}
+
+export interface QualitySummary {
+  created_at: string;
+  npc_key: string;
+  technique: string;
+  judge_model: string;
+  total: number;
+  passed: number;
+  failed: number;
+  pass_rate: number;
+  metrics: Record<string, QualityMetric>;
+  categories: Record<string, QualityCategory>;
+  failures_path?: string;
+}
+
+export interface QualityFailureMetric {
+  name: string;
+  score: number;
+  threshold: number;
+  success: boolean;
+  reason: string;
+  evaluation_model: string;
+  error?: string;
+}
+
+export interface QualityFailure {
+  test_name: string;
+  input: string;
+  actual_output: string;
+  metadata?: Record<string, unknown>;
+  metric: QualityFailureMetric;
+}
+
 // --- API helpers ---
 
 export const fetchJson = async <T,>(url: string): Promise<T> => {

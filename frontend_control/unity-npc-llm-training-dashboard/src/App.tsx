@@ -37,6 +37,7 @@ import { NpcOverview } from './components/NpcOverview';
 import { Card } from './components/Card';
 import { ColabNotebooksPanel } from './components/ColabNotebooksPanel';
 import { WorkflowAssistantPanel } from './components/WorkflowAssistantPanel';
+import { DatasetPipelinePanel } from './components/DatasetPipelinePanel';
 
 import { DatasetFactory } from './components/DatasetFactory';
 const PipelineFlowPanel = lazy(() => import('./components/PipelineFlowPanel').then(m => ({ default: m.PipelineFlowPanel })));
@@ -52,7 +53,7 @@ const UnityDeployPanel = lazy(() => import('./components/UnityDeployPanel').then
 const RemoteConfigPanel = lazy(() => import('./components/RemoteConfigPanel').then((m) => ({ default: m.RemoteConfigPanel })));
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands' | 'colab' | 'workflow_assistant'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands' | 'colab' | 'workflow_assistant' | 'dataset_pipeline'>('overview');
   const [logs, setLogs] = useState<string[]>([]);
   const [analyticsData, setAnalyticsData] = useState<Array<{ step: number; loss: number; acc: number; lr: number }>>([]);
   const [tensorBoardData, setTensorBoardData] = useState<TensorBoardData | null>(null);
@@ -693,6 +694,7 @@ export default function App() {
     commands: 'Advanced',
     colab: 'Colab Notebook Center',
     workflow_assistant: 'Docs Dataset Gen',
+    dataset_pipeline: 'Dataset Pipeline (Gen + Eval)',
   };
   const activeWorkflowStep = workflowStepByTab[activeTab] || 'Quick Start';
   const isRemoteMode = status?.executionMode === 'remote';
@@ -778,6 +780,7 @@ export default function App() {
               { id: 'feedback', label: '4) Feedback', shortLabel: 'FB' },
               { id: 'colab', label: 'Cloud (Colab)', shortLabel: 'Colab' },
               { id: 'workflow_assistant', label: 'WorkflowDocs', shortLabel: 'Docs' },
+              { id: 'dataset_pipeline', label: 'Dataset Pipeline', shortLabel: 'Pipe' },
               { id: 'jobs', label: 'Ops', shortLabel: 'Ops' },
               { id: 'analytics', label: 'TensorBoard', shortLabel: 'TB' },
               { id: 'compare', label: 'Compare', shortLabel: 'Cmp' },
@@ -1262,6 +1265,25 @@ export default function App() {
               >
                 <WorkflowAssistantPanel
                   availableCommands={availableCommands}
+                  onTriggerCommand={async (payload) => {
+                    await triggerCommand(payload);
+                  }}
+                  jobs={jobs}
+                />
+              </motion.div>
+            )}
+
+            {activeTab === 'dataset_pipeline' && (
+              <motion.div
+                key="dataset_pipeline"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex-1 flex flex-col overflow-hidden"
+              >
+                <DatasetPipelinePanel
+                  availableCommands={availableCommands}
+                  subjects={subjects}
                   onTriggerCommand={async (payload) => {
                     await triggerCommand(payload);
                   }}

@@ -551,6 +551,24 @@ const commandDefinitions: CommandDefinition[] = [
     build: (payload) => ["./ucore", "sanitize", parsedDatasetPath(payload)],
   },
   {
+    id: "dataset-eval",
+    label: "Evaluate Dataset Quality",
+    icon: "bar-chart",
+    color: "warning",
+    type: "Dataset",
+    requiredFields: ["spec", "options.technique"],
+    build: (payload) => ["./ucore", "dataset-eval", parsedSpec(payload), "--technique", sanitizeToken(String(optionValue(payload, "technique") || "template"), "technique")],
+  },
+  {
+    id: "validate-spec",
+    label: "Validate Spec",
+    icon: "check-circle",
+    color: "accent",
+    type: "Validation",
+    requiredFields: ["spec"],
+    build: (payload) => ["./ucore", "validate-spec", parsedSpec(payload), "--generation-ready"],
+  },
+  {
     id: "validate-config",
     label: "Validate Config",
     icon: "check-circle",
@@ -755,6 +773,8 @@ const commandStageIndex = (job: Job): number => {
   switch (job.commandId) {
     case "dataset-generate":
     case "dataset-sanitize":
+    case "dataset-eval":
+    case "validate-spec":
       return 0;
     case "validate-config":
     case "train":
@@ -2598,6 +2618,13 @@ The user can execute these commands directly from your interface.`;
         npcKey: { type: "string", required: true, default: "new_npc_key", description: "NPC Key (snake_case)" },
         "options.subject": { type: "string", required: false, default: "", description: "NPC Subject" },
         "options.name": { type: "string", required: false, default: "", description: "NPC Display Name" },
+      },
+      "validate-spec": {
+        spec: { type: "string", required: true, default: "subjects/history_guide.json", description: "Subject spec path" },
+      },
+      "dataset-eval": {
+        spec: { type: "string", required: true, default: "subjects/history_guide.json", description: "Subject spec path" },
+        "options.technique": { type: "string", required: true, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"], description: "Dataset generation technique" },
       },
       "docs-manifest-generate": {
         spec: { type: "string", required: true, default: "subjects/workflow_assistant.json", description: "Subject spec path" },
