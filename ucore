@@ -60,6 +60,22 @@ def main():
     gen_p.add_argument("--concept-focus", action="append", dest="concept_focus",
                         help="Focus on specific categories (repeatable, boosts example count)")
 
+    # Generate with Ollama (optimized)
+    gen_ollama_p = subparsers.add_parser("generate-ollama", help="Generate dataset using optimized Ollama generator")
+    gen_ollama_p.add_argument("spec", help="Path to subject spec JSON")
+    gen_ollama_p.add_argument("--model", default="llama2", help="Ollama model (default: llama2)")
+    gen_ollama_p.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
+    gen_ollama_p.add_argument("--batch-size", type=int, default=4, help="Concurrent generation tasks")
+    gen_ollama_p.add_argument("--max-retries", type=int, default=3, help="Max retries per generation")
+    gen_ollama_p.add_argument("--temperature", type=float, default=0.7, help="Generation temperature")
+    gen_ollama_p.add_argument("--seed", type=int, default=42, help="Random seed")
+    gen_ollama_p.add_argument("--output", "-o", help="Output JSONL path")
+    gen_ollama_p.add_argument("--no-validation", action="store_true", help="Skip validation split")
+    gen_ollama_p.add_argument("--val-split", type=float, default=0.12, help="Validation split ratio")
+    gen_ollama_p.add_argument("--check-health", action="store_true", help="Verify Ollama is running")
+    gen_ollama_p.add_argument("--pull-model", action="store_true", help="Auto-pull model if not found")
+    gen_ollama_p.add_argument("--dry-run", action="store_true", help="Dry-run: show plan without generating")
+
     # Sanitize
     san_p = subparsers.add_parser("sanitize", help="Sanitize a dataset")
     san_p.add_argument("input", help="Path to input JSONL")
@@ -362,6 +378,34 @@ def main():
         if args.concept_focus:
             for cf in args.concept_focus:
                 cmd.extend(["--concept-focus", cf])
+        run_cmd(cmd)
+
+    elif args.command == "generate-ollama":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "generate_dataset_ollama.py"), args.spec]
+        if args.model:
+            cmd.extend(["--model", args.model])
+        if args.url and args.url != "http://localhost:11434":
+            cmd.extend(["--url", args.url])
+        if args.batch_size and args.batch_size != 4:
+            cmd.extend(["--batch-size", str(args.batch_size)])
+        if args.max_retries and args.max_retries != 3:
+            cmd.extend(["--max-retries", str(args.max_retries)])
+        if args.temperature and args.temperature != 0.7:
+            cmd.extend(["--temperature", str(args.temperature)])
+        if args.seed and args.seed != 42:
+            cmd.extend(["--seed", str(args.seed)])
+        if args.output:
+            cmd.extend(["--output", args.output])
+        if args.no_validation:
+            cmd.append("--no-validation")
+        if args.val_split and args.val_split != 0.12:
+            cmd.extend(["--val-split", str(args.val_split)])
+        if args.check_health:
+            cmd.append("--check-health")
+        if args.pull_model:
+            cmd.append("--pull-model")
+        if args.dry_run:
+            cmd.append("--dry-run")
         run_cmd(cmd)
 
     elif args.command == "sanitize":

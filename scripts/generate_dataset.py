@@ -478,15 +478,36 @@ def _concept_anchor(concept: str, spec, retriever=None) -> str:
         ("protein intake", "Spreading protein across meals rather than eating it all at once"),
         ("hydration", "Drinking water consistently throughout the day, not just during exercise"),
         ("periodization", "Cycling between heavy, moderate, and light training weeks"),
+        ("workout programming", "Designing a weekly training plan that balances different muscle groups and recovery"),
+        ("kitchen organization", "Setting up your kitchen so ingredients, tools, and workspace flow efficiently"),
+        # Astronomy entries
+        ("nebula", "Observing how stars are born inside colorful clouds of gas and dust"),
+        ("stellar evolution", "Tracing how a star changes from formation to its final stage"),
+        ("galaxy formation", "Studying how gravity pulled gas and dust together to create galaxies"),
+        ("big bang", "Exploring the evidence for the universe starting from an extremely hot, dense state"),
+        ("orbit", "Understanding how gravity keeps planets moving in curved paths around a star"),
+        ("star formation", "Watching how dense regions in nebulae collapse to form new stars"),
+        ("planetary motion", "Describing how planets move in elliptical orbits around their star"),
+        ("space exploration", "Using telescopes and probes to discover what lies beyond Earth"),
+        # History entries (alphabetical)
+        ("ancient civilizations", "Studying how early agricultural societies developed along river valleys like the Nile and Mesopotamia"),
+        ("ancient greece", "Exploring the development of democracy and philosophy in ancient Athens"),
+        ("cold war", "Analyzing the ideological competition between the US and Soviet Union after World War II"),
+        ("enlightenment", "Understanding how Enlightenment thinkers like Locke and Voltaire challenged traditional authority"),
+        ("exploration", "Examining how European voyages of exploration connected distant continents through trade"),
+        ("feudalism", "Looking at the hierarchy of medieval feudal society from kings to serfs"),
+        ("imperialism", "Analyzing the motives and consequences of 19th century European imperialism"),
+        ("industrial revolution", "Tracing how steam power and factories transformed 18th century society and labor"),
+        ("medieval period", "Examining the role of religion, feudalism, and trade in medieval Europe"),
+        ("renaissance", "Studying the rebirth of art, science, and humanism during the Renaissance period"),
+        ("roman empire", "Understanding how Roman engineering, law, and governance shaped Western civilization"),
+        ("world war", "Analyzing the causes and global consequences of the World Wars in the 20th century"),
+        ("world history", "Tracing how human societies evolved from ancient times to the modern day"),
+        ("historical thinking", "Examining how historians analyze primary sources to understand past events"),
     ]
     for needle, anchor in anchors:
         if needle in concept_l:
             return _capitalize_first(anchor)
-    # Fall through to example_topics or generic fallback
-    topics = _example_topics(spec, limit=1)
-    if topics:
-        anchor = _topic_to_anchor(topics[0], subject)
-        return anchor
     return _capitalize_first(f"{concept} in {subject}")
 
 
@@ -512,7 +533,7 @@ def generate_identity_response(spec):
     npc_name = spec.get("npc_name", "the guide")
     subject = _subject_focus(spec)
     subject_raw = spec.get("subject", subject)
-    subject_short = subject_raw.split(",")[0].strip()
+    subject_short = subject_raw.split(",")[0].strip().split(":")[0].strip()
     expertise = spec.get("teaching", {}).get("expertise", []) or []
     expertise_list = [str(item).strip() for item in expertise if str(item).strip()]
     expertise_snippet = ", ".join(expertise_list[:3]) if expertise_list else ""
@@ -549,7 +570,7 @@ def generate_identity_response(spec):
 
     if expertise_snippet:
         templates.append(
-            f"I'm {npc_name}. I teach {subject_short} and topics like {expertise_snippet} using clear examples."
+            f"I'm {npc_name}. You can call me that! Happy to help with {subject_short}."
         )
 
     # Always include a fallback
@@ -574,7 +595,7 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
             ]
         else:
             templates = [
-                f"Here's how {concept_a} works: {detail_a}.",
+                f"Great question about {concept_a}! {detail_a} shows why this matters and how it connects to the bigger picture.",
                 f"Think of {concept_a} this way: {detail_a}.",
                 f"The key thing to know about {concept_a}: {detail_a}.",
                 f"Great question! {detail_a} is a perfect example of {concept_a} in action.",
@@ -590,7 +611,8 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
             templates = [
                 f"Going deeper on {concept_a}: {detail_a}.",
                 f"Here is a more detailed look at {concept_a}. {detail_a} shows what this looks like in practice.",
-                f"The important nuance in {concept_a} is when it applies. {detail_a} makes that clearer.",
+                f"A deeper look at {concept_a}: {detail_a} shows how this works in practice.",
+                f"Good question about how {concept_a} developed. {detail_a} is one example that shows the thinking behind it.",
             ]
     else:
         if concept_b:
@@ -630,7 +652,7 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriev
     elif dialogue_type == "misconception":
         templates = [
             f"That is not quite right about {concept}. Let me correct that: {detail}.",
-            f"That is a common misconception about {concept}. The accurate version is {detail}.",
+            f"That is a common misconception about {concept}. It actually works like this: {detail}.",
         ]
 
     return random.choice(templates)
@@ -644,7 +666,7 @@ def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
     if scenario_name:
         scenario_templates = {
             "timeline_analysis": [
-                f"Here is a timeline challenge about {concept}: imagine the different stages of {detail} and explain how one step led to the next.",
+                f"Simple scenario using {concept}: pick one example from {detail} and describe why it shaped events the way it did.",
                 f"Let's test your timeline skills: use {detail} as a concrete case and describe the sequence of events that makes it work.",
             ],
             "primary_source": [
@@ -666,7 +688,8 @@ def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
 
     # Fallback to generic quest templates
     templates = [
-        f"Challenge: {detail}. Explain how this connects to {concept} and what principle it demonstrates.",
+        f"Quiz question: What is one real-world example of {concept}? Hint: {detail}.",
+        f"Time for a practical challenge! Use {subject} to plan one balanced approach and explain why {detail} fits the goal.",
         f"Here is a problem to solve: {detail}. Describe the key factors that make this work and what could go wrong.",
         f"Let me give you a real scenario: {detail}. What would you do differently and why in the context of {concept}?",
         f"Quick quiz: What is one real-world application of {concept} based on {_concept_detail_lower(concept, spec)}?",
@@ -708,7 +731,7 @@ def generate_refusal_response(spec, boundary=None):
         else:
             templates = [
                 f"That is outside my role as {npc_name}. I can help with {subject}, so please ask a question in that area.",
-                f"I should not answer outside my scope. I can redirect to a useful {subject} question instead.",
+                f"I cannot help with that. As a {npc_name}, I only answer questions about {subject}. Let me share something about {subject} instead.",
             ]
         return random.choice(templates)
 
