@@ -1525,6 +1525,103 @@ async function startServer() {
     }
   });
 
+  // --- Dataset Quality API endpoints ---
+
+  app.get("/api/datasets/quality-summary", (_req, res) => {
+    const datasetsDir = path.join(repoRoot, "subjects", "datasets");
+    if (!fs.existsSync(datasetsDir)) return res.json([]);
+    try {
+      const results: Array<{ npcKey: string; technique: string; path: string; summary: Record<string, unknown> }> = [];
+      const npcDirs = fs.readdirSync(datasetsDir);
+      for (const npcKey of npcDirs) {
+        const npcDir = path.join(datasetsDir, npcKey);
+        if (!fs.statSync(npcDir).isDirectory()) continue;
+        const techniqueDirs = fs.readdirSync(npcDir);
+        for (const technique of techniqueDirs) {
+          const summaryPath = path.join(npcDir, technique, "quality_summary.json");
+          if (fs.existsSync(summaryPath)) {
+            try {
+              const summary = JSON.parse(fs.readFileSync(summaryPath, "utf8"));
+              results.push({ npcKey, technique, path: `subjects/datasets/${npcKey}/${technique}/quality_summary.json`, summary });
+            } catch {
+              // skip malformed
+            }
+          }
+        }
+      }
+      return res.json(results);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to list quality summaries" });
+    }
+  });
+
+  app.get("/api/datasets/quality-summary/:npcKey/:technique", (req, res) => {
+    const npcKey = String(req.params.npcKey || "").replace(/\.\./g, "");
+    const technique = String(req.params.technique || "").replace(/\.\./g, "");
+    if (!npcKey || !technique) {
+      return res.status(400).json({ error: "npcKey and technique are required" });
+    }
+    const summaryPath = path.join(repoRoot, "subjects", "datasets", npcKey, technique, "quality_summary.json");
+    if (!summaryPath.startsWith(path.join(repoRoot, "subjects", "datasets"))) {
+      return res.status(400).json({ error: "Invalid path" });
+    }
+    if (!fs.existsSync(summaryPath)) {
+      return res.status(404).json({ error: `Quality summary not found for ${npcKey}/${technique}` });
+    }
+    try {
+      const summary = JSON.parse(fs.readFileSync(summaryPath, "utf8"));
+      return res.json(summary);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to load quality summary" });
+    }
+  });
+
+  app.get("/api/datasets/quality-failures/:npcKey/:technique", (req, res) => {
+    const npcKey = String(req.params.npcKey || "").replace(/\.\./g, "");
+    const technique = String(req.params.technique || "").replace(/\.\./g, "");
+    if (!npcKey || !technique) {
+      return res.status(400).json({ error: "npcKey and technique are required" });
+    }
+
+    // Try to load summary first to get the failures_path
+    const summaryPath = path.join(repoRoot, "subjects", "datasets", npcKey, technique, "quality_summary.json");
+    let failuresPath: string | null = null;
+
+    if (fs.existsSync(summaryPath)) {
+      try {
+        const summary = JSON.parse(fs.readFileSync(summaryPath, "utf8"));
+        if (summary.failures_path) {
+          const candidatePath = path.join(repoRoot, summary.failures_path);
+          if (candidatePath.startsWith(repoRoot) && fs.existsSync(candidatePath)) {
+            failuresPath = candidatePath;
+          }
+        }
+      } catch {
+        // fall through to default path
+      }
+    }
+
+    // Fallback to default path
+    if (!failuresPath) {
+      failuresPath = path.join(repoRoot, "subjects", "datasets", npcKey, technique, "quality_failures.json");
+    }
+
+    if (!failuresPath.startsWith(path.join(repoRoot, "subjects", "datasets"))) {
+      return res.status(400).json({ error: "Invalid path" });
+    }
+
+    if (!fs.existsSync(failuresPath)) {
+      return res.status(404).json({ error: `Quality failures not found for ${npcKey}/${technique}` });
+    }
+
+    try {
+      const failures = JSON.parse(fs.readFileSync(failuresPath, "utf8"));
+      return res.json(failures);
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to load quality failures" });
+    }
+  });
+
   app.get("/api/colab/notebooks", (_req, res) => {
     const colabDir = path.join(repoRoot, "colab", "outputs");
     if (!fs.existsSync(colabDir)) return res.json([]);

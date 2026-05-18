@@ -212,36 +212,79 @@ def _example_topics(spec, limit=2):
     return [str(topic).strip() for topic in topics[:limit] if str(topic).strip()]
 
 
+def _topic_to_anchor(topic: str, subject: str) -> str:
+    clean = topic.strip().rstrip("?")
+    clean = re.sub(r'^(what is|who is|how do i|how do|why is|how does|is|are|can i|should i|what are|how many|when does|where does)\s+', '', clean, flags=re.I).strip()
+    if not clean:
+        return subject
+    return _capitalize_first(clean)
+
+
+def _capitalize_first(text: str) -> str:
+    """Ensure text starts with an uppercase letter."""
+    if not text:
+        return text
+    return text[0].upper() + text[1:]
+
+
 def _concept_detail(spec, concept):
+    subject = _subject_focus(spec)
     topics = _example_topics(spec)
     if topics:
-        return f"For example, connect it to questions like \"{topics[0]}\""
-    return f"For example, use a concrete case from {_subject_focus(spec)}"
+        anchor = _topic_to_anchor(topics[0], subject)
+        return f"{anchor}"
+    return _capitalize_first(f"{concept} in {subject}")
 
 
-def _history_anchor(concept: str, spec) -> str:
+def _concept_anchor(concept: str, spec) -> str:
     concept_l = concept.lower()
+    subject = _subject_focus(spec)
     anchors = [
-        ("renaissance", "the printing press spreading new ideas in Europe"),
-        ("reformation", "Martin Luther's 95 Theses and the split in Western Christianity"),
-        ("early modern", "the printing press, European exploration, and the Reformation"),
-        ("industrial revolution", "steam engines, factories, and railroads"),
-        ("world war i", "trench warfare and the assassination of Franz Ferdinand"),
-        ("world war ii", "the Holocaust and the atomic bomb"),
-        ("cold war", "the Berlin Wall and the nuclear arms race"),
-        ("ancient egypt", "the pyramids at Giza and hieroglyphics"),
-        ("mesopotamia", "cuneiform writing and the first cities"),
-        ("roman empire", "roads, aqueducts, and Augustus's rule"),
-        ("greek", "Athenian democracy and the Persian Wars"),
-        ("medieval", "feudalism, castles, and the Black Death"),
+        ("telescope", "Observing the Moon or Jupiter through a telescope"),
+        ("black hole", "Studying a black hole with a space telescope"),
+        ("solar system", "Tracking planets and moons in our solar system"),
+        ("galaxy", "Identifying a galaxy cloud in the night sky"),
+        ("knife", "Chopping an onion cleanly with a sharp chef's knife"),
+        ("flavor pairing", "Matching lemon and herbs to brighten roasted chicken"),
+        ("food safety", "Keeping raw chicken separate from salad ingredients"),
+        ("cooking technique", "Sautéing vegetables evenly over medium heat"),
+        ("knife skills", "Keeping your knife sharp and using a claw grip for safety"),
+        ("meal prep", "Preparing ingredients in advance to save time during the week"),
+        ("baking", "Measuring flour correctly by spooning it into the cup, not scooping"),
+        ("grilling", "Managing direct and indirect heat zones on a charcoal grill"),
+        ("braising", "Browning meat first then cooking it low and slow in liquid"),
+        ("protein", "Choosing lean cuts and seasoning them well before cooking"),
+        ("umami", "Adding mushrooms, tomatoes, or soy sauce to deepen savory flavor"),
+        ("exercise science", "Using proper squat form to protect your knees"),
+        ("cardiovascular", "Doing brisk walking or cycling to raise your heart rate safely"),
+        ("flexibility", "Doing a gentle hamstring stretch after a run"),
+        ("strength training", "Using controlled lifts with good form and moderate weight"),
+        ("nutrition", "Balancing protein, carbohydrates, and fats for steady energy"),
+        ("recovery", "Resting and sleeping well after a hard workout"),
+        ("squat", "Keeping your back straight and knees tracking over your toes"),
+        ("deadlift", "Hinging at the hips and keeping the bar close to your body"),
+        ("protein intake", "Spreading protein across meals rather than eating it all at once"),
+        ("hydration", "Drinking water consistently throughout the day, not just during exercise"),
+        ("periodization", "Cycling between heavy, moderate, and light training weeks"),
     ]
     for needle, anchor in anchors:
         if needle in concept_l:
-            return anchor
+            return _capitalize_first(anchor)
+    # Fall through to spec's teaching expertise or identity fields
+    expertise = spec.get("teaching", {}).get("expertise", []) or []
+    if expertise:
+        expert_topic = str(expertise[0]).strip()
+        if expert_topic:
+            return _capitalize_first(expert_topic)
+    identity = spec.get("identity", {})
+    background = identity.get("background", "") or ""
+    if background:
+        return _capitalize_first(background.split(".")[0].strip())
     topics = _example_topics(spec, limit=1)
     if topics:
-        return topics[0]
-    return _subject_focus(spec)
+        anchor = _topic_to_anchor(topics[0], subject)
+        return anchor
+    return _capitalize_first(f"{concept} in {subject}")
 
 
 def _refusal_user_message(spec, boundary=None):
@@ -261,35 +304,53 @@ def _refusal_user_message(spec, boundary=None):
 def generate_identity_response(spec):
     """Generate persona self-introduction responses using spec identity fields."""
     identity = spec.get("identity", {})
-    personality = identity.get("personality", "") or ""
+    raw_personality = identity.get("personality", "") or ""
     background = identity.get("background", "") or ""
-    mannerisms = identity.get("mannerisms", "") or ""
     npc_name = spec.get("npc_name", "the guide")
     subject = _subject_focus(spec)
-    topics = _example_topics(spec, limit=2)
+    subject_raw = spec.get("subject", subject)
+    subject_short = subject_raw.split(",")[0].strip()
     expertise = spec.get("teaching", {}).get("expertise", []) or []
     expertise_list = [str(item).strip() for item in expertise if str(item).strip()]
-    expertise_snippet = ", ".join(expertise_list[:3])
+    expertise_snippet = ", ".join(expertise_list[:3]) if expertise_list else ""
+    short_background = background.split(". ")[0] if background else ""
 
-    if personality and background:
-        templates = [
-            f"I'm {npc_name}, a patient world history storyteller who connects ancient civilizations, the Roman Empire, and the Industrial Revolution to the present day.",
-            f"I'm {npc_name}. I guide learners through world history using timeline stories from ancient Egypt, medieval Europe, and the causes of World War I.",
-            f"I'm {npc_name}, your history guide for ancient civilizations, medieval life, and modern revolutions, and I explain events with clear cause-and-effect.",
-        ]
-        if expertise_snippet:
+    # Extract short personality adjective before clause separators
+    personality_short = raw_personality
+    for sep in [" — ", "—", " - ", "- ", ";"]:
+        if sep in personality_short:
+            personality_short = personality_short.split(sep)[0].strip()
+            break
+    parts = [p.strip() for p in personality_short.split(",") if p.strip()]
+    personality_short = ", ".join(parts[:2]) if len(parts) > 2 else personality_short
+    personality_short = personality_short.rstrip(",").strip()
+
+    templates = []
+
+    # Simple direct introductions (always available)
+    templates.append(f"I'm {npc_name}. Happy to help you learn about {subject_short}!")
+    templates.append(f"Hi, I'm {npc_name}. Ask me anything about {subject_short}.")
+    templates.append(f"I'm {npc_name}, your guide to {subject_short}.")
+
+    if personality_short:
+        templates.append(f"I'm {npc_name}, a {personality_short.lower()} expert in {subject_short}.")
+        templates.append(f"I'm {npc_name}, a {personality_short.lower()} with a passion for teaching {subject_short}.")
+
+    if short_background:
+        templates.append(f"My background is in {short_background}.")
+        templates.append(f"I'm {npc_name}. {_capitalize_first(short_background)}.")
+        if personality_short:
             templates.append(
-                f"I'm {npc_name}, your {subject} guide. I explain topics like {expertise_snippet} with concrete historical examples and narrative chronology."
+                f"I'm {npc_name}, a {personality_short.lower()} with experience in {short_background}. I teach {subject_short} with clear examples."
             )
-        if topics:
-            templates.append(
-                f"I'm {npc_name}. I teach {subject} by connecting questions like \"{topics[0]}\" to real events such as the printing press and the fall of Rome."
-            )
-    else:
-        templates = [
-            f"I'm {npc_name}, your {subject} guide.",
-            f"I'm {npc_name}. I help with {subject}.",
-        ]
+
+    if expertise_snippet:
+        templates.append(
+            f"I'm {npc_name}. I teach {subject_short} and topics like {expertise_snippet} using clear examples."
+        )
+
+    # Always include a fallback
+    templates.append(f"I'm {npc_name}, your {subject_short} guide.")
 
     return random.choice(templates)
 
@@ -297,44 +358,47 @@ def generate_identity_response(spec):
 def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="beginner"):
     """Generate teaching responses based on concepts and difficulty tier."""
     subject = _subject_focus(spec)
-    detail = _history_anchor(concept_a, spec) if "history" in subject else _concept_detail(spec, concept_a)
+    detail_a = _concept_anchor(concept_a, spec)
+    detail_b = _concept_anchor(concept_b, spec) if concept_b else None
     if "methodology" in concept_a.lower():
-        detail = "comparing primary sources with later interpretations and checking bias"
+        detail_a = "Comparing sources carefully and checking for bias"
 
     if difficulty == "beginner":
         if concept_b:
             templates = [
-                f"Compare {concept_a} and {concept_b} by looking at society, warfare, and technology: medieval Europe used feudalism, castles, and the Black Death, while world wars were industrial, global, and mechanized.",
-                f"{concept_a} and {concept_b} are different in scale and tools. Medieval history centers on feudalism and castles, while world wars center on industrial weapons and global alliances.",
+                f"Let me compare {concept_a} and {concept_b}. {concept_a} is about {detail_a}, while {concept_b} is about {detail_b}.",
+                f"A beginner can understand {concept_a} as {detail_a} and {concept_b} as {detail_b}.",
             ]
         else:
             templates = [
-                f"A real-world example of {concept_a} is {detail}.",
-                f"The {concept_a} appears in history through {detail}.",
-                f"One clear example of {concept_a} is {detail}.",
-                f"In the real world, {concept_a} is visible in {detail}.",
+                f"Here's how {concept_a} works: {detail_a}.",
+                f"Think of {concept_a} this way: {detail_a}.",
+                f"The key thing to know about {concept_a}: {detail_a}.",
+                f"Great question! {detail_a} is a perfect example of {concept_a} in action.",
+                f"{concept_a} shows up in {subject} through {detail_a}.",
             ]
     elif difficulty == "intermediate":
         if concept_b:
             templates = [
-                f"Compare {concept_a} and {concept_b} by naming the tradeoff between them. In history, {detail} shows the difference clearly.",
-                f"{concept_a} gives one lens, and {concept_b} shows where it changes. Use {detail} as the anchor.",
+                f"Compare {concept_a} and {concept_b} by looking at how {detail_a} differs from {detail_b}.",
+                f"The useful difference between {concept_a} and {concept_b} is that {detail_a} focuses on one side and {detail_b} on the other.",
             ]
         else:
             templates = [
-                f"Go deeper on {concept_a} by giving the definition, the common mistake, and one concrete example. A good one is {detail}.",
-                f"The useful nuance in {concept_a} is knowing when it applies. {detail} makes that visible.",
+                f"Going deeper on {concept_a}: {detail_a}.",
+                f"Here is a more detailed look at {concept_a}. {detail_a} shows what this looks like in practice.",
+                f"The important nuance in {concept_a} is when it applies. {detail_a} makes that clearer.",
             ]
-    elif difficulty == "advanced":
+    else:
         if concept_b:
             templates = [
-                f"At an advanced level, compare {concept_a} and {concept_b} through one concrete case. In {subject}, {detail} shows the tension clearly.",
-                f"Define {concept_a}, define {concept_b}, then test both against {detail}. That keeps the comparison useful.",
+                f"At an advanced level, compare {concept_a} and {concept_b} using {detail_a} and {detail_b} as concrete cases.",
+                f"Define {concept_a} and {concept_b}, then test both against a real example like {detail_a}.",
             ]
         else:
             templates = [
-                f"An advanced explanation of {concept_a} should name the standard view, one limitation, and one concrete example like {detail}.",
-                f"To master {concept_a}, ask where the simple rule breaks down. {detail} is a useful case to test it.",
+                f"Here is an advanced look at {concept_a}. The standard view explains the basics, but one limitation reveals deeper nuance. Consider {detail_a} as an example.",
+                f"To really understand {concept_a}, look at a case where the usual explanation falls short. Consider {detail_a} as a test.",
             ]
     return random.choice(templates)
 
@@ -343,27 +407,27 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive"):
     """Generate conversational responses based on dialogue type."""
     npc_name = spec["npc_name"]
     subject = _subject_focus(spec)
-    detail = _history_anchor(concept, spec) if "history" in subject else _concept_detail(spec, concept)
+    detail = _concept_anchor(concept, spec)
 
     if dialogue_type == "clarification":
         templates = [
-            f"Think of {concept} as one usable idea, not a huge topic. A concrete anchor is {detail}.",
-            f"{concept} gets easier when you anchor it to one clear example like {detail}.",
+            f"Let me clarify what I mean about {concept}. {detail} makes it clearer.",
+            f"Sorry for the confusion. Here is another way to think about {concept}: {detail}.",
         ]
     elif dialogue_type == "deep_dive":
         templates = [
-            f"If you apply {concept} incorrectly, you will mix up the period and misread the causes. A good anchor is {detail}.",
-            f"The key to {concept} is seeing the actual historical change. {detail} is the kind of example that keeps it grounded.",
+            f"Going deeper on {concept}... {detail} shows you what this looks like in practice.",
+            f"The key to {concept} is seeing how it works in practice. {detail} keeps it grounded.",
         ]
     elif dialogue_type == "application":
         templates = [
+            f"You can apply {concept} by focusing on {detail}. Try it yourself.",
             f"Apply {concept} by naming one concrete example first. In {subject}, {detail} is a useful check.",
-            f"Use {concept} by asking what changed, what came before, and what came after. {detail} helps answer that.",
         ]
     elif dialogue_type == "misconception":
         templates = [
+            f"That is not quite right about {concept}. Let me correct that: {detail}.",
             f"That is a common misconception about {concept}. The accurate version is {detail}.",
-            f"The trap with {concept} is overgeneralizing it. A concrete example is {detail}.",
         ]
 
     return random.choice(templates)
@@ -372,24 +436,25 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive"):
 def generate_quest_response(spec, concept, scenario_name=None):
     """Generate quest/challenge responses based on scenario."""
     subject = _subject_focus(spec)
+    detail = _concept_anchor(concept, spec)
 
     if scenario_name:
         scenario_templates = {
             "timeline_analysis": [
-                f"Here is a timeline challenge about {concept}: Can you arrange these key events in chronological order and explain the cause-effect relationship between each pair? This will help you see the bigger picture in {subject}.",
-                f"Let's test your timeline skills! Regarding {concept}, I will give you three dates. Your task is to connect each event to the next, explaining how one led to another in {subject}.",
+                f"Here is a timeline challenge about {concept}: imagine the different stages of {detail} and explain how one step led to the next.",
+                f"Let's test your timeline skills: use {detail} as a concrete case and describe the sequence of events that makes it work.",
             ],
             "primary_source": [
-                f"Time to examine a primary source! Imagine you have found a firsthand account about {concept}. What questions would you ask to determine its reliability and what it reveals about {subject}?",
-                f"Here is a historian's challenge: If you discovered a document from the time of {concept}, what three clues would tell you it is authentic? How would historians in {subject} verify it?",
+                f"Time to examine a real example: imagine a source about {concept} and explain what it tells you about {detail}.",
+                f"Here's a practical challenge: if you had to teach {concept} with {detail}, what evidence would you use and why?",
             ],
             "technique_mastery": [
-                f"Practice question: What is the first safety or setup check you should make before using {concept}, and why does it matter?",
-                f"Technique check: Name one common beginner mistake with {concept}, then explain the safer or cleaner correction.",
+                f"Practice question: what is one simple step you should do every time you use {concept}, and why does it matter for {subject}?",
+                f"Technique check: describe a common beginner mistake with {concept}, then explain how {detail} avoids it.",
             ],
             "meal_planning": [
-                f"Time for a practical challenge! Using {concept}, plan a balanced approach to a three-course meal. What principles from {subject} guide your choices?",
-                f"Here is a real-world scenario: You have limited ingredients but want to apply {concept}. What dishes would you prepare and why? This is a key skill in {subject}.",
+                f"Time for a practical challenge! Use {concept} to plan one balanced meal and explain why {detail} fits the goal.",
+                f"Here is a real-world scenario: you have limited ingredients and need to use {concept}; what would you cook and how does {detail} guide your choice?",
             ],
         }
         cat_templates = scenario_templates.get(scenario_name, [])
@@ -398,9 +463,11 @@ def generate_quest_response(spec, concept, scenario_name=None):
 
     # Fallback to generic quest templates
     templates = [
-        f"Challenge question: What is one concrete example of {concept} in {subject}, and what detail proves you understand it?",
-        f"Practice prompt: Explain {concept} to a beginner using one accurate {subject} example and one common mistake to avoid.",
-        f"Quick quiz: When does {concept} help solve a real {subject} problem, and when would it be the wrong tool?",
+        f"Here's a challenge: Explain how {concept} works using {detail} as your example.",
+        f"Practice problem: Identify the key elements of {concept} and explain why {detail} matters.",
+        f"Quick quiz: What is one real-world application of {concept} based on {detail}?",
+        f"Try this: If you had to teach {concept} to someone new, what would you say about {detail}?",
+        f"Practice prompt: explain {concept} through one concrete example like {detail}.",
     ]
     return random.choice(templates)
 
