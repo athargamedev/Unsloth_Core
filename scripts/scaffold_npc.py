@@ -40,6 +40,14 @@ DEFAULT_SPEC: dict = {
         "approach": "Direct and clear explanations.",
         "difficulty_levels": ["beginner"],
     },
+    "concepts": [
+        {
+            "name": "core concepts",
+            "category": "teaching",
+            "difficulty": "beginner",
+            "aliases": ["fundamentals"]
+        }
+    ],
     "dialogue": {
         "conversation_style": "Informative",
         "max_sentences": 3,

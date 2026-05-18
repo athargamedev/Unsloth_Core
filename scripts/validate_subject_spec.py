@@ -31,6 +31,7 @@ REFERENCE_DOC_MIN_H2_SECTIONS = 5
 REFERENCE_DOC_MIN_BULLETS = 20
 REFERENCE_DOC_QUALITY_PATTERN = re.compile(r"\b(boundar(?:y|ies)|refusal|safety|misconception|myth)\b", re.IGNORECASE)
 PLACEHOLDER_PATTERN = re.compile(r"\b(TODO|TBD|FIXME|stub|placeholder)\b", re.IGNORECASE)
+VALID_DIFFICULTY_LEVELS = {"beginner", "intermediate", "advanced"}
 
 
 @dataclass(frozen=True)
@@ -218,20 +219,85 @@ def validate_reference_docs(
 
 
 def validate_difficulty_levels(spec: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
-    VALID_LEVELS = {"beginner", "intermediate", "advanced"}
-
     teaching = spec.get("teaching")
     if not isinstance(teaching, dict):
-        return  # teaching-level error is reported elsewhere
-
-    levels = teaching.get("difficulty_levels")
-    if not is_non_empty_list(levels):
-        warnings.append("Missing or empty `teaching.difficulty_levels`; expected at least one of: beginner, intermediate, advanced.")
         return
 
-    for level in levels:
-        if level not in VALID_LEVELS:
-            warnings.append(f"Unknown difficulty level \"{level}\" in `teaching.difficulty_levels`; valid values are: {', '.join(sorted(VALID_LEVELS))}.")
+    levels = teaching.get("difficulty_levels")
+    if levels is None:
+        warnings.append(
+            "Missing `teaching.difficulty_levels`; it should be a list of allowed levels or a concept-to-level mapping."
+        )
+        return
+
+    if isinstance(levels, list):
+        if not levels:
+            warnings.append("`teaching.difficulty_levels` should contain at least one difficulty level.")
+            return
+        for level in levels:
+            if not is_non_empty_string(level) or level not in VALID_DIFFICULTY_LEVELS:
+                warnings.append(
+                    f"`teaching.difficulty_levels` contains invalid level `{level}`; valid values are: {', '.join(sorted(VALID_DIFFICULTY_LEVELS))}."
+                )
+    elif isinstance(levels, dict):
+        if not levels:
+            warnings.append("`teaching.difficulty_levels` mapping should contain at least one concept-to-level entry.")
+            return
+        for key, value in levels.items():
+            if not is_non_empty_string(key):
+                errors.append("`teaching.difficulty_levels` mapping keys must be non-empty strings.")
+            if not is_non_empty_string(value) or value not in VALID_DIFFICULTY_LEVELS:
+                errors.append(
+                    f"`teaching.difficulty_levels['{key}']` must be one of: {', '.join(sorted(VALID_DIFFICULTY_LEVELS))}."
+                )
+    else:
+        errors.append("`teaching.difficulty_levels` must be either a list of levels or a mapping from concept to level.")
+
+
+def validate_concepts(spec: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
+    concepts = spec.get("concepts")
+    if concepts is None:
+        return
+
+    if not isinstance(concepts, list):
+        errors.append("`concepts` must be an array if present.")
+        return
+
+    for index, item in enumerate(concepts):
+        if isinstance(item, str):
+            if not item.strip():
+                errors.append(f"`concepts[{index}]` must be a non-empty string.")
+            continue
+
+        if not isinstance(item, dict):
+            errors.append(f"`concepts[{index}]` must be either a string or an object.")
+            continue
+
+        if not is_non_empty_string(item.get("name")):
+            errors.append(f"Missing or invalid `concepts[{index}].name` non-empty string.")
+
+        difficulty = item.get("difficulty")
+        if difficulty is not None and difficulty not in VALID_DIFFICULTY_LEVELS:
+            errors.append(
+                f"`concepts[{index}].difficulty` must be one of: {', '.join(sorted(VALID_DIFFICULTY_LEVELS))}."
+            )
+
+        category = item.get("category")
+        if category is not None and not isinstance(category, str):
+            errors.append(f"`concepts[{index}].category` must be a string if present.")
+        elif isinstance(category, str) and category not in GENERATOR_SUPPORTED_DATASET_CATEGORIES:
+            warnings.append(
+                f"`concepts[{index}].category` is not a supported dataset category; supported values are: {', '.join(sorted(GENERATOR_SUPPORTED_DATASET_CATEGORIES))}."
+            )
+
+        aliases = item.get("aliases")
+        if aliases is not None and not isinstance(aliases, list):
+            errors.append(f"`concepts[{index}].aliases` must be a list of strings if present.")
+        elif isinstance(aliases, list):
+            for alias in aliases:
+                if not is_non_empty_string(alias):
+                    errors.append(f"`concepts[{index}].aliases` must contain only non-empty strings.")
+                    break
 
 
 def validate_system_prompt(spec: dict[str, Any], npc_name: str | None, max_sentences: int | None, errors: list[str], warnings: list[str]) -> None:
@@ -275,6 +341,15 @@ def validate_dataset(
     if not isinstance(examples_per_category, dict) or not examples_per_category:
         errors.append("Missing or invalid `dataset.examples_per_category` non-empty object.")
         return
+
+    corpus_manifest = dataset.get("corpus_manifest")
+    if corpus_manifest is not None:
+        if not is_non_empty_string(corpus_manifest):
+            errors.append("`dataset.corpus_manifest` must be a non-empty string if present.")
+        else:
+            manifest_path = PROJECT_ROOT / corpus_manifest if not Path(corpus_manifest).is_absolute() else Path(corpus_manifest)
+            if not manifest_path.exists():
+                warnings.append(f"`dataset.corpus_manifest` file not found: {corpus_manifest}")
 
     has_positive_supported_category = False
     present_categories: set[str] = set()
@@ -423,6 +498,7 @@ def validate_spec(
         require_reference_contract=require_reference_contract,
     )
     validate_difficulty_levels(spec, errors, warnings)
+    validate_concepts(spec, errors, warnings)
     validate_dataset(
         spec,
         errors,

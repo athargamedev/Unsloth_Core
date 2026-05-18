@@ -62,6 +62,34 @@ def test_ollama_generator_output_shape_is_chatml(tmp_path):
 
 
 
+def test_concept_extractor_uses_explicit_concepts_and_metadata():
+    from scripts.generate_dataset import ConceptExtractor
+
+    spec = minimal_spec()
+    spec["teaching"] = {
+        "expertise": ["demo concepts"],
+        "approach": "explain simply",
+        "difficulty_levels": {"demo concepts": "intermediate"},
+    }
+    spec["concepts"] = [
+        {
+            "name": "special topic",
+            "category": "teaching",
+            "difficulty": "advanced",
+            "aliases": ["specialized topic"],
+        }
+    ]
+
+    concepts = ConceptExtractor(spec).extract()
+    explicit = [c for c in concepts if c.name == "special topic"]
+
+    assert explicit, "Explicit concept should be present in extracted concepts"
+    assert explicit[0].category == "teaching"
+    assert explicit[0].difficulty == "advanced"
+    assert "specialized topic" in explicit[0].aliases
+
+
+
 def test_smoke_custom_prompts_and_tracking_timestamp(monkeypatch, tmp_path, capsys):
     from scripts import smoke_test
 

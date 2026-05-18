@@ -17,7 +17,8 @@ The `subjects/` directory contains JSON files that define the identity, knowledg
 | `refusal` | `object` | Safety boundaries and redirect policies. |
 | `research_queries` | `array` | Queries used by Onyx to retrieve grounded context from the knowledge index. |
 | `system_prompt` | `string` | The final system message used during inference (4-section IDENTITY|VOICE|KNOWLEDGE|RULES format). |
-| `dataset` | `object` | Configuration for dataset balancing. |
+| `concepts` | `array` | Optional structured concepts with category and difficulty metadata for dataset generation. |
+| `dataset` | `object` | Configuration for dataset balancing. Optional `corpus_manifest` may point to a curated corpus file. |
 
 ---
 
@@ -31,7 +32,7 @@ Defines who the NPC is.
 Defines what the NPC knows and how they teach it.
 - `expertise`: List of topics the NPC is an expert in.
 - `approach`: Their teaching method (e.g., "Hands-on demonstrations").
-- `difficulty_levels`: List of intended audience levels (e.g., `["beginner", "expert"]`).
+- `difficulty_levels`: List of intended audience levels (e.g., `["beginner", "intermediate", "advanced"]`) or a concept-to-level mapping.
 
 ## 💬 `dialogue` Object
 Defines the conversational constraints.
@@ -44,7 +45,22 @@ Critical for safety and boundary handling.
 - `boundaries`: List of forbidden topics.
 - `redirect_policy`: How to steer the user back to valid topics.
 
-## 🔍 `research_queries` Array
+## � `concepts` Array
+Optional structured concept metadata used by the generator and DeepEval-quality workflows.
+
+Each item may be either a string concept name or an object with metadata:
+```json
+{
+  "name": "nuclear fusion",
+  "category": "teaching",
+  "difficulty": "advanced",
+  "aliases": ["fusion energy", "stellar fusion"]
+}
+```
+
+When present, explicit `concepts` are used first to seed dataset examples, and category-specific concepts are preferred for `teaching`, `dialogue`, and `quest` examples.
+
+## �🔍 `research_queries` Array
 Used by Onyx generation stage to retrieve grounded context from the knowledge index.
 ```json
 {
@@ -63,7 +79,8 @@ Controls the distribution of examples in the generated `.jsonl` file.
     "dialogue": 16,
     "quest": 8,
     "refusal": 8
-  }
+  },
+  "corpus_manifest": "path/to/curated_corpus.jsonl"
 }
 ```
 

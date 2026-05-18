@@ -562,13 +562,15 @@ class Concept:
     Attributes:
         name: Canonical lowercase name.
         difficulty: One of "beginner", "intermediate", "advanced".
-        source: Origin — "expertise", "subject", "research_query", or "reference_doc".
+        source: Origin — "explicit", "expertise", "subject", "research_query", or "reference_doc".
         aliases: Alternative phrasings from other sources.
+        category: Optional dataset category to bias generation.
     """
     name: str
-    difficulty: str
+    difficulty: str | None
     source: str
     aliases: list[str]
+    category: str | None = None
 
     def __str__(self) -> str:
         return self.name
@@ -611,6 +613,28 @@ class ConceptExtractor:
         concepts: dict[str, Concept] = {}
         teaching = self.spec.get("teaching") or {}
 
+        # 0. Use explicit spec concepts when provided.
+        for item in self.spec.get("concepts") or []:
+            if isinstance(item, str):
+                self._add_concept(concepts, item, "explicit")
+                continue
+            if not isinstance(item, dict):
+                continue
+            name = item.get("name")
+            if not isinstance(name, str) or not name.strip():
+                continue
+            category = item.get("category") if isinstance(item.get("category"), str) and item.get("category").strip() else None
+            difficulty = item.get("difficulty") if item.get("difficulty") in {"beginner", "intermediate", "advanced"} else None
+            aliases = [alias.strip() for alias in item.get("aliases") or [] if isinstance(alias, str) and alias.strip()]
+            self._add_concept(
+                concepts,
+                name,
+                "explicit",
+                category=category,
+                difficulty=difficulty,
+                aliases=aliases,
+            )
+
         # 1. Use structured expertise list (most reliable)
         for exp in teaching.get("expertise") or []:
             self._add_concept(concepts, exp, "expertise")
@@ -640,11 +664,17 @@ class ConceptExtractor:
         return list(concepts.values())
 
     def _add_concept(
-        self, concepts: dict[str, Concept], value: str, source: str
+        self,
+        concepts: dict[str, Concept],
+        value: str,
+        source: str,
+        category: str | None = None,
+        difficulty: str | None = None,
+        aliases: list[str] | None = None,
     ) -> None:
         """Parse, validate, and insert one concept into the accumulator dict."""
         clean = _clean_query(value).strip().lower()
-        if not clean or clean in concepts:
+        if not clean:
             return
         words = clean.split()
         if len(clean) < 4 or len(words) > 5:
@@ -653,8 +683,21 @@ class ConceptExtractor:
             return
         if all(w in self.BANNED_STARTS or w in self.BANNED_ENDS for w in words):
             return
-        difficulty = self._infer_difficulty(clean)
-        concepts[clean] = Concept(clean, difficulty, source, [])
+
+        existing = concepts.get(clean)
+        if existing:
+            if difficulty and existing.difficulty is None:
+                existing.difficulty = difficulty
+            if category and existing.category is None:
+                existing.category = category
+            if aliases:
+                existing.aliases = list(dict.fromkeys(existing.aliases + aliases))
+            return
+
+        if difficulty is None:
+            difficulty = self._infer_difficulty(clean)
+
+        concepts[clean] = Concept(clean, difficulty, source, aliases or [], category)
 
     def _infer_difficulty(self, name: str) -> str:
         """Infer concept difficulty using heuristics.
@@ -716,7 +759,16 @@ def generate_example(spec, category, concepts, generator=None, temperature=0.8,
     elif category == "refusal":
         concept = boundary or "boundary_enforcement"
     else:
-        concept = random.choice(concepts)
+        category_candidates = [c for c in concepts if getattr(c, "category", None) == category]
+        if category_candidates:
+            concept = random.choice(category_candidates)
+        else:
+            concept = random.choice(concepts)
+
+    if isinstance(concept, Concept) and difficulty is None and concept.difficulty:
+        difficulty = concept.difficulty
+
+    concept_category = getattr(concept, "category", None) if isinstance(concept, Concept) else None
 
     if generator:
         # ── LLM-powered generation ───────────────────────────────────────────
@@ -778,6 +830,7 @@ Return ONLY a JSON object with this exact structure:
                     "source": f"{technique if technique != 'template' else 'ollama'}:{generator.__class__.__name__}",
                     "split": "train",
                     "concept": str(concept),
+                    "concept_category": concept_category,
                     "difficulty": difficulty,
                     "safety_tags": [],
                     "content_hash": compute_content_hash(messages),
@@ -863,6 +916,7 @@ Return ONLY a JSON object with this exact structure:
         "source": "template:generate_dataset.py",
         "split": "train",
         "concept": concept_str,
+        "concept_category": concept_category,
         "difficulty": difficulty,
         "safety_tags": safety_tags,
         "content_hash": compute_content_hash(messages),
@@ -891,6 +945,7 @@ def generate_multi_turn_example(spec, concepts, generator, temperature=C.LLM_GEN
     npc_name = spec["npc_name"]
     system_prompt = spec["system_prompt"]
     concept = random.choice(concepts)
+    concept_category = getattr(concept, "category", None) if isinstance(concept, Concept) else None
 
     generation_prompt = f"""
 You are a synthetic data generator for training an NPC named {npc_name}.
@@ -936,6 +991,7 @@ Return ONLY a JSON object with this structure:
                     "source": f"llm:{generator.__class__.__name__}",
                     "split": "train",
                     "concept": str(concept),
+                    "concept_category": concept_category,
                     "difficulty": None,
                     "safety_tags": [],
                     "content_hash": compute_content_hash(messages),
