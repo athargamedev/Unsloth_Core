@@ -70,4 +70,5 @@ frontend_control/**/.next/
 
 # Secrets
 .env
+.env.local
 *.token

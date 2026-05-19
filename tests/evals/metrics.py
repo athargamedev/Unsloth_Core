@@ -20,7 +20,7 @@ from deepeval.test_case import SingleTurnParams
 
 def _ollama_judge() -> OllamaModel:
     return OllamaModel(
-        model=os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen2.5:7b"),
+        model=os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen3:latest"),
         base_url=os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"),
         temperature=float(os.getenv("DEEPEVAL_OLLAMA_TEMPERATURE", "0")),
     )

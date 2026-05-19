@@ -292,8 +292,9 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
 
     if not os.getenv("OLLAMA_NUM_PARALLEL"):
         print(
-            "[warn] OLLAMA_NUM_PARALLEL is not set. For 5x-10x faster async evaluation, "
-            "set 'export OLLAMA_NUM_PARALLEL=4' before starting your Ollama server.",
+            "[recommended] OLLAMA_NUM_PARALLEL is not set. For 5x-10x faster async evaluation, "
+            "set BEFORE starting Ollama:  export OLLAMA_NUM_PARALLEL=4",
+            "Also consider:  export OLLAMA_FLASH_ATTENTION=1  export OLLAMA_KV_CACHE_TYPE=q8_0",
             flush=True,
         )
 
@@ -367,7 +368,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run local DeepEval checks on a generated dataset")
     parser.add_argument("spec", help="Path to subject spec JSON")
     parser.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"])
-    parser.add_argument("--judge-model", default="qwen2.5:7b", help="Local Ollama judge model")
+    parser.add_argument("--judge-model", default="qwen3:latest", help="Local Ollama judge model")
     parser.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
     parser.add_argument("--judge-temperature", type=float, default=0.0)
     parser.add_argument("--cases-per-category", type=int, default=DEFAULT_PRODUCTION_CASES_PER_CATEGORY)

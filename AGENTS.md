@@ -8,7 +8,7 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 3.  **Validate Generation Inputs**: `./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready`
 4.  **Generate Dataset**: `./ucore generate subjects/NPC_specs/history_guide.json --technique template`
 5.  **Sanitize Dataset**: `./ucore sanitize subjects/datasets/history_guide/template/train.jsonl --output subjects/datasets/history_guide/template/train_clean.jsonl --strict-canonical --require-complete-metadata`
-6.  **Dataset Quality Gate**: `./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique template --judge-model qwen2.5:7b`
+6.  **Dataset Quality Gate**: `./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique template --judge-model qwen3:latest`
 7.  **Smoke Test Pipeline**: `./ucore pipeline subjects/NPC_specs/history_guide.json --preset smoke`
 8.  **Production Train**: `./ucore train subjects/NPC_specs/history_guide.json --technique template --preset fast-3b --export-gguf`
 9.  **Evaluate Model**: `./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html`
@@ -23,7 +23,7 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 | **Reference Docs** | `subjects/reference_docs/` | Centralized primer files for grounding dataset generation. |
 | **Schemas** | `subjects/schemas/` | JSON Schema validators for training data format. |
 | **Training Configs**| `configs/` | YAML base configs and presets. |
-| **DeepEval Dataset Gate** | `tests/evals/`, `scripts/dataset/dataset_eval.py` | Local dataset-quality evals using Ollama judge models. |
+| **DeepEval Dataset Gate** | `tests/evals/`, `scripts/dataset/dataset_eval.py` | Local dataset-quality evals using the `qwen3:latest` Ollama judge. |
 | **LoRA Adapters** | `outputs/` | Checkpoints and final adapters from training. |
 | **GGUF Exports** | `exports/` | LoRA adapter GGUFs (MBs) for Unity/LLMUnity. |
 | **Evaluations** | `eval/reports/`, `eval/results/feedback/` | HTML/markdown eval reports, structured per-concept feedback JSON. |
@@ -47,7 +47,7 @@ Transforms a subject spec into a playable NPC:
 
 3.  **Dataset Quality Eval**: `scripts/dataset/dataset_eval.py` + `tests/evals/test_dataset_generation_quality.py`
     - Runs DeepEval against `train_clean.jsonl` before training.
-    - Default local judge: Ollama `qwen2.5:7b` at `http://localhost:11434`.
+    - Default local judge: Ollama `qwen3:latest` (8.2B params) at `http://localhost:11434`.
     - Metrics check persona/category fit and training usefulness/specificity.
     - Outputs: `quality_summary.json` and `quality_failures.json` beside the dataset.
     - Treat `quality_failures.json` as the source of truth for what to regenerate or rewrite. Do not lower thresholds or delete rows to force a pass.
@@ -129,7 +129,7 @@ A local Supabase instance can track:
 ## 🤖 AI Agent Best Practices
 - **Always use `ucore`**: Prefer the unified CLI over direct script calls.
 - **Reference-doc contract**: Use `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md` and `subjects/reference_docs/README.md`. A primer must have one H1, at least 5 H2 sections, at least 20 concrete bullets, at least 250 words, and safety/refusal/boundary/misconception notes.
-- **Dataset gate before training**: Run `./ucore dataset-eval <spec> --technique <technique>` after sanitize and before SFT. Use local Ollama `qwen2.5:7b` unless the user explicitly chooses another local judge.
+- **Dataset gate before training**: Run `./ucore dataset-eval <spec> --technique <technique>` after sanitize and before SFT. Uses local Ollama `qwen3:latest` as the judge (configured in `tests/evals/metrics.py` and `scripts/dataset/dataset_eval.py`).
 - **DeepEval artifacts**: `.deepeval/` is local runtime state and ignored. Dataset gate outputs `quality_summary.json` and `quality_failures.json` are regenerable and ignored.
 - **Export mode**: `ucore export <npc_key>` defaults to adapter-only mode. Use `--full-merge` for standalone merged GGUFs.
 - **Evaluation**: Use `./ucore evaluate --base-model <base.gguf>` to evaluate adapter GGUFs — no full-merge needed. Uses `llama-server --lora`, same mechanism as LLMUnity runtime. Base GGUF at `Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf`.
@@ -141,6 +141,59 @@ A local Supabase instance can track:
 - **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. `llama-server` (inference with `--lora` support), `llama-quantize` (fast local quantization), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary.
 - **Error Handling**: Check `outputs/{npc_key}/runs/` for TensorBoard logs, `eval/results/` for validation metrics.
 - **Before generating a dataset**: Read the `subjects/NPC_specs/*.json` spec and the `subjects/reference_docs/*.md` primer to understand content grounding. If DeepEval fails, fix generation, prompts, concepts, or reference material first; do not change metric thresholds as the first response.
+
+## ⚡ Ollama Performance Tuning
+
+The local Ollama server is tuned for maximum evaluation throughput:
+
+### Environment Variables (systemd override)
+Set via `/etc/systemd/system/ollama.service.d/override.conf`:
+
+| Variable | Value | Effect |
+|----------|-------|--------|
+| `OLLAMA_NUM_PARALLEL` | `4` | 4 concurrent request slots → 5-10x faster DeepEval async evaluation |
+| `OLLAMA_FLASH_ATTENTION` | `1` | Enables flash attention (free speed + memory reduction) |
+| `OLLAMA_KV_CACHE_TYPE` | `q8_0` | 8-bit KV cache halves context memory with near-zero quality loss |
+
+### Judge Model Pipeline
+
+| Layer | Model | Params | Quant | Size |
+|-------|-------|--------|-------|------|
+| **Default judge** (dataset-eval) | `qwen3:latest` | 8.2B | Q4_K_M | 4.9GB |
+| **Fallback** (env `OLLAMA_MODEL_NAME`) | `qwen3:latest` | 8.2B | Q4_K_M | 4.9GB |
+
+The judge is configured at three levels (in priority order):
+1. CLI flag: `--judge-model qwen3:latest` (passed by `dataset_eval.py`)
+2. Env var: `DEEPEVAL_OLLAMA_MODEL` (injected by `dataset_eval.py` before `deepeval test run`)
+3. Code default: `"qwen3:latest"` in `tests/evals/metrics.py`
+
+### Restarting Ollama with Tuning
+```bash
+# The systemd override is already active. To modify:
+sudo systemctl stop ollama
+# Edit /etc/systemd/system/ollama.service.d/override.conf
+# Then:
+sudo systemctl daemon-reload
+sudo systemctl restart ollama
+```
+
+### GPU + CPU Offloading
+Ollama (via llama.cpp) automatically distributes model layers between GPU and CPU when VRAM is insufficient. For our RTX 3060 6GB:
+- **7-8B models** (Q4_K_M): Full GPU offload (~4.9GB weights + ~1GB KV cache overhead)
+- **14B+ models** (Q4_K_M): Partial offload — Ollama auto-partitions layers by available VRAM
+- The `num_gpu` parameter (Modelfile or API option) controls explicit layer allocation
+
+To verify GPU utilization:
+```bash
+ollama ps              # Shows running models and GPU usage
+nvidia-smi             # VRAM consumption per process
+```
+
+### LM Studio Comparison
+Ollama matches LM Studio's offloading capability (both use llama.cpp under the hood) and is **better suited** for our concurrent DeepEval workload:
+- `OLLAMA_NUM_PARALLEL` enables native parallel request handling (LM Studio queues sequentially)
+- No second service or port needed
+- Deeper DeepEval integration via native `OllamaModel` class
 
 ## 📊 W&B Integration
 Weights & Biases tracks every training run with:
