@@ -129,7 +129,7 @@ export default function App() {
     alpha: 32,
     baseModel: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
     wandb: false,
-    technique: 'onyx',
+    technique: 'template',
   });
 
   const {
@@ -438,6 +438,8 @@ export default function App() {
     switch (commandId) {
       case 'dataset-generate':
         return { spec: trainingConfig.spec, options: { technique: trainingConfig.technique, modelId: trainingConfig.baseModel } };
+      case 'generate-ollama':
+        return { spec: trainingConfig.spec, options: { model: 'llama3.2:3b' } };
       case 'train':
       case 'pipeline':
         return { spec: trainingConfig.spec, preset: trainingConfig.preset };
@@ -517,7 +519,17 @@ export default function App() {
 
   const handleGenerateDataset = async () => {
     try {
-      await triggerCommand({ commandId: 'dataset-generate', type: 'Dataset', spec: trainingConfig.spec, options: { technique: trainingConfig.technique, modelId: trainingConfig.baseModel } });
+      const commandId = trainingConfig.technique === 'ollama' ? 'generate-ollama' : 'dataset-generate';
+      await triggerCommand({ 
+        commandId, 
+        type: 'Dataset', 
+        spec: trainingConfig.spec, 
+        options: { 
+          technique: trainingConfig.technique,
+          modelId: trainingConfig.baseModel,
+          model: 'llama3.2:3b',
+        } 
+      });
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Dataset generation failed');
     }
@@ -632,7 +644,17 @@ export default function App() {
 
   const handleRightSidebarGenerateDataset = async () => {
     try {
-      await triggerCommand({ commandId: 'dataset-generate', type: 'Dataset', spec: trainingConfig.spec, options: { technique: trainingConfig.technique, modelId: trainingConfig.baseModel } });
+      const commandId = trainingConfig.technique === 'ollama' ? 'generate-ollama' : 'dataset-generate';
+      await triggerCommand({ 
+        commandId, 
+        type: 'Dataset', 
+        spec: trainingConfig.spec, 
+        options: { 
+          technique: trainingConfig.technique,
+          modelId: trainingConfig.baseModel,
+          model: 'llama3.2:3b',
+        } 
+      });
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Dataset generation failed');
     }
@@ -1164,14 +1186,20 @@ export default function App() {
                   datasets={datasets}
                   trainingConfig={trainingConfig}
                   onGenerateDataset={(npcKey) => {
-                    const cmd = availableCommands.find(c => c.id === 'dataset-generate');
+                    const isOllama = trainingConfig.technique === 'ollama';
+                    const commandId = isOllama ? 'generate-ollama' : 'dataset-generate';
+                    const cmd = availableCommands.find(c => c.id === commandId);
                     if (cmd) {
-                      const payload = {
+                      const payload: Record<string, unknown> = {
                         commandId: cmd.id,
                         type: cmd.type,
                         spec: `subjects/${npcKey}.json`,
-                        options: { technique: 'ollama' }
                       };
+                      if (isOllama) {
+                        payload.options = { model: 'llama3.2:3b' };
+                      } else {
+                        payload.options = { technique: trainingConfig.technique };
+                      }
                       setSelectedCommand(cmd.id);
                       setCommandPayload(payload);
                       setCommandModalOpen(true);

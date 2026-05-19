@@ -14,13 +14,18 @@ from pathlib import Path
 
 import pytest
 from deepeval import assert_test
-from deepeval.test_case import LLMTestCase
+from deepeval.test_case import ConversationalTestCase, LLMTestCase, Turn
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from metrics import DATASET_QUALITY_METRICS
+from metrics import (
+    CONVERSATIONAL_METRICS,
+    DATASET_QUALITY_METRICS,
+    RAG_QUALITY_METRICS,
+    SAFETY_METRICS,
+)
 
 DEFAULT_NPCS = ("history_guide", "chef_assistant")
 DEFAULT_CATEGORIES = ("identity", "teaching", "dialogue", "quest", "refusal")
@@ -115,6 +120,7 @@ def _build_cases() -> list[LLMTestCase]:
                     input=eval_input,
                     actual_output=assistant_message,
                     context=context,
+                    retrieval_context=context,
                     metadata={
                         "npc_key": npc_key,
                         "category": category,
@@ -129,9 +135,60 @@ def _build_cases() -> list[LLMTestCase]:
     return cases
 
 
+def _build_conversational_cases() -> list[ConversationalTestCase]:
+    npc_keys = _csv_env("DEEPEVAL_DATASET_NPC_KEYS", DEFAULT_NPCS)
+    categories = _csv_env("DEEPEVAL_DATASET_CATEGORIES", DEFAULT_CATEGORIES)
+    technique = os.getenv("DEEPEVAL_DATASET_TECHNIQUE", DEFAULT_TECHNIQUE)
+    per_category = int(os.getenv("DEEPEVAL_DATASET_CASES_PER_CATEGORY", "1"))
+    cases = []
+
+    for npc_key in npc_keys:
+        selected_by_category = {category: 0 for category in categories}
+
+        for row in _iter_rows(npc_key, technique):
+            metadata = row.get("metadata", {})
+            category = metadata.get("category")
+            if category not in selected_by_category:
+                continue
+            if selected_by_category[category] >= per_category:
+                continue
+            selected_by_category[category] += 1
+
+            messages = row.get("messages", [])
+            turns = []
+            for msg in messages:
+                role = msg.get("role")
+                content = msg.get("content", "")
+                if role in ("user", "assistant"):
+                    turns.append(Turn(role=role, content=content))
+
+            if len(turns) >= 2:
+                cases.append(
+                    ConversationalTestCase(
+                        name=f"{npc_key}:conv:{category}:{row['_line_number']}",
+                        turns=turns,
+                        metadata={
+                            "npc_key": npc_key,
+                            "category": category,
+                            "source_path": row["_path"],
+                            "line_number": row["_line_number"],
+                        },
+                        tags=[npc_key, category, "conversational"],
+                    )
+                )
+
+    return cases
+
+
 TEST_CASES = _build_cases()
+CONVERSATIONAL_TEST_CASES = _build_conversational_cases()
 
 
 @pytest.mark.parametrize("test_case", TEST_CASES, ids=lambda case: case.name)
 def test_generated_dataset_row_quality(test_case: LLMTestCase):
-    assert_test(test_case=test_case, metrics=DATASET_QUALITY_METRICS)
+    assert_test(test_case=test_case, metrics=DATASET_QUALITY_METRICS + RAG_QUALITY_METRICS + SAFETY_METRICS)
+
+
+@pytest.mark.parametrize("test_case", CONVERSATIONAL_TEST_CASES, ids=lambda case: case.name)
+def test_generated_dataset_conversational_quality(test_case: ConversationalTestCase):
+    assert_test(test_case=test_case, metrics=CONVERSATIONAL_METRICS)

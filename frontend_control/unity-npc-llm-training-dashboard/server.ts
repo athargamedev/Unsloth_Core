@@ -754,6 +754,32 @@ const commandDefinitions: CommandDefinition[] = [
       return args;
     },
   },
+  {
+    id: "generate-ollama",
+    label: "Generate Dataset (Ollama Optimized)",
+    icon: "database",
+    color: "accent",
+    type: "Dataset",
+    requiredFields: ["spec"],
+    build: (payload) => {
+      const args = ["./ucore", "generate-ollama", parsedSpec(payload)];
+      const model = String(optionValue(payload, "model") || "").trim();
+      if (model) args.push("--model", sanitizeToken(model, "model"));
+      const batchSize = Number(optionValue(payload, "batchSize"));
+      if (batchSize && batchSize !== 4) args.push("--batch-size", String(batchSize));
+      const temperature = Number(optionValue(payload, "temperature"));
+      if (temperature && temperature !== 0.7) args.push("--temperature", String(temperature));
+      const mtRatio = Number(optionValue(payload, "multiTurnRatio"));
+      if (mtRatio && mtRatio !== 0.25) args.push("--multi-turn-ratio", String(mtRatio));
+      const seed = Number(optionValue(payload, "seed"));
+      if (seed && seed !== 42) args.push("--seed", String(seed));
+      const url = String(optionValue(payload, "url") || "").trim();
+      if (url && url !== "http://localhost:11434") args.push("--url", sanitizeToken(url, "url"));
+      const maxRetries = Number(optionValue(payload, "maxRetries"));
+      if (maxRetries && maxRetries !== 3) args.push("--max-retries", String(maxRetries));
+      return args;
+    },
+  },
 ];
 
 const commandMap = new Map(commandDefinitions.map((cmd) => [cmd.id, cmd]));
@@ -772,6 +798,7 @@ const parseLoss = (line: string): number | null => {
 const commandStageIndex = (job: Job): number => {
   switch (job.commandId) {
     case "dataset-generate":
+    case "generate-ollama":
     case "dataset-sanitize":
     case "dataset-eval":
     case "validate-spec":
@@ -1171,7 +1198,7 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
 
     let commandId = "pipeline";
     let type = "Pipeline";
-    if (args.includes(" generate ") || args.includes("generate_dataset.py")) {
+    if (args.includes(" generate ") || args.includes("generate-ollama") || args.includes("generate_dataset.py")) {
       commandId = "dataset-generate";
       type = "Dataset";
     } else if (args.includes(" sanitize ") || args.includes("sanitize_dataset.py")) {
@@ -2344,7 +2371,7 @@ The user can execute these commands directly from your interface.`;
       const spec = String(req.body?.spec || "").trim();
       const preset = String(req.body?.preset || "").trim();
       const npcKey = spec.replace(/^subjects\//, "").replace(/\.json$/, "");
-      const technique = String(req.body?.technique || (npcKey === "workflow_assistant" ? "docs" : "onyx")).trim();
+      const technique = String(req.body?.technique || (npcKey === "workflow_assistant" ? "docs" : "template")).trim();
       if (!spec) return res.status(400).json({ error: "spec is required" });
 
       const isWorkflowTool = npcKey === "workflow_assistant";
@@ -2662,10 +2689,10 @@ The user can execute these commands directly from your interface.`;
     const baseDefaultsByCommand: Record<string, Record<string, FieldSchema>> = {
       "dataset-generate": {
         spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json", description: "Subject spec path" },
-        "options.technique": { type: "string", required: false, default: "onyx", enum: ["onyx", "ollama", "template", "openai", "anthropic", "docs"] },
+        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
       },
       "dataset-sanitize": {
-        "options.datasetPath": { type: "string", required: true, default: "subjects/datasets/chemistry_instructor/onyx/train.jsonl", description: "Train dataset path" },
+        "options.datasetPath": { type: "string", required: true, default: "subjects/datasets/chemistry_instructor/template/train.jsonl", description: "Train dataset path" },
       },
       train: {
         spec: { type: "string", required: true, default: "subjects/history_guide.json" },
@@ -2680,7 +2707,7 @@ The user can execute these commands directly from your interface.`;
       pipeline: {
         spec: { type: "string", required: true, default: "subjects/history_guide.json" },
         preset: { type: "string", required: false, default: "fast-3b", ...(presetOptions.length ? { enum: presetOptions } : {}) },
-        "options.technique": { type: "string", required: false, default: "onyx", enum: ["onyx", "ollama", "template", "openai", "anthropic"] },
+        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
         "options.track": { type: "boolean", required: false, default: false },
         "options.wandb": { type: "boolean", required: false, default: false },
       },
@@ -2727,6 +2754,16 @@ The user can execute these commands directly from your interface.`;
         spec: { type: "string", required: true, default: "subjects/workflow_assistant.json", description: "Subject spec path" },
         manifest: { type: "string", required: false, default: "docs/corpora/workflow_assistant_docs.json", description: "Corpus manifest path" },
         "options.technique": { type: "string", required: false, default: "docs", enum: ["docs"] },
+      },
+      "generate-ollama": {
+        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json", description: "Subject spec path" },
+        "options.model": { type: "string", required: false, default: "llama3.2:3b", description: "Ollama model name" },
+        "options.batchSize": { type: "number", required: false, default: 4, description: "Concurrent generation tasks" },
+        "options.temperature": { type: "number", required: false, default: 0.7, description: "Generation temperature (0.0-1.0)" },
+        "options.multiTurnRatio": { type: "number", required: false, default: 0.25, description: "Fraction of multi-turn dialogues" },
+        "options.seed": { type: "number", required: false, default: 42, description: "Random seed for reproducibility" },
+        "options.url": { type: "string", required: false, default: "http://localhost:11434", description: "Ollama server URL" },
+        "options.maxRetries": { type: "number", required: false, default: 3, description: "Max retries per generation" },
       },
     };
 

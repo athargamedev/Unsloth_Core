@@ -50,6 +50,14 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
   const [loadingQuality, setLoadingQuality] = useState(false);
   const [qualityError, setQualityError] = useState<string | null>(null);
   const [showFailures, setShowFailures] = useState(false);
+  const [ollamaConfig, setOllamaConfig] = useState({
+    model: 'llama3.2:3b',
+    batchSize: 4,
+    temperature: 0.7,
+    multiTurnRatio: 0.25,
+    seed: 42,
+  });
+  const [showOllamaOptions, setShowOllamaOptions] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   const selectedSubject = subjects.find((s) => s.id === selectedSubjectId);
@@ -59,66 +67,90 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
   const npcKey = selectedSubjectId;
 
   // Pipeline steps state
-  const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>([
-    {
-      id: 'validate-spec',
-      label: 'Validate Spec',
-      icon: <FileText className="w-3.5 h-3.5" />,
-      color: 'accent',
-      commandId: 'validate-spec',
-      buildPayload: (subjectPath: string) => ({
+  const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>([]);
+
+  // Rebuild pipeline steps when technique or ollama config changes
+  useEffect(() => {
+    const isOllama = selectedTechnique === 'ollama';
+    const steps: PipelineStep[] = [
+      {
+        id: 'validate-spec',
+        label: 'Validate Spec',
+        icon: <FileText className="w-3.5 h-3.5" />,
+        color: 'accent',
         commandId: 'validate-spec',
-        type: 'Validation',
-        spec: subjectPath,
-        options: { generationReady: true },
-      }),
-      status: 'idle',
-      log: [],
-    },
-    {
-      id: 'dataset-generate',
-      label: 'Generate Dataset',
-      icon: <Database className="w-3.5 h-3.5" />,
-      color: 'accent',
-      commandId: 'dataset-generate',
-      buildPayload: (subjectPath: string, npcKey: string, technique: string) => ({
-        commandId: 'dataset-generate',
-        type: 'Dataset',
-        spec: subjectPath,
-        options: { technique },
-      }),
-      status: 'idle',
-      log: [],
-    },
-    {
-      id: 'dataset-sanitize',
-      label: 'Sanitize Dataset',
-      icon: <Shield className="w-3.5 h-3.5" />,
-      color: 'warning',
-      commandId: 'dataset-sanitize',
-      buildPayload: (_subjectPath: string, npcKey: string, technique: string) => ({
+        buildPayload: (subjectPath: string) => ({
+          commandId: 'validate-spec',
+          type: 'Validation',
+          spec: subjectPath,
+          options: { generationReady: true },
+        }),
+        status: 'idle',
+        log: [],
+      },
+      {
+        id: 'dataset-generate',
+        label: isOllama ? 'Generate Dataset (Ollama Optimized)' : 'Generate Dataset',
+        icon: <Database className="w-3.5 h-3.5" />,
+        color: 'accent',
+        commandId: isOllama ? 'generate-ollama' : 'dataset-generate',
+        buildPayload: (subjectPath: string, npcKey: string, technique: string) => {
+          if (isOllama) {
+            return {
+              commandId: 'generate-ollama',
+              type: 'Dataset',
+              spec: subjectPath,
+              options: {
+                model: ollamaConfig.model,
+                batchSize: ollamaConfig.batchSize,
+                temperature: ollamaConfig.temperature,
+                multiTurnRatio: ollamaConfig.multiTurnRatio,
+                seed: ollamaConfig.seed,
+              },
+            };
+          }
+          return {
+            commandId: 'dataset-generate',
+            type: 'Dataset',
+            spec: subjectPath,
+            options: { technique },
+          };
+        },
+        status: 'idle',
+        log: [],
+      },
+      {
+        id: 'dataset-sanitize',
+        label: 'Sanitize Dataset',
+        icon: <Shield className="w-3.5 h-3.5" />,
+        color: 'warning',
         commandId: 'dataset-sanitize',
-        type: 'Dataset',
-        options: { datasetPath: `subjects/datasets/${npcKey}/${technique}/train.jsonl` },
-      }),
-      status: 'idle',
-      log: [],
-    },
-    {
-      id: 'dataset-eval',
-      label: 'Evaluate Dataset',
-      icon: <FlaskConical className="w-3.5 h-3.5" />,
-      color: 'warning',
-      commandId: 'dataset-eval',
-      buildPayload: (subjectPath: string, npcKey: string, technique: string) => ({
+        buildPayload: (_subjectPath: string, npcKey: string, technique: string) => ({
+          commandId: 'dataset-sanitize',
+          type: 'Dataset',
+          options: { datasetPath: `subjects/datasets/${npcKey}/${technique}/train.jsonl` },
+        }),
+        status: 'idle',
+        log: [],
+      },
+      {
+        id: 'dataset-eval',
+        label: 'Evaluate Dataset',
+        icon: <FlaskConical className="w-3.5 h-3.5" />,
+        color: 'warning',
         commandId: 'dataset-eval',
-        type: 'Dataset',
-        options: { spec: subjectPath, technique },
-      }),
-      status: 'idle',
-      log: [],
-    },
-  ]);
+        buildPayload: (subjectPath: string, _npcKey: string, technique: string) => ({
+          commandId: 'dataset-eval',
+          type: 'Dataset',
+          spec: subjectPath,
+          options: { technique },
+        }),
+        status: 'idle',
+        log: [],
+      },
+    ];
+    setPipelineSteps(steps);
+  }, [selectedTechnique, ollamaConfig]);
 
   // Sync job logs into pipeline steps
   useEffect(() => {
@@ -304,6 +336,87 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
             </p>
           </div>
         </div>
+
+        {/* Advanced Ollama Options */}
+        {selectedTechnique === 'ollama' && (
+          <div className="p-3 border border-line bg-surface/50 rounded-sm">
+            <button
+              onClick={() => setShowOllamaOptions(!showOllamaOptions)}
+              className="w-full flex items-center justify-between"
+            >
+              <label className="text-[10px] font-bold text-ink/40 uppercase tracking-wider">
+                <Database className="w-3 h-3 inline mr-1" />
+                Advanced Ollama Options
+              </label>
+              {showOllamaOptions ? (
+                <ChevronUp className="w-3 h-3 text-ink/30" />
+              ) : (
+                <ChevronDown className="w-3 h-3 text-ink/30" />
+              )}
+            </button>
+            {showOllamaOptions && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Model</label>
+                  <input
+                    type="text"
+                    value={ollamaConfig.model}
+                    onChange={(e) => setOllamaConfig({...ollamaConfig, model: e.target.value})}
+                    className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Batch Size</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={16}
+                    value={ollamaConfig.batchSize}
+                    onChange={(e) => setOllamaConfig({...ollamaConfig, batchSize: parseInt(e.target.value) || 4})}
+                    className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Temperature</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={ollamaConfig.temperature}
+                    onChange={(e) => setOllamaConfig({...ollamaConfig, temperature: parseFloat(e.target.value) || 0.7})}
+                    className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Multi-turn Ratio</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={ollamaConfig.multiTurnRatio}
+                    onChange={(e) => setOllamaConfig({...ollamaConfig, multiTurnRatio: parseFloat(e.target.value) || 0.25})}
+                    className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Seed</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={ollamaConfig.seed}
+                    onChange={(e) => setOllamaConfig({...ollamaConfig, seed: parseInt(e.target.value) || 42})}
+                    className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+            )}
+            <p className="mt-2 text-[9px] text-ink/30 italic">
+              These options control the optimized Ollama generator with advanced retry logic and concurrency.
+            </p>
+          </div>
+        )}
 
         {/* Pipeline Steps */}
         <div className="border border-line bg-surface/30 rounded-sm">

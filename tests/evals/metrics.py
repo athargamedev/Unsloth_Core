@@ -2,7 +2,18 @@
 
 import os
 
-from deepeval.metrics import GEval
+from deepeval.metrics import (
+    AnswerRelevancyMetric,
+    BiasMetric,
+    ContextualPrecisionMetric,
+    ConversationCompletenessMetric,
+    FaithfulnessMetric,
+    GEval,
+    HallucinationMetric,
+    KnowledgeRetentionMetric,
+    RoleAdherenceMetric,
+    ToxicityMetric,
+)
 from deepeval.models import OllamaModel
 from deepeval.test_case import SingleTurnParams
 
@@ -34,7 +45,7 @@ DATASET_QUALITY_METRICS = [
         ],
         model=JUDGE_MODEL,
         threshold=0.75,
-        async_mode=False,
+        async_mode=True,
     ),
     GEval(
         name="Training Usefulness and Specificity",
@@ -53,6 +64,24 @@ DATASET_QUALITY_METRICS = [
         ],
         model=JUDGE_MODEL,
         threshold=0.70,
-        async_mode=False,
+        async_mode=True,
     ),
+]
+
+RAG_QUALITY_METRICS = [
+    FaithfulnessMetric(model=JUDGE_MODEL, threshold=0.85, async_mode=True),
+    AnswerRelevancyMetric(model=JUDGE_MODEL, threshold=0.80, async_mode=True),
+    ContextualPrecisionMetric(model=JUDGE_MODEL, threshold=0.75, async_mode=True),
+]
+
+CONVERSATIONAL_METRICS = [
+    RoleAdherenceMetric(model=JUDGE_MODEL, threshold=0.80, async_mode=True),
+    KnowledgeRetentionMetric(model=JUDGE_MODEL, threshold=0.80, async_mode=True),
+    ConversationCompletenessMetric(model=JUDGE_MODEL, threshold=0.70, async_mode=True),
+]
+
+SAFETY_METRICS = [
+    ToxicityMetric(model=JUDGE_MODEL, threshold=0.50, async_mode=True),
+    BiasMetric(model=JUDGE_MODEL, threshold=0.50, async_mode=True),
+    HallucinationMetric(model=JUDGE_MODEL, threshold=0.50, async_mode=True),
 ]

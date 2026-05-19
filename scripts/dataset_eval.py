@@ -75,7 +75,9 @@ def metric_payload(metric: dict) -> dict:
 
 
 def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, judge_model: str, command: list[str]) -> tuple[dict, list[dict]]:
-    test_cases = result.get("testCases") or result.get("test_cases") or []
+    test_cases = (result.get("testCases") or result.get("test_cases") or []) + (
+        result.get("conversationalTestCases") or result.get("conversational_test_cases") or []
+    )
     total = len(test_cases)
     passed = sum(1 for case in test_cases if case.get("success") is True)
     failed = total - passed
@@ -169,6 +171,13 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     ]
     if args.ignore_errors:
         cmd.append("--ignore-errors")
+
+    if not os.getenv("OLLAMA_NUM_PARALLEL"):
+        print(
+            "[warn] OLLAMA_NUM_PARALLEL is not set. For 5x-10x faster async evaluation, "
+            "set 'export OLLAMA_NUM_PARALLEL=4' before starting your Ollama server.",
+            flush=True,
+        )
 
     env = os.environ.copy()
     env.update(

@@ -1845,6 +1845,42 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
     }
 
 
+def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, output_path: str):
+    """Generates complex evaluation test cases directly from an NPC reference document."""
+    try:
+        from deepeval.dataset import EvaluationDataset
+        from deepeval.models import OllamaModel
+        from deepeval.synthesizer import Synthesizer
+    except ImportError:
+        print("[warn] deepeval is not installed or import failed. Skipping golden synthesis.")
+        return
+
+    text = Path(ref_doc_path).read_text(encoding="utf-8")
+    chunks = [c.strip() for c in text.split("\n\n") if len(c.strip()) > 50]
+
+    judge = OllamaModel(
+        model=os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen2.5:7b"),
+        base_url=os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"),
+        temperature=float(os.getenv("DEEPEVAL_OLLAMA_TEMPERATURE", "0")),
+    )
+
+    synthesizer = Synthesizer(model=judge, async_mode=True)
+    print(f"Synthesizing goldens for {npc_key} using DeepEval...")
+    try:
+        synthesizer.generate_test_cases(
+            docs=chunks,
+            num_test_cases=20,
+            max_retries=3,
+            include_expected_output=True,
+        )
+        dataset = EvaluationDataset(test_cases=synthesizer.test_cases)
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        dataset.save_as_json(output_path)
+        print(f"Saved {len(synthesizer.test_cases)} synthetic goldens to {output_path}")
+    except Exception as e:
+        print(f"[error] DeepEval golden synthesis failed: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate ChatML dataset from a subject spec")
     parser.add_argument("spec", help="Path to subject spec JSON file")
@@ -1871,6 +1907,8 @@ def main():
                         help="Path to PeerLM evaluation report JSON for automated RLAIF category boosting")
     parser.add_argument("--telemetry-ipc", default=None,
                         help="Path to JSON IPC file for real-time dashboard telemetry reporting")
+    parser.add_argument("--synthesize-goldens", action="store_true",
+                        help="Generate synthetic evaluation goldens using DeepEval Synthesizer")
     args = parser.parse_args()
 
     # Import re for JSON extraction
@@ -1902,6 +1940,14 @@ def main():
     print(f"Generating dataset for: {spec['npc_name']}")
     print(f"  Subject: {spec['subject']}")
     print()
+
+    if args.synthesize_goldens:
+        ref_doc = spec.get("reference_doc")
+        if ref_doc and (PROJECT_ROOT / ref_doc).exists():
+            golden_path = Path(output_path).parent / "synthetic_goldens.json"
+            generate_synthetic_goldens_from_primer(str(PROJECT_ROOT / ref_doc), npc_key, str(golden_path))
+        else:
+            print(f"  [warn] No reference_doc found for {npc_key} or file missing. Skipping golden synthesis.")
 
     # ── Apply concept-focus boost ─────────────────────────────────────────
     if args.concept_focus:
