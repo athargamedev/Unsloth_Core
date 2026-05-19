@@ -81,30 +81,23 @@ GENERIC_FILLER_REPLACEMENTS = [
 ]
 
 
-def build_category_generation_prompt(category: str, concept_str: str, npc_name: str) -> str:
+def build_category_generation_prompt(category: str, concept_str: str, npc_name: str, player_role: str = "player") -> str:
     """Return category-specific instructions for Ollama dataset generation."""
     prompts = {
         "identity": (
-            f"Create a natural user question asking who {npc_name} is and a response that names the NPC, "
-            "states their role, and gives one concrete subject area they can teach."
+            f"Create a natural user question asking who {npc_name} is and an immersive, in-character response."
         ),
         "teaching": (
-            f"Create a student question about '{concept_str}' and a 1-3 sentence explanation with at least "
-            "one concrete, subject-specific fact. Avoid vague filler."
+            f"Create a question from the perspective of a {player_role} about '{concept_str}' and a helpful explanation."
         ),
         "dialogue": (
-            f"Create a confused follow-up about '{concept_str}' and a helpful answer that directly resolves "
-            "the confusion using one concrete example."
+            f"Create a casual dialogue turn where the {player_role} asks or talks about '{concept_str}' and a helpful answer."
         ),
         "quest": (
-            f"Create an interactive mini-task about '{concept_str}' with a concise scenario or practice question."
+            f"Create a dialogue turn where the {player_role} asks for or discusses a challenge or quest regarding '{concept_str}'."
         ),
         "refusal": (
-            f"Create an out-of-scope or unsafe question related to '{concept_str}' and a refusal that is exactly "
-            "1-3 short sentences. The assistant must: (1) state the boundary plainly, (2) refuse the unsafe or "
-            "out-of-scope request without answering its harmful part, and (3) redirect to a concrete in-scope fact, "
-            "safe alternative, or evidence-based follow-up. Do not answer the rejected request. Avoid vague filler like "
-            "'ask me anything about X.'"
+            f"Create a question from the {player_role} that is out-of-scope for {npc_name} and a polite refusal in-character."
         ),
     }
     return prompts.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
@@ -409,39 +402,58 @@ class OllamaDatasetGenerator:
         return "generic boundary"
 
     async def generate_example_llm(self, category: str, concept_str: str, 
-                                   difficulty: str = None, dialogue_type: str = None,
-                                   scenario_name: str = None, boundary: str = None,
-                                   session=None, executor=None, temperature: float = 0.7,
-                                   multi_turn: bool = False) -> dict | None:
+                                    difficulty: str = None, dialogue_type: str = None,
+                                    scenario_name: str = None, boundary: str = None,
+                                    session=None, executor=None, temperature: float = 0.7,
+                                    multi_turn: bool = False) -> dict | None:
         """Generate single example using LLM."""
         npc_name = self.spec["npc_name"]
         system_prompt = self.spec["system_prompt"]
         
+        game_context = self.spec.get("game_context") or {}
+        setting = game_context.get("setting", "")
+        relationship = game_context.get("relationship_to_player", "")
+
+        dialogue_conf = self.spec.get("dialogue") or {}
+        max_sentences = dialogue_conf.get("max_sentences", 3)
+        max_chars = dialogue_conf.get("max_characters", 200)
+        player_archetypes = dialogue_conf.get("player_archetypes", ["player"])
+        player_role = random.choice(player_archetypes) if player_archetypes else "player"
+
         grounding = ""
         if self.retriever and category not in ["identity", "refusal"]:
             contexts = self.retriever.get_grounding_context(concept_str, top_k=2)
             if contexts:
                 grounding = "\nContext:\n" + "\n".join(contexts[:2])
         
-        category_prompt = build_category_generation_prompt(category, concept_str, npc_name)
+        category_prompt = build_category_generation_prompt(category, concept_str, npc_name, player_role)
         turn_instruction = ""
-        json_shape = '  "user": "user message (1-2 sentences)",\n  "assistant": "NPC response (1-3 sentences, in character, no AI disclaimers)"'
+        json_shape = f'  "user": "user message as a {player_role} (1-2 sentences)",\n  "assistant": "NPC response (1-{max_sentences} sentences, max {max_chars} chars, in character)"'
         if multi_turn:
             turn_instruction = "\nMake this a two-turn exchange: first answer, then a brief follow-up question and answer."
             json_shape = (
-                '  "user": "first user message",\n'
-                '  "assistant": "first NPC response (1-3 sentences)",\n'
-                '  "user2": "follow-up user message",\n'
-                '  "assistant2": "second NPC response (1-3 sentences)"'
+                f'  "user": "first user message as a {player_role}",\n'
+                f'  "assistant": "first NPC response (1-{max_sentences} sentences, max {max_chars} chars)",\n'
+                f'  "user2": "follow-up user message as a {player_role}",\n'
+                f'  "assistant2": "second NPC response (1-{max_sentences} sentences, max {max_chars} chars)"'
             )
         
         generation_prompt = f"""Generate a training dialogue in JSON format for NPC '{npc_name}'.
 
 System Prompt: {system_prompt}
+Setting: {setting or 'Not specified'}
+Player Relationship: {relationship or 'Not specified'}
 
 Task: {category_prompt}{turn_instruction}
 Category: {category}
 Concept: {concept_str}{grounding}
+
+Instructions:
+- The user message must sound like an in-game player ({player_role}).
+- The assistant response must follow {npc_name}'s system prompt perfectly.
+- Speak 1-{max_sentences} sentences (MAXIMUM {max_chars} characters).
+- NEVER use markdown lists, bullet points, bolding, or tables (keep text clean for game UI).
+- Never mention being an AI or language model.
 
 Return JSON:
 {{
@@ -480,13 +492,13 @@ Return JSON:
                 return None
             
             # Validate with guardrail
-            is_valid, reason = self.guardrail.validate(asst_msg, [grounding], npc_name)
+            is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
             if not is_valid:
                 logger.warning(f"Guardrail rejection: {reason}")
                 if category == "refusal":
                     boundary_hint = self._infer_refusal_boundary(user_msg, concept_str)
                     asst_msg = generate_refusal_response(self.spec, boundary=boundary_hint)
-                    is_valid, reason = self.guardrail.validate(asst_msg, [grounding], npc_name)
+                    is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
                     if not is_valid:
                         logger.warning(f"Refusal fallback rejected: {reason}")
                         return None
@@ -498,7 +510,7 @@ Return JSON:
                 asst_msg = generate_refusal_response(self.spec, boundary=boundary_hint)
                 user2_msg = ""
                 asst2_msg = ""
-                is_valid, reason = self.guardrail.validate(asst_msg, [grounding], npc_name)
+                is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
                 if not is_valid:
                     logger.warning(f"Refusal fallback rejected: {reason}")
                     return None
@@ -509,7 +521,7 @@ Return JSON:
                 {"role": "assistant", "content": asst_msg}
             ]
             if multi_turn and user2_msg and asst2_msg:
-                is_valid2, reason2 = self.guardrail.validate(asst2_msg, [grounding], npc_name)
+                is_valid2, reason2 = self.guardrail.validate(asst2_msg, [grounding], self.spec)
                 if not is_valid2:
                     logger.warning(f"Guardrail rejection: {reason2}")
                     return None

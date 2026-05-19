@@ -338,7 +338,7 @@ def score_persona_alignment(example, spec_data=None):
     return max(0, min(10, score))
 
 
-def score_rule_compliance(example, max_sentences=5, min_length=10):
+def score_rule_compliance(example, max_sentences=5, min_length=10, max_characters=500, allow_formatting=True):
     """Score rule_compliance (0-10): penalize violations of length and
     sentence rules derived from the NPC spec."""
     messages = example.get("messages", [])
@@ -362,13 +362,30 @@ def score_rule_compliance(example, max_sentences=5, min_length=10):
     if len(response) < min_length:
         score -= 2
 
-    # -2 if assistant response is too verbose
-    if len(response) > 500:
+    # -3 if assistant response is too long (above spec max_characters)
+    if len(response) > max_characters:
+        score -= 3
+    elif len(response) > 500:
         score -= 2
 
     # -1 if user message has no question mark (less natural)
     if user_msg and "?" not in user_msg:
         score -= 1
+
+    # -2 if formatting is disabled but response has bold/headings/lists
+    if not allow_formatting:
+        has_formatting_viol = False
+        if "**" in response or "__" in response:
+            has_formatting_viol = True
+        elif any(line.strip().startswith('#') for line in response.splitlines()):
+            has_formatting_viol = True
+        else:
+            for line in response.splitlines():
+                if re.match(r'^[-*•\d]+\.?\s+', line.strip()):
+                    has_formatting_viol = True
+                    break
+        if has_formatting_viol:
+            score -= 2
 
     return max(0, min(10, score))
 
@@ -485,7 +502,7 @@ def score_uniqueness(example, seen_user_messages=None):
 
 
 def score_example(example, spec_data=None, seen_user_messages=None,
-                  max_sentences=5, min_length=10):
+                  max_sentences=5, min_length=10, max_characters=500, allow_formatting=True):
     """Score a single example on 5 dimensions (each 0-10).
 
     Returns a dict:
@@ -500,12 +517,19 @@ def score_example(example, spec_data=None, seen_user_messages=None,
         }
     """
     if spec_data:
-        spec_max = spec_data.get("dialogue", {}).get("max_sentences")
+        dialogue_conf = spec_data.get("dialogue", {})
+        spec_max = dialogue_conf.get("max_sentences")
         if spec_max:
             max_sentences = spec_max
+        spec_chars = dialogue_conf.get("max_characters")
+        if spec_chars:
+            max_characters = spec_chars
+        spec_formatting = dialogue_conf.get("allow_formatting")
+        if spec_formatting is not None:
+            allow_formatting = spec_formatting
 
     persona = score_persona_alignment(example, spec_data)
-    rule = score_rule_compliance(example, max_sentences, min_length)
+    rule = score_rule_compliance(example, max_sentences, min_length, max_characters, allow_formatting)
     concept = score_concept_fidelity(example, spec_data)
     engagement = score_engagement(example)
     uniqueness = score_uniqueness(example, seen_user_messages)
@@ -720,6 +744,21 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
     if not messages:
         return None, None, [], "No messages"
 
+    # Resolve settings from spec_data if available
+    max_characters = 500
+    allow_formatting = True
+    if spec_data:
+        dialogue_conf = spec_data.get("dialogue", {})
+        spec_max = dialogue_conf.get("max_sentences")
+        if spec_max:
+            max_sentences = spec_max
+        spec_chars = dialogue_conf.get("max_characters")
+        if spec_chars:
+            max_characters = spec_chars
+        spec_formatting = dialogue_conf.get("allow_formatting")
+        if spec_formatting is not None:
+            allow_formatting = spec_formatting
+
     # 1. Metadata enrichment (early, so later steps have category/concept)
     example, meta_warnings = fix_metadata(
         example, input_path,
@@ -754,7 +793,23 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
             sentence_count = count_sentences(content)
             if sentence_count > max_sentences:
                 return None, None, meta_warnings, \
-                    f"Assistant response too long ({sentence_count} sentences)"
+                    f"Assistant response too verbose ({sentence_count} sentences, max {max_sentences})"
+
+            if len(content) > max_characters:
+                return None, None, meta_warnings, \
+                    f"Assistant response too long ({len(content)} chars, max {max_characters})"
+
+            if not allow_formatting:
+                if "**" in content or "__" in content:
+                    return None, None, meta_warnings, \
+                        "Assistant response contains markdown bolding"
+                if any(line.strip().startswith('#') for line in content.splitlines()):
+                    return None, None, meta_warnings, \
+                        "Assistant response contains markdown headers (#)"
+                for line in content.splitlines():
+                    if re.match(r'^[-*•\d]+\.?\s+', line.strip()):
+                        return None, None, meta_warnings, \
+                            "Assistant response contains markdown lists/bullets"
 
             if example.get("metadata", {}).get("category") == "refusal" and not refusal_response_has_boundary(content):
                 return None, None, meta_warnings, \
@@ -767,6 +822,8 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
         seen_user_messages=seen_user_messages,
         max_sentences=max_sentences,
         min_length=min_length,
+        max_characters=max_characters,
+        allow_formatting=allow_formatting,
     )
 
     # 5. Discard below score threshold
@@ -1057,14 +1114,25 @@ def main():
     fix_metadata_flag = not args.no_fix_metadata
 
     spec_data = None
+    spec_path = None
     if args.spec:
         spec_path = Path(args.spec)
-        if spec_path.exists():
-            with open(spec_path) as f:
-                spec_data = json.load(f)
-            print(f"Loaded spec: {spec_path}")
-        else:
-            print(f"Warning: Spec file not found: {spec_path}")
+    else:
+        npc_key = infer_npc_key_from_path(input_path)
+        if npc_key:
+            try:
+                detected = paths.spec_path(npc_key)
+                if detected and detected.exists():
+                    spec_path = detected
+            except Exception:
+                pass
+
+    if spec_path and spec_path.exists():
+        with open(spec_path) as f:
+            spec_data = json.load(f)
+        print(f"Loaded spec: {spec_path}")
+    elif args.spec:
+        print(f"Warning: Spec file not found: {args.spec}")
 
     print(f"Sanitizing: {input_path}")
     print(f"Output:     {output_path}")

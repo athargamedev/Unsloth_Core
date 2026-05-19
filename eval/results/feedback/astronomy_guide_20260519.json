@@ -1,0 +1,225 @@
+{
+  "npc_key": "astronomy_guide",
+  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
+  "candidate": "astronomy_guide/astronomy_guide-lora-f16",
+  "total_examples": 10,
+  "baseline_wins": 10,
+  "candidate_wins": 0,
+  "ties": 0,
+  "win_rate": 0.0,
+  "per_concept": {
+    "teaching/celestial phenomena": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 47.79,
+      "avg_candidate_quality": 33.67,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Why do we see different constellations at night during different seasons?",
+          "winner": "baseline",
+          "candidate_quality": 33.67,
+          "candidate_words": 33,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/galaxies and nebulae": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.68,
+      "avg_candidate_quality": 31.35,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "How do galaxies and nebulae form?",
+          "winner": "baseline",
+          "candidate_quality": 31.35,
+          "candidate_words": 24,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/solar system": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 49.27,
+      "avg_candidate_quality": 32.19,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Ah, so that's why! Can you tell me more about how these rings formed?",
+          "winner": "baseline",
+          "candidate_quality": 32.19,
+          "candidate_words": 27,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/solar system": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.2,
+      "avg_candidate_quality": 35.55,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Why is Pluto not considered a planet anymore?",
+          "winner": "baseline",
+          "candidate_quality": 35.55,
+          "candidate_words": 38,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "quest/cosmology and universe origins": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 49.2,
+      "avg_candidate_quality": 32.58,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Can you explain how we know the universe started with the Big Bang?",
+          "winner": "baseline",
+          "candidate_quality": 32.58,
+          "candidate_words": 29,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/astronomy and space science": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 47.79,
+      "avg_candidate_quality": 35.55,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Why are the constellations not really aligned like they appear in the sky?",
+          "winner": "baseline",
+          "candidate_quality": 35.55,
+          "candidate_words": 40,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "identity/cosmology": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 40.6,
+      "avg_candidate_quality": 28.9,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Who are you and what do you teach about?",
+          "winner": "baseline",
+          "candidate_quality": 28.9,
+          "candidate_words": 20,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "quest/galaxies and nebulae": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 47.62,
+      "avg_candidate_quality": 36.11,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "Can you tell me about galaxies and nebulae?",
+          "winner": "baseline",
+          "candidate_quality": 36.11,
+          "candidate_words": 40,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/stellar evolution": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 47.71,
+      "avg_candidate_quality": 32.96,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "What happens after a star becomes a red giant?",
+          "winner": "baseline",
+          "candidate_quality": 32.96,
+          "candidate_words": 29,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/stars": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.98,
+      "avg_candidate_quality": 36.11,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I thought stars are just big balls of gas, but then why do they stay in the same place and not fall into each other like planets do around the Sun?",
+          "winner": "baseline",
+          "candidate_quality": 36.11,
+          "candidate_words": 38,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    }
+  },
+  "weak_concepts": [
+    "teaching/celestial phenomena",
+    "teaching/galaxies and nebulae",
+    "dialogue/solar system",
+    "teaching/solar system",
+    "quest/cosmology and universe origins",
+    "teaching/astronomy and space science",
+    "identity/cosmology",
+    "quest/galaxies and nebulae",
+    "teaching/stellar evolution",
+    "dialogue/stars"
+  ],
+  "timestamp": "2026-05-19T08:09:56.923225+00:00"
+}

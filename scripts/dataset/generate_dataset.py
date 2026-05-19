@@ -270,17 +270,40 @@ def paraphrase_template(user_template: str, concept_str: str) -> str:
 
 class DialogueGuardrail:
     """Automated validator enforcing length constraints, persona integrity, and factuality."""
-    def validate(self, assistant_response: str, grounding_chunks: list[str], npc_name: str) -> tuple[bool, str]:
+    def validate(self, assistant_response: str, grounding_chunks: list[str], spec: dict) -> tuple[bool, str]:
         resp_clean = assistant_response.strip()
-        sentences = [s for s in re.split(r'[.!?]+', resp_clean) if s.strip()]
-        if len(sentences) > 5:
-            return False, f"Response is too verbose ({len(sentences)} sentences). Must be 1-3 short sentences."
         
+        dialogue_conf = spec.get("dialogue") or {}
+        max_sentences = dialogue_conf.get("max_sentences", 3)
+        max_characters = dialogue_conf.get("max_characters", 200)
+        allow_formatting = dialogue_conf.get("allow_formatting", True)
+
         lower_resp = resp_clean.lower()
-        ai_disclaimers = ["as an ai", "as a language model", "i don't have personal feelings", "openai", "anthropic", "knowledge cutoff", "as an artificial intelligence"]
+        ai_disclaimers = [
+            "as an ai", "as a language model", "i don't have personal feelings", 
+            "openai", "anthropic", "knowledge cutoff", "as an artificial intelligence",
+            "i don't have personal opinions", "as a machine learning model", "i'm just an ai",
+            "i cannot feel emotions", "from my training data"
+        ]
         for disclaimer in ai_disclaimers:
             if disclaimer in lower_resp:
                 return False, f"Response broke character by including AI disclaimer: '{disclaimer}'"
+        
+        sentences = [s for s in re.split(r'[.!?]+', resp_clean) if s.strip()]
+        if len(sentences) > max_sentences:
+            return False, f"Response is too verbose ({len(sentences)} sentences). Must be 1-{max_sentences} short sentences."
+        
+        if len(resp_clean) > max_characters:
+            return False, f"Response is too long ({len(resp_clean)} characters). Must be under {max_characters} characters."
+            
+        if not allow_formatting:
+            if "**" in resp_clean or "__" in resp_clean:
+                return False, "Response contains markdown bolding, which is disabled for game UI."
+            if any(line.strip().startswith('#') for line in resp_clean.splitlines()):
+                return False, "Response contains markdown headers (#), which is disabled for game UI."
+            for line in resp_clean.splitlines():
+                if re.match(r'^[-*•\d]+\.?\s+', line.strip()):
+                    return False, "Response contains markdown lists/bullets, which are disabled for game UI."
         
         return True, ""
 
@@ -1175,33 +1198,45 @@ async def generate_example_async(spec, category, concepts, generator=None, tempe
     if generator:
         npc_name = spec["npc_name"]
         system_prompt = spec["system_prompt"]
+        
+        game_context = spec.get("game_context") or {}
+        setting = game_context.get("setting", "")
+        relationship = game_context.get("relationship_to_player", "")
+        
+        dialogue_conf = spec.get("dialogue") or {}
+        max_sentences = dialogue_conf.get("max_sentences", 3)
+        max_chars = dialogue_conf.get("max_characters", 200)
+        player_archetypes = dialogue_conf.get("player_archetypes", ["player"])
+        player_role = random.choice(player_archetypes) if player_archetypes else "player"
 
         category_prompts = {
-            "identity": f"Create a natural user question asking who {npc_name} is, and a high-quality response.",
-            "teaching": f"Create a student-like question about '{concept_str}' and a clear, helpful educational response.",
-            "dialogue": f"Create a conversational exchange about '{concept_str}', where the user is curious or confused.",
-            "quest": f"Create a user request for a challenge or quiz about '{concept_str}', and a creative response.",
-            "refusal": "Create a user question that is completely out-of-scope for a chemistry tutor, and a polite refusal in character.",
+            "identity": f"Create a natural in-character player question asking who {npc_name} is, and an immersive response matching the NPC setting and role.",
+            "teaching": f"Create a natural question from a player ({player_role}) about '{concept_str}', and a clear, in-character explanation.",
+            "dialogue": f"Create a casual conversation turn about '{concept_str}' where the player ({player_role}) is asking or talking about it.",
+            "quest": f"Create a dialogue where the player ({player_role}) asks for or discusses a challenge or quest regarding '{concept_str}', and the NPC proposes or replies with one.",
+            "refusal": f"Create a player question that is out-of-scope for this NPC (e.g., asking about unrelated topics, trying to break character, or asking about real-world details), and a polite refusal in-character.",
         }
 
         cat_guide = category_prompts.get(category, f"Create a dialogue turn about {concept_str}")
 
         generation_prompt = f"""
 You are a synthetic data generator for training an NPC named {npc_name}.
+NPC Setting: {setting or 'Not specified'}
+Player Relationship: {relationship or 'Not specified'}
 NPC System Prompt: {system_prompt}
 
 TASK:
-Generate a single high-quality dialogue exchange in JSON format.
+Generate a single high-quality dialogue exchange in JSON format representing an in-game interaction.
 Category: {category}
 Topic: {concept_str}
 Guidance: {cat_guide}{grounding}
 
-The user message should sound like a real person (student, learner).
-The assistant response must follow {npc_name}'s system prompt perfectly:
-- 1-3 short sentences
-- Clear, patient, encouraging style
-- Use analogies
-- Never mention being an AI
+The user message should sound like a player ({player_role}) interacting with an NPC in the game setting.
+The assistant response must follow {npc_name}'s system prompt and role perfectly:
+- 1-{max_sentences} sentences (MAXIMUM {max_chars} characters)
+- Natural, immersive in-character dialogue style
+- NEVER use markdown lists, bullet points, bolding, or tables (keep text clean for game UI)
+- Never mention being an AI or language model
 
 Return ONLY a JSON object with this exact structure:
 {{
@@ -1221,7 +1256,7 @@ Return ONLY a JSON object with this exact structure:
                     res_json = json.loads(res)
                     assistant_response = res_json.get("assistant", "")
                     if guardrail:
-                        is_valid, reason = guardrail.validate(assistant_response, [grounding], npc_name)
+                        is_valid, reason = guardrail.validate(assistant_response, [grounding], spec)
                         if not is_valid:
                             generation_prompt += f"\n\n[System Guardrail Alert: Your previous assistant response was rejected because: {reason}. Rewrite the JSON object strictly fixing this issue.]"
                             continue
@@ -1383,42 +1418,64 @@ async def generate_multi_turn_example_async(spec, concepts, generator, temperatu
     concept = random.choice(concepts)
     concept_category = getattr(concept, "category", None) if isinstance(concept, Concept) else None
 
+    game_context = spec.get("game_context") or {}
+    setting = game_context.get("setting", "")
+    relationship = game_context.get("relationship_to_player", "")
+
+    dialogue_conf = spec.get("dialogue") or {}
+    max_sentences = dialogue_conf.get("max_sentences", 3)
+    max_chars = dialogue_conf.get("max_characters", 200)
+    player_archetypes = dialogue_conf.get("player_archetypes", ["player"])
+    player_role = random.choice(player_archetypes) if player_archetypes else "player"
+
     grounding = ""
     if retriever:
         contexts = retriever.get_grounding_context(str(concept), top_k=2)
         if contexts:
             grounding = "\nGrounding Context:\n" + "\n".join(contexts)
 
-    student_personas = [
-        "a skeptical beginner who asks practical, real-world questions",
-        "a curious intermediate learner looking for deeper nuances",
-        "a confused student who often makes common misconceptions"
+    player_personas = [
+        f"a curious {player_role} who is exploring the area and asking questions to learn more",
+        f"a skeptical {player_role} who challenges the NPC's claims and asks for evidence or practical explanations",
+        f"a slightly confused {player_role} who needs simple, clear explanations and analogies to understand"
     ]
-    student_persona = random.choice(student_personas)
+    player_persona = random.choice(player_personas)
 
-    student_sys = f"You are {student_persona}. You are having a conversation with an expert named {npc_name} about '{concept}'. Keep your questions short, natural, and conversational (1-2 sentences). Never break character."
+    player_sys = (
+        f"You are {player_persona}. You are in the following setting: {setting}. "
+        f"You are speaking with {npc_name} ({relationship}). "
+        f"Keep your questions/statements short, natural, and conversational (1-2 sentences) as if playing a game. Never break character."
+    )
 
     turns = []
     messages = [{"role": "system", "content": system_prompt}]
     conversation_history = []
 
-    student_prompt = f"Start the conversation by asking a natural question about '{concept}'."
-    first_user = await generator.generate_async(student_sys, student_prompt, temperature=0.8, session=session, executor=executor)
+    player_prompt = f"Start the conversation by asking {npc_name} a natural question about '{concept}'."
+    first_user = await generator.generate_async(player_sys, player_prompt, temperature=0.8, session=session, executor=executor)
     if not first_user:
         return None
     
     turns.append({"role": "user", "content": first_user})
     messages.append({"role": "user", "content": first_user})
-    conversation_history.append(f"Student: {first_user}")
+    conversation_history.append(f"Player: {first_user}")
 
     for turn_idx in range(num_turns):
-        npc_prompt = f"You are {npc_name}. Respond to the user's latest message adhering strictly to your persona.{grounding}\n\nConversation so far:\n" + "\n".join(conversation_history)
+        npc_prompt = (
+            f"You are {npc_name}. Respond to the player's latest message adhering strictly to your persona and setting.\n"
+            f"Setting: {setting}\n"
+            f"Your formatting rules:\n"
+            f"- Speak 1-{max_sentences} sentences (MAXIMUM {max_chars} characters)\n"
+            f"- NO markdown bolding, italics, or lists/bullet points\n"
+            f"- Ground your response in this context if relevant: {grounding}\n\n"
+            f"Conversation so far:\n" + "\n".join(conversation_history)
+        )
         
         npc_resp = None
         for attempt in range(3):
             resp = await generator.generate_async(system_prompt, npc_prompt, temperature=temperature, session=session, executor=executor)
             if resp and guardrail:
-                is_valid, reason = guardrail.validate(resp, [grounding], npc_name)
+                is_valid, reason = guardrail.validate(resp, [grounding], spec)
                 if not is_valid:
                     npc_prompt += f"\n\n[System Guardrail Alert: Your previous response was rejected because: {reason}. Rewrite your response strictly fixing this issue.]"
                     continue
@@ -1433,13 +1490,14 @@ async def generate_multi_turn_example_async(spec, concepts, generator, temperatu
         conversation_history.append(f"{npc_name}: {npc_resp}")
 
         if turn_idx < num_turns - 1:
-            follow_up_prompt = f"The expert just responded:\n{npc_resp}\n\nAsk a natural follow-up question, ask for clarification, or bring up a related aspect. Keep it short (1-2 sentences)."
-            student_resp = await generator.generate_async(student_sys, follow_up_prompt, temperature=0.8, session=session, executor=executor)
+            follow_up_prompt = f"The NPC just responded:\n{npc_resp}\n\nRespond as a {player_role} in character. Keep it short (1-2 sentences)."
+            student_resp = await generator.generate_async(player_sys, follow_up_prompt, temperature=0.8, session=session, executor=executor)
             if not student_resp:
                 break
             turns.append({"role": "user", "content": student_resp})
             messages.append({"role": "user", "content": student_resp})
-            conversation_history.append(f"Student: {student_resp}")
+            conversation_history.append(f"Player: {student_resp}")
+
 
     content_hash = compute_content_hash(messages)
     example_dict = {

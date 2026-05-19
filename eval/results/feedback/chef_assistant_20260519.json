@@ -1,0 +1,210 @@
+{
+  "npc_key": "chef_assistant",
+  "baseline": "chef_assistant/chef_assistant_v2-lora-f16",
+  "candidate": "chef_assistant/chef_assistant-lora-f16",
+  "total_examples": 10,
+  "baseline_wins": 3,
+  "candidate_wins": 5,
+  "ties": 2,
+  "win_rate": 0.5,
+  "per_concept": {
+    "teaching/ingredient science": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 38.71,
+      "avg_candidate_quality": 36.38,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Can you explain how the Maillard reaction affects the flavor of seared steak?",
+          "winner": "baseline",
+          "candidate_quality": 36.38,
+          "candidate_words": 43,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/kitchen organization": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 37.61,
+      "avg_candidate_quality": 35.84,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "How does kitchen organization help in cooking? Isn't it just about keeping things tidy?",
+          "winner": "tie",
+          "candidate_quality": 35.84,
+          "candidate_words": 38,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/kitchen organization": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 34.01,
+      "avg_candidate_quality": 35.84,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "ChefAssistant, I'm a bit confused about kitchen organization. Can everyone really see what's going on when everything is so neatly placed? Isn't it more important to have quick access to tools and ingredients during cooking?",
+          "winner": "candidate",
+          "candidate_quality": 35.84,
+          "candidate_words": 37,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/kitchen management": {
+      "total": 2,
+      "baseline_wins": 0,
+      "candidate_wins": 2,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 31.494999999999997,
+      "avg_candidate_quality": 35.83,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "What are some essential tools every chef should know about in the kitchen?",
+          "winner": "candidate",
+          "candidate_quality": 36.11,
+          "candidate_words": 44,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        },
+        {
+          "question": "How do I manage my kitchen more effectively during a busy shift?",
+          "winner": "candidate",
+          "candidate_quality": 35.55,
+          "candidate_words": 38,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/mother sauces (classic french)": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 32.58,
+      "avg_candidate_quality": 36.11,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I'm a bit confused about the mother sauces. Can you explain Espagnole and B\u00e9chamel more?",
+          "winner": "tie",
+          "candidate_quality": 36.11,
+          "candidate_words": 43,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "quest/kitchen organization (mise en place)": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 20.79,
+      "avg_candidate_quality": 35.84,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "Can you show me how to organize my kitchen for cooking?",
+          "winner": "candidate",
+          "candidate_quality": 35.84,
+          "candidate_words": 37,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "refusal/kitchen organization (mise en place)": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 36.64,
+      "avg_candidate_quality": 32.19,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Can you tell me how to organize my kitchen cabinets for better cooking efficiency?",
+          "winner": "candidate",
+          "candidate_quality": 32.19,
+          "candidate_words": 25,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/flavor pairing": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 32.58,
+      "avg_candidate_quality": 31.78,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Can you explain how salt enhances flavors in cooking?",
+          "winner": "baseline",
+          "candidate_quality": 31.78,
+          "candidate_words": 25,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "refusal/flavor pairing": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 44.43,
+      "avg_candidate_quality": 33.32,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Can you tell me about pairing spicy foods with sweet desserts to create a balanced flavor profile?",
+          "winner": "baseline",
+          "candidate_quality": 33.32,
+          "candidate_words": 33,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    }
+  },
+  "weak_concepts": [
+    "teaching/ingredient science",
+    "teaching/kitchen organization",
+    "teaching/kitchen management",
+    "dialogue/mother sauces (classic french)",
+    "quest/kitchen organization (mise en place)",
+    "teaching/flavor pairing",
+    "refusal/flavor pairing"
+  ],
+  "timestamp": "2026-05-19T08:09:12.691523+00:00"
+}

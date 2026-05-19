@@ -15,8 +15,6 @@ unsloth_env/
 skills-lock.json
 
 # Generated data (regenerable)
-eval/
-!eval/**/.gitkeep
 runs/
 !runs/**/.gitkeep
 *.gguf

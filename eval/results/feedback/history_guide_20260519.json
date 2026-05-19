@@ -1,0 +1,225 @@
+{
+  "npc_key": "history_guide",
+  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
+  "candidate": "history_guide/history_guide-lora-f16",
+  "total_examples": 10,
+  "baseline_wins": 10,
+  "candidate_wins": 0,
+  "ties": 0,
+  "win_rate": 0.0,
+  "per_concept": {
+    "teaching/cause and effect": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.83,
+      "avg_candidate_quality": 37.84,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Why did the Roman Empire fall? It seems like it had a lot of problems but I'm not sure what really caused it.",
+          "winner": "baseline",
+          "candidate_quality": 37.84,
+          "candidate_words": 54,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/world wars": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.28,
+      "avg_candidate_quality": 36.64,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Why were there two World Wars? How are they different from each other?",
+          "winner": "baseline",
+          "candidate_quality": 36.64,
+          "candidate_words": 57,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/medieval period": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.44,
+      "avg_candidate_quality": 37.61,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Why did the Black Death lead to the fall of feudalism if it just killed so many people and didn't directly destroy the system itself?",
+          "winner": "baseline",
+          "candidate_quality": 37.61,
+          "candidate_words": 50,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/industrial revolution": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 49.2,
+      "avg_candidate_quality": 34.66,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Can you give me an example of how this change affected people's lives?",
+          "winner": "baseline",
+          "candidate_quality": 34.66,
+          "candidate_words": 39,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/renaissance": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 47.87,
+      "avg_candidate_quality": 36.64,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "But wasn't Florence also part of the Roman Empire? How does that fit with the Renaissance starting there?",
+          "winner": "baseline",
+          "candidate_quality": 36.64,
+          "candidate_words": 44,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "quest/historical thinking skills": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 47.0,
+      "avg_candidate_quality": 29.44,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "How do primary and secondary sources differ in understanding history?",
+          "winner": "baseline",
+          "candidate_quality": 29.44,
+          "candidate_words": 21,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "refusal/cause and effect": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 47.79,
+      "avg_candidate_quality": 37.84,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Can you tell me about how the fall of the Roman Empire caused modern democracy?",
+          "winner": "baseline",
+          "candidate_quality": 37.84,
+          "candidate_words": 55,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/safety boundaries & misconceptions": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 49.05,
+      "avg_candidate_quality": 34.34,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Why did the Roman Empire fall? Was it just because of one reason?",
+          "winner": "baseline",
+          "candidate_quality": 34.34,
+          "candidate_words": 32,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/world history": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.2,
+      "avg_candidate_quality": 33.32,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "What were the main reasons for starting World War I?",
+          "winner": "baseline",
+          "candidate_quality": 33.32,
+          "candidate_words": 34,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "refusal/historical thinking skills": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 46.25,
+      "avg_candidate_quality": 32.19,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Can you tell me if ancient Rome was founded by aliens?",
+          "winner": "baseline",
+          "candidate_quality": 32.19,
+          "candidate_words": 28,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    }
+  },
+  "weak_concepts": [
+    "teaching/cause and effect",
+    "teaching/world wars",
+    "dialogue/medieval period",
+    "teaching/industrial revolution",
+    "dialogue/renaissance",
+    "quest/historical thinking skills",
+    "refusal/cause and effect",
+    "teaching/safety boundaries & misconceptions",
+    "teaching/world history",
+    "refusal/historical thinking skills"
+  ],
+  "timestamp": "2026-05-19T08:10:44.759967+00:00"
+}
