@@ -12,7 +12,7 @@ from __future__ import annotations
 import sys, os, argparse, json, subprocess
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parent.parent.parent
 VENV = REPO / "unsloth_env" / "bin" / "python"
 
 def main():
@@ -22,7 +22,7 @@ def main():
     args = parser.parse_args()
 
     npc = args.npc_key
-    spec = REPO / "subjects" / f"{npc}.json"
+    spec = REPO / "subjects" / "NPC_specs" / f"{npc}.json"
     if not spec.exists():
         print(f"Subject spec not found: {spec}")
         sys.exit(1)

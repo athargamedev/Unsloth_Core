@@ -110,7 +110,7 @@ def main():
     # Auto-detect spec
     spec_path = args.spec
     if not spec_path:
-        spec_guess = paths.subjects_root() / f"{args.npc_key}.json"
+        spec_guess = paths.spec_path(args.npc_key)
         if spec_guess.exists():
             spec_path = str(spec_guess)
             print(f"Auto-detected spec: {spec_path}")
@@ -118,7 +118,7 @@ def main():
     # Build evaluate.py command
     cmd = [
         sys.executable,
-        str(PROJECT_ROOT / "scripts" / "evaluate.py"),
+        str(PROJECT_ROOT / "scripts" / "evaluation" / "evaluate.py"),
         "--baseline", baseline_gguf,
         "--candidate", candidate_gguf,
     ]

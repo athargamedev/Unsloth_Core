@@ -141,6 +141,16 @@ def subjects_root() -> Path:
     return PROJECT_ROOT / "subjects"
 
 
+def spec_dir() -> Path:
+    """Return subjects/NPC_specs/ — canonical location for all NPC spec JSONs."""
+    return subjects_root() / "NPC_specs"
+
+
+def spec_path(npc_key: str) -> Path:
+    """Return subjects/NPC_specs/{npc_key}.json."""
+    return spec_dir() / f"{npc_key}.json"
+
+
 # ── Outputs (LoRA adapters + checkpoints, NO GGUF) ──────────────────────────
 
 def output_root() -> Path:

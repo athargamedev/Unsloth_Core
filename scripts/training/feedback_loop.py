@@ -37,6 +37,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from _config import paths
+
 
 # ── Default thresholds ──────────────────────────────────────────────────────
 
@@ -174,7 +176,7 @@ def print_analysis(feedback_data, weak_concepts):
 
 def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_path=None):
     if not spec_path:
-        spec_path = PROJECT_ROOT / "subjects" / f"{npc_key}.json"
+        spec_path = paths.spec_path(npc_key)
     if not Path(spec_path).exists():
         print(f"  [error] Subject spec not found: {spec_path}")
         return False
@@ -231,7 +233,7 @@ def run_sanitize(npc_key, technique="template", dry_run=False):
 
 def run_training(npc_key, preset, technique="template", dry_run=False):
     """Train a new model with the regenerated dataset."""
-    spec_path = PROJECT_ROOT / "subjects" / f"{npc_key}.json"
+    spec_path = paths.spec_path(npc_key)
     if not spec_path.exists():
         print(f"  [error] Spec not found for training: {spec_path}")
         return None
@@ -275,7 +277,7 @@ def run_evaluate(npc_key, baseline_gguf, candidate_gguf, feedback_output_dir, dr
     feedback_dir = Path(feedback_output_dir)
     feedback_dir.mkdir(parents=True, exist_ok=True)
     feedback_path = feedback_dir / f"{npc_key}_post_retrain.json"
-    spec_path = PROJECT_ROOT / "subjects" / f"{npc_key}.json"
+    spec_path = paths.spec_path(npc_key)
 
     cmd = [
         sys.executable,

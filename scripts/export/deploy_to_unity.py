@@ -35,7 +35,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from _config import paths
 
@@ -85,10 +85,11 @@ def find_unity_project(project_path: Path | None) -> Path | None:
 
 def find_subject_spec(npc_key: str) -> dict | None:
     """Find and load a subject JSON spec by npc_key."""
-    subjects_dir = paths.subjects_root()
     candidates = [
-        subjects_dir / f"{npc_key}.json",
-        subjects_dir / f"{npc_key.replace('_', '-')}.json",
+        paths.spec_path(npc_key),
+        paths.spec_path(npc_key.replace('_', '-')),
+        # Legacy fallback: flat subjects/ dir
+        paths.subjects_root() / f"{npc_key}.json",
     ]
     for path in candidates:
         if path.exists():

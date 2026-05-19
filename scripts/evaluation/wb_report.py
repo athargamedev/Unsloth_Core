@@ -29,8 +29,9 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 def active_npc_keys():
     """Return currently active NPC keys from subjects/NPC_specs/*.json."""
+    from _config import paths
     keys = []
-    for path in sorted((PROJECT_ROOT / "subjects").glob("*.json")):
+    for path in sorted(paths.spec_dir().glob("*.json")):
         try:
             with open(path, "r", encoding="utf-8") as f:
                 spec = json.load(f)
