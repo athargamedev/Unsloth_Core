@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """Compatibility wrapper for the categorized scripts layout."""
 
+from importlib import import_module
 from pathlib import Path
 import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.export.convert_lora_to_gguf import *  # noqa: F401,F403
+_impl = import_module("scripts.export.convert_lora_to_gguf")
+sys.modules[__name__] = _impl
+
+if __name__ == "__main__" and hasattr(_impl, "main"):
+    _impl.main()
