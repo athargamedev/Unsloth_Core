@@ -30,10 +30,11 @@ def read_tensorboard(run_dir: str) -> dict:
             "error": "TensorBoard not installed. pip install tensorboard",
         }
 
-    # Early exit: no event files in the given directory
     import glob
 
-    event_files = glob.glob(os.path.join(run_dir, "events.out.tfevents.*"))
+    # Trainer logs often live in nested subdirectories such as
+    # outputs/<npc>/runs/<run_id>/runs/<tb_run>/events.out.tfevents.*
+    event_files = glob.glob(os.path.join(run_dir, "**", "events.out.tfevents.*"), recursive=True)
     if not event_files:
         return {
             "runId": run_id,
@@ -41,27 +42,26 @@ def read_tensorboard(run_dir: str) -> dict:
             "error": "No event files found",
         }
 
-    # Parse event files at the boundary
-    try:
-        ea = EventAccumulator(run_dir)
-        ea.Reload()
-    except Exception as exc:
-        return {
-            "runId": run_id,
-            "scalars": {},
-            "error": str(exc),
-        }
-
     scalars = {}
-    for tag in ea.Tags().get("scalars", []):
+    event_dirs = sorted({os.path.dirname(file_path) for file_path in event_files})
+    for event_dir in event_dirs:
         try:
-            events = ea.Scalars(tag)
-        except Exception as exc:
-            scalars[tag] = []
+            ea = EventAccumulator(event_dir)
+            ea.Reload()
+        except Exception:
             continue
 
-        # Limit to last 100 points
-        points = [{"step": e.step, "value": round(e.value, 6)} for e in events]
+        for tag in ea.Tags().get("scalars", []):
+            try:
+                events = ea.Scalars(tag)
+            except Exception:
+                continue
+
+            points = [{"step": e.step, "value": round(e.value, 6)} for e in events]
+            scalars.setdefault(tag, []).extend(points)
+
+    for tag, points in scalars.items():
+        points.sort(key=lambda item: item["step"])
         scalars[tag] = points[-100:]
 
     return {

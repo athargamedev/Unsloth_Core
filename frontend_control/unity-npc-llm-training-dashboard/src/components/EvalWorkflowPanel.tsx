@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchJson, fetchOptionalJson } from '../api';
 import type { Subject, ExportArtifact, EvalReportsData, EvalReportFile } from '../api';
 
@@ -14,9 +14,11 @@ interface EvalConfig {
   track: boolean;
   feedbackJson: string;
   judge: boolean;
+  judgeModel: string;
 }
 
 const DEFAULT_BASE = '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf';
+const DEFAULT_JUDGE_MODEL = 'qwen2.5:7b';
 
 export const EvalWorkflowPanel = ({
   subjects, exportArtifacts,
@@ -27,7 +29,7 @@ export const EvalWorkflowPanel = ({
   const [config, setConfig] = useState<EvalConfig>({
     npcKey: '',
     spec: '',
-    baseline: '',
+    baseline: DEFAULT_BASE,
     candidate: '',
     baseModel: DEFAULT_BASE,
     loraWeight: 1.0,
@@ -36,15 +38,22 @@ export const EvalWorkflowPanel = ({
     track: true,
     feedbackJson: '',
     judge: false,
+    judgeModel: DEFAULT_JUDGE_MODEL,
   });
   const [apiError, setApiError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [reports, setReports] = useState<EvalReportsData | null>(null);
   const [selectedReportHtml, setSelectedReportHtml] = useState<string | null>(null);
   const [activeReportFile, setActiveReportFile] = useState<EvalReportFile | null>(null);
+  const [pendingReportNpcKey, setPendingReportNpcKey] = useState<string | null>(null);
   const [presets, setPresets] = useState<Array<{ name: string; description: string; path?: string }>>([]);
   const [lastEvalTime, setLastEvalTime] = useState<number>(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const refreshReports = useCallback(async () => {
+    const data = await fetchOptionalJson<EvalReportsData>('/api/eval-reports');
+    if (data) setReports(data);
+  }, []);
+  const pendingReportAttempts = useRef(0);
 
   // Load subjects, presets, reports
   useEffect(() => {
@@ -70,14 +79,31 @@ export const EvalWorkflowPanel = ({
   }, []);
 
   useEffect(() => {
-    const loadReports = async () => {
-      const data = await fetchOptionalJson<EvalReportsData>('/api/eval-reports');
-      if (data) setReports(data);
-    };
-    loadReports();
-    const interval = setInterval(loadReports, 5000);
+    refreshReports();
+    const interval = setInterval(() => {
+      void refreshReports();
+    }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [refreshReports]);
+
+  useEffect(() => {
+    if (!pendingReportNpcKey || !reports) return;
+    const group = reports.reports.find(r => r.npcKey === pendingReportNpcKey);
+    const latestHtml = group?.files.find(file => file.name.endsWith('.html')) || null;
+    if (!latestHtml) {
+      if (pendingReportAttempts.current < 15) {
+        pendingReportAttempts.current += 1;
+        const timer = window.setTimeout(() => {
+          void refreshReports();
+        }, 1000);
+        return () => window.clearTimeout(timer);
+      }
+      return;
+    }
+    pendingReportAttempts.current = 0;
+    void loadReportHtml(latestHtml);
+    setPendingReportNpcKey(null);
+  }, [pendingReportNpcKey, reports, refreshReports]);
 
   // Pick candidate from exports when npcKey changes
   useEffect(() => {
@@ -86,6 +112,7 @@ export const EvalWorkflowPanel = ({
     if (matchingExport) {
       setConfig(prev => ({
         ...prev,
+        baseline: prev.baseline || DEFAULT_BASE,
         candidate: matchingExport.file,
         feedbackJson: `eval/results/feedback/${config.npcKey}.json`,
       }));
@@ -93,7 +120,7 @@ export const EvalWorkflowPanel = ({
   }, [config.npcKey, exportArtifacts]);
 
   // When a report is served, we need to get the actual HTML content
-  const handleViewReport = async (file: EvalReportFile) => {
+  const loadReportHtml = async (file: EvalReportFile) => {
     setActiveReportFile(file);
     try {
       const resp = await fetch(`/api/eval-reports/file?path=${encodeURIComponent(file.path)}`);
@@ -108,8 +135,14 @@ export const EvalWorkflowPanel = ({
     }
   };
 
+  const handleViewReport = async (file: EvalReportFile) => {
+    await loadReportHtml(file);
+  };
+
   const handleRunEval = async () => {
-    if (!config.spec || !config.baseline || !config.candidate) {
+    const baseline = config.baseline.trim() || config.baseModel.trim() || DEFAULT_BASE;
+    const candidate = config.candidate.trim();
+    if (!config.spec || !baseline || !candidate) {
       setApiError('Spec, baseline, and candidate are required');
       return;
     }
@@ -119,16 +152,24 @@ export const EvalWorkflowPanel = ({
       const payload: Record<string, unknown> = {
         commandId: 'evaluate',
         type: 'Evaluation',
-        baseline: config.baseline,
-        candidate: config.candidate,
+        baseline,
+        candidate,
         spec: config.spec,
-        'num-questions': config.numQuestions,
-        'report-html': config.reportHtml,
-        track: config.track,
+        options: {
+          baseline,
+          candidate,
+          baseModel: config.baseModel,
+          loraWeight: config.loraWeight,
+          numQuestions: config.numQuestions,
+          reportHtml: config.reportHtml,
+          track: config.track,
+          feedbackJson: config.feedbackJson,
+          judge: config.judge,
+          judgeModel: config.judgeModel,
+        },
       };
       if (config.baseModel) {
         payload['base-model'] = config.baseModel;
-        payload['lora-weight'] = config.loraWeight;
       }
       if (config.feedbackJson) {
         payload['feedback-json'] = config.feedbackJson;
@@ -145,6 +186,8 @@ export const EvalWorkflowPanel = ({
         throw new Error(err.error || 'Failed to start evaluation');
       }
       setLastEvalTime(Date.now());
+      pendingReportAttempts.current = 0;
+      setPendingReportNpcKey(config.npcKey);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Evaluation failed');
     } finally {
@@ -177,7 +220,7 @@ export const EvalWorkflowPanel = ({
           <div className="flex gap-2">
             <button
               onClick={handleRunEval}
-              disabled={running || !config.spec || !config.baseline || !config.candidate}
+              disabled={running || !config.spec || !config.candidate}
               className="px-4 py-2 bg-accent text-bg text-[12px] font-bold rounded-sm hover:brightness-110 transition-colors disabled:opacity-40 flex items-center gap-2"
             >
               {running ? (
@@ -301,6 +344,16 @@ export const EvalWorkflowPanel = ({
               <input type="checkbox" checked={config.judge} onChange={e => setConfig(prev => ({ ...prev, judge: e.target.checked }))} />
               <span className="text-[10px]">Judge</span>
             </label>
+            <div>
+              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Judge Model</label>
+              <input
+                type="text"
+                value={config.judgeModel}
+                onChange={e => setConfig(prev => ({ ...prev, judgeModel: e.target.value }))}
+                placeholder={DEFAULT_JUDGE_MODEL}
+                className="w-40 bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+              />
+            </div>
           </div>
         </div>
       </div>

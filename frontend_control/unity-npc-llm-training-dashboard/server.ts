@@ -487,10 +487,34 @@ const requireString = (value: unknown, fieldName: string): string => {
 };
 
 const optionValue = (payload: StartCommandPayload, key: string): string => {
-  const raw = payload.options?.[key];
+  const raw = (payload as Record<string, unknown>)[key] ?? payload.options?.[key];
   if (typeof raw === "string") return raw;
   if (typeof raw === "number" || typeof raw === "boolean") return String(raw);
   return "";
+};
+
+const boolOptionValue = (payload: StartCommandPayload, key: string): boolean => {
+  const raw = (payload as Record<string, unknown>)[key] ?? payload.options?.[key];
+  if (typeof raw === "boolean") return raw;
+  if (typeof raw === "number") return raw !== 0;
+  if (typeof raw === "string") return ["1", "true", "yes", "on"].includes(raw.trim().toLowerCase());
+  return false;
+};
+
+const resolvePayloadPath = (
+  payload: StartCommandPayload,
+  key: string,
+  allowedRoots: string[],
+): string => {
+  const raw = optionValue(payload, key);
+  if (!raw) throw new Error(`${key} is required.`);
+  if (path.isAbsolute(raw)) {
+    if (!fs.existsSync(raw)) {
+      throw new Error(`Invalid ${key}: path not found.`);
+    }
+    return canonicalizeExistingPath(raw);
+  }
+  return resolvePathWithinRoots(raw, key, allowedRoots);
 };
 
 const parsedSpec = (payload: StartCommandPayload): string => {
@@ -515,27 +539,19 @@ const parsedModelPath = (payload: StartCommandPayload): string => {
 };
 
 const parsedBaseline = (payload: StartCommandPayload): string => {
-  return resolvePathWithinRoots(
-    requireString(optionValue(payload, "baseline"), "baseline"),
-    "baseline",
-    [path.join(repoRoot, "exports"), path.join(repoRoot, "outputs")],
-  );
+  return resolvePayloadPath(payload, "baseline", [path.join(repoRoot, "exports"), path.join(repoRoot, "outputs"), repoRoot]);
 };
 
 const parsedCandidate = (payload: StartCommandPayload): string => {
-  return resolvePathWithinRoots(
-    requireString(optionValue(payload, "candidate"), "candidate"),
-    "candidate",
-    [path.join(repoRoot, "exports"), path.join(repoRoot, "outputs")],
-  );
+  return resolvePayloadPath(payload, "candidate", [path.join(repoRoot, "exports"), path.join(repoRoot, "outputs"), repoRoot]);
+};
+
+const parsedBaseModel = (payload: StartCommandPayload): string => {
+  return resolvePayloadPath(payload, "baseModel", [path.join(repoRoot, "exports"), path.join(repoRoot, "outputs"), repoRoot]);
 };
 
 const parsedValData = (payload: StartCommandPayload): string => {
-  return resolvePathWithinRoots(
-    requireString(optionValue(payload, "valData"), "valData"),
-    "valData",
-    [path.join(repoRoot, "subjects")],
-  );
+  return resolvePayloadPath(payload, "valData", [path.join(repoRoot, "subjects"), repoRoot]);
 };
 
 const commandDefinitions: CommandDefinition[] = [
@@ -671,9 +687,23 @@ const commandDefinitions: CommandDefinition[] = [
     type: "Evaluation",
     requiredFields: ["options.baseline", "options.candidate", "spec"],
     build: (payload) => {
-      const valData = optionValue(payload, "valData");
       const command = ["./ucore", "evaluate", "--baseline", parsedBaseline(payload), "--candidate", parsedCandidate(payload), "--spec", parsedSpec(payload)];
-      if (valData.trim()) command.push("--val-data", parsedValData(payload));
+      if (optionValue(payload, "valData").trim()) command.push("--val-data", parsedValData(payload));
+      if (boolOptionValue(payload, "reportHtml")) command.push("--report-html");
+      if (boolOptionValue(payload, "track")) command.push("--track");
+      if (boolOptionValue(payload, "judge")) {
+        command.push("--judge");
+        const judgeModel = optionValue(payload, "judgeModel").trim();
+        if (judgeModel) command.push("--judge-model", sanitizeToken(judgeModel, "judgeModel"));
+      }
+      const baseModel = optionValue(payload, "baseModel").trim();
+      if (baseModel) command.push("--base-model", parsedBaseModel(payload));
+      const loraWeight = optionValue(payload, "loraWeight").trim();
+      if (loraWeight) command.push("--lora-weight", loraWeight);
+      const numQuestions = optionValue(payload, "numQuestions").trim();
+      if (numQuestions) command.push("--num-questions", numQuestions);
+      const feedbackJson = optionValue(payload, "feedbackJson").trim();
+      if (feedbackJson) command.push("--feedback-json", resolvePathWithinRoots(feedbackJson, "feedbackJson", [repoRoot]));
       return command;
     },
   },

@@ -336,7 +336,7 @@ class LlamaServer:
 # ── Ollama Judge ────────────────────────────────────────────────────────────
 
 class OllamaJudge:
-    def __init__(self, model="llama3.1:latest", url="http://localhost:11434/api/chat"):
+    def __init__(self, model="qwen2.5:7b", url="http://localhost:11434/api/chat"):
         self.model = model
         self.url = url
 
@@ -1055,7 +1055,7 @@ def main():
     
     # Judge
     parser.add_argument("--judge", action="store_true", help="Use local Ollama judge")
-    parser.add_argument("--judge-model", default="llama3.1:latest", help="Judge model")
+    parser.add_argument("--judge-model", default="qwen2.5:7b", help="Judge model")
 
     # W&B
     parser.add_argument("--wandb", action="store_true", help="Enable W&B evaluation tracking")
