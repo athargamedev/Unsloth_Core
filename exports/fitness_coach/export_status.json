@@ -1,0 +1,16 @@
+{
+  "npc_key": "fitness_coach",
+  "updated_at": "2026-05-17T19:50:47Z",
+  "state": "completed",
+  "substep": "adapter_done",
+  "started_at": "2026-05-18T21:56:46Z",
+  "mode": "adapter",
+  "quantization": "q4_k_m",
+  "resume": false,
+  "pid": 974982,
+  "timeout_seconds": 5400,
+  "artifacts": [
+    "/home/athar/Projects/Unsloth_Core/exports/fitness_coach/fitness_coach-lora-f16.gguf"
+  ],
+  "completed_at": "2026-05-18T21:56:50Z"
+}

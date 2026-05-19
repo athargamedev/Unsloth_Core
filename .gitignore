@@ -15,10 +15,6 @@ unsloth_env/
 skills-lock.json
 
 # Generated data (regenerable)
-outputs/
-!outputs/**/.gitkeep
-exports/
-!exports/**/.gitkeep
 eval/
 !eval/**/.gitkeep
 runs/
@@ -40,6 +36,7 @@ archive/
 .idea/
 *.swp
 *.swo
+.vscode-ctags
 
 # OS
 .DS_Store

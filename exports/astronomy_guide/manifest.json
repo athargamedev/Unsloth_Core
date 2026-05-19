@@ -1,0 +1,13 @@
+{
+  "npc_key": "astronomy_guide",
+  "run_id": "20260519_fast-3b_llama3.2-3b_001",
+  "base_model": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+  "technique": "ollama",
+  "training_loss": 1.1378321806589762,
+  "num_examples": 113,
+  "created_at": "2026-05-19T05:04:19.682592",
+  "mode": "adapter",
+  "gguf_files": [
+    "/home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf"
+  ]
+}

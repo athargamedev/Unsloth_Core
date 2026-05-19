@@ -1,0 +1,16 @@
+{
+  "npc_key": "chef_assistant",
+  "updated_at": "2026-05-16T02:30:43Z",
+  "state": "completed",
+  "substep": "adapter_done",
+  "started_at": "2026-05-19T08:01:48Z",
+  "mode": "adapter",
+  "quantization": "q4_k_m",
+  "resume": false,
+  "pid": 358390,
+  "timeout_seconds": 5400,
+  "artifacts": [
+    "/home/athar/Projects/Unsloth_Core/exports/chef_assistant/chef_assistant-lora-f16.gguf"
+  ],
+  "completed_at": "2026-05-19T08:01:51Z"
+}

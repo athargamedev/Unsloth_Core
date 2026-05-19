@@ -1,0 +1,14 @@
+{
+  "npc_key": "history_guide",
+  "run_id": "20260519_fast-3b_llama3.2-3b_001",
+  "base_model": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+  "technique": "ollama",
+  "training_loss": 1.1376792710451853,
+  "num_examples": 109,
+  "created_at": "2026-05-19T05:06:41.607457",
+  "mode": "adapter",
+  "gguf_files": [
+    "/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf",
+    "/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide_v2-lora-f16.gguf"
+  ]
+}
