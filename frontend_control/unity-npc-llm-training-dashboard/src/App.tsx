@@ -19,6 +19,7 @@ import {
   User,
   ExternalLink,
   XCircle,
+  Wrench,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
@@ -36,6 +37,7 @@ import { SystemHub } from './components/SystemHub';
 import { NpcOverview } from './components/NpcOverview';
 import { Card } from './components/Card';
 import { ColabNotebooksPanel } from './components/ColabNotebooksPanel';
+import { OllamaPanel } from './components/OllamaPanel';
 import { WorkflowAssistantPanel } from './components/WorkflowAssistantPanel';
 import { DatasetPipelinePanel } from './components/DatasetPipelinePanel';
 
@@ -54,7 +56,7 @@ const UnityDeployPanel = lazy(() => import('./components/UnityDeployPanel').then
 const RemoteConfigPanel = lazy(() => import('./components/RemoteConfigPanel').then((m) => ({ default: m.RemoteConfigPanel })));
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands' | 'colab' | 'workflow_assistant' | 'dataset_pipeline'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands' | 'colab' | 'ollama' | 'workflow_assistant' | 'dataset_pipeline'>('overview');
   const [logs, setLogs] = useState<string[]>([]);
   const [uiError, setUiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -273,6 +275,18 @@ export default function App() {
           status: 'Reference only',
           chips: [{ label: 'cloud', tone: 'muted' as const }],
         };
+      case 'ollama':
+        return {
+          icon: Wrench,
+          title: 'Ollama Tuning',
+          description: 'Manage Ollama performance parameters, GPU offloading, environment variables, and service lifecycle.',
+          tip: 'Changes to OLLAMA_NUM_PARALLEL, flash attention, and KV cache type require an Ollama restart to take effect.',
+          status: 'Performance tuning',
+          chips: [
+            { label: 'service lifecycle', tone: 'accent' as const },
+            { label: 'GPU offloading', tone: 'muted' as const },
+          ],
+        };
       case 'workflow_assistant':
         return {
           icon: Sparkles,
@@ -429,7 +443,7 @@ export default function App() {
         setDatasetViewTechnique(targetTechnique);
         setAvailableTechniques(targetDataset?.versions.map((version) => ({ name: version.tag, train_count: version.entries, val_count: 0 })) || []);
       }
-      const VALID_TABS = ['overview', 'pipeline', 'training', 'datasets', 'dataset_params', 'compare', 'analytics', 'eval', 'feedback', 'commands'] as const;
+      const VALID_TABS = ['overview', 'pipeline', 'training', 'datasets', 'dataset_params', 'compare', 'analytics', 'eval', 'feedback', 'ollama', 'commands'] as const;
       type ValidTab = typeof VALID_TABS[number];
       if ((VALID_TABS as readonly string[]).includes(detail.tab)) {
         setActiveTab(detail.tab as ValidTab);
@@ -883,6 +897,7 @@ export default function App() {
     logs: 'System Console',
     commands: 'Advanced',
     colab: 'Colab Notebook Center',
+    ollama: 'Ollama Tuning',
     workflow_assistant: 'Docs Dataset Gen',
     dataset_pipeline: 'Dataset Pipeline (Gen + Eval)',
   };
@@ -969,6 +984,7 @@ export default function App() {
               { id: 'eval', label: '3) Eval', shortLabel: 'Eval', icon: BarChart3, tip: 'Compare candidates against baselines.' },
               { id: 'feedback', label: '4) Feedback', shortLabel: 'FB', icon: MessageSquare, tip: 'Turn eval failures into regeneration.' },
               { id: 'colab', label: 'Cloud (Colab)', shortLabel: 'Colab', icon: ExternalLink, tip: 'Cloud helper and remote notes.' },
+              { id: 'ollama', label: 'Ollama', shortLabel: 'Ollama', icon: Wrench, tip: 'Manage Ollama performance tuning, GPU offloading, and service lifecycle.' },
               { id: 'workflow_assistant', label: 'WorkflowDocs', shortLabel: 'Docs', icon: Sparkles, tip: 'Canonical workflow reference.' },
               { id: 'dataset_pipeline', label: 'Dataset Pipeline', shortLabel: 'Pipe', icon: Layers, tip: 'Inspect the dataset lifecycle.' },
               { id: 'jobs', label: 'Ops', shortLabel: 'Ops', icon: Settings, tip: 'Control jobs and compare runs.' },
@@ -1464,6 +1480,18 @@ export default function App() {
                 }}
                 jobs={jobs}
               />
+            )}
+
+            {activeTab === 'ollama' && (
+              <motion.div
+                key="ollama"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex-1 flex flex-col overflow-auto"
+              >
+                <OllamaPanel />
+              </motion.div>
             )}
 
             {activeTab === 'workflow_assistant' && (

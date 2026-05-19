@@ -411,6 +411,52 @@ export const fetchJson = async <T,>(url: string): Promise<T> => {
   return response.json() as Promise<T>;
 };
 
+// --- Ollama Tuning types ---
+
+export interface OllamaConfig {
+  OLLAMA_NUM_PARALLEL: string;
+  OLLAMA_FLASH_ATTENTION: string;
+  OLLAMA_KV_CACHE_TYPE: string;
+  num_gpu: string;
+}
+
+export interface OllamaStatus {
+  running: boolean;
+  pid?: number;
+  config: OllamaConfig;
+  activeModel: string | null;
+  gpuLayers: number | null;
+}
+
+export interface OllamaModelInfo {
+  name: string;
+  size: string;
+  modified: string;
+  details?: {
+    parameter_size?: string;
+    quantization_level?: string;
+    family?: string;
+  };
+}
+
+export interface OllamaModelList {
+  models: OllamaModelInfo[];
+}
+
+export interface OllamaApplyConfigPayload {
+  OLLAMA_NUM_PARALLEL?: number;
+  OLLAMA_FLASH_ATTENTION?: boolean;
+  OLLAMA_KV_CACHE_TYPE?: string;
+  num_gpu?: number;
+  restart?: boolean;
+}
+
+export interface OllamaApplyResult {
+  success: boolean;
+  needsRestart: boolean;
+  message: string;
+}
+
 export const fetchOptionalJson = async <T,>(url: string): Promise<T | null> => {
   try {
     return await fetchJson<T>(url);

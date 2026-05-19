@@ -2445,6 +2445,274 @@ The user can execute these commands directly from your interface.`;
     });
   });
 
+  // ── Ollama Management ──────────────────────────────────────────────────
+
+  const OLLAMA_SERVICE = "ollama";
+  const OLLAMA_API_BASE = "http://127.0.0.1:11434";
+  const OLLAMA_OVERRIDE_PATH = "/etc/systemd/system/ollama.service.d/override.conf";
+
+  /** Read an env value from override.conf lines (e.g. Environment="KEY=val") */
+  const parseOverrideEnv = (lines: string[], key: string): string | null => {
+    const re = new RegExp(`^Environment="?${key}\\s*=\\s*(.+?)"?$`);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const match = trimmed.match(re);
+      if (match) {
+        // Strip trailing quote if present
+        let val = match[1].replace(/"$/, "");
+        // Strip comment after value
+        const commentIdx = val.indexOf("#");
+        if (commentIdx >= 0) val = val.slice(0, commentIdx).trim();
+        return val;
+      }
+    }
+    return null;
+  };
+
+  /** Read the full override.conf as an array of lines */
+  const readOverrideLines = (): string[] => {
+    try {
+      if (fs.existsSync(OLLAMA_OVERRIDE_PATH)) {
+        return fs.readFileSync(OLLAMA_OVERRIDE_PATH, "utf8").split("\n");
+      }
+    } catch {
+      // not accessible
+    }
+    return [];
+  };
+
+  /** Safely exec a command, returning stdout or null on failure */
+  const safeExec = (cmd: string): string | null => {
+    try {
+      return execSync(cmd, { encoding: "utf8", timeout: 5000 }).trim();
+    } catch {
+      return null;
+    }
+  };
+
+  /** Fetch JSON from Ollama API with timeout */
+  const ollamaApiFetch = async <T,>(path: string): Promise<T | null> => {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000);
+      try {
+        const response = await fetch(`${OLLAMA_API_BASE}${path}`, { signal: controller.signal });
+        if (!response.ok) return null;
+        return (await response.json()) as T;
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch {
+      return null;
+    }
+  };
+
+  app.get("/api/ollama/status", async (_req, res) => {
+    const isActive = safeExec("systemctl is-active ollama");
+    const running = isActive === "active";
+
+    // PID
+    let pid: number | undefined;
+    if (running) {
+      const pidStr = safeExec("systemctl show --property=MainPID ollama");
+      if (pidStr) {
+        const parsed = parseInt(pidStr.replace("MainPID=", ""), 10);
+        if (Number.isFinite(parsed) && parsed > 0) pid = parsed;
+      }
+    }
+
+    // Read override.conf
+    const overrideLines = readOverrideLines();
+    const defaults = {
+      OLLAMA_NUM_PARALLEL: parseOverrideEnv(overrideLines, "OLLAMA_NUM_PARALLEL") || "1",
+      OLLAMA_FLASH_ATTENTION: parseOverrideEnv(overrideLines, "OLLAMA_FLASH_ATTENTION") || "0",
+      OLLAMA_KV_CACHE_TYPE: parseOverrideEnv(overrideLines, "OLLAMA_KV_CACHE_TYPE") || "f16",
+      num_gpu: "999",
+    };
+
+    // Active model info from Ollama PS API
+    let activeModel: string | null = null;
+    let gpuLayers: number | null = null;
+    if (running) {
+      const psData = await ollamaApiFetch<{ models?: Array<{ name?: string; model?: string; details?: Record<string, unknown> }> }>("/api/ps");
+      if (psData?.models?.length) {
+        activeModel = psData.models[0].model || psData.models[0].name || null;
+        // Try to extract GPU layer info from model details if available
+        const details = psData.models[0].details;
+        if (details?.gpu_layers != null) {
+          gpuLayers = Number(details.gpu_layers);
+        }
+      }
+    }
+
+    // Read num_gpu from active model's modelfile or use default
+    if (running && activeModel) {
+      const showInfo = safeExec(`ollama show ${activeModel.split(":")[0]} 2>/dev/null || true`);
+      if (showInfo) {
+        for (const line of showInfo.split("\n")) {
+          if (line.includes("num_gpu")) {
+            const match = line.match(/num_gpu\s+(\d+)/);
+            if (match) defaults.num_gpu = match[1];
+            break;
+          }
+        }
+      }
+    }
+
+    res.json({
+      running,
+      pid,
+      config: defaults,
+      activeModel,
+      gpuLayers,
+    });
+  });
+
+  app.get("/api/ollama/models", async (_req, res) => {
+    // Try Ollama API /api/tags first (more structured data)
+    const tagsData = await ollamaApiFetch<{ models?: Array<{ name: string; size?: number; modified_at?: string; details?: { parameter_size?: string; quantization_level?: string; family?: string } }> }>("/api/tags");
+    if (tagsData?.models) {
+      const models = tagsData.models.map((m) => ({
+        name: m.name,
+        size: String(m.size ?? 0),
+        modified: m.modified_at || "",
+        details: m.details,
+      }));
+      return res.json({ models });
+    }
+
+    // Fallback: parse `ollama list` output
+    const listOut = safeExec("ollama list 2>/dev/null");
+    if (listOut) {
+      const lines = listOut.trim().split("\n").slice(1); // skip header
+      const models = lines
+        .filter((l) => l.trim())
+        .map((l) => {
+          const parts = l.split(/\s{2,}/);
+          return {
+            name: parts[0]?.trim() || "unknown",
+            size: parts[2]?.trim() || "0",
+            modified: parts[3]?.trim() || "",
+          };
+        });
+      return res.json({ models });
+    }
+
+    // Neither worked — return empty
+    res.json({ models: [] });
+  });
+
+  app.post("/api/ollama/apply-config", (req, res) => {
+    const body = req.body as {
+      OLLAMA_NUM_PARALLEL?: number;
+      OLLAMA_FLASH_ATTENTION?: boolean;
+      OLLAMA_KV_CACHE_TYPE?: string;
+      num_gpu?: number;
+      restart?: boolean;
+    };
+
+    // Build env map from request body, falling back to current values
+    const overrideLines = readOverrideLines();
+    const currentEnv: Record<string, string> = {
+      OLLAMA_NUM_PARALLEL: parseOverrideEnv(overrideLines, "OLLAMA_NUM_PARALLEL") || "1",
+      OLLAMA_FLASH_ATTENTION: parseOverrideEnv(overrideLines, "OLLAMA_FLASH_ATTENTION") || "0",
+      OLLAMA_KV_CACHE_TYPE: parseOverrideEnv(overrideLines, "OLLAMA_KV_CACHE_TYPE") || "f16",
+    };
+
+    // Apply request overrides
+    const newEnv: Record<string, string> = { ...currentEnv };
+    if (body.OLLAMA_NUM_PARALLEL !== undefined) {
+      const val = Math.max(1, Math.min(8, Math.round(body.OLLAMA_NUM_PARALLEL)));
+      newEnv.OLLAMA_NUM_PARALLEL = String(val);
+    }
+    if (body.OLLAMA_FLASH_ATTENTION !== undefined) {
+      newEnv.OLLAMA_FLASH_ATTENTION = body.OLLAMA_FLASH_ATTENTION ? "1" : "0";
+    }
+    if (body.OLLAMA_KV_CACHE_TYPE !== undefined) {
+      const valid = ["f16", "q8_0", "q4_0"];
+      if (valid.includes(body.OLLAMA_KV_CACHE_TYPE)) {
+        newEnv.OLLAMA_KV_CACHE_TYPE = body.OLLAMA_KV_CACHE_TYPE;
+      }
+    }
+
+    // Build the override.conf content
+    const lines: string[] = ["[Service]"];
+    for (const [key, val] of Object.entries(newEnv)) {
+      lines.push(`Environment="${key}=${val}"`);
+    }
+
+    try {
+      // Ensure directory exists
+      const overrideDir = path.dirname(OLLAMA_OVERRIDE_PATH);
+      if (!fs.existsSync(overrideDir)) {
+        fs.mkdirSync(overrideDir, { recursive: true });
+      }
+      fs.writeFileSync(OLLAMA_OVERRIDE_PATH, lines.join("\n") + "\n", "utf8");
+
+      // Reload systemd daemon
+      const reloadResult = safeExec("systemctl daemon-reload");
+      const needsRestart = true;
+
+      if (reloadResult === null) {
+        // systemctl daemon-reload failed — likely permissions
+        return res.status(403).json({
+          success: false,
+          needsRestart: false,
+          message: "Permission denied: cannot reload systemd. Try running with sudo or manually apply the config:\n" +
+            `Config written to ${OLLAMA_OVERRIDE_PATH}\n` +
+            "Then run: sudo systemctl daemon-reload && sudo systemctl restart ollama",
+        });
+      }
+
+      // Optionally restart
+      if (body.restart) {
+        const restartResult = safeExec("systemctl restart ollama");
+        if (restartResult === null) {
+          return res.status(403).json({
+            success: false,
+            needsRestart: true,
+            message: "Config written but restart failed — may need sudo. Run: sudo systemctl restart ollama",
+          });
+        }
+        return res.json({
+          success: true,
+          needsRestart: false,
+          message: "Config applied and Ollama restarted successfully.",
+        });
+      }
+
+      res.json({
+        success: true,
+        needsRestart,
+        message: "Config saved. Restart Ollama for changes to take effect.",
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        needsRestart: false,
+        message: `Failed to apply config: ${err.message}`,
+      });
+    }
+  });
+
+  app.post("/api/ollama/restart", (_req, res) => {
+    const result = safeExec("systemctl restart ollama");
+    if (result === null) {
+      // Try with full path
+      const retry = safeExec("/usr/bin/systemctl restart ollama");
+      if (retry === null) {
+        return res.status(403).json({
+          success: false,
+          message: "Failed to restart Ollama. Try: sudo systemctl restart ollama",
+        });
+      }
+    }
+    res.json({
+      success: true,
+      message: "Ollama service restarted",
+    });
+  });
+
   app.get("/api/health", (_req, res) => {
     const coreChecks = {
       ucoreExists: fs.existsSync(path.join(repoRoot, "ucore")),

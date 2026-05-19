@@ -42,6 +42,21 @@ from metrics import (
 )
 
 # ---------------------------------------------------------------------------
+# Clone metrics with sync mode — async metrics don't serialize scores
+# properly in this test's single-threaded context
+# ---------------------------------------------------------------------------
+
+def _make_sync(metrics_list: list) -> list:
+    for m in metrics_list:
+        m.async_mode = False
+    return metrics_list
+
+DATASET_QUALITY_METRICS = _make_sync(DATASET_QUALITY_METRICS)
+RAG_QUALITY_METRICS = _make_sync(RAG_QUALITY_METRICS)
+CONVERSATIONAL_METRICS = _make_sync(CONVERSATIONAL_METRICS)
+SAFETY_METRICS = _make_sync(SAFETY_METRICS)
+
+# ---------------------------------------------------------------------------
 # Defaults
 # ---------------------------------------------------------------------------
 
