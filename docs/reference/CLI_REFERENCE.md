@@ -28,13 +28,13 @@ Reviews subject specs before generation or training.
 ### `generate`
 Generates training data from a subject spec.
 - `spec`: Path to JSON spec.
-- `--technique`: `onyx` (default) for production datasets, `template` for smoke tests only.
-- `--onyx-url`, `--onyx-api-key`, `--onyx-max-results`, `--onyx-max-context-chars`: Local Onyx retrieval settings for resource-conscious grounded generation.
+- `--technique`: `docs`, `ollama`, `openai`, `anthropic`, or `template` (default `template` for smoke tests).
+- `--docs-manifest`: Curated corpus manifest for `--technique docs`.
 
-The `onyx` technique retrieves from the local Onyx index and writes provenance-rich ChatML with bounded local resource use:
+The `docs` technique retrieves from the curated corpus manifest and writes provenance-rich ChatML with bounded local resource use:
 
 ```bash
-./ucore generate subjects/NPC_specs/my_npc.json --technique onyx --onyx-max-results 3 --onyx-max-context-chars 1200
+./ucore generate subjects/NPC_specs/my_npc.json --technique docs --docs-manifest path/to/curated_corpus.jsonl
 ```
 
 ### `sanitize`

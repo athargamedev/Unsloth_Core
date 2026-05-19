@@ -22,7 +22,7 @@ graph TD
 **Outputs**: `subjects/datasets/{npc_key}/{technique}/train.jsonl`
 
 Using the `research_queries` defined in the subject spec, the generator fetches domain knowledge and synthesizes Q&A pairs.
-- **Techniques**: `onyx` (default) for production datasets, `template` for smoke tests only.
+- **Techniques**: `docs` for grounded production datasets, `template` for smoke tests only.
 - **Format**: All data is generated in **ChatML** format to ensure compatibility with modern instruct models.
 
 ---

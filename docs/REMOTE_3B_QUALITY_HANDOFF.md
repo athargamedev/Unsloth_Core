@@ -66,7 +66,7 @@ So the exported LoRA GGUFs are compatible with the existing fast 3B Unity runtim
 - W&B enabled with tags:
   - remote-3b-quality
   - portfolio
-  - onyx-feedback
+  - docs-feedback
 
 ## After downloading Colab GGUFs
 

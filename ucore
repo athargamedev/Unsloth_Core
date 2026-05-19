@@ -624,7 +624,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "feedback":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "feedback_loop.py"), args.feedback_json]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "feedback_loop.py"), args.feedback_json]
         if args.win_rate_threshold: cmd.extend(["--win-rate-threshold", str(args.win_rate_threshold)])
         if args.quality_threshold: cmd.extend(["--quality-threshold", str(args.quality_threshold)])
         if args.violation_threshold: cmd.extend(["--violation-threshold", str(args.violation_threshold)])

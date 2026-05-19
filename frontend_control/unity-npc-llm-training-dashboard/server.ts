@@ -3336,6 +3336,7 @@ The user can execute these commands directly from your interface.`;
   // ---- WebSocket server ----
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
   const clients = new Set<WebSocketClient>();
+  const heartbeatState = new Map<WebSocketClient, { isAlive: boolean; lastPongAt: number }>();
   let wsEventSeq = 0;
   const wsEventHistory: Array<{ eventId: number; type: string; payload: unknown; timestamp: string }> = [];
   const WS_EVENT_HISTORY_LIMIT = 2000;
@@ -3449,6 +3450,7 @@ The user can execute these commands directly from your interface.`;
 
   wss.on("connection", (ws) => {
     clients.add(ws);
+    heartbeatState.set(ws, { isAlive: true, lastPongAt: Date.now() });
     ws.send(
       JSON.stringify({
         type: "status",
@@ -3465,7 +3467,12 @@ The user can execute these commands directly from your interface.`;
       try {
         const msg = JSON.parse(raw.toString()) as { type?: string; sinceEventId?: number };
         if (msg.type === "ping") {
+          heartbeatState.set(ws, { isAlive: true, lastPongAt: Date.now() });
           ws.send(JSON.stringify({ type: "pong", payload: { now: isoNow() }, timestamp: isoNow() }));
+          return;
+        }
+        if (msg.type === "pong") {
+          heartbeatState.set(ws, { isAlive: true, lastPongAt: Date.now() });
           return;
         }
         if (msg.type === "request_replay") {
@@ -3476,8 +3483,14 @@ The user can execute these commands directly from your interface.`;
       }
     });
 
-    ws.on("close", () => clients.delete(ws));
-    ws.on("error", () => clients.delete(ws));
+    ws.on("close", () => {
+      clients.delete(ws);
+      heartbeatState.delete(ws);
+    });
+    ws.on("error", () => {
+      clients.delete(ws);
+      heartbeatState.delete(ws);
+    });
   });
 
   app.get("/api/events", (req, res) => {
@@ -3499,8 +3512,18 @@ The user can execute these commands directly from your interface.`;
   // Heartbeat ping every 10 seconds to detect half-open connections.
   setInterval(() => {
     if (clients.size === 0) return;
+    const now = Date.now();
     for (const client of clients) {
+      const state = heartbeatState.get(client);
+      if (!state) continue;
+      if (!state.isAlive && now - state.lastPongAt > 30000) {
+        clients.delete(client);
+        heartbeatState.delete(client);
+        try { client.terminate(); } catch { /* ignore */ }
+        continue;
+      }
       if (client.readyState === WebSocketClient.OPEN) {
+        heartbeatState.set(client, { isAlive: false, lastPongAt: state.lastPongAt });
         client.send(JSON.stringify({ type: "ping", payload: { now: isoNow() }, timestamp: isoNow() }));
       }
     }

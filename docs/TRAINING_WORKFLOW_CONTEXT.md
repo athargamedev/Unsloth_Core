@@ -260,23 +260,21 @@ source unsloth_env/bin/activate
 # 2. Scaffold a new NPC
 ./ucore init new_npc --subject "Topic description"
 
-# 3. Index reference docs into Onyx
-python scripts/onyx_index_repo.py --npc-key new_npc \
-  --glob subjects/NPC_specs/new_npc.json \
-  --glob subjects/reference_docs/new_npc_primer.md
+# 3. Generate a docs-backed dataset
+./ucore generate subjects/NPC_specs/new_npc.json --technique docs --docs-manifest path/to/curated_corpus.jsonl
 
 # 4. Quick smoke test
 ./ucore pipeline subjects/NPC_specs/new_npc.json --preset smoke
 
 # 5. Full production pipeline
-./ucore generate subjects/NPC_specs/new_npc.json --technique onyx
-./ucore sanitize subjects/datasets/new_npc/onyx/train.jsonl
-./ucore train subjects/NPC_specs/new_npc.json --technique onyx --preset fast-3b --export-gguf
+./ucore generate subjects/NPC_specs/new_npc.json --technique docs --docs-manifest path/to/curated_corpus.jsonl
+./ucore sanitize subjects/datasets/new_npc/docs/train.jsonl
+./ucore train subjects/NPC_specs/new_npc.json --technique docs --preset fast-3b --export-gguf
 ./ucore evaluate --baseline exports/new_npc/new_npc-lora-f16.gguf \
   --spec subjects/NPC_specs/new_npc.json --report-html
 
 # 6. W&B tracking
-./ucore train subjects/NPC_specs/new_npc.json --technique onyx --preset fast-3b --wandb --export-gguf
+./ucore train subjects/NPC_specs/new_npc.json --technique docs --preset fast-3b --wandb --export-gguf
 
 # 7. Compare two rounds
 ./ucore evaluate \
@@ -311,13 +309,13 @@ python scripts/onyx_index_repo.py --npc-key new_npc \
 subjects/NPC_specs/{npc_key}.json ──── subjects/reference_docs/{npc_key}_primer.md
           │
           ▼
-  scripts/onyx_index_repo.py ──► Onyx (vector DB)
+  ./ucore generate subjects/NPC_specs/{npc_key}.json --technique docs --docs-manifest path/to/curated_corpus.jsonl ──► Docs retrieval/manifest prep
           │
           ▼
-  scripts/dataset/generate_dataset.py ──► Onyx retrieval
+  scripts/dataset/generate_dataset.py ──► Docs retrieval
           │
           ▼
-  subjects/datasets/{npc_key}/onyx/train.jsonl
+  subjects/datasets/{npc_key}/docs/train.jsonl
           │
           ▼
   scripts/dataset/sanitize_dataset.py ──► train_clean.jsonl
@@ -367,32 +365,21 @@ lora:
 
 ---
 
-## 7. Onyx Integration
+## 7. Docs Integration
 
-Onyx is a local RAG knowledge base. The pipeline uses it to:
+Docs is the grounded generation path. The pipeline uses it to:
 
 **During generation:**
-- Retrieve relevant context chunks from indexed reference docs
+- Retrieve relevant context chunks from the curated corpus manifest
 - Feed context to deterministic template for grounded Q&A generation
 - Support document-set scoping per NPC
 - Natural conversation templates (v2) with hash-based variant selection
 
-**Indexing reference docs:**
-```bash
-python scripts/onyx_index_repo.py     # index project-wide
-python scripts/onyx_index_repo.py --npc-key history_guide \
-  --glob subjects/NPC_specs/history_guide.json \
-  --glob subjects/reference_docs/history_primer.md
-python scripts/onyx_index_repo.py --dry-run  # preview
-```
-
-**Onyx-backed generation:**
+**Docs-backed generation:**
 ```bash
 ./ucore generate subjects/NPC_specs/history_guide.json \
-  --technique onyx \
-  --onyx-max-results 3 \
-  --onyx-max-context-chars 1200 \
-  --onyx-prep
+  --technique docs \
+  --docs-manifest path/to/curated_corpus.jsonl
 ```
 
 ---
@@ -404,7 +391,7 @@ python scripts/onyx_index_repo.py --dry-run  # preview
 | `README.md` | Project overview and quick start |
 | `AGENTS.md` | AI agent reference (architecture, commands, logic map) |
 | `docs/TRAINING_WORKFLOW_CONTEXT.md` | This document — full pipeline detail |
-| `docs/ONYX_WORKFLOW.md` | Onyx setup, indexing, and generation workflow |
+| `docs/CLI_REFERENCE.md` | Docs flags, generation, and dataset workflow |
 | `subjects/NPC_specs/*.json` | NPC specification files |
 | `configs/*.yaml` | Training configuration base files |
 | `configs/presets/*.yaml` | Training presets (hyperparameter profiles) |

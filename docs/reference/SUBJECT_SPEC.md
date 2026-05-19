@@ -84,7 +84,7 @@ Controls the distribution of examples in the generated `.jsonl` file.
 }
 ```
 
-(both onyx and template techniques use the same example distribution)
+(both docs and template techniques use the same example distribution)
 
 ---
 

@@ -40,6 +40,7 @@ import { WorkflowAssistantPanel } from './components/WorkflowAssistantPanel';
 import { DatasetPipelinePanel } from './components/DatasetPipelinePanel';
 
 import { DatasetFactory } from './components/DatasetFactory';
+import { TabChrome } from './components/TabChrome';
 const PipelineFlowPanel = lazy(() => import('./components/PipelineFlowPanel').then(m => ({ default: m.PipelineFlowPanel })));
 const EvalWorkflowPanel = lazy(() => import('./components/EvalWorkflowPanel').then(m => ({ default: m.EvalWorkflowPanel })));
 const FeedbackLoopPanel = lazy(() => import('./components/FeedbackLoopPanel').then(m => ({ default: m.FeedbackLoopPanel })));
@@ -184,6 +185,186 @@ export default function App() {
       fetchStatus();
     },
   });
+
+  const selectedJob = selectedJobId ? jobs.find((job) => job.id === selectedJobId) ?? jobs[0] ?? null : jobs[0] ?? null;
+  const selectedDataset = datasetViewNpc ? datasets.find((dataset) => dataset.id === datasetViewNpc) ?? null : null;
+  const activeTabMeta = (() => {
+    switch (activeTab) {
+      case 'overview':
+        return {
+          icon: Play,
+          title: 'Quick Start',
+          description: 'Launch the pipeline, inspect the current workspace, and jump to the next decision point.',
+          tip: 'Use this tab to confirm your current NPC, dataset, and active run before starting work.',
+          status: selectedJob?.status || 'Idle',
+          chips: [
+            { label: `${jobs.length} jobs`, tone: 'accent' as const },
+            { label: `${datasets.length} datasets`, tone: 'muted' as const },
+            { label: `${runs.length} runs`, tone: 'muted' as const },
+          ],
+        };
+      case 'pipeline':
+        return {
+          icon: Activity,
+          title: 'Pipeline Map',
+          description: 'A staged view from spec → data → train → export → evaluate → feedback.',
+          tip: 'If you need the shortest path to a fix, start here and follow the stage with the weakest signal.',
+          status: selectedJob?.npcKey || 'No NPC selected',
+          chips: [
+            { label: `Stage ${selectedJob?.stages?.find((stage) => stage.status === 'running')?.name || 'Ready'}`, tone: 'success' as const },
+            { label: `${registryState.workflowCount} workflows`, tone: 'muted' as const },
+          ],
+        };
+      case 'dataset_params':
+        return {
+          icon: Database,
+          title: 'Dataset Controls',
+          description: 'Inspect dataset generation inputs, quality gates, and the exact technique feeding training.',
+          tip: 'Always check the quality summary before training; weak data usually beats strong hyperparameters.',
+          status: selectedDataset ? `${selectedDataset.id}/${datasetViewTechnique || 'technique'}` : 'No dataset selected',
+          chips: [
+            { label: datasetViewNpc || 'select npc', tone: 'accent' as const },
+            { label: datasetViewTechnique || 'choose technique', tone: 'muted' as const },
+          ],
+        };
+      case 'training':
+        return {
+          icon: Cpu,
+          title: 'Training Suite',
+          description: 'Tune LoRA hyperparameters, verify the base model, and launch the next run.',
+          tip: 'Keep the spec, dataset, and preset aligned before changing rank, alpha, or learning rate.',
+          status: trainingConfig.preset,
+          chips: [
+            { label: trainingConfig.technique, tone: 'accent' as const },
+            { label: `${trainingConfig.epochs} epochs`, tone: 'muted' as const },
+            { label: `bs ${trainingConfig.batchSize}`, tone: 'muted' as const },
+          ],
+        };
+      case 'eval':
+        return {
+          icon: BarChart3,
+          title: 'Evaluation Studio',
+          description: 'Compare baseline vs candidate and inspect structured feedback for decision-making.',
+          tip: 'A strong eval should tell you whether to ship, retrain, or fix the dataset.',
+          status: selectedJob?.npcKey || 'Evaluation ready',
+          chips: [
+            { label: `${exportArtifacts.length} exports`, tone: 'muted' as const },
+            { label: `${selectedJobIds.length} selected`, tone: 'accent' as const },
+          ],
+        };
+      case 'feedback':
+        return {
+          icon: MessageSquare,
+          title: 'Feedback Loop',
+          description: 'Turn eval weak spots into targeted regeneration, sanitize, gate, and retrain.',
+          tip: 'Use the feedback JSON to focus on concepts with low win rate or repeated violations.',
+          status: 'Gap analysis',
+          chips: [
+            { label: 'weak concepts', tone: 'warning' as const },
+            { label: 'retrain loop', tone: 'success' as const },
+          ],
+        };
+      case 'colab':
+        return {
+          icon: ExternalLink,
+          title: 'Cloud Notes',
+          description: 'Quick access to cloud-friendly training notebooks and remote execution helpers.',
+          tip: 'Use cloud only when local VRAM is the limiter; keep the local workflow as your source of truth.',
+          status: 'Reference only',
+          chips: [{ label: 'cloud', tone: 'muted' as const }],
+        };
+      case 'workflow_assistant':
+        return {
+          icon: Sparkles,
+          title: 'Workflow Docs',
+          description: 'Repository workflow guidance, commands, and the rules that keep training reproducible.',
+          tip: 'This is the place to check the canonical paths before generating, sanitizing, or training.',
+          status: 'Docs',
+          chips: [{ label: 'canonical flow', tone: 'accent' as const }],
+        };
+      case 'dataset_pipeline':
+        return {
+          icon: Layers,
+          title: 'Dataset Pipeline',
+          description: 'See the data path from raw source to cleaned training rows and quality checkpoints.',
+          tip: 'When a run looks off, verify the dataset pipeline first; most model problems start there.',
+          status: selectedDataset ? selectedDataset.id : 'No dataset selected',
+          chips: [{ label: 'train.jsonl → train_clean.jsonl', tone: 'muted' as const }],
+        };
+      case 'jobs':
+        return {
+          icon: Settings,
+          title: 'Operations Matrix',
+          description: 'A live job control surface for selection, comparison, logs, export, and stop actions.',
+          tip: 'Select one job to inspect, or multiple jobs to compare outputs side-by-side.',
+          status: `${jobs.length} jobs`,
+          chips: [
+            { label: `${selectedJobIds.length} compare`, tone: 'accent' as const },
+            { label: connectionQuality === 'connected' ? 'live' : 'polling', tone: connectionQuality === 'connected' ? 'success' as const : 'warning' as const },
+          ],
+        };
+      case 'analytics':
+        return {
+          icon: BarChart3,
+          title: 'TensorBoard Decision Studio',
+          description: 'Choose runs by model, dataset, and technique; compare curves and dataset quality together.',
+          tip: 'Focus on the primary run first, then compare against a baseline or sibling run before exporting.',
+          status: selectedJob?.npcKey || 'Run comparison',
+          chips: [
+            { label: `${runs.length} runs`, tone: 'muted' as const },
+            { label: `${selectedJobIds.length} selected`, tone: 'accent' as const },
+          ],
+        };
+      case 'compare':
+        return {
+          icon: Layers,
+          title: 'Compare Runs',
+          description: 'A compact comparison view for losses, progress, artifacts, and selection state.',
+          tip: 'Compare runs that share the same spec or dataset so the decision is actually meaningful.',
+          status: `${selectedJobIds.length} selected`,
+          chips: [{ label: 'side-by-side', tone: 'accent' as const }],
+        };
+      case 'datasets':
+        return {
+          icon: Database,
+          title: 'Dataset Browser',
+          description: 'Browse dataset versions, inspect samples, and verify what the model actually learned from.',
+          tip: 'If the model fails a concept, check whether that concept exists in the dataset samples and quality gates.',
+          status: datasetViewNpc || 'All datasets',
+          chips: [
+            { label: `${datasets.length} datasets`, tone: 'muted' as const },
+            { label: `${runs.length} runs`, tone: 'muted' as const },
+          ],
+        };
+      case 'logs':
+        return {
+          icon: Terminal,
+          title: 'Console Stream',
+          description: 'Unified output for commands, training logs, system messages, and failures.',
+          tip: 'Use the console when you need the exact command output or a failure trace before changing code.',
+          status: `${logs.length} lines`,
+          chips: [{ label: 'live telemetry', tone: 'warning' as const }],
+        };
+      case 'commands':
+        return {
+          icon: Bell,
+          title: 'Command Center',
+          description: 'Launch supported actions, inspect reports, deployment tools, and remote controls.',
+          tip: 'Only run the command you can explain later; this keeps the workflow auditable.',
+          status: `${availableCommands.length} commands`,
+          chips: [{ label: 'system tools', tone: 'accent' as const }],
+        };
+      default:
+        return {
+          icon: Play,
+          title: 'Workspace',
+          description: 'A live project workspace.',
+          tip: 'Check the tab-specific banner before making decisions.',
+          status: 'Ready',
+          chips: [],
+        };
+    }
+  })();
 
   // --- Data Fetching ---
 
@@ -781,33 +962,35 @@ export default function App() {
           {/* Tab Selection */}
           <div className="flex px-4 border-b border-line bg-surface/30 backdrop-blur-md overflow-x-auto whitespace-nowrap no-scrollbar">
             {[
-              { id: 'overview', label: 'Quick Start', shortLabel: 'Start' },
-              { id: 'pipeline', label: 'Pipeline', shortLabel: 'Pipe' },
-              { id: 'dataset_params', label: '1) Data', shortLabel: 'Data' },
-              { id: 'training', label: '2) Train', shortLabel: 'Train' },
-              { id: 'eval', label: '3) Eval', shortLabel: 'Eval' },
-              { id: 'feedback', label: '4) Feedback', shortLabel: 'FB' },
-              { id: 'colab', label: 'Cloud (Colab)', shortLabel: 'Colab' },
-              { id: 'workflow_assistant', label: 'WorkflowDocs', shortLabel: 'Docs' },
-              { id: 'dataset_pipeline', label: 'Dataset Pipeline', shortLabel: 'Pipe' },
-              { id: 'jobs', label: 'Ops', shortLabel: 'Ops' },
-              { id: 'analytics', label: 'TensorBoard', shortLabel: 'TB' },
-              { id: 'compare', label: 'Compare', shortLabel: 'Cmp' },
-              { id: 'datasets', label: 'Datasets', shortLabel: 'DS' },
-              { id: 'logs', label: 'Console', shortLabel: 'Log' },
+              { id: 'overview', label: 'Quick Start', shortLabel: 'Start', icon: Play, tip: 'Entry point for the current workspace.' },
+              { id: 'pipeline', label: 'Pipeline', shortLabel: 'Pipe', icon: Activity, tip: 'Visualize the spec-to-feedback flow.' },
+              { id: 'dataset_params', label: '1) Data', shortLabel: 'Data', icon: Database, tip: 'Check data quality before training.' },
+              { id: 'training', label: '2) Train', shortLabel: 'Train', icon: Cpu, tip: 'Tune and launch LoRA training.' },
+              { id: 'eval', label: '3) Eval', shortLabel: 'Eval', icon: BarChart3, tip: 'Compare candidates against baselines.' },
+              { id: 'feedback', label: '4) Feedback', shortLabel: 'FB', icon: MessageSquare, tip: 'Turn eval failures into regeneration.' },
+              { id: 'colab', label: 'Cloud (Colab)', shortLabel: 'Colab', icon: ExternalLink, tip: 'Cloud helper and remote notes.' },
+              { id: 'workflow_assistant', label: 'WorkflowDocs', shortLabel: 'Docs', icon: Sparkles, tip: 'Canonical workflow reference.' },
+              { id: 'dataset_pipeline', label: 'Dataset Pipeline', shortLabel: 'Pipe', icon: Layers, tip: 'Inspect the dataset lifecycle.' },
+              { id: 'jobs', label: 'Ops', shortLabel: 'Ops', icon: Settings, tip: 'Control jobs and compare runs.' },
+              { id: 'analytics', label: 'TensorBoard', shortLabel: 'TB', icon: BarChart3, tip: 'Select and compare training curves.' },
+              { id: 'compare', label: 'Compare', shortLabel: 'Cmp', icon: Layers, tip: 'Multi-run side-by-side review.' },
+              { id: 'datasets', label: 'Datasets', shortLabel: 'DS', icon: Database, tip: 'Browse dataset versions and samples.' },
+              { id: 'logs', label: 'Console', shortLabel: 'Log', icon: Terminal, tip: 'Read raw execution logs.' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
+                title={tab.tip}
                 className={cn(
-                  "shrink-0 px-4 py-3 text-[12px] font-bold uppercase tracking-[0.12em] border-b-2 transition-all duration-300 relative group",
+                  "shrink-0 px-4 py-3 text-[12px] font-bold uppercase tracking-[0.12em] border-b-2 transition-all duration-300 relative group flex items-center gap-2",
                   activeTab === tab.id ? "border-accent text-ink-bright" : "border-transparent text-ink/30 hover:text-ink/60",
                 )}
               >
+                <tab.icon className={cn('w-3.5 h-3.5', activeTab === tab.id ? 'text-accent' : 'text-ink/35 group-hover:text-ink/60')} />
                 <span className="sm:hidden">{tab.shortLabel}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
                 {tab.id === 'compare' && selectedJobIds.length > 0 && (
-                  <span className="ml-2 bg-accent text-bg px-1.5 rounded-full text-[12px] font-mono animate-pulse">
+                  <span className="ml-1 bg-accent text-bg px-1.5 rounded-full text-[12px] font-mono animate-pulse">
                     {selectedJobIds.length}
                   </span>
                 )}
@@ -818,6 +1001,15 @@ export default function App() {
               </button>
             ))}
           </div>
+
+          <TabChrome
+            icon={activeTabMeta.icon}
+            title={activeTabMeta.title}
+            description={activeTabMeta.description}
+            tip={activeTabMeta.tip}
+            chips={activeTabMeta.chips}
+            status={activeTabMeta.status}
+          />
 
           <AnimatePresence mode="wait">
             {activeTab === 'overview' && (
