@@ -24,6 +24,12 @@ export interface Job {
   wandbUrl?: string | null;
 }
 
+export interface JobsSnapshot {
+  jobs: Job[];
+  workflowCount: number;
+  autoSyncExternal: boolean;
+}
+
 export interface DatasetVersion {
   tag: string;
   size: string;

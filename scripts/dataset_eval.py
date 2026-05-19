@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from scripts.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEEPEVAL_TEST = PROJECT_ROOT / "tests" / "evals" / "test_dataset_generation_quality.py"
@@ -212,6 +214,18 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
         technique=args.technique,
         judge_model=args.judge_model,
         command=cmd,
+    )
+    dataset_summary = summarize_jsonl_dataset(clean_path)
+    expected_distribution = expected_examples_per_category(spec)
+    distribution_gaps = calculate_distribution_gaps(expected_distribution, dataset_summary.get("by_category", {}))
+    summary.update(
+        {
+            "dataset_summary": dataset_summary,
+            "expected_distribution": expected_distribution,
+            "distribution_gaps": distribution_gaps,
+            "dataset_total_rows": dataset_summary.get("total", 0),
+            "dataset_unknown_rows": dataset_summary.get("unknown_rows", 0),
+        }
     )
     output_dir = dataset_dir(npc_key, args.technique)
     summary_path = Path(args.output) if args.output else output_dir / "quality_summary.json"

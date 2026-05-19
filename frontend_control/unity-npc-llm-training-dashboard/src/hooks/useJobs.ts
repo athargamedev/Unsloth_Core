@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { fetchJson, type Job } from '../api';
+import { fetchJson, type Job, type JobsSnapshot } from '../api';
 
 const DEFAULT_TYPE_FILTERS = ['Training', 'Dataset', 'Export', 'Evaluation'];
 
@@ -9,10 +9,45 @@ export function useJobs() {
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'running'>('all');
   const [jobTypeFilter, setJobTypeFilter] = useState<string[]>(DEFAULT_TYPE_FILTERS);
+  const [registryState, setRegistryState] = useState<Pick<JobsSnapshot, 'workflowCount' | 'autoSyncExternal'>>({
+    workflowCount: 0,
+    autoSyncExternal: true,
+  });
 
   const fetchJobs = async () => {
-    const data = await fetchJson<Job[]>('/api/jobs');
-    setJobs(data);
+    const data = await fetchJson<JobsSnapshot>('/api/jobs/state');
+    setJobs(data.jobs);
+    setRegistryState({
+      workflowCount: data.workflowCount,
+      autoSyncExternal: data.autoSyncExternal,
+    });
+    setSelectedJobId((current) => (current && data.jobs.some((job) => job.id === current) ? current : null));
+    setSelectedJobIds((current) => current.filter((id) => data.jobs.some((job) => job.id === id)));
+    return data.jobs;
+  };
+
+  const syncJobs = async (force = false) => {
+    const response = await fetch('/api/jobs/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to sync jobs');
+    }
+    return fetchJobs();
+  };
+
+  const clearJobs = async () => {
+    const response = await fetch('/api/jobs/clear', { method: 'POST' });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to clear jobs');
+    }
+    setSelectedJobId(null);
+    setSelectedJobIds([]);
+    return fetchJobs();
   };
 
   const stopJob = async (id: string) => {
@@ -97,6 +132,7 @@ export function useJobs() {
 
   return {
     jobs,
+    registryState,
     setJobs,
     selectedJobId,
     setSelectedJobId,
@@ -113,5 +149,7 @@ export function useJobs() {
     toggleJobSelection,
     exportJobsCsv,
     fetchJobs,
+    syncJobs,
+    clearJobs,
   };
 }

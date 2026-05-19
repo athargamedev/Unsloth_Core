@@ -134,6 +134,7 @@ export default function App() {
 
   const {
     jobs,
+    registryState,
     selectedJobId,
     setSelectedJobId,
     selectedJobIds,
@@ -148,6 +149,8 @@ export default function App() {
     toggleJobSelection,
     exportJobsCsv,
     fetchJobs,
+    syncJobs,
+    clearJobs,
   } = useJobs();
 
   const {
@@ -475,6 +478,27 @@ export default function App() {
     }
   };
 
+  const handleSyncJobs = async (force = false) => {
+    try {
+      setUiError(null);
+      await syncJobs(force);
+    } catch (error) {
+      setUiError(error instanceof Error ? error.message : 'Failed to sync jobs');
+    }
+  };
+
+  const handleClearJobs = async () => {
+    try {
+      setUiError(null);
+      await clearJobs();
+      setLogs([]);
+      setSelectedJobForLogs(null);
+      await fetchData(true);
+    } catch (error) {
+      setUiError(error instanceof Error ? error.message : 'Failed to clear jobs');
+    }
+  };
+
   const handleClearLogs = async () => {
     setLogs([]);
     try {
@@ -737,7 +761,7 @@ export default function App() {
     ? [
       ...(selectedJobForLogs.logs || []),
       ...selectedJobForLogs.stages.flatMap((stage) => stage.logs.map((line) => `[${stage.name}] ${line}`)),
-    ]
+    ].reverse()
     : [];
 
   return (
@@ -1027,6 +1051,7 @@ export default function App() {
                   selectedJobId={selectedJobId}
                   activeFilter={activeFilter}
                   jobTypeFilter={jobTypeFilter}
+                  registryState={registryState}
                   isLoading={isLoading}
                   uiError={uiError}
                   onSelectJob={handleSelectJob}
@@ -1039,6 +1064,8 @@ export default function App() {
                   onManageJob={handleManageJob}
                   onDeleteJob={handleDeleteJob}
                   onViewLogs={(job) => setSelectedJobForLogs(job)}
+                  onSyncJobs={handleSyncJobs}
+                  onClearJobs={handleClearJobs}
                 />
               </motion.div>
             )}

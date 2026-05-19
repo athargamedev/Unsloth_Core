@@ -284,6 +284,8 @@ def main():
                         help="Full merge export after training (slower, standalone GGUF)")
     pipe_p.add_argument("--skip-smoke", action="store_true", help="Skip smoke test phase")
     pipe_p.add_argument("--skip-eval", action="store_true", help="Skip evaluation phase")
+    pipe_p.add_argument("--skip-spec-validate", action="store_true", help="Skip spec generation-ready validation")
+    pipe_p.add_argument("--skip-dataset-eval", action="store_true", help="Skip DeepEval dataset quality gate")
     pipe_p.add_argument("--num-eval-questions", type=int, default=5,
                         help="Number of evaluation questions (default: 5)")
 
@@ -646,6 +648,12 @@ def main():
             os.environ["WANDB_GROUP"] = wandb_group
             os.environ["WANDB_RUN_GROUP"] = wandb_group
 
+        print("[STAGE] spec")
+        if not args.skip_spec_validate:
+            print(f"--- Phase 0: Validating Spec ---")
+            validate_cmd = [PYTHON, str(SCRIPTS_DIR / "validate_subject_spec.py"), args.spec, "--generation-ready"]
+            run_cmd(validate_cmd)
+
         print("[STAGE] dataset")
         print(f"--- Phase 1: Generating Dataset ---")
         gen_cmd = [PYTHON, str(SCRIPTS_DIR / "generate_dataset.py"), args.spec]
@@ -668,8 +676,14 @@ def main():
         san_cmd = [PYTHON, str(SCRIPTS_DIR / "sanitize_dataset.py"), dataset_path, "--output", san_path, "--strict-canonical"]
         run_cmd(san_cmd)
 
+        if not args.skip_dataset_eval:
+            print("[STAGE] quality-gate")
+            print(f"\n--- Phase 3: DeepEval Dataset Quality Gate ---")
+            eval_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset_eval.py"), args.spec, "--technique", technique]
+            run_cmd(eval_cmd)
+
         print("[STAGE] training")
-        print(f"\n--- Phase 3: Training Model ---")
+        print(f"\n--- Phase 4: Training Model ---")
         train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--from-spec",
                      "--technique", technique, "--preset", args.preset]
         if args.full_merge_export:
@@ -689,7 +703,7 @@ def main():
 
         print("[STAGE] export")
         if not args.skip_smoke:
-            print(f"\n--- Phase 4: Smoke Testing ---")
+            print(f"\n--- Phase 5: Smoke Testing ---")
             if ggufs:
                 smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
                 if args.track:
@@ -699,7 +713,7 @@ def main():
                 print("Warning: No GGUF found for smoke testing")
 
         if not args.skip_eval:
-            print(f"\n--- Phase 5: Evaluation ---")
+            print(f"\n--- Phase 6: Evaluation ---")
             # Re-scan for GGUFs if not already found
             if not ggufs and export_dir.exists():
                 ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)

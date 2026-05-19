@@ -114,6 +114,22 @@ def identify_weak_concepts(feedback_data, win_rate_threshold, quality_threshold,
                     "extra_examples": DEFAULT_EXTRA_EXAMPLES,
                 }
             })
+
+    for gap in feedback_data.get("distribution_gaps", []) or []:
+        category = gap.get("category")
+        shortfall = gap.get("shortfall", 0)
+        if not category or shortfall <= 0:
+            continue
+        weak.append({
+            "concept": f"distribution/{category}",
+            "reasons": [f"shortfall={shortfall}", f"target={gap.get('target', 0)}", f"actual={gap.get('actual', 0)}"],
+            "data": gap,
+            "action": {
+                "category": category,
+                "concept_focus": category,
+                "extra_examples": max(DEFAULT_EXTRA_EXAMPLES, int(shortfall)),
+            },
+        })
     return weak
 
 

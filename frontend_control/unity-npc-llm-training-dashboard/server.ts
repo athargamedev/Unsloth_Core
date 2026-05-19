@@ -61,6 +61,13 @@ interface Registry {
   logs: string[];
   nodeId: string;
   workflows: Workflow[];
+  autoSyncExternal?: boolean;
+}
+
+interface JobRegistrySnapshot {
+  jobs: Job[];
+  workflowCount: number;
+  autoSyncExternal: boolean;
 }
 
 interface StartCommandPayload {
@@ -134,7 +141,7 @@ const ensureRuntime = () => fs.mkdirSync(runtimeDir, { recursive: true });
 const loadRegistry = (): Registry => {
   ensureRuntime();
   if (!fs.existsSync(registryPath)) {
-    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID(), workflows: [] };
+    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID(), workflows: [], autoSyncExternal: true };
     persistRegistry(registry);
     return registry;
   }
@@ -142,13 +149,14 @@ const loadRegistry = (): Registry => {
   try {
     const registry = JSON.parse(fs.readFileSync(registryPath, "utf8")) as Registry;
     registry.logs = []; // Global log buffer is transient — cleared on restart
+    if (registry.autoSyncExternal === undefined) registry.autoSyncExternal = true;
     if (!registry.nodeId) {
       registry.nodeId = crypto.randomUUID();
       flushPersist(registry);
     }
     return registry;
   } catch {
-    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID(), workflows: [] };
+    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID(), workflows: [], autoSyncExternal: true };
     flushPersist(registry);
     return registry;
   }
@@ -171,6 +179,12 @@ const flushPersist = (registry: Registry) => {
   ensureRuntime();
   fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2), "utf8");
 };
+
+const getJobRegistrySnapshot = (registry: Registry): JobRegistrySnapshot => ({
+  jobs: registry.jobs,
+  workflowCount: registry.workflows.length,
+  autoSyncExternal: registry.autoSyncExternal !== false,
+});
 
 const isoNow = () => new Date().toISOString();
 const makeId = () => `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -891,6 +905,58 @@ const syncExportStageFromStatusFile = (job: Job) => {
   }
 };
 
+const extractNpcKeyFromArgs = (args: string): string | undefined => {
+  const match =
+    args.match(/subjects\/NPC_specs\/([a-zA-Z0-9_\-]+)\.json/) ??
+    args.match(/subjects\/([a-zA-Z0-9_\-]+)\.json/) ??
+    args.match(/subjects\/datasets\/([a-zA-Z0-9_\-]+)\//) ??
+    args.match(/outputs\/([a-zA-Z0-9_\-]+)\//) ??
+    args.match(/exports\/([a-zA-Z0-9_\-]+)\//);
+  return match?.[1];
+};
+
+const extractFlagValue = (args: string, flag: string): string | undefined => {
+  const escapedFlag = flag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = args.match(new RegExp(`(?:^|\\s)${escapedFlag}\\s+([^\\s]+)`));
+  return match?.[1];
+};
+
+const summarizeExternalProcessName = (pid: number, args: string, commandId: string, type: string, npcKey?: string): string => {
+  const details: string[] = [];
+  const cleanNpcKey = npcKey ?? extractNpcKeyFromArgs(args);
+
+  if (cleanNpcKey) details.push(cleanNpcKey);
+
+  if (commandId === "train") {
+    const preset = extractFlagValue(args, "--preset");
+    const technique = extractFlagValue(args, "--technique");
+    const model = extractFlagValue(args, "--model") ?? extractFlagValue(args, "--base-model");
+    if (preset) details.push(`preset:${preset}`);
+    if (technique) details.push(`technique:${technique}`);
+    if (model) details.push(`model:${path.basename(model)}`);
+  } else if (commandId === "dataset-generate") {
+    const technique = extractFlagValue(args, "--technique");
+    if (technique) details.push(`technique:${technique}`);
+  }
+
+  return `${type} · PID ${pid}${details.length > 0 ? ` · ${details.join(" · ")}` : ""}`;
+};
+
+const estimateLiveProgress = (job: Job): number => {
+  const base = computeProgressFromStages(job.status, job.stages);
+  if (job.status !== "running") return base;
+
+  const activeIndex = job.stages.findIndex((stage) => stage.status === "running");
+  if (activeIndex < 0) return base;
+
+  const activeStage = job.stages[activeIndex];
+  if (!activeStage) return base;
+
+  const stageFloor = Math.round((activeIndex / Math.max(job.stages.length, 1)) * 100);
+  const stageBoost = Math.min(14, Math.max(0, (activeStage.logs.length - 1) * 2));
+  return Math.min(99, Math.max(base, stageFloor + 5 + stageBoost));
+};
+
 const updateStagesFromTruth = (job: Job) => {
   const activeIndex = job.commandId === "pipeline" ? syncPipelineStageFromLogs(job) : commandStageIndex(job);
 
@@ -900,7 +966,7 @@ const updateStagesFromTruth = (job: Job) => {
     syncExportStageFromStatusFile(job);
   }
 
-  job.progress = computeProgressFromStages(job.status, job.stages);
+  job.progress = estimateLiveProgress(job);
 };
 
 const appendStageLog = (job: Job, message: string) => {
@@ -1050,6 +1116,7 @@ const ensureExternalJob = (
 };
 
 const syncExternalArtifactsToRegistry = (registry: Registry) => {
+  if (registry.autoSyncExternal === false) return false;
   let changed = false;
 
   const datasetsRoot = path.join(repoRoot, "subjects", "datasets");
@@ -1137,7 +1204,7 @@ const syncExternalArtifactsToRegistry = (registry: Registry) => {
 
         const key = `ext_train_${npcKey}_${runId}`;
         changed = ensureExternalJob(registry, key, {
-          name: `External Train (${npcKey}/${runId})`,
+          name: `External Train (${npcKey}/${runId}${preset ? ` • ${preset}` : ""}${modelId ? ` • ${path.basename(modelId)}` : ""})`,
           type: "Training",
           commandId: "train",
           npcKey,
@@ -1181,7 +1248,32 @@ const syncExternalArtifactsToRegistry = (registry: Registry) => {
   return changed;
 };
 
+const normalizeLegacyExternalProcessNames = (registry: Registry) => {
+  let changed = false;
+  for (const job of registry.jobs) {
+    if (!job.id.startsWith("ext_proc_")) continue;
+    const pid = Number(job.id.replace("ext_proc_", ""));
+    const args = job.command?.[1];
+    if (!Number.isFinite(pid) || typeof args !== "string" || args.trim() === "") continue;
+
+    const inferredNpcKey = extractNpcKeyFromArgs(args);
+    if (!job.npcKey && inferredNpcKey) {
+      job.npcKey = inferredNpcKey;
+      changed = true;
+    }
+
+    const nextName = summarizeExternalProcessName(pid, args, job.commandId ?? "pipeline", job.type, job.npcKey);
+    if (job.name !== nextName) {
+      job.name = nextName;
+      changed = true;
+    }
+  }
+  if (changed) flushPersist(registry);
+  return changed;
+};
+
 const discoverActiveExternalProcesses = (registry: Registry) => {
+  if (registry.autoSyncExternal === false) return { changed: false, discovered: 0 };
   let changed = false;
   const now = isoNow();
 
@@ -1250,8 +1342,7 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
       type = "Evaluation";
     }
 
-    const npcMatch = args.match(/subjects\/([a-zA-Z0-9_\-]+)\.json/);
-    const npcKey = npcMatch ? npcMatch[1] : undefined;
+    const npcKey = extractNpcKeyFromArgs(args);
     const comboKey = `${commandId ?? ""}|${npcKey ?? ""}`;
 
     // --- Dedup: skip if we already track a running ext_proc for same (commandId, npcKey) ---
@@ -1271,6 +1362,7 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
     const existing = registry.jobs.find((job) => job.id === id);
     if (existing) {
       let needsUpdate = false;
+      const nextName = summarizeExternalProcessName(pid, args, commandId, type, npcKey);
       if (existing.status !== "running") {
         existing.status = "running";
         existing.finishedAt = undefined;
@@ -1287,6 +1379,14 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
         existing.type = type;
         needsUpdate = true;
       }
+      if (existing.npcKey !== npcKey) {
+        existing.npcKey = npcKey;
+        needsUpdate = true;
+      }
+      if (existing.name !== nextName) {
+        existing.name = nextName;
+        needsUpdate = true;
+      }
       if (needsUpdate) {
         appendStageLog(existing, `[EXTERNAL][PID ${pid}] Process still running (re-classified as ${type})`);
         changed = true;
@@ -1296,7 +1396,7 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
 
     const job: Job = {
       id,
-      name: `External Process (${pid})${npcKey ? ` ${npcKey}` : ""}`,
+      name: summarizeExternalProcessName(pid, args, commandId, type, npcKey),
       type,
       commandId,
       npcKey,
@@ -1359,6 +1459,7 @@ async function startServer() {
   const PORT = Number(process.env.PORT || "3100");
   const registry = loadRegistry();
   reconcileOrphanedJobs(registry);
+  normalizeLegacyExternalProcessNames(registry);
   syncExternalArtifactsToRegistry(registry);
   discoverActiveExternalProcesses(registry);
 
@@ -1473,6 +1574,14 @@ async function startServer() {
   app.get("/api/jobs", (_req, res) => {
     const jobs = refreshJobsCacheIfStale();
     res.json(jobs);
+  });
+  app.get("/api/jobs/state", (_req, res) => {
+    const jobs = refreshJobsCacheIfStale();
+    res.json({
+      jobs,
+      workflowCount: registry.workflows.length,
+      autoSyncExternal: registry.autoSyncExternal !== false,
+    } satisfies JobRegistrySnapshot);
   });
   app.get("/api/logs", (_req, res) => res.json(registry.logs));
   app.post("/api/logs/clear", (_req, res) => {
@@ -2556,6 +2665,7 @@ The user can execute these commands directly from your interface.`;
         const lines = chunk.toString().split("\n").map((l) => l.trim()).filter(Boolean);
         for (const line of lines) {
           const prefixed = `[${source.toUpperCase()}][${job.id}] ${line}`;
+          const previousProgress = job.progress;
           job.logs.push(prefixed);
           job.logs = job.logs.slice(-MAX_LOG_LINES);
           appendStageLog(job, prefixed);
@@ -2563,9 +2673,11 @@ The user can execute these commands directly from your interface.`;
           const parsedLoss = parseLoss(line);
           if (parsedLoss !== null) {
             job.loss = parsedLoss;
-            broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
           }
           updateStagesFromTruth(job);
+          if (job.progress !== previousProgress || parsedLoss !== null) {
+            broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
+          }
         }
         persistRegistry(registry);
       };
@@ -2654,6 +2766,7 @@ The user can execute these commands directly from your interface.`;
                 const lines = chunk.toString().split("\n").map((l) => l.trim()).filter(Boolean);
                 for (const line of lines) {
                   const prefixed = `[${source.toUpperCase()}][${nextJob.id}] ${line}`;
+                  const previousProgress = nextJob.progress;
                   nextJob.logs.push(prefixed);
                   nextJob.logs = nextJob.logs.slice(-MAX_LOG_LINES);
                   appendStageLog(nextJob, prefixed);
@@ -2661,9 +2774,11 @@ The user can execute these commands directly from your interface.`;
                   const parsedLoss = parseLoss(line);
                   if (parsedLoss !== null) {
                     nextJob.loss = parsedLoss;
-                    broadcast("job_update", { id: nextJob.id, status: nextJob.status, loss: nextJob.loss, progress: nextJob.progress });
                   }
                   updateStagesFromTruth(nextJob);
+                  if (nextJob.progress !== previousProgress || parsedLoss !== null) {
+                    broadcast("job_update", { id: nextJob.id, status: nextJob.status, loss: nextJob.loss, progress: nextJob.progress });
+                  }
                 }
                 persistRegistry(registry);
               };
@@ -2953,17 +3068,49 @@ The user can execute these commands directly from your interface.`;
     return res.json({ success: true });
   });
 
-  app.post("/api/jobs/sync", (_req, res) => {
+  app.post("/api/jobs/clear", (_req, res) => {
+    const running = registry.jobs.filter((job) => job.status === "running");
+    if (running.length > 0) {
+      return res.status(409).json({ error: "Cannot clear while jobs are running", running: running.map((job) => job.id) });
+    }
+
+    registry.jobs = [];
+    registry.workflows = [];
+    registry.logs = [];
+    registry.autoSyncExternal = false;
+    invalidateJobsCache();
+    flushPersist(registry);
+    broadcast("logs_cleared", { clearedAt: new Date().toISOString() });
+    broadcast("job_update", { cleared: true, jobs: 0, autoSyncExternal: false });
+    return res.json({ success: true, cleared: true });
+  });
+
+  app.post("/api/jobs/sync", (req, res) => {
+    const force = Boolean((req.body as { force?: boolean } | undefined)?.force);
+    if (force) {
+      registry.autoSyncExternal = true;
+    }
     const changedArtifacts = syncExternalArtifactsToRegistry(registry);
     const proc = discoverActiveExternalProcesses(registry);
     invalidateJobsCache();
+    if (force || changedArtifacts || proc.changed) {
+      broadcast("job_update", {
+        synced: true,
+        force,
+        jobs: registry.jobs.length,
+        autoSyncExternal: registry.autoSyncExternal !== false,
+      });
+    }
     return res.json({
       synced: true,
+      force,
       changed: changedArtifacts || proc.changed,
       changedArtifacts,
       changedProcesses: proc.changed,
       discoveredProcesses: proc.discovered,
       jobs: registry.jobs.length,
+      autoSyncExternal: registry.autoSyncExternal !== false,
+      workflowCount: registry.workflows.length,
     });
   });
 

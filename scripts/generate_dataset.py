@@ -44,6 +44,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from _config import constants as C
 from _config.log_setup import log_info, log_warn, log_error, log_state
+from scripts.dataset_contracts import dataset_contract_from_spec, calculate_distribution_gaps
 from scripts.generate_workflow_dataset import (
     default_manifest_path,
     generate_workflow_dataset_from_manifest,
@@ -1781,6 +1782,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
             print(f"  [warn] Could not hash spec file {spec_path}: file not found")
 
     # Write train_manifest.json
+    dataset_contract = dataset_contract_from_spec(spec)
     manifest = {
         "npc_key": spec["npc_key"],
         "technique": technique,
@@ -1794,6 +1796,12 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
             "file": str(spec_path) if spec_path else None,
             "hash": spec_hash,
             "ref_doc": spec.get("reference_doc"),
+        },
+        "contract": dataset_contract,
+        "distribution": {
+            "expected_examples_per_category": dataset_contract["expected_examples_per_category"],
+            "observed_examples_per_category": dict(by_category),
+            "distribution_gaps": calculate_distribution_gaps(dataset_contract["expected_examples_per_category"], dict(by_category)),
         },
         "statistics": {
             "total": len(examples),

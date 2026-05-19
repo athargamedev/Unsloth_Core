@@ -12,6 +12,10 @@ interface OperationsMatrixProps {
   selectedJobId: string | null;
   activeFilter: 'all' | 'running';
   jobTypeFilter: string[];
+  registryState: {
+    workflowCount: number;
+    autoSyncExternal: boolean;
+  };
   isLoading?: boolean;
   uiError?: string | null;
   onSelectJob: (id: string) => void;
@@ -24,6 +28,8 @@ interface OperationsMatrixProps {
   onManageJob: (id: string) => void;
   onDeleteJob: (id: string) => void;
   onViewLogs: (job: any) => void;
+  onSyncJobs: (force?: boolean) => void | Promise<void>;
+  onClearJobs: () => void | Promise<void>;
 }
 
 export const OperationsMatrix = ({
@@ -33,6 +39,7 @@ export const OperationsMatrix = ({
   selectedJobId,
   activeFilter,
   jobTypeFilter,
+  registryState,
   isLoading = false,
   uiError = null,
   onSelectJob,
@@ -45,8 +52,38 @@ export const OperationsMatrix = ({
   onManageJob,
   onDeleteJob,
   onViewLogs,
+  onSyncJobs,
+  onClearJobs,
 }: OperationsMatrixProps) => {
   const selectedJob = selectedJobId ? jobs.find((j) => j.id === selectedJobId) : null;
+
+  const getJobDetails = (job: Job) => {
+    const args = job.command?.slice(1).join(' ') || '';
+    const details: string[] = [];
+    const npcKey =
+      job.npcKey ||
+      args.match(/subjects\/NPC_specs\/([A-Za-z0-9_\-]+)\.json/)?.[1] ||
+      args.match(/subjects\/([A-Za-z0-9_\-]+)\.json/)?.[1] ||
+      args.match(/outputs\/([A-Za-z0-9_\-]+)\//)?.[1] ||
+      args.match(/exports\/([A-Za-z0-9_\-]+)\//)?.[1] ||
+      '';
+    const preset = args.match(/--preset\s+([^\s]+)/)?.[1];
+    const technique = args.match(/--technique\s+([^\s]+)/)?.[1];
+    const model = args.match(/--model\s+([^\s]+)/)?.[1] || args.match(/--base-model\s+([^\s]+)/)?.[1];
+
+    if (job.commandId) details.push(job.commandId);
+    if (npcKey) details.push(npcKey);
+    if (preset) details.push(`preset:${preset}`);
+    if (technique) details.push(`technique:${technique}`);
+    if (model) details.push(`model:${model.split('/').pop()}`);
+
+    return details.join(' · ');
+  };
+
+  const getActiveStageName = (job: Job) =>
+    job.stages.find((stage) => stage.status === 'running')?.name ||
+    job.stages.find((stage) => stage.status === 'failed' || stage.status === 'stopped')?.name ||
+    '';
 
   return (
     <motion.div
@@ -71,8 +108,8 @@ export const OperationsMatrix = ({
             )}
           </div>
           <div className="flex gap-2">
-            <div className="flex gap-1 items-center">
-              <span className="text-[12px] text-ink/45 font-bold uppercase tracking-wider mr-1">Types shown</span>
+            <div className="flex items-center gap-2 rounded border border-line bg-panel/70 px-2 py-1">
+              <span className="text-[12px] text-ink/45 font-bold uppercase tracking-wider">Types shown</span>
               {['Training', 'Dataset', 'Export', 'Evaluation'].map((t) => (
                 <button
                   key={t}
@@ -88,6 +125,32 @@ export const OperationsMatrix = ({
                 </button>
               ))}
             </div>
+            <div className="flex items-center gap-2 rounded border border-line bg-panel/70 px-2 py-1">
+              <span className="text-[12px] text-ink/45 font-bold uppercase tracking-wider">Registry</span>
+              <span className={cn(
+                "px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider border",
+                registryState.autoSyncExternal
+                  ? "bg-success/10 text-success border-success/30"
+                  : "bg-warning/10 text-warning border-warning/30",
+              )}>
+                {registryState.autoSyncExternal ? 'Auto-sync on' : 'Auto-sync paused'}
+              </span>
+              <span className="text-[12px] text-ink/40 font-mono">{registryState.workflowCount} workflows</span>
+            </div>
+            <button
+              onClick={() => onSyncJobs(!registryState.autoSyncExternal)}
+              className="px-2 py-1 bg-panel border border-line text-[10px] text-ink/60 rounded hover:bg-white/5 transition-colors"
+              title={registryState.autoSyncExternal ? 'Refresh job snapshot' : 'Re-enable auto-sync and refresh external jobs'}
+            >
+              {registryState.autoSyncExternal ? 'Resync' : 'Resume & sync'}
+            </button>
+            <button
+              onClick={onClearJobs}
+              className="px-2 py-1 bg-panel border border-line text-[10px] text-danger rounded hover:bg-white/5 transition-colors"
+              title="Clear all jobs, logs, and workflows from the matrix"
+            >
+              Clear Matrix
+            </button>
             <button
               onClick={onSetActiveFilter}
               className={cn(
@@ -174,7 +237,16 @@ export const OperationsMatrix = ({
                         {selectedJobIds.includes(job.id) && <div className="w-1.5 h-1.5 bg-bg rounded-full" />}
                       </div>
                     </td>
-                    <td className="p-3 font-bold text-ink-bright truncate group-hover:text-accent transition-colors">{job.name}</td>
+                    <td className="p-3 font-bold text-ink-bright truncate group-hover:text-accent transition-colors">
+                      <div className="min-w-0">
+                        <div className="truncate">{job.name}</div>
+                        {getJobDetails(job) && (
+                          <div className="text-[9px] text-ink/45 truncate mt-0.5 font-mono">
+                            {getJobDetails(job)}
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td className={cn(
                       "p-3 text-right font-bold",
                       job.loss !== null && job.loss < 0.1 ? "text-success" : "text-warning",
@@ -187,6 +259,9 @@ export const OperationsMatrix = ({
                         <div className="w-12 h-1 bg-line rounded-full overflow-hidden">
                           <div className="h-full bg-accent transition-all duration-1000" style={{ width: `${job.progress}%` }} />
                         </div>
+                        {getActiveStageName(job) && (
+                          <span className="text-[9px] text-ink/40 truncate max-w-16">{getActiveStageName(job)}</span>
+                        )}
                       </div>
                     </td>
                     <td className="p-3 text-ink/55 truncate uppercase text-[12px]">{job.type}</td>

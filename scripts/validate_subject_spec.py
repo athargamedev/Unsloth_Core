@@ -17,21 +17,18 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
 from _config.paths import SNAKE_CASE_PATTERN
+from scripts.dataset_contracts import (
+    MIN_DATASET_EXAMPLES_PER_CATEGORY,
+    SUPPORTED_DATASET_CATEGORIES,
+    VALID_DIFFICULTY_LEVELS,
+)
 
-GENERATOR_SUPPORTED_DATASET_CATEGORIES = {"identity", "teaching", "dialogue", "quest", "refusal"}
-MIN_DATASET_EXAMPLES_PER_CATEGORY = {
-    "identity": 8,
-    "teaching": 32,
-    "dialogue": 16,
-    "quest": 8,
-    "refusal": 8,
-}
+GENERATOR_SUPPORTED_DATASET_CATEGORIES = set(SUPPORTED_DATASET_CATEGORIES)
 REFERENCE_DOC_MIN_WORDS = 250
 REFERENCE_DOC_MIN_H2_SECTIONS = 5
 REFERENCE_DOC_MIN_BULLETS = 20
 REFERENCE_DOC_QUALITY_PATTERN = re.compile(r"\b(boundar(?:y|ies)|refusal|safety|misconception|myth)\b", re.IGNORECASE)
 PLACEHOLDER_PATTERN = re.compile(r"\b(TODO|TBD|FIXME|stub|placeholder)\b", re.IGNORECASE)
-VALID_DIFFICULTY_LEVELS = {"beginner", "intermediate", "advanced"}
 
 
 @dataclass(frozen=True)

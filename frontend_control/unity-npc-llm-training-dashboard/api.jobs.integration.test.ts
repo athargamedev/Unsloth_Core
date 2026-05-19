@@ -102,6 +102,50 @@ test("/api/jobs reflects stage-derived progress for a newly started command", as
   }
 });
 
+test("/api/jobs/state exposes canonical registry controls and manual resync can re-enable sync", async () => {
+  const { child, baseUrl } = await startServer(3213);
+
+  try {
+    const bootstrapRes = await fetch(`${baseUrl}/api/jobs/sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ force: true }),
+    });
+    assert.equal(bootstrapRes.ok, true, `bootstrap sync failed: ${bootstrapRes.status} ${await bootstrapRes.text()}`);
+
+    const initialRes = await fetch(`${baseUrl}/api/jobs/state`);
+    assert.equal(initialRes.ok, true, `state fetch failed: ${initialRes.status}`);
+    const initial = (await initialRes.json()) as { jobs: Array<{ id: string }>; workflowCount: number; autoSyncExternal: boolean };
+    assert.equal(Array.isArray(initial.jobs), true);
+    assert.equal(initial.workflowCount >= 0, true);
+    assert.equal(initial.autoSyncExternal, true);
+
+    const clearRes = await fetch(`${baseUrl}/api/jobs/clear`, { method: "POST" });
+    assert.equal(clearRes.ok, true, `clear failed: ${clearRes.status} ${await clearRes.text()}`);
+
+    const clearedRes = await fetch(`${baseUrl}/api/jobs/state`);
+    assert.equal(clearedRes.ok, true, `cleared state fetch failed: ${clearedRes.status}`);
+    const cleared = (await clearedRes.json()) as { jobs: Array<{ id: string }>; workflowCount: number; autoSyncExternal: boolean };
+    assert.equal(cleared.jobs.length, 0);
+    assert.equal(cleared.workflowCount, 0);
+    assert.equal(cleared.autoSyncExternal, false);
+
+    const resyncRes = await fetch(`${baseUrl}/api/jobs/sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ force: true }),
+    });
+    assert.equal(resyncRes.ok, true, `resync failed: ${resyncRes.status} ${await resyncRes.text()}`);
+
+    const resyncedRes = await fetch(`${baseUrl}/api/jobs/state`);
+    assert.equal(resyncedRes.ok, true, `resynced state fetch failed: ${resyncedRes.status}`);
+    const resynced = (await resyncedRes.json()) as { autoSyncExternal: boolean };
+    assert.equal(resynced.autoSyncExternal, true);
+  } finally {
+    await stopServer(child);
+  }
+});
+
 test("stopping a running job transitions to stopped with stopped stage", async () => {
   const { child, baseUrl } = await startServer(3212);
   let startedJobId: string | null = null;
@@ -159,3 +203,5 @@ test("stopping a running job transitions to stopped with stopped stage", async (
     await stopServer(child);
   }
 });
+
+

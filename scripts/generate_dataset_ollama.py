@@ -49,6 +49,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 from _config import paths, constants as C
 from _config.log_setup import log_info, log_warn, log_error, log_state
+from scripts.dataset_contracts import dataset_contract_from_spec, calculate_distribution_gaps
 from generate_dataset import (
     CATEGORY_TEMPLATES,
     ConceptExtractor,
@@ -788,6 +789,7 @@ Examples:
         if diff:
             by_difficulty[diff] += 1
     
+    dataset_contract = dataset_contract_from_spec(spec)
     manifest = {
         "npc_key": npc_key,
         "technique": "ollama",
@@ -798,6 +800,12 @@ Examples:
             "temperature": args.temperature,
             "multi_turn_ratio": args.multi_turn_ratio,
             "version": "ollama-v2",
+        },
+        "contract": dataset_contract,
+        "distribution": {
+            "expected_examples_per_category": dataset_contract["expected_examples_per_category"],
+            "observed_examples_per_category": dict(by_category),
+            "distribution_gaps": calculate_distribution_gaps(dataset_contract["expected_examples_per_category"], dict(by_category)),
         },
         "statistics": {
             "total": len(examples),
