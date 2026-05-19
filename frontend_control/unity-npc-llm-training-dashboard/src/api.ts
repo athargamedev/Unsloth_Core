@@ -112,7 +112,27 @@ export interface Telemetry {
 export interface RunArtifact {
   id: string;
   npcKey: string;
+  runId?: string;
+  path?: string;
+  layout?: 'canonical' | 'legacy';
   updatedAt: string;
+  model?: string | null;
+  datasetPath?: string | null;
+  technique?: string | null;
+  loss?: number | null;
+  trainRuntime?: number | null;
+  trainSamplesPerSecond?: number | null;
+  trainStepsPerSecond?: number | null;
+  epoch?: number | null;
+  batchSize?: number | null;
+  epochs?: number | null;
+  learningRate?: number | null;
+  loraRank?: number | null;
+  loraAlpha?: number | null;
+  wandbEnabled?: boolean | null;
+  hasConfigSnapshot?: boolean;
+  hasAdapter?: boolean;
+  hasTensorBoard?: boolean;
 }
 
 export interface ExportArtifact {

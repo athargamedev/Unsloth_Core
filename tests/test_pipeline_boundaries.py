@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -178,7 +179,7 @@ def test_ollama_multi_turn_selection_is_deterministic():
     assert not all(first)
 
 
-def test_export_latest_resolution_keeps_npc_key(monkeypatch, tmp_path):
+def test_export_resolution_keeps_npc_key(monkeypatch, tmp_path):
     from _config import paths
 
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
@@ -192,6 +193,26 @@ def test_export_latest_resolution_keeps_npc_key(monkeypatch, tmp_path):
 
     assert npc_key == "demo_npc"
     assert adapter_dir == run_dir.resolve()
+
+
+def test_export_resolution_falls_back_to_newest_run_without_symlinks(monkeypatch, tmp_path):
+    from _config import paths
+
+    monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
+    older = paths.run_dir("demo_npc", "20260512_fast_001")
+    newer = paths.run_dir("demo_npc", "20260512_fast_002")
+    older.mkdir(parents=True)
+    newer.mkdir(parents=True)
+    (older / "adapter_config.json").write_text(json.dumps({"base_model_name_or_path": "unsloth/Test"}))
+    (newer / "adapter_config.json").write_text(json.dumps({"base_model_name_or_path": "unsloth/Test"}))
+    os.utime(older, (1_700_000_000, 1_700_000_000))
+    os.utime(newer, (1_700_000_100, 1_700_000_100))
+
+    npc_key, adapter_dir = paths.resolve_adapter_dir(paths.output_dir("demo_npc"))
+
+    assert npc_key == "demo_npc"
+    assert adapter_dir == newer.resolve()
+
 
 
 def test_validate_spec_generation_ready_requires_reference_contract(monkeypatch, tmp_path):

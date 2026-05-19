@@ -1,58 +1,14 @@
 #!/usr/bin/env python3
-"""One-shot feedback improvement cycle for a single NPC.
+"""Compatibility wrapper for the categorized scripts layout."""
 
-Usage:
-    python3 scripts/iterate_feedback.py chemistry_instructor --preset fast-3b
-
-Runs: evaluate → feedback (auto) → train → evaluate → report
-All on the active subject. Assumes the dataset already exists.
-"""
-
-from __future__ import annotations
-import sys, os, argparse, json, subprocess
 from pathlib import Path
+import sys
 
-REPO = Path(__file__).resolve().parent.parent
-VENV = REPO / "unsloth_env" / "bin" / "python"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("npc_key", help="NPC key (e.g. chemistry_instructor)")
-    parser.add_argument("--preset", default="fast-3b", help="Training preset")
-    args = parser.parse_args()
-
-    npc = args.npc_key
-    spec = REPO / "subjects" / f"{npc}.json"
-    if not spec.exists():
-        print(f"Subject spec not found: {spec}")
-        sys.exit(1)
-
-    feedback_json = REPO / "eval" / "results" / "feedback" / f"{npc}.json"
-    feedback_json.parent.mkdir(parents=True, exist_ok=True)
-
-    steps = [
-        (f"Evaluate {npc}",
-         f"{VENV} scripts/evaluate.py "
-         f"--spec {spec} --feedback-json {feedback_json}"),
-        (f"Feedback loop for {npc}",
-         f"{VENV} scripts/feedback_loop.py {feedback_json} --auto"),
-        (f"Train {npc}",
-         f"{VENV} scripts/train.py {spec} --preset {args.preset} --export-gguf"),
-        (f"Re-evaluate {npc}",
-         f"{VENV} scripts/evaluate.py "
-         f"--spec {spec} --feedback-json {feedback_json}"),
-    ]
-
-    for label, cmd in steps:
-        print(f"\n{'='*60}")
-        print(f"  {label}")
-        print(f"{'='*60}")
-        ret = subprocess.run(cmd, shell=True, cwd=REPO)
-        if ret.returncode != 0:
-            print(f"[FAIL] {label} exited with code {ret.returncode}")
-            sys.exit(1)
-
-    print(f"\n✓ {npc} improvement cycle complete")
+from scripts.training.iterate_feedback import *  # noqa: F401,F403
 
 if __name__ == "__main__":
+    from scripts.training.iterate_feedback import main
     main()

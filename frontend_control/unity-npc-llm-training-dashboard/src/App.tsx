@@ -23,7 +23,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { fetchJson } from './api';
-import type { AvailableCommand, Job, TrainingConfig, TensorBoardData, HealthCheck } from './api';
+import type { AvailableCommand, Job, TrainingConfig, HealthCheck } from './api';
 import { useJobs } from './hooks/useJobs';
 import { useSystemStatus } from './hooks/useSystemStatus';
 import { useTelemetry } from './hooks/useTelemetry';
@@ -55,9 +55,6 @@ const RemoteConfigPanel = lazy(() => import('./components/RemoteConfigPanel').th
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands' | 'colab' | 'workflow_assistant' | 'dataset_pipeline'>('overview');
   const [logs, setLogs] = useState<string[]>([]);
-  const [analyticsData, setAnalyticsData] = useState<Array<{ step: number; loss: number; acc: number; lr: number }>>([]);
-  const [tensorBoardData, setTensorBoardData] = useState<TensorBoardData | null>(null);
-  const [tbIsFallback, setTbIsFallback] = useState(false);
   const [uiError, setUiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fetchInFlightRef = useRef(false);
@@ -289,50 +286,6 @@ export default function App() {
       window.removeEventListener('navigate-pipeline-action', handlePipelineAction);
     };
   }, []);
-
-  useEffect(() => {
-    const targetJobId = selectedJobId || jobs[0]?.id;
-    if (!targetJobId) {
-      setTensorBoardData(null);
-      setTbIsFallback(true);
-      fetchJson<Array<{ step: number; loss: number; acc: number; lr: number }>>('/api/analytics')
-        .then(setAnalyticsData)
-        .catch(() => setAnalyticsData([]));
-      return;
-    }
-
-    fetchJson<TensorBoardData>(`/api/tensorboard?runId=${encodeURIComponent(targetJobId)}`)
-      .then((tbData) => {
-        if (tbData.error || Object.keys(tbData.scalars).length === 0) {
-          setTbIsFallback(true);
-          return fetchJson<Array<{ step: number; loss: number; acc: number; lr: number }>>('/api/analytics')
-            .then(setAnalyticsData)
-            .catch(() => setAnalyticsData([]));
-        }
-        setTbIsFallback(false);
-        const lossScalars = tbData.scalars['train/loss'] || tbData.scalars['loss'] || [];
-        const accScalars = tbData.scalars['eval/acc'] || tbData.scalars['acc'] || [];
-        const lrScalars = tbData.scalars['train/learning_rate'] || tbData.scalars['learning_rate'] || [];
-
-        const maxSteps = Math.max(
-          lossScalars.length, accScalars.length, lrScalars.length, 1
-        );
-        const combined = Array.from({ length: maxSteps }, (_, i) => ({
-          step: lossScalars[i]?.step || accScalars[i]?.step || lrScalars[i]?.step || i + 1,
-          loss: lossScalars[i]?.value ?? 0,
-          acc: accScalars[i]?.value ?? 0,
-          lr: lrScalars[i]?.value ?? 0,
-        }));
-        setAnalyticsData(combined);
-        setTensorBoardData(tbData);
-      })
-      .catch(() => {
-        setTbIsFallback(true);
-        fetchJson<Array<{ step: number; loss: number; acc: number; lr: number }>>('/api/analytics')
-          .then(setAnalyticsData)
-          .catch(() => setAnalyticsData([]));
-      });
-  }, [selectedJobId, jobs]);
 
   // --- Handlers ---
 
@@ -1137,10 +1090,10 @@ export default function App() {
             {activeTab === 'analytics' && (
               <Suspense fallback={renderTabSkeleton('chart')}>
                 <TensorBoardPanel
-                  data={analyticsData}
+                  jobs={jobs}
+                  runs={runs}
                   onRefresh={fetchData}
                   isLive={connectionQuality === 'connected'}
-                  isFallback={tbIsFallback}
                 />
               </Suspense>
             )}

@@ -677,7 +677,7 @@ const commandDefinitions: CommandDefinition[] = [
     color: "default",
     type: "Export",
     requiredFields: ["npcKey"],
-    build: ({ npcKey }) => ["./ucore", "export-adapter", `outputs/${sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")}/best`],
+    build: ({ npcKey }) => ["./ucore", "export-adapter", `outputs/${sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")}`],
   },
   {
     id: "evaluate",
@@ -1063,6 +1063,25 @@ const listNpcRunDirs = (npcKey: string): Array<{ runId: string; runDir: string; 
   }
 
   return runs;
+};
+
+const resolveTrainingConfigSnapshotPath = (npcKey: string): string | null => {
+  const candidates = [
+    path.join(repoRoot, "outputs", npcKey, "best", "config_snapshot.yaml"),
+    path.join(repoRoot, "outputs", npcKey, "latest", "config_snapshot.yaml"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+
+  const runs = listNpcRunDirs(npcKey)
+    .sort((a, b) => fs.statSync(b.runDir).mtimeMs - fs.statSync(a.runDir).mtimeMs);
+  for (const run of runs) {
+    const configPath = path.join(run.runDir, "config_snapshot.yaml");
+    if (fs.existsSync(configPath)) return configPath;
+  }
+
+  return null;
 };
 
 const findRunDirById = (requestedId: string, registry: Registry): { runId: string; runDir: string } | null => {
@@ -1563,15 +1582,124 @@ async function startServer() {
       .map((file) => ({ id: file.replace(/\.json$/, ""), path: `subjects/NPC_specs/${file}` }));
   };
 
-  const listRuns = () => {
+  const parseRunSnapshotScalar = (raw: string): string | number | boolean | null => {
+  const value = raw.trim();
+  if (!value || value === "null" || value === "~") return null;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  if (/^-?\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(value)) return Number(value);
+  return value;
+};
+
+const readRunMetadata = (runDir: string) => {
+  const metadata: Record<string, any> = {
+    hasConfigSnapshot: false,
+    hasAdapter: fs.existsSync(path.join(runDir, "adapter_model.safetensors")),
+    hasTensorBoard: false,
+  };
+
+  const configPath = path.join(runDir, "config_snapshot.yaml");
+  if (fs.existsSync(configPath)) {
+    metadata.hasConfigSnapshot = true;
+    try {
+      const raw = fs.readFileSync(configPath, "utf8");
+      let section = "";
+      for (const line of raw.split(/\r?\n/)) {
+        if (!line.trim() || line.trim().startsWith("#")) continue;
+        const indent = (line.match(/^\s*/) || [""])[0].length;
+        const trimmed = line.trim();
+        if (indent === 0 && trimmed.endsWith(":")) {
+          section = trimmed.slice(0, -1);
+          continue;
+        }
+        const match = trimmed.match(/^([A-Za-z0-9_]+):\s*(.*)$/);
+        if (!match) continue;
+        const [, key, value] = match;
+        const parsed = parseRunSnapshotScalar(value);
+        if (indent === 0) {
+          metadata[key] = parsed;
+        } else if (section) {
+          metadata[`${section}.${key}`] = parsed;
+        }
+      }
+    } catch {
+      // ignore malformed snapshots
+    }
+  }
+
+  const metricsPath = path.join(runDir, "training_metrics.json");
+  if (fs.existsSync(metricsPath)) {
+    try {
+      const metrics = JSON.parse(fs.readFileSync(metricsPath, "utf8"));
+      Object.assign(metadata, {
+        loss: typeof metrics.train_loss === "number" ? metrics.train_loss : (typeof metrics.loss === "number" ? metrics.loss : null),
+        trainRuntime: typeof metrics.train_runtime === "number" ? metrics.train_runtime : null,
+        trainSamplesPerSecond: typeof metrics.train_samples_per_second === "number" ? metrics.train_samples_per_second : null,
+        trainStepsPerSecond: typeof metrics.train_steps_per_second === "number" ? metrics.train_steps_per_second : null,
+        epoch: typeof metrics.epoch === "number" ? metrics.epoch : null,
+      });
+    } catch {
+      // ignore malformed metrics
+    }
+  }
+
+  const stack: string[] = [runDir];
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || metadata.hasTensorBoard) continue;
+    try {
+      for (const entry of fs.readdirSync(current)) {
+        const full = path.join(current, entry);
+        const stat = fs.statSync(full);
+        if (stat.isDirectory()) {
+          stack.push(full);
+        } else if (entry.startsWith("events.out.tfevents.")) {
+          metadata.hasTensorBoard = true;
+          break;
+        }
+      }
+    } catch {
+      // ignore unreadable directories
+    }
+  }
+
+  return metadata;
+};
+
+const listRuns = () => {
     const outputsRoot = path.join(repoRoot, "outputs");
     if (!fs.existsSync(outputsRoot)) return [];
-    const entries: Array<{ id: string; npcKey: string; runId: string; path: string; updatedAt: string; layout: string }> = [];
+    const entries: Array<{
+      id: string;
+      npcKey: string;
+      runId: string;
+      path: string;
+      updatedAt: string;
+      layout: string;
+      model?: string | null;
+      datasetPath?: string | null;
+      technique?: string | null;
+      loss?: number | null;
+      trainRuntime?: number | null;
+      trainSamplesPerSecond?: number | null;
+      trainStepsPerSecond?: number | null;
+      epoch?: number | null;
+      batchSize?: number | null;
+      epochs?: number | null;
+      learningRate?: number | null;
+      loraRank?: number | null;
+      loraAlpha?: number | null;
+      wandbEnabled?: boolean | null;
+      hasConfigSnapshot?: boolean;
+      hasAdapter?: boolean;
+      hasTensorBoard?: boolean;
+    }> = [];
     for (const npcKey of fs.readdirSync(outputsRoot)) {
       const npcPath = path.join(outputsRoot, npcKey);
       if (!fs.statSync(npcPath).isDirectory()) continue;
       for (const run of listNpcRunDirs(npcKey)) {
         const stat = fs.statSync(run.runDir);
+        const metadata = readRunMetadata(run.runDir);
         entries.push({
           id: `${npcKey}/${run.runId}`,
           npcKey,
@@ -1579,6 +1707,23 @@ async function startServer() {
           path: path.relative(repoRoot, run.runDir),
           updatedAt: stat.mtime.toISOString(),
           layout: run.layout,
+          model: typeof metadata.model === "string" ? metadata.model : null,
+          datasetPath: typeof metadata.dataset_path === "string" ? metadata.dataset_path : null,
+          technique: typeof metadata.technique === "string" ? metadata.technique : null,
+          loss: typeof metadata.loss === "number" ? metadata.loss : null,
+          trainRuntime: typeof metadata.trainRuntime === "number" ? metadata.trainRuntime : null,
+          trainSamplesPerSecond: typeof metadata.trainSamplesPerSecond === "number" ? metadata.trainSamplesPerSecond : null,
+          trainStepsPerSecond: typeof metadata.trainStepsPerSecond === "number" ? metadata.trainStepsPerSecond : null,
+          epoch: typeof metadata.epoch === "number" ? metadata.epoch : null,
+          batchSize: typeof metadata["training.batch_size"] === "number" ? metadata["training.batch_size"] : null,
+          epochs: typeof metadata["training.num_epochs"] === "number" ? metadata["training.num_epochs"] : null,
+          learningRate: typeof metadata["training.learning_rate"] === "number" ? metadata["training.learning_rate"] : null,
+          loraRank: typeof metadata["lora.r"] === "number" ? metadata["lora.r"] : null,
+          loraAlpha: typeof metadata["lora.alpha"] === "number" ? metadata["lora.alpha"] : null,
+          wandbEnabled: typeof metadata["wandb.enabled"] === "boolean" ? metadata["wandb.enabled"] : null,
+          hasConfigSnapshot: Boolean(metadata.hasConfigSnapshot),
+          hasAdapter: Boolean(metadata.hasAdapter),
+          hasTensorBoard: Boolean(metadata.hasTensorBoard),
         });
       }
     }
@@ -2353,18 +2498,24 @@ The user can execute these commands directly from your interface.`;
 
   app.get("/api/tensorboard", (req, res) => {
     const runId = typeof req.query.runId === "string" ? req.query.runId.trim() : "";
+    const npcKey = typeof req.query.npcKey === "string" ? req.query.npcKey.trim() : "";
     if (!runId) return res.json({ runId: "", scalars: {}, error: "runId query parameter is required" });
 
     let resolvedRun: { runId: string; runDir: string } | null = null;
     try {
-      resolvedRun = findRunDirById(runId, registry);
+      if (npcKey) {
+        const run = listNpcRunDirs(npcKey).find((item) => item.runId === runId);
+        resolvedRun = run ? { runId: run.runId, runDir: run.runDir } : null;
+      } else {
+        resolvedRun = findRunDirById(runId, registry);
+      }
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Invalid runId";
       return res.json({ runId, scalars: {}, error: msg });
     }
 
     if (!resolvedRun) {
-      return res.json({ runId, scalars: {}, error: `Run directory not found for ${runId}` });
+      return res.json({ runId, scalars: {}, error: `Run directory not found for ${npcKey ? `${npcKey}/${runId}` : runId}` });
     }
 
     try {
@@ -2593,8 +2744,8 @@ The user can execute these commands directly from your interface.`;
       }
       if (!exportModelId) {
         try {
-          const bestConfigPath = path.join(repoRoot, "outputs", npcKey, "best", "config_snapshot.yaml");
-          if (fs.existsSync(bestConfigPath)) {
+          const bestConfigPath = resolveTrainingConfigSnapshotPath(npcKey);
+          if (bestConfigPath) {
             const content = fs.readFileSync(bestConfigPath, "utf8");
             const modelMatch = content.match(/^model:\s*(.+)$/m);
             if (modelMatch) exportModelId = modelMatch[1].trim();
