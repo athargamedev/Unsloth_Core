@@ -1,0 +1,209 @@
+Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py subjects/fitness_coach.json --model qwen2.5:7b --batch-size 2 --check-health
+2026-05-19 01:44:23,966 [INFO] Checking Ollama health...
+2026-05-19 01:44:23,969 [INFO] ✓ Ollama is running
+2026-05-19 01:44:23,970 [INFO] Available models: qwen2.5
+2026-05-19 01:44:23,971 [INFO] Loading spec: subjects/fitness_coach.json
+2026-05-19 01:44:23,971 [INFO] Generating dataset for NPC: FitnessCoach
+2026-05-19 01:44:23,971 [INFO] Subject: Fitness, exercise science, and nutrition: strength training, cardio, flexibility, workout programming, nutrition fundamentals, recovery, injury prevention
+2026-05-19 01:44:23,971 [INFO] Model: qwen2.5:7b
+2026-05-19 01:44:23,971 [INFO] Initializing generator...
+2026-05-19 01:44:23,971 [INFO] Generating 132 examples with model 'qwen2.5:7b'...
+2026-05-19 01:44:23,971 [INFO] This may take several minutes depending on hardware and model size
+
+/home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py:558: DeprecationWarning: There is no current event loop
+  loop = asyncio.get_event_loop()
+2026-05-19 01:45:37,935 [INFO] Progress: 1/132 (0.8%) | Elapsed: 1m 13s | ETA: 2h 41m [identity]
+2026-05-19 01:45:37,935 [INFO]   strength training
+2026-05-19 01:46:10,194 [INFO] Progress: 3/132 (2.3%) | Elapsed: 1m 46s | ETA: 1h 16m [identity]
+2026-05-19 01:46:10,194 [INFO]   exercise science
+2026-05-19 01:46:24,079 [INFO] Progress: 5/132 (3.8%) | Elapsed: 2m 0s | ETA: 50m 50s [identity]
+2026-05-19 01:46:24,079 [INFO]   nutrition fundamentals
+2026-05-19 01:47:11,394 [INFO] Progress: 7/132 (5.3%) | Elapsed: 2m 47s | ETA: 49m 49s [identity]
+2026-05-19 01:47:11,394 [INFO]   flexibility and mobility
+2026-05-19 01:47:25,826 [INFO] Progress: 9/132 (6.8%) | Elapsed: 3m 1s | ETA: 41m 25s [identity]
+2026-05-19 01:47:25,826 [INFO]   recovery
+2026-05-19 01:47:36,487 [INFO] Progress: 11/132 (8.3%) | Elapsed: 3m 12s | ETA: 35m 17s [identity]
+2026-05-19 01:47:36,487 [INFO]   flexibility
+2026-05-19 01:47:52,065 [INFO] Progress: 13/132 (9.8%) | Elapsed: 3m 28s | ETA: 31m 44s [teaching]
+2026-05-19 01:47:52,065 [INFO]   fitness
+2026-05-19 01:47:57,165 [INFO] Progress: 14/132 (10.6%) | Elapsed: 3m 33s | ETA: 29m 56s [teaching]
+2026-05-19 01:47:57,165 [INFO]   strength training
+2026-05-19 01:48:10,347 [INFO] Progress: 15/132 (11.4%) | Elapsed: 3m 46s | ETA: 29m 25s [teaching]
+2026-05-19 01:48:10,347 [INFO]   cardio
+2026-05-19 01:48:26,333 [INFO] Progress: 17/132 (12.9%) | Elapsed: 4m 2s | ETA: 27m 19s [teaching]
+2026-05-19 01:48:26,333 [INFO]   exercise science
+2026-05-19 01:48:39,305 [INFO] Progress: 19/132 (14.4%) | Elapsed: 4m 15s | ETA: 25m 18s [teaching]
+2026-05-19 01:48:39,305 [INFO]   strength training
+2026-05-19 01:48:53,803 [INFO] Progress: 21/132 (15.9%) | Elapsed: 4m 29s | ETA: 23m 46s [teaching]
+2026-05-19 01:48:53,803 [INFO]   flexibility and mobility
+2026-05-19 01:49:08,789 [INFO] Progress: 23/132 (17.4%) | Elapsed: 4m 44s | ETA: 22m 29s [teaching]
+2026-05-19 01:49:08,789 [INFO]   cardio
+2026-05-19 01:50:14,667 [INFO] Progress: 24/132 (18.2%) | Elapsed: 5m 50s | ETA: 26m 18s [teaching]
+2026-05-19 01:50:14,667 [INFO]   exercise science
+2026-05-19 01:50:28,948 [INFO] Progress: 25/132 (18.9%) | Elapsed: 6m 4s | ETA: 26m 2s [teaching]
+2026-05-19 01:50:28,948 [INFO]   fitness
+2026-05-19 01:50:53,183 [INFO] Progress: 26/132 (19.7%) | Elapsed: 6m 29s | ETA: 26m 26s [teaching]
+2026-05-19 01:50:53,183 [INFO]   flexibility and mobility
+2026-05-19 01:51:03,646 [INFO] Progress: 27/132 (20.5%) | Elapsed: 6m 39s | ETA: 25m 54s [teaching]
+2026-05-19 01:51:03,646 [INFO]   recovery
+2026-05-19 01:51:13,875 [INFO] Progress: 28/132 (21.2%) | Elapsed: 6m 49s | ETA: 25m 22s [teaching]
+2026-05-19 01:51:13,875 [INFO]   flexibility
+2026-05-19 01:51:26,646 [INFO] Progress: 29/132 (22.0%) | Elapsed: 7m 2s | ETA: 25m 1s [teaching]
+2026-05-19 01:51:26,646 [INFO]   recovery
+2026-05-19 01:52:21,471 [INFO] Progress: 30/132 (22.7%) | Elapsed: 7m 57s | ETA: 27m 3s [teaching]
+2026-05-19 01:52:21,471 [INFO]   fitness
+2026-05-19 01:52:30,677 [INFO] Progress: 31/132 (23.5%) | Elapsed: 8m 6s | ETA: 26m 25s [teaching]
+2026-05-19 01:52:30,677 [INFO]   injury prevention
+2026-05-19 01:52:55,189 [INFO] Progress: 32/132 (24.2%) | Elapsed: 8m 31s | ETA: 26m 37s [teaching]
+2026-05-19 01:52:55,189 [INFO]   flexibility and mobility
+2026-05-19 01:53:06,011 [INFO] Progress: 33/132 (25.0%) | Elapsed: 8m 42s | ETA: 26m 6s [teaching]
+2026-05-19 01:53:06,011 [INFO]   recovery and rest
+2026-05-19 01:53:13,846 [INFO] Progress: 34/132 (25.8%) | Elapsed: 8m 49s | ETA: 25m 27s [teaching]
+2026-05-19 01:53:13,846 [INFO]   cardio
+2026-05-19 01:53:23,656 [INFO] Progress: 35/132 (26.5%) | Elapsed: 8m 59s | ETA: 24m 55s [teaching]
+2026-05-19 01:53:23,656 [INFO]   nutrition fundamentals
+2026-05-19 01:54:25,816 [INFO] Progress: 36/132 (27.3%) | Elapsed: 10m 1s | ETA: 26m 44s [teaching]
+2026-05-19 01:54:25,816 [INFO]   exercise science fundamentals
+2026-05-19 01:54:38,820 [INFO] Progress: 37/132 (28.0%) | Elapsed: 10m 14s | ETA: 26m 18s [teaching]
+2026-05-19 01:54:38,820 [INFO]   safety & form
+2026-05-19 01:55:06,413 [INFO] Progress: 38/132 (28.8%) | Elapsed: 10m 42s | ETA: 26m 29s [teaching]
+2026-05-19 01:55:06,413 [INFO]   exercise science
+2026-05-19 01:55:21,777 [INFO] Progress: 39/132 (29.5%) | Elapsed: 10m 57s | ETA: 26m 8s [teaching]
+2026-05-19 01:55:21,777 [INFO]   exercise science fundamentals
+2026-05-19 01:55:36,655 [INFO] Progress: 40/132 (30.3%) | Elapsed: 11m 12s | ETA: 25m 47s [teaching]
+2026-05-19 01:55:36,655 [INFO]   exercise science fundamentals
+2026-05-19 01:55:49,232 [INFO] Progress: 41/132 (31.1%) | Elapsed: 11m 25s | ETA: 25m 20s [teaching]
+2026-05-19 01:55:49,232 [INFO]   cardiovascular fitness
+2026-05-19 01:56:59,533 [INFO] Progress: 42/132 (31.8%) | Elapsed: 12m 35s | ETA: 26m 59s [teaching]
+2026-05-19 01:56:59,533 [INFO]   recovery
+2026-05-19 01:57:17,649 [INFO] Progress: 43/132 (32.6%) | Elapsed: 12m 53s | ETA: 26m 41s [teaching]
+2026-05-19 01:57:17,649 [INFO]   injury prevention
+2026-05-19 01:57:49,634 [INFO] Progress: 44/132 (33.3%) | Elapsed: 13m 25s | ETA: 26m 51s [teaching]
+2026-05-19 01:57:49,634 [INFO]   workout programming
+2026-05-19 01:58:02,963 [INFO] Progress: 45/132 (34.1%) | Elapsed: 13m 38s | ETA: 26m 23s [teaching]
+2026-05-19 01:58:02,963 [INFO]   nutrition fundamentals
+2026-05-19 01:58:12,570 [INFO] Progress: 46/132 (34.8%) | Elapsed: 13m 48s | ETA: 25m 49s [teaching]
+2026-05-19 01:58:12,570 [INFO]   cardiovascular fitness
+2026-05-19 01:58:28,989 [INFO] Progress: 47/132 (35.6%) | Elapsed: 14m 5s | ETA: 25m 28s [teaching]
+2026-05-19 01:58:28,989 [INFO]   flexibility and mobility
+2026-05-19 01:58:56,452 [INFO] Progress: 48/132 (36.4%) | Elapsed: 14m 32s | ETA: 25m 26s [teaching]
+2026-05-19 01:58:56,452 [INFO]   exercise science fundamentals
+2026-05-19 01:59:07,621 [INFO] Progress: 49/132 (37.1%) | Elapsed: 14m 43s | ETA: 24m 56s [teaching]
+2026-05-19 01:59:07,621 [INFO]   workout programming
+2026-05-19 01:59:24,961 [INFO] Progress: 51/132 (38.6%) | Elapsed: 15m 0s | ETA: 23m 50s [teaching]
+2026-05-19 01:59:24,961 [INFO]   strength training
+2026-05-19 01:59:30,501 [INFO] Progress: 52/132 (39.4%) | Elapsed: 15m 6s | ETA: 23m 14s [teaching]
+2026-05-19 01:59:30,501 [INFO]   injury prevention
+2026-05-19 02:00:57,923 [INFO] Progress: 53/132 (40.2%) | Elapsed: 16m 33s | ETA: 24m 41s [teaching]
+2026-05-19 02:00:57,923 [INFO]   strength training
+2026-05-19 02:01:34,784 [INFO] Progress: 55/132 (41.7%) | Elapsed: 17m 10s | ETA: 24m 3s [teaching]
+2026-05-19 02:01:34,784 [INFO]   safety & form
+2026-05-19 02:01:54,787 [INFO] Progress: 57/132 (43.2%) | Elapsed: 17m 30s | ETA: 23m 2s [teaching]
+2026-05-19 02:01:54,787 [INFO]   cardio
+2026-05-19 02:03:08,465 [INFO] Progress: 59/132 (44.7%) | Elapsed: 18m 44s | ETA: 23m 11s [teaching]
+2026-05-19 02:03:08,465 [INFO]   exercise science fundamentals
+2026-05-19 02:03:39,472 [INFO] Progress: 61/132 (46.2%) | Elapsed: 19m 15s | ETA: 22m 24s [teaching]
+2026-05-19 02:03:39,472 [INFO]   recovery
+2026-05-19 02:03:44,799 [INFO] Progress: 62/132 (47.0%) | Elapsed: 19m 20s | ETA: 21m 50s [teaching]
+2026-05-19 02:03:44,799 [INFO]   recovery and rest
+2026-05-19 02:05:01,913 [INFO] Progress: 63/132 (47.7%) | Elapsed: 20m 37s | ETA: 22m 35s [teaching]
+2026-05-19 02:05:01,913 [INFO]   fitness
+2026-05-19 02:06:35,088 [INFO] Progress: 65/132 (49.2%) | Elapsed: 22m 11s | ETA: 22m 52s [teaching]
+2026-05-19 02:06:35,088 [INFO]   injury prevention
+2026-05-19 02:08:08,064 [INFO] Progress: 67/132 (50.8%) | Elapsed: 23m 44s | ETA: 23m 1s [teaching]
+2026-05-19 02:08:08,064 [INFO]   fitness
+2026-05-19 02:09:35,141 [INFO] Progress: 69/132 (52.3%) | Elapsed: 25m 11s | ETA: 22m 59s [dialogue]
+2026-05-19 02:09:35,141 [INFO]   safety & form
+2026-05-19 02:11:05,758 [INFO] Progress: 71/132 (53.8%) | Elapsed: 26m 41s | ETA: 22m 56s [dialogue]
+2026-05-19 02:11:05,758 [INFO]   cardio
+2026-05-19 02:12:37,796 [INFO] Progress: 73/132 (55.3%) | Elapsed: 28m 13s | ETA: 22m 48s [dialogue]
+2026-05-19 02:12:37,796 [INFO]   workout programming
+2026-05-19 02:12:44,637 [INFO] Progress: 74/132 (56.1%) | Elapsed: 28m 20s | ETA: 22m 12s [dialogue]
+2026-05-19 02:12:44,637 [INFO]   cardio
+2026-05-19 02:14:11,733 [INFO] Progress: 75/132 (56.8%) | Elapsed: 29m 47s | ETA: 22m 38s [dialogue]
+2026-05-19 02:14:11,733 [INFO]   flexibility and mobility
+2026-05-19 02:14:19,160 [INFO] Progress: 76/132 (57.6%) | Elapsed: 29m 55s | ETA: 22m 2s [dialogue]
+2026-05-19 02:14:19,160 [INFO]   recovery
+2026-05-19 02:15:30,537 [INFO] Progress: 77/132 (58.3%) | Elapsed: 31m 6s | ETA: 22m 13s [dialogue]
+2026-05-19 02:15:30,537 [INFO]   strength training
+2026-05-19 02:16:59,658 [INFO] Progress: 79/132 (59.8%) | Elapsed: 32m 35s | ETA: 21m 52s [dialogue]
+2026-05-19 02:16:59,659 [INFO]   flexibility
+2026-05-19 02:17:39,561 [INFO] Progress: 81/132 (61.4%) | Elapsed: 33m 15s | ETA: 20m 56s [dialogue]
+2026-05-19 02:17:39,561 [INFO]   exercise science fundamentals
+2026-05-19 02:18:13,125 [INFO] Progress: 83/132 (62.9%) | Elapsed: 33m 49s | ETA: 19m 57s [dialogue]
+2026-05-19 02:18:13,125 [INFO]   strength training
+2026-05-19 02:18:46,119 [INFO] Progress: 85/132 (64.4%) | Elapsed: 34m 22s | ETA: 19m 0s [dialogue]
+2026-05-19 02:18:46,119 [INFO]   flexibility and mobility
+2026-05-19 02:18:51,734 [INFO] Progress: 86/132 (65.2%) | Elapsed: 34m 27s | ETA: 18m 26s [dialogue]
+2026-05-19 02:18:51,734 [INFO]   safety & form
+2026-05-19 02:19:23,352 [INFO] Progress: 87/132 (65.9%) | Elapsed: 34m 59s | ETA: 18m 5s [dialogue]
+2026-05-19 02:19:23,352 [INFO]   strength training
+2026-05-19 02:19:56,237 [INFO] Progress: 89/132 (67.4%) | Elapsed: 35m 32s | ETA: 17m 10s [dialogue]
+2026-05-19 02:19:56,237 [INFO]   nutrition fundamentals
+2026-05-19 02:20:03,117 [INFO] Progress: 90/132 (68.2%) | Elapsed: 35m 39s | ETA: 16m 38s [dialogue]
+2026-05-19 02:20:03,117 [INFO]   recovery and rest
+2026-05-19 02:20:25,309 [INFO] Progress: 91/132 (68.9%) | Elapsed: 36m 1s | ETA: 16m 13s [dialogue]
+2026-05-19 02:20:25,309 [INFO]   flexibility
+2026-05-19 02:20:56,101 [INFO] Progress: 93/132 (70.5%) | Elapsed: 36m 32s | ETA: 15m 19s [dialogue]
+2026-05-19 02:20:56,102 [INFO]   workout programming
+2026-05-19 02:21:22,893 [INFO] Progress: 95/132 (72.0%) | Elapsed: 36m 58s | ETA: 14m 24s [dialogue]
+2026-05-19 02:21:22,893 [INFO]   workout programming
+2026-05-19 02:21:56,405 [INFO] Progress: 97/132 (73.5%) | Elapsed: 37m 32s | ETA: 13m 32s [dialogue]
+2026-05-19 02:21:56,405 [INFO]   flexibility and mobility
+2026-05-19 02:22:02,097 [INFO] Progress: 98/132 (74.2%) | Elapsed: 37m 38s | ETA: 13m 3s [dialogue]
+2026-05-19 02:22:02,097 [INFO]   flexibility
+2026-05-19 02:22:33,890 [INFO] Progress: 99/132 (75.0%) | Elapsed: 38m 9s | ETA: 12m 43s [dialogue]
+2026-05-19 02:22:33,890 [INFO]   nutrition fundamentals
+2026-05-19 02:23:18,181 [INFO] Progress: 101/132 (76.5%) | Elapsed: 38m 54s | ETA: 11m 56s [quest]
+2026-05-19 02:23:18,181 [INFO]   flexibility
+2026-05-19 02:23:23,222 [INFO] Progress: 102/132 (77.3%) | Elapsed: 38m 59s | ETA: 11m 28s [quest]
+2026-05-19 02:23:23,222 [INFO]   flexibility
+2026-05-19 02:23:43,215 [INFO] Progress: 103/132 (78.0%) | Elapsed: 39m 19s | ETA: 11m 4s [quest]
+2026-05-19 02:23:43,215 [INFO]   strength training
+2026-05-19 02:24:18,230 [INFO] Progress: 105/132 (79.5%) | Elapsed: 39m 54s | ETA: 10m 15s [quest]
+2026-05-19 02:24:18,230 [INFO]   flexibility
+2026-05-19 02:24:53,924 [INFO] Progress: 107/132 (81.1%) | Elapsed: 40m 29s | ETA: 9m 27s [quest]
+2026-05-19 02:24:53,924 [INFO]   fitness
+2026-05-19 02:25:33,370 [INFO] Progress: 109/132 (82.6%) | Elapsed: 41m 9s | ETA: 8m 41s [quest]
+2026-05-19 02:25:33,370 [INFO]   flexibility and mobility
+2026-05-19 02:26:05,074 [INFO] Progress: 111/132 (84.1%) | Elapsed: 41m 41s | ETA: 7m 53s [quest]
+2026-05-19 02:26:05,074 [INFO]   recovery and rest
+2026-05-19 02:26:31,328 [INFO] Progress: 113/132 (85.6%) | Elapsed: 42m 7s | ETA: 7m 4s [quest]
+2026-05-19 02:26:31,328 [INFO]   nutrition fundamentals
+2026-05-19 02:26:53,055 [INFO] Progress: 115/132 (87.1%) | Elapsed: 42m 29s | ETA: 6m 16s [quest]
+2026-05-19 02:26:53,055 [INFO]   recovery
+2026-05-19 02:27:16,512 [INFO] Progress: 117/132 (88.6%) | Elapsed: 42m 52s | ETA: 5m 29s [refusal]
+2026-05-19 02:27:16,512 [INFO]   flexibility and mobility
+2026-05-19 02:27:39,525 [INFO] Progress: 119/132 (90.2%) | Elapsed: 43m 15s | ETA: 4m 43s [refusal]
+2026-05-19 02:27:39,525 [INFO]   workout programming
+2026-05-19 02:28:01,856 [INFO] Progress: 121/132 (91.7%) | Elapsed: 43m 37s | ETA: 3m 57s [refusal]
+2026-05-19 02:28:01,856 [INFO]   exercise science fundamentals
+2026-05-19 02:28:32,987 [INFO] Progress: 123/132 (93.2%) | Elapsed: 44m 9s | ETA: 3m 13s [refusal]
+2026-05-19 02:28:32,987 [INFO]   exercise science
+2026-05-19 02:28:54,664 [INFO] Progress: 125/132 (94.7%) | Elapsed: 44m 30s | ETA: 2m 29s [refusal]
+2026-05-19 02:28:54,664 [INFO]   safety & form
+2026-05-19 02:29:00,272 [INFO] Progress: 126/132 (95.5%) | Elapsed: 44m 36s | ETA: 2m 7s [refusal]
+2026-05-19 02:29:00,272 [INFO]   exercise science
+2026-05-19 02:29:29,955 [INFO] Progress: 127/132 (96.2%) | Elapsed: 45m 5s | ETA: 1m 46s [refusal]
+2026-05-19 02:29:29,955 [INFO]   exercise science fundamentals
+2026-05-19 02:29:35,011 [INFO] Progress: 128/132 (97.0%) | Elapsed: 45m 11s | ETA: 1m 24s [refusal]
+2026-05-19 02:29:35,011 [INFO]   workout programming
+2026-05-19 02:29:57,187 [INFO] Progress: 129/132 (97.7%) | Elapsed: 45m 33s | ETA: 1m 3s [refusal]
+2026-05-19 02:29:57,187 [INFO]   injury prevention
+2026-05-19 02:30:02,746 [INFO] Progress: 130/132 (98.5%) | Elapsed: 45m 38s | ETA: 42s [refusal]
+2026-05-19 02:30:02,746 [INFO]   nutrition fundamentals
+2026-05-19 02:30:25,232 [INFO] Progress: 131/132 (99.2%) | Elapsed: 46m 1s | ETA: 21s [refusal]
+2026-05-19 02:30:25,232 [INFO]   strength training
+2026-05-19 02:30:27,338 [INFO] Progress: 132/132 (100.0%) | Elapsed: 46m 3s | ETA: 0s [refusal]
+2026-05-19 02:30:27,338 [INFO]   flexibility and mobility
+2026-05-19 02:30:27,338 [INFO] 
+======================================================================
+2026-05-19 02:30:27,338 [INFO] Generation complete: 132 examples
+2026-05-19 02:30:27,338 [INFO] Stats: 132/132 successful (100.0% success rate, 0 errors)
+2026-05-19 02:30:27,338 [INFO] ======================================================================
+2026-05-19 02:30:27,339 [INFO] ✓ Wrote 117 training examples to /home/athar/Projects/Unsloth_Core/subjects/datasets/fitness_coach/ollama/train.jsonl
+2026-05-19 02:30:27,340 [INFO] ✓ Wrote 15 validation examples to /home/athar/Projects/Unsloth_Core/subjects/datasets/fitness_coach/ollama/validation.jsonl
+2026-05-19 02:30:27,340 [INFO] ✓ Wrote manifest to /home/athar/Projects/Unsloth_Core/subjects/datasets/fitness_coach/ollama/train_manifest.json
+2026-05-19 02:30:27,340 [INFO] 
+✓ Dataset generation complete!
+{"ts": "2026-05-19T05:30:27.340436+00:00", "event": "dataset_generated", "npc_key": "fitness_coach", "total": 132, "train": 117, "validation": 15, "technique": "ollama"}

@@ -6,8 +6,8 @@ This script manages the SFT (Supervised Fine-Tuning) process using Unsloth
 and LoRA. It supports hierarchical configurations and model-aware presets.
 
 Usage:
-    ./ucore train subjects/chemistry_instructor.json --preset fast-3b
-    python scripts/train.py subjects/chemistry_instructor.json --from-spec --export-gguf
+    ./ucore train subjects/NPC_specs/chemistry_instructor.json --preset fast-3b
+    python scripts/train.py subjects/NPC_specs/chemistry_instructor.json --from-spec --export-gguf
 
 Technical Details:
 - Input: train_clean.jsonl and a subject spec or YAML config.

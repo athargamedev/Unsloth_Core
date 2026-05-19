@@ -3,10 +3,10 @@
   "technique": "ollama",
   "model": "qwen2.5:7b",
   "generation": {
-    "date": "2026-05-19T00:35:57Z",
-    "seed": 43,
-    "temperature": 0.65,
-    "multi_turn_ratio": 0.3,
+    "date": "2026-05-19T05:30:27Z",
+    "seed": 42,
+    "temperature": 0.7,
+    "multi_turn_ratio": 0.25,
     "version": "ollama-v2"
   },
   "statistics": {
@@ -14,16 +14,16 @@
     "train": 117,
     "validation": 15,
     "by_category": {
-      "dialogue": 32,
-      "teaching": 56,
       "refusal": 16,
+      "quest": 16,
       "identity": 12,
-      "quest": 16
+      "dialogue": 32,
+      "teaching": 56
     },
     "by_difficulty": {
-      "advanced": 14,
+      "intermediate": 19,
       "beginner": 23,
-      "intermediate": 19
+      "advanced": 14
     },
     "generator_stats": {
       "requests": 132,

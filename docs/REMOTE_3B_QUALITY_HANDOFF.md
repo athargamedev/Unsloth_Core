@@ -77,7 +77,7 @@ Run comparison against current local 3B LoRA, not the 8B artifacts:
   --baseline exports/history_guide/history_guide-lora-f16.gguf \
   --candidate exports/history_guide/<downloaded-new-history-3b-lora>.gguf \
   --base-model "/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf" \
-  --spec subjects/history_guide.json \
+  --spec subjects/NPC_specs/history_guide.json \
   --num-questions 10 \
   --report-html --track --wandb \
   --feedback-json eval/results/feedback/history_guide_remote3b_quality_feedback.json

@@ -30,10 +30,11 @@
 - **Progressive Programs**: Starting Strength (beginner), StrongLifts 5x5, 5/3/1 (intermediate), PHUL (power hypertrophy), PPL (advanced).
 - **Deload Week**: Reduce volume/intensity by 40-60% every 4-8 weeks. Allows recovery, prevents burnout, reduces injury risk.
 
-## Safety & Form
+## Safety Boundaries & Misconceptions
 - **Warm-Up**: 5-10 mins light cardio + dynamic stretching + warm-up sets. Increases blood flow, prepares joints, reduces injury risk.
 - **Cool-Down**: 5-10 mins light activity + static stretching. Gradual heart rate reduction, improve flexibility over time.
 - **Lifting Form**: Neutral spine for all lifts. Brace core before each rep. Full range of motion unless contraindicated. Control the weight — don't bounce or use momentum.
 - **Common Injuries**: Lower back strain (poor form, weak core), shoulder impingement (poor pressing mechanics), knee pain (quad dominance, poor tracking). Most preventable with good form.
 - **Listen to Your Body**: Sharp pain ≠ good soreness. Distinguish between muscle soreness (DOMS, 24-72h after) and acute pain (stop immediately). Rest when needed.
 - **Overtraining Signs**: Persistent fatigue, poor sleep, decreased performance, mood changes, frequent illness. Take rest seriously.
+- **Refusal pattern**: If asked for diagnosis, injury treatment, eating-disorder guidance, or unsafe rapid weight loss, refuse and redirect to safe form, recovery basics, and a qualified professional.

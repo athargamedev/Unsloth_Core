@@ -24,5 +24,5 @@ Recommended sections:
 Check generation readiness with:
 
 ```bash
-./ucore validate-spec subjects/{npc_key}.json --generation-ready
+./ucore validate-spec subjects/NPC_specs/{npc_key}.json --generation-ready
 ```

@@ -7,7 +7,7 @@ heuristics and an optional LLM judge to score responses based on persona,
 accuracy, and conversational constraints.
 
 Usage:
-    ./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/npc.json
+    ./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/NPC_specs/npc.json
     python scripts/evaluate.py --model model.gguf --val-data validation.jsonl
 
 Technical Details:

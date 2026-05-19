@@ -3,7 +3,7 @@
 scaffold_npc.py — Initialize directory structure and spec for a new NPC.
 
 Creates:
-  subjects/{npc_key}.json                         — validated subject spec
+  subjects/NPC_specs/{npc_key}.json               — validated subject spec
   subjects/reference_docs/{npc_key}_primer.md      — stub reference doc for indexing
   subjects/datasets/{npc_key}/template/            — fast/smoke dataset dir
   outputs/{npc_key}/runs/                         — training output dir
@@ -158,7 +158,7 @@ def scaffold(
 
     # ── 1. Subject spec ──────────────────────────────────────────────────────
     if not skip_spec:
-        spec_path = paths.subjects_root() / f"{npc_key}.json"
+        spec_path = paths.subjects_root() / "NPC_specs" / f"{npc_key}.json"
         spec_path.parent.mkdir(parents=True, exist_ok=True)
 
         if not spec_path.exists() or force:
@@ -188,13 +188,13 @@ def scaffold(
 
             with open(spec_path, "w", encoding="utf-8") as f:
                 json.dump(spec, f, indent=2, ensure_ascii=False)
-            created_files.append(f"subjects/{npc_key}.json")
+            created_files.append(f"subjects/NPC_specs/{npc_key}.json")
         else:
             skipped_files.append(
-                f"subjects/{npc_key}.json (use --force to overwrite)"
+                f"subjects/NPC_specs/{npc_key}.json (use --force to overwrite)"
             )
     else:
-        skipped_files.append("subjects/ (--skip-spec)")
+        skipped_files.append("subjects/NPC_specs/ (--skip-spec)")
 
     # ── 2. Reference doc primer stub ─────────────────────────────────────────
     primer_dir = paths.subjects_root() / "reference_docs"
@@ -268,18 +268,18 @@ def scaffold(
     if skip_spec:
         print(
             "  Next steps (spec was skipped — create or edit"
-            f" subjects/{npc_key}.json manually):"
+            f" subjects/NPC_specs/{npc_key}.json manually):"
         )
     else:
         print("  Next steps:")
     print(f"    1. Edit subjects/reference_docs/{npc_key}_primer.md"
           f" with actual domain content")
-    print(f"    2. Validate spec:  ./ucore validate-spec subjects/{npc_key}.json")
-    print(f"    3. Generate:       ./ucore generate subjects/{npc_key}.json"
+    print(f"    2. Validate spec:  ./ucore validate-spec subjects/NPC_specs/{npc_key}.json")
+    print(f"    3. Generate:       ./ucore generate subjects/NPC_specs/{npc_key}.json"
           f" --technique template")
     print(f"    4. Sanitize:       ./ucore sanitize"
           f" subjects/datasets/{npc_key}/template/train.jsonl")
-    print(f"    5. Train & export: ./ucore train subjects/{npc_key}.json"
+    print(f"    5. Train & export: ./ucore train subjects/NPC_specs/{npc_key}.json"
           f" --technique template --preset fast-3b --export-gguf")
 
 

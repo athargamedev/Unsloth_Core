@@ -4,6 +4,7 @@ import type { Telemetry } from '../api';
 interface UseWebSocketOptions {
   onTelemetry?: (data: Telemetry) => void;
   onJobUpdate?: (data: { id: string; status: string; loss: number | null; progress: number; wandbUrl?: string }) => void;
+  onLogsCleared?: () => void;
   onFallbackPolling?: () => void;
   onResync?: () => void;
 }
@@ -23,10 +24,12 @@ export function useWebSocket(options: UseWebSocketOptions) {
   const onTelemetryRef = useRef(options.onTelemetry);
   const onJobUpdateRef = useRef(options.onJobUpdate);
   const onFallbackPollingRef = useRef(options.onFallbackPolling);
+  const onLogsClearedRef = useRef(options.onLogsCleared);
   const onResyncRef = useRef(options.onResync);
   onTelemetryRef.current = options.onTelemetry;
   onJobUpdateRef.current = options.onJobUpdate;
   onFallbackPollingRef.current = options.onFallbackPolling;
+  onLogsClearedRef.current = options.onLogsCleared;
   onResyncRef.current = options.onResync;
 
   const connect = useCallback(() => {
@@ -83,6 +86,8 @@ export function useWebSocket(options: UseWebSocketOptions) {
               onTelemetryRef.current(evt.payload);
             } else if (evt.type === 'job_update' && onJobUpdateRef.current) {
               onJobUpdateRef.current(evt.payload);
+            } else if (evt.type === 'logs_cleared' && onLogsClearedRef.current) {
+              onLogsClearedRef.current();
             }
           }
           return;
@@ -92,6 +97,8 @@ export function useWebSocket(options: UseWebSocketOptions) {
           onTelemetryRef.current(msg.payload);
         } else if (msg.type === 'job_update' && onJobUpdateRef.current) {
           onJobUpdateRef.current(msg.payload);
+        } else if (msg.type === 'logs_cleared' && onLogsClearedRef.current) {
+          onLogsClearedRef.current();
         }
       } catch {
         // ignore malformed messages

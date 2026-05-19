@@ -2,6 +2,795 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_train_chef_assistant_20260518_fast-3b_llama3.2-3b_002",
+      "name": "External Train (chef_assistant/20260518_fast-3b_llama3.2-3b_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-19T01:04:19.644Z",
+      "startedAt": "2026-05-19T01:04:19.644Z",
+      "finishedAt": "2026-05-19T01:04:19.644Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260518_fast-3b_llama3.2-3b_002/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+      "name": "External Train (history_guide/20260518_fast-3b_llama3.2-3b_003)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-19T01:04:15.733Z",
+      "startedAt": "2026-05-19T01:04:15.733Z",
+      "finishedAt": "2026-05-19T01:04:15.733Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260518_fast-3b_llama3.2-3b_003/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_history_guide_20260518_fast-3b_llama3.2-3b_001",
+      "name": "External Train (history_guide/20260518_fast-3b_llama3.2-3b_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-18T20:30:44.993Z",
+      "startedAt": "2026-05-18T20:30:44.993Z",
+      "finishedAt": "2026-05-18T20:30:44.993Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260518_fast-3b_llama3.2-3b_001/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_history_guide_20260518_fast-3b_llama3.2-3b_002",
+      "name": "External Train (history_guide/20260518_fast-3b_llama3.2-3b_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": 1.0678045961591933,
+      "createdAt": "2026-05-18T21:07:26.652Z",
+      "startedAt": "2026-05-18T21:07:26.652Z",
+      "finishedAt": "2026-05-18T21:07:26.652Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260518_fast-3b_llama3.2-3b_002/training_metrics.json",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_fitness_coach_20260518_fast-3b_llama3.2-3b_002",
+      "name": "External Train (fitness_coach/20260518_fast-3b_llama3.2-3b_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "fitness_coach",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-19T01:04:25.671Z",
+      "startedAt": "2026-05-19T01:04:25.671Z",
+      "finishedAt": "2026-05-19T01:04:25.671Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/fitness_coach.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/fitness_coach/runs/20260518_fast-3b_llama3.2-3b_002/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_fitness_coach_20260518_fast-3b_llama3.2-3b_001",
+      "name": "External Train (fitness_coach/20260518_fast-3b_llama3.2-3b_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "fitness_coach",
+      "status": "completed",
+      "progress": 100,
+      "loss": 1.0389132102330525,
+      "createdAt": "2026-05-18T21:56:46.901Z",
+      "startedAt": "2026-05-18T21:56:46.901Z",
+      "finishedAt": "2026-05-18T21:56:46.901Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/fitness_coach.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/fitness_coach/runs/20260518_fast-3b_llama3.2-3b_001/training_metrics.json",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_chef_assistant_20260518_fast-3b_llama3.2-3b_001",
+      "name": "External Train (chef_assistant/20260518_fast-3b_llama3.2-3b_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": 1.1282526532808939,
+      "createdAt": "2026-05-18T21:12:01.282Z",
+      "startedAt": "2026-05-18T21:12:01.282Z",
+      "finishedAt": "2026-05-18T21:12:01.282Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260518_fast-3b_llama3.2-3b_001/training_metrics.json",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260518_fast-3b_llama3.2-3b_002",
+      "name": "External Train (astronomy_guide/20260518_fast-3b_llama3.2-3b_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-19T01:04:24.431Z",
+      "startedAt": "2026-05-19T01:04:24.431Z",
+      "finishedAt": "2026-05-19T01:04:24.431Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260518_fast-3b_llama3.2-3b_002/config_snapshot.yaml",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260518_fast-3b_llama3.2-3b_001",
+      "name": "External Train (astronomy_guide/20260518_fast-3b_llama3.2-3b_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": 1.1100082635879516,
+      "createdAt": "2026-05-18T21:27:58.937Z",
+      "startedAt": "2026-05-18T21:27:58.937Z",
+      "finishedAt": "2026-05-18T21:27:58.937Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260518_fast-3b_llama3.2-3b_001/training_metrics.json",
+        "[EXTERNAL] run layout=canonical"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_history_guide_ollama",
+      "name": "External Dataset Sanitize (history_guide/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-18T23:17:22.358Z",
+      "startedAt": "2026-05-18T23:17:22.358Z",
+      "finishedAt": "2026-05-18T23:17:22.358Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/history_guide/ollama/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/history_guide/ollama/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_history_guide_ollama",
+      "name": "External Dataset Generate (history_guide/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-18T23:09:57.445Z",
+      "startedAt": "2026-05-18T23:09:57.445Z",
+      "finishedAt": "2026-05-18T23:09:57.445Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/history_guide.json",
+        "--technique",
+        "ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/history_guide/ollama/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_fitness_coach_ollama",
+      "name": "External Dataset Sanitize (fitness_coach/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "fitness_coach",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-18T20:52:04.190Z",
+      "startedAt": "2026-05-18T20:52:04.190Z",
+      "finishedAt": "2026-05-18T20:52:04.190Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/fitness_coach/ollama/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/fitness_coach/ollama/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_fitness_coach_ollama",
+      "name": "External Dataset Generate (fitness_coach/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "fitness_coach",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-19T00:35:57.965Z",
+      "startedAt": "2026-05-19T00:35:57.965Z",
+      "finishedAt": "2026-05-19T00:35:57.965Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/fitness_coach.json",
+        "--technique",
+        "ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/fitness_coach/ollama/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_chef_assistant_template",
+      "name": "External Dataset Sanitize (chef_assistant/template)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-18T20:16:53.597Z",
+      "startedAt": "2026-05-18T20:16:53.597Z",
+      "finishedAt": "2026-05-18T20:16:53.597Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/chef_assistant/template/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/chef_assistant/template/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_chef_assistant_ollama",
+      "name": "External Dataset Sanitize (chef_assistant/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-18T23:22:37.580Z",
+      "startedAt": "2026-05-18T23:22:37.580Z",
+      "finishedAt": "2026-05-18T23:22:37.580Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/chef_assistant/ollama/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/chef_assistant/ollama/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_astronomy_guide_ollama",
+      "name": "External Dataset Sanitize (astronomy_guide/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-19T00:35:59.330Z",
+      "startedAt": "2026-05-19T00:35:59.330Z",
+      "finishedAt": "2026-05-19T00:35:59.330Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/astronomy_guide/ollama/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/astronomy_guide/ollama/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_astronomy_guide_ollama",
+      "name": "External Dataset Generate (astronomy_guide/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-19T00:03:16.382Z",
+      "startedAt": "2026-05-19T00:03:16.382Z",
+      "finishedAt": "2026-05-19T00:03:16.382Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/astronomy_guide.json",
+        "--technique",
+        "ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/astronomy_guide/ollama/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_sanitize_history_guide_template",
       "name": "External Dataset Sanitize (history_guide/template)",
       "type": "Dataset",
@@ -38528,7 +39317,57 @@
     }
   ],
   "logs": [
-    "[2026-05-18T15:09:45.789Z] [SYNC] imported external job ext_sanitize_history_guide_template"
+    "[2026-05-19T02:51:48.251Z] [SYNC] imported external job ext_train_chef_assistant_20260518_fast-3b_llama3.2-3b_002",
+    "[2026-05-19T02:51:48.239Z] [SYSTEM] dismissed job ext_train_chef_assistant_20260518_fast-3b_llama3.2-3b_002",
+    "[2026-05-19T02:51:45.909Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:45.892Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:43.162Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:43.015Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:41.813Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:41.771Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:40.751Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:40.739Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:39.283Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:39.269Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:37.876Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:37.864Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:36.830Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:36.703Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:35.810Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:35.676Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:34.768Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:34.701Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:33.756Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:33.744Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:32.499Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:32.426Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:31.545Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:31.456Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:27.834Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_001",
+    "[2026-05-19T02:51:27.820Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_001",
+    "[2026-05-19T02:51:26.727Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:26.712Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:51:25.254Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_002",
+    "[2026-05-19T02:51:25.242Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_002",
+    "[2026-05-19T02:51:22.941Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_001",
+    "[2026-05-19T02:51:22.929Z] [SYSTEM] dismissed job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_001",
+    "[2026-05-19T02:49:17.288Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_003",
+    "[2026-05-19T02:49:17.288Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_002",
+    "[2026-05-19T02:49:17.287Z] [SYNC] imported external job ext_train_history_guide_20260518_fast-3b_llama3.2-3b_001",
+    "[2026-05-19T02:49:17.285Z] [SYNC] imported external job ext_train_fitness_coach_20260518_fast-3b_llama3.2-3b_002",
+    "[2026-05-19T02:49:17.285Z] [SYNC] imported external job ext_train_fitness_coach_20260518_fast-3b_llama3.2-3b_001",
+    "[2026-05-19T02:49:17.283Z] [SYNC] imported external job ext_train_chef_assistant_20260518_fast-3b_llama3.2-3b_002",
+    "[2026-05-19T02:49:17.283Z] [SYNC] imported external job ext_train_chef_assistant_20260518_fast-3b_llama3.2-3b_001",
+    "[2026-05-19T02:49:17.283Z] [SYNC] imported external job ext_train_astronomy_guide_20260518_fast-3b_llama3.2-3b_002",
+    "[2026-05-19T02:49:17.283Z] [SYNC] imported external job ext_train_astronomy_guide_20260518_fast-3b_llama3.2-3b_001",
+    "[2026-05-19T02:49:17.280Z] [SYNC] imported external job ext_sanitize_history_guide_ollama",
+    "[2026-05-19T02:49:17.280Z] [SYNC] imported external job ext_dataset_history_guide_ollama",
+    "[2026-05-19T02:49:17.279Z] [SYNC] imported external job ext_sanitize_fitness_coach_ollama",
+    "[2026-05-19T02:49:17.279Z] [SYNC] imported external job ext_dataset_fitness_coach_ollama",
+    "[2026-05-19T02:49:17.279Z] [SYNC] imported external job ext_sanitize_chef_assistant_template",
+    "[2026-05-19T02:49:17.279Z] [SYNC] imported external job ext_sanitize_chef_assistant_ollama",
+    "[2026-05-19T02:49:17.279Z] [SYNC] imported external job ext_sanitize_astronomy_guide_ollama",
+    "[2026-05-19T02:49:17.279Z] [SYNC] imported external job ext_dataset_astronomy_guide_ollama"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": []

@@ -227,7 +227,7 @@ def build_manual_examples(spec: dict) -> list[dict]:
                     "content": "I am WorkflowAssistant for Unsloth_Core. I help with checked-in docs, CLI workflows, dataset generation, sanitization, training, export, evaluation, and the frontend dashboard. I prefer exact file paths and `./ucore` commands over vague advice."
                 },
             ],
-            "metadata": {"npc_key": npc_key, "category": "identity", "source": "docs_manifest", "source_path": "subjects/workflow_assistant.json"},
+            "metadata": {"npc_key": npc_key, "category": "identity", "source": "docs_manifest", "source_path": "subjects/NPC_specs/workflow_assistant.json"},
         },
         {
             "messages": [
@@ -238,7 +238,7 @@ def build_manual_examples(spec: dict) -> list[dict]:
                     "content": "No. I can recommend the next safe `./ucore` or repo command, but I should not pretend I already ran it or saw your runtime state. If you share output, I can help interpret it."
                 },
             ],
-            "metadata": {"npc_key": npc_key, "category": "refusal", "source": "docs_manifest", "source_path": "subjects/workflow_assistant.json"},
+            "metadata": {"npc_key": npc_key, "category": "refusal", "source": "docs_manifest", "source_path": "subjects/NPC_specs/workflow_assistant.json"},
         },
         {
             "messages": [

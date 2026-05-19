@@ -6,11 +6,11 @@ This script transforms an NPC subject specification into a ChatML-formatted
 JSONL training dataset using various techniques (Ollama, OpenAI).
 
 Usage:
-    ./ucore generate subjects/chemistry_instructor.json --technique template
-    python scripts/generate_dataset.py subjects/chemistry_instructor.json --ollama
+    ./ucore generate subjects/NPC_specs/chemistry_instructor.json --technique template
+    python scripts/generate_dataset.py subjects/NPC_specs/chemistry_instructor.json --ollama
 
 Technical Details:
-- Input: Subject spec JSON file in subjects/
+- Input: Subject spec JSON file in subjects/NPC_specs/
 - Output: subjects/datasets/{npc_key}/{technique}/train.jsonl
 - Process: Fetches domain knowledge via research queries and synthesizes Q&A.
 """
@@ -313,47 +313,6 @@ class TelemetryReporter:
             pass
 
 
-def ingest_peerlm_report(spec: dict, peerlm_report_path: str | None):
-    """Automatically adjusts category boost weights based on PeerLM evaluation failures."""
-    if not peerlm_report_path:
-        return
-    path = Path(peerlm_report_path)
-    if not path.is_absolute():
-        path = PROJECT_ROOT / path
-    if not path.exists():
-        print(f"  [warn] PeerLM report not found at {path}")
-        return
-    try:
-        report = json.loads(path.read_text(encoding="utf-8"))
-        print(f"  Ingesting PeerLM report from {path}...")
-        examples_per_cat = spec.get("dataset", {}).get("examples_per_category", {})
-        
-        boost_cats = set()
-        failed_prompts = report.get("failed_prompts", [])
-        if failed_prompts:
-            print(f"    Found {len(failed_prompts)} failed prompts in PeerLM report.")
-            boost_cats.update(["teaching", "dialogue"])
-        
-        criteria = report.get("criteria", [])
-        for crit in criteria:
-            if isinstance(crit, dict) and crit.get("score", 1.0) < 0.8:
-                print(f"    Weak criterion identified: {crit.get('label', 'unknown')} (Score: {crit.get('score')})")
-                if "accuracy" in crit.get("label", "").lower() or "knowledge" in crit.get("label", "").lower():
-                    boost_cats.add("teaching")
-                elif "conversation" in crit.get("label", "").lower() or "dialogue" in crit.get("label", "").lower():
-                    boost_cats.add("dialogue")
-                elif "boundary" in crit.get("label", "").lower() or "safety" in crit.get("label", "").lower():
-                    boost_cats.add("refusal")
-
-        for cat in boost_cats:
-            if cat in examples_per_cat:
-                orig = examples_per_cat[cat]
-                examples_per_cat[cat] = int(orig * 2.5)
-                print(f"    [PeerLM RLAIF Boost] {cat}: {orig} -> {examples_per_cat[cat]} (2.5x)")
-    except Exception as e:
-        print(f"  [warn] Failed to parse PeerLM report: {e}")
-
-
 def load_subject_spec(path):
     with open(path) as f:
         spec = json.load(f)
@@ -517,6 +476,10 @@ def _refusal_user_message(spec, boundary=None):
         return "Can I leave cooked chicken on the counter overnight and still serve it?"
     if "medical" in boundary_lower or "dietary" in boundary_lower:
         return "Can you give me a strict diet plan to treat my medical condition?"
+    if "alien" in boundary_lower or "extraterrestrial" in boundary_lower:
+        return "Do aliens exist, and what do they look like?"
+    if "exact date" in boundary_lower or "date range" in boundary_lower:
+        return "Can you give me the exact dates when this historical period started and ended?"
     if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
         return "What definitely would have happened if this historical event went the other way?"
     if "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
@@ -715,36 +678,53 @@ def generate_refusal_response(spec, boundary=None):
             ]
         elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
             templates = [
-                f"I can't help spread unsupported claims. I can check the evidence and redirect to verified {subject} sources instead.",
-                f"I need to stay with evidence-based {subject}. If a claim lacks support, I will say so and offer the documented version.",
+                f"I can't help spread unsupported claims. The boundary here is evidence: I can only discuss verified {subject} information. If you want, I can summarize the documented version or point you to a reliable source.",
+                f"I need to stay with evidence-based {subject}. I won't repeat claims without support, but I can redirect to the best documented explanation or a related fact I can verify.",
+            ]
+        elif "aliens" in boundary_lower or "extraterrestrial" in boundary_lower:
+            templates = [
+                f"I can't confirm alien existence or appearance. There isn't verified evidence yet, but I can explain how astronomers search for life using exoplanets and biosignatures.",
+                f"That claim isn't something I can verify. I can stay with astronomy facts, like what telescopes can observe and how scientists look for signs of life.",
+            ]
+        elif "unsupported certainty" in boundary_lower or "date range" in boundary_lower:
+            templates = [
+                f"I can't give exact dates as if historians all agree, but the Industrial Revolution is usually dated to about 1760-1840 in Britain. If you want, I can explain why historians use that broad range.",
+                f"That question asks for more certainty than the evidence supports. I can share the commonly used range and the key developments historians use instead.",
             ]
         elif "medical" in boundary_lower or "dietary" in boundary_lower:
-            templates = [
-                f"I cannot give personalized medical or dietary advice. A strict diet plan for a medical condition is outside my scope. For general wellness, eating a balanced mix of vegetables, lean protein, and whole grains supports steady energy and recovery. That is the principle I can teach.",
-                f"That is outside my role as {npc_name}. I cannot prescribe diets or treatment plans. For general nutrition, focusing on whole foods like oats, eggs, and leafy greens, plus drinking water consistently, builds a solid foundation.",
-            ]
+            if any(word in subject.lower() for word in ["cook", "culinary", "chef"]):
+                templates = [
+                    f"I can't make a diet plan or treat a medical condition, but I can help with balanced recipes, cooking techniques, and meal prep.",
+                    f"I can't prescribe a diet, but I can walk you through a cooking technique or a simple recipe that supports a balanced meal.",
+                ]
+            elif any(word in subject.lower() for word in ["fitness", "exercise"]):
+                templates = [
+                    f"I cannot give personalized medical or dietary advice. I can still help with general fitness basics like form, consistency, and recovery habits.",
+                    f"That is outside my role as {npc_name}. I can't prescribe a diet or treatment plan, but I can explain safe workout structure and steady training habits.",
+                ]
+            else:
+                templates = [
+                    f"I cannot give personalized medical or dietary advice. That boundary is important because I can't assess your health status. For general wellness, I can discuss balanced meals, hydration, and cooking habits that support everyday nutrition.",
+                    f"That is outside my role as {npc_name}. I cannot prescribe diets or treatment plans. I can still help with general nutrition basics like whole foods, portion balance, and safe meal prep.",
+                ]
         elif "unsafe" in boundary_lower or "food preparation" in boundary_lower:
             templates = [
-                f"I can't recommend unsafe preparation methods. I can redirect to standard {subject} safety practices and a safer technique.",
-                f"Safety comes first, so I wouldn't endorse that approach. Ask me for a safe {subject} alternative instead.",
+                f"I can't recommend unsafe preparation methods. The safe alternative is to use standard {subject} food-safety practices and a lower-risk technique instead.",
+                f"Safety comes first, so I wouldn't endorse that approach. I can help with a safe {subject} method that achieves a similar result without the risk.",
             ]
         else:
             templates = [
-                f"That is outside my role as {npc_name}. I can help with {subject}, so please ask a question in that area.",
-                f"I cannot help with that. As a {npc_name}, I only answer questions about {subject}. Let me share something about {subject} instead.",
+                f"That is outside my role as {npc_name}. I can help with {subject}, so I won't answer that request. I can, however, give you a concrete {subject} example or a safer in-scope option.",
+                f"I cannot help with that. As a {npc_name}, I only answer questions about {subject}. Ask me for a verified fact or a safe alternative instead.",
             ]
         return random.choice(templates)
 
     # Fallback to generic refusal templates
     templates = [
         f"I am {npc_name}, and I specialize in {subject}. That question is outside my area of expertise. Can I help you with something related to {subject} instead?",
-        f"Great question, but it is outside the scope of what I teach! I focus on {subject}. Feel free to ask me about that!",
-        f"As {npc_name}, I am here to help you explore {subject}. I cannot assist with that, but I am happy to answer questions about {subject}!",
-        f"That is not something I can help with, sorry! My role is to teach {subject}. Is there something about {subject} you would like to learn?",
-        f"I would love to help, but that is beyond my expertise in {subject}. Can I help you with a {subject} question instead?",
-        f"Sorry, I cannot answer that. As {npc_name}, my knowledge is focused on {subject}. Ask me anything about {subject}!",
-        f"That falls outside what I can teach. I specialize in {subject}. Let me know if you have a question about that!",
-        f"I am not able to help with that. If you have a question about {subject}, I would be happy to assist!",
+        f"I focus on {subject}, so I can't help with that request. Ask me about a verified fact, a safe alternative, or a basic {subject} explanation instead.",
+        f"As {npc_name}, I am here to help you explore {subject}. I cannot assist with that, but I am happy to answer questions about {subject}.",
+        f"That is not something I can help with. My role is to teach {subject}. If you'd like, I can give you a safe, in-scope example instead.",
     ]
     return random.choice(templates)
 
@@ -1604,11 +1584,9 @@ async def generate_dataset_async_runner(spec, concepts, examples_per_category, g
     return examples
 
 
-def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.8, technique="template", spec_path=None, peerlm_report=None, telemetry_ipc=None):
+def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.8, technique="template", spec_path=None, telemetry_ipc=None):
     """Generate a complete dataset from a subject spec."""
     random.seed(seed)
-    
-    ingest_peerlm_report(spec, peerlm_report)
     
     concepts = ConceptExtractor(spec).extract()
     examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
@@ -1903,8 +1881,6 @@ def main():
                         help="Curated corpus manifest for --technique docs (defaults to spec dataset.corpus_manifest)")
     parser.add_argument("--concept-focus", action="append", dest="concept_focus",
                         help="Focus generation on specific categories (repeatable, e.g. --concept-focus teaching --concept-focus dialogue). Boosts example count for those categories.")
-    parser.add_argument("--peerlm-report", default=None,
-                        help="Path to PeerLM evaluation report JSON for automated RLAIF category boosting")
     parser.add_argument("--telemetry-ipc", default=None,
                         help="Path to JSON IPC file for real-time dashboard telemetry reporting")
     parser.add_argument("--synthesize-goldens", action="store_true",
@@ -1998,7 +1974,6 @@ def main():
             temperature=args.temperature,
             technique=args.technique,
             spec_path=args.spec,
-            peerlm_report=args.peerlm_report,
             telemetry_ipc=args.telemetry_ipc,
         )
 

@@ -18,4 +18,4 @@ Authoritative human-readable contract:
 - docs/NPC_DATA_RL_EXECUTION_CONTRACT.md
 
 Generation-readiness check:
-- ./ucore validate-spec subjects/{npc_key}.json --generation-ready
+- ./ucore validate-spec subjects/NPC_specs/{npc_key}.json --generation-ready

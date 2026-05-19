@@ -177,6 +177,7 @@ export default function App() {
   const { connectionQuality } = useWebSocket({
     onTelemetry: (data) => setTelemetry(data),
     onJobUpdate: () => fetchJobs(),
+    onLogsCleared: () => setLogs([]),
     onFallbackPolling: () => { /* polling already runs every 5s */ },
     onResync: () => {
       fetchJobs();
@@ -471,6 +472,15 @@ export default function App() {
       await fetchData(true);
     } catch (error) {
       setUiError(error instanceof Error ? error.message : 'Failed to clear job');
+    }
+  };
+
+  const handleClearLogs = async () => {
+    setLogs([]);
+    try {
+      await fetch('/api/logs/clear', { method: 'POST' });
+    } catch {
+      // Server endpoint may not exist yet — logs cleared locally regardless
     }
   };
 
@@ -1049,7 +1059,7 @@ export default function App() {
                   <div className="flex gap-3">
                     <span className="text-[12px] text-ink/40 font-mono">BUFFER: {logs.length} LINES</span>
                     <button
-                      onClick={() => setLogs([])}
+                      onClick={handleClearLogs}
                       className="text-[12px] font-bold text-accent hover:brightness-125 uppercase tracking-tighter"
                     >
                       Reset Console
@@ -1075,9 +1085,10 @@ export default function App() {
                       );
                     })
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center space-y-2 opacity-20">
-                      <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                      <div className="text-[10px] uppercase font-bold tracking-[0.2em]">Synchronizing Stream...</div>
+                    <div className="h-full flex flex-col items-center justify-center space-y-2 opacity-30">
+                      <div className="text-[14px] opacity-40">⏸</div>
+                      <div className="text-[10px] uppercase font-bold tracking-[0.2em] text-ink/40">Console Ready — No Active Session</div>
+                      <div className="text-[9px] text-ink/20">Logs appear here when a command starts</div>
                     </div>
                   )}
                   <div ref={logsEndRef} />

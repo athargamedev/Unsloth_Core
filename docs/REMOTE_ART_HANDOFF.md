@@ -62,7 +62,7 @@ After training:
 ./ucore evaluate --base-model /path/to/base.gguf \
   --baseline exports/{npc_key}/{npc_key}_v2-lora-f16.gguf \
   --candidate exports/{npc_key}/{npc_key}-lora-f16.gguf \
-  --spec subjects/{npc_key}.json \
+  --spec subjects/NPC_specs/{npc_key}.json \
   --wandb \
   --feedback-json eval/results/feedback/{npc_key}_remote_v1.json
 ```
@@ -83,7 +83,7 @@ flag. To regenerate notebooks in the future:
 
 ```bash
 ./ucore plan-batch \
-  --spec subjects/chef_assistant.json --spec subjects/history_guide.json \
+  --spec subjects/NPC_specs/chef_assistant.json --spec subjects/NPC_specs/history_guide.json \
   --presets fast-3b \
   --generate-colab-notebooks \
   --colab-output-dir colab/outputs \

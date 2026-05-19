@@ -10,13 +10,13 @@ Specialized dataset generation using local Ollama models with:
 - Automatic model detection and fallback
 
 Usage:
-    ./ucore generate-ollama subjects/chemistry_instructor.json --model llama2
-    ./ucore generate-ollama subjects/history_guide.json --batch-size 4 --max-retries 3
+    ./ucore generate-ollama subjects/NPC_specs/chemistry_instructor.json --model llama2
+    ./ucore generate-ollama subjects/NPC_specs/history_guide.json --batch-size 4 --max-retries 3
 
 Technical Details:
 - Ollama API: http://localhost:11434/api/chat
 - Default model: llama2 (fast, ~4GB), optionally llama3.1, mistral, neural-chat
-- Input: Subject spec JSON file in subjects/
+- Input: Subject spec JSON file in subjects/NPC_specs/
 - Output: subjects/datasets/{npc_key}/ollama/train.jsonl
 """
 
@@ -59,6 +59,7 @@ from generate_dataset import (
     generate_dialogue_response,
     generate_quest_response,
     generate_refusal_response,
+    _refusal_user_message,
     compute_content_hash,
     load_subject_spec,
 )
@@ -98,9 +99,11 @@ def build_category_generation_prompt(category: str, concept_str: str, npc_name: 
             f"Create an interactive mini-task about '{concept_str}' with a concise scenario or practice question."
         ),
         "refusal": (
-            f"Create an out-of-scope or unsafe question related to '{concept_str}' and a polite refusal. "
-            "The assistant response must include explicit boundary-setting and a safe redirect to evidence-based, "
-            "in-scope help."
+            f"Create an out-of-scope or unsafe question related to '{concept_str}' and a refusal that is exactly "
+            "1-3 short sentences. The assistant must: (1) state the boundary plainly, (2) refuse the unsafe or "
+            "out-of-scope request without answering its harmful part, and (3) redirect to a concrete in-scope fact, "
+            "safe alternative, or evidence-based follow-up. Do not answer the rejected request. Avoid vague filler like "
+            "'ask me anything about X.'"
         ),
     }
     return prompts.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
@@ -380,6 +383,30 @@ class OllamaDatasetGenerator:
         self.guardrail = DialogueGuardrail()
         self.progress = None
     
+    def _pick_concept(self, category: str, index: int) -> str:
+        """Cycle through concepts deterministically to maximize coverage."""
+        if not self.concepts:
+            return category
+        category_offset = int(hashlib.sha256(category.encode("utf-8")).hexdigest()[:8], 16) % len(self.concepts)
+        return str(self.concepts[(category_offset + index) % len(self.concepts)])
+
+    def _infer_refusal_boundary(self, user_msg: str, concept_str: str) -> str:
+        """Infer a refusal boundary label so fallback templates stay specific."""
+        text = f"{user_msg} {concept_str}".lower()
+        if any(k in text for k in ["medical", "dietary", "weight loss", "weight", "calorie", "nutrition", "condition"]):
+            return "medical or dietary"
+        if any(k in text for k in ["alien", "aliens", "extraterrestrial", "ufo", "life on other planets"]):
+            return "aliens or speculative claims"
+        if any(k in text for k in ["exact date", "exact dates", "started and ended", "when did", "date range"]):
+            return "unsupported certainty or date range"
+        if any(k in text for k in ["unsafe", "leave cooked", "food poisoning", "contamination"]):
+            return "unsafe food preparation"
+        if any(k in text for k in ["what if", "would have happened", "counterfactual", "hypothetical", "alternate history"]):
+            return "speculate or counterfactual"
+        if any(k in text for k in ["hiding", "conspiracy", "misinformation", "experts are hiding", "true story"]):
+            return "misinformation or conspiracy"
+        return "generic boundary"
+
     async def generate_example_llm(self, category: str, concept_str: str, 
                                    difficulty: str = None, dialogue_type: str = None,
                                    scenario_name: str = None, boundary: str = None,
@@ -455,7 +482,25 @@ Return JSON:
             is_valid, reason = self.guardrail.validate(asst_msg, [grounding], npc_name)
             if not is_valid:
                 logger.warning(f"Guardrail rejection: {reason}")
-                return None
+                if category == "refusal":
+                    boundary_hint = self._infer_refusal_boundary(user_msg, concept_str)
+                    asst_msg = generate_refusal_response(self.spec, boundary=boundary_hint)
+                    is_valid, reason = self.guardrail.validate(asst_msg, [grounding], npc_name)
+                    if not is_valid:
+                        logger.warning(f"Refusal fallback rejected: {reason}")
+                        return None
+                else:
+                    return None
+            if category == "refusal":
+                boundary_hint = self._infer_refusal_boundary(user_msg, concept_str)
+                user_msg = _refusal_user_message(self.spec, boundary_hint)
+                asst_msg = generate_refusal_response(self.spec, boundary=boundary_hint)
+                user2_msg = ""
+                asst2_msg = ""
+                is_valid, reason = self.guardrail.validate(asst_msg, [grounding], npc_name)
+                if not is_valid:
+                    logger.warning(f"Refusal fallback rejected: {reason}")
+                    return None
             
             messages = [
                 {"role": "system", "content": system_prompt},
@@ -521,8 +566,8 @@ Return JSON:
         async def gen_task(category: str, index: int, difficulty: str = None):
             async with semaphore:
                 try:
-                    concept = random.choice(self.concepts)
-                    multi_turn = should_generate_multi_turn(category, index, multi_turn_ratio)
+                    concept = self._pick_concept(category, index)
+                    multi_turn = False if category in {"identity", "refusal"} else should_generate_multi_turn(category, index, multi_turn_ratio)
                     example = await self.generate_example_llm(
                         category, str(concept), difficulty=difficulty,
                         session=session, executor=executor, temperature=temperature,
@@ -580,9 +625,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  ./ucore generate-ollama subjects/history_guide.json
-  ./ucore generate-ollama subjects/chemistry_instructor.json --model llama2 --batch-size 2
-  ./ucore generate-ollama subjects/fitness_coach.json --temperature 0.6 --check-health
+  ./ucore generate-ollama subjects/NPC_specs/history_guide.json
+  ./ucore generate-ollama subjects/NPC_specs/chemistry_instructor.json --model llama2 --batch-size 2
+  ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --temperature 0.6 --check-health
         """
     )
     

@@ -28,7 +28,7 @@ spec.json + knowledge_base/ → hash-based variant selection → template fill �
 └─────────────────────────────────────────────────────────────────┘
 
 Step 1: Load Inputs
-  ├─ subjects/{npc_key}.json (NPC spec)
+  ├─ subjects/NPC_specs/{npc_key}.json (NPC spec)
   ├─ knowledge_base/category_library.json (universal templates)
   ├─ knowledge_base/prompt_templates.yaml (variant templates)
   ├─ knowledge_base/domain_concepts/{npc_key}.json (NPC-specific concepts)
@@ -330,7 +330,7 @@ def _fill_template(template, variant, item, knowledge_base, category_config, see
 **Verification Test**:
 ```python
 def test_deterministic_reproducibility():
-    spec = load_json("subjects/history_guide.json")
+    spec = load_json("subjects/NPC_specs/history_guide.json")
     kb = load_knowledge_base("knowledge_base/")
     
     data1 = generate_deterministic(spec, kb, seed=42)
@@ -437,20 +437,20 @@ Generated Dataset
 
 ### Generate Deterministic (Default)
 ```bash
-./ucore generate subjects/history_guide.json
+./ucore generate subjects/NPC_specs/history_guide.json
 # → subjects/datasets/history_guide/deterministic/train.jsonl
 ```
 
 ### Regenerate Weak Concepts (Feedback Loop)
 ```bash
-./ucore generate subjects/history_guide.json \
+./ucore generate subjects/NPC_specs/history_guide.json \
   --concept-focus dialogue,teaching \
   --seed 43  # Different seed, new examples
 ```
 
 ### Enrich with Ollama
 ```bash
-./ucore generate subjects/history_guide.json \
+./ucore generate subjects/NPC_specs/history_guide.json \
   --technique ollama \
   --enrichment-file subjects/datasets/history_guide/deterministic/train.jsonl
 # → Takes deterministic as input, improves with LLM
@@ -458,7 +458,7 @@ Generated Dataset
 
 ### Full Pipeline
 ```bash
-./ucore pipeline subjects/history_guide.json --technique deterministic
+./ucore pipeline subjects/NPC_specs/history_guide.json --technique deterministic
 # → Generate → Sanitize → Train → Export → Eval (all automatically)
 ```
 

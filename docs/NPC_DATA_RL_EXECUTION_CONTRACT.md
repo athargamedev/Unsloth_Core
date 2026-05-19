@@ -8,7 +8,7 @@ shape. Use it before any training run.
 
 Fresh datasets must be generated from:
 
-- `subjects/{npc_key}.json` for identity, system prompt, categories, counts, and behavior rules.
+- `subjects/NPC_specs/{npc_key}.json` for identity, system prompt, categories, counts, and behavior rules.
 - `subjects/reference_docs/{npc_key_or_subject}_primer.md` for grounded domain facts.
 - `subjects/schemas/*.schema.json` for machine-readable record formats.
 
@@ -89,13 +89,13 @@ Every SFT JSONL row must include:
 Before training:
 
 ```bash
-./ucore validate-spec subjects/{npc_key}.json --generation-ready
-./ucore generate subjects/{npc_key}.json --technique template
+./ucore validate-spec subjects/NPC_specs/{npc_key}.json --generation-ready
+./ucore generate subjects/NPC_specs/{npc_key}.json --technique template
 ./ucore sanitize subjects/datasets/{npc_key}/template/train.jsonl \
   --output subjects/datasets/{npc_key}/template/train_clean.jsonl \
   --strict-canonical \
   --require-complete-metadata
-./ucore dataset-eval subjects/{npc_key}.json --technique template --judge-model qwen2.5:7b
+./ucore dataset-eval subjects/NPC_specs/{npc_key}.json --technique template --judge-model qwen2.5:7b
 ```
 
 Use `quality_failures.json` as the build-loop source of truth. Fix generation,

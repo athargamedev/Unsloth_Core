@@ -1,0 +1,163 @@
+Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py subjects/astronomy_guide.json --model qwen2.5:7b --batch-size 2 --check-health
+2026-05-19 01:25:46,852 [INFO] Checking Ollama health...
+2026-05-19 01:25:46,854 [INFO] ✓ Ollama is running
+2026-05-19 01:25:46,855 [INFO] Available models: qwen2.5
+2026-05-19 01:25:46,856 [INFO] Loading spec: subjects/astronomy_guide.json
+2026-05-19 01:25:46,856 [INFO] Generating dataset for NPC: AstronomyGuide
+2026-05-19 01:25:46,856 [INFO] Subject: Astronomy and space science: solar system, stars, galaxies, cosmology, telescopes, space exploration, planetary science, celestial phenomena
+2026-05-19 01:25:46,856 [INFO] Model: qwen2.5:7b
+2026-05-19 01:25:46,856 [INFO] Initializing generator...
+2026-05-19 01:25:46,857 [INFO] Generating 132 examples with model 'qwen2.5:7b'...
+2026-05-19 01:25:46,857 [INFO] This may take several minutes depending on hardware and model size
+
+/home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py:558: DeprecationWarning: There is no current event loop
+  loop = asyncio.get_event_loop()
+2026-05-19 01:26:02,916 [INFO] Progress: 1/132 (0.8%) | Elapsed: 16s | ETA: 35m 3s [identity]
+2026-05-19 01:26:02,916 [INFO]   planetary science
+2026-05-19 01:26:08,084 [INFO] Progress: 3/132 (2.3%) | Elapsed: 21s | ETA: 15m 12s [identity]
+2026-05-19 01:26:08,084 [INFO]   astronomy and space science
+2026-05-19 01:26:13,557 [INFO] Progress: 5/132 (3.8%) | Elapsed: 26s | ETA: 11m 18s [identity]
+2026-05-19 01:26:13,557 [INFO]   astronomical phenomena
+2026-05-19 01:26:18,919 [INFO] Progress: 8/132 (6.1%) | Elapsed: 32s | ETA: 8m 16s [identity]
+2026-05-19 01:26:18,919 [INFO]   galaxies and nebulae
+2026-05-19 01:26:24,840 [INFO] Progress: 10/132 (7.6%) | Elapsed: 37s | ETA: 7m 43s [identity]
+2026-05-19 01:26:24,840 [INFO]   stellar evolution
+2026-05-19 01:26:32,642 [INFO] Progress: 12/132 (9.1%) | Elapsed: 45s | ETA: 7m 37s [identity]
+2026-05-19 01:26:32,642 [INFO]   galaxies and nebulae
+2026-05-19 01:26:38,282 [INFO] Progress: 13/132 (9.8%) | Elapsed: 51s | ETA: 7m 50s [teaching]
+2026-05-19 01:26:38,282 [INFO]   space exploration
+2026-05-19 01:26:43,351 [INFO] Progress: 14/132 (10.6%) | Elapsed: 56s | ETA: 7m 56s [teaching]
+2026-05-19 01:26:43,351 [INFO]   astronomical phenomena
+2026-05-19 01:26:48,591 [INFO] Progress: 16/132 (12.1%) | Elapsed: 1m 1s | ETA: 7m 27s [teaching]
+2026-05-19 01:26:48,591 [INFO]   solar system
+2026-05-19 01:26:54,968 [INFO] Progress: 19/132 (14.4%) | Elapsed: 1m 8s | ETA: 6m 45s [teaching]
+2026-05-19 01:26:54,969 [INFO]   astronomical phenomena
+2026-05-19 01:27:01,711 [INFO] Progress: 22/132 (16.7%) | Elapsed: 1m 14s | ETA: 6m 14s [teaching]
+2026-05-19 01:27:01,711 [INFO]   solar system
+2026-05-19 01:27:11,199 [INFO] Progress: 25/132 (18.9%) | Elapsed: 1m 24s | ETA: 6m 0s [teaching]
+2026-05-19 01:27:11,199 [INFO]   galaxies
+2026-05-19 01:27:17,148 [INFO] Progress: 27/132 (20.5%) | Elapsed: 1m 30s | ETA: 5m 51s [teaching]
+2026-05-19 01:27:17,148 [INFO]   observational astronomy
+2026-05-19 01:27:22,834 [INFO] Progress: 29/132 (22.0%) | Elapsed: 1m 35s | ETA: 5m 40s [teaching]
+2026-05-19 01:27:22,834 [INFO]   galaxies
+2026-05-19 01:27:27,996 [INFO] Progress: 31/132 (23.5%) | Elapsed: 1m 41s | ETA: 5m 29s [teaching]
+2026-05-19 01:27:27,996 [INFO]   galaxies and nebulae
+2026-05-19 01:27:33,650 [INFO] Progress: 32/132 (24.2%) | Elapsed: 1m 46s | ETA: 5m 33s [teaching]
+2026-05-19 01:27:33,650 [INFO]   telescopes
+2026-05-19 01:27:40,146 [INFO] Progress: 35/132 (26.5%) | Elapsed: 1m 53s | ETA: 5m 13s [teaching]
+2026-05-19 01:27:40,146 [INFO]   cosmology
+2026-05-19 01:27:46,945 [INFO] Progress: 37/132 (28.0%) | Elapsed: 2m 0s | ETA: 5m 8s [teaching]
+2026-05-19 01:27:46,945 [INFO]   stellar evolution
+2026-05-19 01:27:54,731 [INFO] Progress: 39/132 (29.5%) | Elapsed: 2m 7s | ETA: 5m 4s [teaching]
+2026-05-19 01:27:54,731 [INFO]   planetary science
+2026-05-19 01:28:00,018 [INFO] Progress: 40/132 (30.3%) | Elapsed: 2m 13s | ETA: 5m 6s [teaching]
+2026-05-19 01:28:00,018 [INFO]   telescopes
+2026-05-19 01:28:05,739 [INFO] Progress: 42/132 (31.8%) | Elapsed: 2m 18s | ETA: 4m 57s [teaching]
+2026-05-19 01:28:05,739 [INFO]   stars
+2026-05-19 01:28:14,571 [INFO] Progress: 44/132 (33.3%) | Elapsed: 2m 27s | ETA: 4m 55s [teaching]
+2026-05-19 01:28:14,571 [INFO]   space exploration
+2026-05-19 01:28:20,240 [INFO] Progress: 45/132 (34.1%) | Elapsed: 2m 33s | ETA: 4m 56s [teaching]
+2026-05-19 01:28:20,240 [INFO]   galaxies and nebulae
+2026-05-19 01:28:27,030 [INFO] Progress: 47/132 (35.6%) | Elapsed: 2m 40s | ETA: 4m 49s [teaching]
+2026-05-19 01:28:27,030 [INFO]   astronomical phenomena
+2026-05-19 01:28:33,781 [INFO] Progress: 50/132 (37.9%) | Elapsed: 2m 46s | ETA: 4m 33s [teaching]
+2026-05-19 01:28:33,781 [INFO]   astronomical phenomena
+2026-05-19 01:28:41,234 [INFO] Progress: 52/132 (39.4%) | Elapsed: 2m 54s | ETA: 4m 28s [teaching]
+2026-05-19 01:28:41,234 [INFO]   telescopes
+2026-05-19 01:28:49,325 [INFO] Progress: 55/132 (41.7%) | Elapsed: 3m 2s | ETA: 4m 15s [teaching]
+2026-05-19 01:28:49,325 [INFO]   cosmology
+2026-05-19 01:28:54,595 [INFO] Progress: 57/132 (43.2%) | Elapsed: 3m 7s | ETA: 4m 7s [teaching]
+2026-05-19 01:28:54,595 [INFO]   cosmology
+2026-05-19 01:29:00,157 [INFO] Progress: 59/132 (44.7%) | Elapsed: 3m 13s | ETA: 3m 59s [teaching]
+2026-05-19 01:29:00,157 [INFO]   space exploration
+2026-05-19 01:29:06,520 [INFO] Progress: 61/132 (46.2%) | Elapsed: 3m 19s | ETA: 3m 52s [teaching]
+2026-05-19 01:29:06,520 [INFO]   galaxies and nebulae
+2026-05-19 01:29:13,031 [INFO] Progress: 63/132 (47.7%) | Elapsed: 3m 26s | ETA: 3m 45s [teaching]
+2026-05-19 01:29:13,031 [INFO]   astronomical phenomena
+2026-05-19 01:29:19,737 [INFO] Progress: 65/132 (49.2%) | Elapsed: 3m 32s | ETA: 3m 39s [teaching]
+2026-05-19 01:29:19,737 [INFO]   stars & stellar evolution
+2026-05-19 01:29:27,425 [INFO] Progress: 67/132 (50.8%) | Elapsed: 3m 40s | ETA: 3m 33s [teaching]
+2026-05-19 01:29:27,425 [INFO]   astronomy and space science
+2026-05-19 01:29:36,386 [INFO] Progress: 69/132 (52.3%) | Elapsed: 3m 49s | ETA: 3m 29s [dialogue]
+2026-05-19 01:29:36,386 [INFO]   galaxies
+2026-05-19 01:29:43,368 [INFO] Progress: 71/132 (53.8%) | Elapsed: 3m 56s | ETA: 3m 23s [dialogue]
+2026-05-19 01:29:43,368 [INFO]   astronomical phenomena
+2026-05-19 01:29:50,790 [INFO] Progress: 73/132 (55.3%) | Elapsed: 4m 3s | ETA: 3m 17s [dialogue]
+2026-05-19 01:29:50,790 [INFO]   galaxies
+2026-05-19 01:29:56,994 [INFO] Progress: 74/132 (56.1%) | Elapsed: 4m 10s | ETA: 3m 16s [dialogue]
+2026-05-19 01:29:56,994 [INFO]   telescopes
+2026-05-19 01:30:02,998 [INFO] Progress: 75/132 (56.8%) | Elapsed: 4m 16s | ETA: 3m 14s [dialogue]
+2026-05-19 01:30:02,998 [INFO]   astronomy and space science
+2026-05-19 01:30:08,654 [INFO] Progress: 76/132 (57.6%) | Elapsed: 4m 21s | ETA: 3m 12s [dialogue]
+2026-05-19 01:30:08,654 [INFO]   galaxies and nebulae
+2026-05-19 01:30:15,876 [INFO] Progress: 78/132 (59.1%) | Elapsed: 4m 29s | ETA: 3m 6s [dialogue]
+2026-05-19 01:30:15,876 [INFO]   galaxies
+2026-05-19 01:30:22,094 [INFO] Progress: 80/132 (60.6%) | Elapsed: 4m 35s | ETA: 2m 58s [dialogue]
+2026-05-19 01:30:22,094 [INFO]   galaxies & cosmology
+2026-05-19 01:30:28,309 [INFO] Progress: 82/132 (62.1%) | Elapsed: 4m 41s | ETA: 2m 51s [dialogue]
+2026-05-19 01:30:28,309 [INFO]   stars & stellar evolution
+2026-05-19 01:30:33,838 [INFO] Progress: 84/132 (63.6%) | Elapsed: 4m 46s | ETA: 2m 43s [dialogue]
+2026-05-19 01:30:33,838 [INFO]   astronomy and space science
+2026-05-19 01:30:40,873 [INFO] Progress: 85/132 (64.4%) | Elapsed: 4m 54s | ETA: 2m 42s [dialogue]
+2026-05-19 01:30:40,873 [INFO]   observational astronomy
+2026-05-19 01:30:47,245 [INFO] Progress: 86/132 (65.2%) | Elapsed: 5m 0s | ETA: 2m 40s [dialogue]
+2026-05-19 01:30:47,245 [INFO]   astronomical phenomena
+2026-05-19 01:30:54,630 [INFO] Progress: 88/132 (66.7%) | Elapsed: 5m 7s | ETA: 2m 33s [dialogue]
+2026-05-19 01:30:54,630 [INFO]   celestial phenomena
+2026-05-19 01:31:04,351 [INFO] Progress: 90/132 (68.2%) | Elapsed: 5m 17s | ETA: 2m 28s [dialogue]
+2026-05-19 01:31:04,351 [INFO]   cosmology
+2026-05-19 01:31:11,075 [INFO] Progress: 92/132 (69.7%) | Elapsed: 5m 24s | ETA: 2m 20s [dialogue]
+2026-05-19 01:31:11,075 [INFO]   observational astronomy
+2026-05-19 01:31:20,095 [INFO] Progress: 94/132 (71.2%) | Elapsed: 5m 33s | ETA: 2m 14s [dialogue]
+2026-05-19 01:31:20,095 [INFO]   galaxies & cosmology
+2026-05-19 01:31:27,373 [INFO] Progress: 95/132 (72.0%) | Elapsed: 5m 40s | ETA: 2m 12s [dialogue]
+2026-05-19 01:31:27,373 [INFO]   galaxies and nebulae
+2026-05-19 01:31:32,887 [INFO] Progress: 97/132 (73.5%) | Elapsed: 5m 46s | ETA: 2m 4s [dialogue]
+2026-05-19 01:31:32,888 [INFO]   planetary science
+2026-05-19 01:31:39,718 [INFO] Progress: 98/132 (74.2%) | Elapsed: 5m 52s | ETA: 2m 2s [dialogue]
+2026-05-19 01:31:39,718 [INFO]   observational astronomy
+2026-05-19 01:31:46,840 [INFO] Progress: 100/132 (75.8%) | Elapsed: 5m 59s | ETA: 1m 55s [dialogue]
+2026-05-19 01:31:46,840 [INFO]   celestial phenomena
+2026-05-19 01:31:55,771 [INFO] Progress: 102/132 (77.3%) | Elapsed: 6m 8s | ETA: 1m 48s [quest]
+2026-05-19 01:31:55,771 [INFO]   telescopes
+2026-05-19 01:32:02,906 [INFO] Progress: 104/132 (78.8%) | Elapsed: 6m 16s | ETA: 1m 41s [quest]
+2026-05-19 01:32:02,906 [INFO]   stars & stellar evolution
+2026-05-19 01:32:08,583 [INFO] Progress: 106/132 (80.3%) | Elapsed: 6m 21s | ETA: 1m 33s [quest]
+2026-05-19 01:32:08,583 [INFO]   astronomy and space science
+2026-05-19 01:32:14,094 [INFO] Progress: 107/132 (81.1%) | Elapsed: 6m 27s | ETA: 1m 30s [quest]
+2026-05-19 01:32:14,094 [INFO]   solar system
+2026-05-19 01:32:21,962 [INFO] Progress: 109/132 (82.6%) | Elapsed: 6m 35s | ETA: 1m 23s [quest]
+2026-05-19 01:32:21,962 [INFO]   astronomy and space science
+2026-05-19 01:32:28,565 [INFO] Progress: 111/132 (84.1%) | Elapsed: 6m 41s | ETA: 1m 15s [quest]
+2026-05-19 01:32:28,565 [INFO]   planetary science
+2026-05-19 01:32:35,208 [INFO] Progress: 113/132 (85.6%) | Elapsed: 6m 48s | ETA: 1m 8s [quest]
+2026-05-19 01:32:35,208 [INFO]   celestial phenomena
+2026-05-19 01:32:41,189 [INFO] Progress: 115/132 (87.1%) | Elapsed: 6m 54s | ETA: 1m 1s [quest]
+2026-05-19 01:32:41,189 [INFO]   stars & stellar evolution
+2026-05-19 01:32:47,805 [INFO] Progress: 117/132 (88.6%) | Elapsed: 7m 0s | ETA: 53s [refusal]
+2026-05-19 01:32:47,805 [INFO]   astronomy and space science
+2026-05-19 01:32:52,894 [INFO] Progress: 119/132 (90.2%) | Elapsed: 7m 6s | ETA: 46s [refusal]
+2026-05-19 01:32:52,894 [INFO]   cosmology and universe origins
+2026-05-19 01:32:59,435 [INFO] Progress: 122/132 (92.4%) | Elapsed: 7m 12s | ETA: 35s [refusal]
+2026-05-19 01:32:59,435 [INFO]   stars
+2026-05-19 01:33:06,959 [INFO] Progress: 125/132 (94.7%) | Elapsed: 7m 20s | ETA: 24s [refusal]
+2026-05-19 01:33:06,959 [INFO]   observational astronomy
+2026-05-19 01:33:11,984 [INFO] Progress: 126/132 (95.5%) | Elapsed: 7m 25s | ETA: 21s [refusal]
+2026-05-19 01:33:11,984 [INFO]   cosmology
+2026-05-19 01:33:19,863 [INFO] Progress: 128/132 (97.0%) | Elapsed: 7m 33s | ETA: 14s [refusal]
+2026-05-19 01:33:19,863 [INFO]   safety boundaries & misconceptions
+2026-05-19 01:33:27,144 [INFO] Progress: 130/132 (98.5%) | Elapsed: 7m 40s | ETA: 7s [refusal]
+2026-05-19 01:33:27,144 [INFO]   galaxies
+2026-05-19 01:33:32,867 [INFO] Progress: 132/132 (100.0%) | Elapsed: 7m 46s | ETA: 0s [refusal]
+2026-05-19 01:33:32,867 [INFO]   solar system
+2026-05-19 01:33:32,867 [INFO] 
+======================================================================
+2026-05-19 01:33:32,867 [INFO] Generation complete: 132 examples
+2026-05-19 01:33:32,867 [INFO] Stats: 132/132 successful (100.0% success rate, 0 errors)
+2026-05-19 01:33:32,867 [INFO] ======================================================================
+2026-05-19 01:33:32,869 [INFO] ✓ Wrote 117 training examples to /home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/train.jsonl
+2026-05-19 01:33:32,869 [INFO] ✓ Wrote 15 validation examples to /home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/validation.jsonl
+2026-05-19 01:33:32,869 [INFO] ✓ Wrote manifest to /home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/train_manifest.json
+2026-05-19 01:33:32,869 [INFO] 
+✓ Dataset generation complete!
+{"ts": "2026-05-19T04:33:32.869531+00:00", "event": "dataset_generated", "npc_key": "astronomy_guide", "total": 132, "train": 117, "validation": 15, "technique": "ollama"}

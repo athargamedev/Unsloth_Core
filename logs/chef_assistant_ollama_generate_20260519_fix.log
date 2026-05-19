@@ -1,0 +1,30 @@
+Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py subjects/chef_assistant.json --model qwen2.5:7b --check-health
+2026-05-19 02:30:59,527 [INFO] Checking Ollama health...
+2026-05-19 02:30:59,529 [INFO] ✓ Ollama is running
+2026-05-19 02:30:59,530 [INFO] Available models: qwen2.5
+2026-05-19 02:30:59,531 [INFO] Loading spec: subjects/chef_assistant.json
+2026-05-19 02:30:59,531 [INFO] Generating dataset for NPC: ChefAssistant
+2026-05-19 02:30:59,531 [INFO] Subject: Cooking and culinary arts: knife skills, cooking techniques, ingredient science, world cuisines, food safety, kitchen management
+2026-05-19 02:30:59,531 [INFO] Model: qwen2.5:7b
+2026-05-19 02:30:59,531 [INFO] Initializing generator...
+2026-05-19 02:30:59,532 [INFO] Generating 132 examples with model 'qwen2.5:7b'...
+2026-05-19 02:30:59,532 [INFO] This may take several minutes depending on hardware and model size
+
+/home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py:598: DeprecationWarning: There is no current event loop
+  loop = asyncio.get_event_loop()
+2026-05-19 02:31:30,683 [INFO] Progress: 1/132 (0.8%) | Elapsed: 31s | ETA: 1h 8m [identity]
+2026-05-19 02:31:30,683 [INFO]   ingredient science
+2026-05-19 02:31:37,757 [INFO] Progress: 4/132 (3.0%) | Elapsed: 38s | ETA: 20m 23s [identity]
+2026-05-19 02:31:37,757 [INFO]   world cuisines
+2026-05-19 02:32:14,334 [INFO] Progress: 5/132 (3.8%) | Elapsed: 1m 14s | ETA: 31m 39s [identity]
+2026-05-19 02:32:14,334 [INFO]   kitchen management
+2026-05-19 02:32:21,085 [INFO] Progress: 8/132 (6.1%) | Elapsed: 1m 21s | ETA: 21m 4s [identity]
+2026-05-19 02:32:21,085 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:32:56,362 [INFO] Progress: 9/132 (6.8%) | Elapsed: 1m 56s | ETA: 26m 36s [identity]
+2026-05-19 02:32:56,362 [INFO]   knife skills
+2026-05-19 02:33:03,281 [INFO] Progress: 12/132 (9.1%) | Elapsed: 2m 3s | ETA: 20m 37s [identity]
+2026-05-19 02:33:03,281 [INFO]   flavor pairing
+2026-05-19 02:33:38,872 [INFO] Progress: 13/132 (9.8%) | Elapsed: 2m 39s | ETA: 24m 18s [teaching]
+2026-05-19 02:33:38,873 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:33:44,029 [INFO] Progress: 14/132 (10.6%) | Elapsed: 2m 44s | ETA: 23m 6s [teaching]
+2026-05-19 02:33:44,029 [INFO]   knife skills

@@ -7,8 +7,8 @@ Compute a deterministic recommendation for where to run:
 - training: local vs remote_colab
 
 Usage:
-  python scripts/plan_execution.py --spec subjects/chemistry_instructor.json --preset fast-3b --json
-  python scripts/plan_execution.py --spec subjects/chemistry_instructor.json --preset llama-3b-fast --local-vram-gb 6
+  python scripts/plan_execution.py --spec subjects/NPC_specs/chemistry_instructor.json --preset fast-3b --json
+  python scripts/plan_execution.py --spec subjects/NPC_specs/chemistry_instructor.json --preset llama-3b-fast --local-vram-gb 6
 """
 
 from __future__ import annotations

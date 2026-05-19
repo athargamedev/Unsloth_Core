@@ -1,4 +1,4 @@
-# Subject Specification Schema (subjects/*.json)
+# Subject Specification Schema (subjects/NPC_specs/*.json)
 
 > **Cross-reference**: For the complete dataset lifecycle, generation techniques, sanitization rules, training data flow, and minimum requirements, see [`TRAINING_WORKFLOW_CONTEXT.md`](../TRAINING_WORKFLOW_CONTEXT.md).
 

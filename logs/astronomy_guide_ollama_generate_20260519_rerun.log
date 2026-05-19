@@ -1,0 +1,24 @@
+Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py subjects/astronomy_guide.json --model qwen2.5:7b --batch-size 2 --check-health
+2026-05-19 02:17:50,362 [INFO] Checking Ollama health...
+2026-05-19 02:17:50,363 [INFO] ✓ Ollama is running
+2026-05-19 02:17:50,365 [INFO] Available models: qwen2.5
+2026-05-19 02:17:50,365 [INFO] Loading spec: subjects/astronomy_guide.json
+2026-05-19 02:17:50,365 [INFO] Generating dataset for NPC: AstronomyGuide
+2026-05-19 02:17:50,365 [INFO] Subject: Astronomy and space science: solar system, stars, galaxies, cosmology, telescopes, space exploration, planetary science, celestial phenomena
+2026-05-19 02:17:50,365 [INFO] Model: qwen2.5:7b
+2026-05-19 02:17:50,366 [INFO] Initializing generator...
+2026-05-19 02:17:50,366 [INFO] Generating 132 examples with model 'qwen2.5:7b'...
+2026-05-19 02:17:50,366 [INFO] This may take several minutes depending on hardware and model size
+
+/home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py:567: DeprecationWarning: There is no current event loop
+  loop = asyncio.get_event_loop()
+2026-05-19 02:18:18,165 [INFO] Progress: 1/132 (0.8%) | Elapsed: 27s | ETA: 1h 0m [identity]
+2026-05-19 02:18:18,165 [INFO]   safety boundaries & misconceptions
+2026-05-19 02:18:55,744 [INFO] Progress: 3/132 (2.3%) | Elapsed: 1m 5s | ETA: 46m 51s [identity]
+2026-05-19 02:18:55,744 [INFO]   space exploration
+2026-05-19 02:19:30,953 [INFO] Progress: 5/132 (3.8%) | Elapsed: 1m 40s | ETA: 42m 34s [identity]
+2026-05-19 02:19:30,953 [INFO]   astronomy and space science
+2026-05-19 02:20:04,767 [INFO] Progress: 7/132 (5.3%) | Elapsed: 2m 14s | ETA: 40m 0s [identity]
+2026-05-19 02:20:04,768 [INFO]   space exploration
+2026-05-19 02:20:33,026 [INFO] Progress: 9/132 (6.8%) | Elapsed: 2m 42s | ETA: 37m 3s [identity]
+2026-05-19 02:20:33,026 [INFO]   stars & stellar evolution

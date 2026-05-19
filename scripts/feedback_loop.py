@@ -494,9 +494,9 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
         print(f"  (dry-run mode — no changes made)")
     if not auto_retrain and not dry_run:
         print(f"\n  Next step: train and re-evaluate:")
-        print(f"    ./ucore train subjects/{npc_key}.json --preset {train_preset}")
+        print(f"    ./ucore train subjects/NPC_specs/{npc_key}.json --preset {train_preset}")
         print(f"    ./ucore evaluate --baseline <old.gguf> --candidate <new.gguf>"
-              f" --spec subjects/{npc_key}.json --feedback-json eval/results/feedback/{npc_key}_round2.json")
+              f" --spec subjects/NPC_specs/{npc_key}.json --feedback-json eval/results/feedback/{npc_key}_round2.json")
     print(f"  Pipeline state: {PIPELINE_STATE_PATH}")
 
     if json_output:

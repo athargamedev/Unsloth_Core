@@ -330,7 +330,7 @@ class ProjectAudit:
             print(f"   1. Focus on weak concepts: {npc_info.get('focus_categories', [])}")
             print(f"   2. Re-run pipeline with feedback: ./ucore feedback <feedback_file>")
         else:
-            print(f"   1. Run a training cycle: ./ucore train subjects/{npc_key}.json --preset fast-3b")
+            print(f"   1. Run a training cycle: ./ucore train subjects/NPC_specs/{npc_key}.json --preset fast-3b")
         
         print(f"\n{'='*70}\n")
 

@@ -6,7 +6,7 @@ This script performs quick inference tests on an exported GGUF model to
 ensure it maintains its persona and hasn't suffered from mode collapse.
 
 Usage:
-    ./ucore smoke exports/my_npc/my_model.gguf --spec subjects/my_npc.json
+    ./ucore smoke exports/my_npc/my_model.gguf --spec subjects/NPC_specs/my_npc.json
     python scripts/smoke_test.py exports/my_npc/my_model.gguf --track
 
 Technical Details:

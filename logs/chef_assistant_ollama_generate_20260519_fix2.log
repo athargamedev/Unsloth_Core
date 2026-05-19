@@ -1,0 +1,191 @@
+Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py subjects/chef_assistant.json --model qwen2.5:7b --check-health
+2026-05-19 02:34:13,373 [INFO] Checking Ollama health...
+2026-05-19 02:34:13,375 [INFO] ✓ Ollama is running
+2026-05-19 02:34:13,376 [INFO] Available models: qwen2.5
+2026-05-19 02:34:13,377 [INFO] Loading spec: subjects/chef_assistant.json
+2026-05-19 02:34:13,377 [INFO] Generating dataset for NPC: ChefAssistant
+2026-05-19 02:34:13,377 [INFO] Subject: Cooking and culinary arts: knife skills, cooking techniques, ingredient science, world cuisines, food safety, kitchen management
+2026-05-19 02:34:13,377 [INFO] Model: qwen2.5:7b
+2026-05-19 02:34:13,377 [INFO] Initializing generator...
+2026-05-19 02:34:13,377 [INFO] Generating 132 examples with model 'qwen2.5:7b'...
+2026-05-19 02:34:13,377 [INFO] This may take several minutes depending on hardware and model size
+
+/home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py:598: DeprecationWarning: There is no current event loop
+  loop = asyncio.get_event_loop()
+2026-05-19 02:34:53,236 [INFO] Progress: 1/132 (0.8%) | Elapsed: 39s | ETA: 1h 27m [identity]
+2026-05-19 02:34:53,236 [INFO]   ingredient science
+2026-05-19 02:34:59,567 [INFO] Progress: 4/132 (3.0%) | Elapsed: 46s | ETA: 24m 38s [identity]
+2026-05-19 02:34:59,567 [INFO]   world cuisines
+2026-05-19 02:35:40,080 [INFO] Progress: 5/132 (3.8%) | Elapsed: 1m 26s | ETA: 36m 42s [identity]
+2026-05-19 02:35:40,080 [INFO]   kitchen management
+2026-05-19 02:35:47,184 [INFO] Progress: 8/132 (6.1%) | Elapsed: 1m 33s | ETA: 24m 13s [identity]
+2026-05-19 02:35:47,184 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:36:23,413 [INFO] Progress: 9/132 (6.8%) | Elapsed: 2m 10s | ETA: 29m 37s [identity]
+2026-05-19 02:36:23,413 [INFO]   knife skills
+2026-05-19 02:36:29,611 [INFO] Progress: 12/132 (9.1%) | Elapsed: 2m 16s | ETA: 22m 42s [identity]
+2026-05-19 02:36:29,611 [INFO]   flavor pairing
+2026-05-19 02:37:06,637 [INFO] Progress: 13/132 (9.8%) | Elapsed: 2m 53s | ETA: 26m 25s [teaching]
+2026-05-19 02:37:06,637 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:37:11,890 [INFO] Progress: 14/132 (10.6%) | Elapsed: 2m 58s | ETA: 25m 4s [teaching]
+2026-05-19 02:37:11,890 [INFO]   knife skills
+2026-05-19 02:37:18,586 [INFO] Progress: 16/132 (12.1%) | Elapsed: 3m 5s | ETA: 22m 22s [teaching]
+2026-05-19 02:37:18,586 [INFO]   ingredient selection
+2026-05-19 02:37:52,133 [INFO] Progress: 17/132 (12.9%) | Elapsed: 3m 38s | ETA: 24m 39s [teaching]
+2026-05-19 02:37:52,133 [INFO]   flavor pairing
+2026-05-19 02:37:58,661 [INFO] Progress: 19/132 (14.4%) | Elapsed: 3m 45s | ETA: 22m 19s [teaching]
+2026-05-19 02:37:58,661 [INFO]   kitchen organization
+2026-05-19 02:38:34,427 [INFO] Progress: 21/132 (15.9%) | Elapsed: 4m 21s | ETA: 22m 59s [teaching]
+2026-05-19 02:38:34,427 [INFO]   world cuisines
+2026-05-19 02:38:40,551 [INFO] Progress: 23/132 (17.4%) | Elapsed: 4m 27s | ETA: 21m 6s [teaching]
+2026-05-19 02:38:40,551 [INFO]   ingredient science
+2026-05-19 02:39:22,900 [INFO] Progress: 25/132 (18.9%) | Elapsed: 5m 9s | ETA: 22m 4s [teaching]
+2026-05-19 02:39:22,900 [INFO]   flavor pairing principles
+2026-05-19 02:39:29,162 [INFO] Progress: 27/132 (20.5%) | Elapsed: 5m 15s | ETA: 20m 28s [teaching]
+2026-05-19 02:39:29,162 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:40:04,941 [INFO] Progress: 29/132 (22.0%) | Elapsed: 5m 51s | ETA: 20m 48s [teaching]
+2026-05-19 02:40:04,941 [INFO]   cooking techniques
+2026-05-19 02:40:14,737 [INFO] Progress: 32/132 (24.2%) | Elapsed: 6m 1s | ETA: 18m 49s [teaching]
+2026-05-19 02:40:14,737 [INFO]   food safety
+2026-05-19 02:40:41,304 [INFO] Progress: 33/132 (25.0%) | Elapsed: 6m 27s | ETA: 19m 23s [teaching]
+2026-05-19 02:40:41,304 [INFO]   kitchen organization
+2026-05-19 02:40:49,164 [INFO] Progress: 36/132 (27.3%) | Elapsed: 6m 35s | ETA: 17m 35s [teaching]
+2026-05-19 02:40:49,164 [INFO]   cooking and culinary arts
+2026-05-19 02:41:21,692 [INFO] Progress: 37/132 (28.0%) | Elapsed: 7m 8s | ETA: 18m 19s [teaching]
+2026-05-19 02:41:21,692 [INFO]   ingredient science
+2026-05-19 02:41:27,995 [INFO] Progress: 39/132 (29.5%) | Elapsed: 7m 14s | ETA: 17m 16s [teaching]
+2026-05-19 02:41:27,995 [INFO]   flavor pairing principles
+2026-05-19 02:41:33,653 [INFO] Progress: 40/132 (30.3%) | Elapsed: 7m 20s | ETA: 16m 52s [teaching]
+2026-05-19 02:41:33,653 [INFO]   mother sauces (classic french)
+2026-05-19 02:41:59,056 [INFO] Progress: 41/132 (31.1%) | Elapsed: 7m 45s | ETA: 17m 13s [teaching]
+2026-05-19 02:41:59,056 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:42:06,287 [INFO] Progress: 43/132 (32.6%) | Elapsed: 7m 52s | ETA: 16m 18s [teaching]
+2026-05-19 02:42:06,287 [INFO]   cooking techniques
+2026-05-19 02:42:12,100 [INFO] Progress: 44/132 (33.3%) | Elapsed: 7m 58s | ETA: 15m 57s [teaching]
+2026-05-19 02:42:12,100 [INFO]   ingredient selection
+2026-05-19 02:42:46,915 [INFO] Progress: 45/132 (34.1%) | Elapsed: 8m 33s | ETA: 16m 32s [teaching]
+2026-05-19 02:42:46,915 [INFO]   flavor pairing
+2026-05-19 02:42:55,003 [INFO] Progress: 47/132 (35.6%) | Elapsed: 8m 41s | ETA: 15m 43s [teaching]
+2026-05-19 02:42:55,003 [INFO]   kitchen organization
+2026-05-19 02:43:27,714 [INFO] Progress: 49/132 (37.1%) | Elapsed: 9m 14s | ETA: 15m 38s [teaching]
+2026-05-19 02:43:27,714 [INFO]   world cuisines
+2026-05-19 02:43:34,180 [INFO] Progress: 51/132 (38.6%) | Elapsed: 9m 20s | ETA: 14m 50s [teaching]
+2026-05-19 02:43:34,180 [INFO]   ingredient science
+2026-05-19 02:43:39,255 [INFO] Progress: 52/132 (39.4%) | Elapsed: 9m 25s | ETA: 14m 30s [teaching]
+2026-05-19 02:43:39,255 [INFO]   kitchen management
+2026-05-19 02:44:02,185 [INFO] Progress: 53/132 (40.2%) | Elapsed: 9m 48s | ETA: 14m 37s [teaching]
+2026-05-19 02:44:02,185 [INFO]   flavor pairing principles
+2026-05-19 02:44:07,872 [INFO] Progress: 55/132 (41.7%) | Elapsed: 9m 54s | ETA: 13m 52s [teaching]
+2026-05-19 02:44:07,873 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:45:14,239 [INFO] Progress: 56/132 (42.4%) | Elapsed: 11m 0s | ETA: 14m 56s [teaching]
+2026-05-19 02:45:14,239 [INFO]   knife skills
+2026-05-19 02:45:27,933 [INFO] Progress: 57/132 (43.2%) | Elapsed: 11m 14s | ETA: 14m 47s [teaching]
+2026-05-19 02:45:27,933 [INFO]   cooking techniques
+2026-05-19 02:45:52,785 [INFO] Progress: 60/132 (45.5%) | Elapsed: 11m 39s | ETA: 13m 59s [teaching]
+2026-05-19 02:45:52,785 [INFO]   food safety
+2026-05-19 02:46:10,854 [INFO] Progress: 61/132 (46.2%) | Elapsed: 11m 57s | ETA: 13m 55s [teaching]
+2026-05-19 02:46:10,854 [INFO]   kitchen organization
+2026-05-19 02:46:16,400 [INFO] Progress: 62/132 (47.0%) | Elapsed: 12m 3s | ETA: 13m 36s [teaching]
+2026-05-19 02:46:16,400 [INFO]   recipe adaptation
+2026-05-19 02:46:24,209 [INFO] Progress: 64/132 (48.5%) | Elapsed: 12m 10s | ETA: 12m 56s [teaching]
+2026-05-19 02:46:24,209 [INFO]   cooking and culinary arts
+2026-05-19 02:46:43,992 [INFO] Progress: 65/132 (49.2%) | Elapsed: 12m 30s | ETA: 12m 53s [teaching]
+2026-05-19 02:46:43,992 [INFO]   ingredient science
+2026-05-19 02:46:50,838 [INFO] Progress: 67/132 (50.8%) | Elapsed: 12m 37s | ETA: 12m 14s [teaching]
+2026-05-19 02:46:50,838 [INFO]   flavor pairing principles
+2026-05-19 02:48:00,701 [INFO] Progress: 68/132 (51.5%) | Elapsed: 13m 47s | ETA: 12m 58s [teaching]
+2026-05-19 02:48:00,702 [INFO]   mother sauces (classic french)
+2026-05-19 02:48:19,629 [INFO] Progress: 69/132 (52.3%) | Elapsed: 14m 6s | ETA: 12m 52s [dialogue]
+2026-05-19 02:48:19,629 [INFO]   recipe adaptation
+2026-05-19 02:48:27,289 [INFO] Progress: 71/132 (53.8%) | Elapsed: 14m 13s | ETA: 12m 13s [dialogue]
+2026-05-19 02:48:27,289 [INFO]   cooking and culinary arts
+2026-05-19 02:48:50,630 [INFO] Progress: 72/132 (54.5%) | Elapsed: 14m 37s | ETA: 12m 11s [dialogue]
+2026-05-19 02:48:50,630 [INFO]   ingredient science
+2026-05-19 02:49:05,039 [INFO] Progress: 73/132 (55.3%) | Elapsed: 14m 51s | ETA: 12m 0s [dialogue]
+2026-05-19 02:49:05,039 [INFO]   kitchen management
+2026-05-19 02:49:11,310 [INFO] Progress: 74/132 (56.1%) | Elapsed: 14m 57s | ETA: 11m 43s [dialogue]
+2026-05-19 02:49:11,310 [INFO]   flavor pairing principles
+2026-05-19 02:49:19,466 [INFO] Progress: 75/132 (56.8%) | Elapsed: 15m 6s | ETA: 11m 28s [dialogue]
+2026-05-19 02:49:19,467 [INFO]   mother sauces (classic french)
+2026-05-19 02:49:30,146 [INFO] Progress: 76/132 (57.6%) | Elapsed: 15m 16s | ETA: 11m 15s [dialogue]
+2026-05-19 02:49:30,146 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:49:46,875 [INFO] Progress: 77/132 (58.3%) | Elapsed: 15m 33s | ETA: 11m 6s [dialogue]
+2026-05-19 02:49:46,875 [INFO]   knife skills
+2026-05-19 02:49:54,379 [INFO] Progress: 79/132 (59.8%) | Elapsed: 15m 41s | ETA: 10m 31s [dialogue]
+2026-05-19 02:49:54,379 [INFO]   ingredient selection
+2026-05-19 02:51:06,777 [INFO] Progress: 80/132 (60.6%) | Elapsed: 16m 53s | ETA: 10m 58s [dialogue]
+2026-05-19 02:51:06,777 [INFO]   flavor pairing
+2026-05-19 02:51:22,401 [INFO] Progress: 81/132 (61.4%) | Elapsed: 17m 9s | ETA: 10m 47s [dialogue]
+2026-05-19 02:51:22,401 [INFO]   food safety
+2026-05-19 02:51:29,598 [INFO] Progress: 83/132 (62.9%) | Elapsed: 17m 16s | ETA: 10m 11s [dialogue]
+2026-05-19 02:51:29,598 [INFO]   recipe adaptation
+2026-05-19 02:51:53,615 [INFO] Progress: 84/132 (63.6%) | Elapsed: 17m 40s | ETA: 10m 5s [dialogue]
+2026-05-19 02:51:53,615 [INFO]   world cuisines
+2026-05-19 02:52:15,533 [INFO] Progress: 85/132 (64.4%) | Elapsed: 18m 2s | ETA: 9m 58s [dialogue]
+2026-05-19 02:52:15,533 [INFO]   cooking and culinary arts
+2026-05-19 02:52:21,840 [INFO] Progress: 86/132 (65.2%) | Elapsed: 18m 8s | ETA: 9m 42s [dialogue]
+2026-05-19 02:52:21,840 [INFO]   ingredient science
+2026-05-19 02:52:32,370 [INFO] Progress: 88/132 (66.7%) | Elapsed: 18m 18s | ETA: 9m 9s [dialogue]
+2026-05-19 02:52:32,370 [INFO]   flavor pairing principles
+2026-05-19 02:52:48,854 [INFO] Progress: 89/132 (67.4%) | Elapsed: 18m 35s | ETA: 8m 58s [dialogue]
+2026-05-19 02:52:48,854 [INFO]   mother sauces (classic french)
+2026-05-19 02:52:54,805 [INFO] Progress: 90/132 (68.2%) | Elapsed: 18m 41s | ETA: 8m 43s [dialogue]
+2026-05-19 02:52:54,805 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:53:37,020 [INFO] Progress: 92/132 (69.7%) | Elapsed: 19m 23s | ETA: 8m 25s [dialogue]
+2026-05-19 02:53:37,020 [INFO]   cooking techniques
+2026-05-19 02:53:55,514 [INFO] Progress: 93/132 (70.5%) | Elapsed: 19m 42s | ETA: 8m 15s [dialogue]
+2026-05-19 02:53:55,514 [INFO]   ingredient selection
+2026-05-19 02:54:05,848 [INFO] Progress: 95/132 (72.0%) | Elapsed: 19m 52s | ETA: 7m 44s [dialogue]
+2026-05-19 02:54:05,848 [INFO]   food safety
+2026-05-19 02:55:41,600 [INFO] Progress: 97/132 (73.5%) | Elapsed: 21m 28s | ETA: 7m 44s [dialogue]
+2026-05-19 02:55:41,600 [INFO]   recipe adaptation
+2026-05-19 02:55:47,865 [INFO] Progress: 98/132 (74.2%) | Elapsed: 21m 34s | ETA: 7m 29s [dialogue]
+2026-05-19 02:55:47,865 [INFO]   world cuisines
+2026-05-19 02:55:56,972 [INFO] Progress: 100/132 (75.8%) | Elapsed: 21m 43s | ETA: 6m 57s [dialogue]
+2026-05-19 02:55:56,972 [INFO]   ingredient science
+2026-05-19 02:56:26,156 [INFO] Progress: 101/132 (76.5%) | Elapsed: 22m 12s | ETA: 6m 49s [quest]
+2026-05-19 02:56:26,156 [INFO]   cooking techniques
+2026-05-19 02:56:31,599 [INFO] Progress: 102/132 (77.3%) | Elapsed: 22m 18s | ETA: 6m 33s [quest]
+2026-05-19 02:56:31,599 [INFO]   ingredient selection
+2026-05-19 02:56:37,006 [INFO] Progress: 104/132 (78.8%) | Elapsed: 22m 23s | ETA: 6m 1s [quest]
+2026-05-19 02:56:37,006 [INFO]   food safety
+2026-05-19 02:56:54,446 [INFO] Progress: 105/132 (79.5%) | Elapsed: 22m 41s | ETA: 5m 49s [quest]
+2026-05-19 02:56:54,446 [INFO]   kitchen organization
+2026-05-19 02:57:02,434 [INFO] Progress: 107/132 (81.1%) | Elapsed: 22m 49s | ETA: 5m 19s [quest]
+2026-05-19 02:57:02,434 [INFO]   world cuisines
+2026-05-19 02:58:29,018 [INFO] Progress: 109/132 (82.6%) | Elapsed: 24m 15s | ETA: 5m 7s [quest]
+2026-05-19 02:58:29,018 [INFO]   ingredient science
+2026-05-19 02:58:34,094 [INFO] Progress: 111/132 (84.1%) | Elapsed: 24m 20s | ETA: 4m 36s [quest]
+2026-05-19 02:58:34,094 [INFO]   flavor pairing principles
+2026-05-19 02:59:11,952 [INFO] Progress: 113/132 (85.6%) | Elapsed: 24m 58s | ETA: 4m 11s [quest]
+2026-05-19 02:59:11,952 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:59:18,882 [INFO] Progress: 115/132 (87.1%) | Elapsed: 25m 5s | ETA: 3m 42s [quest]
+2026-05-19 02:59:18,882 [INFO]   cooking techniques
+2026-05-19 02:59:37,629 [INFO] Progress: 117/132 (88.6%) | Elapsed: 25m 24s | ETA: 3m 15s [refusal]
+2026-05-19 02:59:37,629 [INFO]   kitchen organization (mise en place)
+2026-05-19 02:59:43,441 [INFO] Progress: 119/132 (90.2%) | Elapsed: 25m 30s | ETA: 2m 47s [refusal]
+2026-05-19 02:59:43,441 [INFO]   cooking techniques
+2026-05-19 03:01:07,996 [INFO] Progress: 121/132 (91.7%) | Elapsed: 26m 54s | ETA: 2m 26s [refusal]
+2026-05-19 03:01:07,996 [INFO]   flavor pairing
+2026-05-19 03:01:13,009 [INFO] Progress: 123/132 (93.2%) | Elapsed: 26m 59s | ETA: 1m 58s [refusal]
+2026-05-19 03:01:13,009 [INFO]   kitchen organization
+2026-05-19 03:01:51,672 [INFO] Progress: 125/132 (94.7%) | Elapsed: 27m 38s | ETA: 1m 32s [refusal]
+2026-05-19 03:01:51,672 [INFO]   world cuisines
+2026-05-19 03:01:59,582 [INFO] Progress: 128/132 (97.0%) | Elapsed: 27m 46s | ETA: 52s [refusal]
+2026-05-19 03:01:59,582 [INFO]   kitchen management
+2026-05-19 03:02:14,130 [INFO] Progress: 129/132 (97.7%) | Elapsed: 28m 0s | ETA: 39s [refusal]
+2026-05-19 03:02:14,130 [INFO]   flavor pairing principles
+2026-05-19 03:02:20,308 [INFO] Progress: 131/132 (99.2%) | Elapsed: 28m 6s | ETA: 12s [refusal]
+2026-05-19 03:02:20,308 [INFO]   kitchen organization (mise en place)
+2026-05-19 03:02:22,904 [INFO] Progress: 132/132 (100.0%) | Elapsed: 28m 9s | ETA: 0s [refusal]
+2026-05-19 03:02:22,904 [INFO]   knife skills
+2026-05-19 03:02:22,904 [INFO] 
+======================================================================
+2026-05-19 03:02:22,904 [INFO] Generation complete: 132 examples
+2026-05-19 03:02:22,904 [INFO] Stats: 132/132 successful (100.0% success rate, 0 errors)
+2026-05-19 03:02:22,904 [INFO] ======================================================================
+2026-05-19 03:02:22,906 [INFO] ✓ Wrote 117 training examples to /home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/ollama/train.jsonl
+2026-05-19 03:02:22,906 [INFO] ✓ Wrote 15 validation examples to /home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/ollama/validation.jsonl
+2026-05-19 03:02:22,906 [INFO] ✓ Wrote manifest to /home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/ollama/train_manifest.json
+2026-05-19 03:02:22,906 [INFO] 
+✓ Dataset generation complete!
+{"ts": "2026-05-19T06:02:22.906711+00:00", "event": "dataset_generated", "npc_key": "chef_assistant", "total": 132, "train": 117, "validation": 15, "technique": "ollama"}

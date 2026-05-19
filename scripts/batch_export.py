@@ -145,7 +145,7 @@ def main():
     if not npc_keys:
         print("Error: No trained NPCs found.")
         print(f"Looked in: {paths.output_root()}")
-        print("Train some first with: python scripts/train.py subjects/<npc>.json --from-spec --preset fast-3b")
+        print("Train some first with: python scripts/train.py subjects/NPC_specs/<npc>.json --from-spec --preset fast-3b")
         sys.exit(1)
 
     print(f"Found {len(npc_keys)} trained NPC(s): {', '.join(npc_keys)}")

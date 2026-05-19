@@ -1,0 +1,26 @@
+Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py subjects/astronomy_guide.json --model qwen2.5:7b --check-health
+2026-05-19 02:21:07,051 [INFO] Checking Ollama health...
+2026-05-19 02:21:07,053 [INFO] ✓ Ollama is running
+2026-05-19 02:21:07,054 [INFO] Available models: qwen2.5
+2026-05-19 02:21:07,055 [INFO] Loading spec: subjects/astronomy_guide.json
+2026-05-19 02:21:07,055 [INFO] Generating dataset for NPC: AstronomyGuide
+2026-05-19 02:21:07,055 [INFO] Subject: Astronomy and space science: solar system, stars, galaxies, cosmology, telescopes, space exploration, planetary science, celestial phenomena
+2026-05-19 02:21:07,055 [INFO] Model: qwen2.5:7b
+2026-05-19 02:21:07,055 [INFO] Initializing generator...
+2026-05-19 02:21:07,056 [INFO] Generating 132 examples with model 'qwen2.5:7b'...
+2026-05-19 02:21:07,056 [INFO] This may take several minutes depending on hardware and model size
+
+/home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py:567: DeprecationWarning: There is no current event loop
+  loop = asyncio.get_event_loop()
+2026-05-19 02:21:36,705 [INFO] Progress: 1/132 (0.8%) | Elapsed: 29s | ETA: 1h 4m [identity]
+2026-05-19 02:21:36,705 [INFO]   space exploration
+2026-05-19 02:21:41,842 [INFO] Progress: 4/132 (3.0%) | Elapsed: 34s | ETA: 18m 33s [identity]
+2026-05-19 02:21:41,842 [INFO]   safety boundaries & misconceptions
+2026-05-19 02:22:09,558 [INFO] Progress: 5/132 (3.8%) | Elapsed: 1m 2s | ETA: 26m 27s [identity]
+2026-05-19 02:22:09,558 [INFO]   astronomy and space science
+2026-05-19 02:22:15,014 [INFO] Progress: 8/132 (6.1%) | Elapsed: 1m 7s | ETA: 17m 33s [identity]
+2026-05-19 02:22:15,014 [INFO]   planetary science
+2026-05-19 02:22:47,248 [INFO] Progress: 9/132 (6.8%) | Elapsed: 1m 40s | ETA: 22m 49s [identity]
+2026-05-19 02:22:47,248 [INFO]   stars & stellar evolution
+2026-05-19 02:22:53,995 [INFO] Progress: 11/132 (8.3%) | Elapsed: 1m 46s | ETA: 19m 36s [identity]
+2026-05-19 02:22:53,995 [INFO]   galaxies & cosmology

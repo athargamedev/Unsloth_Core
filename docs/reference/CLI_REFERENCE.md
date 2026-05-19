@@ -5,7 +5,7 @@ The `ucore` tool is the unified entry point for the Unsloth_Core pipeline. It wr
 ## 🚀 The Pipeline Command
 The easiest way to run the entire flow.
 ```bash
-./ucore pipeline subjects/my_npc.json --preset fast-3b
+./ucore pipeline subjects/NPC_specs/my_npc.json --preset fast-3b
 ```
 **Stage**: `generate` -> `sanitize` -> `train` -> `export` -> `smoke`.
 
@@ -15,13 +15,13 @@ The easiest way to run the entire flow.
 
 ### `validate-spec`
 Reviews subject specs before generation or training.
-- `spec`: Path to one `subjects/*.json` file.
+- `spec`: Path to one `subjects/NPC_specs/*.json` file.
 - `--all`: Validate every spec in `subjects/`; this is a repository-wide audit and can fail because checked-in draft or incomplete specs exist.
 - `--json`: Emit machine-readable results with per-spec errors, warnings, and summary counts.
 - `--strict`: Exit nonzero on warnings as well as errors.
 
 ```bash
-./ucore validate-spec subjects/history_guide.json
+./ucore validate-spec subjects/NPC_specs/history_guide.json
 ./ucore validate-spec --all --json
 ```
 
@@ -34,7 +34,7 @@ Generates training data from a subject spec.
 The `onyx` technique retrieves from the local Onyx index and writes provenance-rich ChatML with bounded local resource use:
 
 ```bash
-./ucore generate subjects/my_npc.json --technique onyx --onyx-max-results 3 --onyx-max-context-chars 1200
+./ucore generate subjects/NPC_specs/my_npc.json --technique onyx --onyx-max-results 3 --onyx-max-context-chars 1200
 ```
 
 ### `sanitize`
@@ -58,15 +58,15 @@ Starts a LoRA fine-tuning session.
 - `--no-wandb`: Disable W&B even if enabled in config.
 - `--export-gguf`: Automatically export to GGUF after training completes.
 
-For the Workflow Assistant tool, `subjects/workflow_assistant.json` is a docs-backed audit artifact path. This subject is not intended for production Unity NPC export, and its dataset should be used for offline validation or tooling support only.
+For the Workflow Assistant tool, `subjects/NPC_specs/workflow_assistant.json` is a docs-backed audit artifact path. This subject is not intended for production Unity NPC export, and its dataset should be used for offline validation or tooling support only.
 
 **W&B convenience preset:**
 ```bash
-./ucore train subjects/my_npc.json --preset wandb
+./ucore train subjects/NPC_specs/my_npc.json --preset wandb
 ```
 The `wandb` preset enables W&B tracking via config (equivalent to `--wandb`). Presets are single-select; use `--wandb` alongside another preset when needed:
 ```bash
-./ucore train subjects/my_npc.json --preset fast-3b --wandb
+./ucore train subjects/NPC_specs/my_npc.json --preset fast-3b --wandb
 ```
 
 ### `export`

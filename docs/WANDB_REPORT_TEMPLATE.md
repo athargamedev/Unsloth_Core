@@ -150,30 +150,6 @@ Keep a quick-reference list of the latest artifact versions for each NPC.
 
 ### 7. Model Comparison Section (Optional)
 
-If PeerLM blind evaluation results have been imported, add a comparison table.
-
-1. Click **Add block** → **Heading 2** and enter: `Model Comparison`
-2. Click **Add panel** → **Run compare**.
-
-   | Setting | Value |
-   |---------|-------|
-   | **Filter** | `tags:peerlm` |
-   | **Chart type** | Table |
-   | **Columns** | `config.npc_key`, `peerlm/overall_score`, `peerlm/cost`, `peerlm/rank` |
-
-3. Add a **Text** block:
-
-   ```markdown
-   **PeerLM blind evaluation:** Models are compared side-by-side by an impartial judge.
-   Rankings reflect overall quality as determined by the evaluation protocol.
-   ```
-
-4. To import PeerLM results:
-
-   ```bash
-   python scripts/peerlm/import.py --input <path/to/peerlm_results.json>
-   ```
-
 ---
 
 ### 8. Save as Template
@@ -242,7 +218,6 @@ For the template to display data, the following runs must exist in the project:
 |------|--------|----------|
 | Training | `./ucore pipeline <spec> --wandb` | `train`, `<npc_key>` |
 | Evaluation | `./ucore evaluate <spec> --wandb` | `eval`, `<npc_key>` |
-| PeerLM (optional) | `python scripts/peerlm/import.py --input <file>.json` | `peerlm` |
 
 **Minimum viable data:** At least one training run and one evaluation run for at least one NPC.
 

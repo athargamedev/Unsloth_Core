@@ -16,7 +16,7 @@ docs/
 │   └── FRONTEND_DASHBOARD.md           ← Orchestration UI for pipeline management
 ├── reference/
 │   ├── CLI_REFERENCE.md                ← Full `./ucore` command reference
-│   └── SUBJECT_SPEC.md                 ← Schema definition for subjects/*.json
+│   └── SUBJECT_SPEC.md                 ← Schema definition for subjects/NPC_specs/*.json
 └── plans/
     └── 2026-05-16-self-improving-pipeline.md  ← Pipeline roadmap
 ```
@@ -31,7 +31,7 @@ docs/
 | [`architecture/SUPABASE_SCHEMA.md`](architecture/SUPABASE_SCHEMA.md) | Local Supabase schema: npc_profiles, dialogue_sessions, npc_memories, test_results |
 | [`integration/FRONTEND_DASHBOARD.md`](integration/FRONTEND_DASHBOARD.md) | React dashboard: pipeline orchestration, job table, realtime metrics |
 | [`reference/CLI_REFERENCE.md`](reference/CLI_REFERENCE.md) | Full `./ucore` command reference with examples |
-| [`reference/SUBJECT_SPEC.md`](reference/SUBJECT_SPEC.md) | JSON schema for `subjects/*.json` — identity, teaching, dialogue, quest, refusal |
+| [`reference/SUBJECT_SPEC.md`](reference/SUBJECT_SPEC.md) | JSON schema for `subjects/NPC_specs/*.json` — identity, teaching, dialogue, quest, refusal |
 | [`plans/2026-05-16-self-improving-pipeline.md`](plans/2026-05-16-self-improving-pipeline.md) | Roadmap for feedback loop, Onyx-driven self-improvement, and knowledge gap detection |
 
 ## 🚀 Getting Started

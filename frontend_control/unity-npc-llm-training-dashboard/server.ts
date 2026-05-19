@@ -728,7 +728,7 @@ const commandDefinitions: CommandDefinition[] = [
     build: (payload) => {
       const args = ["./ucore", "plan-batch", "--generate-colab-notebooks"];
       
-      const specGlob = String(payload.options?.specGlob || "subjects/*.json").trim();
+      const specGlob = String(payload.options?.specGlob || "subjects/NPC_specs/*.json").trim();
       if (specGlob) args.push("--spec-glob", specGlob);
 
       const presets = String(payload.options?.presets || "fast-3b,premium-3b,premium-8b,safe-any").trim();
@@ -1010,7 +1010,6 @@ const ensureExternalJob = (
 
   updateStagesFromTruth(job);
   registry.jobs.unshift(job);
-  globalLog(registry, `[SYNC] imported external job ${job.id}`);
   return true;
 };
 
@@ -1278,7 +1277,6 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
 
     updateStagesFromTruth(job);
     registry.jobs.unshift(job);
-    globalLog(registry, `[SYNC] discovered running external process pid=${pid}`);
     changed = true;
   }
 
@@ -1441,6 +1439,12 @@ async function startServer() {
     res.json(jobs);
   });
   app.get("/api/logs", (_req, res) => res.json(registry.logs));
+  app.post("/api/logs/clear", (_req, res) => {
+    registry.logs.length = 0;
+    flushPersist(registry);
+    broadcast("logs_cleared", { clearedAt: new Date().toISOString() });
+    res.json({ success: true });
+  });
 
   app.get("/api/analytics", (req, res) => {
     const jobId = typeof req.query.jobId === "string" ? req.query.jobId : "";
@@ -1800,6 +1804,28 @@ The user can execute these commands directly from your interface.`;
       return res.status(500).json({ error: messageText });
     }
   });
+
+  const unloadGemmaModel = () => {
+    try {
+      const result = require("child_process").execSync("ollama ps", { encoding: "utf8", timeout: 5000 });
+      const lines = result.trim().split("\n");
+      // Skip header line, extract first column (NAME) from remaining lines
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const modelName = line.split(/\s+/)[0];
+        if (!modelName) continue;
+        try {
+          require("child_process").execSync(`ollama stop ${modelName}`, { stdio: "ignore", timeout: 5000 });
+          globalLog(registry, `[SYSTEM] Unloaded ${modelName} to free GPU memory`);
+        } catch {
+          globalLog(registry, `[SYSTEM] Failed to unload ${modelName}, continuing`);
+        }
+      }
+    } catch {
+      globalLog(registry, "[SYSTEM] Could not query Ollama running models");
+    }
+  };
 
   const unloadAssistantModel = () => {
     try {
@@ -2480,6 +2506,7 @@ The user can execute these commands directly from your interface.`;
       firstStep.status = "running";
       firstStep.jobId = job.id;
       registry.jobs.unshift(job);
+      registry.logs.length = 0; // Clear global log buffer — start fresh
       globalLog(registry, `[WORKFLOW] starting ${workflowId} step 1/${steps.length}: ${command.join(" ")}`);
       persistRegistry(registry);
       broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
@@ -2982,6 +3009,7 @@ The user can execute these commands directly from your interface.`;
   // Helper for launching jobs (shared by /api/commands/start and /api/assistant/execute)
   const launchJob = (job: Job) => {
     updateStagesFromTruth(job);
+    registry.logs.length = 0; // Clear global log buffer — start fresh
     registry.jobs.unshift(job);
     invalidateJobsCache();
     globalLog(registry, `[SYSTEM] starting ${job.id}: ${job.command.join(" ")}`);

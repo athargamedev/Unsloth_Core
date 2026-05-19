@@ -3,7 +3,7 @@
 validate_config.py — Resolve and validate effective training config without running training.
 
 Usage:
-  python scripts/validate_config.py --spec subjects/chemistry_instructor.json --preset fast-3b --data subjects/datasets/chemistry_instructor/template/train.jsonl
+  python scripts/validate_config.py --spec subjects/NPC_specs/chemistry_instructor.json --preset fast-3b --data subjects/datasets/chemistry_instructor/template/train.jsonl
   python scripts/validate_config.py --config configs/lora-sft-base.yaml --preset quality-1.7b
 """
 

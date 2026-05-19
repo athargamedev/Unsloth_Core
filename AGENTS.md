@@ -5,20 +5,20 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 ## 🚀 Quick Start for Agents
 1.  **Activate Env**: `source unsloth_env/bin/activate`
 2.  **Verify Setup**: `./ucore audit check`
-3.  **Validate Generation Inputs**: `./ucore validate-spec subjects/history_guide.json --generation-ready`
-4.  **Generate Dataset**: `./ucore generate subjects/history_guide.json --technique template`
+3.  **Validate Generation Inputs**: `./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready`
+4.  **Generate Dataset**: `./ucore generate subjects/NPC_specs/history_guide.json --technique template`
 5.  **Sanitize Dataset**: `./ucore sanitize subjects/datasets/history_guide/template/train.jsonl --output subjects/datasets/history_guide/template/train_clean.jsonl --strict-canonical --require-complete-metadata`
-6.  **Dataset Quality Gate**: `./ucore dataset-eval subjects/history_guide.json --technique template --judge-model qwen2.5:7b`
-7.  **Smoke Test Pipeline**: `./ucore pipeline subjects/history_guide.json --preset smoke`
-8.  **Production Train**: `./ucore train subjects/history_guide.json --technique template --preset fast-3b --export-gguf`
-9.  **Evaluate Model**: `./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf --spec subjects/history_guide.json --report-html`
+6.  **Dataset Quality Gate**: `./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique template --judge-model qwen2.5:7b`
+7.  **Smoke Test Pipeline**: `./ucore pipeline subjects/NPC_specs/history_guide.json --preset smoke`
+8.  **Production Train**: `./ucore train subjects/NPC_specs/history_guide.json --technique template --preset fast-3b --export-gguf`
+9.  **Evaluate Model**: `./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html`
 
 ## 📂 Project Logic Map (Where things live)
 | Component | Directory / File | Description |
 | :--- | :--- | :--- |
 | **Unified CLI** | `ucore` | Main entry point for all operations. |
 | **Core Scripts** | `scripts/` | Python implementation of the pipeline stages. |
-| **NPC Specs** | `subjects/` | JSON files defining NPC identity and knowledge. |
+| **NPC Specs** | `subjects/NPC_specs/` | JSON files defining NPC identity and knowledge. |
 | **Datasets** | `subjects/datasets/{npc}/{technique}/` | Generated training/validation data (JSONL). `template/` = default dataset directory. |
 | **Reference Docs** | `subjects/reference_docs/` | Centralized primer files for grounding dataset generation. |
 | **Schemas** | `subjects/schemas/` | JSON Schema validators for training data format. |
@@ -87,7 +87,7 @@ Transforms a subject spec into a playable NPC:
 When creating a new NPC with `./ucore init <npc_key> --subject <subject>`:
 
 ```
-subjects/{npc_key}.json                          — spec with 4-section system prompt
+subjects/NPC_specs/{npc_key}.json                          — spec with 4-section system prompt
 subjects/reference_docs/{npc_key}_primer.md       — stub primer for indexing
 subjects/datasets/{npc_key}/template/             — smoke/fast datasets only
 subjects/datasets/{npc_key}/{technique}/quality_*.json — DeepEval dataset gate reports
@@ -140,7 +140,7 @@ A local Supabase instance can track:
   - `--wandb` for W&B experiment tracking.
 - **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. `llama-server` (inference with `--lora` support), `llama-quantize` (fast local quantization), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary.
 - **Error Handling**: Check `outputs/{npc_key}/runs/` for TensorBoard logs, `eval/results/` for validation metrics.
-- **Before generating a dataset**: Read the `subjects/*.json` spec and the `subjects/reference_docs/*.md` primer to understand content grounding. If DeepEval fails, fix generation, prompts, concepts, or reference material first; do not change metric thresholds as the first response.
+- **Before generating a dataset**: Read the `subjects/NPC_specs/*.json` spec and the `subjects/reference_docs/*.md` primer to understand content grounding. If DeepEval fails, fix generation, prompts, concepts, or reference material first; do not change metric thresholds as the first response.
 
 ## 📊 W&B Integration
 Weights & Biases tracks every training run with:

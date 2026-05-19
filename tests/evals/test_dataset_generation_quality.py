@@ -40,7 +40,7 @@ def _csv_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
 
 
 def _load_spec(npc_key: str) -> dict:
-    with (PROJECT_ROOT / "subjects" / f"{npc_key}.json").open() as f:
+    with (PROJECT_ROOT / "subjects" / "NPC_specs" / f"{npc_key}.json").open() as f:
         return json.load(f)
 
 

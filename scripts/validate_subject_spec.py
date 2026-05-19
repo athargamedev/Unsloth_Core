@@ -511,7 +511,7 @@ def validate_spec(
 
 
 def find_subject_specs() -> list[Path]:
-    return sorted(paths.subjects_root().glob("*.json"))
+    return sorted(paths.subjects_root().glob("NPC_specs/*.json"))
 
 
 def print_human_results(results: list[SpecResult]) -> None:
@@ -544,8 +544,8 @@ def build_json_payload(results: list[SpecResult]) -> dict[str, Any]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate subject specs before generation/training.")
-    parser.add_argument("spec", nargs="?", help="Path to one subjects/*.json spec")
-    parser.add_argument("--all", action="store_true", help="Validate every subjects/*.json spec")
+    parser.add_argument("spec", nargs="?", help="Path to one subjects/NPC_specs/*.json spec")
+    parser.add_argument("--all", action="store_true", help="Validate every subjects/NPC_specs/*.json spec")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     parser.add_argument("--strict", action="store_true", help="Exit nonzero on warnings as well as errors")
     parser.add_argument("--require-reference-docs", action="store_true", help="Fail if reference_doc file does not exist on disk")

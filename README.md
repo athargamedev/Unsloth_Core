@@ -11,7 +11,7 @@ A professional, "agent-first" pipeline for building NPC dialogue models with Uns
 
 2. **Run the Full Pipeline**
    ```bash
-   ./ucore pipeline subjects/chemistry_instructor.json --preset fast-3b
+   ./ucore pipeline subjects/NPC_specs/chemistry_instructor.json --preset fast-3b
    ```
 
 3. **Deploy to Unity**
@@ -24,7 +24,7 @@ A professional, "agent-first" pipeline for building NPC dialogue models with Uns
 ## 📂 Project Structure
 
 - `ucore`: The unified CLI entry point.
-- `subjects/`: NPC identity and knowledge specifications (.json).
+- `subjects/NPC_specs/`: NPC identity and knowledge specifications (.json).
 - `subjects/datasets/`: Generated training and validation data (.jsonl).
 - `subjects/schemas/`: JSON Schema validators for training data format.
 - `subjects/reference_docs/`: Reference materials for NotebookLM dataset generation.
@@ -53,11 +53,11 @@ The project documentation is structured for both human developers and AI agents:
 ## 🛠️ Unified CLI (`ucore`)
 
 ```bash
-./ucore generate subjects/workflow_assistant.json --technique docs
-./ucore generate subjects/subject.json --technique template
+./ucore generate subjects/NPC_specs/workflow_assistant.json --technique docs
+./ucore generate subjects/NPC_specs/subject.json --technique template
 ./ucore sanitize subjects/datasets/subject/template/train.jsonl --strict-canonical
-./ucore dataset-eval subjects/subject.json --technique template --judge-model qwen2.5:7b
-./ucore train subjects/subject.json --preset fast-3b
+./ucore dataset-eval subjects/NPC_specs/subject.json --technique template --judge-model qwen2.5:7b
+./ucore train subjects/NPC_specs/subject.json --preset fast-3b
 ./ucore smoke exports/subject/model.gguf
 ./ucore evaluate --baseline old.gguf --candidate new.gguf
 ./ucore feedback eval/results/feedback/subject.json --dry-run
@@ -74,13 +74,13 @@ DeepEval is the local build-loop gate before training:
 5. **Fix generation** from `quality_failures.json`, then rerun before training.
 
 ```bash
-./ucore validate-spec subjects/history_guide.json --generation-ready
-./ucore generate subjects/history_guide.json --technique template
+./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready
+./ucore generate subjects/NPC_specs/history_guide.json --technique template
 ./ucore sanitize subjects/datasets/history_guide/template/train.jsonl \
   --output subjects/datasets/history_guide/template/train_clean.jsonl \
   --strict-canonical \
   --require-complete-metadata
-./ucore dataset-eval subjects/history_guide.json --technique template --soft-fail
+./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique template --soft-fail
 ```
 
 Outputs:
@@ -100,7 +100,7 @@ The model feedback loop closes the gap between trained model evaluation and data
 
 ```bash
 # Full loop
-./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/npc.json --feedback-json eval/results/feedback/npc.json
+./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/NPC_specs/npc.json --feedback-json eval/results/feedback/npc.json
 ./ucore feedback eval/results/feedback/npc.json --auto
 # Then retrain and re-evaluate to measure improvement
 
@@ -118,10 +118,10 @@ The Workflow Assistant is a dedicated local tool for mastering Unsloth_Core, not
 For offline artifact generation and corpus auditing, the legacy docs-backed workflow assistant path remains available:
 
 ```bash
-./ucore validate-spec subjects/workflow_assistant.json
-./ucore generate subjects/workflow_assistant.json --technique docs
+./ucore validate-spec subjects/NPC_specs/workflow_assistant.json
+./ucore generate subjects/NPC_specs/workflow_assistant.json --technique docs
 ./ucore sanitize subjects/datasets/workflow_assistant/docs/train.jsonl --strict-canonical
-./ucore validate-config --spec subjects/workflow_assistant.json --preset smoke --data subjects/datasets/workflow_assistant/docs/train_clean.jsonl --require-canonical
+./ucore validate-config --spec subjects/NPC_specs/workflow_assistant.json --preset smoke --data subjects/datasets/workflow_assistant/docs/train_clean.jsonl --require-canonical
 ```
 
 This path is for audit and tooling support only; `workflow_assistant` is not intended for Unity model export.

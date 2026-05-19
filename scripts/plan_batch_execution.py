@@ -110,7 +110,7 @@ def generate_colab_notebooks(
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Batch planner for local vs remote_colab training")
-    ap.add_argument("--spec-glob", default="subjects/*.json", help="Glob under project root")
+    ap.add_argument("--spec-glob", default="subjects/NPC_specs/*.json", help="Glob under project root")
     ap.add_argument("--spec", action="append", dest="specs", help="Explicit spec path; repeatable")
     ap.add_argument("--presets", default="fast-3b", help="Comma-separated presets")
     ap.add_argument("--local-vram-gb", type=float, help="Override local VRAM GB")

@@ -28,7 +28,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 
 def active_npc_keys():
-    """Return currently active NPC keys from subjects/*.json."""
+    """Return currently active NPC keys from subjects/NPC_specs/*.json."""
     keys = []
     for path in sorted((PROJECT_ROOT / "subjects").glob("*.json")):
         try:

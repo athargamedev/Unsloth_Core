@@ -18,7 +18,7 @@ graph TD
 
 ## 🟢 Stage 1: Generation
 **Script**: `scripts/generate_dataset.py`  
-**Inputs**: `subjects/*.json`  
+**Inputs**: `subjects/NPC_specs/*.json`  
 **Outputs**: `subjects/datasets/{npc_key}/{technique}/train.jsonl`
 
 Using the `research_queries` defined in the subject spec, the generator fetches domain knowledge and synthesizes Q&A pairs.

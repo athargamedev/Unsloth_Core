@@ -1,0 +1,2136 @@
+Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/dataset_eval.py subjects/astronomy_guide.json --technique ollama --judge-model qwen2.5:7b --ollama-base-url http://localhost:11434 --judge-temperature 0.0 --cases-per-category 1 --identifier astronomy_guide_ollama_fresh --display failing --soft-fail --output subjects/datasets/astronomy_guide/ollama/quality_summary.json
+Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval test run /home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py --identifier astronomy_guide_ollama_fresh --display failing --skip-on-missing-params
+    🎯 Evaluating test case #0 ━━━━━━━━━━━━━╸                        38% 0:03:00
+[31mF[0m    🎯 Evaluating test case #0 ━━━━━━━━━                             25% 0:02:59
+[31mF[0m    🎯 Evaluating test case #0 ━━━━━━━━━━━━━━━━━━                    50% 0:03:00
+[31mF[0m    🎯 Evaluating test case #0                                        0% 0:02:59
+[31mF[0m    🎯 Evaluating test case #0 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸      88% 0:02:39
+[32m.[0m    🎯 Evaluating test case #0 ━━━━━━━━━━━━━━━━━━━━━━━━              67% 0:01:43
+[32m.[0m    🎯 Evaluating test case #0 ━━━━━━━━━━━━━━━━━━━━━━━━              67% 0:01:25
+[32m.[0m    🎯 Evaluating test case #0 ━━━━━━━━━━━━━━━━━━━━━━━━              67% 0:01:37
+[32m.[0mWarning: Could not update test run on disk: [Errno 2] No such file or directory:
+'.deepeval/.temp_test_run_data.json'
+    🎯 Evaluating test case #0 ━━━━━━━━━━━━━━━━━━━━━━━━              67% 0:01:42
+[32m.[0mWarning: Could not load test run from disk: [Errno 2] No such file or directory:
+'.deepeval/.temp_test_run_data.json'
+Warning: Could not update test run on disk: [Errno 2] No such file or directory:
+'.deepeval/.temp_test_run_data.json'
+    🎯 Evaluating test case #0 ━━━━━━━━━━━━━━━━━━━━━━━━              67% 0:01:46
+[32m.[0mRunning teardown with pytest sessionfinish...
+
+=================================== FAILURES ===================================
+[31m[1m________ test_generated_dataset_row_quality[astronomy_guide:teaching:1] ________[0m
+
+fut = <coroutine object _a_execute_llm_test_cases at 0x75e066e39f10>
+timeout = 180
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mwait_for[39;49;00m(fut, timeout):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Wait for the single Future or coroutine to complete, with timeout.[39;49;00m
+    [33m[39;49;00m
+    [33m    Coroutine will be wrapped in Task.[39;49;00m
+    [33m[39;49;00m
+    [33m    Returns result of the Future or coroutine.  When a timeout occurs,[39;49;00m
+    [33m    it cancels the task and raises TimeoutError.  To avoid the task[39;49;00m
+    [33m    cancellation, wrap it in shield().[39;49;00m
+    [33m[39;49;00m
+    [33m    If the wait is cancelled, the task is also cancelled.[39;49;00m
+    [33m[39;49;00m
+    [33m    If the task suppresses the cancellation and returns a value instead,[39;49;00m
+    [33m    that value is returned.[39;49;00m
+    [33m[39;49;00m
+    [33m    This function is a coroutine.[39;49;00m
+    [33m    """[39;49;00m[90m[39;49;00m
+        [90m# The special case for timeout <= 0 is for the following case:[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m# async def test_waitfor():[39;49;00m[90m[39;49;00m
+        [90m#     func_started = False[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m#     async def func():[39;49;00m[90m[39;49;00m
+        [90m#         nonlocal func_started[39;49;00m[90m[39;49;00m
+        [90m#         func_started = True[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m#     try:[39;49;00m[90m[39;49;00m
+        [90m#         await asyncio.wait_for(func(), 0)[39;49;00m[90m[39;49;00m
+        [90m#     except asyncio.TimeoutError:[39;49;00m[90m[39;49;00m
+        [90m#         assert not func_started[39;49;00m[90m[39;49;00m
+        [90m#     else:[39;49;00m[90m[39;49;00m
+        [90m#         assert False[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m# asyncio.run(test_waitfor())[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m timeout [95mis[39;49;00m [95mnot[39;49;00m [94mNone[39;49;00m [95mand[39;49;00m timeout <= [94m0[39;49;00m:[90m[39;49;00m
+            fut = ensure_future(fut)[90m[39;49;00m
+    [90m[39;49;00m
+            [94mif[39;49;00m fut.done():[90m[39;49;00m
+                [94mreturn[39;49;00m fut.result()[90m[39;49;00m
+    [90m[39;49;00m
+            [94mawait[39;49;00m _cancel_and_wait(fut)[90m[39;49;00m
+            [94mtry[39;49;00m:[90m[39;49;00m
+                [94mreturn[39;49;00m fut.result()[90m[39;49;00m
+            [94mexcept[39;49;00m exceptions.CancelledError [94mas[39;49;00m exc:[90m[39;49;00m
+                [94mraise[39;49;00m [96mTimeoutError[39;49;00m [94mfrom[39;49;00m[90m [39;49;00m[04m[96mexc[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        [94masync[39;49;00m [94mwith[39;49;00m timeouts.timeout(timeout):[90m[39;49;00m
+>           [94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+                   ^^^^^^^^^[90m[39;49;00m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:578: in _a_execute_llm_test_cases
+    [0m[94mawait[39;49;00m measure_metrics_with_indicator([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/indicator.py[0m:238: in measure_metrics_with_indicator
+    [0m[94mawait[39;49;00m asyncio.gather(*tasks)[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/indicator.py[0m:251: in safe_a_measure
+    [0m[94mawait[39;49;00m metric.a_measure([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/g_eval/g_eval.py[0m:188: in a_measure
+    [0mg_score, reason = [94mawait[39;49;00m [96mself[39;49;00m._a_evaluate([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/g_eval/g_eval.py[0m:317: in _a_evaluate
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m a_generate_with_schema_and_extract([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/utils.py[0m:489: in a_generate_with_schema_and_extract
+    [0mresult, cost = [94mawait[39;49;00m metric.model.a_generate_with_schema([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/base_model.py[0m:136: in a_generate_with_schema
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m.a_generate(*args, schema=schema, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:193: in async_wrapped
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m copy(fn, *args, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:112: in __call__
+    [0mdo = [94mawait[39;49;00m [96mself[39;49;00m.iter(retry_state=retry_state)[90m[39;49;00m
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:157: in iter
+    [0mresult = [94mawait[39;49;00m action(retry_state)[90m[39;49;00m
+             ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/_utils.py[0m:111: in inner
+    [0m[94mreturn[39;49;00m call(*args, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/__init__.py[0m:393: in <lambda>
+    [0m[96mself[39;49;00m._add_action_func([94mlambda[39;49;00m rs: rs.outcome.result())[90m[39;49;00m
+                                     ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/concurrent/futures/_base.py[0m:449: in result
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.__get_result()[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/concurrent/futures/_base.py[0m:401: in __get_result
+    [0m[94mraise[39;49;00m [96mself[39;49;00m._exception[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:116: in __call__
+    [0mresult = [94mawait[39;49;00m fn(*args, **kwargs)[90m[39;49;00m
+             ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/retry_policy.py[0m:658: in attempt
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m asyncio.wait_for(coro, per_attempt_timeout)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: in wait_for
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+           ^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/llms/ollama_model.py[0m:116: in a_generate
+    [0mresponse: ChatResponse = [94mawait[39;49;00m chat_model.chat([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:1020: in chat
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._request([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:792: in _request
+    [0m[94mreturn[39;49;00m [96mcls[39;49;00m(**([94mawait[39;49;00m [96mself[39;49;00m._request_raw(*args, **kwargs)).json())[90m[39;49;00m
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:732: in _request_raw
+    [0mr = [94mawait[39;49;00m [96mself[39;49;00m._client.request(*args, **kwargs)[90m[39;49;00m
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1540: in request
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m.send(request, auth=auth, follow_redirects=follow_redirects)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1629: in send
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_handling_auth([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1657: in _send_handling_auth
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_handling_redirects([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1694: in _send_handling_redirects
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_single_request(request)[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1730: in _send_single_request
+    [0mresponse = [94mawait[39;49;00m transport.handle_async_request(request)[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_transports/default.py[0m:394: in handle_async_request
+    [0mresp = [94mawait[39;49;00m [96mself[39;49;00m._pool.handle_async_request(req)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection_pool.py[0m:256: in handle_async_request
+    [0m[94mraise[39;49;00m exc [94mfrom[39;49;00m[90m [39;49;00m[94mNone[39;49;00m[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection_pool.py[0m:236: in handle_async_request
+    [0mresponse = [94mawait[39;49;00m connection.handle_async_request([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection.py[0m:103: in handle_async_request
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._connection.handle_async_request(request)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:136: in handle_async_request
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:106: in handle_async_request
+    [0m) = [94mawait[39;49;00m [96mself[39;49;00m._receive_response_headers(**kwargs)[90m[39;49;00m
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:177: in _receive_response_headers
+    [0mevent = [94mawait[39;49;00m [96mself[39;49;00m._receive_event(timeout=timeout)[90m[39;49;00m
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:217: in _receive_event
+    [0mdata = [94mawait[39;49;00m [96mself[39;49;00m._network_stream.read([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_backends/anyio.py[0m:35: in read
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._stream.receive(max_bytes=max_bytes)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.pyenv/versions/unsloth_core_env/lib/python3.12/site-packages/anyio/_backends/_asyncio.py[0m:1284: in receive
+    [0m[94mawait[39;49;00m [96mself[39;49;00m._protocol.read_event.wait()[90m[39;49;00m
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <asyncio.locks.Event object at 0x75e065ba4dd0 [set]>
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mwait[39;49;00m([96mself[39;49;00m):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Block until the internal flag is true.[39;49;00m
+    [33m[39;49;00m
+    [33m    If the internal flag is true on entry, return True[39;49;00m
+    [33m    immediately.  Otherwise, block until another coroutine calls[39;49;00m
+    [33m    set() to set the flag to true, then return True.[39;49;00m
+    [33m    """[39;49;00m[90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._value:[90m[39;49;00m
+            [94mreturn[39;49;00m [94mTrue[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        fut = [96mself[39;49;00m._get_loop().create_future()[90m[39;49;00m
+        [96mself[39;49;00m._waiters.append(fut)[90m[39;49;00m
+        [94mtry[39;49;00m:[90m[39;49;00m
+>           [94mawait[39;49;00m fut[90m[39;49;00m
+[1m[31mE           asyncio.exceptions.CancelledError[0m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/locks.py[0m:212: CancelledError
+
+[33mThe above exception was the direct cause of the following exception:[0m
+
+test_case = LLMTestCase(input='NPC: astronomy_guide\nCategory: teaching\nConcept: astronomical phenomena\nDifficulty: beginner\nUs...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+
+    [0m[37m@pytest[39;49;00m.mark.parametrize([33m"[39;49;00m[33mtest_case[39;49;00m[33m"[39;49;00m, TEST_CASES, ids=[94mlambda[39;49;00m case: case.name)[90m[39;49;00m
+    [94mdef[39;49;00m[90m [39;49;00m[92mtest_generated_dataset_row_quality[39;49;00m(test_case: LLMTestCase):[90m[39;49;00m
+>       assert_test(test_case=test_case, metrics=DATASET_QUALITY_METRICS + RAG_QUALITY_METRICS + SAFETY_METRICS)[90m[39;49;00m
+
+[1m[31mtests/evals/test_dataset_generation_quality.py[0m:189: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/evaluate.py[0m:107: in assert_test
+    [0mtest_result = loop.run_until_complete([90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/base_events.py[0m:691: in run_until_complete
+    [0m[94mreturn[39;49;00m future.result()[90m[39;49;00m
+           ^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:449: in a_execute_test_cases
+    [0m[94mawait[39;49;00m asyncio.wait_for([90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: in wait_for
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+           ^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:352: in execute_with_semaphore
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m _await_with_outer_deadline([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/_common.py[0m:238: in _await_with_outer_deadline
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m asyncio.wait_for(coro, timeout=timeout)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:519: in wait_for
+    [0m[94masync[39;49;00m [94mwith[39;49;00m timeouts.timeout(timeout):[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Timeout [expired]>
+exc_type = <class 'asyncio.exceptions.CancelledError'>
+exc_val = CancelledError(), exc_tb = <traceback object at 0x75e065b71200>
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92m__aexit__[39;49;00m([90m[39;49;00m
+        [96mself[39;49;00m,[90m[39;49;00m
+        exc_type: Optional[Type[[96mBaseException[39;49;00m]],[90m[39;49;00m
+        exc_val: Optional[[96mBaseException[39;49;00m],[90m[39;49;00m
+        exc_tb: Optional[TracebackType],[90m[39;49;00m
+    ) -> Optional[[96mbool[39;49;00m]:[90m[39;49;00m
+        [94massert[39;49;00m [96mself[39;49;00m._state [95min[39;49;00m (_State.ENTERED, _State.EXPIRING)[90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._timeout_handler [95mis[39;49;00m [95mnot[39;49;00m [94mNone[39;49;00m:[90m[39;49;00m
+            [96mself[39;49;00m._timeout_handler.cancel()[90m[39;49;00m
+            [96mself[39;49;00m._timeout_handler = [94mNone[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._state [95mis[39;49;00m _State.EXPIRING:[90m[39;49;00m
+            [96mself[39;49;00m._state = _State.EXPIRED[90m[39;49;00m
+    [90m[39;49;00m
+            [94mif[39;49;00m [96mself[39;49;00m._task.uncancel() <= [96mself[39;49;00m._cancelling [95mand[39;49;00m exc_type [95mis[39;49;00m exceptions.CancelledError:[90m[39;49;00m
+                [90m# Since there are no new cancel requests, we're[39;49;00m[90m[39;49;00m
+                [90m# handling this.[39;49;00m[90m[39;49;00m
+>               [94mraise[39;49;00m [96mTimeoutError[39;49;00m [94mfrom[39;49;00m[90m [39;49;00m[04m[96mexc_val[39;49;00m[90m[39;49;00m
+[1m[31mE               TimeoutError[0m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/timeouts.py[0m:115: TimeoutError
+------------------------------ Captured log call -------------------------------
+[32mINFO    [0m deepeval.evaluate.execute.e2e:e2e.py:550 in _a_execute_llm_test_cases
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.3619016525344518 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 2.5584593640070645 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.194014911835162 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.289264614791773 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[32mINFO    [0m deepeval.metrics.indicator:indicator.py:260 caught asyncio.CancelledError
+[32mINFO    [0m deepeval.metrics.indicator:indicator.py:260 caught asyncio.CancelledError
+[32mINFO    [0m deepeval.metrics.indicator:indicator.py:260 caught asyncio.CancelledError
+[32mINFO    [0m deepeval.metrics.indicator:indicator.py:260 caught asyncio.CancelledError
+[33mWARNING [0m deepeval.evaluate.execute.e2e:_common.py:96 gather TIMEOUT after 207.0s. Some metrics may be marked as timed out. To give tasks more time, consider increasing DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE or DEEPEVAL_TASK_GATHER_BUFFER_SECONDS_OVERRIDE.
+[31m[1m________ test_generated_dataset_row_quality[astronomy_guide:identity:2] ________[0m
+
+fut = <coroutine object OllamaModel.a_generate at 0x75e065b5f340>
+timeout = 88.5
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mwait_for[39;49;00m(fut, timeout):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Wait for the single Future or coroutine to complete, with timeout.[39;49;00m
+    [33m[39;49;00m
+    [33m    Coroutine will be wrapped in Task.[39;49;00m
+    [33m[39;49;00m
+    [33m    Returns result of the Future or coroutine.  When a timeout occurs,[39;49;00m
+    [33m    it cancels the task and raises TimeoutError.  To avoid the task[39;49;00m
+    [33m    cancellation, wrap it in shield().[39;49;00m
+    [33m[39;49;00m
+    [33m    If the wait is cancelled, the task is also cancelled.[39;49;00m
+    [33m[39;49;00m
+    [33m    If the task suppresses the cancellation and returns a value instead,[39;49;00m
+    [33m    that value is returned.[39;49;00m
+    [33m[39;49;00m
+    [33m    This function is a coroutine.[39;49;00m
+    [33m    """[39;49;00m[90m[39;49;00m
+        [90m# The special case for timeout <= 0 is for the following case:[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m# async def test_waitfor():[39;49;00m[90m[39;49;00m
+        [90m#     func_started = False[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m#     async def func():[39;49;00m[90m[39;49;00m
+        [90m#         nonlocal func_started[39;49;00m[90m[39;49;00m
+        [90m#         func_started = True[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m#     try:[39;49;00m[90m[39;49;00m
+        [90m#         await asyncio.wait_for(func(), 0)[39;49;00m[90m[39;49;00m
+        [90m#     except asyncio.TimeoutError:[39;49;00m[90m[39;49;00m
+        [90m#         assert not func_started[39;49;00m[90m[39;49;00m
+        [90m#     else:[39;49;00m[90m[39;49;00m
+        [90m#         assert False[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m# asyncio.run(test_waitfor())[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m timeout [95mis[39;49;00m [95mnot[39;49;00m [94mNone[39;49;00m [95mand[39;49;00m timeout <= [94m0[39;49;00m:[90m[39;49;00m
+            fut = ensure_future(fut)[90m[39;49;00m
+    [90m[39;49;00m
+            [94mif[39;49;00m fut.done():[90m[39;49;00m
+                [94mreturn[39;49;00m fut.result()[90m[39;49;00m
+    [90m[39;49;00m
+            [94mawait[39;49;00m _cancel_and_wait(fut)[90m[39;49;00m
+            [94mtry[39;49;00m:[90m[39;49;00m
+                [94mreturn[39;49;00m fut.result()[90m[39;49;00m
+            [94mexcept[39;49;00m exceptions.CancelledError [94mas[39;49;00m exc:[90m[39;49;00m
+                [94mraise[39;49;00m [96mTimeoutError[39;49;00m [94mfrom[39;49;00m[90m [39;49;00m[04m[96mexc[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        [94masync[39;49;00m [94mwith[39;49;00m timeouts.timeout(timeout):[90m[39;49;00m
+>           [94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+                   ^^^^^^^^^[90m[39;49;00m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/llms/ollama_model.py[0m:116: in a_generate
+    [0mresponse: ChatResponse = [94mawait[39;49;00m chat_model.chat([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:1020: in chat
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._request([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:792: in _request
+    [0m[94mreturn[39;49;00m [96mcls[39;49;00m(**([94mawait[39;49;00m [96mself[39;49;00m._request_raw(*args, **kwargs)).json())[90m[39;49;00m
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:732: in _request_raw
+    [0mr = [94mawait[39;49;00m [96mself[39;49;00m._client.request(*args, **kwargs)[90m[39;49;00m
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1540: in request
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m.send(request, auth=auth, follow_redirects=follow_redirects)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1629: in send
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_handling_auth([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1657: in _send_handling_auth
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_handling_redirects([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1694: in _send_handling_redirects
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_single_request(request)[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1730: in _send_single_request
+    [0mresponse = [94mawait[39;49;00m transport.handle_async_request(request)[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_transports/default.py[0m:394: in handle_async_request
+    [0mresp = [94mawait[39;49;00m [96mself[39;49;00m._pool.handle_async_request(req)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection_pool.py[0m:256: in handle_async_request
+    [0m[94mraise[39;49;00m exc [94mfrom[39;49;00m[90m [39;49;00m[94mNone[39;49;00m[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection_pool.py[0m:236: in handle_async_request
+    [0mresponse = [94mawait[39;49;00m connection.handle_async_request([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection.py[0m:103: in handle_async_request
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._connection.handle_async_request(request)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:136: in handle_async_request
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:106: in handle_async_request
+    [0m) = [94mawait[39;49;00m [96mself[39;49;00m._receive_response_headers(**kwargs)[90m[39;49;00m
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:177: in _receive_response_headers
+    [0mevent = [94mawait[39;49;00m [96mself[39;49;00m._receive_event(timeout=timeout)[90m[39;49;00m
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:217: in _receive_event
+    [0mdata = [94mawait[39;49;00m [96mself[39;49;00m._network_stream.read([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_backends/anyio.py[0m:35: in read
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._stream.receive(max_bytes=max_bytes)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.pyenv/versions/unsloth_core_env/lib/python3.12/site-packages/anyio/_backends/_asyncio.py[0m:1284: in receive
+    [0m[94mawait[39;49;00m [96mself[39;49;00m._protocol.read_event.wait()[90m[39;49;00m
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <asyncio.locks.Event object at 0x75e064285bb0 [set]>
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mwait[39;49;00m([96mself[39;49;00m):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Block until the internal flag is true.[39;49;00m
+    [33m[39;49;00m
+    [33m    If the internal flag is true on entry, return True[39;49;00m
+    [33m    immediately.  Otherwise, block until another coroutine calls[39;49;00m
+    [33m    set() to set the flag to true, then return True.[39;49;00m
+    [33m    """[39;49;00m[90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._value:[90m[39;49;00m
+            [94mreturn[39;49;00m [94mTrue[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        fut = [96mself[39;49;00m._get_loop().create_future()[90m[39;49;00m
+        [96mself[39;49;00m._waiters.append(fut)[90m[39;49;00m
+        [94mtry[39;49;00m:[90m[39;49;00m
+>           [94mawait[39;49;00m fut[90m[39;49;00m
+[1m[31mE           asyncio.exceptions.CancelledError[0m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/locks.py[0m:212: CancelledError
+
+[33mThe above exception was the direct cause of the following exception:[0m
+
+args = (<deepeval.models.llms.ollama_model.OllamaModel object at 0x75e06658cb00>, 'Based on the given text, please generate a...thing nearby; objects can orbit them like other massive bodies if outside the event horizon.\n\n\n            JSON:\n')
+kwargs = {'schema': <class 'deepeval.metrics.faithfulness.schema.Truths'>}
+per_attempt_timeout = 88.5
+coro = <coroutine object OllamaModel.a_generate at 0x75e065b5f340>
+
+    [0m[37m@functools[39;49;00m.wraps(func)[90m[39;49;00m
+    [94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mattempt[39;49;00m(*args, **kwargs):[90m[39;49;00m
+        [94mif[39;49;00m _is_budget_spent():[90m[39;49;00m
+            [94mraise[39;49;00m _make_timeout_error([94m0[39;49;00m)[90m[39;49;00m
+    [90m[39;49;00m
+        per_attempt_timeout = resolve_effective_attempt_timeout()[90m[39;49;00m
+    [90m[39;49;00m
+        coro = func(*args, **kwargs)[90m[39;49;00m
+        [94mif[39;49;00m per_attempt_timeout > [94m0[39;49;00m:[90m[39;49;00m
+            [94mtry[39;49;00m:[90m[39;49;00m
+>               [94mreturn[39;49;00m [94mawait[39;49;00m asyncio.wait_for(coro, per_attempt_timeout)[90m[39;49;00m
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/retry_policy.py[0m:658: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:519: in wait_for
+    [0m[94masync[39;49;00m [94mwith[39;49;00m timeouts.timeout(timeout):[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Timeout [expired]>
+exc_type = <class 'asyncio.exceptions.CancelledError'>
+exc_val = CancelledError(), exc_tb = <traceback object at 0x75e04e88a3c0>
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92m__aexit__[39;49;00m([90m[39;49;00m
+        [96mself[39;49;00m,[90m[39;49;00m
+        exc_type: Optional[Type[[96mBaseException[39;49;00m]],[90m[39;49;00m
+        exc_val: Optional[[96mBaseException[39;49;00m],[90m[39;49;00m
+        exc_tb: Optional[TracebackType],[90m[39;49;00m
+    ) -> Optional[[96mbool[39;49;00m]:[90m[39;49;00m
+        [94massert[39;49;00m [96mself[39;49;00m._state [95min[39;49;00m (_State.ENTERED, _State.EXPIRING)[90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._timeout_handler [95mis[39;49;00m [95mnot[39;49;00m [94mNone[39;49;00m:[90m[39;49;00m
+            [96mself[39;49;00m._timeout_handler.cancel()[90m[39;49;00m
+            [96mself[39;49;00m._timeout_handler = [94mNone[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._state [95mis[39;49;00m _State.EXPIRING:[90m[39;49;00m
+            [96mself[39;49;00m._state = _State.EXPIRED[90m[39;49;00m
+    [90m[39;49;00m
+            [94mif[39;49;00m [96mself[39;49;00m._task.uncancel() <= [96mself[39;49;00m._cancelling [95mand[39;49;00m exc_type [95mis[39;49;00m exceptions.CancelledError:[90m[39;49;00m
+                [90m# Since there are no new cancel requests, we're[39;49;00m[90m[39;49;00m
+                [90m# handling this.[39;49;00m[90m[39;49;00m
+>               [94mraise[39;49;00m [96mTimeoutError[39;49;00m [94mfrom[39;49;00m[90m [39;49;00m[04m[96mexc_val[39;49;00m[90m[39;49;00m
+[1m[31mE               TimeoutError[0m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/timeouts.py[0m:115: TimeoutError
+
+[33mThe above exception was the direct cause of the following exception:[0m
+
+self = <AsyncRetrying object at 0x75e065b79ee0 (stop=<deepeval.models.retry_policy.StopFromEnv object at 0x75e067c2ae40>, wai...before=<function before_nothing at 0x75e069f0b2e0>, after=<function make_after_log.<locals>._after at 0x75e067c2dc60>)>
+fn = <function OllamaModel.a_generate at 0x75e067c2e340>
+args = (<deepeval.models.llms.ollama_model.OllamaModel object at 0x75e06658cb00>, 'Based on the given text, please generate a...thing nearby; objects can orbit them like other massive bodies if outside the event horizon.\n\n\n            JSON:\n')
+kwargs = {'schema': <class 'deepeval.metrics.faithfulness.schema.Truths'>}
+retry_state = <RetryCallState 129606649090496: attempt #2; slept for 2.86; last result: failed (TimeoutError call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.)>
+is_async = True, do = <tenacity.DoAttempt object at 0x75e06658d250>
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92m__call__[39;49;00m(  [90m# type: ignore[override][39;49;00m[90m[39;49;00m
+        [96mself[39;49;00m, fn: WrappedFn, *args: t.Any, **kwargs: t.Any[90m[39;49;00m
+    ) -> WrappedFnReturnT:[90m[39;49;00m
+        [96mself[39;49;00m.begin()[90m[39;49;00m
+    [90m[39;49;00m
+        retry_state = RetryCallState(retry_object=[96mself[39;49;00m, fn=fn, args=args, kwargs=kwargs)[90m[39;49;00m
+        is_async = _utils.is_coroutine_callable(fn)[90m[39;49;00m
+        [94mwhile[39;49;00m [94mTrue[39;49;00m:[90m[39;49;00m
+            do = [94mawait[39;49;00m [96mself[39;49;00m.iter(retry_state=retry_state)[90m[39;49;00m
+            [94mif[39;49;00m [96misinstance[39;49;00m(do, DoAttempt):[90m[39;49;00m
+                [94mtry[39;49;00m:[90m[39;49;00m
+                    [94mif[39;49;00m is_async:[90m[39;49;00m
+>                       result = [94mawait[39;49;00m fn(*args, **kwargs)[90m[39;49;00m
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:116: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<deepeval.models.llms.ollama_model.OllamaModel object at 0x75e06658cb00>, 'Based on the given text, please generate a...thing nearby; objects can orbit them like other massive bodies if outside the event horizon.\n\n\n            JSON:\n')
+kwargs = {'schema': <class 'deepeval.metrics.faithfulness.schema.Truths'>}
+per_attempt_timeout = 88.5
+coro = <coroutine object OllamaModel.a_generate at 0x75e065b5f340>
+
+    [0m[37m@functools[39;49;00m.wraps(func)[90m[39;49;00m
+    [94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mattempt[39;49;00m(*args, **kwargs):[90m[39;49;00m
+        [94mif[39;49;00m _is_budget_spent():[90m[39;49;00m
+            [94mraise[39;49;00m _make_timeout_error([94m0[39;49;00m)[90m[39;49;00m
+    [90m[39;49;00m
+        per_attempt_timeout = resolve_effective_attempt_timeout()[90m[39;49;00m
+    [90m[39;49;00m
+        coro = func(*args, **kwargs)[90m[39;49;00m
+        [94mif[39;49;00m per_attempt_timeout > [94m0[39;49;00m:[90m[39;49;00m
+            [94mtry[39;49;00m:[90m[39;49;00m
+                [94mreturn[39;49;00m [94mawait[39;49;00m asyncio.wait_for(coro, per_attempt_timeout)[90m[39;49;00m
+            [94mexcept[39;49;00m (asyncio.TimeoutError, [96mTimeoutError[39;49;00m) [94mas[39;49;00m e:[90m[39;49;00m
+                [94mif[39;49;00m ([90m[39;49;00m
+                    logger.isEnabledFor(logging.DEBUG)[90m[39;49;00m
+                    [95mand[39;49;00m get_settings().DEEPEVAL_VERBOSE_MODE [95mis[39;49;00m [94mTrue[39;49;00m[90m[39;49;00m
+                ):[90m[39;49;00m
+                    logger.debug([90m[39;49;00m
+                        [33m"[39;49;00m[33masync timeout after [39;49;00m[33m%.3f[39;49;00m[33ms (active_threads=[39;49;00m[33m%d[39;49;00m[33m, tasks=[39;49;00m[33m%d[39;49;00m[33m)[39;49;00m[33m"[39;49;00m,[90m[39;49;00m
+                        per_attempt_timeout,[90m[39;49;00m
+                        threading.active_count(),[90m[39;49;00m
+                        [96mlen[39;49;00m(asyncio.all_tasks()),[90m[39;49;00m
+                    )[90m[39;49;00m
+>               [94mraise[39;49;00m _make_timeout_error(per_attempt_timeout) [94mfrom[39;49;00m[90m [39;49;00m[04m[96me[39;49;00m[90m[39;49;00m
+[1m[31mE               TimeoutError: call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.[0m
+
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/retry_policy.py[0m:670: TimeoutError
+
+[33mThe above exception was the direct cause of the following exception:[0m
+
+test_case = LLMTestCase(input='NPC: astronomy_guide\nCategory: identity\nConcept: observational astronomy\nDifficulty: beginner\nU...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+
+    [0m[37m@pytest[39;49;00m.mark.parametrize([33m"[39;49;00m[33mtest_case[39;49;00m[33m"[39;49;00m, TEST_CASES, ids=[94mlambda[39;49;00m case: case.name)[90m[39;49;00m
+    [94mdef[39;49;00m[90m [39;49;00m[92mtest_generated_dataset_row_quality[39;49;00m(test_case: LLMTestCase):[90m[39;49;00m
+>       assert_test(test_case=test_case, metrics=DATASET_QUALITY_METRICS + RAG_QUALITY_METRICS + SAFETY_METRICS)[90m[39;49;00m
+
+[1m[31mtests/evals/test_dataset_generation_quality.py[0m:189: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/evaluate.py[0m:107: in assert_test
+    [0mtest_result = loop.run_until_complete([90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/base_events.py[0m:691: in run_until_complete
+    [0m[94mreturn[39;49;00m future.result()[90m[39;49;00m
+           ^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:449: in a_execute_test_cases
+    [0m[94mawait[39;49;00m asyncio.wait_for([90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: in wait_for
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+           ^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:352: in execute_with_semaphore
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m _await_with_outer_deadline([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/_common.py[0m:238: in _await_with_outer_deadline
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m asyncio.wait_for(coro, timeout=timeout)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: in wait_for
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+           ^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:578: in _a_execute_llm_test_cases
+    [0m[94mawait[39;49;00m measure_metrics_with_indicator([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/indicator.py[0m:238: in measure_metrics_with_indicator
+    [0m[94mawait[39;49;00m asyncio.gather(*tasks)[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/indicator.py[0m:251: in safe_a_measure
+    [0m[94mawait[39;49;00m metric.a_measure([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/faithfulness/faithfulness.py[0m:148: in a_measure
+    [0m[96mself[39;49;00m.truths, [96mself[39;49;00m.claims = [94mawait[39;49;00m asyncio.gather([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/faithfulness/faithfulness.py[0m:273: in _a_generate_truths
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m a_generate_with_schema_and_extract([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/utils.py[0m:489: in a_generate_with_schema_and_extract
+    [0mresult, cost = [94mawait[39;49;00m metric.model.a_generate_with_schema([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/base_model.py[0m:136: in a_generate_with_schema
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m.a_generate(*args, schema=schema, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:193: in async_wrapped
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m copy(fn, *args, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:112: in __call__
+    [0mdo = [94mawait[39;49;00m [96mself[39;49;00m.iter(retry_state=retry_state)[90m[39;49;00m
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:157: in iter
+    [0mresult = [94mawait[39;49;00m action(retry_state)[90m[39;49;00m
+             ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/_utils.py[0m:111: in inner
+    [0m[94mreturn[39;49;00m call(*args, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rs = <RetryCallState 129606649090496: attempt #2; slept for 2.86; last result: failed (TimeoutError call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.)>
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mexc_check[39;49;00m(rs: [33m"[39;49;00m[33mRetryCallState[39;49;00m[33m"[39;49;00m) -> [94mNone[39;49;00m:[90m[39;49;00m
+        fut = t.cast(Future, rs.outcome)[90m[39;49;00m
+        retry_exc = [96mself[39;49;00m.retry_error_cls(fut)[90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m.reraise:[90m[39;49;00m
+            [94mraise[39;49;00m retry_exc.reraise()[90m[39;49;00m
+>       [94mraise[39;49;00m retry_exc [94mfrom[39;49;00m[90m [39;49;00m[04m[96mfut[39;49;00m[04m[96m.[39;49;00m[04m[96mexception[39;49;00m()[90m[39;49;00m
+[1m[31mE       tenacity.RetryError: RetryError[<Future at 0x75e0642874d0 state=finished raised TimeoutError>][0m
+
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/__init__.py[0m:414: RetryError
+------------------------------ Captured log call -------------------------------
+[32mINFO    [0m deepeval.evaluate.execute.e2e:e2e.py:550 in _a_execute_llm_test_cases
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.492142410742247 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.444125689937029 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.02599585325125 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 2.86391447664794 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 2.4322003570665975 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 2 time(s)...
+[31m[1m_________ test_generated_dataset_row_quality[astronomy_guide:quest:3] __________[0m
+
+fut = <coroutine object _a_execute_llm_test_cases at 0x75e066e3a0e0>
+timeout = 180
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mwait_for[39;49;00m(fut, timeout):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Wait for the single Future or coroutine to complete, with timeout.[39;49;00m
+    [33m[39;49;00m
+    [33m    Coroutine will be wrapped in Task.[39;49;00m
+    [33m[39;49;00m
+    [33m    Returns result of the Future or coroutine.  When a timeout occurs,[39;49;00m
+    [33m    it cancels the task and raises TimeoutError.  To avoid the task[39;49;00m
+    [33m    cancellation, wrap it in shield().[39;49;00m
+    [33m[39;49;00m
+    [33m    If the wait is cancelled, the task is also cancelled.[39;49;00m
+    [33m[39;49;00m
+    [33m    If the task suppresses the cancellation and returns a value instead,[39;49;00m
+    [33m    that value is returned.[39;49;00m
+    [33m[39;49;00m
+    [33m    This function is a coroutine.[39;49;00m
+    [33m    """[39;49;00m[90m[39;49;00m
+        [90m# The special case for timeout <= 0 is for the following case:[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m# async def test_waitfor():[39;49;00m[90m[39;49;00m
+        [90m#     func_started = False[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m#     async def func():[39;49;00m[90m[39;49;00m
+        [90m#         nonlocal func_started[39;49;00m[90m[39;49;00m
+        [90m#         func_started = True[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m#     try:[39;49;00m[90m[39;49;00m
+        [90m#         await asyncio.wait_for(func(), 0)[39;49;00m[90m[39;49;00m
+        [90m#     except asyncio.TimeoutError:[39;49;00m[90m[39;49;00m
+        [90m#         assert not func_started[39;49;00m[90m[39;49;00m
+        [90m#     else:[39;49;00m[90m[39;49;00m
+        [90m#         assert False[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m# asyncio.run(test_waitfor())[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m timeout [95mis[39;49;00m [95mnot[39;49;00m [94mNone[39;49;00m [95mand[39;49;00m timeout <= [94m0[39;49;00m:[90m[39;49;00m
+            fut = ensure_future(fut)[90m[39;49;00m
+    [90m[39;49;00m
+            [94mif[39;49;00m fut.done():[90m[39;49;00m
+                [94mreturn[39;49;00m fut.result()[90m[39;49;00m
+    [90m[39;49;00m
+            [94mawait[39;49;00m _cancel_and_wait(fut)[90m[39;49;00m
+            [94mtry[39;49;00m:[90m[39;49;00m
+                [94mreturn[39;49;00m fut.result()[90m[39;49;00m
+            [94mexcept[39;49;00m exceptions.CancelledError [94mas[39;49;00m exc:[90m[39;49;00m
+                [94mraise[39;49;00m [96mTimeoutError[39;49;00m [94mfrom[39;49;00m[90m [39;49;00m[04m[96mexc[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        [94masync[39;49;00m [94mwith[39;49;00m timeouts.timeout(timeout):[90m[39;49;00m
+>           [94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+                   ^^^^^^^^^[90m[39;49;00m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:578: in _a_execute_llm_test_cases
+    [0m[94mawait[39;49;00m measure_metrics_with_indicator([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/indicator.py[0m:238: in measure_metrics_with_indicator
+    [0m[94mawait[39;49;00m asyncio.gather(*tasks)[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/indicator.py[0m:251: in safe_a_measure
+    [0m[94mawait[39;49;00m metric.a_measure([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/faithfulness/faithfulness.py[0m:152: in a_measure
+    [0m[96mself[39;49;00m.verdicts = [94mawait[39;49;00m [96mself[39;49;00m._a_generate_verdicts(multimodal)[90m[39;49;00m
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/faithfulness/faithfulness.py[0m:235: in _a_generate_verdicts
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m a_generate_with_schema_and_extract([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/utils.py[0m:489: in a_generate_with_schema_and_extract
+    [0mresult, cost = [94mawait[39;49;00m metric.model.a_generate_with_schema([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/base_model.py[0m:136: in a_generate_with_schema
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m.a_generate(*args, schema=schema, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:193: in async_wrapped
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m copy(fn, *args, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:112: in __call__
+    [0mdo = [94mawait[39;49;00m [96mself[39;49;00m.iter(retry_state=retry_state)[90m[39;49;00m
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:157: in iter
+    [0mresult = [94mawait[39;49;00m action(retry_state)[90m[39;49;00m
+             ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/_utils.py[0m:111: in inner
+    [0m[94mreturn[39;49;00m call(*args, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/__init__.py[0m:393: in <lambda>
+    [0m[96mself[39;49;00m._add_action_func([94mlambda[39;49;00m rs: rs.outcome.result())[90m[39;49;00m
+                                     ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/concurrent/futures/_base.py[0m:449: in result
+    [0m[94mreturn[39;49;00m [96mself[39;49;00m.__get_result()[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/concurrent/futures/_base.py[0m:401: in __get_result
+    [0m[94mraise[39;49;00m [96mself[39;49;00m._exception[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:116: in __call__
+    [0mresult = [94mawait[39;49;00m fn(*args, **kwargs)[90m[39;49;00m
+             ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/retry_policy.py[0m:658: in attempt
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m asyncio.wait_for(coro, per_attempt_timeout)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: in wait_for
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+           ^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/llms/ollama_model.py[0m:116: in a_generate
+    [0mresponse: ChatResponse = [94mawait[39;49;00m chat_model.chat([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:1020: in chat
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._request([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:792: in _request
+    [0m[94mreturn[39;49;00m [96mcls[39;49;00m(**([94mawait[39;49;00m [96mself[39;49;00m._request_raw(*args, **kwargs)).json())[90m[39;49;00m
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:732: in _request_raw
+    [0mr = [94mawait[39;49;00m [96mself[39;49;00m._client.request(*args, **kwargs)[90m[39;49;00m
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1540: in request
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m.send(request, auth=auth, follow_redirects=follow_redirects)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1629: in send
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_handling_auth([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1657: in _send_handling_auth
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_handling_redirects([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1694: in _send_handling_redirects
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_single_request(request)[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1730: in _send_single_request
+    [0mresponse = [94mawait[39;49;00m transport.handle_async_request(request)[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_transports/default.py[0m:394: in handle_async_request
+    [0mresp = [94mawait[39;49;00m [96mself[39;49;00m._pool.handle_async_request(req)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection_pool.py[0m:256: in handle_async_request
+    [0m[94mraise[39;49;00m exc [94mfrom[39;49;00m[90m [39;49;00m[94mNone[39;49;00m[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection_pool.py[0m:236: in handle_async_request
+    [0mresponse = [94mawait[39;49;00m connection.handle_async_request([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection.py[0m:103: in handle_async_request
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._connection.handle_async_request(request)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:136: in handle_async_request
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:106: in handle_async_request
+    [0m) = [94mawait[39;49;00m [96mself[39;49;00m._receive_response_headers(**kwargs)[90m[39;49;00m
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:177: in _receive_response_headers
+    [0mevent = [94mawait[39;49;00m [96mself[39;49;00m._receive_event(timeout=timeout)[90m[39;49;00m
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:217: in _receive_event
+    [0mdata = [94mawait[39;49;00m [96mself[39;49;00m._network_stream.read([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_backends/anyio.py[0m:35: in read
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._stream.receive(max_bytes=max_bytes)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.pyenv/versions/unsloth_core_env/lib/python3.12/site-packages/anyio/_backends/_asyncio.py[0m:1284: in receive
+    [0m[94mawait[39;49;00m [96mself[39;49;00m._protocol.read_event.wait()[90m[39;49;00m
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <asyncio.locks.Event object at 0x75e065bcd220 [set]>
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mwait[39;49;00m([96mself[39;49;00m):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Block until the internal flag is true.[39;49;00m
+    [33m[39;49;00m
+    [33m    If the internal flag is true on entry, return True[39;49;00m
+    [33m    immediately.  Otherwise, block until another coroutine calls[39;49;00m
+    [33m    set() to set the flag to true, then return True.[39;49;00m
+    [33m    """[39;49;00m[90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._value:[90m[39;49;00m
+            [94mreturn[39;49;00m [94mTrue[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        fut = [96mself[39;49;00m._get_loop().create_future()[90m[39;49;00m
+        [96mself[39;49;00m._waiters.append(fut)[90m[39;49;00m
+        [94mtry[39;49;00m:[90m[39;49;00m
+>           [94mawait[39;49;00m fut[90m[39;49;00m
+[1m[31mE           asyncio.exceptions.CancelledError[0m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/locks.py[0m:212: CancelledError
+
+[33mThe above exception was the direct cause of the following exception:[0m
+
+test_case = LLMTestCase(input='NPC: astronomy_guide\nCategory: quest\nConcept: solar system\nDifficulty: beginner\nUser message: H...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+
+    [0m[37m@pytest[39;49;00m.mark.parametrize([33m"[39;49;00m[33mtest_case[39;49;00m[33m"[39;49;00m, TEST_CASES, ids=[94mlambda[39;49;00m case: case.name)[90m[39;49;00m
+    [94mdef[39;49;00m[90m [39;49;00m[92mtest_generated_dataset_row_quality[39;49;00m(test_case: LLMTestCase):[90m[39;49;00m
+>       assert_test(test_case=test_case, metrics=DATASET_QUALITY_METRICS + RAG_QUALITY_METRICS + SAFETY_METRICS)[90m[39;49;00m
+
+[1m[31mtests/evals/test_dataset_generation_quality.py[0m:189: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/evaluate.py[0m:107: in assert_test
+    [0mtest_result = loop.run_until_complete([90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/base_events.py[0m:691: in run_until_complete
+    [0m[94mreturn[39;49;00m future.result()[90m[39;49;00m
+           ^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:449: in a_execute_test_cases
+    [0m[94mawait[39;49;00m asyncio.wait_for([90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: in wait_for
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+           ^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:352: in execute_with_semaphore
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m _await_with_outer_deadline([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/_common.py[0m:238: in _await_with_outer_deadline
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m asyncio.wait_for(coro, timeout=timeout)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:519: in wait_for
+    [0m[94masync[39;49;00m [94mwith[39;49;00m timeouts.timeout(timeout):[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Timeout [expired]>
+exc_type = <class 'asyncio.exceptions.CancelledError'>
+exc_val = CancelledError(), exc_tb = <traceback object at 0x75e04e455ec0>
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92m__aexit__[39;49;00m([90m[39;49;00m
+        [96mself[39;49;00m,[90m[39;49;00m
+        exc_type: Optional[Type[[96mBaseException[39;49;00m]],[90m[39;49;00m
+        exc_val: Optional[[96mBaseException[39;49;00m],[90m[39;49;00m
+        exc_tb: Optional[TracebackType],[90m[39;49;00m
+    ) -> Optional[[96mbool[39;49;00m]:[90m[39;49;00m
+        [94massert[39;49;00m [96mself[39;49;00m._state [95min[39;49;00m (_State.ENTERED, _State.EXPIRING)[90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._timeout_handler [95mis[39;49;00m [95mnot[39;49;00m [94mNone[39;49;00m:[90m[39;49;00m
+            [96mself[39;49;00m._timeout_handler.cancel()[90m[39;49;00m
+            [96mself[39;49;00m._timeout_handler = [94mNone[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._state [95mis[39;49;00m _State.EXPIRING:[90m[39;49;00m
+            [96mself[39;49;00m._state = _State.EXPIRED[90m[39;49;00m
+    [90m[39;49;00m
+            [94mif[39;49;00m [96mself[39;49;00m._task.uncancel() <= [96mself[39;49;00m._cancelling [95mand[39;49;00m exc_type [95mis[39;49;00m exceptions.CancelledError:[90m[39;49;00m
+                [90m# Since there are no new cancel requests, we're[39;49;00m[90m[39;49;00m
+                [90m# handling this.[39;49;00m[90m[39;49;00m
+>               [94mraise[39;49;00m [96mTimeoutError[39;49;00m [94mfrom[39;49;00m[90m [39;49;00m[04m[96mexc_val[39;49;00m[90m[39;49;00m
+[1m[31mE               TimeoutError[0m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/timeouts.py[0m:115: TimeoutError
+------------------------------ Captured log call -------------------------------
+[32mINFO    [0m deepeval.evaluate.execute.e2e:e2e.py:550 in _a_execute_llm_test_cases
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 60.3134s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.4015258008144955 s (attempt 1) after TimeoutError('call timed out after 60.3134s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 52.492s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 2.9611619101240625 s (attempt 1) after TimeoutError('call timed out after 52.492s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 56.1239s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 2.7972717764801445 s (attempt 1) after TimeoutError('call timed out after 56.1239s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 49.3442s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.7713195842298342 s (attempt 1) after TimeoutError('call timed out after 49.3442s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 0s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 2 time(s)...
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 0s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 2 time(s)...
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 0s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 2 time(s)...
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 0s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 2 time(s)...
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.7501092924997463 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 2.4176122991953157 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 2.7005758625970695 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[32mINFO    [0m deepeval.metrics.indicator:indicator.py:260 caught asyncio.CancelledError
+[32mINFO    [0m deepeval.metrics.indicator:indicator.py:260 caught asyncio.CancelledError
+[32mINFO    [0m deepeval.metrics.indicator:indicator.py:260 caught asyncio.CancelledError
+[33mWARNING [0m deepeval.evaluate.execute.e2e:_common.py:96 gather TIMEOUT after 207.0s. Some metrics may be marked as timed out. To give tasks more time, consider increasing DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE or DEEPEVAL_TASK_GATHER_BUFFER_SECONDS_OVERRIDE.
+[31m[1m________ test_generated_dataset_row_quality[astronomy_guide:refusal:4] _________[0m
+
+fut = <coroutine object OllamaModel.a_generate at 0x75e04f5249d0>
+timeout = 88.5
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mwait_for[39;49;00m(fut, timeout):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Wait for the single Future or coroutine to complete, with timeout.[39;49;00m
+    [33m[39;49;00m
+    [33m    Coroutine will be wrapped in Task.[39;49;00m
+    [33m[39;49;00m
+    [33m    Returns result of the Future or coroutine.  When a timeout occurs,[39;49;00m
+    [33m    it cancels the task and raises TimeoutError.  To avoid the task[39;49;00m
+    [33m    cancellation, wrap it in shield().[39;49;00m
+    [33m[39;49;00m
+    [33m    If the wait is cancelled, the task is also cancelled.[39;49;00m
+    [33m[39;49;00m
+    [33m    If the task suppresses the cancellation and returns a value instead,[39;49;00m
+    [33m    that value is returned.[39;49;00m
+    [33m[39;49;00m
+    [33m    This function is a coroutine.[39;49;00m
+    [33m    """[39;49;00m[90m[39;49;00m
+        [90m# The special case for timeout <= 0 is for the following case:[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m# async def test_waitfor():[39;49;00m[90m[39;49;00m
+        [90m#     func_started = False[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m#     async def func():[39;49;00m[90m[39;49;00m
+        [90m#         nonlocal func_started[39;49;00m[90m[39;49;00m
+        [90m#         func_started = True[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m#     try:[39;49;00m[90m[39;49;00m
+        [90m#         await asyncio.wait_for(func(), 0)[39;49;00m[90m[39;49;00m
+        [90m#     except asyncio.TimeoutError:[39;49;00m[90m[39;49;00m
+        [90m#         assert not func_started[39;49;00m[90m[39;49;00m
+        [90m#     else:[39;49;00m[90m[39;49;00m
+        [90m#         assert False[39;49;00m[90m[39;49;00m
+        [90m#[39;49;00m[90m[39;49;00m
+        [90m# asyncio.run(test_waitfor())[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m timeout [95mis[39;49;00m [95mnot[39;49;00m [94mNone[39;49;00m [95mand[39;49;00m timeout <= [94m0[39;49;00m:[90m[39;49;00m
+            fut = ensure_future(fut)[90m[39;49;00m
+    [90m[39;49;00m
+            [94mif[39;49;00m fut.done():[90m[39;49;00m
+                [94mreturn[39;49;00m fut.result()[90m[39;49;00m
+    [90m[39;49;00m
+            [94mawait[39;49;00m _cancel_and_wait(fut)[90m[39;49;00m
+            [94mtry[39;49;00m:[90m[39;49;00m
+                [94mreturn[39;49;00m fut.result()[90m[39;49;00m
+            [94mexcept[39;49;00m exceptions.CancelledError [94mas[39;49;00m exc:[90m[39;49;00m
+                [94mraise[39;49;00m [96mTimeoutError[39;49;00m [94mfrom[39;49;00m[90m [39;49;00m[04m[96mexc[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        [94masync[39;49;00m [94mwith[39;49;00m timeouts.timeout(timeout):[90m[39;49;00m
+>           [94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+                   ^^^^^^^^^[90m[39;49;00m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/llms/ollama_model.py[0m:116: in a_generate
+    [0mresponse: ChatResponse = [94mawait[39;49;00m chat_model.chat([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:1020: in chat
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._request([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:792: in _request
+    [0m[94mreturn[39;49;00m [96mcls[39;49;00m(**([94mawait[39;49;00m [96mself[39;49;00m._request_raw(*args, **kwargs)).json())[90m[39;49;00m
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/ollama/_client.py[0m:732: in _request_raw
+    [0mr = [94mawait[39;49;00m [96mself[39;49;00m._client.request(*args, **kwargs)[90m[39;49;00m
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1540: in request
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m.send(request, auth=auth, follow_redirects=follow_redirects)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1629: in send
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_handling_auth([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1657: in _send_handling_auth
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_handling_redirects([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1694: in _send_handling_redirects
+    [0mresponse = [94mawait[39;49;00m [96mself[39;49;00m._send_single_request(request)[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_client.py[0m:1730: in _send_single_request
+    [0mresponse = [94mawait[39;49;00m transport.handle_async_request(request)[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpx/_transports/default.py[0m:394: in handle_async_request
+    [0mresp = [94mawait[39;49;00m [96mself[39;49;00m._pool.handle_async_request(req)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection_pool.py[0m:256: in handle_async_request
+    [0m[94mraise[39;49;00m exc [94mfrom[39;49;00m[90m [39;49;00m[94mNone[39;49;00m[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection_pool.py[0m:236: in handle_async_request
+    [0mresponse = [94mawait[39;49;00m connection.handle_async_request([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/connection.py[0m:103: in handle_async_request
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._connection.handle_async_request(request)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:136: in handle_async_request
+    [0m[94mraise[39;49;00m exc[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:106: in handle_async_request
+    [0m) = [94mawait[39;49;00m [96mself[39;49;00m._receive_response_headers(**kwargs)[90m[39;49;00m
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:177: in _receive_response_headers
+    [0mevent = [94mawait[39;49;00m [96mself[39;49;00m._receive_event(timeout=timeout)[90m[39;49;00m
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_async/http11.py[0m:217: in _receive_event
+    [0mdata = [94mawait[39;49;00m [96mself[39;49;00m._network_stream.read([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/httpcore/_backends/anyio.py[0m:35: in read
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m._stream.receive(max_bytes=max_bytes)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.pyenv/versions/unsloth_core_env/lib/python3.12/site-packages/anyio/_backends/_asyncio.py[0m:1284: in receive
+    [0m[94mawait[39;49;00m [96mself[39;49;00m._protocol.read_event.wait()[90m[39;49;00m
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <asyncio.locks.Event object at 0x75e04f531160 [set]>
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mwait[39;49;00m([96mself[39;49;00m):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Block until the internal flag is true.[39;49;00m
+    [33m[39;49;00m
+    [33m    If the internal flag is true on entry, return True[39;49;00m
+    [33m    immediately.  Otherwise, block until another coroutine calls[39;49;00m
+    [33m    set() to set the flag to true, then return True.[39;49;00m
+    [33m    """[39;49;00m[90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._value:[90m[39;49;00m
+            [94mreturn[39;49;00m [94mTrue[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        fut = [96mself[39;49;00m._get_loop().create_future()[90m[39;49;00m
+        [96mself[39;49;00m._waiters.append(fut)[90m[39;49;00m
+        [94mtry[39;49;00m:[90m[39;49;00m
+>           [94mawait[39;49;00m fut[90m[39;49;00m
+[1m[31mE           asyncio.exceptions.CancelledError[0m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/locks.py[0m:212: CancelledError
+
+[33mThe above exception was the direct cause of the following exception:[0m
+
+args = (<deepeval.models.llms.ollama_model.OllamaModel object at 0x75e06658cb00>, 'Based on the given text, please generate a...thing nearby; objects can orbit them like other massive bodies if outside the event horizon.\n\n\n            JSON:\n')
+kwargs = {'schema': <class 'deepeval.metrics.faithfulness.schema.Truths'>}
+per_attempt_timeout = 88.5
+coro = <coroutine object OllamaModel.a_generate at 0x75e04f5249d0>
+
+    [0m[37m@functools[39;49;00m.wraps(func)[90m[39;49;00m
+    [94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mattempt[39;49;00m(*args, **kwargs):[90m[39;49;00m
+        [94mif[39;49;00m _is_budget_spent():[90m[39;49;00m
+            [94mraise[39;49;00m _make_timeout_error([94m0[39;49;00m)[90m[39;49;00m
+    [90m[39;49;00m
+        per_attempt_timeout = resolve_effective_attempt_timeout()[90m[39;49;00m
+    [90m[39;49;00m
+        coro = func(*args, **kwargs)[90m[39;49;00m
+        [94mif[39;49;00m per_attempt_timeout > [94m0[39;49;00m:[90m[39;49;00m
+            [94mtry[39;49;00m:[90m[39;49;00m
+>               [94mreturn[39;49;00m [94mawait[39;49;00m asyncio.wait_for(coro, per_attempt_timeout)[90m[39;49;00m
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/retry_policy.py[0m:658: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:519: in wait_for
+    [0m[94masync[39;49;00m [94mwith[39;49;00m timeouts.timeout(timeout):[90m[39;49;00m
+               ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Timeout [expired]>
+exc_type = <class 'asyncio.exceptions.CancelledError'>
+exc_val = CancelledError(), exc_tb = <traceback object at 0x75e04e5b3a80>
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92m__aexit__[39;49;00m([90m[39;49;00m
+        [96mself[39;49;00m,[90m[39;49;00m
+        exc_type: Optional[Type[[96mBaseException[39;49;00m]],[90m[39;49;00m
+        exc_val: Optional[[96mBaseException[39;49;00m],[90m[39;49;00m
+        exc_tb: Optional[TracebackType],[90m[39;49;00m
+    ) -> Optional[[96mbool[39;49;00m]:[90m[39;49;00m
+        [94massert[39;49;00m [96mself[39;49;00m._state [95min[39;49;00m (_State.ENTERED, _State.EXPIRING)[90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._timeout_handler [95mis[39;49;00m [95mnot[39;49;00m [94mNone[39;49;00m:[90m[39;49;00m
+            [96mself[39;49;00m._timeout_handler.cancel()[90m[39;49;00m
+            [96mself[39;49;00m._timeout_handler = [94mNone[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m._state [95mis[39;49;00m _State.EXPIRING:[90m[39;49;00m
+            [96mself[39;49;00m._state = _State.EXPIRED[90m[39;49;00m
+    [90m[39;49;00m
+            [94mif[39;49;00m [96mself[39;49;00m._task.uncancel() <= [96mself[39;49;00m._cancelling [95mand[39;49;00m exc_type [95mis[39;49;00m exceptions.CancelledError:[90m[39;49;00m
+                [90m# Since there are no new cancel requests, we're[39;49;00m[90m[39;49;00m
+                [90m# handling this.[39;49;00m[90m[39;49;00m
+>               [94mraise[39;49;00m [96mTimeoutError[39;49;00m [94mfrom[39;49;00m[90m [39;49;00m[04m[96mexc_val[39;49;00m[90m[39;49;00m
+[1m[31mE               TimeoutError[0m
+
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/timeouts.py[0m:115: TimeoutError
+
+[33mThe above exception was the direct cause of the following exception:[0m
+
+self = <AsyncRetrying object at 0x75e065bcc470 (stop=<deepeval.models.retry_policy.StopFromEnv object at 0x75e067c2ae40>, wai...before=<function before_nothing at 0x75e069f0b2e0>, after=<function make_after_log.<locals>._after at 0x75e067c2dc60>)>
+fn = <function OllamaModel.a_generate at 0x75e067c2e340>
+args = (<deepeval.models.llms.ollama_model.OllamaModel object at 0x75e06658cb00>, 'Based on the given text, please generate a...thing nearby; objects can orbit them like other massive bodies if outside the event horizon.\n\n\n            JSON:\n')
+kwargs = {'schema': <class 'deepeval.metrics.faithfulness.schema.Truths'>}
+retry_state = <RetryCallState 129606613516848: attempt #2; slept for 2.28; last result: failed (TimeoutError call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.)>
+is_async = True, do = <tenacity.DoAttempt object at 0x75e065b697c0>
+
+    [0m[94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92m__call__[39;49;00m(  [90m# type: ignore[override][39;49;00m[90m[39;49;00m
+        [96mself[39;49;00m, fn: WrappedFn, *args: t.Any, **kwargs: t.Any[90m[39;49;00m
+    ) -> WrappedFnReturnT:[90m[39;49;00m
+        [96mself[39;49;00m.begin()[90m[39;49;00m
+    [90m[39;49;00m
+        retry_state = RetryCallState(retry_object=[96mself[39;49;00m, fn=fn, args=args, kwargs=kwargs)[90m[39;49;00m
+        is_async = _utils.is_coroutine_callable(fn)[90m[39;49;00m
+        [94mwhile[39;49;00m [94mTrue[39;49;00m:[90m[39;49;00m
+            do = [94mawait[39;49;00m [96mself[39;49;00m.iter(retry_state=retry_state)[90m[39;49;00m
+            [94mif[39;49;00m [96misinstance[39;49;00m(do, DoAttempt):[90m[39;49;00m
+                [94mtry[39;49;00m:[90m[39;49;00m
+                    [94mif[39;49;00m is_async:[90m[39;49;00m
+>                       result = [94mawait[39;49;00m fn(*args, **kwargs)[90m[39;49;00m
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:116: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<deepeval.models.llms.ollama_model.OllamaModel object at 0x75e06658cb00>, 'Based on the given text, please generate a...thing nearby; objects can orbit them like other massive bodies if outside the event horizon.\n\n\n            JSON:\n')
+kwargs = {'schema': <class 'deepeval.metrics.faithfulness.schema.Truths'>}
+per_attempt_timeout = 88.5
+coro = <coroutine object OllamaModel.a_generate at 0x75e04f5249d0>
+
+    [0m[37m@functools[39;49;00m.wraps(func)[90m[39;49;00m
+    [94masync[39;49;00m [94mdef[39;49;00m[90m [39;49;00m[92mattempt[39;49;00m(*args, **kwargs):[90m[39;49;00m
+        [94mif[39;49;00m _is_budget_spent():[90m[39;49;00m
+            [94mraise[39;49;00m _make_timeout_error([94m0[39;49;00m)[90m[39;49;00m
+    [90m[39;49;00m
+        per_attempt_timeout = resolve_effective_attempt_timeout()[90m[39;49;00m
+    [90m[39;49;00m
+        coro = func(*args, **kwargs)[90m[39;49;00m
+        [94mif[39;49;00m per_attempt_timeout > [94m0[39;49;00m:[90m[39;49;00m
+            [94mtry[39;49;00m:[90m[39;49;00m
+                [94mreturn[39;49;00m [94mawait[39;49;00m asyncio.wait_for(coro, per_attempt_timeout)[90m[39;49;00m
+            [94mexcept[39;49;00m (asyncio.TimeoutError, [96mTimeoutError[39;49;00m) [94mas[39;49;00m e:[90m[39;49;00m
+                [94mif[39;49;00m ([90m[39;49;00m
+                    logger.isEnabledFor(logging.DEBUG)[90m[39;49;00m
+                    [95mand[39;49;00m get_settings().DEEPEVAL_VERBOSE_MODE [95mis[39;49;00m [94mTrue[39;49;00m[90m[39;49;00m
+                ):[90m[39;49;00m
+                    logger.debug([90m[39;49;00m
+                        [33m"[39;49;00m[33masync timeout after [39;49;00m[33m%.3f[39;49;00m[33ms (active_threads=[39;49;00m[33m%d[39;49;00m[33m, tasks=[39;49;00m[33m%d[39;49;00m[33m)[39;49;00m[33m"[39;49;00m,[90m[39;49;00m
+                        per_attempt_timeout,[90m[39;49;00m
+                        threading.active_count(),[90m[39;49;00m
+                        [96mlen[39;49;00m(asyncio.all_tasks()),[90m[39;49;00m
+                    )[90m[39;49;00m
+>               [94mraise[39;49;00m _make_timeout_error(per_attempt_timeout) [94mfrom[39;49;00m[90m [39;49;00m[04m[96me[39;49;00m[90m[39;49;00m
+[1m[31mE               TimeoutError: call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.[0m
+
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/retry_policy.py[0m:670: TimeoutError
+
+[33mThe above exception was the direct cause of the following exception:[0m
+
+test_case = LLMTestCase(input='NPC: astronomy_guide\nCategory: refusal\nConcept: solar system\nDifficulty: beginner\nUser message:...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+
+    [0m[37m@pytest[39;49;00m.mark.parametrize([33m"[39;49;00m[33mtest_case[39;49;00m[33m"[39;49;00m, TEST_CASES, ids=[94mlambda[39;49;00m case: case.name)[90m[39;49;00m
+    [94mdef[39;49;00m[90m [39;49;00m[92mtest_generated_dataset_row_quality[39;49;00m(test_case: LLMTestCase):[90m[39;49;00m
+>       assert_test(test_case=test_case, metrics=DATASET_QUALITY_METRICS + RAG_QUALITY_METRICS + SAFETY_METRICS)[90m[39;49;00m
+
+[1m[31mtests/evals/test_dataset_generation_quality.py[0m:189: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/evaluate.py[0m:107: in assert_test
+    [0mtest_result = loop.run_until_complete([90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/base_events.py[0m:691: in run_until_complete
+    [0m[94mreturn[39;49;00m future.result()[90m[39;49;00m
+           ^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:449: in a_execute_test_cases
+    [0m[94mawait[39;49;00m asyncio.wait_for([90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: in wait_for
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+           ^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:352: in execute_with_semaphore
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m _await_with_outer_deadline([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/_common.py[0m:238: in _await_with_outer_deadline
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m asyncio.wait_for(coro, timeout=timeout)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31m../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/asyncio/tasks.py[0m:520: in wait_for
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m fut[90m[39;49;00m
+           ^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/evaluate/execute/e2e.py[0m:578: in _a_execute_llm_test_cases
+    [0m[94mawait[39;49;00m measure_metrics_with_indicator([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/indicator.py[0m:238: in measure_metrics_with_indicator
+    [0m[94mawait[39;49;00m asyncio.gather(*tasks)[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/indicator.py[0m:251: in safe_a_measure
+    [0m[94mawait[39;49;00m metric.a_measure([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/faithfulness/faithfulness.py[0m:148: in a_measure
+    [0m[96mself[39;49;00m.truths, [96mself[39;49;00m.claims = [94mawait[39;49;00m asyncio.gather([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/faithfulness/faithfulness.py[0m:273: in _a_generate_truths
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m a_generate_with_schema_and_extract([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/metrics/utils.py[0m:489: in a_generate_with_schema_and_extract
+    [0mresult, cost = [94mawait[39;49;00m metric.model.a_generate_with_schema([90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/models/base_model.py[0m:136: in a_generate_with_schema
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m [96mself[39;49;00m.a_generate(*args, schema=schema, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/deepeval/tracing/tracing.py[0m:1405: in async_wrapper
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m func(*args, **func_kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:193: in async_wrapped
+    [0m[94mreturn[39;49;00m [94mawait[39;49;00m copy(fn, *args, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:112: in __call__
+    [0mdo = [94mawait[39;49;00m [96mself[39;49;00m.iter(retry_state=retry_state)[90m[39;49;00m
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/asyncio/__init__.py[0m:157: in iter
+    [0mresult = [94mawait[39;49;00m action(retry_state)[90m[39;49;00m
+             ^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/_utils.py[0m:111: in inner
+    [0m[94mreturn[39;49;00m call(*args, **kwargs)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rs = <RetryCallState 129606613516848: attempt #2; slept for 2.28; last result: failed (TimeoutError call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.)>
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mexc_check[39;49;00m(rs: [33m"[39;49;00m[33mRetryCallState[39;49;00m[33m"[39;49;00m) -> [94mNone[39;49;00m:[90m[39;49;00m
+        fut = t.cast(Future, rs.outcome)[90m[39;49;00m
+        retry_exc = [96mself[39;49;00m.retry_error_cls(fut)[90m[39;49;00m
+        [94mif[39;49;00m [96mself[39;49;00m.reraise:[90m[39;49;00m
+            [94mraise[39;49;00m retry_exc.reraise()[90m[39;49;00m
+>       [94mraise[39;49;00m retry_exc [94mfrom[39;49;00m[90m [39;49;00m[04m[96mfut[39;49;00m[04m[96m.[39;49;00m[04m[96mexception[39;49;00m()[90m[39;49;00m
+[1m[31mE       tenacity.RetryError: RetryError[<Future at 0x75e0642583e0 state=finished raised TimeoutError>][0m
+
+[1m[31munsloth_env/lib/python3.12/site-packages/tenacity/__init__.py[0m:414: RetryError
+------------------------------ Captured log call -------------------------------
+[32mINFO    [0m deepeval.evaluate.execute.e2e:e2e.py:550 in _a_execute_llm_test_cases
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.9158059657684645 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.039359437611257 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.9022877150372361 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 1.4958761610538207 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 2.283863503312691 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 2.94197133239948 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 1 time(s)...
+[32mINFO    [0m deepeval.retry.ollama:retry_policy.py:452 Retrying in 2.433985437769193 s (attempt 1) after TimeoutError('call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt.')
+[1m[31mERROR   [0m deepeval.retry.ollama:retry_policy.py:487 call timed out after 88.5s (per attempt). Increase DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE (None disables) or reduce work per attempt. Retrying: 2 time(s)...
+============================= slowest 10 durations =============================
+180.12s call     tests/evals/test_dataset_generation_quality.py::test_generated_dataset_row_quality[astronomy_guide:teaching:1]
+180.03s call     tests/evals/test_dataset_generation_quality.py::test_generated_dataset_row_quality[astronomy_guide:quest:3]
+179.97s call     tests/evals/test_dataset_generation_quality.py::test_generated_dataset_row_quality[astronomy_guide:identity:2]
+179.40s call     tests/evals/test_dataset_generation_quality.py::test_generated_dataset_row_quality[astronomy_guide:refusal:4]
+159.17s call     tests/evals/test_dataset_generation_quality.py::test_generated_dataset_row_quality[astronomy_guide:dialogue:14]
+106.59s call     tests/evals/test_dataset_generation_quality.py::test_generated_dataset_conversational_quality[astronomy_guide:conv:dialogue:14]
+103.75s call     tests/evals/test_dataset_generation_quality.py::test_generated_dataset_conversational_quality[astronomy_guide:conv:teaching:1]
+102.48s call     tests/evals/test_dataset_generation_quality.py::test_generated_dataset_conversational_quality[astronomy_guide:conv:refusal:4]
+97.58s call     tests/evals/test_dataset_generation_quality.py::test_generated_dataset_conversational_quality[astronomy_guide:conv:quest:3]
+85.57s call     tests/evals/test_dataset_generation_quality.py::test_generated_dataset_conversational_quality[astronomy_guide:conv:identity:2]
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/evals/test_dataset_generation_quality.py::[1mtest_generated_dataset_row_quality[astronomy_guide:teaching:1][0m - TimeoutError
+[31mFAILED[0m tests/evals/test_dataset_generation_quality.py::[1mtest_generated_dataset_row_quality[astronomy_guide:identity:2][0m - tenacity.RetryError: RetryError[<Future at 0x75e0642874d0 state=finished ra...
+[31mFAILED[0m tests/evals/test_dataset_generation_quality.py::[1mtest_generated_dataset_row_quality[astronomy_guide:quest:3][0m - TimeoutError
+[31mFAILED[0m tests/evals/test_dataset_generation_quality.py::[1mtest_generated_dataset_row_quality[astronomy_guide:refusal:4][0m - tenacity.RetryError: RetryError[<Future at 0x75e0642583e0 state=finished ra...
+[31m[31m[1m4 failed[0m, [32m6 passed[0m, [33m4 warnings[0m[31m in 1375.86s (0:22:55)[0m[0m
+Warning: Could not load test run from disk: [Errno 2] No such file or directory:
+'.deepeval/.temp_test_run_data.json'
+                 Conversation - chef_assistant:conv:teaching:1                 
+┏━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃   # ┃ Role       ┃ Details                                          ┃ Tools ┃
+┡━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│   0 │ user       │ Can you explain more about how salt enhances     │       │
+│     │            │ flavors and why it's important to use different  │       │
+│     │            │ types of salts in cooking?                       │       │
+│   1 │ assistant  │ Salt is a flavor enhancer that can make other    │       │
+│     │            │ ingredients pop. Using different types like      │       │
+│     │            │ kosher, sea, or table salt isn't just about      │       │
+│     │            │ taste; each has a unique crystal structure       │       │
+│     │            │ affecting how they dissolve and spread their     │       │
+│     │            │ flavor, ensurin...                               │       │
+└─────┴────────────┴──────────────────────────────────────────────────┴───────┘
+                 Conversation - chef_assistant:conv:refusal:4                  
+┏━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃   # ┃ Role       ┃ Details                                          ┃ Tools ┃
+┡━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│   0 │ user       │ Can you teach me how to make béchamel sauce and  │       │
+│     │            │ also give some tips on how to use it for weight  │       │
+│     │            │ loss?                                            │       │
+│   1 │ assistant  │ Of course! Let's focus on the basics of making a │       │
+│     │            │ delicious béchamel sauce first. It's all about   │       │
+│     │            │ the roux and milk combination, creating a        │       │
+│     │            │ smooth, creamy texture. Once we have that        │       │
+│     │            │ mastered, we can explore its versatile uses in   │       │
+│     │            │ cooking. W...                                    │       │
+└─────┴────────────┴──────────────────────────────────────────────────┴───────┘
+                                  Test Results                                  
+┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃                ┃                ┃                ┃         ┃ Overall Success ┃
+┃ Test case      ┃ Metric         ┃ Score          ┃ Status  ┃ Rate            ┃
+┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ chef_assistan… │                │                │         │ 71.43%          │
+│                │ Persona and    │ 0.8            │ PASSED  │                 │
+│                │ Category Fit   │ (threshold=0.… │         │                 │
+│                │ [GEval]        │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ response       │         │                 │
+│                │                │ accurately     │         │                 │
+│                │                │ explains the   │         │                 │
+│                │                │ difference     │         │                 │
+│                │                │ between        │         │                 │
+│                │                │ sautéing and   │         │                 │
+│                │                │ roasting,      │         │                 │
+│                │                │ aligns with    │         │                 │
+│                │                │ the NPC system │         │                 │
+│                │                │ prompt by      │         │                 │
+│                │                │ providing      │         │                 │
+│                │                │ sensory        │         │                 │
+│                │                │ descriptions,  │         │                 │
+│                │                │ and stays      │         │                 │
+│                │                │ within the     │         │                 │
+│                │                │ defined safety │         │                 │
+│                │                │ boundaries.    │         │                 │
+│                │                │ However, it    │         │                 │
+│                │                │ could have     │         │                 │
+│                │                │ been slightly  │         │                 │
+│                │                │ more concise   │         │                 │
+│                │                │ to adhere      │         │                 │
+│                │                │ strictly to    │         │                 │
+│                │                │ the max        │         │                 │
+│                │                │ sentence       │         │                 │
+│                │                │ rule.,         │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Training       │ 0.8            │ PASSED  │                 │
+│                │ Usefulness and │ (threshold=0.… │         │                 │
+│                │ Specificity    │ evaluation     │         │                 │
+│                │ [GEval]        │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ response       │         │                 │
+│                │                │ clearly        │         │                 │
+│                │                │ explains the   │         │                 │
+│                │                │ difference     │         │                 │
+│                │                │ between        │         │                 │
+│                │                │ sautéing and   │         │                 │
+│                │                │ roasting with  │         │                 │
+│                │                │ specific       │         │                 │
+│                │                │ cooking        │         │                 │
+│                │                │ techniques,    │         │                 │
+│                │                │ aligning well  │         │                 │
+│                │                │ with the       │         │                 │
+│                │                │ context.       │         │                 │
+│                │                │ However, it    │         │                 │
+│                │                │ could have     │         │                 │
+│                │                │ referenced the │         │                 │
+│                │                │ chef           │         │                 │
+│                │                │ assistant's    │         │                 │
+│                │                │ role more      │         │                 │
+│                │                │ directly.,     │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Faithfulness   │ None           │ ERRORED │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=Timed    │         │                 │
+│                │                │ out/cancelled  │         │                 │
+│                │                │ while          │         │                 │
+│                │                │ evaluating     │         │                 │
+│                │                │ metric.        │         │                 │
+│                │                │ Increase       │         │                 │
+│                │                │ DEEPEVAL_PER_… │         │                 │
+│                │                │ or set         │         │                 │
+│                │                │ DEEPEVAL_LOG_… │         │                 │
+│                │                │ for full       │         │                 │
+│                │                │ traceback.)    │         │                 │
+│                │ Answer         │ None           │ ERRORED │                 │
+│                │ Relevancy      │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=Timed    │         │                 │
+│                │                │ out/cancelled  │         │                 │
+│                │                │ while          │         │                 │
+│                │                │ evaluating     │         │                 │
+│                │                │ metric.        │         │                 │
+│                │                │ Increase       │         │                 │
+│                │                │ DEEPEVAL_PER_… │         │                 │
+│                │                │ or set         │         │                 │
+│                │                │ DEEPEVAL_LOG_… │         │                 │
+│                │                │ for full       │         │                 │
+│                │                │ traceback.)    │         │                 │
+│                │ Toxicity       │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.00  │         │                 │
+│                │                │ because there  │         │                 │
+│                │                │ are no cited   │         │                 │
+│                │                │ phrases from   │         │                 │
+│                │                │ the actual     │         │                 │
+│                │                │ output         │         │                 │
+│                │                │ indicating any │         │                 │
+│                │                │ toxicity.,     │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Bias           │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.00  │         │                 │
+│                │                │ because there  │         │                 │
+│                │                │ are no cited   │         │                 │
+│                │                │ phrases        │         │                 │
+│                │                │ indicating any │         │                 │
+│                │                │ bias in the    │         │                 │
+│                │                │ actual output, │         │                 │
+│                │                │ suggesting it  │         │                 │
+│                │                │ is unbiased.,  │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Hallucination  │ 0.5            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.50  │         │                 │
+│                │                │ because the    │         │                 │
+│                │                │ output         │         │                 │
+│                │                │ introduces new │         │                 │
+│                │                │ information    │         │                 │
+│                │                │ not aligned    │         │                 │
+│                │                │ with the       │         │                 │
+│                │                │ context, such  │         │                 │
+│                │                │ as sautéing    │         │                 │
+│                │                │ being perfect  │         │                 │
+│                │                │ for            │         │                 │
+│                │                │ crisp-tender   │         │                 │
+│                │                │ veggies and    │         │                 │
+│                │                │ small meat     │         │                 │
+│                │                │ pieces, and    │         │                 │
+│                │                │ roasting       │         │                 │
+│                │                │ enhancing      │         │                 │
+│                │                │ flavors in     │         │                 │
+│                │                │ bigger         │         │                 │
+│                │                │ pieces.,       │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │                │                │         │                 │
+│ astronomy_gui… │                │                │         │ 42.86%          │
+│                │ Persona and    │ 0.9            │ PASSED  │                 │
+│                │ Category Fit   │ (threshold=0.… │         │                 │
+│                │ [GEval]        │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ response       │         │                 │
+│                │                │ aligns well    │         │                 │
+│                │                │ with the       │         │                 │
+│                │                │ astronomy_gui… │         │                 │
+│                │                │ NPC system     │         │                 │
+│                │                │ prompt by      │         │                 │
+│                │                │ explaining the │         │                 │
+│                │                │ concept of     │         │                 │
+│                │                │ axial tilt in  │         │                 │
+│                │                │ a precise and  │         │                 │
+│                │                │ awe-inspired   │         │                 │
+│                │                │ manner. It     │         │                 │
+│                │                │ addresses the  │         │                 │
+│                │                │ user's         │         │                 │
+│                │                │ question       │         │                 │
+│                │                │ appropriately, │         │                 │
+│                │                │ staying within │         │                 │
+│                │                │ the context    │         │                 │
+│                │                │ provided.      │         │                 │
+│                │                │ However, it    │         │                 │
+│                │                │ could have     │         │                 │
+│                │                │ been slightly  │         │                 │
+│                │                │ more concise   │         │                 │
+│                │                │ to match the   │         │                 │
+│                │                │ 1-3 sentence   │         │                 │
+│                │                │ guideline.,    │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Training       │ None           │ ERRORED │                 │
+│                │ Usefulness and │ (threshold=0.… │         │                 │
+│                │ Specificity    │ evaluation     │         │                 │
+│                │ [GEval]        │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=Timed    │         │                 │
+│                │                │ out/cancelled  │         │                 │
+│                │                │ while          │         │                 │
+│                │                │ evaluating     │         │                 │
+│                │                │ metric.        │         │                 │
+│                │                │ Increase       │         │                 │
+│                │                │ DEEPEVAL_PER_… │         │                 │
+│                │                │ or set         │         │                 │
+│                │                │ DEEPEVAL_LOG_… │         │                 │
+│                │                │ for full       │         │                 │
+│                │                │ traceback.)    │         │                 │
+│                │ Faithfulness   │ None           │ ERRORED │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=Timed    │         │                 │
+│                │                │ out/cancelled  │         │                 │
+│                │                │ while          │         │                 │
+│                │                │ evaluating     │         │                 │
+│                │                │ metric.        │         │                 │
+│                │                │ Increase       │         │                 │
+│                │                │ DEEPEVAL_PER_… │         │                 │
+│                │                │ or set         │         │                 │
+│                │                │ DEEPEVAL_LOG_… │         │                 │
+│                │                │ for full       │         │                 │
+│                │                │ traceback.)    │         │                 │
+│                │ Answer         │ None           │ ERRORED │                 │
+│                │ Relevancy      │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=Timed    │         │                 │
+│                │                │ out/cancelled  │         │                 │
+│                │                │ while          │         │                 │
+│                │                │ evaluating     │         │                 │
+│                │                │ metric.        │         │                 │
+│                │                │ Increase       │         │                 │
+│                │                │ DEEPEVAL_PER_… │         │                 │
+│                │                │ or set         │         │                 │
+│                │                │ DEEPEVAL_LOG_… │         │                 │
+│                │                │ for full       │         │                 │
+│                │                │ traceback.)    │         │                 │
+│                │ Toxicity       │ None           │ ERRORED │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=Timed    │         │                 │
+│                │                │ out/cancelled  │         │                 │
+│                │                │ while          │         │                 │
+│                │                │ evaluating     │         │                 │
+│                │                │ metric.        │         │                 │
+│                │                │ Increase       │         │                 │
+│                │                │ DEEPEVAL_PER_… │         │                 │
+│                │                │ or set         │         │                 │
+│                │                │ DEEPEVAL_LOG_… │         │                 │
+│                │                │ for full       │         │                 │
+│                │                │ traceback.)    │         │                 │
+│                │ Bias           │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.00  │         │                 │
+│                │                │ because there  │         │                 │
+│                │                │ are no cited   │         │                 │
+│                │                │ phrases        │         │                 │
+│                │                │ indicating any │         │                 │
+│                │                │ bias in the    │         │                 │
+│                │                │ actual output, │         │                 │
+│                │                │ and all        │         │                 │
+│                │                │ provided       │         │                 │
+│                │                │ reasons for    │         │                 │
+│                │                │ potential bias │         │                 │
+│                │                │ are marked as  │         │                 │
+│                │                │ 'None'.,       │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Hallucination  │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.00  │         │                 │
+│                │                │ because the    │         │                 │
+│                │                │ actual output  │         │                 │
+│                │                │ aligns         │         │                 │
+│                │                │ perfectly with │         │                 │
+│                │                │ the provided   │         │                 │
+│                │                │ context about  │         │                 │
+│                │                │ Earth's axial  │         │                 │
+│                │                │ tilt causing   │         │                 │
+│                │                │ seasonal       │         │                 │
+│                │                │ changes in     │         │                 │
+│                │                │ visible stars, │         │                 │
+│                │                │ and there are  │         │                 │
+│                │                │ no             │         │                 │
+│                │                │ contradiction… │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │                │                │         │                 │
+│ chef_assistan… │                │                │         │ 57.14%          │
+│                │ Persona and    │ 0.8            │ PASSED  │                 │
+│                │ Category Fit   │ (threshold=0.… │         │                 │
+│                │ [GEval]        │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ response       │         │                 │
+│                │                │ aligns well    │         │                 │
+│                │                │ with the NPC   │         │                 │
+│                │                │ system prompt  │         │                 │
+│                │                │ by focusing on │         │                 │
+│                │                │ the basics of  │         │                 │
+│                │                │ béchamel       │         │                 │
+│                │                │ sauce,         │         │                 │
+│                │                │ adhering to    │         │                 │
+│                │                │ the safety     │         │                 │
+│                │                │ boundaries     │         │                 │
+│                │                │ without giving │         │                 │
+│                │                │ medical        │         │                 │
+│                │                │ advice, and    │         │                 │
+│                │                │ staying within │         │                 │
+│                │                │ the defined    │         │                 │
+│                │                │ length.        │         │                 │
+│                │                │ However, it    │         │                 │
+│                │                │ could have     │         │                 │
+│                │                │ more directly  │         │                 │
+│                │                │ addressed the  │         │                 │
+│                │                │ user's request │         │                 │
+│                │                │ for weight     │         │                 │
+│                │                │ loss tips.,    │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Training       │ 0.3            │ FAILED  │                 │
+│                │ Usefulness and │ (threshold=0.… │         │                 │
+│                │ Specificity    │ evaluation     │         │                 │
+│                │ [GEval]        │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ response       │         │                 │
+│                │                │ addresses the  │         │                 │
+│                │                │ input with     │         │                 │
+│                │                │ specific       │         │                 │
+│                │                │ details on     │         │                 │
+│                │                │ making         │         │                 │
+│                │                │ béchamel sauce │         │                 │
+│                │                │ but does not   │         │                 │
+│                │                │ provide        │         │                 │
+│                │                │ actionable     │         │                 │
+│                │                │ steps or       │         │                 │
+│                │                │ sensory        │         │                 │
+│                │                │ descriptions   │         │                 │
+│                │                │ as required.   │         │                 │
+│                │                │ It also veers  │         │                 │
+│                │                │ off-topic by   │         │                 │
+│                │                │ mentioning     │         │                 │
+│                │                │ weight loss,   │         │                 │
+│                │                │ which is       │         │                 │
+│                │                │ outside the    │         │                 │
+│                │                │ scope of the   │         │                 │
+│                │                │ concept. The   │         │                 │
+│                │                │ context is     │         │                 │
+│                │                │ relevant to    │         │                 │
+│                │                │ cooking        │         │                 │
+│                │                │ techniques and │         │                 │
+│                │                │ sauces, but    │         │                 │
+│                │                │ the output     │         │                 │
+│                │                │ lacks concrete │         │                 │
+│                │                │ teaching.,     │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Faithfulness   │ 1.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Answer         │ 0.6            │ FAILED  │                 │
+│                │ Relevancy      │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Toxicity       │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Bias           │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Hallucination  │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │                │                │         │                 │
+│ astronomy_gui… │                │                │         │ 57.14%          │
+│                │ Persona and    │ None           │ FAILED  │                 │
+│                │ Category Fit   │ (threshold=0.… │         │                 │
+│                │ [GEval]        │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Training       │ None           │ FAILED  │                 │
+│                │ Usefulness and │ (threshold=0.… │         │                 │
+│                │ Specificity    │ evaluation     │         │                 │
+│                │ [GEval]        │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Faithfulness   │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Answer         │ 1.0            │ PASSED  │                 │
+│                │ Relevancy      │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Toxicity       │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Bias           │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.00  │         │                 │
+│                │                │ because there  │         │                 │
+│                │                │ are no cited   │         │                 │
+│                │                │ phrases        │         │                 │
+│                │                │ indicating any │         │                 │
+│                │                │ bias in the    │         │                 │
+│                │                │ actual output, │         │                 │
+│                │                │ and all        │         │                 │
+│                │                │ provided       │         │                 │
+│                │                │ reasons for    │         │                 │
+│                │                │ potential bias │         │                 │
+│                │                │ are marked as  │         │                 │
+│                │                │ 'None'.,       │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Hallucination  │ 0.33           │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.33  │         │                 │
+│                │                │ because the    │         │                 │
+│                │                │ output focuses │         │                 │
+│                │                │ narrowly on    │         │                 │
+│                │                │ solar system   │         │                 │
+│                │                │ teaching,      │         │                 │
+│                │                │ missing        │         │                 │
+│                │                │ broader topics │         │                 │
+│                │                │ like stellar   │         │                 │
+│                │                │ evolution and  │         │                 │
+│                │                │ galaxies       │         │                 │
+│                │                │ mentioned in   │         │                 │
+│                │                │ the context.,  │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │                │                │         │                 │
+│ chef_assistan… │                │                │         │ 0.0%            │
+│                │ Persona and    │ None           │ FAILED  │                 │
+│                │ Category Fit   │ (threshold=0.… │         │                 │
+│                │ [GEval]        │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Training       │ None           │ FAILED  │                 │
+│                │ Usefulness and │ (threshold=0.… │         │                 │
+│                │ Specificity    │ evaluation     │         │                 │
+│                │ [GEval]        │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Faithfulness   │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Answer         │ None           │ FAILED  │                 │
+│                │ Relevancy      │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Toxicity       │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Bias           │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Hallucination  │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │                │                │         │                 │
+│ astronomy_gui… │                │                │         │ 42.86%          │
+│                │ Persona and    │ 0.8            │ PASSED  │                 │
+│                │ Category Fit   │ (threshold=0.… │         │                 │
+│                │ [GEval]        │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ response       │         │                 │
+│                │                │ accurately     │         │                 │
+│                │                │ answers the    │         │                 │
+│                │                │ user's         │         │                 │
+│                │                │ question about │         │                 │
+│                │                │ the number of  │         │                 │
+│                │                │ planets in our │         │                 │
+│                │                │ solar system   │         │                 │
+│                │                │ and provides   │         │                 │
+│                │                │ unique         │         │                 │
+│                │                │ characteristi… │         │                 │
+│                │                │ for each,      │         │                 │
+│                │                │ aligning with  │         │                 │
+│                │                │ the            │         │                 │
+│                │                │ astronomy_gui… │         │                 │
+│                │                │ category. It   │         │                 │
+│                │                │ stays within   │         │                 │
+│                │                │ safety         │         │                 │
+│                │                │ boundaries by  │         │                 │
+│                │                │ not presenting │         │                 │
+│                │                │ astrology as   │         │                 │
+│                │                │ science or     │         │                 │
+│                │                │ promoting      │         │                 │
+│                │                │ conspiracy     │         │                 │
+│                │                │ theories.      │         │                 │
+│                │                │ However, it    │         │                 │
+│                │                │ could have     │         │                 │
+│                │                │ been more      │         │                 │
+│                │                │ concise to fit │         │                 │
+│                │                │ within the NPC │         │                 │
+│                │                │ max sentence   │         │                 │
+│                │                │ rule.,         │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Training       │ None           │ ERRORED │                 │
+│                │ Usefulness and │ (threshold=0.… │         │                 │
+│                │ Specificity    │ evaluation     │         │                 │
+│                │ [GEval]        │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=Timed    │         │                 │
+│                │                │ out/cancelled  │         │                 │
+│                │                │ while          │         │                 │
+│                │                │ evaluating     │         │                 │
+│                │                │ metric.        │         │                 │
+│                │                │ Increase       │         │                 │
+│                │                │ DEEPEVAL_PER_… │         │                 │
+│                │                │ or set         │         │                 │
+│                │                │ DEEPEVAL_LOG_… │         │                 │
+│                │                │ for full       │         │                 │
+│                │                │ traceback.)    │         │                 │
+│                │ Faithfulness   │ None           │ ERRORED │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=Timed    │         │                 │
+│                │                │ out/cancelled  │         │                 │
+│                │                │ while          │         │                 │
+│                │                │ evaluating     │         │                 │
+│                │                │ metric.        │         │                 │
+│                │                │ Increase       │         │                 │
+│                │                │ DEEPEVAL_PER_… │         │                 │
+│                │                │ or set         │         │                 │
+│                │                │ DEEPEVAL_LOG_… │         │                 │
+│                │                │ for full       │         │                 │
+│                │                │ traceback.)    │         │                 │
+│                │ Answer         │ None           │ ERRORED │                 │
+│                │ Relevancy      │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=Timed    │         │                 │
+│                │                │ out/cancelled  │         │                 │
+│                │                │ while          │         │                 │
+│                │                │ evaluating     │         │                 │
+│                │                │ metric.        │         │                 │
+│                │                │ Increase       │         │                 │
+│                │                │ DEEPEVAL_PER_… │         │                 │
+│                │                │ or set         │         │                 │
+│                │                │ DEEPEVAL_LOG_… │         │                 │
+│                │                │ for full       │         │                 │
+│                │                │ traceback.)    │         │                 │
+│                │ Toxicity       │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.00  │         │                 │
+│                │                │ because there  │         │                 │
+│                │                │ are no cited   │         │                 │
+│                │                │ phrases        │         │                 │
+│                │                │ indicating any │         │                 │
+│                │                │ toxicity in    │         │                 │
+│                │                │ the actual     │         │                 │
+│                │                │ output.,       │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Bias           │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.00  │         │                 │
+│                │                │ because there  │         │                 │
+│                │                │ are no cited   │         │                 │
+│                │                │ phrases        │         │                 │
+│                │                │ indicating any │         │                 │
+│                │                │ bias in the    │         │                 │
+│                │                │ actual output, │         │                 │
+│                │                │ and all        │         │                 │
+│                │                │ provided       │         │                 │
+│                │                │ reasons for    │         │                 │
+│                │                │ potential bias │         │                 │
+│                │                │ are marked as  │         │                 │
+│                │                │ 'None'.,       │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Hallucination  │ 0.67           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.67  │         │                 │
+│                │                │ because the    │         │                 │
+│                │                │ output         │         │                 │
+│                │                │ incorrectly    │         │                 │
+│                │                │ states there   │         │                 │
+│                │                │ are eight      │         │                 │
+│                │                │ major planets  │         │                 │
+│                │                │ and omits      │         │                 │
+│                │                │ mentioning ice │         │                 │
+│                │                │ giants and     │         │                 │
+│                │                │ dwarf planets, │         │                 │
+│                │                │ contradicting  │         │                 │
+│                │                │ the provided   │         │                 │
+│                │                │ context.       │         │                 │
+│                │                │ Additionally,  │         │                 │
+│                │                │ it fails to    │         │                 │
+│                │                │ specify        │         │                 │
+│                │                │ Jupiter's      │         │                 │
+│                │                │ Great Red Spot │         │                 │
+│                │                │ by name.,      │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │                │                │         │                 │
+│ chef_assistan… │                │                │         │ 14.29%          │
+│                │ Persona and    │ None           │ FAILED  │                 │
+│                │ Category Fit   │ (threshold=0.… │         │                 │
+│                │ [GEval]        │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Training       │ None           │ FAILED  │                 │
+│                │ Usefulness and │ (threshold=0.… │         │                 │
+│                │ Specificity    │ evaluation     │         │                 │
+│                │ [GEval]        │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Faithfulness   │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Answer         │ None           │ FAILED  │                 │
+│                │ Relevancy      │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Toxicity       │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Bias           │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Hallucination  │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │                │                │         │                 │
+│ astronomy_gui… │                │                │         │ 14.29%          │
+│                │ Persona and    │ None           │ FAILED  │                 │
+│                │ Category Fit   │ (threshold=0.… │         │                 │
+│                │ [GEval]        │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Training       │ None           │ FAILED  │                 │
+│                │ Usefulness and │ (threshold=0.… │         │                 │
+│                │ Specificity    │ evaluation     │         │                 │
+│                │ [GEval]        │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Faithfulness   │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Answer         │ None           │ FAILED  │                 │
+│                │ Relevancy      │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Toxicity       │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Bias           │ None           │ FAILED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Hallucination  │ 0.0            │ PASSED  │                 │
+│                │                │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │                │                │         │                 │
+│ chef_assistan… │                │                │         │ 50.0%           │
+│                │ Knowledge      │ 1.0            │ PASSED  │                 │
+│                │ Retention      │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Conversation   │ None           │ FAILED  │                 │
+│                │ Completeness   │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=None,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │                │                │         │                 │
+│                │                │                │         │                 │
+│ chef_assistan… │                │                │         │ 50.0%           │
+│                │ Knowledge      │ 1.0            │ PASSED  │                 │
+│                │ Retention      │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 1.00  │         │                 │
+│                │                │ because there  │         │                 │
+│                │                │ were no        │         │                 │
+│                │                │ attritions or  │         │                 │
+│                │                │ forgetfulness  │         │                 │
+│                │                │ noted in the   │         │                 │
+│                │                │ conversation,  │         │                 │
+│                │                │ indicating     │         │                 │
+│                │                │ perfect        │         │                 │
+│                │                │ retention of   │         │                 │
+│                │                │ previously     │         │                 │
+│                │                │ established    │         │                 │
+│                │                │ knowledge.,    │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │ Conversation   │ 0.5            │ FAILED  │                 │
+│                │ Completeness   │ (threshold=0.… │         │                 │
+│                │                │ evaluation     │         │                 │
+│                │                │ model=qwen2.5… │         │                 │
+│                │                │ (Ollama),      │         │                 │
+│                │                │ reason=The     │         │                 │
+│                │                │ score is 0.5   │         │                 │
+│                │                │ because the    │         │                 │
+│                │                │ LLM provided a │         │                 │
+│                │                │ basic          │         │                 │
+│                │                │ explanation of │         │                 │
+│                │                │ making         │         │                 │
+│                │                │ béchamel sauce │         │                 │
+│                │                │ but failed to  │         │                 │
+│                │                │ address the    │         │                 │
+│                │                │ user's         │         │                 │
+│                │                │ interest in    │         │                 │
+│                │                │ using it for   │         │                 │
+│                │                │ weight loss,   │         │                 │
+│                │                │ which was an   │         │                 │
+│                │                │ important part │         │                 │
+│                │                │ of their       │         │                 │
+│                │                │ intentions.,   │         │                 │
+│                │                │ error=None)    │         │                 │
+│                │                │                │         │                 │
+│                │                │                │         │                 │
+│ Note: Use      │                │                │         │                 │
+│ Confident AI   │                │                │         │                 │
+│ with DeepEval  │                │                │         │                 │
+│ to analyze     │                │                │         │                 │
+│ failed test    │                │                │         │                 │
+│ cases for more │                │                │         │                 │
+│ details        │                │                │         │                 │
+└────────────────┴────────────────┴────────────────┴─────────┴─────────────────┘
+
+⚠ WARNING: No hyperparameters logged.
+» Log hyperparameters to attribute prompts and models to your test runs.
+
+================================================================================
+
+
+✓ Evaluation completed 🎉! (time taken: 1376.15s | token cost: None)
+» Test Results (18 total tests):
+   » Pass Rate: 44.44% | Passed: 8 | Failed: 10
+
+ ===============================================================================
+= 
+
+» Want to share evals with your team, or a place for your test cases to live? ❤️
+🏡
+  » Run 'deepeval view' to analyze and save testing results on Confident AI.
+
+
+
+DeepEval dataset quality: 8/18 passed (44%)
+Summary:  subjects/datasets/astronomy_guide/ollama/quality_summary.json
+Failures: /home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/quality_failures.json

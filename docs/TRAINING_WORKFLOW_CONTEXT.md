@@ -39,9 +39,9 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 
 **Key CLI flags:**
 ```bash
-./ucore generate subjects/history_guide.json
-./ucore generate subjects/history_guide.json --technique template
-./ucore generate subjects/history_guide.json --technique ollama --model llama3.1
+./ucore generate subjects/NPC_specs/history_guide.json
+./ucore generate subjects/NPC_specs/history_guide.json --technique template
+./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1
 ```
 
 ### Stage 2: Sanitize Dataset
@@ -67,7 +67,7 @@ This is the local build-loop gate for dataset generation quality, not a final
 model validation step.
 
 ```bash
-./ucore dataset-eval subjects/history_guide.json \
+./ucore dataset-eval subjects/NPC_specs/history_guide.json \
   --technique template \
   --judge-model qwen2.5:7b \
   --cases-per-category 1
@@ -149,13 +149,13 @@ Compares two models (baseline vs candidate) or measures standalone:
   --baseline exports/history_guide/round1/history_guide-lora-f16.gguf \
   --candidate exports/history_guide/history_guide-lora-f16.gguf \
   --base-model /path/to/llama-3.2-3b-instruct-q4_k_m.gguf \
-  --spec subjects/history_guide.json \
+  --spec subjects/NPC_specs/history_guide.json \
   --report-html \
   --feedback-json eval/results/feedback/history_guide_round2.json
 
 # Standalone measurement (no comparison)
 ./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf \
-  --spec subjects/history_guide.json --report-html
+  --spec subjects/NPC_specs/history_guide.json --report-html
 ```
 
 **Key details:**
@@ -189,7 +189,7 @@ Closes the loop between evaluation and dataset generation:
 
 ## 2. Subject Spec Format
 
-Located in `subjects/*.json`. Structure (using history_guide as example):
+Located in `subjects/NPC_specs/*.json`. Structure (using history_guide as example):
 
 ```json
 {
@@ -262,28 +262,28 @@ source unsloth_env/bin/activate
 
 # 3. Index reference docs into Onyx
 python scripts/onyx_index_repo.py --npc-key new_npc \
-  --glob subjects/new_npc.json \
+  --glob subjects/NPC_specs/new_npc.json \
   --glob subjects/reference_docs/new_npc_primer.md
 
 # 4. Quick smoke test
-./ucore pipeline subjects/new_npc.json --preset smoke
+./ucore pipeline subjects/NPC_specs/new_npc.json --preset smoke
 
 # 5. Full production pipeline
-./ucore generate subjects/new_npc.json --technique onyx
+./ucore generate subjects/NPC_specs/new_npc.json --technique onyx
 ./ucore sanitize subjects/datasets/new_npc/onyx/train.jsonl
-./ucore train subjects/new_npc.json --technique onyx --preset fast-3b --export-gguf
+./ucore train subjects/NPC_specs/new_npc.json --technique onyx --preset fast-3b --export-gguf
 ./ucore evaluate --baseline exports/new_npc/new_npc-lora-f16.gguf \
-  --spec subjects/new_npc.json --report-html
+  --spec subjects/NPC_specs/new_npc.json --report-html
 
 # 6. W&B tracking
-./ucore train subjects/new_npc.json --technique onyx --preset fast-3b --wandb --export-gguf
+./ucore train subjects/NPC_specs/new_npc.json --technique onyx --preset fast-3b --wandb --export-gguf
 
 # 7. Compare two rounds
 ./ucore evaluate \
   --baseline exports/new_npc/round1/new_npc-lora-f16.gguf \
   --candidate exports/new_npc/new_npc-lora-f16.gguf \
   --base-model Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf \
-  --spec subjects/new_npc.json --report-html
+  --spec subjects/NPC_specs/new_npc.json --report-html
 
 # 8. Feedback loop
 ./ucore feedback eval/results/feedback/new_npc_round2.json --dry-run
@@ -308,7 +308,7 @@ python scripts/onyx_index_repo.py --npc-key new_npc \
 ## 5. Data Flow Diagram
 
 ```
-subjects/{npc_key}.json ──── subjects/reference_docs/{npc_key}_primer.md
+subjects/NPC_specs/{npc_key}.json ──── subjects/reference_docs/{npc_key}_primer.md
           │
           ▼
   scripts/onyx_index_repo.py ──► Onyx (vector DB)
@@ -344,13 +344,13 @@ subjects/{npc_key}.json ──── subjects/reference_docs/{npc_key}_primer.md
 
 Training configs are intentionally simple now:
 
-1. **Spec-derived base**: `scripts/train.py` builds the effective config from `subjects/{npc}.json`, the detected canonical dataset path, and the default Llama 3.2 3B model.
+1. **Spec-derived base**: `scripts/train.py` builds the effective config from `subjects/NPC_specs/{npc}.json`, the detected canonical dataset path, and the default Llama 3.2 3B model.
 2. **Preset** (`configs/presets/{name}.yaml`) overrides hyperparameters. Current active presets are `fast-3b`, `safe-any`, `smoke`, and `wandb`.
 3. **CLI flags** (`--lr`, `--epochs`, `--wandb`, etc.) override everything above.
 
 Use one training preset plus `--wandb` as a flag:
 ```bash
-./ucore train subjects/history_guide.json --preset fast-3b --wandb --export-gguf
+./ucore train subjects/NPC_specs/history_guide.json --preset fast-3b --wandb --export-gguf
 ```
 
 `configs/lora-sft-base.yaml` remains as the canonical base config for validation/planning tools (`validate_config.py`, `plan_execution.py`). Duplicate top-level model configs and old Qwen/0.5B/1B presets were removed to avoid drift.
@@ -381,14 +381,14 @@ Onyx is a local RAG knowledge base. The pipeline uses it to:
 ```bash
 python scripts/onyx_index_repo.py     # index project-wide
 python scripts/onyx_index_repo.py --npc-key history_guide \
-  --glob subjects/history_guide.json \
+  --glob subjects/NPC_specs/history_guide.json \
   --glob subjects/reference_docs/history_primer.md
 python scripts/onyx_index_repo.py --dry-run  # preview
 ```
 
 **Onyx-backed generation:**
 ```bash
-./ucore generate subjects/history_guide.json \
+./ucore generate subjects/NPC_specs/history_guide.json \
   --technique onyx \
   --onyx-max-results 3 \
   --onyx-max-context-chars 1200 \
@@ -405,6 +405,6 @@ python scripts/onyx_index_repo.py --dry-run  # preview
 | `AGENTS.md` | AI agent reference (architecture, commands, logic map) |
 | `docs/TRAINING_WORKFLOW_CONTEXT.md` | This document — full pipeline detail |
 | `docs/ONYX_WORKFLOW.md` | Onyx setup, indexing, and generation workflow |
-| `subjects/*.json` | NPC specification files |
+| `subjects/NPC_specs/*.json` | NPC specification files |
 | `configs/*.yaml` | Training configuration base files |
 | `configs/presets/*.yaml` | Training presets (hyperparameter profiles) |

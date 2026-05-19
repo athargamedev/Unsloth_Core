@@ -1,0 +1,185 @@
+Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py subjects/history_guide.json --model qwen2.5:7b --batch-size 2 --check-health
+2026-05-19 02:30:27,602 [INFO] Checking Ollama health...
+2026-05-19 02:30:27,604 [INFO] ✓ Ollama is running
+2026-05-19 02:30:27,605 [INFO] Available models: qwen2.5
+2026-05-19 02:30:27,606 [INFO] Loading spec: subjects/history_guide.json
+2026-05-19 02:30:27,606 [INFO] Generating dataset for NPC: HistoryGuide
+2026-05-19 02:30:27,606 [INFO] Subject: World history: ancient civilizations, classical antiquity, medieval period, Renaissance, modern era, world wars, historical methodology
+2026-05-19 02:30:27,606 [INFO] Model: qwen2.5:7b
+2026-05-19 02:30:27,606 [INFO] Initializing generator...
+2026-05-19 02:30:27,606 [INFO] Generating 132 examples with model 'qwen2.5:7b'...
+2026-05-19 02:30:27,606 [INFO] This may take several minutes depending on hardware and model size
+
+/home/athar/Projects/Unsloth_Core/scripts/generate_dataset_ollama.py:598: DeprecationWarning: There is no current event loop
+  loop = asyncio.get_event_loop()
+2026-05-19 02:30:45,233 [INFO] Progress: 1/132 (0.8%) | Elapsed: 17s | ETA: 38m 29s [identity]
+2026-05-19 02:30:45,233 [INFO]   world wars
+2026-05-19 02:31:12,362 [INFO] Progress: 3/132 (2.3%) | Elapsed: 44s | ETA: 32m 4s [identity]
+2026-05-19 02:31:12,362 [INFO]   industrial revolution
+2026-05-19 02:31:54,576 [INFO] Progress: 5/132 (3.8%) | Elapsed: 1m 26s | ETA: 36m 49s [identity]
+2026-05-19 02:31:54,576 [INFO]   timeline analysis
+2026-05-19 02:32:32,778 [INFO] Progress: 7/132 (5.3%) | Elapsed: 2m 5s | ETA: 37m 15s [identity]
+2026-05-19 02:32:32,778 [INFO]   world history
+2026-05-19 02:33:19,847 [INFO] Progress: 9/132 (6.8%) | Elapsed: 2m 52s | ETA: 39m 13s [identity]
+2026-05-19 02:33:19,847 [INFO]   renaissance
+2026-05-19 02:34:04,382 [INFO] Progress: 11/132 (8.3%) | Elapsed: 3m 36s | ETA: 39m 44s [identity]
+2026-05-19 02:34:04,382 [INFO]   renaissance & reformation
+2026-05-19 02:34:36,635 [INFO] Progress: 13/132 (9.8%) | Elapsed: 4m 9s | ETA: 37m 59s [teaching]
+2026-05-19 02:34:36,635 [INFO]   early modern era
+2026-05-19 02:34:42,893 [INFO] Progress: 14/132 (10.6%) | Elapsed: 4m 15s | ETA: 35m 51s [teaching]
+2026-05-19 02:34:42,893 [INFO]   historical thinking skills
+2026-05-19 02:35:29,359 [INFO] Progress: 15/132 (11.4%) | Elapsed: 5m 1s | ETA: 39m 13s [teaching]
+2026-05-19 02:35:29,359 [INFO]   safety boundaries & misconceptions
+2026-05-19 02:36:15,569 [INFO] Progress: 17/132 (12.9%) | Elapsed: 5m 47s | ETA: 39m 13s [teaching]
+2026-05-19 02:36:15,569 [INFO]   roman empire
+2026-05-19 02:36:54,525 [INFO] Progress: 19/132 (14.4%) | Elapsed: 6m 26s | ETA: 38m 21s [teaching]
+2026-05-19 02:36:54,525 [INFO]   world wars
+2026-05-19 02:37:43,698 [INFO] Progress: 21/132 (15.9%) | Elapsed: 7m 16s | ETA: 38m 25s [teaching]
+2026-05-19 02:37:43,698 [INFO]   historical methodology
+2026-05-19 02:38:25,509 [INFO] Progress: 23/132 (17.4%) | Elapsed: 7m 57s | ETA: 37m 44s [teaching]
+2026-05-19 02:38:25,509 [INFO]   cause and effect
+2026-05-19 02:39:09,670 [INFO] Progress: 25/132 (18.9%) | Elapsed: 8m 42s | ETA: 37m 14s [teaching]
+2026-05-19 02:39:09,670 [INFO]   classical antiquity
+2026-05-19 02:39:55,347 [INFO] Progress: 27/132 (20.5%) | Elapsed: 9m 27s | ETA: 36m 47s [teaching]
+2026-05-19 02:39:55,347 [INFO]   modern era
+2026-05-19 02:40:33,426 [INFO] Progress: 29/132 (22.0%) | Elapsed: 10m 5s | ETA: 35m 51s [teaching]
+2026-05-19 02:40:33,426 [INFO]   early modern era
+2026-05-19 02:41:07,896 [INFO] Progress: 31/132 (23.5%) | Elapsed: 10m 40s | ETA: 34m 46s [teaching]
+2026-05-19 02:41:07,896 [INFO]   safety boundaries & misconceptions
+2026-05-19 02:41:14,007 [INFO] Progress: 32/132 (24.2%) | Elapsed: 10m 46s | ETA: 33m 40s [teaching]
+2026-05-19 02:41:14,007 [INFO]   ancient civilizations
+2026-05-19 02:41:50,684 [INFO] Progress: 33/132 (25.0%) | Elapsed: 11m 23s | ETA: 34m 9s [teaching]
+2026-05-19 02:41:50,684 [INFO]   roman empire
+2026-05-19 02:42:35,164 [INFO] Progress: 35/132 (26.5%) | Elapsed: 12m 7s | ETA: 33m 36s [teaching]
+2026-05-19 02:42:35,164 [INFO]   world wars
+2026-05-19 02:43:20,994 [INFO] Progress: 37/132 (28.0%) | Elapsed: 12m 53s | ETA: 33m 5s [teaching]
+2026-05-19 02:43:20,994 [INFO]   historical methodology
+2026-05-19 02:43:53,756 [INFO] Progress: 39/132 (29.5%) | Elapsed: 13m 26s | ETA: 32m 2s [teaching]
+2026-05-19 02:43:53,756 [INFO]   cause and effect
+2026-05-19 02:43:59,277 [INFO] Progress: 40/132 (30.3%) | Elapsed: 13m 31s | ETA: 31m 6s [teaching]
+2026-05-19 02:43:59,277 [INFO]   world history
+2026-05-19 02:45:22,676 [INFO] Progress: 41/132 (31.1%) | Elapsed: 14m 55s | ETA: 33m 6s [teaching]
+2026-05-19 02:45:22,676 [INFO]   classical antiquity
+2026-05-19 02:46:02,308 [INFO] Progress: 43/132 (32.6%) | Elapsed: 15m 34s | ETA: 32m 14s [teaching]
+2026-05-19 02:46:02,308 [INFO]   modern era
+2026-05-19 02:46:08,182 [INFO] Progress: 44/132 (33.3%) | Elapsed: 15m 40s | ETA: 31m 21s [teaching]
+2026-05-19 02:46:08,182 [INFO]   renaissance & reformation
+2026-05-19 02:46:35,497 [INFO] Progress: 45/132 (34.1%) | Elapsed: 16m 7s | ETA: 31m 11s [teaching]
+2026-05-19 02:46:35,497 [INFO]   early modern era
+2026-05-19 02:48:11,059 [INFO] Progress: 47/132 (35.6%) | Elapsed: 17m 43s | ETA: 32m 3s [teaching]
+2026-05-19 02:48:11,059 [INFO]   safety boundaries & misconceptions
+2026-05-19 02:48:59,449 [INFO] Progress: 49/132 (37.1%) | Elapsed: 18m 31s | ETA: 31m 23s [teaching]
+2026-05-19 02:48:59,449 [INFO]   roman empire
+2026-05-19 02:49:38,836 [INFO] Progress: 51/132 (38.6%) | Elapsed: 19m 11s | ETA: 30m 28s [teaching]
+2026-05-19 02:49:38,836 [INFO]   world wars
+2026-05-19 02:49:43,848 [INFO] Progress: 52/132 (39.4%) | Elapsed: 19m 16s | ETA: 29m 38s [teaching]
+2026-05-19 02:49:43,848 [INFO]   industrial revolution
+2026-05-19 02:51:14,971 [INFO] Progress: 53/132 (40.2%) | Elapsed: 20m 47s | ETA: 30m 59s [teaching]
+2026-05-19 02:51:14,971 [INFO]   historical methodology
+2026-05-19 02:52:04,203 [INFO] Progress: 55/132 (41.7%) | Elapsed: 21m 36s | ETA: 30m 15s [teaching]
+2026-05-19 02:52:04,203 [INFO]   cause and effect
+2026-05-19 02:52:42,829 [INFO] Progress: 57/132 (43.2%) | Elapsed: 22m 15s | ETA: 29m 16s [teaching]
+2026-05-19 02:52:42,829 [INFO]   classical antiquity
+2026-05-19 02:53:49,683 [INFO] Progress: 59/132 (44.7%) | Elapsed: 23m 22s | ETA: 28m 54s [teaching]
+2026-05-19 02:53:49,683 [INFO]   modern era
+2026-05-19 02:55:30,941 [INFO] Progress: 61/132 (46.2%) | Elapsed: 25m 3s | ETA: 29m 9s [teaching]
+2026-05-19 02:55:30,941 [INFO]   early modern era
+2026-05-19 02:55:38,139 [INFO] Progress: 62/132 (47.0%) | Elapsed: 25m 10s | ETA: 28m 25s [teaching]
+2026-05-19 02:55:38,139 [INFO]   historical thinking skills
+2026-05-19 02:56:19,032 [INFO] Progress: 63/132 (47.7%) | Elapsed: 25m 51s | ETA: 28m 19s [teaching]
+2026-05-19 02:56:19,032 [INFO]   safety boundaries & misconceptions
+2026-05-19 02:56:45,013 [INFO] Progress: 65/132 (49.2%) | Elapsed: 26m 17s | ETA: 27m 5s [teaching]
+2026-05-19 02:56:45,013 [INFO]   roman empire
+2026-05-19 02:56:51,017 [INFO] Progress: 66/132 (50.0%) | Elapsed: 26m 23s | ETA: 26m 23s [teaching]
+2026-05-19 02:56:51,017 [INFO]   medieval period
+2026-05-19 02:58:20,065 [INFO] Progress: 67/132 (50.8%) | Elapsed: 27m 52s | ETA: 27m 2s [teaching]
+2026-05-19 02:58:20,065 [INFO]   world wars
+2026-05-19 02:59:05,730 [INFO] Progress: 69/132 (52.3%) | Elapsed: 28m 38s | ETA: 26m 8s [dialogue]
+2026-05-19 02:59:05,730 [INFO]   industrial revolution
+2026-05-19 02:59:30,921 [INFO] Progress: 71/132 (53.8%) | Elapsed: 29m 3s | ETA: 24m 57s [dialogue]
+2026-05-19 02:59:30,921 [INFO]   timeline analysis
+2026-05-19 03:00:58,779 [INFO] Progress: 73/132 (55.3%) | Elapsed: 30m 31s | ETA: 24m 39s [dialogue]
+2026-05-19 03:00:58,779 [INFO]   world history
+2026-05-19 03:01:04,938 [INFO] Progress: 74/132 (56.1%) | Elapsed: 30m 37s | ETA: 24m 0s [dialogue]
+2026-05-19 03:01:04,938 [INFO]   classical antiquity
+2026-05-19 03:01:42,889 [INFO] Progress: 75/132 (56.8%) | Elapsed: 31m 15s | ETA: 23m 45s [dialogue]
+2026-05-19 03:01:42,889 [INFO]   renaissance
+2026-05-19 03:01:48,441 [INFO] Progress: 76/132 (57.6%) | Elapsed: 31m 20s | ETA: 23m 5s [dialogue]
+2026-05-19 03:01:48,442 [INFO]   modern era
+2026-05-19 03:02:07,692 [INFO] Progress: 77/132 (58.3%) | Elapsed: 31m 40s | ETA: 22m 37s [dialogue]
+2026-05-19 03:02:07,692 [INFO]   renaissance & reformation
+2026-05-19 03:03:37,722 [INFO] Progress: 79/132 (59.8%) | Elapsed: 33m 10s | ETA: 22m 15s [dialogue]
+2026-05-19 03:03:37,722 [INFO]   historical thinking skills
+2026-05-19 03:03:48,077 [INFO] Progress: 81/132 (61.4%) | Elapsed: 33m 20s | ETA: 20m 59s [dialogue]
+2026-05-19 03:03:48,077 [INFO]   ancient civilizations
+2026-05-19 03:03:54,519 [INFO] Progress: 83/132 (62.9%) | Elapsed: 33m 26s | ETA: 19m 44s [dialogue]
+2026-05-19 03:03:54,519 [INFO]   medieval period
+2026-05-19 03:05:02,297 [INFO] Progress: 84/132 (63.6%) | Elapsed: 34m 34s | ETA: 19m 45s [dialogue]
+2026-05-19 03:05:02,297 [INFO]   world wars
+2026-05-19 03:05:07,659 [INFO] Progress: 85/132 (64.4%) | Elapsed: 34m 40s | ETA: 19m 10s [dialogue]
+2026-05-19 03:05:07,659 [INFO]   industrial revolution
+2026-05-19 03:06:22,235 [INFO] Progress: 86/132 (65.2%) | Elapsed: 35m 54s | ETA: 19m 12s [dialogue]
+2026-05-19 03:06:22,235 [INFO]   historical methodology
+2026-05-19 03:06:46,033 [INFO] Progress: 88/132 (66.7%) | Elapsed: 36m 18s | ETA: 18m 9s [dialogue]
+2026-05-19 03:06:46,033 [INFO]   cause and effect
+2026-05-19 03:08:10,870 [INFO] Progress: 90/132 (68.2%) | Elapsed: 37m 43s | ETA: 17m 36s [dialogue]
+2026-05-19 03:08:10,870 [INFO]   classical antiquity
+2026-05-19 03:09:31,683 [INFO] Progress: 92/132 (69.7%) | Elapsed: 39m 4s | ETA: 16m 59s [dialogue]
+2026-05-19 03:09:31,683 [INFO]   modern era
+2026-05-19 03:10:04,363 [INFO] Progress: 94/132 (71.2%) | Elapsed: 39m 36s | ETA: 16m 0s [dialogue]
+2026-05-19 03:10:04,364 [INFO]   early modern era
+2026-05-19 03:10:10,112 [INFO] Progress: 95/132 (72.0%) | Elapsed: 39m 42s | ETA: 15m 27s [dialogue]
+2026-05-19 03:10:10,112 [INFO]   historical thinking skills
+2026-05-19 03:11:24,924 [INFO] Progress: 96/132 (72.7%) | Elapsed: 40m 57s | ETA: 15m 21s [dialogue]
+2026-05-19 03:11:24,924 [INFO]   safety boundaries & misconceptions
+2026-05-19 03:12:49,308 [INFO] Progress: 98/132 (74.2%) | Elapsed: 42m 21s | ETA: 14m 41s [dialogue]
+2026-05-19 03:12:49,308 [INFO]   roman empire
+2026-05-19 03:14:20,880 [INFO] Progress: 100/132 (75.8%) | Elapsed: 43m 53s | ETA: 14m 2s [dialogue]
+2026-05-19 03:14:20,880 [INFO]   world wars
+2026-05-19 03:16:02,743 [INFO] Progress: 102/132 (77.3%) | Elapsed: 45m 35s | ETA: 13m 24s [quest]
+2026-05-19 03:16:02,743 [INFO]   medieval period
+2026-05-19 03:17:27,512 [INFO] Progress: 104/132 (78.8%) | Elapsed: 46m 59s | ETA: 12m 39s [quest]
+2026-05-19 03:17:27,512 [INFO]   industrial revolution
+2026-05-19 03:18:55,238 [INFO] Progress: 106/132 (80.3%) | Elapsed: 48m 27s | ETA: 11m 53s [quest]
+2026-05-19 03:18:55,238 [INFO]   timeline analysis
+2026-05-19 03:19:00,918 [INFO] Progress: 107/132 (81.1%) | Elapsed: 48m 33s | ETA: 11m 20s [quest]
+2026-05-19 03:19:00,918 [INFO]   cause and effect
+2026-05-19 03:20:40,104 [INFO] Progress: 108/132 (81.8%) | Elapsed: 50m 12s | ETA: 11m 9s [quest]
+2026-05-19 03:20:40,104 [INFO]   world history
+2026-05-19 03:20:48,008 [INFO] Progress: 109/132 (82.6%) | Elapsed: 50m 20s | ETA: 10m 37s [quest]
+2026-05-19 03:20:48,008 [INFO]   classical antiquity
+2026-05-19 03:22:05,576 [INFO] Progress: 110/132 (83.3%) | Elapsed: 51m 37s | ETA: 10m 19s [quest]
+2026-05-19 03:22:05,576 [INFO]   renaissance
+2026-05-19 03:23:26,467 [INFO] Progress: 112/132 (84.8%) | Elapsed: 52m 58s | ETA: 9m 27s [quest]
+2026-05-19 03:23:26,467 [INFO]   renaissance & reformation
+2026-05-19 03:24:03,706 [INFO] Progress: 114/132 (86.4%) | Elapsed: 53m 36s | ETA: 8m 27s [quest]
+2026-05-19 03:24:03,706 [INFO]   historical thinking skills
+2026-05-19 03:24:18,976 [INFO] Progress: 116/132 (87.9%) | Elapsed: 53m 51s | ETA: 7m 25s [quest]
+2026-05-19 03:24:18,976 [INFO]   ancient civilizations
+2026-05-19 03:25:32,198 [INFO] Progress: 118/132 (89.4%) | Elapsed: 55m 4s | ETA: 6m 32s [refusal]
+2026-05-19 03:25:32,198 [INFO]   renaissance
+2026-05-19 03:26:00,621 [INFO] Progress: 120/132 (90.9%) | Elapsed: 55m 33s | ETA: 5m 33s [refusal]
+2026-05-19 03:26:00,621 [INFO]   renaissance & reformation
+2026-05-19 03:26:18,275 [INFO] Progress: 122/132 (92.4%) | Elapsed: 55m 50s | ETA: 4m 34s [refusal]
+2026-05-19 03:26:18,275 [INFO]   historical thinking skills
+2026-05-19 03:27:37,173 [INFO] Progress: 124/132 (93.9%) | Elapsed: 57m 9s | ETA: 3m 41s [refusal]
+2026-05-19 03:27:37,173 [INFO]   ancient civilizations
+2026-05-19 03:28:06,408 [INFO] Progress: 126/132 (95.5%) | Elapsed: 57m 38s | ETA: 2m 44s [refusal]
+2026-05-19 03:28:06,408 [INFO]   medieval period
+2026-05-19 03:28:22,800 [INFO] Progress: 128/132 (97.0%) | Elapsed: 57m 55s | ETA: 1m 48s [refusal]
+2026-05-19 03:28:22,800 [INFO]   industrial revolution
+2026-05-19 03:28:37,892 [INFO] Progress: 130/132 (98.5%) | Elapsed: 58m 10s | ETA: 53s [refusal]
+2026-05-19 03:28:37,892 [INFO]   timeline analysis
+2026-05-19 03:28:50,577 [INFO] Progress: 132/132 (100.0%) | Elapsed: 58m 22s | ETA: 0s [refusal]
+2026-05-19 03:28:50,578 [INFO]   world history
+2026-05-19 03:28:50,578 [INFO] 
+======================================================================
+2026-05-19 03:28:50,578 [INFO] Generation complete: 132 examples
+2026-05-19 03:28:50,578 [INFO] Stats: 132/132 successful (100.0% success rate, 0 errors)
+2026-05-19 03:28:50,578 [INFO] ======================================================================
+2026-05-19 03:28:50,579 [INFO] ✓ Wrote 117 training examples to /home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/train.jsonl
+2026-05-19 03:28:50,579 [INFO] ✓ Wrote 15 validation examples to /home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/validation.jsonl
+2026-05-19 03:28:50,580 [INFO] ✓ Wrote manifest to /home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/train_manifest.json
+2026-05-19 03:28:50,580 [INFO] 
+✓ Dataset generation complete!
+{"ts": "2026-05-19T06:28:50.580096+00:00", "event": "dataset_generated", "npc_key": "history_guide", "total": 132, "train": 117, "validation": 15, "technique": "ollama"}

@@ -84,6 +84,12 @@ def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, jud
     failures: list[dict] = []
     metric_totals: dict[str, dict[str, float]] = {}
     category_totals: dict[str, dict[str, int]] = {}
+    result_identifier = result.get("identifier")
+    requested_identifier = None
+    if "--identifier" in command:
+        idx = command.index("--identifier")
+        if idx + 1 < len(command):
+            requested_identifier = command[idx + 1]
 
     for case in test_cases:
         metadata = case.get("metadata") or {}
@@ -134,7 +140,8 @@ def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, jud
         "npc_key": npc_key,
         "technique": technique,
         "judge_model": judge_model,
-        "deepeval_identifier": result.get("identifier"),
+        "deepeval_identifier": requested_identifier or result_identifier,
+        "deepeval_result_identifier": result_identifier,
         "command": command,
         "total": total,
         "passed": passed,
@@ -189,6 +196,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
             "DEEPEVAL_OLLAMA_BASE_URL": args.ollama_base_url,
             "DEEPEVAL_OLLAMA_TEMPERATURE": str(args.judge_temperature),
             "DEEPEVAL_TELEMETRY_OPT_OUT": "1",
+            "DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE": os.getenv("DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE", "600"),
         }
     )
     if args.categories:
