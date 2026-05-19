@@ -47,6 +47,7 @@ def load_spec(spec_path: Path) -> dict:
     spec = load_json(spec_path)
     if "npc_key" not in spec:
         raise SystemExit(f"Error: missing npc_key in {spec_path}")
+    spec.setdefault("__path__", str(spec_path))
     return spec
 
 
@@ -156,6 +157,114 @@ def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, jud
     return summary, failures
 
 
+def load_optional_json(path: Path) -> dict | None:
+    if not path.exists():
+        return None
+    try:
+        return load_json(path)
+    except Exception:
+        return None
+
+
+def derive_feedback_signals(summary: dict, failures: list[dict], dataset_summary: dict, expected_distribution: dict[str, int]) -> list[dict]:
+    signals: list[dict] = []
+    for gap in summary.get("distribution_gaps", []) or []:
+        signals.append({
+            "type": "distribution_gap",
+            "severity": "high" if gap.get("shortfall", 0) >= gap.get("target", 0) / 2 else "medium",
+            "category": gap.get("category"),
+            "target": gap.get("target", 0),
+            "actual": gap.get("actual", 0),
+            "shortfall": gap.get("shortfall", 0),
+            "suggested_action": "regenerate_more_examples_for_category",
+        })
+
+    for category, stats in summary.get("categories", {}).items():
+        pass_rate = stats.get("pass_rate")
+        if pass_rate is not None and pass_rate < 0.75:
+            signals.append({
+                "type": "deepeval_category_weakness",
+                "severity": "medium",
+                "category": category,
+                "pass_rate": pass_rate,
+                "suggested_action": "inspect_category_failures",
+            })
+
+    by_metric_failure: dict[str, int] = {}
+    for failure in failures:
+        metric = failure.get("metric", {}).get("name") or "unknown"
+        by_metric_failure[metric] = by_metric_failure.get(metric, 0) + 1
+    for metric_name, count in sorted(by_metric_failure.items(), key=lambda item: (-item[1], item[0])):
+        signals.append({
+            "type": "deepeval_metric_failure",
+            "severity": "medium" if count < 5 else "high",
+            "metric": metric_name,
+            "count": count,
+            "suggested_action": "review_failed_rows_and_prompts",
+        })
+
+    if dataset_summary.get("unknown_rows", 0):
+        signals.append({
+            "type": "dataset_parse_noise",
+            "severity": "high",
+            "unknown_rows": dataset_summary.get("unknown_rows", 0),
+            "suggested_action": "fix_sanitizer_or_generator_output_shape",
+        })
+
+    if not signals and summary.get("pass_rate", 0) >= 0.9 and not summary.get("distribution_gaps"):
+        signals.append({
+            "type": "healthy",
+            "severity": "low",
+            "suggested_action": "no_action_needed",
+        })
+
+    return signals
+
+
+def build_combined_quality_report(
+    *,
+    spec: dict,
+    technique: str,
+    clean_path: Path,
+    manifest_path: Path,
+    summary: dict,
+    failures: list[dict],
+) -> dict:
+    manifest = load_optional_json(manifest_path) or {}
+    dataset_summary = summary.get("dataset_summary") or summarize_jsonl_dataset(clean_path)
+    expected_distribution = summary.get("expected_distribution") or expected_examples_per_category(spec)
+    distribution_gaps = summary.get("distribution_gaps") or calculate_distribution_gaps(expected_distribution, dataset_summary.get("by_category", {}))
+    combined = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "npc_key": spec.get("npc_key"),
+        "technique": technique,
+        "spec": {
+            "path": spec.get("__path__"),
+            "reference_doc": spec.get("reference_doc"),
+            "system_prompt": spec.get("system_prompt"),
+        },
+        "manifest": manifest,
+        "sanitizer": {
+            "manifest": manifest.get("sanitizer", {}),
+            "input": manifest.get("input", {}),
+            "statistics": manifest.get("statistics", {}),
+            "discarded": manifest.get("discarded", {}),
+        },
+        "dataset": {
+            "path": str(clean_path),
+            "summary": dataset_summary,
+            "expected_distribution": expected_distribution,
+            "distribution_gaps": distribution_gaps,
+        },
+        "deepeval": {
+            "summary": summary,
+            "failures": failures,
+        },
+        "feedback_signals": derive_feedback_signals(summary, failures, dataset_summary, expected_distribution),
+    }
+    return combined
+
+
 def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     npc_key = spec["npc_key"]
     clean_path = dataset_dir(npc_key, args.technique) / "train_clean.jsonl"
@@ -230,13 +339,24 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     output_dir = dataset_dir(npc_key, args.technique)
     summary_path = Path(args.output) if args.output else output_dir / "quality_summary.json"
     failures_path = output_dir / "quality_failures.json"
+    report_path = output_dir / "quality_report.json"
+    combined_report = build_combined_quality_report(
+        spec=spec,
+        technique=args.technique,
+        clean_path=clean_path,
+        manifest_path=output_dir / "train_manifest.json",
+        summary=summary,
+        failures=failures,
+    )
     write_json(summary_path, summary)
     write_json(failures_path, failures)
+    write_json(report_path, combined_report)
 
     print()
     print(f"DeepEval dataset quality: {summary['passed']}/{summary['total']} passed ({summary['pass_rate']:.0%})")
     print(f"Summary:  {summary_path}")
     print(f"Failures: {failures_path}")
+    print(f"Report:   {report_path}")
 
     if args.soft_fail:
         return 0
