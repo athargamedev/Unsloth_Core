@@ -11,11 +11,11 @@
 - `subjects/NPC_specs/*.json`
 - `subjects/reference_docs/*.md`
 - `subjects/schemas/sft_record.schema.json`
-- `scripts/generate_dataset.py`
-- `scripts/sanitize_dataset.py`
-- `scripts/validate_subject_spec.py`
-- `scripts/dataset_eval.py`
-- `scripts/feedback_loop.py`
+- `scripts/dataset/generate_dataset.py`
+- `scripts/dataset/sanitize_dataset.py`
+- `scripts/dataset/validate_subject_spec.py`
+- `scripts/dataset/dataset_eval.py`
+- `scripts/training/feedback_loop.py`
 - `tests/evals/test_dataset_generation_quality.py`
 - `tests/evals/metrics.py`
 

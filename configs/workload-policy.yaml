@@ -1,5 +1,5 @@
 # Workload placement policy for local vs remote execution.
-# Used by scripts/plan_execution.py.
+# Used by scripts/orchestration/plan_execution.py.
 
 version: 1
 

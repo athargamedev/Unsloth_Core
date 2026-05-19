@@ -187,16 +187,16 @@ For offline or CI/CD workflows, the `wb_report.py` script generates equivalent m
 
 ```bash
 # Latest eval run for each active NPC
-python scripts/wb_report.py
+python scripts/evaluation/wb_report.py
 
 # Specific NPC only
-python scripts/wb_report.py --npc history_guide
+python scripts/evaluation/wb_report.py --npc history_guide
 
 # Specific W&B run
-python scripts/wb_report.py --run-id <run_id>
+python scripts/evaluation/wb_report.py --run-id <run_id>
 
 # Custom output path
-python scripts/wb_report.py --output eval/reports/wandb_portfolio_$(date +%F).md
+python scripts/evaluation/wb_report.py --output eval/reports/wandb_portfolio_$(date +%F).md
 ```
 
 **Requirements:**
@@ -206,7 +206,7 @@ pip install wandb
 wandb.login()  # via ~/.netrc or WANDB_API_KEY env var
 ```
 
-See `scripts/wb_report.py` for the full interface.
+See `scripts/evaluation/wb_report.py` for the full interface.
 
 ---
 

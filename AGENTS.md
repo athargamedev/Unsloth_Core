@@ -23,7 +23,7 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 | **Reference Docs** | `subjects/reference_docs/` | Centralized primer files for grounding dataset generation. |
 | **Schemas** | `subjects/schemas/` | JSON Schema validators for training data format. |
 | **Training Configs**| `configs/` | YAML base configs and presets. |
-| **DeepEval Dataset Gate** | `tests/evals/`, `scripts/dataset_eval.py` | Local dataset-quality evals using Ollama judge models. |
+| **DeepEval Dataset Gate** | `tests/evals/`, `scripts/dataset/dataset_eval.py` | Local dataset-quality evals using Ollama judge models. |
 | **LoRA Adapters** | `outputs/` | Checkpoints and final adapters from training. |
 | **GGUF Exports** | `exports/` | LoRA adapter GGUFs (MBs) for Unity/LLMUnity. |
 | **Evaluations** | `eval/reports/`, `eval/results/feedback/` | HTML/markdown eval reports, structured per-concept feedback JSON. |
@@ -35,41 +35,41 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 ## 🛠️ The Pipeline (7 Stages + Feedback Loop)
 Transforms a subject spec into a playable NPC:
 
-1.  **Generation**: `scripts/generate_dataset.py`
+1.  **Generation**: `scripts/dataset/generate_dataset.py`
     - **Template** (default): Fast deterministic generation for pipeline testing.
     - **Docs**: Deterministic generation grounded in curated repo/doc manifests.
     - **Ollama / OpenAI / Anthropic**: Available for LLM-driven synthetic data.
     - Output: `subjects/datasets/{npc_key}/{technique}/train.jsonl`.
 
-2.  **Sanitization**: `scripts/sanitize_dataset.py`
+2.  **Sanitization**: `scripts/dataset/sanitize_dataset.py`
     - Validates ChatML format, cleans whitespace, removes empty messages.
     - Output: `.../train_clean.jsonl`.
 
-3.  **Dataset Quality Eval**: `scripts/dataset_eval.py` + `tests/evals/test_dataset_generation_quality.py`
+3.  **Dataset Quality Eval**: `scripts/dataset/dataset_eval.py` + `tests/evals/test_dataset_generation_quality.py`
     - Runs DeepEval against `train_clean.jsonl` before training.
     - Default local judge: Ollama `qwen2.5:7b` at `http://localhost:11434`.
     - Metrics check persona/category fit and training usefulness/specificity.
     - Outputs: `quality_summary.json` and `quality_failures.json` beside the dataset.
     - Treat `quality_failures.json` as the source of truth for what to regenerate or rewrite. Do not lower thresholds or delete rows to force a pass.
 
-4.  **Training**: `scripts/train.py`
+4.  **Training**: `scripts/training/train.py`
     - Unsloth SFTTrainer with LoRA. Config hierarchy: Base YAML < Preset < CLI.
     - Presets: `smoke` (debug), `fast-3b` (standard), `safe-any` (OOM fallback).
     - `--export-gguf` exports adapter GGUF inline after training.
     - Output: `outputs/{npc_key}/` (LoRA adapter) + `exports/{npc_key}/{npc}-lora-f16.gguf`.
 
-5.  **Export & Smoke Test**: `scripts/export.py` → `scripts/smoke_test.py`
+5.  **Export & Smoke Test**: `scripts/export/export.py` → `scripts/ops/smoke_test.py`
     - **Adapter mode** (default): Converts LoRA to lightweight GGUF via `convert_lora_to_gguf.py` — MBs, no base model needed.
     - **Full-merge** (`--full-merge-export`): Exports f16 GGUF + quantizes via `llama-quantize`.
     - **Smoke test**: Validates persona adherence via automated prompts.
 
-6.  **Model Evaluation**: `scripts/evaluate.py`
+6.  **Model Evaluation**: `scripts/evaluation/evaluate.py`
     - Starts `llama-server` with `--lora` for adapter evaluation (no full-merge needed).
     - Compares two models (baseline vs candidate) or measures standalone.
     - Supports `--base-model` for LoRA-on-base-model evaluation.
     - Output: HTML report (Chart.js), markdown per-question breakdown, structured feedback JSON.
 
-7.  **Feedback Loop**: `scripts/feedback_loop.py` + `scripts/evaluate.py --feedback-json`
+7.  **Feedback Loop**: `scripts/training/feedback_loop.py` + `scripts/evaluation/evaluate.py --feedback-json`
     - Analyzes eval results → identifies weak concepts → determines gap type:
       - `training_density`: Model didn't learn the topic → regenerate more examples
       - `knowledge_gap`: No relevant reference material → add primer, re-index

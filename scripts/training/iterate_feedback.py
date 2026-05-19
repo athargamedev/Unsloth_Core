@@ -2,7 +2,7 @@
 """One-shot feedback improvement cycle for a single NPC.
 
 Usage:
-    python3 scripts/iterate_feedback.py chemistry_instructor --preset fast-3b
+    python3 scripts/training/iterate_feedback.py chemistry_instructor --preset fast-3b
 
 Runs: evaluate → feedback (auto) → train → evaluate → report
 All on the active subject. Assumes the dataset already exists.
@@ -32,14 +32,14 @@ def main():
 
     steps = [
         (f"Evaluate {npc}",
-         f"{VENV} scripts/evaluate.py "
+         f"{VENV} scripts/evaluation/evaluate.py "
          f"--spec {spec} --feedback-json {feedback_json}"),
         (f"Feedback loop for {npc}",
-         f"{VENV} scripts/feedback_loop.py {feedback_json} --auto"),
+         f"{VENV} scripts/training/feedback_loop.py {feedback_json} --auto"),
         (f"Train {npc}",
-         f"{VENV} scripts/train.py {spec} --preset {args.preset} --export-gguf"),
+         f"{VENV} scripts/training/train.py {spec} --preset {args.preset} --export-gguf"),
         (f"Re-evaluate {npc}",
-         f"{VENV} scripts/evaluate.py "
+         f"{VENV} scripts/evaluation/evaluate.py "
          f"--spec {spec} --feedback-json {feedback_json}"),
     ]
 

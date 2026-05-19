@@ -7,7 +7,7 @@ ensure it maintains its persona and hasn't suffered from mode collapse.
 
 Usage:
     ./ucore smoke exports/my_npc/my_model.gguf --spec subjects/NPC_specs/my_npc.json
-    python scripts/smoke_test.py exports/my_npc/my_model.gguf --track
+    python scripts/ops/smoke_test.py exports/my_npc/my_model.gguf --track
 
 Technical Details:
 - Input: GGUF model file and optional subject spec.

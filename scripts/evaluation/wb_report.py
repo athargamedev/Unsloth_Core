@@ -6,10 +6,10 @@ Connects to W&B, fetches the latest eval runs for each NPC, and produces a
 polished markdown report that can be shared with employers or published.
 
 Usage:
-    python scripts/wb_report.py                       # Latest eval for each NPC
-    python scripts/wb_report.py --npc history_guide   # Specific NPC
-    python scripts/wb_report.py --run-id <run_id>      # Specific W&B run
-    python scripts/wb_report.py --output my_report.md  # Custom path
+    python scripts/evaluation/wb_report.py                       # Latest eval for each NPC
+    python scripts/evaluation/wb_report.py --npc history_guide   # Specific NPC
+    python scripts/evaluation/wb_report.py --run-id <run_id>      # Specific W&B run
+    python scripts/evaluation/wb_report.py --output my_report.md  # Custom path
 
 Requires:
     wandb.login() already configured (via ~/.netrc or env)

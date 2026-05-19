@@ -6,9 +6,9 @@ Loads the base model once, then iterates all NPCs with trained LoRA adapters,
 exporting each to the correct GGUF path.
 
 Usage:
-    python scripts/batch_export.py [--quantization q4_k_m] [--model unsloth/Llama-3.2-3B-Instruct-bnb-4bit]
-    python scripts/batch_export.py --skip-f16    # only export quantized variant
-    python scripts/batch_export.py --npc chemistry_instructor,bible_instructor  # specific NPCs only
+    python scripts/export/batch_export.py [--quantization q4_k_m] [--model unsloth/Llama-3.2-3B-Instruct-bnb-4bit]
+    python scripts/export/batch_export.py --skip-f16    # only export quantized variant
+    python scripts/export/batch_export.py --npc chemistry_instructor,bible_instructor  # specific NPCs only
 """
 
 import argparse
@@ -145,7 +145,7 @@ def main():
     if not npc_keys:
         print("Error: No trained NPCs found.")
         print(f"Looked in: {paths.output_root()}")
-        print("Train some first with: python scripts/train.py subjects/NPC_specs/<npc>.json --from-spec --preset fast-3b")
+        print("Train some first with: python scripts/training/train.py subjects/NPC_specs/<npc>.json --from-spec --preset fast-3b")
         sys.exit(1)
 
     print(f"Found {len(npc_keys)} trained NPC(s): {', '.join(npc_keys)}")

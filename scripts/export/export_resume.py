@@ -3,8 +3,8 @@
 export_resume.py — resume/continue GGUF export for an NPC.
 
 Usage:
-  python scripts/export_resume.py chemistry_instructor
-  python scripts/export_resume.py chemistry_instructor --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit --quantization q4_k_m
+  python scripts/export/export_resume.py chemistry_instructor
+  python scripts/export/export_resume.py chemistry_instructor --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit --quantization q4_k_m
 """
 
 import argparse

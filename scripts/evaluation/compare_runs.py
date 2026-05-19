@@ -6,12 +6,12 @@ Resolves run manifests, finds the exported GGUF, and runs evaluate.py
 for a side-by-side comparison. Results go to eval/comparisons/.
 
 Usage:
-    python scripts/compare_runs.py chemistry_instructor \\
+    python scripts/evaluation/compare_runs.py chemistry_instructor \\
         --baseline-run 20260512_llama-3b-fast_001 \\
         --candidate-run 20260512_llama-3b-quality_001
 
     # With an LLM judge
-    python scripts/compare_runs.py chemistry_instructor \\
+    python scripts/evaluation/compare_runs.py chemistry_instructor \\
         --baseline-run 20260512_fast_001 \\
         --candidate-run 20260512_quality_001 \\
         --judge

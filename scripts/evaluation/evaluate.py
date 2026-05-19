@@ -8,7 +8,7 @@ accuracy, and conversational constraints.
 
 Usage:
     ./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/NPC_specs/npc.json
-    python scripts/evaluate.py --model model.gguf --val-data validation.jsonl
+    python scripts/evaluation/evaluate.py --model model.gguf --val-data validation.jsonl
 
 Technical Details:
 - Input: One or two GGUF models, subject spec, and validation dataset.

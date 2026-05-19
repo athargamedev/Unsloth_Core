@@ -6,9 +6,9 @@ Performs strict structural validation, AI artifact filtering, quality scoring,
 and metadata enrichment on ChatML training datasets.
 
 Usage:
-    python scripts/sanitize_dataset.py subjects/datasets/my_npc/template/train.jsonl
-    python scripts/sanitize_dataset.py subjects/datasets/my_npc/template/train.jsonl --quality-report
-    python scripts/sanitize_dataset.py subjects/datasets/my_npc/template/train.jsonl --strict-mode --artifact-check warn
+    python scripts/dataset/sanitize_dataset.py subjects/datasets/my_npc/template/train.jsonl
+    python scripts/dataset/sanitize_dataset.py subjects/datasets/my_npc/template/train.jsonl --quality-report
+    python scripts/dataset/sanitize_dataset.py subjects/datasets/my_npc/template/train.jsonl --strict-mode --artifact-check warn
 
 Output: A clean, scored, metadata-complete JSONL file at *_clean.jsonl.
 """

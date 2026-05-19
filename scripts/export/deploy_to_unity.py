@@ -11,19 +11,19 @@ Automates the full deployment pipeline:
 
 Usage:
     # Deploy to sibling Unity project (default relative path)
-    python scripts/deploy_to_unity.py
+    python scripts/export/deploy_to_unity.py
 
     # Specify Unity project path explicitly
-    python scripts/deploy_to_unity.py --unity-project /path/to/UnityProject
+    python scripts/export/deploy_to_unity.py --unity-project /path/to/UnityProject
 
     # Skip export step (only copy already-exported GGUF files)
-    python scripts/deploy_to_unity.py --skip-export
+    python scripts/export/deploy_to_unity.py --skip-export
 
     # Dry run — show what would be done without copying
-    python scripts/deploy_to_unity.py --dry-run
+    python scripts/export/deploy_to_unity.py --dry-run
 
     # Only export GGUF (no Unity copy)
-    python scripts/deploy_to_unity.py --export-only
+    python scripts/export/deploy_to_unity.py --export-only
 """
 
 import argparse

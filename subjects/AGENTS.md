@@ -8,7 +8,7 @@ This folder defines the NPC specs, primers, datasets, and schemas that drive the
 - Primers live under `subjects/reference_docs/` and should be substantive, not placeholder stubs.
 - Dataset artifacts live under `subjects/datasets/{npc_key}/{technique}/`.
 - Treat `train_clean.jsonl` as the training input when it exists.
-- Respect the schema contract in `subjects/schemas/` and the validation rules in `scripts/validate_subject_spec.py`.
+- Respect the schema contract in `subjects/schemas/` and the validation rules in `scripts/dataset/validate_subject_spec.py`.
 - Do not weaken thresholds to force quality gates to pass; fix generation, primer content, or dataset balance instead.
 - Keep subject docs and specs synchronized when renaming NPCs or changing subject scope.
 

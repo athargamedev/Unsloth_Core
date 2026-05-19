@@ -5,7 +5,7 @@
   "sanitizer": {
     "version": "v2",
     "date": "2026-05-19T06:04:00Z",
-    "argv": "/home/athar/Projects/Unsloth_Core/scripts/sanitize_dataset.py subjects/datasets/chef_assistant/ollama/train.jsonl --output subjects/datasets/chef_assistant/ollama/train_clean.jsonl --strict-canonical",
+    "argv": "/home/athar/Projects/Unsloth_Core/scripts/dataset/sanitize_dataset.py subjects/datasets/chef_assistant/ollama/train.jsonl --output subjects/datasets/chef_assistant/ollama/train_clean.jsonl --strict-canonical",
     "artifact_check_mode": "strict",
     "strict_mode": false
   },

@@ -94,6 +94,6 @@ The `--local-vram-gb 4.0` override forces Colab routing (since 6GB local VRAM
 technically meets the 5.2GB threshold for fast-3b but is unreliable in practice).
 
 ## Related Files
-- `scripts/colab_notebook_generator.py` — notebook generator
-- `scripts/plan_batch_execution.py` — batch planner
+- `scripts/ops/colab_notebook_generator.py` — notebook generator
+- `scripts/orchestration/plan_batch_execution.py` — batch planner
 - `colab/art_plan.json` — full execution plan

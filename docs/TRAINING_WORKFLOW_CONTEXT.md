@@ -17,7 +17,7 @@ Subject Spec (JSON) → [Generate] → [Sanitize] → [Train] → [Export] → [
 ### Stage 1: Generate Dataset
 
 **Entry point:** `./ucore generate <spec>`
-**Script:** `scripts/generate_dataset.py`
+**Script:** `scripts/dataset/generate_dataset.py`
 
 Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 
@@ -47,7 +47,7 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 ### Stage 2: Sanitize Dataset
 
 **Entry point:** `./ucore sanitize <input>`
-**Script:** `scripts/sanitize_dataset.py`
+**Script:** `scripts/dataset/sanitize_dataset.py`
 
 Validates dataset integrity:
 - Confirms ChatML format (role/content turn structure)
@@ -60,7 +60,7 @@ Validates dataset integrity:
 ### Stage 3: Dataset Quality Eval
 
 **Entry point:** `./ucore dataset-eval <spec>`
-**Script:** `scripts/dataset_eval.py`
+**Script:** `scripts/dataset/dataset_eval.py`
 
 Runs the committed DeepEval suite against the sanitized dataset before training.
 This is the local build-loop gate for dataset generation quality, not a final
@@ -90,7 +90,7 @@ run pass.
 ### Stage 4: Training
 
 **Entry point:** `./ucore train <spec>`
-**Script:** `scripts/train.py`
+**Script:** `scripts/training/train.py`
 
 Uses Unsloth's `SFTTrainer` with LoRA for parameter-efficient fine-tuning. Config hierarchy:
 
@@ -123,7 +123,7 @@ Base config → Preset override → CLI override
 ### Stage 5: Export
 
 **Entry point:** `./ucore export <npc_key>`
-**Scripts:** `scripts/export.py`
+**Scripts:** `scripts/export/export.py`
 
 **Adapter mode (default):**
 - Converts LoRA adapter to lightweight f16 GGUF via `convert_lora_to_gguf.py`
@@ -139,7 +139,7 @@ Base config → Preset override → CLI override
 ### Stage 6: Model Evaluation
 
 **Entry point:** `./ucore evaluate <args>`
-**Scripts:** `scripts/evaluate.py`
+**Scripts:** `scripts/evaluation/evaluate.py`
 
 Compares two models (baseline vs candidate) or measures standalone:
 
@@ -174,7 +174,7 @@ Compares two models (baseline vs candidate) or measures standalone:
 ### Stage 7: Feedback Loop
 
 **Entry point:** `./ucore feedback <feedback.json>`
-**Scripts:** `scripts/feedback_loop.py`, `scripts/evaluate.py --feedback-json`
+**Scripts:** `scripts/training/feedback_loop.py`, `scripts/evaluation/evaluate.py --feedback-json`
 
 Closes the loop between evaluation and dataset generation:
 
@@ -314,25 +314,25 @@ subjects/NPC_specs/{npc_key}.json ──── subjects/reference_docs/{npc_key}
   scripts/onyx_index_repo.py ──► Onyx (vector DB)
           │
           ▼
-  scripts/generate_dataset.py ──► Onyx retrieval
+  scripts/dataset/generate_dataset.py ──► Onyx retrieval
           │
           ▼
   subjects/datasets/{npc_key}/onyx/train.jsonl
           │
           ▼
-  scripts/sanitize_dataset.py ──► train_clean.jsonl
+  scripts/dataset/sanitize_dataset.py ──► train_clean.jsonl
           │
           ▼
-  scripts/train.py ──► configs/*.yaml + presets/*.yaml
+  scripts/training/train.py ──► configs/*.yaml + presets/*.yaml
           │
           ▼
   outputs/{npc_key}/runs/{run_id}/  (LoRA adapter)
           │
           ▼
-  scripts/export.py ──► exports/{npc_key}/{npc_key}-lora-f16.gguf
+  scripts/export/export.py ──► exports/{npc_key}/{npc_key}-lora-f16.gguf
           │
           ▼
-  scripts/evaluate.py ──► eval/reports/ + eval/results/feedback/
+  scripts/evaluation/evaluate.py ──► eval/reports/ + eval/results/feedback/
           │
           ▼
   Unity StreamingAssets/Models/{npc_key}-lora-f16.gguf
@@ -344,7 +344,7 @@ subjects/NPC_specs/{npc_key}.json ──── subjects/reference_docs/{npc_key}
 
 Training configs are intentionally simple now:
 
-1. **Spec-derived base**: `scripts/train.py` builds the effective config from `subjects/NPC_specs/{npc}.json`, the detected canonical dataset path, and the default Llama 3.2 3B model.
+1. **Spec-derived base**: `scripts/training/train.py` builds the effective config from `subjects/NPC_specs/{npc}.json`, the detected canonical dataset path, and the default Llama 3.2 3B model.
 2. **Preset** (`configs/presets/{name}.yaml`) overrides hyperparameters. Current active presets are `fast-3b`, `safe-any`, `smoke`, and `wandb`.
 3. **CLI flags** (`--lr`, `--epochs`, `--wandb`, etc.) override everything above.
 

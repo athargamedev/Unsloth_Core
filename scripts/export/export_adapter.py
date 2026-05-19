@@ -7,13 +7,13 @@ into a smaller GGUF adapter file loadable at runtime by llama.cpp / LLMUnity.
 
 Usage:
     # Single adapter
-    python scripts/export_adapter.py outputs/bible_instructor
+    python scripts/export/export_adapter.py outputs/bible_instructor
 
     # Batch convert all adapters in outputs/
-    python scripts/export_adapter.py --all
+    python scripts/export/export_adapter.py --all
 
     # Specify outtype
-    python scripts/export_adapter.py outputs/marvel_instructor --outtype q8_0
+    python scripts/export/export_adapter.py outputs/marvel_instructor --outtype q8_0
 """
 import argparse
 import json

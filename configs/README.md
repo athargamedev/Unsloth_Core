@@ -4,7 +4,7 @@ This directory is intentionally small. The current project focus is two simple L
 
 ## Required files
 
-- `lora-sft-base.yaml` — canonical base training config used by `scripts/validate_config.py` and `scripts/plan_execution.py`.
+- `lora-sft-base.yaml` — canonical base training config used by `scripts/ops/validate_config.py` and `scripts/orchestration/plan_execution.py`.
 - `presets/fast-3b.yaml` — standard production preset for Llama 3.2 3B on the RTX 3060 6GB workflow.
 - `presets/safe-any.yaml` — OOM fallback preset.
 - `presets/smoke.yaml` — tiny smoke-test preset.

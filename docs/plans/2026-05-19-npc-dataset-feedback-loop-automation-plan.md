@@ -14,11 +14,11 @@
 
 Before changing behavior, inspect the existing workflow and record where each contract lives:
 - NPC spec source of truth: `subjects/NPC_specs/{npc_key}.json`
-- Dataset generation entrypoints: `scripts/generate_dataset.py` and `./ucore generate`
-- Sanitization: `scripts/sanitize_dataset.py` and `./ucore sanitize`
+- Dataset generation entrypoints: `scripts/dataset/generate_dataset.py` and `./ucore generate`
+- Sanitization: `scripts/dataset/sanitize_dataset.py` and `./ucore sanitize`
 - Generation-readiness validation: `./ucore validate-spec <spec> --generation-ready`
-- Dataset quality gate: `scripts/dataset_eval.py`, `tests/evals/`, and `./ucore dataset-eval`
-- Feedback loop / gap analysis: `scripts/feedback_loop.py`, `scripts/evaluate.py --feedback-json`
+- Dataset quality gate: `scripts/dataset/dataset_eval.py`, `tests/evals/`, and `./ucore dataset-eval`
+- Feedback loop / gap analysis: `scripts/training/feedback_loop.py`, `scripts/evaluation/evaluate.py --feedback-json`
 - Reference grounding: `subjects/reference_docs/README.md` and the per-NPC primer docs
 - Runtime outputs: `subjects/datasets/{npc}/{technique}/`, `outputs/{npc_key}/`, `eval/`
 
@@ -102,11 +102,11 @@ The feedback loop should translate failures into one of a few action types:
 **Files to inspect:**
 - `subjects/NPC_specs/*.json`
 - `subjects/reference_docs/*.md`
-- `scripts/generate_dataset.py`
-- `scripts/sanitize_dataset.py`
-- `scripts/dataset_eval.py`
-- `scripts/feedback_loop.py`
-- `scripts/evaluate.py`
+- `scripts/dataset/generate_dataset.py`
+- `scripts/dataset/sanitize_dataset.py`
+- `scripts/dataset/dataset_eval.py`
+- `scripts/training/feedback_loop.py`
+- `scripts/evaluation/evaluate.py`
 - `tests/evals/*`
 - `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md`
 
@@ -131,9 +131,9 @@ The feedback loop should translate failures into one of a few action types:
 **Files to create or modify:**
 - `subjects/schemas/*.json` (dataset and feedback schemas if missing or incomplete)
 - `subjects/reference_docs/README.md`
-- `scripts/generate_dataset.py`
-- `scripts/sanitize_dataset.py`
-- `scripts/dataset_eval.py`
+- `scripts/dataset/generate_dataset.py`
+- `scripts/dataset/sanitize_dataset.py`
+- `scripts/dataset/dataset_eval.py`
 
 **Tasks:**
 1. Add or refine schema fields for metadata, provenance, and versioning.
@@ -154,8 +154,8 @@ The feedback loop should translate failures into one of a few action types:
 **Objective:** Use DeepEval as a feedback signal that tells the system what to regenerate or rewrite next.
 
 **Files to create or modify:**
-- `scripts/feedback_loop.py`
-- `scripts/dataset_eval.py`
+- `scripts/training/feedback_loop.py`
+- `scripts/dataset/dataset_eval.py`
 - `tests/evals/*`
 - `./ucore` command wiring if needed
 
@@ -182,8 +182,8 @@ The feedback loop should translate failures into one of a few action types:
 **Objective:** Ensure the workflow optimizes the actual distribution, not just raw row count.
 
 **Files to create or modify:**
-- `scripts/dataset_eval.py`
-- `scripts/feedback_loop.py`
+- `scripts/dataset/dataset_eval.py`
+- `scripts/training/feedback_loop.py`
 - `tests/evals/*`
 - any helper module used for analysis
 

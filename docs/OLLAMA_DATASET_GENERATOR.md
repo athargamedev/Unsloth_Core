@@ -21,8 +21,8 @@ High-performance, Ollama-optimized NPC dataset generator for Unsloth_Core. Desig
 
 ### Direct Script Usage
 ```bash
-python scripts/generate_dataset_ollama.py subjects/NPC_specs/history_guide.json
-python scripts/generate_dataset_ollama.py subjects/NPC_specs/history_guide.json --model llama3.1 --batch-size 2
+python scripts/dataset/generate_dataset_ollama.py subjects/NPC_specs/history_guide.json
+python scripts/dataset/generate_dataset_ollama.py subjects/NPC_specs/history_guide.json --model llama3.1 --batch-size 2
 ```
 
 ## Features

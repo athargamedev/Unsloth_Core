@@ -9,20 +9,20 @@ to address those weaknesses.
 
 Usage:
     # After evaluation, run the feedback loop:
-    python scripts/feedback_loop.py eval/results/feedback/chemistry_instructor_20260515.json
+    python scripts/training/feedback_loop.py eval/results/feedback/chemistry_instructor_20260515.json
 
     # With custom thresholds:
-    python scripts/feedback_loop.py eval/results/feedback/biology_tutor.json \
+    python scripts/training/feedback_loop.py eval/results/feedback/biology_tutor.json \
         --win-rate-threshold 0.4 --quality-threshold 25 \
         --extra-examples 16 --dry-run
 
     # Full auto mode with retrain:
-    python scripts/feedback_loop.py eval/results/feedback/npc.json \
+    python scripts/training/feedback_loop.py eval/results/feedback/npc.json \
         --auto --auto-retrain --train-preset fast-3b \
         --baseline exports/npc/baseline.gguf
 
     # Machine-readable output for CI:
-    python scripts/feedback_loop.py eval/results/feedback/npc.json --json
+    python scripts/training/feedback_loop.py eval/results/feedback/npc.json --json
 """
 
 import argparse
@@ -555,7 +555,7 @@ def main():
     if not os.path.exists(args.feedback_json):
         print(f"Error: Feedback JSON not found: {args.feedback_json}")
         print("\nRun evaluate.py with --feedback-json to generate it first:")
-        print(f"  python scripts/evaluate.py ... --feedback-json {args.feedback_json}")
+        print(f"  python scripts/evaluation/evaluate.py ... --feedback-json {args.feedback_json}")
         sys.exit(1)
 
     if args.auto_retrain and not args.baseline and not args.dry_run:

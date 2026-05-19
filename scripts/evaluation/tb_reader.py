@@ -2,7 +2,7 @@
 """Read TensorBoard event files and return metrics as JSON.
 
 Usage:
-    python scripts/tb_reader.py --run-dir <path_to_event_folder>
+    python scripts/evaluation/tb_reader.py --run-dir <path_to_event_folder>
 """
 import argparse
 import json

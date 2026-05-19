@@ -67,9 +67,9 @@ Use it when you are about to touch dataset generation, training, export, evaluat
 When a workflow looks wrong:
 
 1. Check `_config/paths.py` first
-2. Then check `scripts/train.py`
-3. Then check `scripts/export.py`
-4. Then check `scripts/evaluate.py`
+2. Then check `scripts/training/train.py`
+3. Then check `scripts/export/export.py`
+4. Then check `scripts/evaluation/evaluate.py`
 5. Then check `frontend_control/unity-npc-llm-training-dashboard/server.ts`
 6. Then verify the filesystem, API, and browser in that order
 
@@ -85,7 +85,7 @@ When a workflow looks wrong:
 ## Useful verification commands
 
 ```bash
-python -m py_compile scripts/train.py scripts/export.py scripts/evaluate.py
+python -m py_compile scripts/training/train.py scripts/export/export.py scripts/evaluation/evaluate.py
 pytest -q tests/test_pipeline_boundaries.py
 npm run build --prefix frontend_control/unity-npc-llm-training-dashboard
 ```

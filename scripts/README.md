@@ -11,7 +11,8 @@ The `scripts/` folder is now organized into categories so agents can find the ri
 - `scripts/orchestration/` — planning and batch execution helpers
 - `scripts/ops/` — scaffolding, audits, smoke tests, config checks, and integration probes
 
-## Compatibility
+## Entry points
 
-Root-level script filenames are preserved as thin wrappers for backward compatibility.
 Prefer importing or editing the categorized implementations under the subdirectories above.
+Root-level `scripts/*.py` entrypoints have been retired; use the categorized paths or `./ucore`.
+Legacy Python import aliases remain available through `scripts/__init__.py` for backward compatibility.

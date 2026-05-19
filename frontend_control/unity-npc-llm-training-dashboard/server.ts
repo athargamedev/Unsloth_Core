@@ -1360,12 +1360,12 @@ const discoverActiveExternalProcesses = (registry: Registry) => {
     const isRelevant =
       args.includes("./ucore ") ||
       args.includes("/ucore ") ||
-      args.includes("scripts/train.py") ||
-      args.includes("scripts/generate_dataset.py") ||
-      args.includes("scripts/sanitize_dataset.py") ||
-      args.includes("scripts/export.py") ||
-      args.includes("scripts/evaluate.py") ||
-      args.includes("scripts/smoke_test.py");
+      args.includes("scripts/training/train.py") ||
+      args.includes("scripts/dataset/generate_dataset.py") ||
+      args.includes("scripts/dataset/sanitize_dataset.py") ||
+      args.includes("scripts/export/export.py") ||
+      args.includes("scripts/evaluation/evaluate.py") ||
+      args.includes("scripts/ops/smoke_test.py");
     if (!isRelevant) continue;
 
     if (args.includes("server.ts") || args.includes("vite") || args.includes("npm run dev")) continue;
@@ -2521,7 +2521,7 @@ The user can execute these commands directly from your interface.`;
     try {
       const result = execFileSync(
         "python",
-        ["scripts/tb_reader.py", "--run-dir", resolvedRun.runDir],
+        ["scripts/evaluation/tb_reader.py", "--run-dir", resolvedRun.runDir],
         { cwd: repoRoot, encoding: "utf8", timeout: 10000 },
       );
       const data = JSON.parse(result.trim());

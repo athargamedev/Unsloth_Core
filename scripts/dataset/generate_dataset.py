@@ -7,7 +7,7 @@ JSONL training dataset using various techniques (Ollama, OpenAI).
 
 Usage:
     ./ucore generate subjects/NPC_specs/chemistry_instructor.json --technique template
-    python scripts/generate_dataset.py subjects/NPC_specs/chemistry_instructor.json --ollama
+    python scripts/dataset/generate_dataset.py subjects/NPC_specs/chemistry_instructor.json --ollama
 
 Technical Details:
 - Input: Subject spec JSON file in subjects/NPC_specs/

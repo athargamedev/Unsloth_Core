@@ -8,8 +8,8 @@ Checks/bootstraps NPC profile alignment between subject specs and Supabase,
 then runs a minimal dialogue memory probe through DB functions.
 
 Usage:
-    python scripts/supabase_integration_check.py --npc-key chemistry_instructor
-    python scripts/supabase_integration_check.py --npc-key chemistry_instructor --player-id 11111111-1111-1111-1111-111111111111
+    python scripts/ops/supabase_integration_check.py --npc-key chemistry_instructor
+    python scripts/ops/supabase_integration_check.py --npc-key chemistry_instructor --player-id 11111111-1111-1111-1111-111111111111
 """
 
 import argparse

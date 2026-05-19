@@ -9,7 +9,7 @@ This folder contains the dashboard backend and frontend code that orchestrate jo
 - Eval reporting must preserve HTML report generation, tracking, judge mode, judge model, base model, LoRA weight, question count, and feedback JSON support.
 - Prefer backend-owned state over frontend inference for jobs, reports, and progress.
 - When changing paths or defaults, verify both the API shape and the rendered UI.
-- Keep compatibility with existing `./ucore` commands and root scripts wrappers.
+- Keep compatibility with existing `./ucore` commands and the categorized script paths.
 
 ## Quick checks
 - `npm run build`

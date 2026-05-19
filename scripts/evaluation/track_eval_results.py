@@ -3,7 +3,7 @@
 track_eval_results.py — Store and track model evaluation results in Supabase
 
 Usage:
-    python scripts/track_eval_results.py \\
+    python scripts/evaluation/track_eval_results.py \\
         --npc-key chemistry_instructor \\
         --model exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf \\
         --win-rate 0.75 \\

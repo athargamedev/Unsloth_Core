@@ -10,7 +10,7 @@ Produces a markdown comparison report with agreement analysis,
 per-category breakdowns, per-metric comparisons, and actionable recommendations.
 
 Usage:
-    python scripts/compare_quality_gates.py \\
+    python scripts/dataset/compare_quality_gates.py \\
         --deepeval-summary subjects/datasets/astronomy_guide/ollama/quality_summary.json \\
         --deepeval-failures subjects/datasets/astronomy_guide/ollama/quality_failures.json \\
         --peerlm-results subjects/datasets/astronomy_guide/ollama/peerlm_eval_results.json \\

@@ -17,7 +17,7 @@ graph TD
 ---
 
 ## 🟢 Stage 1: Generation
-**Script**: `scripts/generate_dataset.py`  
+**Script**: `scripts/dataset/generate_dataset.py`  
 **Inputs**: `subjects/NPC_specs/*.json`  
 **Outputs**: `subjects/datasets/{npc_key}/{technique}/train.jsonl`
 
@@ -28,7 +28,7 @@ Using the `research_queries` defined in the subject spec, the generator fetches 
 ---
 
 ## 🟡 Stage 2: Sanitization
-**Script**: `scripts/sanitize_dataset.py`  
+**Script**: `scripts/dataset/sanitize_dataset.py`  
 **Inputs**: `train.jsonl`  
 **Outputs**: `train_clean.jsonl`
 
@@ -40,7 +40,7 @@ This stage acts as a quality gate. It performs:
 ---
 
 ## 🔵 Stage 3: Training
-**Script**: `scripts/train.py`  
+**Script**: `scripts/training/train.py`  
 **Inputs**: `train_clean.jsonl` + `configs/presets/*.yaml`  
 **Outputs**: `outputs/{npc_key}/` (LoRA Adapter)
 
@@ -52,7 +52,7 @@ The heart of the project. It uses **Unsloth** for extremely memory-efficient fin
 ---
 
 ## 🔴 Stage 4: Export & Validation
-**Scripts**: `scripts/export.py`, `scripts/smoke_test.py`  
+**Scripts**: `scripts/export/export.py`, `scripts/ops/smoke_test.py`  
 **Inputs**: LoRA Adapter + Base Model  
 **Outputs**: `exports/*.gguf`
 
