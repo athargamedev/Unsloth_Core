@@ -10,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-from scripts._repo_root import PROJECT_ROOT
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 

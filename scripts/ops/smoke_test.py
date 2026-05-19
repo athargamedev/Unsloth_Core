@@ -24,7 +24,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
-from scripts._repo_root import PROJECT_ROOT
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 def run_llama_cli(model_path, prompt, system_prompt=None, max_tokens=128):

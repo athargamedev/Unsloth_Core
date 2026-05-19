@@ -22,7 +22,7 @@ from typing import Any
 
 import yaml
 
-from scripts._repo_root import PROJECT_ROOT
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"
 BASE_CONFIG_PATH = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"
 POLICY_PATH = PROJECT_ROOT / "configs" / "workload-policy.yaml"

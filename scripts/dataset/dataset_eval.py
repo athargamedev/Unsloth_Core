@@ -16,7 +16,7 @@ from typing import Any
 from scripts.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
 
 
-from scripts._repo_root import PROJECT_ROOT
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEEPEVAL_TEST = PROJECT_ROOT / "tests" / "evals" / "test_dataset_generation_quality.py"
 DEFAULT_PRODUCTION_CASES_PER_CATEGORY = 5
 

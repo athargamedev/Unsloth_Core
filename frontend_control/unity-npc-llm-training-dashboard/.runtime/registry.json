@@ -2,6 +2,66 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "job_1779223453359_gnzo9",
+      "name": "Run Feedback Loop",
+      "type": "Feedback",
+      "commandId": "feedback",
+      "status": "failed",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-19T20:44:13.359Z",
+      "startedAt": "2026-05-19T20:44:13.359Z",
+      "command": [
+        "./ucore",
+        "feedback",
+        "eval/results/feedback/astronomy_guide_20260519.json",
+        "--dry-run",
+        "--skip-gap-detection",
+        "--auto-retrain",
+        "--train-preset",
+        "fast-3b"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "failed",
+          "logs": [
+            "[STDOUT][job_1779223453359_gnzo9] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/feedback_loop.py eval/results/feedback/astronomy_guide_20260519.json --win-rate-threshold 0.5 --quality-threshold 25.0 --violation-threshold 1 --dry-run --skip-gap-detection --auto-retrain --train-preset fast-3b",
+            "[STDERR][job_1779223453359_gnzo9] Traceback (most recent call last):",
+            "[STDERR][job_1779223453359_gnzo9] File \"/home/athar/Projects/Unsloth_Core/scripts/training/feedback_loop.py\", line 37, in <module>",
+            "[STDERR][job_1779223453359_gnzo9] from scripts._repo_root import PROJECT_ROOT",
+            "[STDERR][job_1779223453359_gnzo9] ModuleNotFoundError: No module named 'scripts._repo_root'",
+            "[STDOUT][job_1779223453359_gnzo9] Error: Command failed with return code 1"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[STDOUT][job_1779223453359_gnzo9] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/feedback_loop.py eval/results/feedback/astronomy_guide_20260519.json --win-rate-threshold 0.5 --quality-threshold 25.0 --violation-threshold 1 --dry-run --skip-gap-detection --auto-retrain --train-preset fast-3b",
+        "[STDERR][job_1779223453359_gnzo9] Traceback (most recent call last):",
+        "[STDERR][job_1779223453359_gnzo9] File \"/home/athar/Projects/Unsloth_Core/scripts/training/feedback_loop.py\", line 37, in <module>",
+        "[STDERR][job_1779223453359_gnzo9] from scripts._repo_root import PROJECT_ROOT",
+        "[STDERR][job_1779223453359_gnzo9] ModuleNotFoundError: No module named 'scripts._repo_root'",
+        "[STDOUT][job_1779223453359_gnzo9] Error: Command failed with return code 1"
+      ],
+      "exitCode": 1,
+      "finishedAt": "2026-05-19T20:44:13.467Z"
+    },
+    {
       "id": "job_1779222630900_iilw8",
       "name": "Run Feedback Loop",
       "type": "Feedback",
@@ -1061,12 +1121,15 @@
     }
   ],
   "logs": [
-    "[2026-05-19T20:30:30.988Z] [SYSTEM] job job_1779222630900_iilw8 failed (exit 2)",
-    "[2026-05-19T20:30:30.983Z] [STDOUT][job_1779222630900_iilw8] Error: Command failed with return code 2",
-    "[2026-05-19T20:30:30.981Z] [STDERR][job_1779222630900_iilw8] /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python: can't open file '/home/athar/Projects/Unsloth_Core/scripts/feedback_loop.py': [Errno 2] No such file or directory",
-    "[2026-05-19T20:30:30.974Z] [STDOUT][job_1779222630900_iilw8] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/feedback_loop.py eval/results/feedback/history_guide_20260519.json --win-rate-threshold 0.5 --quality-threshold 25.0 --violation-threshold 1 --dry-run --skip-gap-detection --auto-retrain --train-preset fast-3b",
-    "[2026-05-19T20:30:30.901Z] [SYSTEM] Could not query Ollama running models",
-    "[2026-05-19T20:30:30.901Z] [SYSTEM] starting job_1779222630900_iilw8: ./ucore feedback eval/results/feedback/history_guide_20260519.json --dry-run --skip-gap-detection --auto-retrain --train-preset fast-3b"
+    "[2026-05-19T20:44:13.467Z] [SYSTEM] job job_1779223453359_gnzo9 failed (exit 1)",
+    "[2026-05-19T20:44:13.462Z] [STDOUT][job_1779223453359_gnzo9] Error: Command failed with return code 1",
+    "[2026-05-19T20:44:13.459Z] [STDERR][job_1779223453359_gnzo9] ModuleNotFoundError: No module named 'scripts._repo_root'",
+    "[2026-05-19T20:44:13.459Z] [STDERR][job_1779223453359_gnzo9] from scripts._repo_root import PROJECT_ROOT",
+    "[2026-05-19T20:44:13.459Z] [STDERR][job_1779223453359_gnzo9] File \"/home/athar/Projects/Unsloth_Core/scripts/training/feedback_loop.py\", line 37, in <module>",
+    "[2026-05-19T20:44:13.458Z] [STDERR][job_1779223453359_gnzo9] Traceback (most recent call last):",
+    "[2026-05-19T20:44:13.435Z] [STDOUT][job_1779223453359_gnzo9] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/feedback_loop.py eval/results/feedback/astronomy_guide_20260519.json --win-rate-threshold 0.5 --quality-threshold 25.0 --violation-threshold 1 --dry-run --skip-gap-detection --auto-retrain --train-preset fast-3b",
+    "[2026-05-19T20:44:13.359Z] [SYSTEM] Could not query Ollama running models",
+    "[2026-05-19T20:44:13.359Z] [SYSTEM] starting job_1779223453359_gnzo9: ./ucore feedback eval/results/feedback/astronomy_guide_20260519.json --dry-run --skip-gap-detection --auto-retrain --train-preset fast-3b"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": [],

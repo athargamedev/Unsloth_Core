@@ -42,7 +42,7 @@ try:
 except ImportError:
     aiohttp = None
 
-from scripts._repo_root import PROJECT_ROOT
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(SCRIPT_DIR))

@@ -34,7 +34,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from scripts._repo_root import PROJECT_ROOT
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
@@ -180,7 +180,7 @@ def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_pat
         return False
     cmd = [
         sys.executable,
-        str(PROJECT_ROOT / "scripts" / "generate_dataset.py"),
+        str(PROJECT_ROOT / "scripts" / "dataset" / "generate_dataset.py"),
         str(spec_path),
         "--technique", "template",
         "--model", "llama3.1:latest",
@@ -216,7 +216,7 @@ def run_sanitize(npc_key, technique="template", dry_run=False):
         return True
     print(f"  Sanitizing: {dataset_path}")
     ok, stdout, stderr = run_cmd(
-        [sys.executable, str(PROJECT_ROOT / "scripts" / "sanitize_dataset.py"),
+        [sys.executable, str(PROJECT_ROOT / "scripts" / "dataset" / "sanitize_dataset.py"),
          dataset_path, "--output", clean_path, "--strict-canonical"],
         timeout=60,
     )
@@ -238,7 +238,7 @@ def run_training(npc_key, preset, technique="template", dry_run=False):
 
     cmd = [
         sys.executable,
-        str(PROJECT_ROOT / "scripts" / "train.py"),
+        str(PROJECT_ROOT / "scripts" / "training" / "train.py"),
         str(spec_path),
         "--from-spec",
         "--technique", technique,
@@ -279,7 +279,7 @@ def run_evaluate(npc_key, baseline_gguf, candidate_gguf, feedback_output_dir, dr
 
     cmd = [
         sys.executable,
-        str(PROJECT_ROOT / "scripts" / "evaluate.py"),
+        str(PROJECT_ROOT / "scripts" / "evaluation" / "evaluate.py"),
         "--baseline", str(baseline_gguf),
         "--candidate", str(candidate_gguf),
         "--spec", str(spec_path),

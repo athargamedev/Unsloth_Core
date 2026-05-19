@@ -40,7 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _config import paths
 
 
-from scripts._repo_root import PROJECT_ROOT
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 STREAMING_ASSETS_MODELS = "Assets/StreamingAssets/Models"
 MANIFEST_FILENAME = "npc_deployment_manifest.json"
 
