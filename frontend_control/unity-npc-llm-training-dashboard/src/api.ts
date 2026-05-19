@@ -13,6 +13,7 @@ export interface Job {
   progress: number;
   loss: number | null;
   type: string;
+  commandId?: string;
   createdAt: string;
   stages: Stage[];
   command?: string[];

@@ -70,6 +70,7 @@ interface StartCommandPayload {
   preset?: string;
   npcKey?: string;
   options?: Record<string, string | number | boolean | undefined>;
+  [key: string]: unknown;
 }
 
 interface WorkflowStep {
@@ -755,6 +756,41 @@ const commandDefinitions: CommandDefinition[] = [
     },
   },
   {
+    id: "feedback",
+    label: "Run Feedback Loop",
+    icon: "refresh-cw",
+    color: "accent",
+    type: "Feedback",
+    requiredFields: ["feedback_json"],
+    build: (payload) => {
+      const feedbackJson = resolvePathWithinRoots(
+        sanitizeToken(String(requireString(payload.feedback_json, "feedback_json")), "feedback_json"),
+        "feedback_json",
+        [repoRoot],
+      );
+      const args = ["./ucore", "feedback", feedbackJson];
+      if (payload["dry-run"] === true || String(payload["dry-run"] || "").toLowerCase() === "true") {
+        args.push("--dry-run");
+      }
+      if (payload["skip-gap-detection"] === true || String(payload["skip-gap-detection"] || "").toLowerCase() === "true") {
+        args.push("--skip-gap-detection");
+      }
+      if (payload["auto-retrain"] === true || String(payload["auto-retrain"] || "").toLowerCase() === "true") {
+        args.push("--auto-retrain");
+      }
+      const trainPreset = String(payload["train-preset"] || "").trim();
+      if (trainPreset) args.push("--train-preset", sanitizeToken(trainPreset, "train-preset"));
+      const baseline = String(payload["baseline"] || "").trim();
+      if (baseline) args.push("--baseline", sanitizeToken(baseline, "baseline"));
+      const saveGaps = String(payload["save-gaps"] || "").trim();
+      if (saveGaps) args.push("--save-gaps", sanitizeToken(saveGaps, "save-gaps"));
+      if (payload["json"] === true || String(payload["json"] || "").toLowerCase() === "true") {
+        args.push("--json");
+      }
+      return args;
+    },
+  },
+  {
     id: "generate-ollama",
     label: "Generate Dataset (Ollama Optimized)",
     icon: "database",
@@ -1389,11 +1425,11 @@ async function startServer() {
   };
 
   const listSubjects = () => {
-    const subjectsRoot = path.join(repoRoot, "subjects");
-    if (!fs.existsSync(subjectsRoot)) return [];
-    return fs.readdirSync(subjectsRoot)
+    const specsDir = path.join(repoRoot, "subjects", "NPC_specs");
+    if (!fs.existsSync(specsDir)) return [];
+    return fs.readdirSync(specsDir)
       .filter((f) => f.endsWith(".json"))
-      .map((file) => ({ id: file.replace(/\.json$/, ""), path: `subjects/${file}` }));
+      .map((file) => ({ id: file.replace(/\.json$/, ""), path: `subjects/NPC_specs/${file}` }));
   };
 
   const listRuns = () => {
@@ -2715,14 +2751,14 @@ The user can execute these commands directly from your interface.`;
 
     const baseDefaultsByCommand: Record<string, Record<string, FieldSchema>> = {
       "dataset-generate": {
-        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json", description: "Subject spec path" },
-        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json", description: "Subject spec path" },
+        "options.technique": { type: "string", required: false, default: "ollama", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
       },
       "dataset-sanitize": {
-        "options.datasetPath": { type: "string", required: true, default: "subjects/datasets/chemistry_instructor/template/train.jsonl", description: "Train dataset path" },
+        "options.datasetPath": { type: "string", required: true, default: "subjects/datasets/history_guide/ollama/train.jsonl", description: "Train dataset path" },
       },
       train: {
-        spec: { type: "string", required: true, default: "subjects/history_guide.json" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json" },
         preset: { type: "string", required: false, default: "fast-3b", ...(presetOptions.length ? { enum: presetOptions } : {}) },
         "options.learningRate": { type: "string", required: false, default: "2e-4" },
         "options.batchSize": { type: "number", required: false, default: 1 },
@@ -2730,30 +2766,32 @@ The user can execute these commands directly from your interface.`;
         "options.rank": { type: "number", required: false, default: 16 },
         "options.alpha": { type: "number", required: false, default: 32 },
         "options.baseModel": { type: "string", required: false, default: "unsloth/Llama-3.2-3B-Instruct-bnb-4bit" },
+        "options.technique": { type: "string", required: false, default: "ollama", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
+        "options.wandb": { type: "boolean", required: false, default: false },
       },
       pipeline: {
-        spec: { type: "string", required: true, default: "subjects/history_guide.json" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json" },
         preset: { type: "string", required: false, default: "fast-3b", ...(presetOptions.length ? { enum: presetOptions } : {}) },
-        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
+        "options.technique": { type: "string", required: false, default: "ollama", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
         "options.track": { type: "boolean", required: false, default: false },
         "options.wandb": { type: "boolean", required: false, default: false },
       },
       export: {
-        npcKey: { type: "string", required: true, default: "chemistry_instructor" },
+        npcKey: { type: "string", required: true, default: "history_guide" },
         "options.modelId": { type: "string", required: true, default: "unsloth/Llama-3.2-3B-Instruct-bnb-4bit" },
       },
       "export-adapter": {
-        npcKey: { type: "string", required: true, default: "chemistry_instructor" },
+        npcKey: { type: "string", required: true, default: "history_guide" },
       },
       evaluate: {
-        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
-        "options.baseline": { type: "string", required: true, default: "exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf" },
-        "options.candidate": { type: "string", required: true, default: "exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json" },
+        "options.baseline": { type: "string", required: true, default: "exports/history_guide/history_guide-lora-f16.gguf" },
+        "options.candidate": { type: "string", required: true, default: "exports/history_guide/history_guide-lora-f16.gguf" },
         "options.valData": { type: "string", required: false, default: "" },
       },
       smoke: {
-        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json" },
-        "options.modelPath": { type: "string", required: true, default: "exports/chemistry_instructor/chemistry_instructor-llama3.2-3b-q4_k_m.gguf" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json" },
+        "options.modelPath": { type: "string", required: true, default: "exports/history_guide/history_guide-lora-f16.gguf" },
       },
       deploy: {
         "options.unityProject": { type: "string", required: false, default: "" },
@@ -2762,7 +2800,7 @@ The user can execute these commands directly from your interface.`;
         "options.exportOnly": { type: "boolean", required: false, default: false },
       },
       "supabase-check": {
-        npcKey: { type: "string", required: true, default: "chemistry_instructor" },
+        npcKey: { type: "string", required: true, default: "history_guide" },
         "options.playerId": { type: "string", required: false, default: "" },
       },
       init: {
@@ -2771,19 +2809,19 @@ The user can execute these commands directly from your interface.`;
         "options.name": { type: "string", required: false, default: "", description: "NPC Display Name" },
       },
       "validate-spec": {
-        spec: { type: "string", required: true, default: "subjects/history_guide.json", description: "Subject spec path" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json", description: "Subject spec path" },
       },
       "dataset-eval": {
-        spec: { type: "string", required: true, default: "subjects/history_guide.json", description: "Subject spec path" },
-        "options.technique": { type: "string", required: true, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"], description: "Dataset generation technique" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json", description: "Subject spec path" },
+        "options.technique": { type: "string", required: true, default: "ollama", enum: ["template", "docs", "ollama", "openai", "anthropic"], description: "Dataset generation technique" },
       },
       "docs-manifest-generate": {
-        spec: { type: "string", required: true, default: "subjects/workflow_assistant.json", description: "Subject spec path" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json", description: "Subject spec path" },
         manifest: { type: "string", required: false, default: "docs/corpora/workflow_assistant_docs.json", description: "Corpus manifest path" },
         "options.technique": { type: "string", required: false, default: "docs", enum: ["docs"] },
       },
       "generate-ollama": {
-        spec: { type: "string", required: true, default: "subjects/chemistry_instructor.json", description: "Subject spec path" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json", description: "Subject spec path" },
         "options.model": { type: "string", required: false, default: "llama3.2:3b", description: "Ollama model name" },
         "options.batchSize": { type: "number", required: false, default: 4, description: "Concurrent generation tasks" },
         "options.temperature": { type: "number", required: false, default: 0.7, description: "Generation temperature (0.0-1.0)" },

@@ -119,17 +119,17 @@ export default function App() {
   const [presetDesc, setPresetDesc] = useState<Record<string, string>>({});
 
   const [trainingConfig, setTrainingConfig] = useState<TrainingConfig>({
-    spec: 'subjects/chemistry_instructor.json',
+    spec: 'subjects/NPC_specs/history_guide.json',
     preset: 'fast-3b',
     learningRate: '2e-4',
     scheduler: 'cosine',
-    batchSize: 4,
+    batchSize: 1,
     epochs: 3,
     rank: 16,
     alpha: 32,
     baseModel: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
     wandb: false,
-    technique: 'template',
+    technique: 'ollama',
   });
 
   const {
@@ -435,7 +435,7 @@ export default function App() {
       return payload;
     }
 
-    const derivedNpcKey = trainingConfig.spec.replace('subjects/', '').replace('.json', '');
+    const derivedNpcKey = trainingConfig.spec.split('/').pop()?.replace('.json', '') || '';
     switch (commandId) {
       case 'dataset-generate':
         return { spec: trainingConfig.spec, options: { technique: trainingConfig.technique, modelId: trainingConfig.baseModel } };
@@ -569,7 +569,7 @@ export default function App() {
     if (!npcKey || !technique) return;
     setTrainingConfig((prev) => ({
       ...prev,
-      spec: `subjects/${npcKey}.json`,
+      spec: `subjects/NPC_specs/${npcKey}.json`,
       technique,
     }));
     setUiError(`Training Suite preselected for ${npcKey} using ${technique}. Review settings, then launch training.`);
@@ -644,7 +644,7 @@ export default function App() {
       await triggerCommand({
         commandId: 'export',
         type: 'Export',
-        npcKey: trainingConfig.spec.replace('subjects/', '').replace('.json', ''),
+        npcKey: trainingConfig.spec.split('/').pop()?.replace('.json', '') || '',
         options: { modelId: trainingConfig.baseModel },
       });
     } catch (error) {
@@ -1204,7 +1204,7 @@ export default function App() {
                       const payload: Record<string, unknown> = {
                         commandId: cmd.id,
                         type: cmd.type,
-                        spec: `subjects/${npcKey}.json`,
+                        spec: `subjects/NPC_specs/${npcKey}.json`,
                       };
                       if (isOllama) {
                         payload.options = { model: 'llama3.2:3b' };
@@ -1285,7 +1285,7 @@ export default function App() {
                   await triggerCommand({
                     commandId: payload.commandId,
                     type: payload.type,
-                    spec: 'subjects/chef_assistant.json',
+                    spec: 'subjects/NPC_specs/chef_assistant.json',
                     preset: 'fast-3b',
                     options: payload.options
                   });

@@ -36,7 +36,7 @@ export function ColabNotebooksPanel({ onTriggerCommand, jobs }: ColabNotebooksPa
   const [error, setError] = useState<string | null>(null);
   
   // Form states for regenerating notebooks
-  const [specGlob, setSpecGlob] = useState('subjects/*.json');
+  const [specGlob, setSpecGlob] = useState('subjects/NPC_specs/*.json');
   const [presets, setPresets] = useState('fast-3b,premium-3b,premium-8b,safe-any');
   const [localVram, setLocalVram] = useState('4.0');
   const [isSubmitting, setIsSubmitting] = useState(false);
