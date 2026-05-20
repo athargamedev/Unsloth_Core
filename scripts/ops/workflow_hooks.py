@@ -62,11 +62,19 @@ class WorkflowHookRecorder:
         else:
             self.emit(step, "complete", **fields)
 
+def default_hook_path(
+    output_dir: str | Path,
+    filename: str = "workflow_hooks.jsonl",
+    run_dir: str | Path | None = None
+) -> Path:
+    """Return the path to the workflow hooks JSONL file.
 
-def default_hook_path(output_dir: str | Path, filename: str = "workflow_hooks.jsonl") -> Path:
+    If run_dir is provided (preferred), the hooks are written to the unified
+    .pipeline/runs/{run_id}/ directory. Otherwise, they fall back to output_dir.
+    """
+    if run_dir:
+        return Path(run_dir) / filename
     return Path(output_dir) / filename
-
-
 class WorkflowHookReader:
     """Read and aggregate workflow hook JSONL files for dashboard display."""
 

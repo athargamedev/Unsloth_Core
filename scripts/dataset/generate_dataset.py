@@ -1890,6 +1890,8 @@ def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, outp
         print(f"[error] DeepEval golden synthesis failed: {e}")
 
 
+from scripts.ops.run_registry import PipelineRun
+
 def main():
     parser = argparse.ArgumentParser(description="Generate ChatML dataset from a subject spec")
     parser.add_argument("spec", help="Path to subject spec JSON file")
@@ -1950,81 +1952,109 @@ def main():
     print(f"  Subject: {spec['subject']}")
     print()
 
-    if args.synthesize_goldens:
-        ref_doc = spec.get("reference_doc")
-        if ref_doc and (PROJECT_ROOT / ref_doc).exists():
-            golden_path = Path(output_path).parent / "synthetic_goldens.json"
-            generate_synthetic_goldens_from_primer(str(PROJECT_ROOT / ref_doc), npc_key, str(golden_path))
-        else:
-            print(f"  [warn] No reference_doc found for {npc_key} or file missing. Skipping golden synthesis.")
+    with PipelineRun(
+        npc_key=npc_key,
+        stage="generate",
+        technique=args.technique,
+        spec_path=args.spec,
+        entrypoint="cli",
+    ) as run:
+        from _config.log_setup import set_active_run, clear_active_run
+        set_active_run(run.run_id, run.run_dir)
 
-    # ── Apply concept-focus boost ─────────────────────────────────────────
-    if args.concept_focus:
-        examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
-        if examples_per_category:
-            print(f"  Concept focus enabled: {args.concept_focus}")
-            for cat in list(examples_per_category.keys()):
-                if cat in args.concept_focus:
-                    boost_factor = 2.0
-                    original = examples_per_category[cat]
-                    examples_per_category[cat] = max(original + 4, int(original * boost_factor))
-                    print(f"    {cat}: {original} -> {examples_per_category[cat]} ({boost_factor}x boost)")
-            # Also add a focused note to the output path
-            focus_suffix = "_focused"
-            if args.output and "_focused" not in str(args.output):
-                output_path = str(args.output).replace(".jsonl", f"{focus_suffix}.jsonl")
-                print(f"  Focused output path: {output_path}")
-        else:
-            print("  [warn] --concept-focus specified but spec has no examples_per_category")
-
-    if args.technique == "docs":
-        manifest_path = (
-            args.docs_manifest
-            or spec.get("dataset", {}).get("corpus_manifest")
-            or str(default_manifest_path())
-        )
         try:
-            result = generate_workflow_dataset_from_manifest(
-                spec,
-                manifest_path,
-                output_path,
-                seed=args.seed,
-                include_validation=not args.no_validation,
-                val_split=args.val_split,
-            )
-        except Exception as exc:
-            print(f"Error: docs manifest generation failed: {exc}")
-            sys.exit(2)
-    else:
-        result = generate_dataset(
-            spec,
-            output_path,
-            seed=args.seed,
-            include_validation=not args.no_validation,
-            val_split=args.val_split,
-            generator=generator,
-            multi_turn_ratio=args.multi_turn_ratio,
-            temperature=args.temperature,
-            technique=args.technique,
-            spec_path=args.spec,
-            telemetry_ipc=args.telemetry_ipc,
-            workflow_hooks=args.workflow_hooks,
-        )
+            if args.synthesize_goldens:
+                ref_doc = spec.get("reference_doc")
+                if ref_doc and (PROJECT_ROOT / ref_doc).exists():
+                    golden_path = Path(output_path).parent / "synthetic_goldens.json"
+                    generate_synthetic_goldens_from_primer(str(PROJECT_ROOT / ref_doc), npc_key, str(golden_path))
+                else:
+                    print(f"  [warn] No reference_doc found for {npc_key} or file missing. Skipping golden synthesis.")
 
-    log_state("dataset_generated", npc_key=result.get("npc_key", spec.get("npc_key", "unknown")),
-              total=result["total"], train=result["train"], validation=result["validation"],
-              train_path=result["train_path"], technique=args.technique)
-    print(f"  Total examples:  {result['total']}")
-    print(f"  Training:        {result['train']}")
-    print(f"  Validation:      {result['validation']}")
-    print(f"  Categories:      {json.dumps(result['categories'])}")
-    print(f"  Train path:      {result['train_path']}")
-    if result["val_path"]:
-        print(f"  Val path:        {result['val_path']}")
-    if result.get("manifest_path"):
-        print(f"  Manifest:        {result['manifest_path']}")
-    print()
-    print("Dataset generation complete!")
+            # ── Apply concept-focus boost ─────────────────────────────────────────
+            if args.concept_focus:
+                examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
+                if examples_per_category:
+                    print(f"  Concept focus enabled: {args.concept_focus}")
+                    for cat in list(examples_per_category.keys()):
+                        if cat in args.concept_focus:
+                            boost_factor = 2.0
+                            original = examples_per_category[cat]
+                            examples_per_category[cat] = max(original + 4, int(original * boost_factor))
+                            print(f"    {cat}: {original} -> {examples_per_category[cat]} ({boost_factor}x boost)")
+                    # Also add a focused note to the output path
+                    focus_suffix = "_focused"
+                    if args.output and "_focused" not in str(args.output):
+                        output_path = str(args.output).replace(".jsonl", f"{focus_suffix}.jsonl")
+                        print(f"  Focused output path: {output_path}")
+                else:
+                    print("  [warn] --concept-focus specified but spec has no examples_per_category")
+
+            if args.technique == "docs":
+                manifest_path = (
+                    args.docs_manifest
+                    or spec.get("dataset", {}).get("corpus_manifest")
+                    or str(default_manifest_path())
+                )
+                try:
+                    result = generate_workflow_dataset_from_manifest(
+                        spec,
+                        manifest_path,
+                        output_path,
+                        seed=args.seed,
+                        include_validation=not args.no_validation,
+                        val_split=args.val_split,
+                    )
+                except Exception as exc:
+                    print(f"Error: docs manifest generation failed: {exc}")
+                    sys.exit(2)
+            else:
+                result = generate_dataset(
+                    spec,
+                    output_path,
+                    seed=args.seed,
+                    include_validation=not args.no_validation,
+                    val_split=args.val_split,
+                    generator=generator,
+                    multi_turn_ratio=args.multi_turn_ratio,
+                    temperature=args.temperature,
+                    technique=args.technique,
+                    spec_path=args.spec,
+                    telemetry_ipc=args.telemetry_ipc,
+                    workflow_hooks=args.workflow_hooks or str(run.hook_path),
+                )
+
+            run.set_artifacts(
+                train_path=result["train_path"],
+                val_path=result["val_path"],
+                manifest_path=result.get("manifest_path")
+            )
+            run.set_metrics(
+                total=result["total"],
+                train=result["train"],
+                validation=result["validation"]
+            )
+
+            log_state("dataset_generated", npc_key=result.get("npc_key", spec.get("npc_key", "unknown")),
+                      total=result["total"], train=result["train"], validation=result["validation"],
+                      train_path=result["train_path"], technique=args.technique)
+
+            print(f"  Total examples:  {result['total']}")
+            print(f"  Training:        {result['train']}")
+            print(f"  Validation:      {result['validation']}")
+            print(f"  Categories:      {json.dumps(result['categories'])}")
+            print(f"  Train path:      {result['train_path']}")
+            if result["val_path"]:
+                print(f"  Val path:        {result['val_path']}")
+            if result.get("manifest_path"):
+                print(f"  Manifest:        {result['manifest_path']}")
+            print()
+            print("Dataset generation complete!")
+
+        finally:
+            clear_active_run()
+
+
 
 
 if __name__ == "__main__":

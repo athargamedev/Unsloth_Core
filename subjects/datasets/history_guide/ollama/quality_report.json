@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-20T22:57:57.702170+00:00",
+  "created_at": "2026-05-20T23:50:35.499298+00:00",
   "npc_key": "history_guide",
   "technique": "ollama",
   "spec": {
@@ -13,7 +13,7 @@
     "sanitized": true,
     "sanitizer": {
       "version": "v2",
-      "date": "2026-05-20T20:10:57Z",
+      "date": "2026-05-20T23:04:06Z",
       "argv": "/home/athar/Projects/Unsloth_Core/scripts/dataset/sanitize_dataset.py subjects/datasets/history_guide/ollama/train.jsonl --output subjects/datasets/history_guide/ollama/train_clean.jsonl --strict-canonical",
       "artifact_check_mode": "strict",
       "strict_mode": false
@@ -24,7 +24,7 @@
     },
     "input": {
       "file": "subjects/datasets/history_guide/ollama/train.jsonl",
-      "hash": "sha256:6ef3426ccacb8ff26429ad610ad6393005a738998775dfebfbeb444c97d42b5a",
+      "hash": "sha256:22ffa9a22a5ce02fda7aca301cde098d29f7558aeaacdfb88808d471beda2fab",
       "total_examples": 120
     },
     "statistics": {
@@ -48,7 +48,7 @@
         "boundary_enforcement": 15
       },
       "quality_scores": {
-        "mean": 81.8,
+        "mean": 81.7,
         "median": 81.0,
         "min": 72,
         "max": 92,
@@ -75,11 +75,11 @@
       "by_reason": {}
     },
     "content_hashes": [
-      "11f59aea8800eb5a2c179bd02ee073aeb9145558e5d5eb229286f29f95cd0a7f",
+      "0c7b9491f5eec32d803f18d0e6b4b6f4c07d5d6c48cf3170b5de2368a447bd4f",
       "2c46a10266b23ee0d9c484fa2d42f456754d601d9e0483499f97148bb8e33edd",
       "8f35949256b1dfa9297a2a71b4a09a0ddd9bc359a1bd64fe510bae6ac85755b8",
-      "ea864a3c89dd424413bec1fa1d35be430f186d0f53a4ba63d6f57e6ef157dac2",
-      "fbc12b0effedf56735ffe88c0a08f07175a3b5f167ad0ea2211eb8998c208c2f",
+      "5a098d8f0664b7934ac5f020eb6b97ef8a52afda7174311a7d438772dd5a63ac",
+      "399168e80364478f037a5d1b305e0bd0bb49423f3ce598195d9e759bcb86799f",
       "2e8b0a16421581a78cf4a3ff9a9b943363c7107433821e14cd229875721234aa",
       "5080db3ec11045134f4b03b5ce4c7fd720bf4de092c8109737908170c17290ee",
       "0285bfd2df911d6bcc20f9fc790a273cc55ced0ed1cbcddda921623c6a85a1aa",
@@ -87,7 +87,7 @@
       "fa40d3b8c409927445007dc121fc92b602b7c3647cfaab43f774531a052c9c78",
       "32cda672220a5106f6542dbcf16906bd958d173d16c93f8c06e40f1f0c87a625",
       "8ef9377c9bd0c95c91c572fc8e744627b4e2ae085f8092ebfccd46537314b4cb",
-      "ad9479696affb656c038e414e82bd78d0aa7ac5136637ae4cdfdeffcb0555c18",
+      "0e2e2667b453599b968e35aea044b71e2c9c6f495eadb221d1da3faf26674608",
       "1efdc04b784fd06f8a0b127bc09795302285dae006d97b4626f6dd3eee14e9b0",
       "9cc302a26eadf5ac43589a2be5906c6e7c531ff202b4115543961543cca0ccd0",
       "9973f57368eb737609ec40ad3ce81d5773760a950818429c63c238c1dd53b3a8",
@@ -180,7 +180,7 @@
       "0d7d57346d61e710716463fd8e23bf73bdf55ea118f02987b55d53ef0f602e93",
       "39dea61bd32674dee50fa6ce44366928ad3791a38df1a0191793e42caea9e238",
       "6ec8ab28410e9ff402e1f6c7a63ec13aa1375c48da57fa8c3106f1d548222c92",
-      "8227b7caf736dc40af60d701a357c1d115c59e4701e28d85906de61049b56826",
+      "f88f1194fd6a40106bda0f30e1c908a2b875181cddfd553b42269875c7a6fa79",
       "b4cb1863a439f9537c5faa0e236b11c83411a84af3b949a28f55915d0abd58ed",
       "a22f464dbb528b7a2cbcba227dd6e5aae862e901be98118cceb88a9a26b3d82c",
       "6196f0c093b476d5695ab3476f71ea52f49471303d7b1f1252d25c36df174fe1",
@@ -208,14 +208,14 @@
   "sanitizer": {
     "manifest": {
       "version": "v2",
-      "date": "2026-05-20T20:10:57Z",
+      "date": "2026-05-20T23:04:06Z",
       "argv": "/home/athar/Projects/Unsloth_Core/scripts/dataset/sanitize_dataset.py subjects/datasets/history_guide/ollama/train.jsonl --output subjects/datasets/history_guide/ollama/train_clean.jsonl --strict-canonical",
       "artifact_check_mode": "strict",
       "strict_mode": false
     },
     "input": {
       "file": "subjects/datasets/history_guide/ollama/train.jsonl",
-      "hash": "sha256:6ef3426ccacb8ff26429ad610ad6393005a738998775dfebfbeb444c97d42b5a",
+      "hash": "sha256:22ffa9a22a5ce02fda7aca301cde098d29f7558aeaacdfb88808d471beda2fab",
       "total_examples": 120
     },
     "statistics": {
@@ -239,7 +239,7 @@
         "boundary_enforcement": 15
       },
       "quality_scores": {
-        "mean": 81.8,
+        "mean": 81.7,
         "median": 81.0,
         "min": 72,
         "max": 92,
@@ -343,30 +343,30 @@
   },
   "deepeval": {
     "summary": {
-      "created_at": "2026-05-20T22:57:57.701234+00:00",
+      "created_at": "2026-05-20T23:50:35.498248+00:00",
       "npc_key": "history_guide",
       "technique": "ollama",
       "judge_model": "qwen3:latest",
-      "deepeval_identifier": "dataset-quality-history_guide-ollama-20260520-191809",
-      "deepeval_result_identifier": "dataset-quality-history_guide-ollama-20260520-191809",
+      "deepeval_identifier": "dataset-quality-history_guide-ollama-20260520-200418",
+      "deepeval_result_identifier": "dataset-quality-history_guide-ollama-20260520-200418",
       "command": [
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
         "test",
         "run",
         "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
         "--identifier",
-        "dataset-quality-history_guide-ollama-20260520-191809",
+        "dataset-quality-history_guide-ollama-20260520-200418",
         "--display",
         "all",
         "--skip-on-missing-params"
       ],
       "total": 10,
-      "passed": 4,
-      "failed": 6,
-      "pass_rate": 0.4,
+      "passed": 7,
+      "failed": 3,
+      "pass_rate": 0.7,
       "metrics": {
         "Answer Relevancy": {
-          "count": 5,
+          "count": 4,
           "average_score": 1.0,
           "pass_rate": 1.0
         },
@@ -377,7 +377,7 @@
         },
         "Conversation Completeness": {
           "count": 5,
-          "average_score": 0.6,
+          "average_score": 0.7,
           "pass_rate": 0.6
         },
         "Faithfulness": {
@@ -387,17 +387,17 @@
         },
         "Hallucination": {
           "count": 5,
-          "average_score": 0.2667,
-          "pass_rate": 0.8
+          "average_score": 0.1333,
+          "pass_rate": 1.0
         },
         "Knowledge Retention": {
           "count": 5,
-          "average_score": 0.9,
-          "pass_rate": 0.8
+          "average_score": 1.0,
+          "pass_rate": 1.0
         },
         "Persona and Category Fit [GEval]": {
           "count": 5,
-          "average_score": 0.94,
+          "average_score": 1.0,
           "pass_rate": 1.0
         },
         "Toxicity": {
@@ -407,8 +407,8 @@
         },
         "Training Usefulness and Specificity [GEval]": {
           "count": 5,
-          "average_score": 0.56,
-          "pass_rate": 0.4
+          "average_score": 0.92,
+          "pass_rate": 1.0
         }
       },
       "categories": {
@@ -419,8 +419,8 @@
         },
         "identity": {
           "total": 2,
-          "passed": 0,
-          "pass_rate": 0.0
+          "passed": 2,
+          "pass_rate": 1.0
         },
         "quest": {
           "total": 2,
@@ -434,8 +434,8 @@
         },
         "teaching": {
           "total": 2,
-          "passed": 1,
-          "pass_rate": 0.5
+          "passed": 2,
+          "pass_rate": 1.0
         }
       },
       "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/quality_failures.json",
@@ -516,30 +516,9 @@
     },
     "failures": [
       {
-        "test_name": "history_guide:teaching:1",
-        "input": "NPC: history_guide\nCategory: teaching\nConcept: historical thinking\nDifficulty: intermediate\nUser message: HistoryGuide, I've been studying the ancient civilizations in these scrolls. How do historians think about cause and effect in events?",
-        "actual_output": "Historians analyze past events by identifying the causes that led to a particular outcome. This helps us understand the consequences of human actions, like the fall of empires or the rise of new ideas.",
-        "metadata": {
-          "npc_key": "history_guide",
-          "category": "teaching",
-          "concept": "historical thinking",
-          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
-          "line_number": 1
-        },
-        "metric": {
-          "name": "Training Usefulness and Specificity [GEval]",
-          "score": 0.4,
-          "threshold": 0.7,
-          "success": false,
-          "reason": "The output provides a general explanation of cause and effect without actionable details or domain-specific examples, failing to align with the context's emphasis on primary sources, concrete examples, and structured explanations. It lacks specificity and fails to engage with the context's guidelines for teaching historical thinking.",
-          "evaluation_model": "qwen3:latest (Ollama)",
-          "error": null
-        }
-      },
-      {
         "test_name": "history_guide:refusal:5",
         "input": "NPC: history_guide\nCategory: refusal\nConcept: core timeline anchors\nDifficulty: beginner\nUser message: Can you help me with something unrelated to world history?",
-        "actual_output": "I can't help with that request. I can help with verified world history facts, timelines, and primary-source context instead.",
+        "actual_output": "I can't help outside world history. Bring me a period, event, or source, and I'll map the causes, evidence, and consequences for you.",
         "metadata": {
           "npc_key": "history_guide",
           "category": "refusal",
@@ -548,53 +527,11 @@
           "line_number": 5
         },
         "metric": {
-          "name": "Training Usefulness and Specificity [GEval]",
-          "score": 0.3,
-          "threshold": 0.7,
+          "name": "Answer Relevancy",
+          "score": null,
+          "threshold": 0.8,
           "success": false,
-          "reason": "The Actual Output is specific in refusing unrelated topics and aligns with the refusal rules in the Context, but it lacks concrete teaching/dialogue or actionable details about the target concept (core timeline anchors). It does not provide teachable insights or examples from the referenced historical anchors, instead offering a generic refusal without connecting to the domain-specific teaching objective.",
-          "evaluation_model": "qwen3:latest (Ollama)",
-          "error": null
-        }
-      },
-      {
-        "test_name": "history_guide:identity:13",
-        "input": "NPC: history_guide\nCategory: identity\nConcept: historical thinking\nDifficulty: beginner\nUser message: I stumbled upon this ancient tower, and I'm searching for someone who can guide me through the ages. Have you seen anyone around?",
-        "actual_output": "Greetings, traveler! I am HistoryGuide, a storyteller of worlds past. The Chronos Spire's archives are my home, where dusty scrolls whisper secrets to those willing to listen.",
-        "metadata": {
-          "npc_key": "history_guide",
-          "category": "identity",
-          "concept": "historical thinking",
-          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
-          "line_number": 13
-        },
-        "metric": {
-          "name": "Training Usefulness and Specificity [GEval]",
-          "score": 0.2,
-          "threshold": 0.7,
-          "success": false,
-          "reason": "The Actual Output provides a generic introduction without concrete historical teaching or actionable details, failing to address the user's request for guidance through history. It lacks specific domain-specific insights tied to the Input's context, such as the Core Timeline Anchors or Useful Vocabulary from the Reference doc.",
-          "evaluation_model": "qwen3:latest (Ollama)",
-          "error": null
-        }
-      },
-      {
-        "test_name": "history_guide:identity:13",
-        "input": "NPC: history_guide\nCategory: identity\nConcept: historical thinking\nDifficulty: beginner\nUser message: I stumbled upon this ancient tower, and I'm searching for someone who can guide me through the ages. Have you seen anyone around?",
-        "actual_output": "Greetings, traveler! I am HistoryGuide, a storyteller of worlds past. The Chronos Spire's archives are my home, where dusty scrolls whisper secrets to those willing to listen.",
-        "metadata": {
-          "npc_key": "history_guide",
-          "category": "identity",
-          "concept": "historical thinking",
-          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
-          "line_number": 13
-        },
-        "metric": {
-          "name": "Hallucination",
-          "score": 0.6666666666666666,
-          "threshold": 0.5,
-          "success": false,
-          "reason": "The score is 0.67 because the actual output partially aligns with the context's role description but significantly contradicts by omitting required historical references (ancient civilizations, world wars, History Primer details) and only providing generic greetings and vague mentions of scrolls.",
+          "reason": null,
           "evaluation_model": "qwen3:latest (Ollama)",
           "error": null
         }
@@ -610,11 +547,11 @@
           "line_number": 4
         },
         "metric": {
-          "name": "Knowledge Retention",
+          "name": "Conversation Completeness",
           "score": 0.5,
-          "threshold": 0.8,
+          "threshold": 0.7,
           "success": false,
-          "reason": "The score is 0.50 because the LLM contradicted the known fact that 'bad air' was identified as a cause of the plague in the Previous Knowledge, indicating partial retention but a significant factual error.",
+          "reason": "The score is 0.5 because the LLM response prioritized analytical methods for studying the Black Death over directly addressing the user's request for medieval accounts of the plague as divine punishment, missing the specific historical perspectives the user sought.",
           "evaluation_model": "qwen3:latest (Ollama)",
           "error": null
         }
@@ -634,27 +571,7 @@
           "score": 0.0,
           "threshold": 0.7,
           "success": false,
-          "reason": "The score is 0.0 because the LLM refused to assist with the user's request for a topic outside world history and instead redirected the user to world history, completely failing to address the intended need.",
-          "evaluation_model": "qwen3:latest (Ollama)",
-          "error": null
-        }
-      },
-      {
-        "test_name": "history_guide:conv:identity:13",
-        "input": null,
-        "actual_output": null,
-        "metadata": {
-          "npc_key": "history_guide",
-          "category": "identity",
-          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
-          "line_number": 13
-        },
-        "metric": {
-          "name": "Conversation Completeness",
-          "score": 0.0,
-          "threshold": 0.7,
-          "success": false,
-          "reason": "The score is 0.0 because the LLM's response failed to provide any information or guidance about the ancient tower's history, instead only introducing itself as 'HistoryGuide' and mentioning archives without addressing the user's specific request for details on the tower.",
+          "reason": "The score is 0.0 because the LLM response explicitly stated it cannot assist outside world history, directly contradicting the User's intention to confirm assistance in that area. The response failed to address the User's request and instead limited the scope of help.",
           "evaluation_model": "qwen3:latest (Ollama)",
           "error": null
         }
@@ -717,30 +634,9 @@
     {
       "type": "deepeval_category_weakness",
       "severity": "medium",
-      "category": "identity",
-      "pass_rate": 0.0,
-      "suggested_action": "inspect_category_failures"
-    },
-    {
-      "type": "deepeval_category_weakness",
-      "severity": "medium",
       "category": "refusal",
       "pass_rate": 0.0,
       "suggested_action": "inspect_category_failures"
-    },
-    {
-      "type": "deepeval_category_weakness",
-      "severity": "medium",
-      "category": "teaching",
-      "pass_rate": 0.5,
-      "suggested_action": "inspect_category_failures"
-    },
-    {
-      "type": "deepeval_metric_failure",
-      "severity": "medium",
-      "metric": "Training Usefulness and Specificity [GEval]",
-      "count": 3,
-      "suggested_action": "review_failed_rows_and_prompts"
     },
     {
       "type": "deepeval_metric_failure",
@@ -752,14 +648,7 @@
     {
       "type": "deepeval_metric_failure",
       "severity": "medium",
-      "metric": "Hallucination",
-      "count": 1,
-      "suggested_action": "review_failed_rows_and_prompts"
-    },
-    {
-      "type": "deepeval_metric_failure",
-      "severity": "medium",
-      "metric": "Knowledge Retention",
+      "metric": "Answer Relevancy",
       "count": 1,
       "suggested_action": "review_failed_rows_and_prompts"
     }

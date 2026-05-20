@@ -12,6 +12,7 @@ unsloth_env/
 # Local tool state
 .hermes/
 .opencode/
+.pipeline/
 skills-lock.json
 
 # Generated data (regenerable)

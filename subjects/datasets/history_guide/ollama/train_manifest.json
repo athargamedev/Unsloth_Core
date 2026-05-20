@@ -4,7 +4,7 @@
   "sanitized": true,
   "sanitizer": {
     "version": "v2",
-    "date": "2026-05-20T20:10:57Z",
+    "date": "2026-05-20T23:51:53Z",
     "argv": "/home/athar/Projects/Unsloth_Core/scripts/dataset/sanitize_dataset.py subjects/datasets/history_guide/ollama/train.jsonl --output subjects/datasets/history_guide/ollama/train_clean.jsonl --strict-canonical",
     "artifact_check_mode": "strict",
     "strict_mode": false
@@ -15,7 +15,7 @@
   },
   "input": {
     "file": "subjects/datasets/history_guide/ollama/train.jsonl",
-    "hash": "sha256:6ef3426ccacb8ff26429ad610ad6393005a738998775dfebfbeb444c97d42b5a",
+    "hash": "sha256:12e6b0f3693c1f78c0a4f97182ee6fd755fffdd03f7468795a5820a2e0bf5662",
     "total_examples": 120
   },
   "statistics": {
@@ -39,7 +39,7 @@
       "boundary_enforcement": 15
     },
     "quality_scores": {
-      "mean": 81.8,
+      "mean": 81.7,
       "median": 81.0,
       "min": 72,
       "max": 92,
@@ -66,11 +66,11 @@
     "by_reason": {}
   },
   "content_hashes": [
-    "11f59aea8800eb5a2c179bd02ee073aeb9145558e5d5eb229286f29f95cd0a7f",
+    "0c7b9491f5eec32d803f18d0e6b4b6f4c07d5d6c48cf3170b5de2368a447bd4f",
     "2c46a10266b23ee0d9c484fa2d42f456754d601d9e0483499f97148bb8e33edd",
     "8f35949256b1dfa9297a2a71b4a09a0ddd9bc359a1bd64fe510bae6ac85755b8",
-    "ea864a3c89dd424413bec1fa1d35be430f186d0f53a4ba63d6f57e6ef157dac2",
-    "fbc12b0effedf56735ffe88c0a08f07175a3b5f167ad0ea2211eb8998c208c2f",
+    "e43aa2c881afc3bbb7229c0a2d9cd6c165f1ab929482adf01144f47b8b464fa2",
+    "af1c7ea2fca616b2d8286e82c95b7c859f4188361240e23a083800a42fba0be0",
     "2e8b0a16421581a78cf4a3ff9a9b943363c7107433821e14cd229875721234aa",
     "5080db3ec11045134f4b03b5ce4c7fd720bf4de092c8109737908170c17290ee",
     "0285bfd2df911d6bcc20f9fc790a273cc55ced0ed1cbcddda921623c6a85a1aa",
@@ -78,7 +78,7 @@
     "fa40d3b8c409927445007dc121fc92b602b7c3647cfaab43f774531a052c9c78",
     "32cda672220a5106f6542dbcf16906bd958d173d16c93f8c06e40f1f0c87a625",
     "8ef9377c9bd0c95c91c572fc8e744627b4e2ae085f8092ebfccd46537314b4cb",
-    "ad9479696affb656c038e414e82bd78d0aa7ac5136637ae4cdfdeffcb0555c18",
+    "0e2e2667b453599b968e35aea044b71e2c9c6f495eadb221d1da3faf26674608",
     "1efdc04b784fd06f8a0b127bc09795302285dae006d97b4626f6dd3eee14e9b0",
     "9cc302a26eadf5ac43589a2be5906c6e7c531ff202b4115543961543cca0ccd0",
     "9973f57368eb737609ec40ad3ce81d5773760a950818429c63c238c1dd53b3a8",
@@ -171,7 +171,7 @@
     "0d7d57346d61e710716463fd8e23bf73bdf55ea118f02987b55d53ef0f602e93",
     "39dea61bd32674dee50fa6ce44366928ad3791a38df1a0191793e42caea9e238",
     "6ec8ab28410e9ff402e1f6c7a63ec13aa1375c48da57fa8c3106f1d548222c92",
-    "8227b7caf736dc40af60d701a357c1d115c59e4701e28d85906de61049b56826",
+    "f88f1194fd6a40106bda0f30e1c908a2b875181cddfd553b42269875c7a6fa79",
     "b4cb1863a439f9537c5faa0e236b11c83411a84af3b949a28f55915d0abd58ed",
     "a22f464dbb528b7a2cbcba227dd6e5aae862e901be98118cceb88a9a26b3d82c",
     "6196f0c093b476d5695ab3476f71ea52f49471303d7b1f1252d25c36df174fe1",
