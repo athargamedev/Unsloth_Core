@@ -12,6 +12,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 
 def load_model(model_id, adapter_path):
@@ -72,7 +73,16 @@ def main():
     parser.add_argument("--spec", required=True, help="Subject spec JSON path")
     parser.add_argument("--output", default=None, help="Output report path")
     parser.add_argument("--feedback-json", default=None, help="Feedback JSON output path")
+    parser.add_argument("--workflow-hooks", default=None,
+                        help="Path to a JSONL hook log for step tracing (default: <adapter-dir>/workflow_hooks.jsonl)")
     args = parser.parse_args()
+
+    hook_recorder = WorkflowHookRecorder(
+        args.workflow_hooks or default_hook_path(Path(args.adapter).parent),
+        tool="quick_eval",
+        spec_path=args.spec,
+    )
+    hook_recorder.emit("quick_eval", "start", adapter=args.adapter, spec=args.spec)
 
     # Load spec
     with open(args.spec) as f:
@@ -89,6 +99,7 @@ def main():
     )
 
     if not questions:
+        hook_recorder.emit("quick_eval", "error", reason="no_validation_questions")
         print("No validation questions found in spec.")
         return
 
@@ -99,11 +110,14 @@ def main():
     print()
 
     # Load model and adapter
+    hook_recorder.emit("quick_eval_load_model", "start", model_id=model_id, adapter=args.adapter)
     model, tokenizer = load_model(model_id, args.adapter)
+    hook_recorder.emit("quick_eval_load_model", "complete", model_id=model_id, adapter=args.adapter)
 
     # Run inference on each question
     results = []
     print(f"\n  Running {len(questions)} validation questions...")
+    hook_recorder.emit("quick_eval_run", "start", total=len(questions))
     for i, q in enumerate(questions):
         prompt = q.get("question", "")
         expected = q.get("expected", "")
@@ -121,6 +135,8 @@ def main():
         })
         # Print first 200 chars of response
         print(f"    → {response[:200]}")
+
+    hook_recorder.emit("quick_eval_run", "complete", total=len(questions))
 
     # Generate report
     report = {
@@ -185,6 +201,7 @@ def main():
         print(f"  {cat_concept:40s} {len(r['response']):4d} chars")
     print(f"\n  Total: {len(results)} questions evaluated")
     print(f"  Report: {output_path}")
+    hook_recorder.emit("quick_eval", "complete", total=len(questions), report=output_path, feedback_json=args.feedback_json)
 
 
 if __name__ == "__main__":

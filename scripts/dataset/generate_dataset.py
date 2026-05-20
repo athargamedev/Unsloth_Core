@@ -1608,7 +1608,7 @@ async def generate_dataset_async_runner(spec, concepts, examples_per_category, g
     return examples
 
 
-def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.8, technique="template", spec_path=None, telemetry_ipc=None, workflow_hooks=None):
+def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.6, technique="template", spec_path=None, telemetry_ipc=None, workflow_hooks=None):
     """Generate a complete dataset from a subject spec."""
     random.seed(seed)
     

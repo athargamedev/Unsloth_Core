@@ -2,8 +2,8 @@
 """
 ucore — Unified Unsloth_Core CLI.
 
-Simplifies the NPC training pipeline:
-  generate -> sanitize -> train -> smoke-test
+Canonical workflow:
+  validate-spec -> generate -> sanitize -> dataset-eval -> train -> export -> evaluate -> feedback
 """
 
 import argparse
@@ -48,6 +48,8 @@ def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Unsloth_Core Unified CLI")
+    parser.add_argument("--workflow-hooks", default=None,
+                        help="Path to a JSONL hook log for step tracing (used by workflow scripts)")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # Generate
@@ -61,13 +63,13 @@ def main():
                         help="Focus on specific categories (repeatable, boosts example count)")
 
     # Generate with Ollama (optimized)
-    gen_ollama_p = subparsers.add_parser("generate-ollama", help="Generate dataset using optimized Ollama generator")
+    gen_ollama_p = subparsers.add_parser("generate-ollama", help="Generate dataset using optimized Ollama generator (defaults to local llama3.1-3060-chat)")
     gen_ollama_p.add_argument("spec", help="Path to subject spec JSON")
-    gen_ollama_p.add_argument("--model", default="llama3.1:latest", help="Ollama model (default: llama3.1:latest)")
+    gen_ollama_p.add_argument("--model", default="llama3.1-3060-chat:latest", help="Ollama model (default: llama3.1-3060-chat:latest)")
     gen_ollama_p.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
     gen_ollama_p.add_argument("--batch-size", type=int, default=4, help="Concurrent generation tasks")
     gen_ollama_p.add_argument("--max-retries", type=int, default=3, help="Max retries per generation")
-    gen_ollama_p.add_argument("--temperature", type=float, default=0.7, help="Generation temperature")
+    gen_ollama_p.add_argument("--temperature", type=float, default=0.6, help="Generation temperature")
     gen_ollama_p.add_argument("--multi-turn-ratio", type=float, default=0.25,
                               help="Fraction of rows to request as two-turn dialogues")
     gen_ollama_p.add_argument("--seed", type=int, default=42, help="Random seed")
@@ -265,8 +267,8 @@ def main():
     sb_p.add_argument("--player-id", help="Probe player UUID")
     sb_p.add_argument("--skip-probe", action="store_true", help="Only profile alignment, skip dialogue probe")
 
-    # Pipeline (Generate + Sanitize + Train)
-    pipe_p = subparsers.add_parser("pipeline", help="Run full generation-to-training pipeline")
+    # Pipeline (Validate Spec + Generate + Sanitize + Dataset Eval + Train + Export + Evaluate)
+    pipe_p = subparsers.add_parser("pipeline", help="Run the full generate -> sanitize -> dataset-eval -> train -> export -> evaluate pipeline")
     pipe_p.add_argument("spec", help="Path to subject spec JSON")
     pipe_p.add_argument("--preset", default="fast-3b", help="Training preset")
     pipe_p.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
@@ -334,6 +336,9 @@ def main():
 
     args = parser.parse_args()
 
+    if args.workflow_hooks:
+        os.environ["WORKFLOW_HOOKS_PATH"] = args.workflow_hooks
+
     if args.command in ["init", "new-npc"]:
         cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "scaffold_npc.py"), args.npc_key]
         if args.subject: cmd.extend(["--subject", args.subject])
@@ -381,7 +386,7 @@ def main():
             cmd.extend(["--batch-size", str(args.batch_size)])
         if args.max_retries and args.max_retries != 3:
             cmd.extend(["--max-retries", str(args.max_retries)])
-        if args.temperature and args.temperature != 0.7:
+        if args.temperature and args.temperature != 0.6:
             cmd.extend(["--temperature", str(args.temperature)])
         if args.multi_turn_ratio and args.multi_turn_ratio != 0.25:
             cmd.extend(["--multi-turn-ratio", str(args.multi_turn_ratio)])
@@ -629,22 +634,24 @@ def main():
         # ── Shared W&B pipeline identity ───────────────────────────────
         pipeline_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         npc_key = Path(args.spec).stem
+        technique = "ollama" if args.ollama else args.technique
         wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
+        pipeline_hooks = args.workflow_hooks or str(PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique / "workflow_hooks.jsonl")
         # Set on the base environment so all child processes inherit it
         if args.wandb:
             os.environ["WANDB_GROUP"] = wandb_group
             os.environ["WANDB_RUN_GROUP"] = wandb_group
+        os.environ["WORKFLOW_HOOKS_PATH"] = pipeline_hooks
 
         print("[STAGE] spec")
         if not args.skip_spec_validate:
             print(f"--- Phase 0: Validating Spec ---")
             validate_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "validate_subject_spec.py"), args.spec, "--generation-ready"]
-            run_cmd(validate_cmd)
+            run_cmd(validate_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
         print("[STAGE] dataset")
         print(f"--- Phase 1: Generating Dataset ---")
         gen_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec]
-        technique = "ollama" if args.ollama else args.technique
         gen_cmd.extend(["--technique", technique])
         if technique == "ollama":
             gen_cmd.append("--ollama")
@@ -652,7 +659,7 @@ def main():
             gen_cmd.extend(["--docs-manifest", args.docs_manifest])
         if args.model:
             gen_cmd.extend(["--model", args.model])
-        run_cmd(gen_cmd)
+        run_cmd(gen_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
         # Determine paths
         dataset_path = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
@@ -661,13 +668,13 @@ def main():
         print(f"\n--- Phase 2: Sanitizing Dataset ---")
         san_path = dataset_path.replace("train.jsonl", "train_clean.jsonl")
         san_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), dataset_path, "--output", san_path, "--strict-canonical"]
-        run_cmd(san_cmd)
+        run_cmd(san_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
         if not args.skip_dataset_eval:
             print("[STAGE] quality-gate")
             print(f"\n--- Phase 3: DeepEval Dataset Quality Gate ---")
             eval_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "dataset_eval.py"), args.spec, "--technique", technique]
-            run_cmd(eval_cmd)
+            run_cmd(eval_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
         print("[STAGE] training")
         print(f"\n--- Phase 4: Training Model ---")
@@ -679,7 +686,7 @@ def main():
             train_cmd.append("--export-gguf")
         if args.wandb:
             train_cmd.append("--wandb")
-        train_env = {"WANDB_JOB_TYPE": "train"}
+        train_env = {"WANDB_JOB_TYPE": "train", "WORKFLOW_HOOKS_PATH": pipeline_hooks}
         run_cmd(train_cmd, extra_env=train_env)
 
         # Determine paths for GGUF output
@@ -695,7 +702,7 @@ def main():
                 smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
                 if args.track:
                     smoke_cmd.append("--track")
-                run_cmd(smoke_cmd)
+                run_cmd(smoke_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
             else:
                 print("Warning: No GGUF found for smoke testing")
 
@@ -719,7 +726,7 @@ def main():
                 if args.wandb:
                     eval_cmd.append("--wandb")
                 eval_env = {"WANDB_JOB_TYPE": "eval"}
-                run_cmd(eval_cmd, extra_env=eval_env)
+                run_cmd(eval_cmd, extra_env={"WANDB_JOB_TYPE": "eval", "WORKFLOW_HOOKS_PATH": pipeline_hooks})
             elif len(ggufs) == 1:
                 print(f"  Only one GGUF export found ({ggufs[0].name}) — no baseline to compare against.")
                 print(f"  Run pipeline again after a future training to get a side-by-side evaluation.")

@@ -733,7 +733,7 @@ class OllamaDatasetGenerator:
             return None
     
     async def generate_dataset_async(self, examples_per_category: dict, 
-                                    temperature: float = 0.7, max_workers: int = 4,
+                                    temperature: float = 0.6, max_workers: int = 4,
                                     multi_turn_ratio: float = 0.25,
                                     session=None, executor=None) -> list[dict]:
         """Generate dataset asynchronously."""
@@ -855,8 +855,8 @@ Examples:
     )
     
     parser.add_argument("spec", help="Path to subject spec JSON")
-    parser.add_argument("--model", default="qwen2.5:7b", 
-                       help="Ollama model to use (default: qwen2.5:7b)")
+    parser.add_argument("--model", default="llama3.1-3060-chat:latest", 
+                       help="Ollama model to use (default: llama3.1-3060-chat:latest)")
     parser.add_argument("--url", default="http://localhost:11434",
                        help="Ollama server URL (default: http://localhost:11434)")
     parser.add_argument("--output", "-o", default=None,
@@ -905,7 +905,7 @@ Examples:
     if available:
         logger.info(f"Available models: {', '.join(available)}")
     
-    model_name = args.model.split(':')[0]  # Extract base model name (qwen2.5 from qwen2.5:7b)
+    model_name = args.model.split(':')[0]  # Extract base model name (e.g. llama3.1-3060-chat from llama3.1-3060-chat:latest)
     if not health_checker.model_exists(model_name):
         if args.pull_model:
             logger.info(f"Model '{args.model}' not found, pulling...")

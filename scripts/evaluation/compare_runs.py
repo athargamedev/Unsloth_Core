@@ -6,14 +6,14 @@ Resolves run manifests, finds the exported GGUF, and runs evaluate.py
 for a side-by-side comparison. Results go to eval/comparisons/.
 
 Usage:
-    python scripts/evaluation/compare_runs.py chemistry_instructor \\
-        --baseline-run 20260512_llama-3b-fast_001 \\
+    python scripts/evaluation/compare_runs.py chemistry_instructor \
+        --baseline-run 20260512_llama-3b-fast_001 \
         --candidate-run 20260512_llama-3b-quality_001
 
     # With an LLM judge
-    python scripts/evaluation/compare_runs.py chemistry_instructor \\
-        --baseline-run 20260512_fast_001 \\
-        --candidate-run 20260512_quality_001 \\
+    python scripts/evaluation/compare_runs.py chemistry_instructor \
+        --baseline-run 20260512_fast_001 \
+        --candidate-run 20260512_quality_001 \
         --judge
 """
 
@@ -27,6 +27,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 
 def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str]:
@@ -55,7 +56,6 @@ def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str]:
 
     model_id = manifest.get("model_id", "unsloth/Llama-3.2-3B-Instruct-bnb-4bit")
     model_short = None
-    technique = manifest.get("dataset", {}).get("technique", "template")
     try:
         model_short = paths.model_short_name(model_id)
     except Exception:
@@ -71,13 +71,10 @@ def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str]:
     # Search for matching GGUF
     ggufs = []
     if model_short:
-        # Try specific model naming first
         ggufs = sorted(export_dir.glob(f"{npc_key}-{model_short}-*.gguf"))
     if not ggufs:
-        # Fall back to any GGUF for this NPC
         ggufs = sorted(export_dir.glob(f"{npc_key}-*.gguf"))
     if not ggufs:
-        # Last resort: any GGUF in the export dir
         ggufs = sorted(export_dir.glob("*.gguf"))
 
     if not ggufs:
@@ -101,6 +98,8 @@ def main():
     parser.add_argument("--judge", action="store_true",
                         help="Use local Ollama judge")
     parser.add_argument("--output", "-o", help="Output report path")
+    parser.add_argument("--workflow-hooks", default=None,
+                        help="Path to a JSONL hook log for step tracing (default: <comparison-dir>/workflow_hooks.jsonl)")
     args = parser.parse_args()
 
     # Resolve GGUF paths
@@ -115,6 +114,10 @@ def main():
             spec_path = str(spec_guess)
             print(f"Auto-detected spec: {spec_path}")
 
+    hook_root = Path(args.output).parent if args.output else paths.eval_comparison_dir()
+    hook_recorder = WorkflowHookRecorder(args.workflow_hooks or default_hook_path(hook_root), tool="compare_runs", npc_key=args.npc_key, spec_path=spec_path)
+    hook_recorder.emit("compare_runs", "start", npc_key=args.npc_key, baseline_run=args.baseline_run, candidate_run=args.candidate_run)
+
     # Build evaluate.py command
     cmd = [
         sys.executable,
@@ -127,6 +130,7 @@ def main():
     cmd.extend(["--num-questions", str(args.num_questions)])
     if args.judge:
         cmd.append("--judge")
+    cmd.extend(["--workflow-hooks", str(hook_recorder.path)])
 
     # Default output path
     if not args.output:
@@ -154,6 +158,7 @@ def main():
     print()
 
     subprocess.run(cmd, cwd=str(PROJECT_ROOT), check=True)
+    hook_recorder.emit("compare_runs", "complete", output=args.output, baseline_run=args.baseline_run, candidate_run=args.candidate_run)
     print(f"\n{'=' * 60}")
     print(f"  Comparison complete: {args.output}")
     print(f"{'=' * 60}")

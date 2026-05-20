@@ -23,9 +23,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 
-def _export_one(model, tokenizer, npc_key, model_id, quant, skip_f16=False):
+def _export_one(model, tokenizer, npc_key, model_id, quant, skip_f16=False, hook_recorder=None):
     """Export one NPC's LoRA adapter to GGUF without reloading the base model.
 
     Returns True on success, False on failure.
@@ -33,13 +34,17 @@ def _export_one(model, tokenizer, npc_key, model_id, quant, skip_f16=False):
     try:
         _, output_dir = paths.resolve_adapter_dir(npc_key)
     except FileNotFoundError:
-        print(f"  \u26a0  Skipping '{npc_key}': No adapter found")
+        print(f"  ⚠  Skipping '{npc_key}': No adapter found")
+        if hook_recorder:
+            hook_recorder.emit("batch_export_npc", "error", npc_key=npc_key, quant=quant, reason="missing_adapter")
         return False
     adapter_config = output_dir / "adapter_config.json"
 
     print(f"\n{'=' * 60}")
     print(f"  Exporting: {npc_key}")
     print(f"{'=' * 60}")
+    if hook_recorder:
+        hook_recorder.emit("batch_export_npc", "start", npc_key=npc_key, quant=quant, skip_f16=bool(skip_f16))
 
     from unsloth import save as unsloth_save
     from peft import PeftModel
@@ -68,12 +73,16 @@ def _export_one(model, tokenizer, npc_key, model_id, quant, skip_f16=False):
         )
         gguf_files = sorted(Path(tmpdir).glob("*.gguf"))
         if not gguf_files:
-            print(f"  \u2717  No GGUF file generated for '{npc_key}'")
+            print(f"  ✗  No GGUF file generated for '{npc_key}'")
+            if hook_recorder:
+                hook_recorder.emit("batch_export_npc", "error", npc_key=npc_key, quant=quant, reason="no_gguf_generated")
             return False
         shutil.move(str(gguf_files[0]), str(gguf_path))
         elapsed = time.time() - t0
         size_gb = gguf_path.stat().st_size / (1024 * 1024 * 1024)
-        print(f"  \u2713  {gguf_path.name} ({size_gb:.2f} GB) in {elapsed:.0f}s")
+        print(f"  ✓  {gguf_path.name} ({size_gb:.2f} GB) in {elapsed:.0f}s")
+        if hook_recorder:
+            hook_recorder.emit("batch_export_npc", "complete", npc_key=npc_key, quant=quant, gguf=str(gguf_path), size_gb=round(size_gb, 4))
 
     # Export f16 variant
     if not skip_f16:
@@ -83,6 +92,8 @@ def _export_one(model, tokenizer, npc_key, model_id, quant, skip_f16=False):
         # Skip if f16 already exists and is newer than adapter
         if f16_path.exists() and f16_path.stat().st_mtime > adapter_config.stat().st_mtime:
             print(f"  ~  f16 already up-to-date, skipping")
+            if hook_recorder:
+                hook_recorder.emit("batch_export_npc", "complete", npc_key=npc_key, quant="f16", skipped=True)
         else:
             with tempfile.TemporaryDirectory(prefix=f"gguf_{npc_key}_f16_") as tmpdir:
                 print(f"  Generating GGUF (f16)...")
@@ -97,7 +108,9 @@ def _export_one(model, tokenizer, npc_key, model_id, quant, skip_f16=False):
                     shutil.move(str(gguf_files[0]), str(f16_path))
                     elapsed = time.time() - t0
                     size_mb = f16_path.stat().st_size / (1024 * 1024)
-                    print(f"  \u2713  {f16_path.name} ({size_mb:.0f} MB) in {elapsed:.0f}s")
+                    print(f"  ✓  {f16_path.name} ({size_mb:.0f} MB) in {elapsed:.0f}s")
+                    if hook_recorder:
+                        hook_recorder.emit("batch_export_npc", "complete", npc_key=npc_key, quant="f16", gguf=str(f16_path), size_mb=round(size_mb, 2))
 
     # Free LoRA memory
     del peft_model
@@ -134,11 +147,13 @@ def main():
                         help="Skip exporting f16 variants")
     parser.add_argument("--npc",
                         help="Comma-separated list of NPC keys to export (default: all trained)")
+    parser.add_argument("--workflow-hooks", default=None,
+                        help="Path to a JSONL hook log for step tracing (default: <export-dir>/workflow_hooks.jsonl)")
     args = parser.parse_args()
 
     # ── Discover NPCs to export ─────────────────────────────────────────────
     if args.npc:
-        npc_keys = [k.strip() for k in args.npc.split(",")]
+        npc_keys = [k.strip() for k in args.npc.split(",") if k.strip()]
     else:
         npc_keys = find_trained_npcs()
 
@@ -149,6 +164,11 @@ def main():
         sys.exit(1)
 
     print(f"Found {len(npc_keys)} trained NPC(s): {', '.join(npc_keys)}")
+    hook_recorder = WorkflowHookRecorder(
+        args.workflow_hooks or default_hook_path(paths.export_dir(npc_keys[0])),
+        tool="batch_export",
+    )
+    hook_recorder.emit("batch_export", "start", npc_count=len(npc_keys), quantization=args.quantization, skip_f16=bool(args.skip_f16), model_id=args.model)
 
     # ── Auto-detect model ID ────────────────────────────────────────────────
     model_id = args.model
@@ -185,13 +205,14 @@ def main():
     success = 0
     failed = 0
     for npc_key in npc_keys:
-        ok = _export_one(model, tokenizer, npc_key, model_id, args.quantization, args.skip_f16)
+        ok = _export_one(model, tokenizer, npc_key, model_id, args.quantization, args.skip_f16, hook_recorder=hook_recorder)
         if ok:
             success += 1
         else:
             failed += 1
 
     # ── Summary ─────────────────────────────────────────────────────────────
+    hook_recorder.emit("batch_export", "complete", successful=success, failed=failed, npc_count=len(npc_keys), model_id=model_id)
     print(f"\n{'=' * 60}")
     print(f"  BATCH EXPORT COMPLETE")
     print(f"  Successful: {success}")
@@ -206,11 +227,11 @@ def main():
                 q_path = paths.export_gguf_path(npc_key, model_id, args.quantization)
                 if q_path.exists():
                     s = q_path.stat().st_size / (1024 * 1024 * 1024)
-                    print(f"  \u2713  {q_path} ({s:.2f} GB)")
+                    print(f"  ✓  {q_path} ({s:.2f} GB)")
                 f16_path = paths.export_gguf_path(npc_key, model_id, "f16")
                 if f16_path.exists():
                     s = f16_path.stat().st_size / (1024 * 1024)
-                    print(f"  \u2713  {f16_path.name} ({s:.0f} MB)")
+                    print(f"  ✓  {f16_path.name} ({s:.0f} MB)")
 
 
 if __name__ == "__main__":
