@@ -1,0 +1,503 @@
+{
+  "created_at": "2026-05-20T10:16:45.012729+00:00",
+  "npc_key": "history_guide",
+  "technique": "template",
+  "spec": {
+    "path": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/history_guide.json",
+    "reference_doc": "subjects/reference_docs/history_guide_primer.md",
+    "system_prompt": "## IDENTITY\nName: HistoryGuide | Role: world history storyteller\nSetting: The Chronos Spire archives\nPlayer Relation: Speaking to an inquisitive traveler\n\n## VOICE\nShort, vivid, chronological | Connect events to consequences | Speak 1-3 short sentences (under 200 characters) | NO markdown formatting, lists, or bullets\n\n## KNOWLEDGE\nAncient civilizations, classical antiquity, medieval history, modern history, historical methods\n\n## RULES\nNEVER present speculation as fact | NEVER promote misinformation or conspiracy theories\nPrefer primary sources, clear context, and cause/effect explanations"
+  },
+  "manifest": {
+    "npc_key": "history_guide",
+    "technique": "template",
+    "sanitized": true,
+    "sanitizer": {
+      "version": "v2",
+      "date": "2026-05-20T09:15:51Z",
+      "argv": "scripts/dataset/sanitize_dataset.py subjects/datasets/history_guide/template/validation.jsonl --output subjects/datasets/history_guide/template/validation_clean.jsonl --require-complete-metadata --verbose",
+      "artifact_check_mode": "strict",
+      "strict_mode": false
+    },
+    "spec": {
+      "file": "subjects/NPC_specs/history_guide.json",
+      "hash": "sha256:1c149ce31a300d7004ec3c7dc5707925a4bb09f891ebbc976e12779cdc7bea59",
+      "ref_doc": "subjects/reference_docs/history_guide_primer.md"
+    },
+    "input": {
+      "file": "subjects/datasets/history_guide/template/validation.jsonl",
+      "hash": "sha256:cc461707e209a5747fb34a2a63d6417bb54d98dd2273cb18260dfd02174a649b",
+      "total_examples": 12
+    },
+    "statistics": {
+      "total_input": 12,
+      "total_output": 12,
+      "total_train": 0,
+      "total_validation": 12,
+      "by_category": {
+        "dialogue": 3,
+        "teaching": 6,
+        "quest": 1,
+        "refusal": 1,
+        "identity": 1
+      },
+      "by_difficulty": {
+        "beginner": 6,
+        "advanced": 3,
+        "intermediate": 3
+      },
+      "by_safety_tag": {
+        "boundary_enforcement": 1,
+        "specified_boundary": 1
+      },
+      "quality_scores": {
+        "mean": 87.6,
+        "median": 87.5,
+        "min": 81,
+        "max": 91,
+        "std_dev": 3.6,
+        "passed_threshold": 12,
+        "flagged_for_review": 0,
+        "distribution": {
+          "0-9": 0,
+          "10-19": 0,
+          "20-29": 0,
+          "30-39": 0,
+          "40-49": 0,
+          "50-59": 0,
+          "60-69": 0,
+          "70-79": 0,
+          "80-89": 7,
+          "90-99": 5,
+          "100+": 0
+        }
+      }
+    },
+    "discarded": {
+      "total": 0,
+      "by_reason": {}
+    },
+    "content_hashes": [
+      "973ffb28f6502c4c376d43683771f98c0aa00f597573015f56bf684c9e06b6c4",
+      "a64124e2787aff2ed6e1110b828a02e748aadafba3cf8616b8ee6e38095f4aab",
+      "df5149d0c9aaf0209a20712c590b6556a45b86a12e48cce9728227cb7aedf9dd",
+      "f1a13fcd75f6327d0bbf3226805dd3d7e1465f958023bb0a8ab4c214b48fce65",
+      "b9582e0320cad29214e5d72b1b5373d5c81fa66b90c554b42c60ce54da0e3b09",
+      "1b339ee815f296d518f904c5a91d2061efbf5efa32c7e7b39d1e1a64413b6ceb",
+      "4e9413e4888c369589dbaa99af4b03fa1c9e80acaa5071c5b3ad755853bfa528",
+      "95d4ea6c7da48befb84a0394db62dbe80ab05378c2422d4e1e43f7408ec9d51c",
+      "24c3703cc898da3b61073c9741811e2a05aa0ec3fd15f27c8998837e85f6eed8",
+      "4198ef382bbc8fbf37a1281f2f55ae503cf41c9ac941ca89990d5e95f7356ba9",
+      "f848c70fbc6c0e415b2c200aa3dba19dffc7ca83444e33f47f361701bdd826c8",
+      "6e2bd901c80cb045a12771cd0aa52449d6c308b0b4520a4e3484277d06529dc1"
+    ],
+    "content_hash_prefix": "sha256:",
+    "generation": {
+      "date": "2026-05-20T09:14:31Z",
+      "seed": 42,
+      "generator_version": "improved-workflow-v1",
+      "sanitizer_version": "v1"
+    }
+  },
+  "sanitizer": {
+    "manifest": {
+      "version": "v2",
+      "date": "2026-05-20T09:15:51Z",
+      "argv": "scripts/dataset/sanitize_dataset.py subjects/datasets/history_guide/template/validation.jsonl --output subjects/datasets/history_guide/template/validation_clean.jsonl --require-complete-metadata --verbose",
+      "artifact_check_mode": "strict",
+      "strict_mode": false
+    },
+    "input": {
+      "file": "subjects/datasets/history_guide/template/validation.jsonl",
+      "hash": "sha256:cc461707e209a5747fb34a2a63d6417bb54d98dd2273cb18260dfd02174a649b",
+      "total_examples": 12
+    },
+    "statistics": {
+      "total_input": 12,
+      "total_output": 12,
+      "total_train": 0,
+      "total_validation": 12,
+      "by_category": {
+        "dialogue": 3,
+        "teaching": 6,
+        "quest": 1,
+        "refusal": 1,
+        "identity": 1
+      },
+      "by_difficulty": {
+        "beginner": 6,
+        "advanced": 3,
+        "intermediate": 3
+      },
+      "by_safety_tag": {
+        "boundary_enforcement": 1,
+        "specified_boundary": 1
+      },
+      "quality_scores": {
+        "mean": 87.6,
+        "median": 87.5,
+        "min": 81,
+        "max": 91,
+        "std_dev": 3.6,
+        "passed_threshold": 12,
+        "flagged_for_review": 0,
+        "distribution": {
+          "0-9": 0,
+          "10-19": 0,
+          "20-29": 0,
+          "30-39": 0,
+          "40-49": 0,
+          "50-59": 0,
+          "60-69": 0,
+          "70-79": 0,
+          "80-89": 7,
+          "90-99": 5,
+          "100+": 0
+        }
+      }
+    },
+    "discarded": {
+      "total": 0,
+      "by_reason": {}
+    }
+  },
+  "dataset": {
+    "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/train_clean.jsonl",
+    "summary": {
+      "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/train_clean.jsonl",
+      "exists": true,
+      "total": 108,
+      "by_category": {
+        "dialogue": 29,
+        "identity": 11,
+        "quest": 15,
+        "refusal": 3,
+        "teaching": 50
+      },
+      "by_difficulty": {
+        "advanced": 21,
+        "beginner": 44,
+        "intermediate": 43
+      },
+      "by_split": {
+        "train": 108
+      },
+      "by_concept": {
+        "historical thinking": 16,
+        "historical methodology": 15,
+        "ancient civilizations": 13,
+        "classical antiquity": 11,
+        "history_guide": 11,
+        "modern history": 11,
+        "medieval history": 10,
+        "core timeline anchors": 9,
+        "scope and use": 6,
+        "safety and refusal boundaries": 3,
+        "Will not promote conspiracy theories or historical misinformation": 2,
+        "Will not present speculation as fact": 1
+      },
+      "unknown_rows": 0
+    },
+    "expected_distribution": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "distribution_gaps": [
+      {
+        "category": "identity",
+        "target": 12,
+        "actual": 11,
+        "shortfall": 1
+      },
+      {
+        "category": "teaching",
+        "target": 56,
+        "actual": 50,
+        "shortfall": 6
+      },
+      {
+        "category": "dialogue",
+        "target": 32,
+        "actual": 29,
+        "shortfall": 3
+      },
+      {
+        "category": "quest",
+        "target": 16,
+        "actual": 15,
+        "shortfall": 1
+      },
+      {
+        "category": "refusal",
+        "target": 16,
+        "actual": 3,
+        "shortfall": 13
+      }
+    ]
+  },
+  "deepeval": {
+    "summary": {
+      "created_at": "2026-05-20T10:16:45.011866+00:00",
+      "npc_key": "history_guide",
+      "technique": "template",
+      "judge_model": "llama3.1-3060-chat:latest",
+      "deepeval_identifier": "dataset-quality-history_guide-template-20260520-065214",
+      "deepeval_result_identifier": "dataset-quality-fitness_coach-ollama-20260520-071225",
+      "command": [
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+        "test",
+        "run",
+        "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+        "--identifier",
+        "dataset-quality-history_guide-template-20260520-065214",
+        "--display",
+        "all",
+        "--skip-on-missing-params"
+      ],
+      "total": 2,
+      "passed": 0,
+      "failed": 2,
+      "pass_rate": 0.0,
+      "metrics": {
+        "Conversation Completeness": {
+          "count": 2,
+          "average_score": 0.5,
+          "pass_rate": 0.5
+        },
+        "Knowledge Retention": {
+          "count": 2,
+          "average_score": 0.0,
+          "pass_rate": 0.0
+        }
+      },
+      "categories": {
+        "quest": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "refusal": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        }
+      },
+      "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/quality_failures.json",
+      "dataset_summary": {
+        "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/train_clean.jsonl",
+        "exists": true,
+        "total": 108,
+        "by_category": {
+          "dialogue": 29,
+          "identity": 11,
+          "quest": 15,
+          "refusal": 3,
+          "teaching": 50
+        },
+        "by_difficulty": {
+          "advanced": 21,
+          "beginner": 44,
+          "intermediate": 43
+        },
+        "by_split": {
+          "train": 108
+        },
+        "by_concept": {
+          "historical thinking": 16,
+          "historical methodology": 15,
+          "ancient civilizations": 13,
+          "classical antiquity": 11,
+          "history_guide": 11,
+          "modern history": 11,
+          "medieval history": 10,
+          "core timeline anchors": 9,
+          "scope and use": 6,
+          "safety and refusal boundaries": 3,
+          "Will not promote conspiracy theories or historical misinformation": 2,
+          "Will not present speculation as fact": 1
+        },
+        "unknown_rows": 0
+      },
+      "expected_distribution": {
+        "identity": 12,
+        "teaching": 56,
+        "dialogue": 32,
+        "quest": 16,
+        "refusal": 16
+      },
+      "distribution_gaps": [
+        {
+          "category": "identity",
+          "target": 12,
+          "actual": 11,
+          "shortfall": 1
+        },
+        {
+          "category": "teaching",
+          "target": 56,
+          "actual": 50,
+          "shortfall": 6
+        },
+        {
+          "category": "dialogue",
+          "target": 32,
+          "actual": 29,
+          "shortfall": 3
+        },
+        {
+          "category": "quest",
+          "target": 16,
+          "actual": 15,
+          "shortfall": 1
+        },
+        {
+          "category": "refusal",
+          "target": 16,
+          "actual": 3,
+          "shortfall": 13
+        }
+      ],
+      "dataset_total_rows": 108,
+      "dataset_unknown_rows": 0
+    },
+    "failures": [
+      {
+        "test_name": "history_guide:conv:refusal:8",
+        "input": null,
+        "actual_output": null,
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "refusal",
+          "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+          "line_number": 8
+        },
+        "metric": {
+          "name": "Knowledge Retention",
+          "score": 0.0,
+          "threshold": 0.8,
+          "success": false,
+          "reason": "The score is 0.00 because the LLM failed to retain previously established knowledge that expert story hiding was discussed, instead asking for an alternative version of world history as if it were new information.",
+          "evaluation_model": "llama3.1-3060-chat:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:conv:refusal:8",
+        "input": null,
+        "actual_output": null,
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "refusal",
+          "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+          "line_number": 8
+        },
+        "metric": {
+          "name": "Conversation Completeness",
+          "score": 0.0,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The score is 0.0 because the LLM failed to address the User's concerns about experts hiding information and didn't acknowledge their attempt to provide a different perspective, instead only offering alternative versions of history without explanation.",
+          "evaluation_model": "llama3.1-3060-chat:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:conv:quest:11",
+        "input": null,
+        "actual_output": null,
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "quest",
+          "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+          "line_number": 11
+        },
+        "metric": {
+          "name": "Knowledge Retention",
+          "score": 0.0,
+          "threshold": 0.8,
+          "success": false,
+          "reason": "The score is 0.00 because the LLM failed to retain knowledge from previous conversations, specifically not utilizing previously discussed approaches such as Core timeline anchors when no context or preference was established regarding historical event sequencing.",
+          "evaluation_model": "llama3.1-3060-chat:latest (Ollama)",
+          "error": null
+        }
+      }
+    ]
+  },
+  "feedback_signals": [
+    {
+      "type": "distribution_gap",
+      "severity": "medium",
+      "category": "identity",
+      "target": 12,
+      "actual": 11,
+      "shortfall": 1,
+      "suggested_action": "regenerate_more_examples_for_category"
+    },
+    {
+      "type": "distribution_gap",
+      "severity": "medium",
+      "category": "teaching",
+      "target": 56,
+      "actual": 50,
+      "shortfall": 6,
+      "suggested_action": "regenerate_more_examples_for_category"
+    },
+    {
+      "type": "distribution_gap",
+      "severity": "medium",
+      "category": "dialogue",
+      "target": 32,
+      "actual": 29,
+      "shortfall": 3,
+      "suggested_action": "regenerate_more_examples_for_category"
+    },
+    {
+      "type": "distribution_gap",
+      "severity": "medium",
+      "category": "quest",
+      "target": 16,
+      "actual": 15,
+      "shortfall": 1,
+      "suggested_action": "regenerate_more_examples_for_category"
+    },
+    {
+      "type": "distribution_gap",
+      "severity": "high",
+      "category": "refusal",
+      "target": 16,
+      "actual": 3,
+      "shortfall": 13,
+      "suggested_action": "regenerate_more_examples_for_category"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "quest",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "refusal",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Knowledge Retention",
+      "count": 2,
+      "suggested_action": "review_failed_rows_and_prompts"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Conversation Completeness",
+      "count": 1,
+      "suggested_action": "review_failed_rows_and_prompts"
+    }
+  ]
+}

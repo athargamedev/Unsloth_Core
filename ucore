@@ -154,11 +154,6 @@ def main():
     spec_val_p.add_argument("--require-dataset-minimums", action="store_true", help="Fail unless all dataset categories meet minimum SFT counts")
     spec_val_p.add_argument("--generation-ready", action="store_true", help="Fail unless the spec is ready for fresh dataset generation")
 
-    # Migrate datasets
-    mig_p = subparsers.add_parser("migrate-datasets", help="Migrate legacy flat datasets to canonical structure")
-    mig_p.add_argument("--apply", action="store_true", help="Apply migration (default dry-run)")
-    mig_p.add_argument("--move", action="store_true", help="Move files instead of copy")
-
     # Export (adapter-only by default for Unity, --full-merge for standalone GGUF)
     export_p = subparsers.add_parser("export", help="Export trained LoRA adapter to GGUF (adapter-only by default)")
     export_p.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
@@ -340,7 +335,7 @@ def main():
     args = parser.parse_args()
 
     if args.command in ["init", "new-npc"]:
-        cmd = [PYTHON, str(SCRIPTS_DIR / "scaffold_npc.py"), args.npc_key]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "scaffold_npc.py"), args.npc_key]
         if args.subject: cmd.extend(["--subject", args.subject])
         if args.name: cmd.extend(["--name", args.name])
         if args.force: cmd.append("--force")
@@ -349,7 +344,7 @@ def main():
         sys.exit(0)
 
     if args.command == "audit":
-        from scripts.audit import ProjectAudit
+        from scripts.ops.audit import ProjectAudit
         audit = ProjectAudit()
         if args.audit_command == "check":
             audit.report("full" if args.full else "env")
@@ -428,7 +423,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "train":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.config_or_spec]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "train.py"), args.config_or_spec]
         if args.from_spec or Path(args.config_or_spec).suffix.lower() == ".json": cmd.append("--from-spec")
         if args.preset: cmd.extend(["--preset", args.preset])
         if getattr(args, "technique", None): cmd.extend(["--technique", args.technique])
@@ -446,14 +441,14 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "smoke":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), args.model]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "smoke_test.py"), args.model]
         if args.spec: cmd.extend(["--spec", args.spec])
         if args.check_integrity: cmd.append("--check-integrity")
         if args.track: cmd.append("--track")
         run_cmd(cmd)
 
     elif args.command == "batch-export":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "batch_export.py")]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "batch_export.py")]
         if args.npc: cmd.extend(["--npc", args.npc])
         if args.quantization: cmd.extend(["--quantization", args.quantization])
         if args.model: cmd.extend(["--model", args.model])
@@ -461,12 +456,12 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "tb-reader":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "tb_reader.py"), "--run-dir", args.run_dir]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "tb_reader.py"), "--run-dir", args.run_dir]
         if args.indent: cmd.extend(["--indent", str(args.indent)])
         run_cmd(cmd)
 
     elif args.command == "validate-config":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "validate_config.py")]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "validate_config.py")]
         if args.spec:
             cmd.extend(["--spec", args.spec])
         if args.config:
@@ -511,16 +506,8 @@ def main():
             cmd.append("--generation-ready")
         run_cmd(cmd, announce=not args.json)
 
-    elif args.command == "migrate-datasets":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "migrate_datasets.py")]
-        if args.apply:
-            cmd.append("--apply")
-        if args.move:
-            cmd.append("--move")
-        run_cmd(cmd)
-
     elif args.command == "export":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "export.py"), args.npc_key]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "export.py"), args.npc_key]
         if args.model: cmd.extend(["--model", args.model])
         if args.quantization: cmd.extend(["--quantization", args.quantization])
         if args.full_merge: cmd.append("--full-merge")
@@ -531,7 +518,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "export-resume":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "export_resume.py"), args.npc_key]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "export_resume.py"), args.npc_key]
         if args.model: cmd.extend(["--model", args.model])
         if args.quantization: cmd.extend(["--quantization", args.quantization])
         if args.skip_f16: cmd.append("--skip-f16")
@@ -539,7 +526,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "export-adapter":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "export_adapter.py")]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "export_adapter.py")]
         if args.all:
             cmd.append("--all")
         elif args.adapter_path:
@@ -552,7 +539,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "deploy":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "deploy_to_unity.py")]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "deploy_to_unity.py")]
         if args.unity_project: cmd.extend(["--unity-project", args.unity_project])
         if args.dry_run: cmd.append("--dry-run")
         if args.skip_export: cmd.append("--skip-export")
@@ -560,7 +547,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "evaluate":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "evaluate.py")]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "evaluate.py")]
         if args.baseline: cmd.extend(["--baseline", args.baseline])
         if args.candidate: cmd.extend(["--candidate", args.candidate])
         if args.model: cmd.extend(["--model", args.model])
@@ -584,7 +571,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "quick-eval":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "quick_eval.py"), args.adapter_path]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "quick_eval.py"), args.adapter_path]
         if args.samples: cmd.extend(["--samples", str(args.samples)])
         if args.spec: cmd.extend(["--spec", args.spec])
         if args.val_data: cmd.extend(["--val-data", args.val_data])
@@ -592,14 +579,14 @@ def main():
 
     elif args.command == "track":
         if args.show:
-            cmd = [PYTHON, str(SCRIPTS_DIR / "track_eval_results.py"), "--show"]
+            cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "track_eval_results.py"), "--show"]
             if args.npc_key: cmd.extend(["--npc-key", args.npc_key])
             run_cmd(cmd)
         else:
             if not args.npc_key:
                 print("Error: --npc-key required for tracking (or use --show)")
                 sys.exit(1)
-            cmd = [PYTHON, str(SCRIPTS_DIR / "track_eval_results.py"), "--track"]
+            cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "track_eval_results.py"), "--track"]
             cmd.extend(["--npc-key", args.npc_key])
             if args.model: cmd.extend(["--model", args.model])
             if args.win_rate: cmd.extend(["--win-rate", str(args.win_rate)])
@@ -609,7 +596,7 @@ def main():
             run_cmd(cmd)
 
     elif args.command == "compare-runs":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "compare_runs.py"), args.npc_key]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "compare_runs.py"), args.npc_key]
         cmd.extend(["--baseline-run", args.baseline_run])
         cmd.extend(["--candidate-run", args.candidate_run])
         if args.spec: cmd.extend(["--spec", args.spec])
@@ -618,7 +605,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "supabase-check":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "supabase_integration_check.py"), "--npc-key", args.npc_key]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "supabase_integration_check.py"), "--npc-key", args.npc_key]
         if args.player_id: cmd.extend(["--player-id", args.player_id])
         if args.skip_probe: cmd.append("--skip-probe")
         run_cmd(cmd)
@@ -684,7 +671,7 @@ def main():
 
         print("[STAGE] training")
         print(f"\n--- Phase 4: Training Model ---")
-        train_cmd = [PYTHON, str(SCRIPTS_DIR / "train.py"), args.spec, "--from-spec",
+        train_cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "train.py"), args.spec, "--from-spec",
                      "--technique", technique, "--preset", args.preset]
         if args.full_merge_export:
             train_cmd.append("--full-merge-export")
@@ -705,7 +692,7 @@ def main():
         if not args.skip_smoke:
             print(f"\n--- Phase 5: Smoke Testing ---")
             if ggufs:
-                smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
+                smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
                 if args.track:
                     smoke_cmd.append("--track")
                 run_cmd(smoke_cmd)
@@ -724,7 +711,7 @@ def main():
                 print(f"  Candidate (new): {candidate_path.name}")
                 print(f"  Baseline (prev): {baseline_path.name}")
                 print(f"  Running side-by-side evaluation...")
-                eval_cmd = [PYTHON, str(SCRIPTS_DIR / "evaluate.py"),
+                eval_cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "evaluate.py"),
                             "--baseline", str(baseline_path),
                             "--candidate", str(candidate_path),
                             "--spec", args.spec,
@@ -743,7 +730,7 @@ def main():
         print(f"\n--- Pipeline Complete! ---")
 
     elif args.command == "plan-execution":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "plan_execution.py"), "--spec", args.spec]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "orchestration" / "plan_execution.py"), "--spec", args.spec]
         if args.preset:
             cmd.extend(["--preset", args.preset])
         if args.local_vram_gb is not None:
@@ -753,7 +740,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "plan-batch":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "plan_batch_execution.py"), "--spec-glob", args.spec_glob, "--presets", args.presets]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "orchestration" / "plan_batch_execution.py"), "--spec-glob", args.spec_glob, "--presets", args.presets]
         if args.specs:
             for s in args.specs:
                 cmd.extend(["--spec", s])

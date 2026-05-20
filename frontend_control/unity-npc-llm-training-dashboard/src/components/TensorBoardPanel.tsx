@@ -165,24 +165,28 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
       setCompareRunIds([]);
       return;
     }
-    if (!filteredRuns.some((run) => runKey(run) === primaryRunId)) {
-      setPrimaryRunId(runKey(filteredRuns[0]));
+
+    const firstKey = runKey(filteredRuns[0]);
+    setPrimaryRunId((current) => (filteredRuns.some((run) => runKey(run) === current) ? current : firstKey));
+  }, [filteredRuns]);
+
+  useEffect(() => {
+    if (filteredRuns.length <= 1) {
+      setCompareRunIds([]);
+      return;
     }
+
     setCompareRunIds((current) => {
       const valid = current.filter((id) => filteredRuns.some((run) => runKey(run) === id) && id !== primaryRunId);
       if (valid.length > 0) return valid.slice(0, 3);
-      if (filteredRuns.length > 1) return [runKey(filteredRuns[1])];
-      return [];
+      const fallback = filteredRuns.map((run) => runKey(run)).find((id) => id !== primaryRunId);
+      return fallback ? [fallback] : [];
     });
   }, [filteredRuns, primaryRunId]);
 
   const selectedRuns = useMemo(() => {
-    const picks = [primaryRunId, ...compareRunIds].filter(Boolean);
-    const seen = new Set<string>();
-    return picks
-      .map((id) => filteredRuns.find((run) => runKey(run) === id) || normalizedRuns.find((run) => runKey(run) === id))
-      .filter((run): run is RunArtifact => Boolean(run) && !seen.has(runKey(run)) && Boolean(seen.add(runKey(run))));
-  }, [primaryRunId, compareRunIds, filteredRuns, normalizedRuns]);
+    return filteredRuns.slice(0, 3);
+  }, [filteredRuns]);
 
   useEffect(() => {
     let cancelled = false;
