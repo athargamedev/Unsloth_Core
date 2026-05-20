@@ -160,15 +160,57 @@ GENERIC_FILLER_REPLACEMENTS = [
 
 
 def build_category_generation_prompt(category: str, concept_str: str, npc_name: str, player_role: str = "player") -> str:
-    """Return category-specific instructions for Ollama dataset generation."""
-    prompts = {
+    """Backward-compatible category prompt helper used by tests and callers."""
+    return {
         "identity": f"Write a who-are-you exchange for {npc_name}.",
         "teaching": f"Write a question from a {player_role} about '{concept_str}' and a short, helpful answer.",
         "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer.",
         "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character.",
         "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that redirects to safe in-scope help.",
-    }
-    return prompts.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
+    }.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
+
+
+def _build_generation_prompt(
+    npc_name: str,
+    system_prompt: str,
+    setting: str,
+    relationship: str,
+    category: str,
+    concept_str: str,
+    category_prompt: str,
+    grounding: str,
+    player_role: str,
+    max_sentences: int,
+    max_chars: int,
+    multi_turn: bool = False,
+    turn_instruction: str = "",
+    json_shape: str = "",
+) -> str:
+    prompt = [
+        f"Generate a concise training dialogue in JSON format for NPC '{npc_name}'.",
+        "",
+        f"System Prompt: {system_prompt}",
+        f"Setting: {setting or 'Not specified'}",
+        f"Player Relationship: {relationship or 'Not specified'}",
+        "",
+        f"Task: {category_prompt}{turn_instruction}",
+        f"Category: {category}",
+        f"Concept: {concept_str}{grounding}",
+        "",
+        "Instructions:",
+        f"- The user message must sound like an in-game player ({player_role}).",
+        f"- The assistant response must follow {npc_name}'s system prompt perfectly.",
+        "- Use the reference doc for grounding when available.",
+        f"- Speak 1-{max_sentences} sentences (MAXIMUM {max_chars} characters).",
+        "- NEVER use markdown lists, bullet points, bolding, or tables (keep text clean for game UI).",
+        "- Never mention being an AI or language model.",
+        "",
+        "Return JSON:",
+        "{",
+        json_shape,
+        "}",
+    ]
+    return "\n".join(prompt)
 
 
 def clean_generic_filler(text: str, concept: str = "this topic") -> str:
@@ -530,7 +572,13 @@ class OllamaDatasetGenerator:
             if contexts:
                 grounding = "\nContext:\n" + "\n".join(contexts[:2])
         
-        category_prompt = build_category_generation_prompt(category, concept_str, npc_name, player_role)
+        category_prompt = {
+            "identity": f"Write a who-are-you exchange for {npc_name}.",
+            "teaching": f"Write a question from a {player_role} about '{concept_str}' and a short, helpful answer.",
+            "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer.",
+            "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character.",
+            "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that redirects to safe in-scope help.",
+        }.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
         if difficulty:
             category_prompt += f" Use a {difficulty} tone and prioritize clarity."
         if category == "dialogue" and dialogue_type:
@@ -551,29 +599,22 @@ class OllamaDatasetGenerator:
                 f'  "assistant2": "second NPC response (1-{max_sentences} sentences, max {max_chars} chars)"'
             )
         
-        generation_prompt = f"""Generate a concise training dialogue in JSON format for NPC '{npc_name}'.
-
-System Prompt: {system_prompt}
-Setting: {setting or 'Not specified'}
-Player Relationship: {relationship or 'Not specified'}
-
-Task: {category_prompt}{turn_instruction}
-Category: {category}
-Concept: {concept_str}{grounding}
-
-Instructions:
-- The user message must sound like an in-game player ({player_role}).
-- The assistant response must follow {npc_name}'s system prompt perfectly.
-- Use the reference doc for grounding when available.
-- Speak 1-{max_sentences} sentences (MAXIMUM {max_chars} characters).
-- NEVER use markdown lists, bullet points, bolding, or tables (keep text clean for game UI).
-- Never mention being an AI or language model.
-
-Return JSON:
-{{
-{json_shape}
-}}
-"""
+        generation_prompt = _build_generation_prompt(
+            npc_name=npc_name,
+            system_prompt=system_prompt,
+            setting=setting,
+            relationship=relationship,
+            category=category,
+            concept_str=concept_str,
+            category_prompt=category_prompt,
+            grounding=grounding,
+            player_role=player_role,
+            max_sentences=max_sentences,
+            max_chars=max_chars,
+            multi_turn=multi_turn,
+            turn_instruction=turn_instruction,
+            json_shape=json_shape,
+        )
         
         response = await self.generator.generate_async(
             system_prompt="You are a training data generator for educational NPCs. Output valid JSON.",

@@ -678,6 +678,49 @@ def _clean_query(query):
     return " ".join(str(query or "").split())
 
 
+def _build_example_metadata(
+    spec: dict,
+    category: str,
+    technique: str,
+    concept_str: str,
+    concept_category: str | None,
+    difficulty: str | None,
+    seed: int | None,
+    temperature: float,
+    source: str,
+    multi_turn: bool = False,
+    dialogue_type: str | None = None,
+    scenario_name: str | None = None,
+    boundary: str | None = None,
+    safety_tags: list[str] | None = None,
+) -> dict:
+    metadata = {
+        "npc_key": spec["npc_key"],
+        "category": category,
+        "technique": technique,
+        "source": source,
+        "split": "train",
+        "concept": concept_str,
+        "concept_category": concept_category,
+        "difficulty": difficulty,
+        "safety_tags": safety_tags or [],
+        "generator_params": {
+            "seed": seed,
+            "temperature": temperature,
+            "multi_turn": multi_turn,
+            "reference_doc": spec.get("reference_doc"),
+        },
+    }
+    if dialogue_type:
+        metadata["dialogue_type"] = dialogue_type
+    if scenario_name:
+        metadata["scenario_name"] = scenario_name
+    if boundary:
+        metadata["boundary"] = boundary
+    metadata["content_hash"] = None
+    return metadata
+
+
 # ── LLM Generator Classes ──────────────────────────────────────────────────
 
 class OllamaGenerator:
@@ -1196,30 +1239,22 @@ Return ONLY a JSON object with this exact structure:
                 ]
 
                 content_hash = compute_content_hash(messages)
-                llm_metadata = {
-                    "npc_key": spec["npc_key"],
-                    "category": category,
-                    "technique": technique,
-                    "source": f"{technique if technique != 'template' else 'ollama'}:{generator.__class__.__name__}",
-                    "split": "train",
-                    "concept": concept_str,
-                    "concept_category": concept_category,
-                    "difficulty": difficulty,
-                    "safety_tags": [],
-                    "content_hash": content_hash,
-                    "generator_params": {
-                        "seed": seed,
-                        "temperature": temperature,
-                        "multi_turn": False,
-                        "reference_doc": spec.get("reference_doc"),
-                    },
-                }
-                if dialogue_type:
-                    llm_metadata["dialogue_type"] = dialogue_type
-                if scenario_name:
-                    llm_metadata["scenario_name"] = scenario_name
-                if boundary:
-                    llm_metadata["boundary"] = boundary
+                llm_metadata = _build_example_metadata(
+                    spec=spec,
+                    category=category,
+                    technique=technique,
+                    concept_str=concept_str,
+                    concept_category=concept_category,
+                    difficulty=difficulty,
+                    seed=seed,
+                    temperature=temperature,
+                    source=f"{technique if technique != 'template' else 'ollama'}:{generator.__class__.__name__}",
+                    multi_turn=False,
+                    dialogue_type=dialogue_type,
+                    scenario_name=scenario_name,
+                    boundary=boundary,
+                )
+                llm_metadata["content_hash"] = content_hash
 
                 example_dict = {
                     "messages": messages,
@@ -1276,30 +1311,23 @@ Return ONLY a JSON object with this exact structure:
         safety_tags.append("specified_boundary")
 
     content_hash = compute_content_hash(messages)
-    metadata = {
-        "npc_key": spec["npc_key"],
-        "category": category,
-        "technique": technique,
-        "source": "template:generate_dataset.py",
-        "split": "train",
-        "concept": concept_str,
-        "concept_category": concept_category,
-        "difficulty": difficulty,
-        "safety_tags": safety_tags,
-        "content_hash": content_hash,
-        "generator_params": {
-            "seed": seed,
-            "temperature": 0.8,
-            "multi_turn": False,
-            "reference_doc": spec.get("reference_doc"),
-        },
-    }
-    if dialogue_type:
-        metadata["dialogue_type"] = dialogue_type
-    if scenario_name:
-        metadata["scenario_name"] = scenario_name
-    if boundary:
-        metadata["boundary"] = boundary
+    metadata = _build_example_metadata(
+        spec=spec,
+        category=category,
+        technique=technique,
+        concept_str=concept_str,
+        concept_category=concept_category,
+        difficulty=difficulty,
+        seed=seed,
+        temperature=0.8,
+        source="template:generate_dataset.py",
+        multi_turn=False,
+        dialogue_type=dialogue_type,
+        scenario_name=scenario_name,
+        boundary=boundary,
+        safety_tags=safety_tags,
+    )
+    metadata["content_hash"] = content_hash
 
     example_dict = {
         "messages": messages,
@@ -1310,16 +1338,20 @@ Return ONLY a JSON object with this exact structure:
     return example_dict
 
 
+def _run_coroutine_sync(coro):
+    """Run a coroutine from synchronous code without event-loop deprecation warnings."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    raise RuntimeError("Synchronous dataset generation helpers cannot run inside an active event loop.")
+
+
 def generate_example(spec, category, concepts, generator=None, temperature=0.8,
                      difficulty=None, dialogue_type=None, scenario_name=None,
                      boundary=None, seed=None, technique="template"):
     """Synchronous wrapper for generate_example_async."""
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop.run_until_complete(
+    return _run_coroutine_sync(
         generate_example_async(
             spec, category, concepts, generator=generator, temperature=temperature,
             difficulty=difficulty, dialogue_type=dialogue_type, scenario_name=scenario_name,
@@ -1419,25 +1451,25 @@ async def generate_multi_turn_example_async(spec, concepts, generator, temperatu
     content_hash = compute_content_hash(messages)
     example_dict = {
         "messages": messages,
-        "metadata": {
-            "npc_key": spec["npc_key"],
-            "category": "multi_turn",
-            "technique": technique,
-            "source": f"llm_sim:{generator.__class__.__name__}",
-            "split": "train",
-            "concept": str(concept),
-            "concept_category": concept_category,
-            "difficulty": None,
-            "safety_tags": [],
-            "content_hash": content_hash,
-            "generator_params": {
-                "seed": seed,
-                "temperature": temperature,
-                "multi_turn": True,
-                "reference_doc": spec.get("reference_doc"),
-                "student_persona": student_persona
-            },
-        },
+        "metadata": _build_example_metadata(
+            spec=spec,
+            category="multi_turn",
+            technique=technique,
+            concept_str=str(concept),
+            concept_category=concept_category,
+            difficulty=None,
+            seed=seed,
+            temperature=temperature,
+            source=f"llm_sim:{generator.__class__.__name__}",
+            multi_turn=True,
+            safety_tags=[],
+        ) | {"content_hash": content_hash, "generator_params": {
+            "seed": seed,
+            "temperature": temperature,
+            "multi_turn": True,
+            "reference_doc": spec.get("reference_doc"),
+            "player_persona": player_persona,
+        }},
     }
     if checkpoint_store:
         checkpoint_store.add_checkpoint(content_hash, spec["npc_key"], "multi_turn", str(concept), example_dict)
@@ -1446,12 +1478,7 @@ async def generate_multi_turn_example_async(spec, concepts, generator, temperatu
 
 def generate_multi_turn_example(spec, concepts, generator, temperature=C.LLM_GENERATOR_TEMPERATURE, num_turns=3, technique="template", seed=None):
     """Synchronous wrapper for generate_multi_turn_example_async."""
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop.run_until_complete(
+    return _run_coroutine_sync(
         generate_multi_turn_example_async(
             spec, concepts, generator, temperature=temperature, num_turns=num_turns,
             technique=technique, seed=seed
@@ -1582,13 +1609,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
     refusal_boundaries = refusal_spec.get("boundaries", [])
 
     if generator:
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        examples = loop.run_until_complete(
+        examples = _run_coroutine_sync(
             generate_dataset_async_runner(
                 spec, concepts, examples_per_category, generator, multi_turn_ratio, temperature,
                 technique, seed, quest_scenarios, refusal_boundaries, retriever, guardrail,
@@ -1663,13 +1684,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                 sn = scenario_names[i] if scenario_names else None
                 bd = boundaries[i] if boundaries else None
 
-                try:
-                    loop = asyncio.get_event_loop()
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                
-                example = loop.run_until_complete(
+                example = _run_coroutine_sync(
                     generate_example_async(
                         spec, category, concepts, generator=generator, temperature=temperature,
                         difficulty=diff, dialogue_type=dt, scenario_name=sn, boundary=bd, seed=seed,
