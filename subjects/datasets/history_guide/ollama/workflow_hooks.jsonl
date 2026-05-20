@@ -1,0 +1,1 @@
+{"ts": "2026-05-20T18:26:00.530262+00:00", "step": "deepeval_run", "status": "start", "tool": "dataset_eval", "npc_key": "history_guide", "technique": "ollama", "spec_path": "subjects/NPC_specs/history_guide.json", "identifier": "dataset-quality-history_guide-ollama-20260520-152600", "judge_model": "qwen3:latest", "cases_per_category": 5}

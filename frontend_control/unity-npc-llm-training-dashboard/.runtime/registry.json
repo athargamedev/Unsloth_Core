@@ -2,6 +2,91 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2516117",
+      "name": "Pipeline · PID 2516117 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "history_guide",
+      "status": "running",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T18:26:00.569Z",
+      "startedAt": "2026-05-20T18:26:00.569Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2516117] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_2515790",
+      "name": "Export · PID 2515790",
+      "type": "Export",
+      "commandId": "export",
+      "status": "running",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-20T18:26:00.569Z",
+      "startedAt": "2026-05-20T18:26:00.569Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; set -euo pipefail export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 logdir=/tmp/ucore-deepeval-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   ./ucore dataset-eval \"subjects/NPC_specs/${npc}.json\" --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "running",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2515790] discovered active process",
+        "/usr/bin/bash -lic set +m; set -euo pipefail export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 logdir=/tmp/ucore-deepeval-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   ./ucore dataset-eval \"subjects/NPC_specs/${npc}.json\" --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
       "id": "ext_proc_2322009",
       "name": "Export · PID 2322009",
       "type": "Export",
