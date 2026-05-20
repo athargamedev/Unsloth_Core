@@ -2,12 +2,58 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2853861",
+      "name": "Pipeline · PID 2853861",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T19:20:44.573Z",
+      "startedAt": "2026-05-20T19:20:44.573Z",
+      "command": [
+        "external",
+        "/bin/bash -c ./ucore audit check 2>&1 | head -20"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2853861] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2853861] discovered active process",
+        "/bin/bash -c ./ucore audit check 2>&1 | head -20"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T19:20:45.161Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_2789602",
       "name": "Dataset · PID 2789602 · fitness_coach",
       "type": "Dataset",
       "commandId": "dataset-generate",
       "npcKey": "fitness_coach",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-20T19:09:03.084Z",
@@ -19,8 +65,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2789602] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -42,7 +90,9 @@
         "[EXTERNAL][PID 2789602] discovered active process",
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --model llama3.1-3060-chat:latest"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T19:20:42.161Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_2752872",
@@ -236,7 +286,7 @@
       "name": "Dataset · PID 2571758",
       "type": "Dataset",
       "commandId": "dataset-generate",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-20T18:33:38.583Z",
@@ -248,8 +298,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2571758] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -271,7 +323,9 @@
         "[EXTERNAL][PID 2571758] discovered active process",
         "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-regen-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   stdbuf -oL -eL ./ucore generate-ollama \"subjects/NPC_specs/${npc}.json\" --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T19:20:42.161Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_2559143",

@@ -1648,90 +1648,90 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                     )
                 )
         else:
-            examples = []
-            current = 0
+            with hook_recorder.step("generate_examples", mode="template", total_expected=total_count):
+                examples = []
+                current = 0
             
-            existing_examples = checkpoint_store.get_all_for_npc(spec["npc_key"]) if checkpoint_store else []
-            existing_by_cat = defaultdict(list)
-            for ex in existing_examples:
-                cat = ex.get("metadata", {}).get("category", "unknown")
-                existing_by_cat[cat].append(ex)
+                existing_examples = checkpoint_store.get_all_for_npc(spec["npc_key"]) if checkpoint_store else []
+                existing_by_cat = defaultdict(list)
+                for ex in existing_examples:
+                    cat = ex.get("metadata", {}).get("category", "unknown")
+                    existing_by_cat[cat].append(ex)
 
-            for category, count in examples_per_category.items():
-                if category not in CATEGORY_TEMPLATES:
-                    print(f"  [warn] Unknown category '{category}', skipping")
-                    continue
+                for category, count in examples_per_category.items():
+                    if category not in CATEGORY_TEMPLATES:
+                        print(f"  [warn] Unknown category '{category}', skipping")
+                        continue
 
-                recovered = existing_by_cat.get(category, [])[:count]
-                examples.extend(recovered)
-                remaining_count = count - len(recovered)
-                if recovered:
-                    print(f"  Recovered {len(recovered)} existing examples for '{category}' from checkpoint.")
-                    current += len(recovered)
+                    recovered = existing_by_cat.get(category, [])[:count]
+                    examples.extend(recovered)
+                    remaining_count = count - len(recovered)
+                    if recovered:
+                        print(f"  Recovered {len(recovered)} existing examples for '{category}' from checkpoint.")
+                        current += len(recovered)
                 
-                if remaining_count <= 0:
-                    continue
+                    if remaining_count <= 0:
+                        continue
 
-                difficulties = None
-                dialogue_types = None
-                scenario_names = None
-                boundaries = None
+                    difficulties = None
+                    dialogue_types = None
+                    scenario_names = None
+                    boundaries = None
 
-                if category == "teaching":
-                    n_beg = int(remaining_count * 0.40)
-                    n_int = int(remaining_count * 0.35)
-                    n_adv = remaining_count - n_beg - n_int
-                    difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
-                    random.shuffle(difficulties)
-                elif category == "dialogue":
-                    n_clar = int(remaining_count * 0.20)
-                    n_dive = int(remaining_count * 0.30)
-                    n_app = int(remaining_count * 0.30)
-                    n_misc = remaining_count - n_clar - n_dive - n_app
-                    dialogue_types = (["clarification"] * n_clar + ["deep_dive"] * n_dive
-                                    + ["application"] * n_app + ["misconception"] * n_misc)
-                    random.shuffle(dialogue_types)
-                    n_beg = int(remaining_count * 0.40)
-                    n_int = int(remaining_count * 0.35)
-                    n_adv = remaining_count - n_beg - n_int
-                    difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
-                    random.shuffle(difficulties)
-                elif category == "quest" and quest_scenarios:
-                    scenario_names = [quest_scenarios[i % len(quest_scenarios)] for i in range(remaining_count)]
-                    random.shuffle(scenario_names)
-                    difficulties = ["intermediate"] * remaining_count
-                elif category == "refusal" and refusal_boundaries:
-                    boundaries = [refusal_boundaries[i % len(refusal_boundaries)] for i in range(remaining_count)]
-                    random.shuffle(boundaries)
-                    difficulties = ["beginner"] * remaining_count
-                elif category == "identity":
-                    difficulties = ["beginner"] * remaining_count
+                    if category == "teaching":
+                        n_beg = int(remaining_count * 0.40)
+                        n_int = int(remaining_count * 0.35)
+                        n_adv = remaining_count - n_beg - n_int
+                        difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                        random.shuffle(difficulties)
+                    elif category == "dialogue":
+                        n_clar = int(remaining_count * 0.20)
+                        n_dive = int(remaining_count * 0.30)
+                        n_app = int(remaining_count * 0.30)
+                        n_misc = remaining_count - n_clar - n_dive - n_app
+                        dialogue_types = (["clarification"] * n_clar + ["deep_dive"] * n_dive
+                                        + ["application"] * n_app + ["misconception"] * n_misc)
+                        random.shuffle(dialogue_types)
+                        n_beg = int(remaining_count * 0.40)
+                        n_int = int(remaining_count * 0.35)
+                        n_adv = remaining_count - n_beg - n_int
+                        difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                        random.shuffle(difficulties)
+                    elif category == "quest" and quest_scenarios:
+                        scenario_names = [quest_scenarios[i % len(quest_scenarios)] for i in range(remaining_count)]
+                        random.shuffle(scenario_names)
+                        difficulties = ["intermediate"] * remaining_count
+                    elif category == "refusal" and refusal_boundaries:
+                        boundaries = [refusal_boundaries[i % len(refusal_boundaries)] for i in range(remaining_count)]
+                        random.shuffle(boundaries)
+                        difficulties = ["beginner"] * remaining_count
+                    elif category == "identity":
+                        difficulties = ["beginner"] * remaining_count
 
-                print(f"  Generating {remaining_count} examples for '{category}'...")
-                for i in range(remaining_count):
-                    diff = difficulties[i] if difficulties else None
-                    dt = dialogue_types[i] if dialogue_types else None
-                    sn = scenario_names[i] if scenario_names else None
-                    bd = boundaries[i] if boundaries else None
+                    print(f"  Generating {remaining_count} examples for '{category}'...")
+                    for i in range(remaining_count):
+                        diff = difficulties[i] if difficulties else None
+                        dt = dialogue_types[i] if dialogue_types else None
+                        sn = scenario_names[i] if scenario_names else None
+                        bd = boundaries[i] if boundaries else None
 
-                    example = _run_coroutine_sync(
-                        generate_example_async(
-                            spec, category, concepts, generator=generator, temperature=temperature,
-                            difficulty=diff, dialogue_type=dt, scenario_name=sn, boundary=bd, seed=seed,
-                            technique=technique, session=None, executor=None, retriever=retriever,
-                            guardrail=guardrail, checkpoint_store=checkpoint_store
+                        example = _run_coroutine_sync(
+                            generate_example_async(
+                                spec, category, concepts, generator=generator, temperature=temperature,
+                                difficulty=diff, dialogue_type=dt, scenario_name=sn, boundary=bd, seed=seed,
+                                technique=technique, session=None, executor=None, retriever=retriever,
+                                guardrail=guardrail, checkpoint_store=checkpoint_store
+                            )
                         )
-                    )
 
-                    example["metadata"]["category"] = category
-                    examples.append(example)
-                    current += 1
-                    if telemetry_reporter:
-                        telemetry_reporter.report(total_count, current, category)
-                    if current % 5 == 0 or current == total_count:
-                        print(f"    Progress: {current}/{total_count}")
+                        example["metadata"]["category"] = category
+                        examples.append(example)
+                        current += 1
+                        if telemetry_reporter:
+                            telemetry_reporter.report(total_count, current, category)
+                        if current % 5 == 0 or current == total_count:
+                            print(f"    Progress: {current}/{total_count}")
 
-            hook_recorder.emit("generate_examples", "complete", generated=len(examples), total_expected=total_count)
 
         # ── Split into train/validation (stratified by category) ─────────────
         if include_validation and len(examples) > 5:

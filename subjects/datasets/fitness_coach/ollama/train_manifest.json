@@ -1,0 +1,108 @@
+{
+  "npc_key": "fitness_coach",
+  "technique": "ollama",
+  "model": "llama3.1-3060-chat:latest",
+  "generation": {
+    "date": "2026-05-20T19:20:41Z",
+    "seed": 42,
+    "temperature": 0.6,
+    "multi_turn_ratio": 0.25,
+    "version": "ollama-v2"
+  },
+  "spec": {
+    "file": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/fitness_coach.json",
+    "hash": "sha256:807af925f96e8109ba00003dec38aa6862a71b381981bb8e121eb8c2a45f72d0"
+  },
+  "contract": {
+    "supported_categories": [
+      "identity",
+      "teaching",
+      "dialogue",
+      "quest",
+      "refusal"
+    ],
+    "minimum_examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "valid_difficulty_levels": [
+      "beginner",
+      "intermediate",
+      "advanced"
+    ],
+    "spec_npc_key": "fitness_coach",
+    "reference_doc": "subjects/reference_docs/fitness_coach_primer.md",
+    "technique": null
+  },
+  "distribution": {
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "observed_examples_per_category": {
+      "identity": 11,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "distribution_gaps": [
+      {
+        "category": "identity",
+        "target": 12,
+        "actual": 11,
+        "shortfall": 1
+      }
+    ]
+  },
+  "statistics": {
+    "total": 131,
+    "train": 119,
+    "validation": 12,
+    "by_category": {
+      "identity": 11,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "by_difficulty": {
+      "beginner": 61,
+      "advanced": 24,
+      "intermediate": 46
+    },
+    "by_concept": {
+      "nutrition basics": 12,
+      "mobility and recovery": 12,
+      "nutrition and recovery": 12,
+      "mobility and injury prevention": 12,
+      "misconceptions and refusals": 12,
+      "strength training": 12,
+      "cardio": 12,
+      "programming and progression": 10,
+      "programming": 10,
+      "safety and injury prevention": 9,
+      "scope and use": 9,
+      "training fundamentals": 9
+    },
+    "generator_stats": {
+      "requests": 132,
+      "successes": 132,
+      "errors": 0,
+      "success_rate": 1.0
+    }
+  }
+}
