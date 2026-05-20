@@ -1,6 +1,6 @@
 # Unsloth_Core: AI Agent Reference Guide
 
-This document is the primary source of truth for AI agents (like Antigravity, Claude, or GPT) working on the **Unsloth_Core** repository. It provides high-level architectural context, command references, and logic maps to ensure efficient collaboration.
+This document is the primary source of truth for AI agents (like Antigravity, Claude, or GPT) working on the **Unsloth_Core** repository. The project north star is to produce the best GGUF LoRA adapters for the llama3.2 3B base model so Unity NPCs can load at runtime in LLMUnity and manage dialogue sessions through local Supabase.
 
 ## 🚀 Quick Start for Agents
 1.  **Activate Env**: `source unsloth_env/bin/activate`
@@ -145,6 +145,9 @@ A local Supabase instance can track:
 - **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. `llama-server` (inference with `--lora` support), `llama-quantize` (fast local quantization), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary.
 - **Error Handling**: Check `outputs/{npc_key}/runs/` for TensorBoard logs, `eval/results/` for validation metrics.
 - **Before generating a dataset**: Read the `subjects/NPC_specs/*.json` spec and the `subjects/reference_docs/*.md` primer to understand content grounding. If DeepEval fails, fix generation, prompts, concepts, or reference material first; do not change metric thresholds as the first response.
+- **Dataset/Eval Decision Rules**: Do not increase NPC sentence/character limits to force generation success. Do not lower dataset minimums to hide missing rows. If generation misses rows, fix generator retry/repair/sanitize behavior or report the gap explicitly. If DeepEval fails, fix prompts, primers, concepts, or generated rows; do not weaken thresholds first.
+- **Frontend trust rule**: The dashboard must reflect canonical backend state and process artifacts so non-coder developers can operate the workflow intuitively.
+- **Local Ollama rule**: Benchmark and tune local Ollama on this machine before claiming the need for remote capacity; measure tokens/sec, latency, VRAM use, loaded models, and failure rate.
 
 ## ⚡ Ollama Performance Tuning
 
@@ -221,7 +224,7 @@ Weights & Biases tracks every training run with:
 | Astronomy Guide | `astronomy_guide` | Astronomy and space science | Spec, reference doc, template dataset, exported LoRA GGUF |
 | Fitness Coach | `fitness_coach` | Fitness, exercise science, and nutrition | Spec, reference doc, template dataset, exported LoRA GGUF |
 
-Current local exports are adapter GGUFs under `exports/{npc_key}/`. Unity runtime should load the shared base model once and swap LoRA adapters plus the NPC system prompt.
+Current local exports are adapter GGUFs under `exports/{npc_key}/`. Unity runtime should load the shared llama3.2 3B base model once and swap LoRA adapters plus the NPC system prompt while dialoguing with the local Supabase container.
 
 ---
 

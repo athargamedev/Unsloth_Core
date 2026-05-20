@@ -17,12 +17,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
 from _config.paths import SNAKE_CASE_PATTERN
-from scripts.dataset_contracts import (
+from scripts.dataset.dataset_contracts import (
     MIN_DATASET_EXAMPLES_PER_CATEGORY,
     SUPPORTED_DATASET_CATEGORIES,
     VALID_DIFFICULTY_LEVELS,
+    expected_examples_per_category,
 )
-
 GENERATOR_SUPPORTED_DATASET_CATEGORIES = set(SUPPORTED_DATASET_CATEGORIES)
 REFERENCE_DOC_MIN_WORDS = 250
 REFERENCE_DOC_MIN_H2_SECTIONS = 5

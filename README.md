@@ -1,6 +1,13 @@
 # Unsloth_Core
 
-A professional, "agent-first" pipeline for building NPC dialogue models with Unsloth, exporting GGUF for Unity, and tracking results in Supabase.
+A professional, "agent-first" pipeline for building the best GGUF LoRA adapters for the llama3.2 3B base model, so Unity NPCs can load at runtime in LLMUnity and manage dialogue sessions through local Supabase.
+
+## 🎯 Project North Star
+
+- Train and export high-quality LoRA adapters as GGUF for `llama-3.2-3b-instruct`.
+- Load those adapters in Unity through the LLMUnity plugin at runtime.
+- Support persistent NPC dialogue sessions backed by the local Supabase container.
+- Keep dataset generation, DeepEval gating, training, export, and runtime integration aligned to that deployment target.
 
 ## 🚀 Quick Start
 
@@ -72,6 +79,17 @@ DeepEval is the local build-loop gate before training:
 3. **Sanitize** to `train_clean.jsonl` with complete metadata.
 4. **Dataset-eval** with local Ollama `qwen2.5:7b`.
 5. **Fix generation** from `quality_failures.json`, then rerun before training.
+
+### Decision Rules
+- Do not increase NPC sentence/character limits to force generation success.
+- Do not lower dataset minimums to hide missing rows.
+- If generation misses rows, fix the generator/retry/sanitize path or report the gap explicitly.
+- If DeepEval fails, fix prompts, primers, concepts, or generated rows; do not weaken thresholds first.
+
+### Frontend and Ollama priorities
+- The dashboard must be intuitive enough for non-coder collaborators to operate the workflow without guessing.
+- Reports and job state shown in the UI must come from canonical backend sources.
+- Local Ollama performance should be benchmarked and tuned before claiming the need for remote capacity.
 
 ```bash
 ./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready

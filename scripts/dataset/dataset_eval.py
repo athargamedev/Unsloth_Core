@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from scripts.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
+from scripts.dataset.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
