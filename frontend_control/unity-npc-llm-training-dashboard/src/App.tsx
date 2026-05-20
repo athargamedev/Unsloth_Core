@@ -1305,14 +1305,22 @@ export default function App() {
             )}
 
             {activeTab === 'analytics' && (
-              <Suspense fallback={renderTabSkeleton('chart')}>
-                <TensorBoardPanel
-                  jobs={jobs}
-                  runs={runs}
-                  onRefresh={fetchData}
-                  isLive={connectionQuality === 'connected'}
-                />
-              </Suspense>
+              <motion.div
+                key="analytics"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0"
+              >
+                <Suspense fallback={renderTabSkeleton('chart')}>
+                  <TensorBoardPanel
+                    jobs={jobs}
+                    runs={runs}
+                    onRefresh={fetchData}
+                    isLive={connectionQuality === 'connected'}
+                  />
+                </Suspense>
+              </motion.div>
             )}
 
             {activeTab === 'commands' && (
@@ -1498,7 +1506,7 @@ export default function App() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className="flex-1 flex flex-col overflow-auto"
+                className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0"
               >
                 <OllamaPanel />
               </motion.div>

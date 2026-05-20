@@ -2,6 +2,58 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_4159403",
+      "name": "Pipeline · PID 4159403 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "history_guide",
+      "status": "running",
+      "progress": 70,
+      "loss": null,
+      "createdAt": "2026-05-20T22:18:09.600Z",
+      "startedAt": "2026-05-20T22:18:09.600Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": [
+            "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "running",
+          "logs": [
+            "[STATUS][export] substep=adapter_done state=completed"
+          ]
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 4159403] discovered active process",
+        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
       "id": "ext_proc_3847590",
       "name": "Pipeline · PID 3847590",
       "type": "Pipeline",
@@ -3525,9 +3577,7 @@
       "terminalReason": "external_import"
     }
   ],
-  "logs": [
-    "[2026-05-20T21:46:50.206Z] [STARTUP] Marked 2 stale running job(s) as failed after restart"
-  ],
+  "logs": [],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": [],
   "autoSyncExternal": true
