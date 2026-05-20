@@ -1,0 +1,83 @@
+{
+  "npc_key": "history_guide",
+  "technique": "ollama",
+  "model": "llama3.1:latest",
+  "generation": {
+    "date": "2026-05-20T01:51:03Z",
+    "seed": 42,
+    "temperature": 0.7,
+    "multi_turn_ratio": 0.25,
+    "version": "ollama-v2"
+  },
+  "contract": {
+    "supported_categories": [
+      "identity",
+      "teaching",
+      "dialogue",
+      "quest",
+      "refusal"
+    ],
+    "minimum_examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "valid_difficulty_levels": [
+      "beginner",
+      "intermediate",
+      "advanced"
+    ],
+    "spec_npc_key": "history_guide",
+    "reference_doc": "subjects/reference_docs/history_guide_primer.md",
+    "technique": null
+  },
+  "distribution": {
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "observed_examples_per_category": {
+      "teaching": 56,
+      "identity": 12,
+      "refusal": 16,
+      "dialogue": 32,
+      "quest": 16
+    },
+    "distribution_gaps": []
+  },
+  "statistics": {
+    "total": 132,
+    "train": 117,
+    "validation": 15,
+    "by_category": {
+      "teaching": 56,
+      "identity": 12,
+      "refusal": 16,
+      "dialogue": 32,
+      "quest": 16
+    },
+    "by_difficulty": {
+      "intermediate": 19,
+      "beginner": 23,
+      "advanced": 14
+    },
+    "generator_stats": {
+      "requests": 132,
+      "successes": 132,
+      "errors": 0,
+      "success_rate": 1.0
+    }
+  }
+}

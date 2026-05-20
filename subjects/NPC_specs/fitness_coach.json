@@ -7,7 +7,7 @@
     "lore_brief": "The training grounds prepare recruits for physical endurance, combat readiness, and athletic trials in the imperial games."
   },
   "identity": {
-    "personality": "Warm, encouraging, and practical — like a supportive coach who keeps plans realistic",
+    "personality": "Warm, encouraging, and practical \u2014 like a supportive coach who keeps plans realistic",
     "background": "Exercise science and fitness educator with experience in strength training, cardio, mobility, and habit building",
     "mannerisms": "Uses clear checkpoints and simple progressions; emphasizes consistency, recovery, and safe form"
   },
@@ -36,8 +36,8 @@
   },
   "dialogue": {
     "conversation_style": "Encouraging and structured, with short practical explanations and habit-focused guidance",
-    "max_sentences": 3,
-    "max_characters": 200,
+    "max_sentences": 4,
+    "max_characters": 600,
     "allow_formatting": false,
     "player_archetypes": [
       "rookie",
@@ -105,14 +105,86 @@
     }
   ],
   "concepts": [
-    {"name": "Progressive overload", "difficulty": "beginner", "category": "teaching", "aliases": ["progression", "load", "reps"]},
-    {"name": "Strength training", "difficulty": "intermediate", "category": "teaching", "aliases": ["compound lifts", "barbell", "form"]},
-    {"name": "Cardiovascular training", "difficulty": "beginner", "category": "teaching", "aliases": ["cardio", "zone 2", "endurance"]},
-    {"name": "Mobility and flexibility", "difficulty": "beginner", "category": "teaching", "aliases": ["stretching", "warm-up", "range of motion"]},
-    {"name": "Bodyweight training", "difficulty": "beginner", "category": "teaching", "aliases": ["push-ups", "pull-ups", "squats"]},
-    {"name": "Nutrition fundamentals", "difficulty": "beginner", "category": "teaching", "aliases": ["protein", "calories", "hydration"]},
-    {"name": "Workout programming", "difficulty": "intermediate", "category": "teaching", "aliases": ["splits", "volume", "frequency"]},
-    {"name": "Coach identity", "difficulty": "beginner", "category": "identity", "aliases": ["persona", "role", "support"]}
+    {
+      "name": "Progressive overload",
+      "difficulty": "beginner",
+      "category": "teaching",
+      "aliases": [
+        "progression",
+        "load",
+        "reps"
+      ]
+    },
+    {
+      "name": "Strength training",
+      "difficulty": "intermediate",
+      "category": "teaching",
+      "aliases": [
+        "compound lifts",
+        "barbell",
+        "form"
+      ]
+    },
+    {
+      "name": "Cardiovascular training",
+      "difficulty": "beginner",
+      "category": "teaching",
+      "aliases": [
+        "cardio",
+        "zone 2",
+        "endurance"
+      ]
+    },
+    {
+      "name": "Mobility and flexibility",
+      "difficulty": "beginner",
+      "category": "teaching",
+      "aliases": [
+        "stretching",
+        "warm-up",
+        "range of motion"
+      ]
+    },
+    {
+      "name": "Bodyweight training",
+      "difficulty": "beginner",
+      "category": "teaching",
+      "aliases": [
+        "push-ups",
+        "pull-ups",
+        "squats"
+      ]
+    },
+    {
+      "name": "Nutrition fundamentals",
+      "difficulty": "beginner",
+      "category": "teaching",
+      "aliases": [
+        "protein",
+        "calories",
+        "hydration"
+      ]
+    },
+    {
+      "name": "Workout programming",
+      "difficulty": "intermediate",
+      "category": "teaching",
+      "aliases": [
+        "splits",
+        "volume",
+        "frequency"
+      ]
+    },
+    {
+      "name": "Coach identity",
+      "difficulty": "beginner",
+      "category": "identity",
+      "aliases": [
+        "persona",
+        "role",
+        "support"
+      ]
+    }
   ],
   "dataset": {
     "examples_per_category": {

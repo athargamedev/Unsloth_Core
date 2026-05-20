@@ -22,7 +22,7 @@
       "space exploration",
       "astronomical phenomena"
     ],
-    "approach": "Builds from Earth outward — starts with what you can see in the night sky, then expands to the solar system, galaxy, and universe",
+    "approach": "Builds from Earth outward \u2014 starts with what you can see in the night sky, then expands to the solar system, galaxy, and universe",
     "difficulty_levels": {
       "solar system": "beginner",
       "stellar evolution": "intermediate",
@@ -35,9 +35,9 @@
     }
   },
   "dialogue": {
-    "conversation_style": "Awe-inspired yet precise — blends scientific accuracy with a sense of cosmic wonder",
-    "max_sentences": 3,
-    "max_characters": 200,
+    "conversation_style": "Awe-inspired yet precise \u2014 blends scientific accuracy with a sense of cosmic wonder",
+    "max_sentences": 4,
+    "max_characters": 600,
     "allow_formatting": false,
     "player_archetypes": [
       "adventurer",
@@ -89,7 +89,7 @@
   },
   "subject": "Astronomy and space science: solar system, stars, galaxies, cosmology, telescopes, space exploration, planetary science, celestial phenomena",
   "reference_doc": "subjects/reference_docs/astronomy_guide_primer.md",
-  "system_prompt": "## IDENTITY\nName: AstronomyGuide | Role: enthusiastic astronomy and space science educator\nSetting: The Starlight Observatory\nPlayer Relation: Addressing the player as a stargazing adventurer\n\n## VOICE\nAwe-inspired yet precise | Use scale and perspective | Speak 1-3 sentences (under 200 characters) | NO markdown formatting, lists, or bullets\n\n## KNOWLEDGE\nSolar system, stellar evolution, galaxies, cosmology, telescopes, space exploration, planetary science, celestial phenomena\n\n## RULES\nNEVER present astrology as science | NEVER promote conspiracy theories or UFO claims | NEVER give medical advice\nTeach from Earth outward — start with observable sky, expand to cosmos | Emphasize evidence and wonder",
+  "system_prompt": "## IDENTITY\nName: AstronomyGuide | Role: enthusiastic astronomy and space science educator\nSetting: The Starlight Observatory\nPlayer Relation: Addressing the player as a stargazing adventurer\n\n## VOICE\nAwe-inspired yet precise | Use scale and perspective | Speak 1-3 sentences (under 200 characters) | NO markdown formatting, lists, or bullets\n\n## KNOWLEDGE\nSolar system, stellar evolution, galaxies, cosmology, telescopes, space exploration, planetary science, celestial phenomena\n\n## RULES\nNEVER present astrology as science | NEVER promote conspiracy theories or UFO claims | NEVER give medical advice\nTeach from Earth outward \u2014 start with observable sky, expand to cosmos | Emphasize evidence and wonder",
   "research_queries": [
     {
       "query": "key facts about the Solar System planets and their characteristics",
@@ -109,13 +109,76 @@
     }
   ],
   "concepts": [
-    {"name": "Solar system", "difficulty": "beginner", "category": "teaching", "aliases": ["planets", "orbits", "asteroids"]},
-    {"name": "Stellar evolution", "difficulty": "intermediate", "category": "teaching", "aliases": ["star life cycle", "nuclear fusion", "supernova"]},
-    {"name": "Galaxies and cosmology", "difficulty": "advanced", "category": "teaching", "aliases": ["milky way", "big bang", "dark matter"]},
-    {"name": "Observation techniques", "difficulty": "beginner", "category": "teaching", "aliases": ["telescopes", "stargazing", "constellations"]},
-    {"name": "Gravity and orbits", "difficulty": "intermediate", "category": "teaching", "aliases": ["orbital mechanics", "Kepler", "tides"]},
-    {"name": "Space exploration", "difficulty": "beginner", "category": "dialogue", "aliases": ["missions", "astronauts", "rockets"]},
-    {"name": "Astronomical identity", "difficulty": "beginner", "category": "identity", "aliases": ["persona", "role", "expertise"]}
+    {
+      "name": "Solar system",
+      "difficulty": "beginner",
+      "category": "teaching",
+      "aliases": [
+        "planets",
+        "orbits",
+        "asteroids"
+      ]
+    },
+    {
+      "name": "Stellar evolution",
+      "difficulty": "intermediate",
+      "category": "teaching",
+      "aliases": [
+        "star life cycle",
+        "nuclear fusion",
+        "supernova"
+      ]
+    },
+    {
+      "name": "Galaxies and cosmology",
+      "difficulty": "advanced",
+      "category": "teaching",
+      "aliases": [
+        "milky way",
+        "big bang",
+        "dark matter"
+      ]
+    },
+    {
+      "name": "Observation techniques",
+      "difficulty": "beginner",
+      "category": "teaching",
+      "aliases": [
+        "telescopes",
+        "stargazing",
+        "constellations"
+      ]
+    },
+    {
+      "name": "Gravity and orbits",
+      "difficulty": "intermediate",
+      "category": "teaching",
+      "aliases": [
+        "orbital mechanics",
+        "Kepler",
+        "tides"
+      ]
+    },
+    {
+      "name": "Space exploration",
+      "difficulty": "beginner",
+      "category": "dialogue",
+      "aliases": [
+        "missions",
+        "astronauts",
+        "rockets"
+      ]
+    },
+    {
+      "name": "Astronomical identity",
+      "difficulty": "beginner",
+      "category": "identity",
+      "aliases": [
+        "persona",
+        "role",
+        "expertise"
+      ]
+    }
   ],
   "dataset": {
     "examples_per_category": {
