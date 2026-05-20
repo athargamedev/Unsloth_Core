@@ -2,19 +2,19 @@
   "executionMode": "local",
   "jobs": [
     {
-      "id": "ext_proc_1238499",
-      "name": "Dataset · PID 1238499 · chef_assistant · technique:ollama",
+      "id": "ext_proc_1899581",
+      "name": "Dataset · PID 1899581 · history_guide · technique:ollama",
       "type": "Dataset",
       "commandId": "dataset-generate",
-      "npcKey": "chef_assistant",
+      "npcKey": "history_guide",
       "status": "running",
       "progress": 13,
       "loss": null,
-      "createdAt": "2026-05-20T15:52:17.734Z",
-      "startedAt": "2026-05-20T15:52:17.734Z",
+      "createdAt": "2026-05-20T17:16:50.565Z",
+      "startedAt": "2026-05-20T17:16:50.565Z",
       "command": [
         "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-9106d929ef8c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-9106d929ef8c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-9106d929ef8c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_9106d929ef8c__%s__HERMES_CWD_9106d929ef8c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1-3060-chat"
       ],
       "stages": [
         {
@@ -39,10 +39,570 @@
         }
       ],
       "logs": [
+        "[EXTERNAL][PID 1899581] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1-3060-chat"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_1899576",
+      "name": "Dataset · PID 1899576 · history_guide · technique:ollama",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T17:16:48.558Z",
+      "startedAt": "2026-05-20T17:16:48.558Z",
+      "command": [
+        "external",
+        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1-3060-chat"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1899576] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1899576] discovered active process",
+        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1-3060-chat"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T17:16:50.034Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1871908",
+      "name": "Dataset · PID 1871908 · history_guide · technique:ollama",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T17:06:51.199Z",
+      "startedAt": "2026-05-20T17:06:51.199Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model qwen3:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1871908] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1871908] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model qwen3:latest"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T17:16:38.032Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1785764",
+      "name": "Dataset · PID 1785764 · history_guide · technique:ollama",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T16:56:33.769Z",
+      "startedAt": "2026-05-20T16:56:33.769Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1785764] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1785764] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T17:06:33.769Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_sanitize_astronomy_guide_ollama",
+      "name": "External Dataset Sanitize (astronomy_guide/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-19T23:53:58.422Z",
+      "startedAt": "2026-05-19T23:53:58.422Z",
+      "finishedAt": "2026-05-19T23:53:58.422Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/astronomy_guide/ollama/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/astronomy_guide/ollama/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_astronomy_guide_ollama",
+      "name": "External Dataset Generate (astronomy_guide/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-20T16:55:24.159Z",
+      "startedAt": "2026-05-20T16:55:24.159Z",
+      "finishedAt": "2026-05-20T16:55:24.159Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/astronomy_guide.json",
+        "--technique",
+        "ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/astronomy_guide/ollama/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_1602179",
+      "name": "Dataset · PID 1602179 · astronomy_guide · technique:ollama",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T16:35:59.754Z",
+      "startedAt": "2026-05-20T16:35:59.754Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1602179] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1602179] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T16:55:25.734Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1520070",
+      "name": "Dataset · PID 1520070 · astronomy_guide · technique:ollama",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T16:25:50.987Z",
+      "startedAt": "2026-05-20T16:25:50.987Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1520070] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1520070] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T16:35:51.019Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1435182",
+      "name": "Dataset · PID 1435182 · astronomy_guide · technique:ollama",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T16:15:41.761Z",
+      "startedAt": "2026-05-20T16:15:41.761Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1435182] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1435182] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T16:25:41.985Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_sanitize_chef_assistant_ollama",
+      "name": "External Dataset Sanitize (chef_assistant/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-19T23:53:58.419Z",
+      "startedAt": "2026-05-19T23:53:58.419Z",
+      "finishedAt": "2026-05-19T23:53:58.419Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/chef_assistant/ollama/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/chef_assistant/ollama/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_chef_assistant_ollama",
+      "name": "External Dataset Generate (chef_assistant/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-20T16:09:39.216Z",
+      "startedAt": "2026-05-20T16:09:39.216Z",
+      "finishedAt": "2026-05-20T16:09:39.216Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/chef_assistant.json",
+        "--technique",
+        "ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/chef_assistant/ollama/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_1329130",
+      "name": "Dataset · PID 1329130 · chef_assistant · technique:ollama",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T16:02:29.731Z",
+      "startedAt": "2026-05-20T16:02:29.731Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-9a2a020115bd.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-9a2a020115bd.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-9a2a020115bd.txt 2>/dev/null || true printf '\\n__HERMES_CWD_9a2a020115bd__%s__HERMES_CWD_9a2a020115bd__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1329130] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1329130] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-9a2a020115bd.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-9a2a020115bd.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-9a2a020115bd.txt 2>/dev/null || true printf '\\n__HERMES_CWD_9a2a020115bd__%s__HERMES_CWD_9a2a020115bd__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T16:09:39.728Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1238499",
+      "name": "Dataset · PID 1238499 · chef_assistant · technique:ollama",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T15:52:17.734Z",
+      "startedAt": "2026-05-20T15:52:17.734Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-9106d929ef8c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-9106d929ef8c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-9106d929ef8c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_9106d929ef8c__%s__HERMES_CWD_9106d929ef8c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1238499] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
         "[EXTERNAL][PID 1238499] discovered active process",
         "/usr/bin/bash -c source /tmp/hermes-snap-9106d929ef8c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-9106d929ef8c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-9106d929ef8c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_9106d929ef8c__%s__HERMES_CWD_9106d929ef8c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T16:02:17.741Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_1209893",
