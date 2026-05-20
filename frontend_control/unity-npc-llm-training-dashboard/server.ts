@@ -314,7 +314,7 @@ const ttlCache = new Map<string, { data: unknown; expires: number }>();
 const LOCAL_MODEL_CACHE_TTL_MS = 2000;
 async function withCache<T>(key: string, ttlMs: number, fetcher: () => Promise<T>): Promise<T> {
   const cached = ttlCache.get(key);
-  if (cached && cached.expires > Date.now()) { console.error('[CACHE HIT]', key); return cached.data as T; }
+  if (cached && cached.expires > Date.now()) return cached.data as T;
   const data = await fetcher();
   ttlCache.set(key, { data, expires: Date.now() + Math.max(ttlMs, 500) });
   if (ttlCache.size > 50) {
@@ -2650,7 +2650,7 @@ The user can execute these commands directly from your interface.`;
     return res.json({ mode });
   });
   app.get("/api/system/status", async (_req, res) => {
-    const gpu = parseNvidiaSmiTelemetry();
+    const gpu = await withCache('gpuTelemetry', LOCAL_MODEL_CACHE_TTL_MS, async () => parseNvidiaSmiTelemetry());
     const totalMem = os.totalmem();
     const freeMem = os.freemem();
     const cpuCount = Math.max(os.cpus().length, 1);
