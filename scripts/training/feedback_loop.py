@@ -297,6 +297,41 @@ def run_training(npc_key, preset, technique="template", dry_run=False):
     return None
 
 
+def run_dataset_eval(npc_key, technique="template", judge_model="qwen3:latest",
+                     ollama_base_url="http://localhost:11434",
+                     cases_per_category=5, dry_run=False, soft_fail=False):
+    """Run the dataset quality gate on the sanitized dataset."""
+    spec_path = paths.spec_path(npc_key)
+    if not spec_path.exists():
+        print(f"  [error] Spec not found for dataset evaluation: {spec_path}")
+        return False
+
+    cmd = [
+        sys.executable,
+        str(PROJECT_ROOT / "scripts" / "dataset" / "dataset_eval.py"),
+        str(spec_path),
+        "--technique", technique,
+        "--judge-model", judge_model,
+        "--ollama-base-url", ollama_base_url,
+        "--cases-per-category", str(cases_per_category),
+    ]
+    if soft_fail:
+        cmd.append("--soft-fail")
+
+    if dry_run:
+        print(f"  [dry-run] Would run dataset evaluation: {' '.join(cmd)}")
+        return True
+
+    print(f"  Running dataset evaluation for {npc_key} ({technique})...")
+    ok, stdout, stderr = run_cmd(cmd, timeout=1800)
+    if ok:
+        print(f"  Dataset evaluation passed.")
+        return True
+    print(f"  [error] Dataset evaluation failed or had failing metrics.")
+    print(stderr[:500])
+    return False
+
+
 def run_evaluate(npc_key, baseline_gguf, candidate_gguf, feedback_output_dir, dry_run=False):
     """Evaluate the new model against the baseline with structured output."""
     if dry_run:
@@ -372,7 +407,12 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       technique=DEFAULT_REGENERATION_TECHNIQUE,
                       model=DEFAULT_REGENERATION_MODEL,
                       url=DEFAULT_REGENERATION_URL,
-                      batch_size=DEFAULT_REGENERATION_BATCH_SIZE):
+                      batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
+                      skip_dataset_eval=False,
+                      deepeval_judge_model="qwen3:latest",
+                      deepeval_ollama_url="http://localhost:11434",
+                      deepeval_cases_per_category=5,
+                      deepeval_soft_fail=False):
     """Full feedback loop: analyze → regenerate → optionally retrain."""
     # Capture human-readable output for --json mode
     tee = Tee() if json_output else None
@@ -492,7 +532,42 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
 
         # Sanitize
         print(f"\n  Step 1: Sanitize dataset...")
-        run_sanitize(npc_key, technique=technique, dry_run=dry_run)
+        if not run_sanitize(npc_key, technique=technique, dry_run=dry_run):
+            print("  [error] Sanitization failed; aborting auto-retrain.")
+            result["status"] = "sanitize_failed"
+            update_pipeline_state(npc_key, {
+                "status": "sanitize_failed",
+                "weak_concepts_count": len(weak_concepts),
+                "last_feedback": datetime.now(timezone.utc).isoformat(),
+            })
+            if json_output:
+                print(json.dumps(result, indent=2))
+            return 1
+
+        # Dataset quality gate
+        if not skip_dataset_eval:
+            print(f"\n  Step 1b: Evaluate cleaned dataset before training...")
+            if not run_dataset_eval(
+                npc_key,
+                technique=technique,
+                judge_model=deepeval_judge_model,
+                ollama_base_url=deepeval_ollama_url,
+                cases_per_category=deepeval_cases_per_category,
+                dry_run=dry_run,
+                soft_fail=deepeval_soft_fail,
+            ):
+                print("  [error] Dataset evaluation failed; aborting auto-retrain.")
+                result["status"] = "dataset_eval_failed"
+                update_pipeline_state(npc_key, {
+                    "status": "dataset_eval_failed",
+                    "weak_concepts_count": len(weak_concepts),
+                    "last_feedback": datetime.now(timezone.utc).isoformat(),
+                })
+                if json_output:
+                    print(json.dumps(result, indent=2))
+                return 1
+        else:
+            print("  Skipping dataset evaluation before training.")
 
         # Train
         print(f"\n  Step 2: Train new model...")
@@ -603,6 +678,16 @@ def main():
     parser.add_argument("--train-preset", default=DEFAULT_TRAIN_PRESET,
                         help=f"Training preset (default: {DEFAULT_TRAIN_PRESET})")
     parser.add_argument("--baseline", help="Baseline GGUF path for auto-evaluation after retrain")
+    parser.add_argument("--skip-dataset-eval", action="store_true",
+                        help="Skip dataset quality evaluation before training during auto-retrain")
+    parser.add_argument("--deepeval-judge-model", default="qwen3:latest",
+                        help="Judge model to use for dataset evaluation (default: qwen3:latest)")
+    parser.add_argument("--deepeval-ollama-url", default="http://localhost:11434",
+                        help="Ollama base URL for dataset evaluation (default: http://localhost:11434)")
+    parser.add_argument("--deepeval-cases-per-category", type=int, default=5,
+                        help="Cases per category for DeepEval dataset gating (default: 5)")
+    parser.add_argument("--deepeval-soft-fail", action="store_true",
+                        help="Do not abort dataset evaluation on metric failure; continue training")
 
     args = parser.parse_args()
 
@@ -632,6 +717,11 @@ def main():
         model=args.regeneration_model,
         url=args.regeneration_url,
         batch_size=args.regeneration_batch_size,
+        skip_dataset_eval=args.skip_dataset_eval,
+        deepeval_judge_model=args.deepeval_judge_model,
+        deepeval_ollama_url=args.deepeval_ollama_url,
+        deepeval_cases_per_category=args.deepeval_cases_per_category,
+        deepeval_soft_fail=args.deepeval_soft_fail,
     ))
 
 

@@ -183,7 +183,13 @@ Closes the loop between evaluation and dataset generation:
    - **training_density**: Onyx has relevant docs → regenerate more examples
    - **knowledge_gap**: Onyx returns nothing → add reference doc, re-index
 3. Regenerate targeted dataset → sanitize → dataset-eval → retrain → re-evaluate
-4. CI mode: `--auto-retrain` chains the whole cycle in one command
+4. Control the pre-training gate with:
+   - `--skip-dataset-eval` to bypass the quality gate before training
+   - `--deepeval-judge-model` to select the Ollama judge model
+   - `--deepeval-ollama-url` to point at a custom local Ollama server
+   - `--deepeval-cases-per-category` to adjust evaluation depth
+   - `--deepeval-soft-fail` to write DeepEval artifacts but continue training even if the gate fails
+5. CI mode: `--auto-retrain` chains the whole cycle in one command
 
 ---
 

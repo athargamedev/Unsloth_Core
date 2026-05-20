@@ -106,7 +106,15 @@ The model feedback loop closes the gap between trained model evaluation and data
 
 # One-shot auto-retrain (CI mode):
 ./ucore feedback eval/results/feedback/npc.json --auto --auto-retrain --baseline old.gguf --train-preset fast-3b
-# Chains: regenerate → sanitize → train → evaluate → pipeline state
+# Chains: regenerate → sanitize → dataset-eval → train → evaluate → pipeline state
+
+# Skip the dataset quality gate before training:
+./ucore feedback eval/results/feedback/npc.json --auto --auto-retrain --baseline old.gguf --skip-dataset-eval
+
+# Override the DeepEval judge settings or continue training even on gate failures:
+./ucore feedback eval/results/feedback/npc.json --auto --auto-retrain --baseline old.gguf \
+  --deepeval-judge-model qwen3:latest --deepeval-ollama-url http://localhost:11434 \
+  --deepeval-cases-per-category 5 --deepeval-soft-fail
 
 # Machine-readable output for dashboards:
 ./ucore feedback eval/results/feedback/npc.json --json --skip-gap-detection

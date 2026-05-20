@@ -73,6 +73,10 @@ Transforms a subject spec into a playable NPC:
     - Analyzes eval results → identifies weak concepts → determines gap type:
       - `training_density`: Model didn't learn the topic → regenerate more examples
       - `knowledge_gap`: No relevant reference material → add primer, re-index
+    - After regeneration the new dataset is sanitized and gated with `scripts/dataset/dataset_eval.py` before training.
+    - Use `--skip-dataset-eval` to bypass the pre-training dataset quality gate.
+    - Use `--deepeval-judge-model`, `--deepeval-ollama-url`, and `--deepeval-cases-per-category` to configure the local Ollama judge.
+    - Use `--deepeval-soft-fail` to continue training even when the dataset gate reports metric failures.
     - Auto-retrain mode: `./ucore feedback npc.json --auto-retrain --baseline ...`
     - **CRITICAL NOTE (6GB VRAM)**: Do NOT use `--auto-retrain` if doing LLM-grounded generation on an RTX 3060 6GB. Run generation (`--auto`) first, unload Ollama from memory, then manually run training to avoid OOM crashes.
     - Groups results by category/concept for targeted analysis.

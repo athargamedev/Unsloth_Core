@@ -831,6 +831,26 @@ const commandDefinitions: CommandDefinition[] = [
       if (payload["json"] === true || String(payload["json"] || "").toLowerCase() === "true") {
         args.push("--json");
       }
+      if (payload["skip-dataset-eval"] === true || String(payload["skip-dataset-eval"] || "").toLowerCase() === "true") {
+        args.push("--skip-dataset-eval");
+      }
+      const deepevalJudgeModel = String(payload["deepeval-judge-model"] || "").trim();
+      if (deepevalJudgeModel) args.push("--deepeval-judge-model", sanitizeToken(deepevalJudgeModel, "deepeval-judge-model"));
+      const deepevalOllamaUrl = String(payload["deepeval-ollama-url"] || "").trim();
+      if (deepevalOllamaUrl) args.push("--deepeval-ollama-url", sanitizeToken(deepevalOllamaUrl, "deepeval-ollama-url"));
+      const deepevalCasesPerCategory = String(payload["deepeval-cases-per-category"] || "").trim();
+      if (deepevalCasesPerCategory) args.push("--deepeval-cases-per-category", sanitizeToken(deepevalCasesPerCategory, "deepeval-cases-per-category"));
+      if (payload["deepeval-soft-fail"] === true || String(payload["deepeval-soft-fail"] || "").toLowerCase() === "true") {
+        args.push("--deepeval-soft-fail");
+      }
+      const regenerationTechnique = String(payload["regeneration-technique"] || "").trim();
+      if (regenerationTechnique) args.push("--regeneration-technique", sanitizeToken(regenerationTechnique, "regeneration-technique"));
+      const regenerationModel = String(payload["regeneration-model"] || "").trim();
+      if (regenerationModel) args.push("--regeneration-model", sanitizeToken(regenerationModel, "regeneration-model"));
+      const regenerationUrl = String(payload["regeneration-url"] || "").trim();
+      if (regenerationUrl) args.push("--regeneration-url", sanitizeToken(regenerationUrl, "regeneration-url"));
+      const regenerationBatchSize = String(payload["regeneration-batch-size"] || "").trim();
+      if (regenerationBatchSize) args.push("--regeneration-batch-size", sanitizeToken(regenerationBatchSize, "regeneration-batch-size"));
       return args;
     },
   },
