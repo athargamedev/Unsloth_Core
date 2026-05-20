@@ -63,7 +63,7 @@ def main():
     # Generate with Ollama (optimized)
     gen_ollama_p = subparsers.add_parser("generate-ollama", help="Generate dataset using optimized Ollama generator")
     gen_ollama_p.add_argument("spec", help="Path to subject spec JSON")
-    gen_ollama_p.add_argument("--model", default="llama2", help="Ollama model (default: llama2)")
+    gen_ollama_p.add_argument("--model", default="llama3.1:latest", help="Ollama model (default: llama3.1:latest)")
     gen_ollama_p.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
     gen_ollama_p.add_argument("--batch-size", type=int, default=4, help="Concurrent generation tasks")
     gen_ollama_p.add_argument("--max-retries", type=int, default=3, help="Max retries per generation")
@@ -89,7 +89,7 @@ def main():
     de_p.add_argument("spec", help="Path to subject spec JSON")
     de_p.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"],
                       help="Dataset technique to evaluate")
-    de_p.add_argument("--judge-model", default="qwen2.5:7b", help="Local Ollama judge model")
+    de_p.add_argument("--judge-model", default="qwen3", help="Local Ollama judge model")
     de_p.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
     de_p.add_argument("--judge-temperature", type=float, default=0.0, help="Judge temperature")
     de_p.add_argument("--cases-per-category", type=int, default=5, help="Rows sampled per category")
@@ -362,7 +362,7 @@ def main():
         sys.exit(0)
 
     if args.command == "generate":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "generate_dataset.py"), args.spec]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec]
         technique = "ollama" if args.ollama else args.technique
         cmd.extend(["--technique", technique])
         if technique == "ollama":
@@ -377,7 +377,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "generate-ollama":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "generate_dataset_ollama.py"), args.spec]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset_ollama.py"), args.spec]
         if args.model:
             cmd.extend(["--model", args.model])
         if args.url and args.url != "http://localhost:11434":
@@ -407,13 +407,13 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "sanitize":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "sanitize_dataset.py"), args.input]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), args.input]
         if args.output: cmd.extend(["--output", args.output])
         if args.strict_canonical: cmd.append("--strict-canonical")
         run_cmd(cmd)
 
     elif args.command == "dataset-eval":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset_eval.py"), args.spec]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "dataset_eval.py"), args.spec]
         cmd.extend(["--technique", args.technique])
         cmd.extend(["--judge-model", args.judge_model])
         cmd.extend(["--ollama-base-url", args.ollama_base_url])
@@ -490,7 +490,7 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "validate-spec":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "validate_subject_spec.py")]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "validate_subject_spec.py")]
         if args.spec:
             cmd.append(args.spec)
         if args.all:
@@ -651,12 +651,12 @@ def main():
         print("[STAGE] spec")
         if not args.skip_spec_validate:
             print(f"--- Phase 0: Validating Spec ---")
-            validate_cmd = [PYTHON, str(SCRIPTS_DIR / "validate_subject_spec.py"), args.spec, "--generation-ready"]
+            validate_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "validate_subject_spec.py"), args.spec, "--generation-ready"]
             run_cmd(validate_cmd)
 
         print("[STAGE] dataset")
         print(f"--- Phase 1: Generating Dataset ---")
-        gen_cmd = [PYTHON, str(SCRIPTS_DIR / "generate_dataset.py"), args.spec]
+        gen_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec]
         technique = "ollama" if args.ollama else args.technique
         gen_cmd.extend(["--technique", technique])
         if technique == "ollama":
@@ -673,13 +673,13 @@ def main():
         print("[STAGE] dataset")
         print(f"\n--- Phase 2: Sanitizing Dataset ---")
         san_path = dataset_path.replace("train.jsonl", "train_clean.jsonl")
-        san_cmd = [PYTHON, str(SCRIPTS_DIR / "sanitize_dataset.py"), dataset_path, "--output", san_path, "--strict-canonical"]
+        san_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), dataset_path, "--output", san_path, "--strict-canonical"]
         run_cmd(san_cmd)
 
         if not args.skip_dataset_eval:
             print("[STAGE] quality-gate")
             print(f"\n--- Phase 3: DeepEval Dataset Quality Gate ---")
-            eval_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset_eval.py"), args.spec, "--technique", technique]
+            eval_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "dataset_eval.py"), args.spec, "--technique", technique]
             run_cmd(eval_cmd)
 
         print("[STAGE] training")

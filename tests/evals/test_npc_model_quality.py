@@ -1,10 +1,17 @@
 """DeepEval suite for evaluating NPC model response quality.
 
+This suite is *inactive by default*.  Set ``DEEPEVAL_LIVE_MODEL_URL`` to
+activate — this makes it explicit that the tests require a running inference
+endpoint (Ollama / llama-server / OpenAI-compatible API) and should not be
+confused with the lightweight offline schema checks in
+``test_dataset_schema.py``.
+
 Consumes a golden dataset built by ``scripts/evaluation/build_npc_goldens.py``
 and runs the same metric families used for dataset quality gating plus
 conversational metrics when multi-turn goldens are available.
 
 Environment variables:
+  DEEPEVAL_LIVE_MODEL_URL         — Activate this suite (any non-empty value)
   DEEPEVAL_OLLAMA_MODEL           — Judge model name (default: qwen3)
   DEEPEVAL_OLLAMA_BASE_URL        — Ollama server URL
   DEEPEVAL_OLLAMA_TEMPERATURE     — Judge temperature
@@ -24,10 +31,21 @@ import pytest
 from deepeval import assert_test
 from deepeval.test_case import ConversationalTestCase, LLMTestCase, Turn
 
+# ---------------------------------------------------------------------------
+# Gate: only activate when DEEPEVAL_LIVE_MODEL_URL is set
+# ---------------------------------------------------------------------------
+
+_LIVE_URL = os.getenv("DEEPEVAL_LIVE_MODEL_URL", "").strip()
+if not _LIVE_URL:
+    pytest.skip(
+        "Set DEEPEVAL_LIVE_MODEL_URL to activate model evaluation",
+        allow_module_level=True,
+    )
+
 # Set default judge model *before* importing metrics so the module-level
 # JUDGE_MODEL picks it up when this is the first metrics import.
 os.environ.setdefault("DEEPEVAL_OLLAMA_MODEL", "qwen3")
-os.environ.setdefault("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434")
+os.environ.setdefault("DEEPEVAL_OLLAMA_BASE_URL", _LIVE_URL)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 GOLDENS_PATH = PROJECT_ROOT / "tests" / "evals" / ".dataset" / "npc_goldens.json"
@@ -40,21 +58,6 @@ from metrics import (
     RAG_QUALITY_METRICS,
     SAFETY_METRICS,
 )
-
-# ---------------------------------------------------------------------------
-# Clone metrics with sync mode — async metrics don't serialize scores
-# properly in this test's single-threaded context
-# ---------------------------------------------------------------------------
-
-def _make_sync(metrics_list: list) -> list:
-    for m in metrics_list:
-        m.async_mode = False
-    return metrics_list
-
-DATASET_QUALITY_METRICS = _make_sync(DATASET_QUALITY_METRICS)
-RAG_QUALITY_METRICS = _make_sync(RAG_QUALITY_METRICS)
-CONVERSATIONAL_METRICS = _make_sync(CONVERSATIONAL_METRICS)
-SAFETY_METRICS = _make_sync(SAFETY_METRICS)
 
 # ---------------------------------------------------------------------------
 # Defaults
