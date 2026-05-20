@@ -1,108 +1,189 @@
 {
   "npc_key": "astronomy_guide",
   "technique": "ollama",
-  "model": "llama3.1-3060-chat:latest",
-  "generation": {
-    "date": "2026-05-20T19:35:38Z",
-    "seed": 42,
-    "temperature": 0.6,
-    "multi_turn_ratio": 0.25,
-    "version": "ollama-v2"
+  "sanitized": true,
+  "sanitizer": {
+    "version": "v2",
+    "date": "2026-05-20T20:05:20Z",
+    "argv": "/home/athar/Projects/Unsloth_Core/scripts/dataset/sanitize_dataset.py subjects/datasets/astronomy_guide/ollama/train.jsonl --output subjects/datasets/astronomy_guide/ollama/train_clean.jsonl --strict-canonical",
+    "artifact_check_mode": "strict",
+    "strict_mode": false
   },
   "spec": {
     "file": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/astronomy_guide.json",
     "hash": "sha256:737c729d64b6ed63b09decfe1341f30de0def1b7bc25ed15804f26406a78e44c"
   },
-  "contract": {
-    "supported_categories": [
-      "identity",
-      "teaching",
-      "dialogue",
-      "quest",
-      "refusal"
-    ],
-    "minimum_examples_per_category": {
-      "identity": 8,
-      "teaching": 32,
-      "dialogue": 16,
-      "quest": 8,
-      "refusal": 8
-    },
-    "expected_examples_per_category": {
-      "identity": 12,
-      "teaching": 56,
-      "dialogue": 32,
-      "quest": 16,
-      "refusal": 16
-    },
-    "valid_difficulty_levels": [
-      "beginner",
-      "intermediate",
-      "advanced"
-    ],
-    "spec_npc_key": "astronomy_guide",
-    "reference_doc": "subjects/reference_docs/astronomy_guide_primer.md",
-    "technique": null
-  },
-  "distribution": {
-    "expected_examples_per_category": {
-      "identity": 12,
-      "teaching": 56,
-      "dialogue": 32,
-      "quest": 16,
-      "refusal": 16
-    },
-    "observed_examples_per_category": {
-      "identity": 12,
-      "teaching": 56,
-      "dialogue": 32,
-      "quest": 15,
-      "refusal": 16
-    },
-    "distribution_gaps": [
-      {
-        "category": "quest",
-        "target": 16,
-        "actual": 15,
-        "shortfall": 1
-      }
-    ]
+  "input": {
+    "file": "subjects/datasets/astronomy_guide/ollama/train.jsonl",
+    "hash": "sha256:82de47da22075d69aabd9e3bbd315e0b0fa515ac5da78c1632721b5f8634c0d3",
+    "total_examples": 120
   },
   "statistics": {
-    "total": 131,
-    "train": 119,
-    "validation": 12,
+    "total_input": 120,
+    "total_output": 108,
+    "total_train": 108,
+    "total_validation": 12,
     "by_category": {
-      "identity": 12,
-      "teaching": 56,
-      "dialogue": 32,
+      "teaching": 50,
+      "refusal": 3,
       "quest": 15,
-      "refusal": 16
+      "dialogue": 29,
+      "identity": 11
     },
     "by_difficulty": {
-      "beginner": 62,
-      "advanced": 24,
-      "intermediate": 45
+      "beginner": 44,
+      "advanced": 23,
+      "intermediate": 41
     },
-    "by_concept": {
-      "observational astronomy": 12,
-      "observing the sky": 12,
-      "exploration and evidence": 12,
-      "misconceptions and safety boundaries": 12,
-      "stellar evolution": 12,
-      "solar system": 12,
-      "space exploration": 11,
-      "galaxies and cosmology": 11,
-      "stars, galaxies, and scale": 10,
-      "exoplanets": 9,
-      "scope and use": 9,
-      "solar system basics": 9
+    "by_safety_tag": {
+      "boundary_enforcement": 3
     },
-    "generator_stats": {
-      "requests": 132,
-      "successes": 132,
-      "errors": 0,
-      "success_rate": 1.0
+    "quality_scores": {
+      "mean": 81.7,
+      "median": 81.0,
+      "min": 72,
+      "max": 92,
+      "std_dev": 4.4,
+      "passed_threshold": 108,
+      "flagged_for_review": 0,
+      "distribution": {
+        "0-9": 0,
+        "10-19": 0,
+        "20-29": 0,
+        "30-39": 0,
+        "40-49": 0,
+        "50-59": 0,
+        "60-69": 0,
+        "70-79": 27,
+        "80-89": 71,
+        "90-99": 10,
+        "100+": 0
+      }
     }
+  },
+  "discarded": {
+    "total": 12,
+    "by_reason": {
+      "Duplicate content_hash": 10,
+      "Refusal response lacks boundary-setting or safe redirect": 2
+    }
+  },
+  "content_hashes": [
+    "c20eb4d9315dd06035f4c969078617bd39d9b96d32936b4bd36e1944adaf2808",
+    "ac39cea0039a69f9fed8a641df61e3f005464bc02c3f4228bc80407300b795ab",
+    "d19ecb686d62974bf8460882af767716027d314ae0eb24e2c2cae0d778c69635",
+    "18fc2749505c78b88ec19f325226545775df9f27b5df8ce614e16df8e571fc47",
+    "11cd728de584a172d27be08ebb5ed8d3bc668588d52faabb5e25641db13bf57d",
+    "f4dd446ebc3d5b3f7c6f0b47b6fa833662ad6df2d56be15c75ff8ba7e1565f95",
+    "4a5b2b2b3c14ab6a40e75a0e629d5a6e348e3aa7cbb960119643a3d67480c095",
+    "1faf7261e0839fd2febcfa4d183a582966e9b74ae3335405eb8bcd40be0abd73",
+    "d28bb41175d2d70e3e3899dfb1d5d2fe192536d6ba45ad89931e1a1d88f8dbdf",
+    "d50dc39669e749eba0cc54452c8d29f980a9fea4e57774ac4aa21a3d6cbb1f36",
+    "5be1b6a24450604779dbee036324b704d66b7eebcf06a280c3d5db2fee828fa1",
+    "07c356843fcc181867fa5c81525c7c297e2b1b50adc4a90d8406fe0f16290af6",
+    "32dc01d37b721208572a7985d84a53ea6b7f0e6436fcfb5efffad66bdf8e1562",
+    "55fc53c109a5fa09789835b2b7584256d6abf81ee55a4c3a0c729d3bf25acac6",
+    "078737df6e9f79111fc8d225f4efb8f6650885afe751c9f3c221372319135da7",
+    "3b4e6412e8359e74b99cb685ae87d64c5d6068b833650fec88faba24c2ceafa7",
+    "0166fb0a41954252943bbeb7b312021face2250e9d8697619fc76960ca7d7737",
+    "14a7bea6961140d54a6d407e4bd398b8079b8704b98ddfb2f0f91f09d9327be9",
+    "c155068f8981fab09e6a8dd90bd8b6321b399e68d0887e8e33031de8a79e5f07",
+    "923b1cc425f9688ea631571bd568ce3aa63c1c350ddecbae8d79efad3fc2528e",
+    "f623ff173f2350b750241d11051a245889ccda5039be6ccb47c4f5e62518b984",
+    "ec972b0e50db801a0f1f674dee8e34543aa3a10f28959a8d602776a5cbdee850",
+    "2b0f6074673005054fd2e1b50b38d34b3fec259c3ac540ef0eab53a3821b9e7c",
+    "96404b761ea9640405419ad7bce632ae1c46928cd6dbb38420062de95ad43ffe",
+    "42733f58c03754ed5ba5e3bd2ab47909b6e93641fa54082c0f887ce5d25f2735",
+    "e99ef3a8bb6ddc4c40bf986bd4405513902e0d19a18b9e1b13f8fcd1495264f4",
+    "14e541b59cefb742b15b2958badaaae6d110e12366ac52e93cc62c636468ed93",
+    "e24db911a6eaf18d644812c191c31218e2dad3abb02bcbb90038aaa7d3ced998",
+    "d4383134bb45e2c87794446c7ad8c41f0a76bba99c3d49e5a9f15967f80083dc",
+    "394713dd11e23a2c4d1d52558525ae0b83325506aa2cc6052148c073d2ff902a",
+    "0a20a2de0ebbc806b401d39f2dff1ff0398365ca989358488f416666e9fef41d",
+    "fb07eb926ec7116356ed0475fc6194217b10ab088444081a5302549873d7d963",
+    "a23b4b057910bad2b4b3c91bc8eb7f34572400dace6c59634e18967de56a39c0",
+    "81349cc9675f4958380b8588c6619511c5e29b40eb34b2a1f39758a4fed5ec17",
+    "caf990ce18818067ef75f26ba4b649c336aa2aae41325a0ef0b9e750991a4e3b",
+    "3e93a18c79fb2ad9a9c63cba86b8eb4c377cd8f82630cf676d02d8cb5732d3e2",
+    "21438c814754d40c9e6e234cecd6d18caa22ba4da4750df08be0c8e76e578ecc",
+    "5d6f0588c2989771ab6010161e907b7127e2c06e451b8c62642b77257f6aff34",
+    "5a53592f9714bdb0ac8f6e504a7cd9c9d734b6168dff7069732aa5146a8d6a82",
+    "47583cc8e24509807c7fa2c456fc950d2847dd55796738a192159a7c6e780fec",
+    "3ca933b8ba34bc8f5a0e55b1962de1382476da36bea94f2e5568184ceaa6d5aa",
+    "fe5965cdf96f9a321c8e57d81e071a6dad121ebaea735abc64943396b41f3d2f",
+    "c7e4ebae78bb463453d984c9f34195584db41863f98295adf9d04e3509816718",
+    "5d9737ec2a16da0da3238510027fe973cb45779dd7fc7a9e864bdaa6d34722cb",
+    "f21ed58a6977625e98b267dff05218509c35e60c61f338eef91de61daf8f322e",
+    "15fc912359a9d6791117dabc63973aab6d08639453227cc360b8ac176afa5af3",
+    "77be7c84773f1582428b61fdf092e2ab5d31dbbda0056c3171744fac5cc1f9f4",
+    "8ea7624f479ee387e9c982fa1e8f99b6856e95f489eba53d3ca9078c5bdb89f6",
+    "f08c2ce8bdaa6484b5b8204cd08fe25025c16347663b77b0cfc2304b3a5832b4",
+    "b80b2db22c568ee5495f1a54894fa723518ad7e71b8d0fbcf65fcf8fef83b8d7",
+    "729e000ff39ac421f2ab990223c864c1b82282b9cb5307cee894f0984bd5e50d",
+    "e7be94199b3ce6ee3bdaaeec7147c4f2b0abd9f0cf02d43d421dbfc7c985a255",
+    "f17c3bf0417784d6da5c6b939be14adb734da482b342a27db9517173f2c2979f",
+    "cd104618662cae7a046b78a2765df338d41e7495e2e31794e6d4add59302edad",
+    "204a70723b578efa5cada811884f7f28bb6915e5bc4996376f987e795240a5f9",
+    "4aab94117f5b9541ee9a041afddc50882ded37c2601620378f71191e8e28bf62",
+    "df4cdff695ae4299181e89f492815cd730591b8a32bbc53337460ad1375177ad",
+    "ebe7f5c468f008f626e57472c3edceb90e15c6e26881c2d6157d7cd596e944b7",
+    "00f829c7732d061d6d06bac51681ab8172e0306e9e4e3984b7ada497ceb5e95a",
+    "31c81d306e14a5df33002db534377097ce038dbed517cd4d15979e274a56bf3f",
+    "fe43cd9f374b25747ff2b73961b508288fa0d2dde500e1e438518530938ee25d",
+    "0ffb087ce2816cb323c8dc735c6cff94d75ef6976909fc46772cf963bfeabf0b",
+    "8862f0daf50868c84eea48d9d30d1f7de79ec3a085c0acc51ee75d5c1f8970e1",
+    "81f58a58255ed28badaf766264c0d20a60758d70574dc37f8f25c72c8efd82fc",
+    "44298d5ba9bc19c29da4a1ecf6dc9cf0c792a3c99006001540861919970da5fc",
+    "d70d234976b465f5322170ef9f3a3d9309a947ea5284824326648e2e246fe726",
+    "75ca5a593d863ee320c4d4f8fc195f019701177b119a54da4c5256e2337e2a5f",
+    "cd627646be3eaadc84703216190027b0a56210940dbd0c98cd23f0505818cb70",
+    "c1ed6760a77ed1b120dce801c267383ad0e4f215ec6a90817036d40120bee33f",
+    "3a773e614ccb3ddedf7e9916547535bbf689e1b79484163d8721b47fb47a2f36",
+    "8197b14bc1c1a304a3d9cdf55ad034cf96a1abad6d7185699736881d35286b5d",
+    "12151087a7e04366783a2a6d6b585c9ba07a27e51088e2b9bc505b99e0abf0de",
+    "e57a9426bb7c464235bb79f6e67acaffa9c16caa06dc5f7050439c70ea6b4e1d",
+    "4d963cd3d4146f7a4f98e63bf02e26299867b6ea229e7076bbd53f0a924ec5da",
+    "a8426d2b95aa1c079b831d5cfdcbfe0c75c468c35a517e696b01d49ac866d9de",
+    "264748e9c83cd9a49406dc4c74fc1ab358a78e1d5b45e7222d287306ac782d95",
+    "639e3f584d2e3f3caa659ed19adf56038fc8f6732cc7e9475055f6fb71b3cce0",
+    "b2435b03519edb25ecdeff14f9a30deaf48424718d6a0fcc1f8b8b64c426e79e",
+    "4e297399a20e71015b2a7fd55fce65b967297d639289a7bd019423b469e4dbc6",
+    "a5e436997e1c45584c972a5fa2f083de81a3422a2a3f25f73a7b16637d6dfb53",
+    "c8cc6cb98fee686e5b89715c14c0b5f92ca32e4e0acd8aab9696605740bec879",
+    "d4b72a0c7620aaea10841eb19b9ac803b92df7679e01f5c268892d435f24d244",
+    "2799bd39a5594df7e2e2c72d3959135f606f5b3d79152f6eb220e1a4846d540f",
+    "914ba9b2c7470915a36f132a27a7f2503f229e3c5a3c6aa15b23931cf3e93be8",
+    "910a22945af67359d96aba5d7d6671945133a32e78e53ae0544e1cdd7098c721",
+    "956efc865399d720dd94fbf1b54aba6839c78fe7034a6a32806ad1d941a3a24a",
+    "f179a159d6a241121c88f590c0297e1b36cdb87788d0252befc8c83cb1dbedc2",
+    "5f0a6f9e602cde28fb227bd4768fb06d6652be39be3d1146b87b51e6e1384559",
+    "6af2a07777da5360b241a1cc663e60aad7078a8ee0a203312a4db901f6e37a02",
+    "d7d97c024a0209d3ce918a219a7044db2976048ad322069ef085c0fe1e9ca780",
+    "e688f7ede559a3e93d467255a02f48a5d194422663d4314160cfa33dbd347704",
+    "ce6b1cc3093b935e23ad26a3f56a0214b565b7ec587d0c57f0f16c8b6ca53f5b",
+    "047bede8783c4d693bbd0364200a77aef0eaf41454a75f8d05b272a69f98925c",
+    "0c4eb2751db9c33bf5461666662d71166378dbae1625229b8a3acf1b5f487d77",
+    "e1f8aad01461eabc3c57d6595c05abf8216fd111b3ce661edb86b18957a56b8e",
+    "2c429b692059fca78e8c6c73a322e372edad02d089cc89fb2f9b68817dca7bb7",
+    "173c4683ecab4e2dcb0bc0cbe4b8bce326c92893ebf24ac69b33579ae7099a4c",
+    "5b77f2cf66b104c85ff23174ef8eb0513001d03cc18751422f751c5bbc87ad5d",
+    "e69e12675fec95e770386efd6b969fe824e043f7d3095b5af221f9a86ccaa55e",
+    "59122b68f20176998744a982ec5da50d9727f734d38799b5f838d6d58b294388",
+    "8e0b265dfde982e9a01ee0ddbe64fc7791c226749e2700ffc46a37b182cfd58b",
+    "24f6d2a5135b974419f2e31cfa91a0d963d7c135d14a7aaf5134f979df5954bf",
+    "8198c1bb96d94d6d8a620447263a2f2a5ce6127f539e1cd31fecae4241bbe806",
+    "5667981ec8f3adb7f2a93eb88d241dfe7926218dfa910336129e25728a78d728",
+    "cc57a0d1f9708a8688285ca58dd5d9b280da5b864d2074a2d4cc0d05521d48fc",
+    "b5bf439371e03588a739f53319ecb7b133f95680b7e1be1232d6e6af95ba406d",
+    "dc11928baa75eee1632b0d3eb839cc492babfe0d0de870f7701cbc0af17c4490",
+    "80fc3d609aa1960862150539fd298522af50619f24ad0bafd16fb2d9c5de531b"
+  ],
+  "content_hash_prefix": "sha256:",
+  "generation": {
+    "date": "2026-05-20T20:02:30Z",
+    "seed": 42,
+    "temperature": 0.6,
+    "multi_turn_ratio": 0.25,
+    "version": "ollama-v2"
   }
 }

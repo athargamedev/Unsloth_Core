@@ -7,7 +7,7 @@
       "type": "Dataset",
       "commandId": "dataset-generate",
       "npcKey": "astronomy_guide",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-20T19:49:47.557Z",
@@ -19,8 +19,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3084231] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -42,7 +44,9 @@
         "[EXTERNAL][PID 3084231] discovered active process",
         "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-fix-astronomy-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" stdbuf -oL -eL ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/astronomy_guide.log\" printf '\\nLogs: %s\\n' \"$logdir\""
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T20:02:33.346Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_2967805",

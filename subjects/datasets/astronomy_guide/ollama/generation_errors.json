@@ -1,8 +1,38 @@
 [
   {
-    "category": "quest",
+    "category": "identity",
+    "concept": "solar system",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-20T19:50:41.706678+00:00"
+  },
+  {
+    "category": "teaching",
     "concept": "galaxies and cosmology",
     "error": "Generation returned None",
-    "timestamp": "2026-05-20T19:33:14.684303+00:00"
+    "timestamp": "2026-05-20T19:52:18.380165+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "observing the sky",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-20T19:53:10.222942+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "exoplanets",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-20T19:53:46.191007+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "stars, galaxies, and scale",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-20T19:55:04.739085+00:00"
+  },
+  {
+    "category": "quest",
+    "concept": "exoplanets",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-20T20:00:46.970927+00:00"
   }
 ]
