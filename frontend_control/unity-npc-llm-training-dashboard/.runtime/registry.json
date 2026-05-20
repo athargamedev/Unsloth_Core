@@ -2,6 +2,213 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_3847590",
+      "name": "Pipeline · PID 3847590",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-20T21:33:27.588Z",
+      "startedAt": "2026-05-20T21:33:27.588Z",
+      "command": [
+        "external",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore audit check --full"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3847590] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3847590] discovered active process",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore audit check --full"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T21:33:29.605Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3846570",
+      "name": "Pipeline · PID 3846570",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-20T21:33:21.504Z",
+      "startedAt": "2026-05-20T21:33:21.504Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore audit check"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3846570] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3846570] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore audit check"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T21:33:27.505Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3819125",
+      "name": "Pipeline · PID 3819125 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "history_guide",
+      "status": "running",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-20T21:30:03.465Z",
+      "startedAt": "2026-05-20T21:30:03.465Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "running",
+          "logs": [
+            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3819125] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "terminalReason": "external_detected",
+      "error": "Server restarted — job was still running"
+    },
+    {
+      "id": "ext_proc_3766024",
+      "name": "Pipeline · PID 3766024 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-20T21:23:42.090Z",
+      "startedAt": "2026-05-20T21:23:42.090Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 3766024] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3766024] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T21:29:55.572Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_3683486",
       "name": "Pipeline · PID 3683486 · history_guide",
       "type": "Pipeline",
@@ -164,6 +371,9 @@
             "[SYSTEM] Marked failed: server restarted before completion.",
             "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
             "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)"
           ]
         },
@@ -192,7 +402,8 @@
         "[EXTERNAL][PID 3590320] discovered active process",
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/fitness_coach.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_detected",
+      "error": "Server restarted — job was still running"
     },
     {
       "id": "ext_proc_3193489",
@@ -3305,9 +3516,7 @@
     }
   ],
   "logs": [
-    "[2026-05-20T21:22:21.029Z] [SYSTEM] reconciled ext_proc_3590320 to failed (server_restarted)",
-    "[2026-05-20T21:22:21.029Z] [SYSTEM] reconciled ext_proc_3683484 to failed (server_restarted)",
-    "[2026-05-20T21:22:21.029Z] [SYSTEM] reconciled ext_proc_3683486 to failed (server_restarted)"
+    "[2026-05-20T21:42:02.915Z] [STARTUP] Marked 2 stale running job(s) as failed after restart"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": [],

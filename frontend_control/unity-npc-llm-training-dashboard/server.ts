@@ -151,6 +151,20 @@ const loadRegistry = (): Registry => {
   try {
     const registry = JSON.parse(fs.readFileSync(registryPath, "utf8")) as Registry;
     registry.logs = []; // Global log buffer is transient — cleared on restart
+
+    // Mark stale running jobs as failed — previous server instance crashed/exited
+    const staleRunning = registry.jobs.filter((j: any) => j.status === "running");
+    const staleCount = staleRunning.length;
+    for (const job of staleRunning) {
+      job.status = "failed";
+      job.exitCode = -1;
+      job.finishedAt = isoNow();
+      job.error = "Server restarted — job was still running";
+    }
+    if (staleCount > 0) {
+      globalLog(registry, `[STARTUP] Marked ${staleCount} stale running job(s) as failed after restart`);
+    }
+
     if (registry.autoSyncExternal === undefined) registry.autoSyncExternal = true;
     if (!registry.nodeId) {
       registry.nodeId = crypto.randomUUID();
@@ -2619,12 +2633,31 @@ The user can execute these commands directly from your interface.`;
     return res.json({ mode });
   });
   app.get("/api/system/status", async (_req, res) => {
+    const gpu = parseNvidiaSmiTelemetry();
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const cpuCount = Math.max(os.cpus().length, 1);
     res.json({
       executionMode: registry.executionMode,
       runningJobs: registry.jobs.filter((job) => job.status === "running").length,
       totalJobs: registry.jobs.length,
       repoRoot,
       localModel: await detectLocalModel(),
+      gpu: gpu ? {
+        name: gpu.gpuName,
+        load: gpu.gpuLoad,
+        temperature: gpu.gpuTemperature,
+        vramUsed: gpu.gpuMemoryUsedGB,
+        vramTotal: gpu.gpuMemoryTotalGB,
+      } : null,
+      cpu: {
+        load: Math.round((os.loadavg()[0] / cpuCount) * 100),
+        cores: cpuCount,
+      },
+      memory: {
+        total: Math.round(totalMem / (1024 * 1024 * 1024) * 10) / 10,
+        used: Math.round((totalMem - freeMem) / (1024 * 1024 * 1024) * 10) / 10,
+      },
       timestamp: isoNow(),
     });
   });
