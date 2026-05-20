@@ -663,6 +663,8 @@ def main():
             artifacts=[str(p) for p in gguf_files],
             completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         )
+        hook_recorder.emit("export_full_merge", "complete", model_id=model_id, quantizations=quantizations, artifacts=[str(p) for p in gguf_files])
+        hook_recorder.emit("export_pipeline", "complete", mode="full_merge", quantizations=quantizations, artifacts=[str(p) for p in gguf_files])
 
         print(f"\nExport complete!")
         print(f"  GGUF (f16):       {f16_path}")
@@ -673,6 +675,7 @@ def main():
         _write_status(npc_key, state="failed", substep="failed",
                       error_summary=str(exc),
                       failed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+        hook_recorder.emit("export_pipeline", "error", mode="full_merge" if args.full_merge else "adapter", error=str(exc))
         raise
 
 

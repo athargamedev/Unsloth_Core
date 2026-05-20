@@ -1133,6 +1133,10 @@ def main():
         if not args.feedback_json and spec:
             args.feedback_json = str(paths.eval_feedback_path(spec['npc_key']))
 
+    hook_root = Path(args.output).parent if args.output else (paths.eval_report_dir(spec['npc_key']) if spec else PROJECT_ROOT / "eval" / "reports")
+    hook_recorder = WorkflowHookRecorder(args.workflow_hooks or default_hook_path(hook_root), tool="evaluate", npc_key=spec["npc_key"] if spec else None, spec_path=args.spec)
+    hook_recorder.emit("evaluate_pipeline", "start", baseline=str(baseline_gguf), candidate=str(candidate_gguf), report_path=args.output, html=bool(args.report_html), track=bool(args.track))
+
     if not questions and args.val_data:
         val_set = load_validation_set(args.val_data)
         questions = val_set
@@ -1487,6 +1491,8 @@ def main():
             except Exception as e:
                 print(f"  [wandb] Report artifact failed: {e}")
         wandb.finish()
+
+    hook_recorder.emit("evaluate_pipeline", "complete", report_path=args.output, html=bool(args.report_html), track=bool(args.track))
 
 
 if __name__ == "__main__":

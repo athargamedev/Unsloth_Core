@@ -2,6 +2,52 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2322009",
+      "name": "Export · PID 2322009",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 88,
+      "loss": null,
+      "createdAt": "2026-05-20T18:09:50.786Z",
+      "startedAt": "2026-05-20T18:09:50.786Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-8bc4f6f6c742.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'wc -c < '\\''/home/athar/Projects/Unsloth_Core/scripts/export/export.py'\\'' 2>/dev/null' __hermes_ec=$? export -p > /tmp/hermes-snap-8bc4f6f6c742.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-8bc4f6f6c742.txt 2>/dev/null || true printf '\\n__HERMES_CWD_8bc4f6f6c742__%s__HERMES_CWD_8bc4f6f6c742__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2322009] Process no longer detected"
+          ]
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2322009] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-8bc4f6f6c742.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'wc -c < '\\''/home/athar/Projects/Unsloth_Core/scripts/export/export.py'\\'' 2>/dev/null' __hermes_ec=$? export -p > /tmp/hermes-snap-8bc4f6f6c742.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-8bc4f6f6c742.txt 2>/dev/null || true printf '\\n__HERMES_CWD_8bc4f6f6c742__%s__HERMES_CWD_8bc4f6f6c742__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T18:09:52.568Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_1899581",
       "name": "Dataset · PID 1899581 · history_guide · technique:ollama",
       "type": "Dataset",
