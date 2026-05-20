@@ -122,6 +122,7 @@ const registryPath = path.join(runtimeDir, "registry.json");
 const registryBakPath = path.join(runtimeDir, "registry.json.bak");
 const logsDir = path.join(runtimeDir, "logs");
 const serverLogPath = path.join(runtimeDir, "server.log");
+const watchLogsRoot = path.join(os.tmpdir(), "ucore-watch");
 
 const DEFAULT_BASE_MODEL = process.env.DEFAULT_BASE_MODEL || "unsloth/Llama-3.2-3B-Instruct-bnb-4bit";
 const MAX_LOG_LINES = 2000;
@@ -4091,6 +4092,17 @@ const periodicBackup = setInterval(() => {
 }, 300_000);
 periodicBackup.unref();
 
+// --- Job logs endpoint ---
+app.get("/api/jobs/:id/logs", (req, res) => {
+  const id = req.params.id;
+  const job = registry.jobs.find((j) => j.id === id);
+  const logEntries = readJobLogs(id);
+  res.json({ logs: logEntries, jobName: job?.name || null });
+});
+
+// Periodic backup every 5 minutes (unref'd so does not block shutdown)
+setInterval(() => { backupRegistry(); }, 5 * 60 * 1000).unref();
+
 const httpServer = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
@@ -4156,6 +4168,7 @@ const httpServer = app.listen(PORT, "0.0.0.0", () => {
         const prefixed = `[${source.toUpperCase()}][${job.id}] ${line}`;
         job.logs.push(prefixed);
         job.logs = job.logs.slice(-MAX_LOG_LINES);
+        writeJobLog(job.id, line);
         appendStageLog(job, prefixed);
         globalLog(registry, prefixed);
 

@@ -7,9 +7,12 @@ Canonical workflow:
 """
 
 import argparse
+import json
 import os
+import re
 import subprocess
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -25,6 +28,36 @@ SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 VENV_PYTHON = PROJECT_ROOT / "unsloth_env" / "bin" / "python"
 PYTHON = str(VENV_PYTHON) if (VENV_PYTHON.exists() and not is_colab) else sys.executable
 
+EARLY_ALERT_PATTERNS = [
+    re.compile(r"Traceback \(most recent call last\):"),
+    re.compile(r"\b(?:AssertionError|ModuleNotFoundError|RuntimeError|ValueError|KeyError|IndexError|CalledProcessError|OSError)\b"),
+    re.compile(r"\b(?:ERROR|Error:|FAILED|FAILURE)\b"),
+    re.compile(r"Command timed out|timed out after"),
+    re.compile(r"^\s*F\s+🎯 Evaluating test case"),
+]
+
+
+def _should_watch() -> bool:
+    return os.getenv("UCORE_WATCH", "").strip() == "1"
+
+
+def _make_watch_dir() -> Path:
+    base = Path(os.getenv("UCORE_WATCH_DIR") or (Path(tempfile.gettempdir()) / "ucore-watch"))
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    watch_dir = base / f"{stamp}-{os.getpid()}"
+    watch_dir.mkdir(parents=True, exist_ok=True)
+    return watch_dir
+
+
+def _line_is_early_alert(line: str) -> bool:
+    return any(pattern.search(line) for pattern in EARLY_ALERT_PATTERNS)
+
+
+def _write_json(path: Path, payload: object) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
 def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
     """Run a shell command and print its output.
 
@@ -39,17 +72,81 @@ def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
     env = os.environ.copy()
     if extra_env:
         env.update(extra_env)
+
+    if not _should_watch():
+        try:
+            subprocess.run(cmd, cwd=str(cwd), check=True, env=env)
+        except subprocess.CalledProcessError as e:
+            if announce:
+                print(f"Error: Command failed with return code {e.returncode}")
+            sys.exit(e.returncode)
+        return
+
+    watch_dir = _make_watch_dir()
+    log_path = watch_dir / "stream.log"
+    alerts_path = watch_dir / "alerts.jsonl"
+    summary_path = watch_dir / "summary.json"
+    print(f"[WATCH] streaming logs to {watch_dir}", flush=True)
+
+    proc = subprocess.Popen(
+        cmd,
+        cwd=str(cwd),
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
+    alerts: list[dict[str, str]] = []
+    started_at = datetime.now().isoformat()
     try:
-        subprocess.run(cmd, cwd=str(cwd), check=True, env=env)
-    except subprocess.CalledProcessError as e:
-        if announce:
-            print(f"Error: Command failed with return code {e.returncode}")
-        sys.exit(e.returncode)
+        assert proc.stdout is not None
+        with log_path.open("a", encoding="utf-8") as log_file, alerts_path.open("a", encoding="utf-8") as alert_file:
+            while True:
+                line = proc.stdout.readline()
+                if line == "" and proc.poll() is not None:
+                    break
+                if not line:
+                    continue
+                sys.stdout.write(line)
+                sys.stdout.flush()
+                log_file.write(line)
+                log_file.flush()
+                if _line_is_early_alert(line):
+                    alert = {"timestamp": datetime.now().isoformat(), "line": line.rstrip("\n"), "command": " ".join(cmd)}
+                    alerts.append(alert)
+                    alert_file.write(json.dumps(alert, ensure_ascii=False) + "\n")
+                    alert_file.flush()
+                    print(f"[WATCH][ALERT] {line.rstrip()}", flush=True)
+            returncode = proc.wait()
+    except KeyboardInterrupt:
+        proc.terminate()
+        try:
+            returncode = proc.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            returncode = proc.wait()
+        print("[WATCH] interrupted; process terminated", flush=True)
+
+    summary = {
+        "started_at": started_at,
+        "finished_at": datetime.now().isoformat(),
+        "returncode": returncode,
+        "command": cmd,
+        "watch_dir": str(watch_dir),
+        "alerts": alerts,
+    }
+    _write_json(summary_path, summary)
+    if returncode != 0:
+        print(f"[WATCH] Command failed with return code {returncode}. Logs: {watch_dir}", flush=True)
+        sys.exit(returncode)
 
 def main():
     parser = argparse.ArgumentParser(description="Unsloth_Core Unified CLI")
     parser.add_argument("--workflow-hooks", default=None,
                         help="Path to a JSONL hook log for step tracing (used by workflow scripts)")
+    parser.add_argument("--watch", action="store_true",
+                        help="Stream command output with early error alerts and save a watch log")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # Generate
@@ -338,6 +435,8 @@ def main():
 
     if args.workflow_hooks:
         os.environ["WORKFLOW_HOOKS_PATH"] = args.workflow_hooks
+    if args.watch:
+        os.environ["UCORE_WATCH"] = "1"
 
     if args.command in ["init", "new-npc"]:
         cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "scaffold_npc.py"), args.npc_key]

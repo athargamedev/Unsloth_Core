@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { fetchJson, type Job, type JobsSnapshot } from '../api';
+import { fetchJson, type Job, type JobsSnapshot, type WatchLogsSnapshot } from '../api';
 
 const DEFAULT_TYPE_FILTERS = ['Training', 'Dataset', 'Export', 'Evaluation'];
 
@@ -13,6 +13,12 @@ export function useJobs() {
     workflowCount: 0,
     autoSyncExternal: true,
   });
+  const [watchLogs, setWatchLogs] = useState<WatchLogsSnapshot>({
+    root: '',
+    totalAlerts: 0,
+    latestRun: null,
+    runs: [],
+  });
 
   const fetchJobs = async () => {
     const data = await fetchJson<JobsSnapshot>('/api/jobs/state');
@@ -24,6 +30,22 @@ export function useJobs() {
     setSelectedJobId((current) => (current && data.jobs.some((job) => job.id === current) ? current : null));
     setSelectedJobIds((current) => current.filter((id) => data.jobs.some((job) => job.id === id)));
     return data.jobs;
+  };
+
+  const fetchWatchLogs = async () => {
+    try {
+      const data = await fetchJson<WatchLogsSnapshot>('/api/watch-logs');
+      setWatchLogs(data);
+      return data;
+    } catch {
+      setWatchLogs({
+        root: '',
+        totalAlerts: 0,
+        latestRun: null,
+        runs: [],
+      });
+      return null;
+    }
   };
 
   const syncJobs = async (force = false) => {
@@ -133,6 +155,7 @@ export function useJobs() {
   return {
     jobs,
     registryState,
+    watchLogs,
     setJobs,
     selectedJobId,
     setSelectedJobId,
@@ -149,6 +172,7 @@ export function useJobs() {
     toggleJobSelection,
     exportJobsCsv,
     fetchJobs,
+    fetchWatchLogs,
     syncJobs,
     clearJobs,
   };

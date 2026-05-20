@@ -119,6 +119,7 @@
           "logs": [
             "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)"
           ]
         },
@@ -1236,7 +1237,7 @@
     }
   ],
   "logs": [
-    "[2026-05-20T22:44:23.833Z] [STARTUP] Marked 1 stale running job(s) as failed"
+    "[2026-05-20T22:45:57.456Z] [STARTUP] Marked 1 stale running job(s) as failed"
   ],
   "nodeId": "5ecbf770-7a12-4eb4-a559-6491504274a9",
   "workflows": [],

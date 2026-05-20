@@ -30,6 +30,30 @@ export interface JobsSnapshot {
   autoSyncExternal: boolean;
 }
 
+export interface WatchAlert {
+  timestamp: string;
+  line: string;
+  command: string;
+}
+
+export interface WatchRunSummary {
+  watchDir: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  returncode: number | null;
+  command: string[];
+  alerts: WatchAlert[];
+  alertCount: number;
+  streamTail: string[];
+}
+
+export interface WatchLogsSnapshot {
+  root: string;
+  totalAlerts: number;
+  latestRun: WatchRunSummary | null;
+  runs: WatchRunSummary[];
+}
+
 export interface DatasetVersion {
   tag: string;
   size: string;
