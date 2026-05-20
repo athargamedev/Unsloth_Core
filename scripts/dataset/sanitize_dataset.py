@@ -1144,205 +1144,204 @@ def main():
         technique=input_path.parent.name if input_path.parent else None,
         spec_path=str(spec_path) if spec_path else None,
     )
-    hook_recorder.emit("sanitize", "start", input_path=str(input_path), output_path=str(output_path))
+    with hook_recorder.step("sanitize", input_path=str(input_path), output_path=str(output_path)):
 
-    print(f"Sanitizing: {input_path}")
-    print(f"Output:     {output_path}")
-    if args.quality_report:
-        print(f"Quality thresholds: pass >= {args.quality_threshold_pass}, "
-              f"flag < {args.quality_threshold_flag}")
+        print(f"Sanitizing: {input_path}")
+        print(f"Output:     {output_path}")
+        if args.quality_report:
+            print(f"Quality thresholds: pass >= {args.quality_threshold_pass}, "
+                  f"flag < {args.quality_threshold_flag}")
 
-    # ── Phase 3a: Read all examples into memory ────────────────────────────
-    print(f"Reading: {input_path}")
-    all_examples = []
-    parse_errors = 0
-    with open(input_path, "r") as fin:
-        for line in fin:
-            if not line.strip():
-                continue
-            try:
-                all_examples.append(json.loads(line))
-            except json.JSONDecodeError as e:
-                parse_errors += 1
-                if args.verbose:
-                    print(f"  [error] JSON decode: {e}")
-
-    total_input = len(all_examples)
-    if parse_errors:
-        print(f"  Warning: {parse_errors} JSON parse errors skipped")
-
-    if total_input == 0:
-        print("No examples found. Nothing to sanitize.")
-        return
-
-    # ── Phase 3a: Deduplication ───────────────────────────────────────────
-    if args.dedup:
-        unique_examples, dedup_count, removed_hashes = deduplicate_examples(all_examples)
-        dedup_pct = dedup_count / total_input * 100 if total_input > 0 else 0
-        print(f"Deduplication: removed {dedup_count} duplicates ({dedup_pct:.1f}% of total)")
-        if args.dedup_report and removed_hashes:
-            print(f"  Removed hashes:")
-            for h in removed_hashes:
-                print(f"    - {h}")
-    else:
-        unique_examples = list(all_examples)
-        dedup_count = 0
-        removed_hashes = []
-
-    # ── Compute input file hash for manifest ──────────────────────────────
-    input_hash = HASH_PREFIX + compute_content_hash([])  # placeholder
-    try:
-        input_bytes = input_path.read_bytes()
-        input_hash = HASH_PREFIX + hashlib.sha256(input_bytes).hexdigest()
-    except OSError:
-        input_hash = None
-
-    # ── Processing ────────────────────────────────────────────────────────
-    kept = 0
-    discarded = dedup_count
-    reasons = {}
-    if dedup_count > 0:
-        reasons["Duplicate content_hash"] = dedup_count
-
-    quality_scores = []
-    quality_distribution = Counter()
-    seen_user_messages = set()
-    by_category = Counter()
-    by_difficulty = Counter()
-    by_safety_tag = Counter()
-    content_hashes = []
-    total_train = 0
-    total_validation = 0
-    sibling_validation_count = count_sibling_validation_examples(input_path)
-
-    with open(output_path, "w") as fout:
-        for example in unique_examples:
-            try:
-                clean_ex, quality, meta_warnings, reason = sanitize_example(
-                    example, input_path,
-                    min_length=args.min_length,
-                    max_sentences=args.max_sentences,
-                    strict_mode=args.strict_mode,
-                    artifact_check=args.artifact_check,
-                    verbose_artifacts=args.verbose_artifacts,
-                    fix_metadata_flag=fix_metadata_flag,
-                    require_complete_metadata=args.require_complete_metadata,
-                    discard_below_score=args.discard_below_score,
-                    quality_threshold_pass=args.quality_threshold_pass,
-                    quality_threshold_flag=args.quality_threshold_flag,
-                    seen_user_messages=seen_user_messages,
-                    spec_data=spec_data,
-                )
-
-                if quality:
-                    quality_scores.append(quality)
-                    bucket = (quality["total"] // 10) * 10
-                    quality_distribution[bucket] += 1
-
-                if meta_warnings and args.verbose:
-                    for w in meta_warnings:
-                        print(f"  [meta] {w}")
-
-                if clean_ex:
-                    for m in clean_ex.get("messages", []):
-                        if m.get("role") == "user":
-                            seen_user_messages.add(m.get("content", ""))
-                    fout.write(json.dumps(clean_ex) + "\n")
-                    kept += 1
-
-                    # Collect metadata stats for manifest
-                    meta = clean_ex.get("metadata", {})
-                    if isinstance(meta, dict):
-                        cat = meta.get("category")
-                        if cat:
-                            by_category[cat] += 1
-
-                        diff = meta.get("difficulty")
-                        if diff:
-                            by_difficulty[diff] += 1
-
-                        tags = meta.get("safety_tags", [])
-                        if isinstance(tags, list):
-                            for tag in tags:
-                                by_safety_tag[tag] += 1
-
-                        split = meta.get("split", "train")
-                        if split == "validation":
-                            total_validation += 1
-                        else:
-                            total_train += 1
-
-                        ch = meta.get("content_hash")
-                        if ch:
-                            content_hashes.append(ch)
-                else:
-                    discarded += 1
-                    reasons[reason] = reasons.get(reason, 0) + 1
+        # ── Phase 3a: Read all examples into memory ────────────────────────────
+        print(f"Reading: {input_path}")
+        all_examples = []
+        parse_errors = 0
+        with open(input_path, "r") as fin:
+            for line in fin:
+                if not line.strip():
+                    continue
+                try:
+                    all_examples.append(json.loads(line))
+                except json.JSONDecodeError as e:
+                    parse_errors += 1
                     if args.verbose:
-                        score_str = f" (score: {quality['total']})" if quality else ""
-                        print(f"  [discard] {reason}{score_str}")
+                        print(f"  [error] JSON decode: {e}")
 
-            except ValueError as e:
-                print(f"  [error] Strict validation failed: {e}")
-                return
-            except Exception as e:
-                print(f"  [error] Unexpected error: {e}", file=sys.stderr)
-                if args.debug:
-                    traceback.print_exc()
-                    raise
-                discarded += 1
-                reasons[str(e)] = reasons.get(str(e), 0) + 1
+        total_input = len(all_examples)
+        if parse_errors:
+            print(f"  Warning: {parse_errors} JSON parse errors skipped")
 
-    # ── Phase 3b: Write enriched manifest ─────────────────────────────────
-    if args.write_manifest:
-        # Determine generation manifest path for provenance chaining
-        generation_manifest_path = output_path.parent / "train_manifest.json"
-        if not generation_manifest_path.exists():
-            generation_manifest_path = None
+        if total_input == 0:
+            print("No examples found. Nothing to sanitize.")
+            return
 
-        # Build sanitizer_args dict with argv for the manifest builder
-        sanitizer_args = vars(args)
-        sanitizer_args["argv_str"] = " ".join(sys.argv)
-
-        manifest = build_sanitizer_manifest(
-            npc_key=infer_npc_key_from_path(input_path),
-            technique=infer_technique_from_path(input_path),
-            input_path=input_path,
-            input_hash=input_hash,
-            total_input=total_input,
-            total_output=kept,
-            total_train=total_train,
-            total_validation=max(total_validation, sibling_validation_count),
-            quality_scores=quality_scores,
-            discard_reasons=reasons,
-            by_category=by_category,
-            by_difficulty=by_difficulty,
-            by_safety_tag=by_safety_tag,
-            content_hashes=content_hashes,
-            sanitizer_args=sanitizer_args,
-            generation_manifest_path=generation_manifest_path,
-        )
-
-        # Attach spec info from --spec arg if generation manifest didn't carry it
-        if spec_data:
-            if not manifest.get("spec") or not manifest["spec"].get("hash"):
-                manifest["spec"] = {
-                    "file": args.spec,
-                    "ref_doc": spec_data.get("reference_doc"),
-                }
-
-        manifest_path = None
-        if args.manifest_path:
-            manifest_path = Path(args.manifest_path)
-            write_manifest(manifest, manifest_path.parent, manifest_path.name)
+        # ── Phase 3a: Deduplication ───────────────────────────────────────────
+        if args.dedup:
+            unique_examples, dedup_count, removed_hashes = deduplicate_examples(all_examples)
+            dedup_pct = dedup_count / total_input * 100 if total_input > 0 else 0
+            print(f"Deduplication: removed {dedup_count} duplicates ({dedup_pct:.1f}% of total)")
+            if args.dedup_report and removed_hashes:
+                print(f"  Removed hashes:")
+                for h in removed_hashes:
+                    print(f"    - {h}")
         else:
-            manifest_path = write_manifest(manifest, output_path.parent)
+            unique_examples = list(all_examples)
+            dedup_count = 0
+            removed_hashes = []
 
-        if manifest_path:
-            print(f"  Manifest:        {manifest_path}")
+        # ── Compute input file hash for manifest ──────────────────────────────
+        input_hash = HASH_PREFIX + compute_content_hash([])  # placeholder
+        try:
+            input_bytes = input_path.read_bytes()
+            input_hash = HASH_PREFIX + hashlib.sha256(input_bytes).hexdigest()
+        except OSError:
+            input_hash = None
 
-    # ── Statistics output ─────────────────────────────────────────────────
-    hook_recorder.emit("sanitize", "complete", kept=kept, discarded=discarded, output_path=str(output_path), manifest_path=str(manifest_path) if 'manifest_path' in locals() else None)
+        # ── Processing ────────────────────────────────────────────────────────
+        kept = 0
+        discarded = dedup_count
+        reasons = {}
+        if dedup_count > 0:
+            reasons["Duplicate content_hash"] = dedup_count
+
+        quality_scores = []
+        quality_distribution = Counter()
+        seen_user_messages = set()
+        by_category = Counter()
+        by_difficulty = Counter()
+        by_safety_tag = Counter()
+        content_hashes = []
+        total_train = 0
+        total_validation = 0
+        sibling_validation_count = count_sibling_validation_examples(input_path)
+
+        with open(output_path, "w") as fout:
+            for example in unique_examples:
+                try:
+                    clean_ex, quality, meta_warnings, reason = sanitize_example(
+                        example, input_path,
+                        min_length=args.min_length,
+                        max_sentences=args.max_sentences,
+                        strict_mode=args.strict_mode,
+                        artifact_check=args.artifact_check,
+                        verbose_artifacts=args.verbose_artifacts,
+                        fix_metadata_flag=fix_metadata_flag,
+                        require_complete_metadata=args.require_complete_metadata,
+                        discard_below_score=args.discard_below_score,
+                        quality_threshold_pass=args.quality_threshold_pass,
+                        quality_threshold_flag=args.quality_threshold_flag,
+                        seen_user_messages=seen_user_messages,
+                        spec_data=spec_data,
+                    )
+
+                    if quality:
+                        quality_scores.append(quality)
+                        bucket = (quality["total"] // 10) * 10
+                        quality_distribution[bucket] += 1
+
+                    if meta_warnings and args.verbose:
+                        for w in meta_warnings:
+                            print(f"  [meta] {w}")
+
+                    if clean_ex:
+                        for m in clean_ex.get("messages", []):
+                            if m.get("role") == "user":
+                                seen_user_messages.add(m.get("content", ""))
+                        fout.write(json.dumps(clean_ex) + "\n")
+                        kept += 1
+
+                        # Collect metadata stats for manifest
+                        meta = clean_ex.get("metadata", {})
+                        if isinstance(meta, dict):
+                            cat = meta.get("category")
+                            if cat:
+                                by_category[cat] += 1
+
+                            diff = meta.get("difficulty")
+                            if diff:
+                                by_difficulty[diff] += 1
+
+                            tags = meta.get("safety_tags", [])
+                            if isinstance(tags, list):
+                                for tag in tags:
+                                    by_safety_tag[tag] += 1
+
+                            split = meta.get("split", "train")
+                            if split == "validation":
+                                total_validation += 1
+                            else:
+                                total_train += 1
+
+                            ch = meta.get("content_hash")
+                            if ch:
+                                content_hashes.append(ch)
+                    else:
+                        discarded += 1
+                        reasons[reason] = reasons.get(reason, 0) + 1
+                        if args.verbose:
+                            score_str = f" (score: {quality['total']})" if quality else ""
+                            print(f"  [discard] {reason}{score_str}")
+
+                except ValueError as e:
+                    print(f"  [error] Strict validation failed: {e}")
+                    return
+                except Exception as e:
+                    print(f"  [error] Unexpected error: {e}", file=sys.stderr)
+                    if args.debug:
+                        traceback.print_exc()
+                        raise
+                    discarded += 1
+                    reasons[str(e)] = reasons.get(str(e), 0) + 1
+
+        # ── Phase 3b: Write enriched manifest ─────────────────────────────────
+        if args.write_manifest:
+            # Determine generation manifest path for provenance chaining
+            generation_manifest_path = output_path.parent / "train_manifest.json"
+            if not generation_manifest_path.exists():
+                generation_manifest_path = None
+
+            # Build sanitizer_args dict with argv for the manifest builder
+            sanitizer_args = vars(args)
+            sanitizer_args["argv_str"] = " ".join(sys.argv)
+
+            manifest = build_sanitizer_manifest(
+                npc_key=infer_npc_key_from_path(input_path),
+                technique=infer_technique_from_path(input_path),
+                input_path=input_path,
+                input_hash=input_hash,
+                total_input=total_input,
+                total_output=kept,
+                total_train=total_train,
+                total_validation=max(total_validation, sibling_validation_count),
+                quality_scores=quality_scores,
+                discard_reasons=reasons,
+                by_category=by_category,
+                by_difficulty=by_difficulty,
+                by_safety_tag=by_safety_tag,
+                content_hashes=content_hashes,
+                sanitizer_args=sanitizer_args,
+                generation_manifest_path=generation_manifest_path,
+            )
+
+            # Attach spec info from --spec arg if generation manifest didn't carry it
+            if spec_data:
+                if not manifest.get("spec") or not manifest["spec"].get("hash"):
+                    manifest["spec"] = {
+                        "file": args.spec,
+                        "ref_doc": spec_data.get("reference_doc"),
+                    }
+
+            manifest_path = None
+            if args.manifest_path:
+                manifest_path = Path(args.manifest_path)
+                write_manifest(manifest, manifest_path.parent, manifest_path.name)
+            else:
+                manifest_path = write_manifest(manifest, output_path.parent)
+
+            if manifest_path:
+                print(f"  Manifest:        {manifest_path}")
+
+        # ── Statistics output ─────────────────────────────────────────────────
     total_processed = total_input
     discard_pct = (total_processed - kept) / total_processed * 100 if total_processed > 0 else 0
     print(f"\nStats:")

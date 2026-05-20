@@ -296,73 +296,73 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
         technique=args.technique,
         spec_path=args.spec,
     )
-    hook_recorder.emit("deepeval_run", "start", identifier=identifier, judge_model=args.judge_model, cases_per_category=args.cases_per_category)
-    if args.ignore_errors:
-        cmd.append("--ignore-errors")
+    with hook_recorder.step("deepeval_run", identifier=identifier, judge_model=args.judge_model, cases_per_category=args.cases_per_category):
 
-    if not os.getenv("OLLAMA_NUM_PARALLEL"):
-        print(
-            "[recommended] OLLAMA_NUM_PARALLEL is not set. For 5x-10x faster async evaluation, "
-            "set BEFORE starting Ollama:  export OLLAMA_NUM_PARALLEL=4",
-            "Also consider:  export OLLAMA_FLASH_ATTENTION=1  export OLLAMA_KV_CACHE_TYPE=q8_0",
-            flush=True,
+        if args.ignore_errors:
+            cmd.append("--ignore-errors")
+
+        if not os.getenv("OLLAMA_NUM_PARALLEL"):
+            print(
+                "[recommended] OLLAMA_NUM_PARALLEL is not set. For 5x-10x faster async evaluation, "
+                "set BEFORE starting Ollama:  export OLLAMA_NUM_PARALLEL=4",
+                "Also consider:  export OLLAMA_FLASH_ATTENTION=1  export OLLAMA_KV_CACHE_TYPE=q8_0",
+                flush=True,
+            )
+
+        env = os.environ.copy()
+        env.update(
+            {
+                "DEEPEVAL_DATASET_NPC_KEYS": npc_key,
+                "DEEPEVAL_DATASET_TECHNIQUE": args.technique,
+                "DEEPEVAL_DATASET_CASES_PER_CATEGORY": str(args.cases_per_category),
+                "DEEPEVAL_OLLAMA_MODEL": args.judge_model,
+                "DEEPEVAL_OLLAMA_BASE_URL": args.ollama_base_url,
+                "DEEPEVAL_OLLAMA_TEMPERATURE": str(args.judge_temperature),
+                "DEEPEVAL_TELEMETRY_OPT_OUT": "1",
+                "DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE": os.getenv("DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE", "600"),
+            }
         )
+        if args.categories:
+            env["DEEPEVAL_DATASET_CATEGORIES"] = args.categories
 
-    env = os.environ.copy()
-    env.update(
-        {
-            "DEEPEVAL_DATASET_NPC_KEYS": npc_key,
-            "DEEPEVAL_DATASET_TECHNIQUE": args.technique,
-            "DEEPEVAL_DATASET_CASES_PER_CATEGORY": str(args.cases_per_category),
-            "DEEPEVAL_OLLAMA_MODEL": args.judge_model,
-            "DEEPEVAL_OLLAMA_BASE_URL": args.ollama_base_url,
-            "DEEPEVAL_OLLAMA_TEMPERATURE": str(args.judge_temperature),
-            "DEEPEVAL_TELEMETRY_OPT_OUT": "1",
-            "DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE": os.getenv("DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE", "600"),
-        }
-    )
-    if args.categories:
-        env["DEEPEVAL_DATASET_CATEGORIES"] = args.categories
+        print(f"Running: {' '.join(cmd)}", flush=True)
+        completed = subprocess.run(cmd, cwd=str(PROJECT_ROOT), env=env)
 
-    print(f"Running: {' '.join(cmd)}", flush=True)
-    completed = subprocess.run(cmd, cwd=str(PROJECT_ROOT), env=env)
-
-    result = latest_deepeval_result()
-    summary, failures = summarize_deepeval_result(
-        result,
-        npc_key=npc_key,
-        technique=args.technique,
-        judge_model=args.judge_model,
-        command=cmd,
-    )
-    dataset_summary = summarize_jsonl_dataset(clean_path)
-    expected_distribution = expected_examples_per_category(spec)
-    distribution_gaps = calculate_distribution_gaps(expected_distribution, dataset_summary.get("by_category", {}))
-    summary.update(
-        {
-            "dataset_summary": dataset_summary,
-            "expected_distribution": expected_distribution,
-            "distribution_gaps": distribution_gaps,
-            "dataset_total_rows": dataset_summary.get("total", 0),
-            "dataset_unknown_rows": dataset_summary.get("unknown_rows", 0),
-        }
-    )
-    output_dir = dataset_dir(npc_key, args.technique)
-    summary_path = Path(args.output) if args.output else output_dir / "quality_summary.json"
-    failures_path = output_dir / "quality_failures.json"
-    report_path = output_dir / "quality_report.json"
-    combined_report = build_combined_quality_report(
-        spec=spec,
-        technique=args.technique,
-        clean_path=clean_path,
-        manifest_path=output_dir / "train_manifest.json",
-        summary=summary,
-        failures=failures,
-    )
-    write_json(summary_path, summary)
-    write_json(failures_path, failures)
-    write_json(report_path, combined_report)
-    hook_recorder.emit("deepeval_run", "complete", summary_path=str(summary_path), failures_path=str(failures_path), report_path=str(report_path), pass_rate=summary["pass_rate"])
+        result = latest_deepeval_result()
+        summary, failures = summarize_deepeval_result(
+            result,
+            npc_key=npc_key,
+            technique=args.technique,
+            judge_model=args.judge_model,
+            command=cmd,
+        )
+        dataset_summary = summarize_jsonl_dataset(clean_path)
+        expected_distribution = expected_examples_per_category(spec)
+        distribution_gaps = calculate_distribution_gaps(expected_distribution, dataset_summary.get("by_category", {}))
+        summary.update(
+            {
+                "dataset_summary": dataset_summary,
+                "expected_distribution": expected_distribution,
+                "distribution_gaps": distribution_gaps,
+                "dataset_total_rows": dataset_summary.get("total", 0),
+                "dataset_unknown_rows": dataset_summary.get("unknown_rows", 0),
+            }
+        )
+        output_dir = dataset_dir(npc_key, args.technique)
+        summary_path = Path(args.output) if args.output else output_dir / "quality_summary.json"
+        failures_path = output_dir / "quality_failures.json"
+        report_path = output_dir / "quality_report.json"
+        combined_report = build_combined_quality_report(
+            spec=spec,
+            technique=args.technique,
+            clean_path=clean_path,
+            manifest_path=output_dir / "train_manifest.json",
+            summary=summary,
+            failures=failures,
+        )
+        write_json(summary_path, summary)
+        write_json(failures_path, failures)
+        write_json(report_path, combined_report)
 
     print()
     print(f"DeepEval dataset quality: {summary['passed']}/{summary['total']} passed ({summary['pass_rate']:.0%})")

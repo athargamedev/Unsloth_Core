@@ -2,19 +2,65 @@
   "executionMode": "local",
   "jobs": [
     {
-      "id": "ext_proc_2572047",
-      "name": "Dataset · PID 2572047 · history_guide",
+      "id": "ext_proc_2752872",
+      "name": "Dataset · PID 2752872",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T19:02:32.611Z",
+      "startedAt": "2026-05-20T19:02:32.611Z",
+      "command": [
+        "external",
+        "python -m py_compile scripts/dataset/sanitize_dataset.py"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2752872] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2752872] discovered active process",
+        "python -m py_compile scripts/dataset/sanitize_dataset.py"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T19:02:33.061Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2720451",
+      "name": "Dataset · PID 2720451 · astronomy_guide",
       "type": "Dataset",
       "commandId": "dataset-generate",
-      "npcKey": "history_guide",
+      "npcKey": "astronomy_guide",
       "status": "running",
       "progress": 13,
       "loss": null,
-      "createdAt": "2026-05-20T18:33:38.583Z",
-      "startedAt": "2026-05-20T18:33:38.583Z",
+      "createdAt": "2026-05-20T18:57:12.010Z",
+      "startedAt": "2026-05-20T18:57:12.010Z",
       "command": [
         "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/history_guide.json --model llama3.1-3060-chat:latest"
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest"
       ],
       "stages": [
         {
@@ -39,10 +85,104 @@
         }
       ],
       "logs": [
+        "[EXTERNAL][PID 2720451] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_2642548",
+      "name": "Dataset · PID 2642548 · chef_assistant",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T18:45:20.965Z",
+      "startedAt": "2026-05-20T18:45:20.965Z",
+      "command": [
+        "external",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore generate-ollama subjects/NPC_specs/chef_assistant.json --model llama3.1-3060-chat:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2642548] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2642548] discovered active process",
+        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore generate-ollama subjects/NPC_specs/chef_assistant.json --model llama3.1-3060-chat:latest"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T18:57:12.010Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2572047",
+      "name": "Dataset · PID 2572047 · history_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T18:33:38.583Z",
+      "startedAt": "2026-05-20T18:33:38.583Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/history_guide.json --model llama3.1-3060-chat:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2572047] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
         "[EXTERNAL][PID 2572047] discovered active process",
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/history_guide.json --model llama3.1-3060-chat:latest"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T18:45:20.965Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_2571758",

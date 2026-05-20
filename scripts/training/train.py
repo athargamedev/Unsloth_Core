@@ -778,108 +778,102 @@ def main():
     # Write config snapshot
     log_config_snapshot(config, run_dir)
     log_state("training_start", npc_key=npc_key, run_id=run_id, model=model_name, preset=args.preset)
-    hook_recorder.emit("training_pipeline", "start", run_id=run_id, output_dir=run_dir, export_gguf=bool(args.export_gguf), preset=args.preset)
+    with hook_recorder.step("training_pipeline", run_id=run_id, output_dir=run_dir, export_gguf=bool(args.export_gguf), preset=args.preset):
 
-    # ── Load model ─────────────────────────────────────────────────────
-    log_info("[1/4] Loading model and tokenizer...")
-    hook_recorder.emit("load_model", "start", model=model_name, preset=args.preset)
-    model, tokenizer = get_model_and_tokenizer(config)
-    hook_recorder.emit("load_model", "complete", model=model_name, preset=args.preset)
-    log_info("Model loaded")
+        # ── Load model ─────────────────────────────────────────────────────
+        log_info("[1/4] Loading model and tokenizer...")
+        with hook_recorder.step("load_model", model=model_name, preset=args.preset):
+            model, tokenizer = get_model_and_tokenizer(config)
+        log_info("Model loaded")
 
-    # ── Load dataset ───────────────────────────────────────────────────
-    log_info("[2/4] Loading dataset...")
-    dataset_path = config.get("dataset_path", "")
-    if not dataset_path or not os.path.exists(dataset_path):
-        # Try to derive dataset path
-        technique = config.get("technique", "template")
-        clean_candidate = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
-        raw_candidate = paths.dataset_dir(npc_key) / technique / "train.jsonl"
-        dataset_path = str(clean_candidate if clean_candidate.exists() else raw_candidate)
+        # ── Load dataset ───────────────────────────────────────────────────
+        log_info("[2/4] Loading dataset...")
+        dataset_path = config.get("dataset_path", "")
+        if not dataset_path or not os.path.exists(dataset_path):
+            # Try to derive dataset path
+            technique = config.get("technique", "template")
+            clean_candidate = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
+            raw_candidate = paths.dataset_dir(npc_key) / technique / "train.jsonl"
+            dataset_path = str(clean_candidate if clean_candidate.exists() else raw_candidate)
 
-    hook_recorder.emit("load_dataset", "start", dataset_path=dataset_path)
-    dataset = load_dataset_from_jsonl(dataset_path, tokenizer, config)
-    eval_dataset = None  # TODO: support eval split
-    num_examples = len(dataset)
-    hook_recorder.emit("load_dataset", "complete", dataset_path=dataset_path, num_examples=num_examples)
-    log_info("Dataset loaded: %d examples", num_examples)
+        with hook_recorder.step("load_dataset", dataset_path=dataset_path):
+            dataset = load_dataset_from_jsonl(dataset_path, tokenizer, config)
+            eval_dataset = None  # TODO: support eval split
+            num_examples = len(dataset)
+        log_info("Dataset loaded: %d examples", num_examples)
 
-    # ── Training ───────────────────────────────────────────────────────
-    log_info("[3/4] Running training...")
-    hook_recorder.emit("run_training", "start", dataset_path=dataset_path, num_examples=num_examples)
-    trainer, metrics = run_training(model, tokenizer, dataset, eval_dataset, config)
-    training_loss = metrics.get("train_loss", 0.0)
-    hook_recorder.emit("run_training", "complete", dataset_path=dataset_path, num_examples=num_examples, training_loss=training_loss)
-    log_info("Training complete: loss=%.4f", training_loss)
-    log_state("training_complete", npc_key=npc_key, run_id=run_id, loss=training_loss, examples=num_examples)
+        # ── Training ───────────────────────────────────────────────────────
+        log_info("[3/4] Running training...")
+        with hook_recorder.step("run_training", dataset_path=dataset_path, num_examples=num_examples):
+            trainer, metrics = run_training(model, tokenizer, dataset, eval_dataset, config)
+        training_loss = metrics.get("train_loss", 0.0)
+        log_info("Training complete: loss=%.4f", training_loss)
+        log_state("training_complete", npc_key=npc_key, run_id=run_id, loss=training_loss, examples=num_examples)
 
-    # ── Promotion check ────────────────────────────────────────────────
-    hook_recorder.emit("promotion_check", "start", training_loss=training_loss, num_examples=num_examples)
-    promotion_passed, promotion_failures = check_promotion_rules(
-        training_loss, config, num_examples
-    )
-    hook_recorder.emit("promotion_check", "complete", training_loss=training_loss, num_examples=num_examples, passed=promotion_passed)
-    run_pointer_target = Path("runs") / run_id
-    if promotion_passed:
-        log_info("Promotion rules passed")
-        # Create/update 'best' symlink to this run
-        best_link = Path(output_dir or paths.output_dir(npc_key)) / "best"
-        update_run_pointer(best_link, run_pointer_target, "best")
-    else:
-        log_warn("Promotion rules failed:")
-        for failure in promotion_failures:
-            log_warn("  - %s", failure)
-
-    # Always update 'latest' symlink regardless of promotion result
-    latest_link = Path(output_dir or paths.output_dir(npc_key)) / "latest"
-    update_run_pointer(latest_link, run_pointer_target, "latest")
-
-    # ── GGUF Export ────────────────────────────────────────────────────
-
-    if args.export_gguf:
-        log_info("[4/4] Exporting to GGUF (adapter mode for Unity)...")
-        exports_dir = paths.export_dir(npc_key)
-        exports_dir.mkdir(parents=True, exist_ok=True)
-
-        # Use the unified export.py in adapter mode (fast, no base model loading)
-        export_script = PROJECT_ROOT / "scripts" / "export.py"
-        export_cmd = [sys.executable, str(export_script), str(output_dir)]
-        if getattr(args, 'full_merge_export', False):
-            export_cmd.append("--full-merge")
-            quant = args.quantization or config.get("export", {}).get("quantization", "q4_k_m")
-            export_cmd.extend(["--quantization", quant])
-            log_info("  Mode: full-merge (standalone GGUF)")
+        # ── Promotion check ────────────────────────────────────────────────
+        with hook_recorder.step("promotion_check", training_loss=training_loss, num_examples=num_examples):
+            promotion_passed, promotion_failures = check_promotion_rules(
+                training_loss, config, num_examples
+            )
+        run_pointer_target = Path("runs") / run_id
+        if promotion_passed:
+            log_info("Promotion rules passed")
+            # Create/update 'best' symlink to this run
+            best_link = Path(output_dir or paths.output_dir(npc_key)) / "best"
+            update_run_pointer(best_link, run_pointer_target, "best")
         else:
-            log_info("  Mode: adapter-only (LLMUnity compatible)")
+            log_warn("Promotion rules failed:")
+            for failure in promotion_failures:
+                log_warn("  - %s", failure)
 
-        log_info("  Running: %s", " ".join(str(c) for c in export_cmd[2:]))
-        result = subprocess.run(export_cmd, capture_output=False, text=True, timeout=7200)
-        if result.returncode != 0:
-            log_error("GGUF export failed (exit %d)", result.returncode)
+        # Always update 'latest' symlink regardless of promotion result
+        latest_link = Path(output_dir or paths.output_dir(npc_key)) / "latest"
+        update_run_pointer(latest_link, run_pointer_target, "latest")
+
+        # ── GGUF Export ────────────────────────────────────────────────────
+
+        if args.export_gguf:
+            log_info("[4/4] Exporting to GGUF (adapter mode for Unity)...")
+            exports_dir = paths.export_dir(npc_key)
+            exports_dir.mkdir(parents=True, exist_ok=True)
+
+            # Use the unified export.py in adapter mode (fast, no base model loading)
+            export_script = PROJECT_ROOT / "scripts" / "export.py"
+            export_cmd = [sys.executable, str(export_script), str(output_dir)]
+            if getattr(args, 'full_merge_export', False):
+                export_cmd.append("--full-merge")
+                quant = args.quantization or config.get("export", {}).get("quantization", "q4_k_m")
+                export_cmd.extend(["--quantization", quant])
+                log_info("  Mode: full-merge (standalone GGUF)")
+            else:
+                log_info("  Mode: adapter-only (LLMUnity compatible)")
+
+            log_info("  Running: %s", " ".join(str(c) for c in export_cmd[2:]))
+            result = subprocess.run(export_cmd, capture_output=False, text=True, timeout=7200)
+            if result.returncode != 0:
+                log_error("GGUF export failed (exit %d)", result.returncode)
+            else:
+                log_info("GGUF export complete")
+
+            # Write manifest with export info
+            gguf_files = sorted(exports_dir.glob(f"{npc_key}*.gguf"))
+            manifest = {
+                "npc_key": npc_key,
+                "run_id": run_id,
+                "base_model": config.get("model"),
+                "technique": technique,
+                "training_loss": training_loss,
+                "num_examples": num_examples,
+                "created_at": datetime.now().isoformat(),
+                "mode": "full_merge" if getattr(args, 'full_merge_export', False) else "adapter",
+                "gguf_files": [str(gf) for gf in gguf_files],
+            }
+            manifest_path = exports_dir / "manifest.json"
+            with open(manifest_path, "w") as f:
+                json.dump(manifest, f, indent=2)
+            log_info("  Manifest: %s", manifest_path)
         else:
-            log_info("GGUF export complete")
-
-        # Write manifest with export info
-        gguf_files = sorted(exports_dir.glob(f"{npc_key}*.gguf"))
-        manifest = {
-            "npc_key": npc_key,
-            "run_id": run_id,
-            "base_model": config.get("model"),
-            "technique": technique,
-            "training_loss": training_loss,
-            "num_examples": num_examples,
-            "created_at": datetime.now().isoformat(),
-            "mode": "full_merge" if getattr(args, 'full_merge_export', False) else "adapter",
-            "gguf_files": [str(gf) for gf in gguf_files],
-        }
-        manifest_path = exports_dir / "manifest.json"
-        with open(manifest_path, "w") as f:
-            json.dump(manifest, f, indent=2)
-        log_info("  Manifest: %s", manifest_path)
-    else:
-        log_info("[4/4] Skipping GGUF export (use --export-gguf to enable)")
-
-    hook_recorder.emit("training_pipeline", "complete", run_id=run_id, output_dir=run_dir, export_gguf=bool(args.export_gguf))
+            log_info("[4/4] Skipping GGUF export (use --export-gguf to enable)")
 
     log_state("training_finished", npc_key=npc_key, run_id=run_id, loss=training_loss,
               export=bool(args.export_gguf), promoted=promotion_passed)

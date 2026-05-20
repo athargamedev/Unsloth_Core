@@ -527,156 +527,150 @@ def main():
         timeout_seconds=args.timeout_seconds,
     )
     hook_recorder = WorkflowHookRecorder(args.workflow_hooks or default_hook_path(paths.export_dir(npc_key)), tool="export", npc_key=npc_key)
-    hook_recorder.emit("export_pipeline", "start", mode="full_merge" if args.full_merge else "adapter", quantization=args.quantization, resume=bool(args.resume), output_dir=str(output_dir))
+    with hook_recorder.step("export_pipeline", mode="full_merge" if args.full_merge else "adapter", quantization=args.quantization, resume=bool(args.resume), output_dir=str(output_dir)):
 
-    if not args.full_merge:
-        # ── Adapter mode (default) — fast, no base model loading ─────────────
-        print(f"Mode: adapter-only (for Unity/LLMUnity)")
-        print(f"  Adapter: {output_dir}")
-        print(f"  NPC:     {npc_key}")
-        print(f"  Outtype: {args.outtype}")
+        if not args.full_merge:
+            # ── Adapter mode (default) — fast, no base model loading ─────────────
+            print(f"Mode: adapter-only (for Unity/LLMUnity)")
+            print(f"  Adapter: {output_dir}")
+            print(f"  NPC:     {npc_key}")
+            print(f"  Outtype: {args.outtype}")
 
-        hook_recorder.emit("export_adapter", "start", outtype=args.outtype, output_dir=str(output_dir))
-        output_path = _export_adapter_gguf(
-            output_dir, npc_key,
-            outtype=args.outtype,
-        )
-        hook_recorder.emit("export_adapter", "complete", outtype=args.outtype, output_path=str(output_path))
+            with hook_recorder.step("export_adapter", outtype=args.outtype, output_dir=str(output_dir)):
+                output_path = _export_adapter_gguf(
+                    output_dir, npc_key,
+                    outtype=args.outtype,
+                )
 
-        # Write manifest
-        write_manifest(
-            npc_key, "adapter",
-            [f"lora-{args.outtype}"],
-            [output_path], output_dir,
-        )
-        _write_status(
-            npc_key, state="completed", substep="adapter_done",
-            artifacts=[str(output_path)],
-            completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        )
-        hook_recorder.emit("export_pipeline", "complete", mode="adapter", artifacts=[str(output_path)])
-        print(f"\nExport complete! Adapter GGUF ready for Unity.")
-        print(f"  Load in LLMUnity: base_model.gguf + lora_adapter.gguf")
-        print(f"  Size: {output_path.stat().st_size / 1e6:.1f} MB")
-        return
-
-    # ── Full-merge mode — optimized: single f16 export + local quantize ─────
-    model_id = args.model
-    if model_id is None:
-        adapter_config = output_dir / "adapter_config.json"
-        if adapter_config.exists():
-            with open(adapter_config) as f:
-                cfg = json.load(f)
-            model_id = cfg.get(
-                "base_model_name_or_path",
-                "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+            # Write manifest
+            write_manifest(
+                npc_key, "adapter",
+                [f"lora-{args.outtype}"],
+                [output_path], output_dir,
             )
-        else:
-            model_id = "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
-
-    print(f"Mode: full-merge (standalone GGUF)")
-    print(f"  Adapter:  {output_dir}")
-    print(f"  NPC key:  {npc_key}")
-    print(f"  Model ID: {model_id}")
-
-    quant_path = paths.export_gguf_path(npc_key, model_id, args.quantization)
-    f16_path = paths.export_gguf_path(npc_key, model_id, "f16")
-
-    # Check resume
-    if args.resume and quant_path.exists() and (args.skip_f16 or f16_path.exists()):
-        print("[resume] Artifacts exist. Regenerating manifest.")
-        gguf_files = [quant_path]
-        quantizations = [args.quantization]
-        if not args.skip_f16:
-            gguf_files.append(f16_path)
-            quantizations.append("f16")
-        write_manifest(npc_key, model_id, quantizations, gguf_files, output_dir)
-        _write_status(npc_key, state="completed", substep="resume_noop",
-                      artifacts=[str(p) for p in gguf_files])
-        hook_recorder.emit("export_pipeline", "complete", mode="full_merge", resume=True, artifacts=[str(p) for p in gguf_files])
-        print("Export resume complete (no-op).")
-        return
-
-    try:
-        hook_recorder.emit("export_full_merge", "start", model_id=model_id, quantization=args.quantization)
-        # ── Load model ──────────────────────────────────────────────────────
-        from unsloth import FastLanguageModel, save as unsloth_save
-        from peft import PeftModel
-        import torch
-        import types
-
-        print(f"\nLoading model...")
-        model, tokenizer = FastLanguageModel.from_pretrained(
-            model_name=model_id,
-            max_seq_length=2048,
-            dtype=None,
-            load_in_4bit=True,
-        )
-
-        # ── Validate tokenizer configuration ────────────────────────────────
-        _validate_tokenizer(tokenizer, model_id, npc_key)
-
-        # ── Load LoRA adapter ──────────────────────────────────────────────
-        adapter_path = output_dir / "adapter_config.json"
-        if adapter_path.exists():
-            print(f"  Loading LoRA adapter from: {output_dir}")
-            model = PeftModel.from_pretrained(model, str(output_dir), is_trainable=False)
-            model.save_pretrained_gguf = types.MethodType(
-                unsloth_save.unsloth_save_pretrained_gguf, model,
+            _write_status(
+                npc_key, state="completed", substep="adapter_done",
+                artifacts=[str(output_path)],
+                completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             )
+            print(f"\nExport complete! Adapter GGUF ready for Unity.")
+            print(f"  Load in LLMUnity: base_model.gguf + lora_adapter.gguf")
+            print(f"  Size: {output_path.stat().st_size / 1e6:.1f} MB")
+            return
 
-        # ── Export only f16 via unsloth (one slow pass) ─────────────────────
-        f16_path = paths.export_gguf_path(npc_key, model_id, "f16")
-        if args.resume and f16_path.exists():
-            print(f"  [resume] Skipping f16 export — already exists")
-        else:
-            _export_gguf_file(
-                model, tokenizer, model_id, "f16",
-                f16_path,
-                npc_key=npc_key,
-                substep_timeout=args.timeout_seconds,
-                maximum_memory=args.maximum_memory,
-            )
-
-        # ── Quantize to target format via llama-quantize (fast) ─────────────
-        gguf_files = [f16_path]
-        quantizations = ["f16"]
-
-        if args.quantization and args.quantization != "f16":
-            if args.resume and quant_path.exists():
-                print(f"  [resume] Skipping {args.quantization} — already exists")
+        # ── Full-merge mode — optimized: single f16 export + local quantize ─────
+        model_id = args.model
+        if model_id is None:
+            adapter_config = output_dir / "adapter_config.json"
+            if adapter_config.exists():
+                with open(adapter_config) as f:
+                    cfg = json.load(f)
+                model_id = cfg.get(
+                    "base_model_name_or_path",
+                    "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+                )
             else:
-                result = _quantize_gguf(f16_path, quant_path, args.quantization)
-                if result:
-                    gguf_files.append(quant_path)
-                    quantizations.append(args.quantization)
+                model_id = "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+
+        print(f"Mode: full-merge (standalone GGUF)")
+        print(f"  Adapter:  {output_dir}")
+        print(f"  NPC key:  {npc_key}")
+        print(f"  Model ID: {model_id}")
+
+        quant_path = paths.export_gguf_path(npc_key, model_id, args.quantization)
+        f16_path = paths.export_gguf_path(npc_key, model_id, "f16")
+
+        # Check resume
+        if args.resume and quant_path.exists() and (args.skip_f16 or f16_path.exists()):
+            print("[resume] Artifacts exist. Regenerating manifest.")
+            gguf_files = [quant_path]
+            quantizations = [args.quantization]
+            if not args.skip_f16:
+                gguf_files.append(f16_path)
+                quantizations.append("f16")
+            write_manifest(npc_key, model_id, quantizations, gguf_files, output_dir)
+            _write_status(npc_key, state="completed", substep="resume_noop",
+                          artifacts=[str(p) for p in gguf_files])
+            print("Export resume complete (no-op).")
+            return
+
+        try:
+            with hook_recorder.step("export_full_merge", model_id=model_id, quantization=args.quantization):
+                # ── Load model ──────────────────────────────────────────────────────
+                from unsloth import FastLanguageModel, save as unsloth_save
+                from peft import PeftModel
+                import torch
+                import types
+
+                print(f"\nLoading model...")
+                model, tokenizer = FastLanguageModel.from_pretrained(
+                    model_name=model_id,
+                    max_seq_length=2048,
+                    dtype=None,
+                    load_in_4bit=True,
+                )
+
+                # ── Validate tokenizer configuration ────────────────────────────────
+                _validate_tokenizer(tokenizer, model_id, npc_key)
+
+                # ── Load LoRA adapter ──────────────────────────────────────────────
+                adapter_path = output_dir / "adapter_config.json"
+                if adapter_path.exists():
+                    print(f"  Loading LoRA adapter from: {output_dir}")
+                    model = PeftModel.from_pretrained(model, str(output_dir), is_trainable=False)
+                    model.save_pretrained_gguf = types.MethodType(
+                        unsloth_save.unsloth_save_pretrained_gguf, model,
+                    )
+
+                # ── Export only f16 via unsloth (one slow pass) ─────────────────────
+                f16_path = paths.export_gguf_path(npc_key, model_id, "f16")
+                if args.resume and f16_path.exists():
+                    print(f"  [resume] Skipping f16 export — already exists")
                 else:
-                    print(f"  [WARN] Local quantization to {args.quantization} failed.")
-                    print(f"  The f16 GGUF is still available at: {f16_path}")
-                    print(f"  You can run quantize manually:")
-                    print(f"    {LLAMA_QUANTIZE} {f16_path} {quant_path} {args.quantization}")
+                    _export_gguf_file(
+                        model, tokenizer, model_id, "f16",
+                        f16_path,
+                        npc_key=npc_key,
+                        substep_timeout=args.timeout_seconds,
+                        maximum_memory=args.maximum_memory,
+                    )
 
-        # ── Write manifest ──────────────────────────────────────────────────
-        write_manifest(npc_key, model_id, quantizations, gguf_files, output_dir)
-        _write_status(
-            npc_key, state="completed", substep="finalized",
-            artifacts=[str(p) for p in gguf_files],
-            completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        )
-        hook_recorder.emit("export_full_merge", "complete", model_id=model_id, quantizations=quantizations, artifacts=[str(p) for p in gguf_files])
-        hook_recorder.emit("export_pipeline", "complete", mode="full_merge", quantizations=quantizations, artifacts=[str(p) for p in gguf_files])
+                # ── Quantize to target format via llama-quantize (fast) ─────────────
+                gguf_files = [f16_path]
+                quantizations = ["f16"]
 
-        print(f"\nExport complete!")
-        print(f"  GGUF (f16):       {f16_path}")
-        if args.quantization and args.quantization != "f16" and quant_path.exists():
-            print(f"  GGUF ({args.quantization}): {quant_path}")
+                if args.quantization and args.quantization != "f16":
+                    if args.resume and quant_path.exists():
+                        print(f"  [resume] Skipping {args.quantization} — already exists")
+                    else:
+                        result = _quantize_gguf(f16_path, quant_path, args.quantization)
+                        if result:
+                            gguf_files.append(quant_path)
+                            quantizations.append(args.quantization)
+                        else:
+                            print(f"  [WARN] Local quantization to {args.quantization} failed.")
+                            print(f"  The f16 GGUF is still available at: {f16_path}")
+                            print(f"  You can run quantize manually:")
+                            print(f"    {LLAMA_QUANTIZE} {f16_path} {quant_path} {args.quantization}")
 
-    except Exception as exc:
-        _write_status(npc_key, state="failed", substep="failed",
-                      error_summary=str(exc),
-                      failed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
-        hook_recorder.emit("export_pipeline", "error", mode="full_merge" if args.full_merge else "adapter", error=str(exc))
-        raise
+                # ── Write manifest ──────────────────────────────────────────────────
+                write_manifest(npc_key, model_id, quantizations, gguf_files, output_dir)
+                _write_status(
+                    npc_key, state="completed", substep="finalized",
+                    artifacts=[str(p) for p in gguf_files],
+                    completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                )
+
+            print(f"\nExport complete!")
+            print(f"  GGUF (f16):       {f16_path}")
+            if args.quantization and args.quantization != "f16" and quant_path.exists():
+                print(f"  GGUF ({args.quantization}): {quant_path}")
+
+        except Exception as exc:
+            _write_status(npc_key, state="failed", substep="failed",
+                          error_summary=str(exc),
+                          failed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+            raise
 
 
 if __name__ == "__main__":

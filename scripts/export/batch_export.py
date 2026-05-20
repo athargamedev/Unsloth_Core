@@ -168,51 +168,50 @@ def main():
         args.workflow_hooks or default_hook_path(paths.export_dir(npc_keys[0])),
         tool="batch_export",
     )
-    hook_recorder.emit("batch_export", "start", npc_count=len(npc_keys), quantization=args.quantization, skip_f16=bool(args.skip_f16), model_id=args.model)
+    with hook_recorder.step("batch_export", npc_count=len(npc_keys), quantization=args.quantization, skip_f16=bool(args.skip_f16), model_id=args.model):
 
-    # ── Auto-detect model ID ────────────────────────────────────────────────
-    model_id = args.model
-    if model_id is None:
-        # Try auto-detecting from first NPC's adapter config
-        _, first_output = paths.resolve_adapter_dir(npc_keys[0])
-        adapter_config = first_output / "adapter_config.json"
-        if adapter_config.exists():
-            with open(adapter_config) as f:
-                cfg = json.load(f)
-            model_id = cfg.get("base_model_name_or_path",
-                              "unsloth/Llama-3.2-3B-Instruct-bnb-4bit")
-        else:
-            model_id = "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
-        print(f"Auto-detected model: {model_id}")
+        # ── Auto-detect model ID ────────────────────────────────────────────────
+        model_id = args.model
+        if model_id is None:
+            # Try auto-detecting from first NPC's adapter config
+            _, first_output = paths.resolve_adapter_dir(npc_keys[0])
+            adapter_config = first_output / "adapter_config.json"
+            if adapter_config.exists():
+                with open(adapter_config) as f:
+                    cfg = json.load(f)
+                model_id = cfg.get("base_model_name_or_path",
+                                  "unsloth/Llama-3.2-3B-Instruct-bnb-4bit")
+            else:
+                model_id = "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+            print(f"Auto-detected model: {model_id}")
 
-    # ── Load base model ONCE ────────────────────────────────────────────────
-    print(f"\nLoading base model: {model_id}")
-    print("This may take a few minutes (downloading if not cached)...")
-    t0 = time.time()
+        # ── Load base model ONCE ────────────────────────────────────────────────
+        print(f"\nLoading base model: {model_id}")
+        print("This may take a few minutes (downloading if not cached)...")
+        t0 = time.time()
 
-    from unsloth import FastLanguageModel
-    import torch
+        from unsloth import FastLanguageModel
+        import torch
 
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=model_id,
-        max_seq_length=2048,
-        dtype=None,
-        load_in_4bit=True,
-    )
-    print(f"  Model loaded in {time.time() - t0:.0f}s")
+        model, tokenizer = FastLanguageModel.from_pretrained(
+            model_name=model_id,
+            max_seq_length=2048,
+            dtype=None,
+            load_in_4bit=True,
+        )
+        print(f"  Model loaded in {time.time() - t0:.0f}s")
 
-    # ── Export each NPC ─────────────────────────────────────────────────────
-    success = 0
-    failed = 0
-    for npc_key in npc_keys:
-        ok = _export_one(model, tokenizer, npc_key, model_id, args.quantization, args.skip_f16, hook_recorder=hook_recorder)
-        if ok:
-            success += 1
-        else:
-            failed += 1
+        # ── Export each NPC ─────────────────────────────────────────────────────
+        success = 0
+        failed = 0
+        for npc_key in npc_keys:
+            ok = _export_one(model, tokenizer, npc_key, model_id, args.quantization, args.skip_f16, hook_recorder=hook_recorder)
+            if ok:
+                success += 1
+            else:
+                failed += 1
 
-    # ── Summary ─────────────────────────────────────────────────────────────
-    hook_recorder.emit("batch_export", "complete", successful=success, failed=failed, npc_count=len(npc_keys), model_id=model_id)
+        # ── Summary ─────────────────────────────────────────────────────────────
     print(f"\n{'=' * 60}")
     print(f"  BATCH EXPORT COMPLETE")
     print(f"  Successful: {success}")

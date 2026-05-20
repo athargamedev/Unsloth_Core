@@ -63,3 +63,131 @@ class WorkflowHookRecorder:
 
 def default_hook_path(output_dir: str | Path, filename: str = "workflow_hooks.jsonl") -> Path:
     return Path(output_dir) / filename
+
+
+class WorkflowHookReader:
+    """Read and aggregate workflow hook JSONL files for dashboard display."""
+
+    @staticmethod
+    def read(hook_path: str | Path) -> list[dict]:
+        """Parse a workflow_hooks.jsonl into a list of event dicts."""
+        path = Path(hook_path)
+        if not path.exists():
+            return []
+        events: list[dict] = []
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        events.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+        return events
+
+    def group_by_trace(self, events: list[dict]) -> dict[str, list[dict]]:
+        """Group events into traces by (tool, npc_key) sorted chronologically.
+
+        A 'trace' is a sequence of events from the same tool + npc_key combination,
+        ordered by timestamp. Returns {trace_key: [events]}.
+        """
+        traces: dict[str, list[dict]] = {}
+        for event in events:
+            tool = event.get("tool", "unknown")
+            npc_key = event.get("npc_key", "unknown")
+            key = f"{tool}:{npc_key}"
+            traces.setdefault(key, []).append(event)
+        # Sort each trace by timestamp
+        for key in traces:
+            traces[key].sort(key=lambda e: e.get("ts", ""))
+        return traces
+
+    @staticmethod
+    def trace_summary(trace: list[dict]) -> dict:
+        """Compute summary for a single trace (one tool + npc_key run).
+
+        Returns:
+            tool, npc_key, technique: from first event
+            steps: list of {step, status, ts, duration_s, ...}
+            start_ts, end_ts: overall time range
+            total_duration_s: elapsed time
+            completed: count of completed steps
+            failed: count of failed steps
+            events_by_step: {step: {start: event, complete: event, error: event}}
+        """
+        if not trace:
+            return {}
+        first = trace[0]
+        last = trace[-1]
+        steps: dict[str, dict[str, dict]] = {}
+        for event in trace:
+            step = event.get("step", "?")
+            status = event.get("status", "?")
+            steps.setdefault(step, {})[status] = event
+
+        start_ts = first.get("ts", "")
+        end_ts = last.get("ts", "")
+        total_duration_s: float | None = None
+        try:
+            s = datetime.fromisoformat(start_ts) if start_ts else None
+            e = datetime.fromisoformat(end_ts) if end_ts else None
+            if s and e:
+                total_duration_s = (e - s).total_seconds()
+        except (ValueError, TypeError):
+            pass
+
+        step_list: list[dict] = []
+        for step_name, events_by_status in steps.items():
+            start_event = events_by_status.get("start", {})
+            complete_event = events_by_status.get("complete", {})
+            error_event = events_by_status.get("error", {})
+            step_start_ts = start_event.get("ts", "")
+            step_end_ts = complete_event.get("ts", "") or error_event.get("ts", "")
+            step_duration_s: float | None = None
+            try:
+                ss = datetime.fromisoformat(step_start_ts) if step_start_ts else None
+                se = datetime.fromisoformat(step_end_ts) if step_end_ts else None
+                if ss and se:
+                    step_duration_s = (se - ss).total_seconds()
+            except (ValueError, TypeError):
+                pass
+
+            step_list.append({
+                "step": step_name,
+                "status": "complete" if complete_event else ("error" if error_event else "started"),
+                "ts": step_start_ts or step_end_ts,
+                "duration_s": step_duration_s,
+                "has_start": bool(start_event),
+                "has_complete": bool(complete_event),
+                "has_error": bool(error_event),
+            })
+
+        completed = sum(1 for s in step_list if s["status"] == "complete")
+        failed = sum(1 for s in step_list if s["status"] == "error")
+
+        return {
+            "tool": first.get("tool"),
+            "npc_key": first.get("npc_key"),
+            "technique": first.get("technique"),
+            "start_ts": start_ts,
+            "end_ts": end_ts,
+            "total_duration_s": total_duration_s,
+            "step_count": len(step_list),
+            "completed": completed,
+            "failed": failed,
+            "steps": sorted(step_list, key=lambda s: s["ts"]),
+            "events_by_step": steps,
+        }
+
+    @classmethod
+    def pipeline_summary(cls, hook_path: str | Path) -> dict | list[dict]:
+        """Read a hook file and return full summaries per trace.
+
+        Returns a single dict if one trace, or a list if multiple traces.
+        """
+        events = cls.read(hook_path)
+        if not events:
+            return {"events": [], "traces": []}
+        traces = cls().group_by_trace(events)
+        summaries = [cls.trace_summary(trace) for trace in traces.values()]
+        return summaries[0] if len(summaries) == 1 else summaries

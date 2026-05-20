@@ -427,228 +427,227 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
         technique=technique,
         spec_path=None,
     )
-    hook_recorder.emit("feedback_loop", "start", feedback_path=str(feedback_path), auto_retrain=auto_retrain, dry_run=dry_run)
-    feedback_data = load_feedback_json(feedback_path)
-    npc_key = feedback_data.get("npc_key", "unknown")
-    candidate_model = feedback_data.get("candidate", "")
+    with hook_recorder.step("feedback_loop", feedback_path=str(feedback_path), auto_retrain=auto_retrain, dry_run=dry_run):
+        feedback_data = load_feedback_json(feedback_path)
+        npc_key = feedback_data.get("npc_key", "unknown")
+        candidate_model = feedback_data.get("candidate", "")
 
-    # ── 2. Analyze ─────────────────────────────────────────────────────
-    weak_concepts = identify_weak_concepts(
-        feedback_data, win_rate_threshold, quality_threshold, violation_threshold
-    )
-    print_analysis(feedback_data, weak_concepts)
+        # ── 2. Analyze ─────────────────────────────────────────────────────
+        weak_concepts = identify_weak_concepts(
+            feedback_data, win_rate_threshold, quality_threshold, violation_threshold
+        )
+        print_analysis(feedback_data, weak_concepts)
 
-    # Build the result dict
-    result = {
-        "status": "ok",
-        "npc_key": npc_key,
-        "weak_concepts": [],
-        "gap_results": [],
-        "regeneration": {"ok": False, "focus_categories": [], "technique": technique},
-        "auto_retrain": None,
-        "pipeline_state": None,
-    }
+        # Build the result dict
+        result = {
+            "status": "ok",
+            "npc_key": npc_key,
+            "weak_concepts": [],
+            "gap_results": [],
+            "regeneration": {"ok": False, "focus_categories": [], "technique": technique},
+            "auto_retrain": None,
+            "pipeline_state": None,
+        }
 
-    if not weak_concepts:
-        print("\nNothing to improve. Model is performing well across all areas.")
-        result["status"] = "no_weak_concepts"
-        update_pipeline_state(npc_key, {
-            "status": "healthy",
-            "weak_concepts_count": 0,
-            "last_feedback": datetime.now(timezone.utc).isoformat(),
-        })
-        if json_output:
-            print(json.dumps(result, indent=2))
-        return 0
-
-    result["weak_concepts"] = [
-        {"concept": wc["concept"], "reasons": wc["reasons"]}
-        for wc in weak_concepts
-    ]
-
-    # ── 3. Knowledge gap detection ─────────────────────────────────────
-    gap_results = []
-    if not skip_gap_detection:
-        print(f"\n{'─' * 40}")
-        print("  Checking knowledge coverage for weak concepts...")
-        print("  (gap detection requires external service — skipping)")
-        result["gap_results"] = gap_results
-
-        if save_gaps:
-            save_path = Path(save_gaps)
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(save_path, "w") as f:
-                json.dump(gap_results, f, indent=2)
-            print(f"\n  Gap report saved to: {save_path}")
-    else:
-        print("\n  (gap detection skipped)")
-
-    # ── 4. Plan regeneration ───────────────────────────────────────────
-    print(f"\n{'=' * 60}")
-    print(f"  REGENERATION PLAN")
-    print(f"{'=' * 60}")
-    focus_categories = sorted(set(wc["action"]["category"] for wc in weak_concepts))
-    for wc in weak_concepts:
-        print(f"  {wc['concept']}: {', '.join(wc['reasons'])}")
-    print(f"\n  Unique categories to boost: {', '.join(focus_categories)}")
-    if auto_retrain:
-        print(f"  Auto-retrain enabled: preset={train_preset}, baseline={baseline_gguf}")
-
-    # ── 5. Confirm ─────────────────────────────────────────────────────
-    if not auto_yes and not dry_run:
-        print(f"\nProceed with targeted regeneration? [Y/n] ", end="", flush=True)
-        try:
-            response = input().strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            response = "n"
-        if response not in ("", "y", "yes"):
-            print("Cancelled.")
-            result["status"] = "cancelled"
-            if json_output:
-                print(json.dumps(result, indent=2))
-            return 1
-
-    # ── 6. Execute regeneration ────────────────────────────────────────
-    print(f"\n{'─' * 40}")
-    ok = generate_targeted_dataset(
-        npc_key,
-        focus_categories,
-        dry_run=dry_run,
-        technique=technique,
-        model=model,
-        url=url,
-        batch_size=batch_size,
-    )
-    result["regeneration"] = {"ok": ok, "focus_categories": focus_categories, "technique": technique}
-
-    if not ok:
-        print(f"\n  Regeneration failed.")
-        result["status"] = "regeneration_failed"
-        if json_output:
-            print(json.dumps(result, indent=2))
-        update_pipeline_state(npc_key, {
-            "status": "regeneration_failed",
-            "weak_concepts_count": len(weak_concepts),
-            "last_feedback": datetime.now(timezone.utc).isoformat(),
-        })
-        return 1
-
-    # ── 7. Auto-retrain ────────────────────────────────────────────────
-    trained_gguf = None
-    if auto_retrain and not dry_run:
-        print(f"\n{'─' * 40}")
-        print("  AUTO-RETRAIN PHASE")
-        print(f"{'─' * 40}")
-
-        # Sanitize
-        print(f"\n  Step 1: Sanitize dataset...")
-        if not run_sanitize(npc_key, technique=technique, dry_run=dry_run):
-            print("  [error] Sanitization failed; aborting auto-retrain.")
-            result["status"] = "sanitize_failed"
+        if not weak_concepts:
+            print("\nNothing to improve. Model is performing well across all areas.")
+            result["status"] = "no_weak_concepts"
             update_pipeline_state(npc_key, {
-                "status": "sanitize_failed",
-                "weak_concepts_count": len(weak_concepts),
+                "status": "healthy",
+                "weak_concepts_count": 0,
                 "last_feedback": datetime.now(timezone.utc).isoformat(),
             })
             if json_output:
                 print(json.dumps(result, indent=2))
+            return 0
+
+        result["weak_concepts"] = [
+            {"concept": wc["concept"], "reasons": wc["reasons"]}
+            for wc in weak_concepts
+        ]
+
+        # ── 3. Knowledge gap detection ─────────────────────────────────────
+        gap_results = []
+        if not skip_gap_detection:
+            print(f"\n{'─' * 40}")
+            print("  Checking knowledge coverage for weak concepts...")
+            print("  (gap detection requires external service — skipping)")
+            result["gap_results"] = gap_results
+
+            if save_gaps:
+                save_path = Path(save_gaps)
+                save_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(save_path, "w") as f:
+                    json.dump(gap_results, f, indent=2)
+                print(f"\n  Gap report saved to: {save_path}")
+        else:
+            print("\n  (gap detection skipped)")
+
+        # ── 4. Plan regeneration ───────────────────────────────────────────
+        print(f"\n{'=' * 60}")
+        print(f"  REGENERATION PLAN")
+        print(f"{'=' * 60}")
+        focus_categories = sorted(set(wc["action"]["category"] for wc in weak_concepts))
+        for wc in weak_concepts:
+            print(f"  {wc['concept']}: {', '.join(wc['reasons'])}")
+        print(f"\n  Unique categories to boost: {', '.join(focus_categories)}")
+        if auto_retrain:
+            print(f"  Auto-retrain enabled: preset={train_preset}, baseline={baseline_gguf}")
+
+        # ── 5. Confirm ─────────────────────────────────────────────────────
+        if not auto_yes and not dry_run:
+            print(f"\nProceed with targeted regeneration? [Y/n] ", end="", flush=True)
+            try:
+                response = input().strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                response = "n"
+            if response not in ("", "y", "yes"):
+                print("Cancelled.")
+                result["status"] = "cancelled"
+                if json_output:
+                    print(json.dumps(result, indent=2))
+                return 1
+
+        # ── 6. Execute regeneration ────────────────────────────────────────
+        print(f"\n{'─' * 40}")
+        ok = generate_targeted_dataset(
+            npc_key,
+            focus_categories,
+            dry_run=dry_run,
+            technique=technique,
+            model=model,
+            url=url,
+            batch_size=batch_size,
+        )
+        result["regeneration"] = {"ok": ok, "focus_categories": focus_categories, "technique": technique}
+
+        if not ok:
+            print(f"\n  Regeneration failed.")
+            result["status"] = "regeneration_failed"
+            if json_output:
+                print(json.dumps(result, indent=2))
+            update_pipeline_state(npc_key, {
+                "status": "regeneration_failed",
+                "weak_concepts_count": len(weak_concepts),
+                "last_feedback": datetime.now(timezone.utc).isoformat(),
+            })
             return 1
 
-        # Dataset quality gate
-        if not skip_dataset_eval:
-            print(f"\n  Step 1b: Evaluate cleaned dataset before training...")
-            if not run_dataset_eval(
-                npc_key,
-                technique=technique,
-                judge_model=deepeval_judge_model,
-                ollama_base_url=deepeval_ollama_url,
-                cases_per_category=deepeval_cases_per_category,
-                dry_run=dry_run,
-                soft_fail=deepeval_soft_fail,
-            ):
-                print("  [error] Dataset evaluation failed; aborting auto-retrain.")
-                result["status"] = "dataset_eval_failed"
+        # ── 7. Auto-retrain ────────────────────────────────────────────────
+        trained_gguf = None
+        if auto_retrain and not dry_run:
+            print(f"\n{'─' * 40}")
+            print("  AUTO-RETRAIN PHASE")
+            print(f"{'─' * 40}")
+
+            # Sanitize
+            print(f"\n  Step 1: Sanitize dataset...")
+            if not run_sanitize(npc_key, technique=technique, dry_run=dry_run):
+                print("  [error] Sanitization failed; aborting auto-retrain.")
+                result["status"] = "sanitize_failed"
                 update_pipeline_state(npc_key, {
-                    "status": "dataset_eval_failed",
+                    "status": "sanitize_failed",
                     "weak_concepts_count": len(weak_concepts),
                     "last_feedback": datetime.now(timezone.utc).isoformat(),
                 })
                 if json_output:
                     print(json.dumps(result, indent=2))
                 return 1
-        else:
-            print("  Skipping dataset evaluation before training.")
 
-        # Train
-        print(f"\n  Step 2: Train new model...")
-        trained_gguf = run_training(npc_key, train_preset, technique=technique, dry_run=dry_run)
-        result["auto_retrain"] = {"trained_gguf": trained_gguf}
+            # Dataset quality gate
+            if not skip_dataset_eval:
+                print(f"\n  Step 1b: Evaluate cleaned dataset before training...")
+                if not run_dataset_eval(
+                    npc_key,
+                    technique=technique,
+                    judge_model=deepeval_judge_model,
+                    ollama_base_url=deepeval_ollama_url,
+                    cases_per_category=deepeval_cases_per_category,
+                    dry_run=dry_run,
+                    soft_fail=deepeval_soft_fail,
+                ):
+                    print("  [error] Dataset evaluation failed; aborting auto-retrain.")
+                    result["status"] = "dataset_eval_failed"
+                    update_pipeline_state(npc_key, {
+                        "status": "dataset_eval_failed",
+                        "weak_concepts_count": len(weak_concepts),
+                        "last_feedback": datetime.now(timezone.utc).isoformat(),
+                    })
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    return 1
+            else:
+                print("  Skipping dataset evaluation before training.")
 
-        if trained_gguf and baseline_gguf:
-            # Evaluate
-            print(f"\n  Step 3: Evaluate against baseline...")
-            eval_feedback_path = run_evaluate(npc_key, baseline_gguf, trained_gguf,
-                                               PROJECT_ROOT / "eval" / "results" / "feedback",
-                                               dry_run=dry_run)
-            result["auto_retrain"]["eval_feedback_path"] = eval_feedback_path
+            # Train
+            print(f"\n  Step 2: Train new model...")
+            trained_gguf = run_training(npc_key, train_preset, technique=technique, dry_run=dry_run)
+            result["auto_retrain"] = {"trained_gguf": trained_gguf}
 
-            if eval_feedback_path and Path(eval_feedback_path).exists():
-                # Load eval results for pipeline state
-                try:
-                    post_eval = load_feedback_json(eval_feedback_path)
-                    result["auto_retrain"]["win_rate"] = post_eval.get("win_rate")
-                    result["auto_retrain"]["candidate_wins"] = post_eval.get("candidate_wins")
-                    result["auto_retrain"]["total_examples"] = post_eval.get("total_examples")
-                except Exception:
-                    pass
-        elif trained_gguf:
-            print(f"  (skipping eval: no --baseline provided)")
-    elif auto_retrain and dry_run:
-        print(f"\n  [dry-run] Would auto-retrain with preset '{train_preset}'")
-        result["auto_retrain"] = {
-            "trained_gguf": None,
-            "eval_feedback_path": None,
-            "dry_run": True,
-            "train_preset": train_preset,
-            "baseline": str(baseline_gguf) if baseline_gguf else None,
+            if trained_gguf and baseline_gguf:
+                # Evaluate
+                print(f"\n  Step 3: Evaluate against baseline...")
+                eval_feedback_path = run_evaluate(npc_key, baseline_gguf, trained_gguf,
+                                                   PROJECT_ROOT / "eval" / "results" / "feedback",
+                                                   dry_run=dry_run)
+                result["auto_retrain"]["eval_feedback_path"] = eval_feedback_path
+
+                if eval_feedback_path and Path(eval_feedback_path).exists():
+                    # Load eval results for pipeline state
+                    try:
+                        post_eval = load_feedback_json(eval_feedback_path)
+                        result["auto_retrain"]["win_rate"] = post_eval.get("win_rate")
+                        result["auto_retrain"]["candidate_wins"] = post_eval.get("candidate_wins")
+                        result["auto_retrain"]["total_examples"] = post_eval.get("total_examples")
+                    except Exception:
+                        pass
+            elif trained_gguf:
+                print(f"  (skipping eval: no --baseline provided)")
+        elif auto_retrain and dry_run:
+            print(f"\n  [dry-run] Would auto-retrain with preset '{train_preset}'")
+            result["auto_retrain"] = {
+                "trained_gguf": None,
+                "eval_feedback_path": None,
+                "dry_run": True,
+                "train_preset": train_preset,
+                "baseline": str(baseline_gguf) if baseline_gguf else None,
+            }
+
+        # ── 8. Update pipeline state ───────────────────────────────────────
+        state_update = {
+            "status": "regenerated",
+            "weak_concepts_count": len(weak_concepts),
+            "focus_categories": focus_categories,
+            "regeneration_technique": technique,
+            "last_feedback": datetime.now(timezone.utc).isoformat(),
+            "auto_retrain_complete": auto_retrain and trained_gguf is not None,
         }
+        if trained_gguf:
+            state_update["latest_gguf"] = trained_gguf
+        if result.get("auto_retrain") and result["auto_retrain"].get("win_rate") is not None:
+            state_update["latest_win_rate"] = result["auto_retrain"]["win_rate"]
+        update_pipeline_state(npc_key, state_update)
+        result["pipeline_state"] = state_update
 
-    # ── 8. Update pipeline state ───────────────────────────────────────
-    state_update = {
-        "status": "regenerated",
-        "weak_concepts_count": len(weak_concepts),
-        "focus_categories": focus_categories,
-        "regeneration_technique": technique,
-        "last_feedback": datetime.now(timezone.utc).isoformat(),
-        "auto_retrain_complete": auto_retrain and trained_gguf is not None,
-    }
-    if trained_gguf:
-        state_update["latest_gguf"] = trained_gguf
-    if result.get("auto_retrain") and result["auto_retrain"].get("win_rate") is not None:
-        state_update["latest_win_rate"] = result["auto_retrain"]["win_rate"]
-    update_pipeline_state(npc_key, state_update)
-    result["pipeline_state"] = state_update
+        # ── 9. Summary ─────────────────────────────────────────────────────
+        print(f"\n{'=' * 60}")
+        print(f"  FEEDBACK LOOP COMPLETE")
+        print(f"{'=' * 60}")
+        print(f"  Regenerated dataset with focus on: {', '.join(focus_categories)}")
+        if auto_retrain and trained_gguf:
+            print(f"  Retrained model: {trained_gguf}")
+        if dry_run:
+            print(f"  (dry-run mode — no changes made)")
+        if not auto_retrain and not dry_run:
+            print(f"\n  Next step: train and re-evaluate:")
+            print(f"    ./ucore train subjects/NPC_specs/{npc_key}.json --preset {train_preset}")
+            print(f"    ./ucore evaluate --baseline <old.gguf> --candidate <new.gguf>"
+                  f" --spec subjects/NPC_specs/{npc_key}.json --feedback-json eval/results/feedback/{npc_key}_round2.json")
+        print(f"  Pipeline state: {PIPELINE_STATE_PATH}")
 
-    # ── 9. Summary ─────────────────────────────────────────────────────
-    print(f"\n{'=' * 60}")
-    print(f"  FEEDBACK LOOP COMPLETE")
-    print(f"{'=' * 60}")
-    print(f"  Regenerated dataset with focus on: {', '.join(focus_categories)}")
-    if auto_retrain and trained_gguf:
-        print(f"  Retrained model: {trained_gguf}")
-    if dry_run:
-        print(f"  (dry-run mode — no changes made)")
-    if not auto_retrain and not dry_run:
-        print(f"\n  Next step: train and re-evaluate:")
-        print(f"    ./ucore train subjects/NPC_specs/{npc_key}.json --preset {train_preset}")
-        print(f"    ./ucore evaluate --baseline <old.gguf> --candidate <new.gguf>"
-              f" --spec subjects/NPC_specs/{npc_key}.json --feedback-json eval/results/feedback/{npc_key}_round2.json")
-    print(f"  Pipeline state: {PIPELINE_STATE_PATH}")
+        if json_output:
+            print(json.dumps(result, indent=2))
 
-    if json_output:
-        print(json.dumps(result, indent=2))
-
-    hook_recorder.emit("feedback_loop", "complete", npc_key=npc_key, weak_concepts=len(weak_concepts), auto_retrain=auto_retrain)
     return 0
 
 

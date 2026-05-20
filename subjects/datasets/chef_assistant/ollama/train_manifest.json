@@ -1,0 +1,102 @@
+{
+  "npc_key": "chef_assistant",
+  "technique": "ollama",
+  "model": "llama3.1-3060-chat:latest",
+  "generation": {
+    "date": "2026-05-20T18:57:10Z",
+    "seed": 42,
+    "temperature": 0.6,
+    "multi_turn_ratio": 0.25,
+    "version": "ollama-v2"
+  },
+  "spec": {
+    "file": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/chef_assistant.json",
+    "hash": "sha256:9f2431a63d169cd885330e96ce84c1063a46afc4e3f412fbd9706b3e4e9e8893"
+  },
+  "contract": {
+    "supported_categories": [
+      "identity",
+      "teaching",
+      "dialogue",
+      "quest",
+      "refusal"
+    ],
+    "minimum_examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "valid_difficulty_levels": [
+      "beginner",
+      "intermediate",
+      "advanced"
+    ],
+    "spec_npc_key": "chef_assistant",
+    "reference_doc": "subjects/reference_docs/chef_assistant_primer.md",
+    "technique": null
+  },
+  "distribution": {
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "observed_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "distribution_gaps": []
+  },
+  "statistics": {
+    "total": 132,
+    "train": 120,
+    "validation": 12,
+    "by_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "by_difficulty": {
+      "beginner": 62,
+      "advanced": 24,
+      "intermediate": 46
+    },
+    "by_concept": {
+      "kitchen organization": 12,
+      "core kitchen flow": 11,
+      "ingredient science": 11,
+      "knife skills and techniques": 10,
+      "flavor and ingredient logic": 10,
+      "knife skills": 10,
+      "cooking techniques": 10,
+      "flavor balance": 10,
+      "food safety": 10,
+      "kitchen workflow": 10,
+      "scope and use": 10,
+      "food safety and storage": 9,
+      "misconceptions and refusals": 9
+    },
+    "generator_stats": {
+      "requests": 132,
+      "successes": 132,
+      "errors": 0,
+      "success_rate": 1.0
+    }
+  }
+}

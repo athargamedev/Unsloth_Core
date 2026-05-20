@@ -116,49 +116,48 @@ def main():
 
     hook_root = Path(args.output).parent if args.output else paths.eval_comparison_dir()
     hook_recorder = WorkflowHookRecorder(args.workflow_hooks or default_hook_path(hook_root), tool="compare_runs", npc_key=args.npc_key, spec_path=spec_path)
-    hook_recorder.emit("compare_runs", "start", npc_key=args.npc_key, baseline_run=args.baseline_run, candidate_run=args.candidate_run)
+    with hook_recorder.step("compare_runs", npc_key=args.npc_key, baseline_run=args.baseline_run, candidate_run=args.candidate_run):
 
-    # Build evaluate.py command
-    cmd = [
-        sys.executable,
-        str(PROJECT_ROOT / "scripts" / "evaluation" / "evaluate.py"),
-        "--baseline", baseline_gguf,
-        "--candidate", candidate_gguf,
-    ]
-    if spec_path:
-        cmd.extend(["--spec", spec_path])
-    cmd.extend(["--num-questions", str(args.num_questions)])
-    if args.judge:
-        cmd.append("--judge")
-    cmd.extend(["--workflow-hooks", str(hook_recorder.path)])
+        # Build evaluate.py command
+        cmd = [
+            sys.executable,
+            str(PROJECT_ROOT / "scripts" / "evaluation" / "evaluate.py"),
+            "--baseline", baseline_gguf,
+            "--candidate", candidate_gguf,
+        ]
+        if spec_path:
+            cmd.extend(["--spec", spec_path])
+        cmd.extend(["--num-questions", str(args.num_questions)])
+        if args.judge:
+            cmd.append("--judge")
+        cmd.extend(["--workflow-hooks", str(hook_recorder.path)])
 
-    # Default output path
-    if not args.output:
-        report_dir = paths.eval_comparison_dir()
-        report_dir.mkdir(parents=True, exist_ok=True)
-        today = date.today().isoformat()
-        args.output = str(
-            report_dir
-            / f"{args.npc_key}_{args.baseline_run}_vs_{args.candidate_run}_{today}.md"
-        )
-    cmd.extend(["--output", args.output])
+        # Default output path
+        if not args.output:
+            report_dir = paths.eval_comparison_dir()
+            report_dir.mkdir(parents=True, exist_ok=True)
+            today = date.today().isoformat()
+            args.output = str(
+                report_dir
+                / f"{args.npc_key}_{args.baseline_run}_vs_{args.candidate_run}_{today}.md"
+            )
+        cmd.extend(["--output", args.output])
 
-    # Track results
-    cmd.append("--track")
+        # Track results
+        cmd.append("--track")
 
-    print(f"{'=' * 60}")
-    print(f"  RUN COMPARISON")
-    print(f"  NPC:        {args.npc_key}")
-    print(f"  Baseline:   {args.baseline_run}")
-    print(f"  Candidate:  {args.candidate_run}")
-    print(f"{'=' * 60}")
-    print(f"  Baseline GGUF:  {baseline_gguf}")
-    print(f"  Candidate GGUF: {candidate_gguf}")
-    print(f"  Output:         {args.output}")
-    print()
+        print(f"{'=' * 60}")
+        print(f"  RUN COMPARISON")
+        print(f"  NPC:        {args.npc_key}")
+        print(f"  Baseline:   {args.baseline_run}")
+        print(f"  Candidate:  {args.candidate_run}")
+        print(f"{'=' * 60}")
+        print(f"  Baseline GGUF:  {baseline_gguf}")
+        print(f"  Candidate GGUF: {candidate_gguf}")
+        print(f"  Output:         {args.output}")
+        print()
 
-    subprocess.run(cmd, cwd=str(PROJECT_ROOT), check=True)
-    hook_recorder.emit("compare_runs", "complete", output=args.output, baseline_run=args.baseline_run, candidate_run=args.candidate_run)
+        subprocess.run(cmd, cwd=str(PROJECT_ROOT), check=True)
     print(f"\n{'=' * 60}")
     print(f"  Comparison complete: {args.output}")
     print(f"{'=' * 60}")

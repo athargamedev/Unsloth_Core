@@ -1,0 +1,99 @@
+{
+  "npc_key": "history_guide",
+  "technique": "ollama",
+  "model": "llama3.1-3060-chat:latest",
+  "generation": {
+    "date": "2026-05-20T18:45:20Z",
+    "seed": 42,
+    "temperature": 0.6,
+    "multi_turn_ratio": 0.25,
+    "version": "ollama-v2"
+  },
+  "spec": {
+    "file": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/history_guide.json",
+    "hash": "sha256:1c149ce31a300d7004ec3c7dc5707925a4bb09f891ebbc976e12779cdc7bea59"
+  },
+  "contract": {
+    "supported_categories": [
+      "identity",
+      "teaching",
+      "dialogue",
+      "quest",
+      "refusal"
+    ],
+    "minimum_examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "valid_difficulty_levels": [
+      "beginner",
+      "intermediate",
+      "advanced"
+    ],
+    "spec_npc_key": "history_guide",
+    "reference_doc": "subjects/reference_docs/history_guide_primer.md",
+    "technique": null
+  },
+  "distribution": {
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "observed_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "distribution_gaps": []
+  },
+  "statistics": {
+    "total": 132,
+    "train": 120,
+    "validation": 12,
+    "by_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "by_difficulty": {
+      "beginner": 62,
+      "advanced": 24,
+      "intermediate": 46
+    },
+    "by_concept": {
+      "medieval history": 16,
+      "modern history": 15,
+      "classical antiquity": 14,
+      "historical methodology": 13,
+      "useful vocabulary": 13,
+      "ancient civilizations": 13,
+      "historical thinking": 12,
+      "scope and use": 12,
+      "safety and refusal boundaries": 12,
+      "core timeline anchors": 12
+    },
+    "generator_stats": {
+      "requests": 132,
+      "successes": 132,
+      "errors": 0,
+      "success_rate": 1.0
+    }
+  }
+}

@@ -945,9 +945,9 @@ Examples:
         technique="ollama",
         spec_path=args.spec,
     )
-    hook_recorder.emit("prepare", "start", output_path=str(output_path), model=args.model)
-    
-    if args.dry_run:
+    with hook_recorder.step("prepare", output_path=str(output_path), model=args.model):
+        
+        if args.dry_run:
             examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
             if args.concept_focus:
                 examples_per_category = boost_examples_for_focus(examples_per_category, args.concept_focus)
@@ -961,144 +961,142 @@ Examples:
             logger.info(f"Temperature: {args.temperature}")
             logger.info(f"Batch size: {args.batch_size}")
             logger.info(f"Seed: {args.seed}\n")
-            hook_recorder.emit("prepare", "complete", mode="dry-run", total_expected=total)
             return
-    # ── Generate dataset ──────────────────────────────────────────────────
-    logger.info("Initializing generator...")
-    hook_recorder.emit("model_health", "start", model=args.model)
-    generator = OllamaGeneratorV2(
-        model=args.model,
-        url=f"{args.url}/api/chat",
-        max_retries=args.max_retries,
-        batch_size=args.batch_size,
-        health_check=health_checker
-    )
-    
-    dataset_gen = OllamaDatasetGenerator(spec, generator, batch_size=args.batch_size)
-    
-    examples_per_category = dict(spec.get("dataset", {}).get("examples_per_category", {}) or {})
-    if args.concept_focus:
-        examples_per_category = boost_examples_for_focus(examples_per_category, args.concept_focus)
+        # ── Generate dataset ──────────────────────────────────────────────────
+        logger.info("Initializing generator...")
+        hook_recorder.emit("model_health", "start", model=args.model)
+        generator = OllamaGeneratorV2(
+            model=args.model,
+            url=f"{args.url}/api/chat",
+            max_retries=args.max_retries,
+            batch_size=args.batch_size,
+            health_check=health_checker
+        )
+        
+        dataset_gen = OllamaDatasetGenerator(spec, generator, batch_size=args.batch_size)
+        
+        examples_per_category = dict(spec.get("dataset", {}).get("examples_per_category", {}) or {})
+        if args.concept_focus:
+            examples_per_category = boost_examples_for_focus(examples_per_category, args.concept_focus)
 
-    total_to_gen = sum(examples_per_category.values())
-    logger.info(f"Generating {total_to_gen} examples with model '{args.model}'...")
-    hook_recorder.emit("generate_examples", "start", total_expected=total_to_gen, temperature=args.temperature, batch_size=args.batch_size)
-    if args.concept_focus:
-        logger.info(f"Focused on categories: {', '.join(args.concept_focus)}")
-    logger.info(f"This may take several minutes depending on hardware and model size\n")
-    examples = dataset_gen.generate_dataset_sync(
-        examples_per_category,
-        temperature=args.temperature,
-        multi_turn_ratio=args.multi_turn_ratio,
-    )
-    
-    logger.info(f"\n{'='*70}")
-    logger.info(f"Generation complete: {len(examples)} examples")
-    stats = generator.get_stats()
-    logger.info(f"Stats: {stats['successes']}/{stats['requests']} successful "
-               f"({stats['success_rate']*100:.1f}% success rate, {stats['errors']} errors)")
-    logger.info(f"{'='*70}")
-    
-    # ── Train/validation split ─────────────────────────────────────────────
-    if args.no_validation or len(examples) <= 5:
-        train_examples = examples
-        val_examples = []
-    else:
-        train_examples, val_examples = stratified_train_val_split(examples, args.val_split)
-    
-    # ── Write files ────────────────────────────────────────────────────────
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    val_path = None
-    
-    with open(output_path, "w") as f:
-        for ex in train_examples:
-            ex["metadata"]["split"] = "train"
-            f.write(json.dumps(ex) + "\n")
-    
-    logger.info(f"✓ Wrote {len(train_examples)} training examples to {output_path}")
-    
-    if val_examples:
-        val_path = output_path.parent / "validation.jsonl"
-        with open(val_path, "w") as f:
-            for ex in val_examples:
-                ex["metadata"]["split"] = "validation"
+        total_to_gen = sum(examples_per_category.values())
+        logger.info(f"Generating {total_to_gen} examples with model '{args.model}'...")
+        hook_recorder.emit("generate_examples", "start", total_expected=total_to_gen, temperature=args.temperature, batch_size=args.batch_size)
+        if args.concept_focus:
+            logger.info(f"Focused on categories: {', '.join(args.concept_focus)}")
+        logger.info(f"This may take several minutes depending on hardware and model size\n")
+        examples = dataset_gen.generate_dataset_sync(
+            examples_per_category,
+            temperature=args.temperature,
+            multi_turn_ratio=args.multi_turn_ratio,
+        )
+        
+        logger.info(f"\n{'='*70}")
+        logger.info(f"Generation complete: {len(examples)} examples")
+        stats = generator.get_stats()
+        logger.info(f"Stats: {stats['successes']}/{stats['requests']} successful "
+                   f"({stats['success_rate']*100:.1f}% success rate, {stats['errors']} errors)")
+        logger.info(f"{'='*70}")
+        
+        # ── Train/validation split ─────────────────────────────────────────────
+        if args.no_validation or len(examples) <= 5:
+            train_examples = examples
+            val_examples = []
+        else:
+            train_examples, val_examples = stratified_train_val_split(examples, args.val_split)
+        
+        # ── Write files ────────────────────────────────────────────────────────
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        val_path = None
+        
+        with open(output_path, "w") as f:
+            for ex in train_examples:
+                ex["metadata"]["split"] = "train"
                 f.write(json.dumps(ex) + "\n")
-        logger.info(f"✓ Wrote {len(val_examples)} validation examples to {val_path}")
-    
-    # ── Write manifest ─────────────────────────────────────────────────────
-    by_category = defaultdict(int)
-    by_difficulty = defaultdict(int)
-    by_concept = defaultdict(int)
-    
-    for ex in examples:
-        meta = ex.get("metadata", {})
-        by_category[meta.get("category", "unknown")] += 1
-        diff = meta.get("difficulty")
-        if diff:
-            by_difficulty[diff] += 1
-        conc = meta.get("concept")
-        if conc:
-            by_concept[conc] += 1
-    
-    dataset_contract = dataset_contract_from_spec(spec)
-    spec_hash = None
-    try:
-        spec_path_resolved = Path(args.spec)
-        if spec_path_resolved.exists():
-            spec_hash = "sha256:" + hashlib.sha256(spec_path_resolved.read_bytes()).hexdigest()
-    except Exception:
-        pass
+        
+        logger.info(f"✓ Wrote {len(train_examples)} training examples to {output_path}")
+        
+        if val_examples:
+            val_path = output_path.parent / "validation.jsonl"
+            with open(val_path, "w") as f:
+                for ex in val_examples:
+                    ex["metadata"]["split"] = "validation"
+                    f.write(json.dumps(ex) + "\n")
+            logger.info(f"✓ Wrote {len(val_examples)} validation examples to {val_path}")
+        
+        # ── Write manifest ─────────────────────────────────────────────────────
+        by_category = defaultdict(int)
+        by_difficulty = defaultdict(int)
+        by_concept = defaultdict(int)
+        
+        for ex in examples:
+            meta = ex.get("metadata", {})
+            by_category[meta.get("category", "unknown")] += 1
+            diff = meta.get("difficulty")
+            if diff:
+                by_difficulty[diff] += 1
+            conc = meta.get("concept")
+            if conc:
+                by_concept[conc] += 1
+        
+        dataset_contract = dataset_contract_from_spec(spec)
+        spec_hash = None
+        try:
+            spec_path_resolved = Path(args.spec)
+            if spec_path_resolved.exists():
+                spec_hash = "sha256:" + hashlib.sha256(spec_path_resolved.read_bytes()).hexdigest()
+        except Exception:
+            pass
 
-    manifest = {
-        "npc_key": npc_key,
-        "technique": "ollama",
-        "model": args.model,
-        "generation": {
-            "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "seed": args.seed,
-            "temperature": args.temperature,
-            "multi_turn_ratio": args.multi_turn_ratio,
-            "version": "ollama-v2",
-        },
-        "spec": {
-            "file": str(Path(args.spec).resolve()),
-            "hash": spec_hash,
-        },
-        "contract": dataset_contract,
-        "distribution": {
-            "expected_examples_per_category": dataset_contract["expected_examples_per_category"],
-            "observed_examples_per_category": dict(by_category),
-            "distribution_gaps": calculate_distribution_gaps(dataset_contract["expected_examples_per_category"], dict(by_category)),
-        },
-        "statistics": {
-            "total": len(examples),
-            "train": len(train_examples),
-            "validation": len(val_examples),
-            "by_category": dict(by_category),
-            "by_difficulty": dict(by_difficulty),
-            "by_concept": dict(sorted(by_concept.items(), key=lambda x: -x[1])),
-            "generator_stats": stats,
-        },
-    }
-    
-    manifest_path = output_path.parent / "train_manifest.json"
-    with open(manifest_path, "w") as f:
-        json.dump(manifest, f, indent=2)
-    logger.info(f"✓ Wrote manifest to {manifest_path}")
-    hook_recorder.emit("write_artifacts", "complete", train_path=str(output_path), val_path=str(val_path) if val_path else None, manifest_path=str(manifest_path), total=len(examples))
-    
-    # ── Report errors ──────────────────────────────────────────────────────
-    if dataset_gen.progress and dataset_gen.progress.errors:
-        error_path = output_path.parent / "generation_errors.json"
-        with open(error_path, "w") as f:
-            json.dump(dataset_gen.progress.errors, f, indent=2)
-        logger.warning(f"⚠ {len(dataset_gen.progress.errors)} generation errors logged to {error_path}")
-    
-    logger.info("\n✓ Dataset generation complete!")
-    hook_recorder.emit("prepare", "complete", train_rows=len(train_examples), validation_rows=len(val_examples), total=len(examples))
-    log_state("dataset_generated", npc_key=npc_key, total=len(examples),
-             train=len(train_examples), validation=len(val_examples), technique="ollama")
+        manifest = {
+            "npc_key": npc_key,
+            "technique": "ollama",
+            "model": args.model,
+            "generation": {
+                "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "seed": args.seed,
+                "temperature": args.temperature,
+                "multi_turn_ratio": args.multi_turn_ratio,
+                "version": "ollama-v2",
+            },
+            "spec": {
+                "file": str(Path(args.spec).resolve()),
+                "hash": spec_hash,
+            },
+            "contract": dataset_contract,
+            "distribution": {
+                "expected_examples_per_category": dataset_contract["expected_examples_per_category"],
+                "observed_examples_per_category": dict(by_category),
+                "distribution_gaps": calculate_distribution_gaps(dataset_contract["expected_examples_per_category"], dict(by_category)),
+            },
+            "statistics": {
+                "total": len(examples),
+                "train": len(train_examples),
+                "validation": len(val_examples),
+                "by_category": dict(by_category),
+                "by_difficulty": dict(by_difficulty),
+                "by_concept": dict(sorted(by_concept.items(), key=lambda x: -x[1])),
+                "generator_stats": stats,
+            },
+        }
+        
+        manifest_path = output_path.parent / "train_manifest.json"
+        with open(manifest_path, "w") as f:
+            json.dump(manifest, f, indent=2)
+        logger.info(f"✓ Wrote manifest to {manifest_path}")
+        hook_recorder.emit("write_artifacts", "complete", train_path=str(output_path), val_path=str(val_path) if val_path else None, manifest_path=str(manifest_path), total=len(examples))
+        
+        # ── Report errors ──────────────────────────────────────────────────────
+        if dataset_gen.progress and dataset_gen.progress.errors:
+            error_path = output_path.parent / "generation_errors.json"
+            with open(error_path, "w") as f:
+                json.dump(dataset_gen.progress.errors, f, indent=2)
+            logger.warning(f"⚠ {len(dataset_gen.progress.errors)} generation errors logged to {error_path}")
+        
+        logger.info("\n✓ Dataset generation complete!")
+        log_state("dataset_generated", npc_key=npc_key, total=len(examples),
+                 train=len(train_examples), validation=len(val_examples), technique="ollama")
 
 
 if __name__ == "__main__":

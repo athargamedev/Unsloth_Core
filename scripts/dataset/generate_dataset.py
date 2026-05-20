@@ -1629,221 +1629,218 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
         spec_path=spec_path,
     )
     total_count = sum(examples_per_category.values())
-    hook_recorder.emit("prepare", "start", output_path=str(output_path_obj), include_validation=include_validation, total_expected=total_count)
+    with hook_recorder.step("prepare", output_path=str(output_path_obj), include_validation=include_validation, total_expected=total_count):
 
-    quest_spec = spec.get("quest", {})
-    quest_scenario_list = quest_spec.get("scenarios", [])
-    quest_scenarios = [s["name"] for s in quest_scenario_list] if quest_scenario_list else []
+        quest_spec = spec.get("quest", {})
+        quest_scenario_list = quest_spec.get("scenarios", [])
+        quest_scenarios = [s["name"] for s in quest_scenario_list] if quest_scenario_list else []
 
-    refusal_spec = spec.get("refusal", {})
-    refusal_boundaries = refusal_spec.get("boundaries", [])
+        refusal_spec = spec.get("refusal", {})
+        refusal_boundaries = refusal_spec.get("boundaries", [])
 
-    if generator:
-        hook_recorder.emit("generate_examples", "start", mode="async", total_expected=total_count)
-        examples = _run_coroutine_sync(
-            generate_dataset_async_runner(
-                spec, concepts, examples_per_category, generator, multi_turn_ratio, temperature,
-                technique, seed, quest_scenarios, refusal_boundaries, retriever, guardrail,
-                checkpoint_store, telemetry_reporter
-            )
-        )
-    else:
-        examples = []
-        current = 0
-        
-        existing_examples = checkpoint_store.get_all_for_npc(spec["npc_key"]) if checkpoint_store else []
-        existing_by_cat = defaultdict(list)
-        for ex in existing_examples:
-            cat = ex.get("metadata", {}).get("category", "unknown")
-            existing_by_cat[cat].append(ex)
-
-        for category, count in examples_per_category.items():
-            if category not in CATEGORY_TEMPLATES:
-                print(f"  [warn] Unknown category '{category}', skipping")
-                continue
-
-            recovered = existing_by_cat.get(category, [])[:count]
-            examples.extend(recovered)
-            remaining_count = count - len(recovered)
-            if recovered:
-                print(f"  Recovered {len(recovered)} existing examples for '{category}' from checkpoint.")
-                current += len(recovered)
-            
-            if remaining_count <= 0:
-                continue
-
-            difficulties = None
-            dialogue_types = None
-            scenario_names = None
-            boundaries = None
-
-            if category == "teaching":
-                n_beg = int(remaining_count * 0.40)
-                n_int = int(remaining_count * 0.35)
-                n_adv = remaining_count - n_beg - n_int
-                difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
-                random.shuffle(difficulties)
-            elif category == "dialogue":
-                n_clar = int(remaining_count * 0.20)
-                n_dive = int(remaining_count * 0.30)
-                n_app = int(remaining_count * 0.30)
-                n_misc = remaining_count - n_clar - n_dive - n_app
-                dialogue_types = (["clarification"] * n_clar + ["deep_dive"] * n_dive
-                                + ["application"] * n_app + ["misconception"] * n_misc)
-                random.shuffle(dialogue_types)
-                n_beg = int(remaining_count * 0.40)
-                n_int = int(remaining_count * 0.35)
-                n_adv = remaining_count - n_beg - n_int
-                difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
-                random.shuffle(difficulties)
-            elif category == "quest" and quest_scenarios:
-                scenario_names = [quest_scenarios[i % len(quest_scenarios)] for i in range(remaining_count)]
-                random.shuffle(scenario_names)
-                difficulties = ["intermediate"] * remaining_count
-            elif category == "refusal" and refusal_boundaries:
-                boundaries = [refusal_boundaries[i % len(refusal_boundaries)] for i in range(remaining_count)]
-                random.shuffle(boundaries)
-                difficulties = ["beginner"] * remaining_count
-            elif category == "identity":
-                difficulties = ["beginner"] * remaining_count
-
-            print(f"  Generating {remaining_count} examples for '{category}'...")
-            for i in range(remaining_count):
-                diff = difficulties[i] if difficulties else None
-                dt = dialogue_types[i] if dialogue_types else None
-                sn = scenario_names[i] if scenario_names else None
-                bd = boundaries[i] if boundaries else None
-
-                example = _run_coroutine_sync(
-                    generate_example_async(
-                        spec, category, concepts, generator=generator, temperature=temperature,
-                        difficulty=diff, dialogue_type=dt, scenario_name=sn, boundary=bd, seed=seed,
-                        technique=technique, session=None, executor=None, retriever=retriever,
-                        guardrail=guardrail, checkpoint_store=checkpoint_store
-                    )
+        if generator:
+            hook_recorder.emit("generate_examples", "start", mode="async", total_expected=total_count)
+            examples = _run_coroutine_sync(
+                generate_dataset_async_runner(
+                    spec, concepts, examples_per_category, generator, multi_turn_ratio, temperature,
+                    technique, seed, quest_scenarios, refusal_boundaries, retriever, guardrail,
+                    checkpoint_store, telemetry_reporter
                 )
-
-                example["metadata"]["category"] = category
-                examples.append(example)
-                current += 1
-                if telemetry_reporter:
-                    telemetry_reporter.report(total_count, current, category)
-                if current % 5 == 0 or current == total_count:
-                    print(f"    Progress: {current}/{total_count}")
-
-        hook_recorder.emit("generate_examples", "complete", generated=len(examples), total_expected=total_count)
-
-    # ── Split into train/validation (stratified by category) ─────────────
-    if include_validation and len(examples) > 5:
-        by_category = defaultdict(list)
-        for ex in examples:
-            cat = ex.get("metadata", {}).get("category", "unknown")
-            by_category[cat].append(ex)
-
-        train_examples = []
-        val_examples = []
-        for cat, cat_examples in by_category.items():
-            random.shuffle(cat_examples)
-            # Ensure at least 1 example for validation if count > 1
-            split = max(1, min(len(cat_examples) - 1, int(len(cat_examples) * val_split))) if len(cat_examples) > 1 else 0
-            val_examples.extend(cat_examples[:split])
-            train_examples.extend(cat_examples[split:])
-
-        random.shuffle(train_examples)
-        random.shuffle(val_examples)
-    else:
-        train_examples = list(examples)
-        val_examples = []
-
-    # Set split metadata on every example
-    for ex in train_examples:
-        ex["metadata"]["split"] = "train"
-    for ex in val_examples:
-        ex["metadata"]["split"] = "validation"
-
-    # Write training set
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    hook_recorder.emit("write_artifacts", "start", train_target=str(output_path), validation_enabled=include_validation)
-
-    train_path = output_path
-    with open(train_path, "w") as f:
-        for ex in train_examples:
-            f.write(json.dumps(ex) + "\n")
-
-    # Write validation set
-    val_path = None
-    if val_examples:
-        val_path = output_path.parent / "validation.jsonl"
-        with open(val_path, "w") as f:
-            for ex in val_examples:
-                f.write(json.dumps(ex) + "\n")
-
-    # ── Compute statistics for manifest ──
-    by_category = defaultdict(int)
-    by_difficulty = defaultdict(int)
-    by_concept = defaultdict(int)
-
-    for ex in examples:
-        meta = ex.get("metadata", {})
-        by_category[meta.get("category", "unknown")] += 1
-        diff = meta.get("difficulty")
-        if diff:
-            by_difficulty[diff] += 1
-        conc = meta.get("concept")
-        if conc:
-            by_concept[conc] += 1
-
-    # Compute spec file hash for provenance tracking
-    spec_hash = None
-    if spec_path:
-        spec_path_resolved = Path(spec_path)
-        if spec_path_resolved.exists():
-            spec_bytes = spec_path_resolved.read_bytes()
-            spec_hash = "sha256:" + hashlib.sha256(spec_bytes).hexdigest()
+            )
         else:
-            print(f"  [warn] Could not hash spec file {spec_path}: file not found")
+            examples = []
+            current = 0
+            
+            existing_examples = checkpoint_store.get_all_for_npc(spec["npc_key"]) if checkpoint_store else []
+            existing_by_cat = defaultdict(list)
+            for ex in existing_examples:
+                cat = ex.get("metadata", {}).get("category", "unknown")
+                existing_by_cat[cat].append(ex)
 
-    # Write train_manifest.json
-    dataset_contract = dataset_contract_from_spec(spec)
-    manifest = {
-        "npc_key": spec["npc_key"],
-        "technique": technique,
-        "generation": {
-            "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "seed": seed,
-            "generator_version": "improved-workflow-v1",
-            "sanitizer_version": "v1",
-        },
-        "spec": {
-            "file": str(spec_path) if spec_path else None,
-            "hash": spec_hash,
-            "ref_doc": spec.get("reference_doc"),
-        },
-        "contract": dataset_contract,
-        "distribution": {
-            "expected_examples_per_category": dataset_contract["expected_examples_per_category"],
-            "observed_examples_per_category": dict(by_category),
-            "distribution_gaps": calculate_distribution_gaps(dataset_contract["expected_examples_per_category"], dict(by_category)),
-        },
-        "statistics": {
-            "total": len(examples),
-            "train": len(train_examples),
-            "validation": len(val_examples),
-            "by_category": dict(by_category),
-            "by_difficulty": dict(by_difficulty),
-            "by_concept": dict(sorted(by_concept.items(), key=lambda x: -x[1])),
-        },
-    }
+            for category, count in examples_per_category.items():
+                if category not in CATEGORY_TEMPLATES:
+                    print(f"  [warn] Unknown category '{category}', skipping")
+                    continue
 
-    manifest_path = output_path.parent / "train_manifest.json"
-    with open(manifest_path, "w") as f:
-        json.dump(manifest, f, indent=2)
+                recovered = existing_by_cat.get(category, [])[:count]
+                examples.extend(recovered)
+                remaining_count = count - len(recovered)
+                if recovered:
+                    print(f"  Recovered {len(recovered)} existing examples for '{category}' from checkpoint.")
+                    current += len(recovered)
+                
+                if remaining_count <= 0:
+                    continue
 
-    print(f"  Manifest:        {manifest_path}")
+                difficulties = None
+                dialogue_types = None
+                scenario_names = None
+                boundaries = None
 
-    hook_recorder.emit("write_artifacts", "complete", train_rows=len(train_examples), validation_rows=len(val_examples), manifest_path=str(manifest_path))
-    hook_recorder.emit("prepare", "complete", total_examples=len(examples), train_rows=len(train_examples), validation_rows=len(val_examples))
+                if category == "teaching":
+                    n_beg = int(remaining_count * 0.40)
+                    n_int = int(remaining_count * 0.35)
+                    n_adv = remaining_count - n_beg - n_int
+                    difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                    random.shuffle(difficulties)
+                elif category == "dialogue":
+                    n_clar = int(remaining_count * 0.20)
+                    n_dive = int(remaining_count * 0.30)
+                    n_app = int(remaining_count * 0.30)
+                    n_misc = remaining_count - n_clar - n_dive - n_app
+                    dialogue_types = (["clarification"] * n_clar + ["deep_dive"] * n_dive
+                                    + ["application"] * n_app + ["misconception"] * n_misc)
+                    random.shuffle(dialogue_types)
+                    n_beg = int(remaining_count * 0.40)
+                    n_int = int(remaining_count * 0.35)
+                    n_adv = remaining_count - n_beg - n_int
+                    difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                    random.shuffle(difficulties)
+                elif category == "quest" and quest_scenarios:
+                    scenario_names = [quest_scenarios[i % len(quest_scenarios)] for i in range(remaining_count)]
+                    random.shuffle(scenario_names)
+                    difficulties = ["intermediate"] * remaining_count
+                elif category == "refusal" and refusal_boundaries:
+                    boundaries = [refusal_boundaries[i % len(refusal_boundaries)] for i in range(remaining_count)]
+                    random.shuffle(boundaries)
+                    difficulties = ["beginner"] * remaining_count
+                elif category == "identity":
+                    difficulties = ["beginner"] * remaining_count
+
+                print(f"  Generating {remaining_count} examples for '{category}'...")
+                for i in range(remaining_count):
+                    diff = difficulties[i] if difficulties else None
+                    dt = dialogue_types[i] if dialogue_types else None
+                    sn = scenario_names[i] if scenario_names else None
+                    bd = boundaries[i] if boundaries else None
+
+                    example = _run_coroutine_sync(
+                        generate_example_async(
+                            spec, category, concepts, generator=generator, temperature=temperature,
+                            difficulty=diff, dialogue_type=dt, scenario_name=sn, boundary=bd, seed=seed,
+                            technique=technique, session=None, executor=None, retriever=retriever,
+                            guardrail=guardrail, checkpoint_store=checkpoint_store
+                        )
+                    )
+
+                    example["metadata"]["category"] = category
+                    examples.append(example)
+                    current += 1
+                    if telemetry_reporter:
+                        telemetry_reporter.report(total_count, current, category)
+                    if current % 5 == 0 or current == total_count:
+                        print(f"    Progress: {current}/{total_count}")
+
+            hook_recorder.emit("generate_examples", "complete", generated=len(examples), total_expected=total_count)
+
+        # ── Split into train/validation (stratified by category) ─────────────
+        if include_validation and len(examples) > 5:
+            by_category = defaultdict(list)
+            for ex in examples:
+                cat = ex.get("metadata", {}).get("category", "unknown")
+                by_category[cat].append(ex)
+
+            train_examples = []
+            val_examples = []
+            for cat, cat_examples in by_category.items():
+                random.shuffle(cat_examples)
+                # Ensure at least 1 example for validation if count > 1
+                split = max(1, min(len(cat_examples) - 1, int(len(cat_examples) * val_split))) if len(cat_examples) > 1 else 0
+                val_examples.extend(cat_examples[:split])
+                train_examples.extend(cat_examples[split:])
+
+            random.shuffle(train_examples)
+            random.shuffle(val_examples)
+        else:
+            train_examples = list(examples)
+            val_examples = []
+
+        # Set split metadata on every example
+        for ex in train_examples:
+            ex["metadata"]["split"] = "train"
+        for ex in val_examples:
+            ex["metadata"]["split"] = "validation"
+
+        # Write training set
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with hook_recorder.step("write_artifacts", train_target=str(output_path), validation_enabled=include_validation):
+
+            train_path = output_path
+            with open(train_path, "w") as f:
+                for ex in train_examples:
+                    f.write(json.dumps(ex) + "\n")
+
+            # Write validation set
+            val_path = None
+            if val_examples:
+                val_path = output_path.parent / "validation.jsonl"
+                with open(val_path, "w") as f:
+                    for ex in val_examples:
+                        f.write(json.dumps(ex) + "\n")
+
+            # ── Compute statistics for manifest ──
+            by_category = defaultdict(int)
+            by_difficulty = defaultdict(int)
+            by_concept = defaultdict(int)
+
+            for ex in examples:
+                meta = ex.get("metadata", {})
+                by_category[meta.get("category", "unknown")] += 1
+                diff = meta.get("difficulty")
+                if diff:
+                    by_difficulty[diff] += 1
+                conc = meta.get("concept")
+                if conc:
+                    by_concept[conc] += 1
+
+            # Compute spec file hash for provenance tracking
+            spec_hash = None
+            if spec_path:
+                spec_path_resolved = Path(spec_path)
+                if spec_path_resolved.exists():
+                    spec_bytes = spec_path_resolved.read_bytes()
+                    spec_hash = "sha256:" + hashlib.sha256(spec_bytes).hexdigest()
+                else:
+                    print(f"  [warn] Could not hash spec file {spec_path}: file not found")
+
+            # Write train_manifest.json
+            dataset_contract = dataset_contract_from_spec(spec)
+            manifest = {
+                "npc_key": spec["npc_key"],
+                "technique": technique,
+                "generation": {
+                    "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "seed": seed,
+                    "generator_version": "improved-workflow-v1",
+                    "sanitizer_version": "v1",
+                },
+                "spec": {
+                    "file": str(spec_path) if spec_path else None,
+                    "hash": spec_hash,
+                    "ref_doc": spec.get("reference_doc"),
+                },
+                "contract": dataset_contract,
+                "distribution": {
+                    "expected_examples_per_category": dataset_contract["expected_examples_per_category"],
+                    "observed_examples_per_category": dict(by_category),
+                    "distribution_gaps": calculate_distribution_gaps(dataset_contract["expected_examples_per_category"], dict(by_category)),
+                },
+                "statistics": {
+                    "total": len(examples),
+                    "train": len(train_examples),
+                    "validation": len(val_examples),
+                    "by_category": dict(by_category),
+                    "by_difficulty": dict(by_difficulty),
+                    "by_concept": dict(sorted(by_concept.items(), key=lambda x: -x[1])),
+                },
+            }
+
+            manifest_path = output_path.parent / "train_manifest.json"
+            with open(manifest_path, "w") as f:
+                json.dump(manifest, f, indent=2)
+
+            print(f"  Manifest:        {manifest_path}")
 
     return {
         "spec": spec["npc_key"],

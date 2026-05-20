@@ -1135,364 +1135,352 @@ def main():
 
     hook_root = Path(args.output).parent if args.output else (paths.eval_report_dir(spec['npc_key']) if spec else PROJECT_ROOT / "eval" / "reports")
     hook_recorder = WorkflowHookRecorder(args.workflow_hooks or default_hook_path(hook_root), tool="evaluate", npc_key=spec["npc_key"] if spec else None, spec_path=args.spec)
-    hook_recorder.emit("evaluate_pipeline", "start", baseline=str(baseline_gguf), candidate=str(candidate_gguf), report_path=args.output, html=bool(args.report_html), track=bool(args.track))
+    with hook_recorder.step("evaluate_pipeline", baseline=str(baseline_gguf), candidate=str(candidate_gguf), report_path=args.output, html=bool(args.report_html), track=bool(args.track)):
 
-    if not questions and args.val_data:
-        val_set = load_validation_set(args.val_data)
-        questions = val_set
-        print(f"Loaded {len(questions)} questions from validation set")
+        if not questions and args.val_data:
+            val_set = load_validation_set(args.val_data)
+            questions = val_set
+            print(f"Loaded {len(questions)} questions from validation set")
 
-    if not questions:
-        # Fall back to generic questions
-        print("No validation set found. Using generic evaluation questions.")
-        questions = generic_eval_questions(spec)
+        if not questions:
+            # Fall back to generic questions
+            print("No validation set found. Using generic evaluation questions.")
+            questions = generic_eval_questions(spec)
 
-    # Limit questions
-    questions = questions[:args.num_questions]
+        # Limit questions
+        questions = questions[:args.num_questions]
 
-    # Start baseline server
-    print("\n[1/4] Starting baseline server...")
-    hook_recorder.emit("start_baseline_server", "start", port=args.port)
-    baseline_kwargs = dict(port=args.port, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens)
-    if args.base_model:
-        base_model_path = Path(args.base_model)
-        if not base_model_path.exists():
-            print(f"Error: Base model not found: {args.base_model}")
-            sys.exit(1)
-        if baseline_gguf.resolve() == base_model_path.resolve():
-            baseline_server = LlamaServer(base_model_path, **baseline_kwargs)
-            print(f"  (LoRA mode: baseline is base-only: {base_model_path})")
+        # Start baseline server
+        print("\n[1/4] Starting baseline server...")
+        baseline_kwargs = dict(port=args.port, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens)
+        if args.base_model:
+            base_model_path = Path(args.base_model)
+            if not base_model_path.exists():
+                print(f"Error: Base model not found: {args.base_model}")
+                sys.exit(1)
+            if baseline_gguf.resolve() == base_model_path.resolve():
+                baseline_server = LlamaServer(base_model_path, **baseline_kwargs)
+                print(f"  (LoRA mode: baseline is base-only: {base_model_path})")
+            else:
+                baseline_server = LlamaServer(
+                    base_model_path, lora_path=baseline_gguf,
+                    lora_weight=args.lora_weight, **baseline_kwargs
+                )
+                print(f"  (LoRA mode: base={base_model_path}, adapter={baseline_gguf})")
         else:
-            baseline_server = LlamaServer(
-                base_model_path, lora_path=baseline_gguf,
-                lora_weight=args.lora_weight, **baseline_kwargs
+            baseline_server = LlamaServer(baseline_gguf, **baseline_kwargs)
+        with hook_recorder.step("start_baseline_server", port=args.port):
+            if not baseline_server.start():
+                sys.exit(1)
+
+        print("[2/4] Evaluating baseline...")
+        with hook_recorder.step("evaluate_baseline", questions=len(questions)):
+            baseline_results = evaluate_model(baseline_server, questions, spec)
+        baseline_server.stop()
+
+        # Start candidate server
+        print("\n[3/4] Starting candidate server...")
+        candidate_kwargs = dict(port=args.port + 1, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens)
+        if args.base_model:
+            # LoRA mode: candidate is an adapter, start server with base model + --lora
+            base_model_path = Path(args.base_model)
+            if not base_model_path.exists():
+                print(f"Error: Base model not found: {args.base_model}")
+                sys.exit(1)
+            candidate_server = LlamaServer(
+                base_model_path, lora_path=candidate_gguf,
+                lora_weight=args.lora_weight, **candidate_kwargs
             )
-            print(f"  (LoRA mode: base={base_model_path}, adapter={baseline_gguf})")
-    else:
-        baseline_server = LlamaServer(baseline_gguf, **baseline_kwargs)
-    if not baseline_server.start():
-        hook_recorder.emit("start_baseline_server", "error", port=args.port)
-        sys.exit(1)
-    hook_recorder.emit("start_baseline_server", "complete", port=args.port)
+            print(f"  (LoRA mode: base={base_model_path}, adapter={candidate_gguf})")
+        else:
+            candidate_server = LlamaServer(candidate_gguf, **candidate_kwargs)
+        with hook_recorder.step("start_candidate_server", port=args.port + 1):
+            if not candidate_server.start():
+                sys.exit(1)
 
-    print("[2/4] Evaluating baseline...")
-    hook_recorder.emit("evaluate_baseline", "start", questions=len(questions))
-    baseline_results = evaluate_model(baseline_server, questions, spec)
-    hook_recorder.emit("evaluate_baseline", "complete", questions=len(questions))
-    baseline_server.stop()
+        print("[4/4] Evaluating candidate...")
+        with hook_recorder.step("evaluate_candidate", questions=len(questions)):
+            candidate_results = evaluate_model(candidate_server, questions, spec)
+        candidate_server.stop()
 
-    # Start candidate server
-    print("\n[3/4] Starting candidate server...")
-    hook_recorder.emit("start_candidate_server", "start", port=args.port + 1)
-    candidate_kwargs = dict(port=args.port + 1, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens)
-    if args.base_model:
-        # LoRA mode: candidate is an adapter, start server with base model + --lora
-        base_model_path = Path(args.base_model)
-        if not base_model_path.exists():
-            print(f"Error: Base model not found: {args.base_model}")
-            sys.exit(1)
-        candidate_server = LlamaServer(
-            base_model_path, lora_path=candidate_gguf,
-            lora_weight=args.lora_weight, **candidate_kwargs
-        )
-        print(f"  (LoRA mode: base={base_model_path}, adapter={candidate_gguf})")
-    else:
-        candidate_server = LlamaServer(candidate_gguf, **candidate_kwargs)
-    if not candidate_server.start():
-        hook_recorder.emit("start_candidate_server", "error", port=args.port + 1)
-        sys.exit(1)
-    hook_recorder.emit("start_candidate_server", "complete", port=args.port + 1)
+        # Compare and report
+        print("\nComparing models...")
+        with hook_recorder.step("compare_models", questions=len(questions)):
+            judge = None
+            if args.judge:
+                print(f"Initializing Ollama judge ({args.judge_model})...")
+                judge = OllamaJudge(model=args.judge_model)
+            comparison = compare_models(baseline_results, candidate_results, spec, judge=judge)
 
-    print("[4/4] Evaluating candidate...")
-    hook_recorder.emit("evaluate_candidate", "start", questions=len(questions))
-    candidate_results = evaluate_model(candidate_server, questions, spec)
-    hook_recorder.emit("evaluate_candidate", "complete", questions=len(questions))
-    candidate_server.stop()
+        if not "*" in args.baseline:
+            baseline_path = Path(args.baseline)
+            baseline_name = f"{baseline_path.parent.name}/{baseline_path.stem}"
+        else:
+            baseline_path = Path(str(baseline_gguf))
+            baseline_name = f"{baseline_path.parent.name}/{baseline_path.stem}"
+        if not "*" in args.candidate:
+            candidate_path = Path(args.candidate)
+            candidate_name = f"{candidate_path.parent.name}/{candidate_path.stem}"
+        else:
+            candidate_path = Path(str(candidate_gguf))
+            candidate_name = f"{candidate_path.parent.name}/{candidate_path.stem}"
 
-    # Compare and report
-    print("\nComparing models...")
-    hook_recorder.emit("compare_models", "start", questions=len(questions))
-    judge = None
-    if args.judge:
-        print(f"Initializing Ollama judge ({args.judge_model})...")
-        judge = OllamaJudge(model=args.judge_model)
+        with hook_recorder.step("write_report", report_path=args.output):
+            report = generate_report(
+                comparison,
+                baseline_name=baseline_name,
+                candidate_name=candidate_name,
+                spec=spec,
+                output_path=args.output,
+            )
 
-    comparison = compare_models(baseline_results, candidate_results, spec, judge=judge)
-    hook_recorder.emit("compare_models", "complete", total=comparison.get("total"), candidate_wins=comparison.get("candidate_wins"), baseline_wins=comparison.get("baseline_wins"), ties=comparison.get("ties"))
+        print(report)
 
-    if not "*" in args.baseline:
-        baseline_path = Path(args.baseline)
-        baseline_name = f"{baseline_path.parent.name}/{baseline_path.stem}"
-    else:
-        baseline_path = Path(str(baseline_gguf))
-        baseline_name = f"{baseline_path.parent.name}/{baseline_path.stem}"
-    if not "*" in args.candidate:
-        candidate_path = Path(args.candidate)
-        candidate_name = f"{candidate_path.parent.name}/{candidate_path.stem}"
-    else:
-        candidate_path = Path(str(candidate_gguf))
-        candidate_name = f"{candidate_path.parent.name}/{candidate_path.stem}"
+        # Generate HTML report with loss curves if requested
+        if args.report_html:
+            html_path = Path(args.output).with_suffix(".html") if args.output else None
+            if html_path is None and spec:
+                html_path = paths.eval_report_path(spec["npc_key"], fmt="html")
+            with hook_recorder.step("write_html_report", html_path=str(html_path) if html_path else None):
+                generate_html_report(
+                    comparison,
+                    baseline_name=baseline_name,
+                    candidate_name=candidate_name,
+                    spec=spec,
+                    output_path=str(html_path) if html_path else None,
+                )
 
-    hook_recorder.emit("write_report", "start", report_path=args.output)
-    report = generate_report(
-        comparison,
-        baseline_name=baseline_name,
-        candidate_name=candidate_name,
-        spec=spec,
-        output_path=args.output,
-    )
-
-    print(report)
-    hook_recorder.emit("write_report", "complete", report_path=args.output)
-
-    # Generate HTML report with loss curves if requested
-    if args.report_html:
-        html_path = Path(args.output).with_suffix(".html") if args.output else None
-        if html_path is None and spec:
-            html_path = paths.eval_report_path(spec["npc_key"], fmt="html")
-        hook_recorder.emit("write_html_report", "start", html_path=str(html_path) if html_path else None)
-        generate_html_report(
-            comparison,
-            baseline_name=baseline_name,
-            candidate_name=candidate_name,
-            spec=spec,
-            output_path=str(html_path) if html_path else None,
-        )
-        hook_recorder.emit("write_html_report", "complete", html_path=str(html_path) if html_path else None)
-
-    # Track results if requested
-    if args.track and spec:
-        from scripts.track_eval_results import track_result, track_per_example_result
-        
-        npc_key = spec.get("npc_key", "unknown")
-        cw = comparison["candidate_wins"]
-        total = comparison["total"]
-        ties = comparison["ties"]
-        
-        c_metrics_agg = [c["candidate_metrics"] for c in comparison.get("comparisons", [])]
-        avg_candidate_quality = sum(m.get("quality", 0) for m in c_metrics_agg) / len(c_metrics_agg) if c_metrics_agg else 0
-        
-        print(f"\n[track] Storing summary in Supabase/local...")
-        track_result(
-            npc_key=npc_key,
-            model_path=str(candidate_gguf),
-            win_rate=cw / total if total > 0 else 0,
-            avg_quality=avg_candidate_quality,
-            notes=f"vs {baseline_name}: {cw}/{total} wins, {ties} ties",
-            metadata={
-                "baseline_model": baseline_name,
-                "candidate_model": candidate_name,
-                "total_examples": total,
-                "wins": cw,
-                "ties": ties
-            }
-        )
-
-        print(f"[track] Storing per-example results in Supabase...")
-        test_run_name = f"Compare_{npc_key}_{datetime.now().strftime('%Y%m%d_%H%M')}"
-        for comp in comparison.get("comparisons", []):
-            track_per_example_result(
+        # Track results if requested
+        if args.track and spec:
+            from scripts.track_eval_results import track_result, track_per_example_result
+            
+            npc_key = spec.get("npc_key", "unknown")
+            cw = comparison["candidate_wins"]
+            total = comparison["total"]
+            ties = comparison["ties"]
+            
+            c_metrics_agg = [c["candidate_metrics"] for c in comparison.get("comparisons", [])]
+            avg_candidate_quality = sum(m.get("quality", 0) for m in c_metrics_agg) / len(c_metrics_agg) if c_metrics_agg else 0
+            
+            print(f"\n[track] Storing summary in Supabase/local...")
+            track_result(
                 npc_key=npc_key,
-                test_name=test_run_name,
-                prompt=comp["question"],
-                response=comp["candidate"],
-                expected=None,
-                score=1.0 if comp["winner"] == "candidate" else (0.5 if comp["winner"] == "tie" else 0.0),
-                metrics=comp["candidate_metrics"],
+                model_path=str(candidate_gguf),
+                win_rate=cw / total if total > 0 else 0,
+                avg_quality=avg_candidate_quality,
+                notes=f"vs {baseline_name}: {cw}/{total} wins, {ties} ties",
                 metadata={
-                    "baseline_response": comp["baseline"],
-                    "winner": comp["winner"],
-                    "reasoning": comp.get("reasoning")
+                    "baseline_model": baseline_name,
+                    "candidate_model": candidate_name,
+                    "total_examples": total,
+                    "wins": cw,
+                    "ties": ties
                 }
             )
 
-    # ── Feedback JSON output ────────────────────────────────────────────
-    if args.feedback_json and spec:
-        npc_key = spec.get("npc_key", "unknown")
-        feedback_path = Path(args.feedback_json)
-        feedback_path.parent.mkdir(parents=True, exist_ok=True)
+            print(f"[track] Storing per-example results in Supabase...")
+            test_run_name = f"Compare_{npc_key}_{datetime.now().strftime('%Y%m%d_%H%M')}"
+            for comp in comparison.get("comparisons", []):
+                track_per_example_result(
+                    npc_key=npc_key,
+                    test_name=test_run_name,
+                    prompt=comp["question"],
+                    response=comp["candidate"],
+                    expected=None,
+                    score=1.0 if comp["winner"] == "candidate" else (0.5 if comp["winner"] == "tie" else 0.0),
+                    metrics=comp["candidate_metrics"],
+                    metadata={
+                        "baseline_response": comp["baseline"],
+                        "winner": comp["winner"],
+                        "reasoning": comp.get("reasoning")
+                    }
+                )
 
-        # Group comparisons by concept (extracted from question or use generic)
-        from collections import defaultdict
-        by_concept = defaultdict(list)
-        for comp in comparison.get("comparisons", []):
-            concept = "general"
-            # Try to extract concept from metadata in the validation question
-            q_meta = comp.get("metadata", {})
-            if q_meta.get("category"):
-                concept = f"{q_meta['category']}/{q_meta.get('concept', 'general')}"
-            by_concept[concept].append(comp)
+        # ── Feedback JSON output ────────────────────────────────────────────
+        if args.feedback_json and spec:
+            npc_key = spec.get("npc_key", "unknown")
+            feedback_path = Path(args.feedback_json)
+            feedback_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Compute per-concept metrics
-        per_concept = {}
-        for concept, comps in by_concept.items():
-            b_metrics = [c["baseline_metrics"] for c in comps]
-            c_metrics = [c["candidate_metrics"] for c in comps]
-            baseline_wins = sum(1 for c in comps if c["winner"] == "baseline")
-            candidate_wins = sum(1 for c in comps if c["winner"] == "candidate")
-            ties = sum(1 for c in comps if c["winner"] == "tie")
+            # Group comparisons by concept (extracted from question or use generic)
+            from collections import defaultdict
+            by_concept = defaultdict(list)
+            for comp in comparison.get("comparisons", []):
+                concept = "general"
+                # Try to extract concept from metadata in the validation question
+                q_meta = comp.get("metadata", {})
+                if q_meta.get("category"):
+                    concept = f"{q_meta['category']}/{q_meta.get('concept', 'general')}"
+                by_concept[concept].append(comp)
 
-            per_concept[concept] = {
-                "total": len(comps),
-                "baseline_wins": baseline_wins,
-                "candidate_wins": candidate_wins,
-                "ties": ties,
-                "win_rate": candidate_wins / len(comps) if comps else 0,
-                "avg_baseline_quality": sum(m.get("quality", 0) for m in b_metrics) / len(b_metrics) if b_metrics else 0,
-                "avg_candidate_quality": sum(m.get("quality", 0) for m in c_metrics) / len(c_metrics) if c_metrics else 0,
-                "constraint_violations": sum(
-                    1 for c in comps
-                    if not c["candidate_metrics"].get("sentences_ok", True)
-                    or not c["candidate_metrics"].get("no_ai_disclaimer", True)
-                ),
-                "examples": [{
-                    "question": c["question"],
-                    "winner": c["winner"],
-                    "candidate_quality": c["candidate_metrics"].get("quality", 0),
-                    "candidate_words": c["candidate_metrics"].get("length", 0),
-                    "sentences_ok": c["candidate_metrics"].get("sentences_ok", True),
-                    "no_ai_disclaimer": c["candidate_metrics"].get("no_ai_disclaimer", True),
-                } for c in comps],
+            # Compute per-concept metrics
+            per_concept = {}
+            for concept, comps in by_concept.items():
+                b_metrics = [c["baseline_metrics"] for c in comps]
+                c_metrics = [c["candidate_metrics"] for c in comps]
+                baseline_wins = sum(1 for c in comps if c["winner"] == "baseline")
+                candidate_wins = sum(1 for c in comps if c["winner"] == "candidate")
+                ties = sum(1 for c in comps if c["winner"] == "tie")
+
+                per_concept[concept] = {
+                    "total": len(comps),
+                    "baseline_wins": baseline_wins,
+                    "candidate_wins": candidate_wins,
+                    "ties": ties,
+                    "win_rate": candidate_wins / len(comps) if comps else 0,
+                    "avg_baseline_quality": sum(m.get("quality", 0) for m in b_metrics) / len(b_metrics) if b_metrics else 0,
+                    "avg_candidate_quality": sum(m.get("quality", 0) for m in c_metrics) / len(c_metrics) if c_metrics else 0,
+                    "constraint_violations": sum(
+                        1 for c in comps
+                        if not c["candidate_metrics"].get("sentences_ok", True)
+                        or not c["candidate_metrics"].get("no_ai_disclaimer", True)
+                    ),
+                    "examples": [{
+                        "question": c["question"],
+                        "winner": c["winner"],
+                        "candidate_quality": c["candidate_metrics"].get("quality", 0),
+                        "candidate_words": c["candidate_metrics"].get("length", 0),
+                        "sentences_ok": c["candidate_metrics"].get("sentences_ok", True),
+                        "no_ai_disclaimer": c["candidate_metrics"].get("no_ai_disclaimer", True),
+                    } for c in comps],
+                }
+
+            feedback_data = {
+                "npc_key": npc_key,
+                "baseline": baseline_name,
+                "candidate": candidate_name,
+                "total_examples": comparison["total"],
+                "baseline_wins": comparison["baseline_wins"],
+                "candidate_wins": comparison["candidate_wins"],
+                "ties": comparison["ties"],
+                "win_rate": comparison["candidate_wins"] / comparison["total"] if comparison["total"] > 0 else 0,
+                "per_concept": per_concept,
+                "weak_concepts": [
+                    concept for concept, data in per_concept.items()
+                    if data["win_rate"] < 0.5 or data["avg_candidate_quality"] < 20 or data["constraint_violations"] > 0
+                ],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
-        feedback_data = {
-            "npc_key": npc_key,
-            "baseline": baseline_name,
-            "candidate": candidate_name,
-            "total_examples": comparison["total"],
-            "baseline_wins": comparison["baseline_wins"],
-            "candidate_wins": comparison["candidate_wins"],
-            "ties": comparison["ties"],
-            "win_rate": comparison["candidate_wins"] / comparison["total"] if comparison["total"] > 0 else 0,
-            "per_concept": per_concept,
-            "weak_concepts": [
-                concept for concept, data in per_concept.items()
-                if data["win_rate"] < 0.5 or data["avg_candidate_quality"] < 20 or data["constraint_violations"] > 0
-            ],
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
+            with open(feedback_path, "w") as f:
+                json.dump(feedback_data, f, indent=2)
+            print(f"\n[feedback] Structured eval results saved to: {feedback_path}")
+            print(f"[feedback] Weak concepts identified: {len(feedback_data['weak_concepts'])}")
+            for wc in feedback_data["weak_concepts"]:
+                info = per_concept[wc]
+                print(f"  - {wc}: win_rate={info['win_rate']:.0%}, avg_quality={info['avg_candidate_quality']:.1f}, violations={info['constraint_violations']}")
 
-        with open(feedback_path, "w") as f:
-            json.dump(feedback_data, f, indent=2)
-        print(f"\n[feedback] Structured eval results saved to: {feedback_path}")
-        print(f"[feedback] Weak concepts identified: {len(feedback_data['weak_concepts'])}")
-        for wc in feedback_data["weak_concepts"]:
-            info = per_concept[wc]
-            print(f"  - {wc}: win_rate={info['win_rate']:.0%}, avg_quality={info['avg_candidate_quality']:.1f}, violations={info['constraint_violations']}")
+        # ── W&B Evaluation Tracking ─────────────────────────────────────────
+        if args.wandb and spec:
+            import wandb
+            npc_key = spec.get("npc_key", "unknown")
+            cw = comparison["candidate_wins"]
+            bw = comparison["baseline_wins"]
+            total = comparison["total"]
+            ties = comparison["ties"]
+            win_rate = cw / total if total > 0 else 0
 
-    # ── W&B Evaluation Tracking ─────────────────────────────────────────
-    if args.wandb and spec:
-        import wandb
-        npc_key = spec.get("npc_key", "unknown")
-        cw = comparison["candidate_wins"]
-        bw = comparison["baseline_wins"]
-        total = comparison["total"]
-        ties = comparison["ties"]
-        win_rate = cw / total if total > 0 else 0
-
-        wandb_group_env = os.environ.get("WANDB_GROUP")
-        config = {
-            "npc_key": npc_key,
-            "baseline": baseline_name,
-            "candidate": candidate_name,
-            "num_questions": total,
-            "judge": args.judge,
-            "judge_model": args.judge_model,
-            "baseline_model_path": args.baseline,
-            "candidate_model_path": args.candidate,
-            "categories": list(set(
-                q.get("metadata", {}).get("category", "general")
-                for q in questions
-            )),
-        }
-        if wandb_group_env:
-            config["wandb_group"] = wandb_group_env
-        wandb.init(
-            project=args.wandb_project or "unsloth-core",
-            entity=args.wandb_entity,
-            group=os.environ.get("WANDB_GROUP"),
-            job_type=os.environ.get("WANDB_JOB_TYPE", "eval"),
-            config=config,
-            name=f"eval-{npc_key}-{baseline_name}-vs-{candidate_name}",
-            tags=["eval", npc_key, baseline_name, candidate_name],
-        )
-        # Log comparison summary
-        wandb.log({
-            "eval/baseline_wins": bw,
-            "eval/candidate_wins": cw,
-            "eval/ties": ties,
-            "eval/total": total,
-            "eval/win_rate": win_rate,
-        })
-        # Build a W&B Table for structured per-question results
-        table_data = []
-        for comp in comparison.get("comparisons", []):
-            meta = comp.get("metadata", {})
-            category = meta.get("category", "general")
-            concept = meta.get("concept", "general")
-            table_data.append([
-                comp["question"],
-                category,
-                concept,
-                comp["baseline_metrics"].get("quality", 0),
-                comp["candidate_metrics"].get("quality", 0),
-                comp["baseline_metrics"].get("length", 0),
-                comp["candidate_metrics"].get("length", 0),
-                comp["baseline_metrics"].get("sentences", 0),
-                comp["candidate_metrics"].get("sentences", 0),
-                comp["baseline_metrics"].get("sentences_ok", True),
-                comp["candidate_metrics"].get("sentences_ok", True),
-                comp["baseline_metrics"].get("no_ai_disclaimer", True),
-                comp["candidate_metrics"].get("no_ai_disclaimer", True),
-                comp["winner"],
-            ])
-        eval_table = wandb.Table(
-            columns=[
-                "question", "category", "concept",
-                "baseline_quality", "candidate_quality",
-                "baseline_words", "candidate_words",
-                "baseline_sentences", "candidate_sentences",
-                "baseline_sentences_ok", "candidate_sentences_ok",
-                "baseline_no_ai", "candidate_no_ai",
-                "winner",
-            ],
-            data=table_data,
-        )
-        wandb.log({"eval/comparison_table": eval_table})
-        # Aggregate metrics per category
-        from collections import defaultdict
-        by_category = defaultdict(list)
-        for row in table_data:
-            by_category[row[1]].append(row)  # row[1] = category
-        for cat, rows in by_category.items():
-            cat_wins = sum(1 for r in rows if r[-1] == "candidate")
-            cat_total = len(rows)
+            wandb_group_env = os.environ.get("WANDB_GROUP")
+            config = {
+                "npc_key": npc_key,
+                "baseline": baseline_name,
+                "candidate": candidate_name,
+                "num_questions": total,
+                "judge": args.judge,
+                "judge_model": args.judge_model,
+                "baseline_model_path": args.baseline,
+                "candidate_model_path": args.candidate,
+                "categories": list(set(
+                    q.get("metadata", {}).get("category", "general")
+                    for q in questions
+                )),
+            }
+            if wandb_group_env:
+                config["wandb_group"] = wandb_group_env
+            wandb.init(
+                project=args.wandb_project or "unsloth-core",
+                entity=args.wandb_entity,
+                group=os.environ.get("WANDB_GROUP"),
+                job_type=os.environ.get("WANDB_JOB_TYPE", "eval"),
+                config=config,
+                name=f"eval-{npc_key}-{baseline_name}-vs-{candidate_name}",
+                tags=["eval", npc_key, baseline_name, candidate_name],
+            )
+            # Log comparison summary
             wandb.log({
-                f"eval/category/{cat}/win_rate": cat_wins / cat_total if cat_total > 0 else 0,
-                f"eval/category/{cat}/total": cat_total,
-                f"eval/category/{cat}/wins": cat_wins,
+                "eval/baseline_wins": bw,
+                "eval/candidate_wins": cw,
+                "eval/ties": ties,
+                "eval/total": total,
+                "eval/win_rate": win_rate,
             })
-        # Log report as artifact
-        if args.output and os.path.exists(args.output):
-            try:
-                report_artifact = wandb.Artifact(
-                    name=f"eval-report-{npc_key}",
-                    type="eval-report",
-                    description=f"Evaluation report for {npc_key}: {baseline_name} vs {candidate_name}",
-                    metadata={
-                        "baseline": baseline_name,
-                        "candidate": candidate_name,
-                        "win_rate": win_rate,
-                        "total_questions": total,
-                    },
-                )
-                report_artifact.add_file(args.output)
-                wandb.log_artifact(report_artifact)
-            except Exception as e:
-                print(f"  [wandb] Report artifact failed: {e}")
-        wandb.finish()
-
-    hook_recorder.emit("evaluate_pipeline", "complete", report_path=args.output, html=bool(args.report_html), track=bool(args.track))
+            # Build a W&B Table for structured per-question results
+            table_data = []
+            for comp in comparison.get("comparisons", []):
+                meta = comp.get("metadata", {})
+                category = meta.get("category", "general")
+                concept = meta.get("concept", "general")
+                table_data.append([
+                    comp["question"],
+                    category,
+                    concept,
+                    comp["baseline_metrics"].get("quality", 0),
+                    comp["candidate_metrics"].get("quality", 0),
+                    comp["baseline_metrics"].get("length", 0),
+                    comp["candidate_metrics"].get("length", 0),
+                    comp["baseline_metrics"].get("sentences", 0),
+                    comp["candidate_metrics"].get("sentences", 0),
+                    comp["baseline_metrics"].get("sentences_ok", True),
+                    comp["candidate_metrics"].get("sentences_ok", True),
+                    comp["baseline_metrics"].get("no_ai_disclaimer", True),
+                    comp["candidate_metrics"].get("no_ai_disclaimer", True),
+                    comp["winner"],
+                ])
+            eval_table = wandb.Table(
+                columns=[
+                    "question", "category", "concept",
+                    "baseline_quality", "candidate_quality",
+                    "baseline_words", "candidate_words",
+                    "baseline_sentences", "candidate_sentences",
+                    "baseline_sentences_ok", "candidate_sentences_ok",
+                    "baseline_no_ai", "candidate_no_ai",
+                    "winner",
+                ],
+                data=table_data,
+            )
+            wandb.log({"eval/comparison_table": eval_table})
+            # Aggregate metrics per category
+            from collections import defaultdict
+            by_category = defaultdict(list)
+            for row in table_data:
+                by_category[row[1]].append(row)  # row[1] = category
+            for cat, rows in by_category.items():
+                cat_wins = sum(1 for r in rows if r[-1] == "candidate")
+                cat_total = len(rows)
+                wandb.log({
+                    f"eval/category/{cat}/win_rate": cat_wins / cat_total if cat_total > 0 else 0,
+                    f"eval/category/{cat}/total": cat_total,
+                    f"eval/category/{cat}/wins": cat_wins,
+                })
+            # Log report as artifact
+            if args.output and os.path.exists(args.output):
+                try:
+                    report_artifact = wandb.Artifact(
+                        name=f"eval-report-{npc_key}",
+                        type="eval-report",
+                        description=f"Evaluation report for {npc_key}: {baseline_name} vs {candidate_name}",
+                        metadata={
+                            "baseline": baseline_name,
+                            "candidate": candidate_name,
+                            "win_rate": win_rate,
+                            "total_questions": total,
+                        },
+                    )
+                    report_artifact.add_file(args.output)
+                    wandb.log_artifact(report_artifact)
+                except Exception as e:
+                    print(f"  [wandb] Report artifact failed: {e}")
+            wandb.finish()
 
 
 if __name__ == "__main__":
