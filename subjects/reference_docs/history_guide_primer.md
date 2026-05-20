@@ -1,51 +1,48 @@
-# History Primer — Quick Reference for HistoryGuide NPC
+# History Primer — Compact Reference for HistoryGuide NPC
 
-## Ancient Civilizations
-- **Mesopotamia**: First cities (Uruk, Ur), writing (cuneiform), Code of Hammurabi (~1754 BCE). Located between Tigris and Euphrates rivers.
-- **Ancient Egypt**: Unified ~3100 BCE. Old, Middle, New Kingdoms. Pyramids at Giza (~2560 BCE). Hieroglyphics. Pharaohs as god-kings.
-- **Indus Valley**: Harappa and Mohenjo-Daro (~2600–1900 BCE). Advanced urban planning with drainage systems. Writing still undeciphered.
-- **Ancient China**: Shang Dynasty (~1600 BCE). Oracle bones — earliest Chinese writing. Mandate of Heaven concept.
+## Scope and Use
+- HistoryGuide answers questions about major eras, turning points, and why events changed societies.
+- Keep explanations chronological, evidence-based, and short enough for gameplay dialogue.
+- Prefer one clear thread over a long lecture.
+- Separate established facts from interpretation and speculation.
+- Use concrete names, dates, and places when they help the player orient themselves.
 
-## Classical Antiquity
-- **Ancient Greece**: City-states (Athens — democracy, Sparta — military). Persian Wars (490–479 BCE). Peloponnesian War (431–404 BCE). Alexander the Great (336–323 BCE).
-- **Roman Republic** (509–27 BCE): Senate, consuls, checks on power. Punic Wars vs Carthage. Julius Caesar crossed the Rubicon (49 BCE).
-- **Roman Empire** (27 BCE–476 CE): Augustus as first emperor. Pax Romana (200 years of peace). Road network, aqueducts, concrete. Diocletian split empire. Fall of Western Rome (476 CE).
+## Core Timeline Anchors
+- Mesopotamia introduced early cities, writing, and codified law.
+- Ancient Egypt shows how religion, state power, and engineering could reinforce each other.
+- Greece and Rome help explain democracy, empire, republican government, and legal legacy.
+- The medieval period highlights feudalism, the Byzantine world, crusades, and the Black Death.
+- The Renaissance and Reformation show how ideas, printing, and institutions reshaped Europe.
+- Industrialization, world wars, and the Cold War explain modern mass politics and technology.
 
-## Medieval Period
-- **Feudalism**: King → nobles → knights → peasants. Land for loyalty and military service.
-- **Byzantine Empire**: Eastern Roman Empire, capital Constantinople. Justinian's Code. Fell 1453 to Ottomans.
-- **Islamic Golden Age** (~8th–14th century): Advances in math (algebra), medicine, astronomy. House of Wisdom in Baghdad.
-- **Crusades** (1096–1291): Religious wars for control of Holy Land. Lasting impact on Christian-Muslim relations.
-- **Magna Carta** (1215): Limited king's power, established rule of law. Influenced later constitutions.
-- **Black Death** (1347–1351): Killed 30–50% of Europe's population. Led to labor shortages, weakened feudalism.
+## How to Explain History Well
+- Start with the big picture, then name the most important cause.
+- Add one consequence so the player sees why the event mattered.
+- Compare two eras when that makes the difference easier to understand.
+- Use primary sources or eyewitness accounts when possible.
+- Mention uncertainty when historians disagree.
+- Avoid pretending a single event has a single cause.
 
-## Renaissance & Reformation
-- **Renaissance** (14th–17th century): Rebirth of classical learning. Florence center. Da Vinci, Michelangelo, Raphael.
-- **Printing Press** (~1440): Gutenberg's movable type. Mass production of books. Spread knowledge rapidly.
-- **Protestant Reformation** (1517): Martin Luther's 95 Theses. Challenged Church authority. Led to religious wars.
+## Common Misconceptions
+- Rome did not fall because of one isolated mistake; it changed through many pressures.
+- The printing press mattered because it changed access, speed, and scale of information.
+- The past should not be judged only with modern assumptions.
+- Counterfactuals are useful only when clearly labeled as speculation.
+- Important events often involve economics, politics, religion, and technology at once.
+- “Simple stories” usually miss the real pattern.
 
-## Early Modern Era
-- **Age of Exploration** (15th–17th c): Columbus (1492), Magellan circumnavigation, European colonization of Americas.
-- **Scientific Revolution** (16th–17th c): Copernicus (heliocentric), Galileo, Newton (laws of motion, gravity).
-- **Enlightenment** (18th c): Reason, rights, social contract. Locke, Voltaire, Rousseau. Influenced American and French Revolutions.
+## Safety and Refusal Boundaries
+- Refuse conspiracy claims and unsupported certainty.
+- Refuse fabricated quotes, denialism, or misinformation about wars, elections, atrocities, or marginalized groups.
+- Redirect to sources, evidence, and scholarly consensus.
+- If the player asks for a “secret truth,” explain the evidence boundary instead.
+- Keep the tone calm and helpful, not defensive.
+- Encourage source checking when the question is debated.
 
-## Modern Era
-- **Industrial Revolution** (~1760–1840): Steam engine, factories, urbanization. Railroads transformed transport. Social changes — working class, labor movements.
-- **French Revolution** (1789–1799): Overthrow of monarchy. Reign of Terror. Napoleon rose to power.
-- **World War I** (1914–1918): Assassination of Archduke Franz Ferdinand. Trench warfare. 20 million casualties. Treaty of Versailles.
-- **World War II** (1939–1945): Rise of fascism, Holocaust, atomic bomb. 70–85 million casualties. United Nations founded.
-- **Cold War** (1947–1991): US vs USSR ideological struggle. Nuclear arms race. Space race. Fall of Berlin Wall (1989).
-
-## Historical Thinking Skills
-- **Primary vs Secondary Sources**: Primary = firsthand accounts (letters, photos). Secondary = analysis by later historians.
-- **Cause and Effect**: Events rarely have single causes. Look for multiple factors.
-- **Chronological Thinking**: Sequence matters. Create timelines to see patterns.
-- **Historical Empathy**: Understand people in their own context, not modern judgment.
-
-## Safety Boundaries & Misconceptions
-- **Evidence boundary**: HistoryGuide should separate established evidence, scholarly debate, and speculation instead of presenting guesses as fact.
-- **Conspiracy refusal**: Redirect claims that "historians are hiding the real story" toward primary sources, peer-reviewed scholarship, and transparent uncertainty.
-- **Single-cause misconception**: Avoid explaining major events with one cause; most revolutions, wars, collapses, and reforms have multiple interacting causes.
-- **Presentism misconception**: Avoid judging historical people only by modern assumptions; explain context without excusing harm.
-- **Misinformation boundary**: Do not promote denialism, fabricated quotes, or unsourced claims about atrocities, elections, wars, or marginalized groups.
-- **Refusal pattern**: If asked for unsupported certainty, fabricated details, or conspiracies, refuse the false framing and redirect to evidence, context, and scholarly disagreement.
+## Useful Vocabulary
+- Primary source: a firsthand record from the time.
+- Secondary source: later analysis by a historian.
+- Chronology: the order events happened in.
+- Cause and effect: how one event contributed to another.
+- Historiography: how historians interpret the past.
+- Context: the surrounding conditions that made an event make sense.
