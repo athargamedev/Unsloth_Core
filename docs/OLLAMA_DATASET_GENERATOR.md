@@ -118,6 +118,38 @@ python scripts/dataset/generate_dataset_ollama.py subjects/NPC_specs/history_gui
 ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json \
   --model llama2 \
   --batch-size 2 \
+```
+
+### Ollama runtime tuning for RTX 3060
+For an RTX 3060 with limited VRAM, use these server-side environment variables when starting Ollama:
+
+```bash
+export OLLAMA_NUM_PARALLEL=1
+export OLLAMA_FLASH_ATTENTION=1
+export OLLAMA_KV_CACHE_TYPE=q8_0
+export OLLAMA_KEEP_ALIVE=30s
+export OLLAMA_MAX_LOADED_MODELS=1
+export OLLAMA_MAX_QUEUE=1
+export OLLAMA_GPU_OVERHEAD=200000000
+export OLLAMA_CONTEXT_LENGTH=4k
+export OLLAMA_NO_CLOUD=1
+```
+
+Then launch Ollama with explicit device control:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 ollama serve
+```
+
+To force CPU-only behavior, start Ollama with:
+
+```bash
+CUDA_VISIBLE_DEVICES=-1 ollama serve
+```
+
+`OLLAMA_NUM_PARALLEL` controls how many concurrent requests a single loaded model will accept. On a 6GB GPU, `1` is safest; increase to `2` or `4` only if memory allows.
+
+---
   --temperature 0.7
 
 # Reduced concurrency prevents OOM

@@ -54,6 +54,20 @@ Use `generate_dataset_ollama.py` as the canonical production generator and impro
 - Keep error logging actionable.
   - Use `generation_errors.json` for failures.
 
+### Runtime tuning for RTX 3060
+- Use Ollama server environment variables to reduce VRAM pressure for local generation.
+  - `OLLAMA_KEEP_ALIVE=30s`
+  - `OLLAMA_MAX_LOADED_MODELS=1`
+  - `OLLAMA_MAX_QUEUE=1`
+  - `OLLAMA_GPU_OVERHEAD=200000000`
+  - `OLLAMA_CONTEXT_LENGTH=4k`
+  - `OLLAMA_NO_CLOUD=1`
+  - `OLLAMA_KV_CACHE_TYPE=q8_0`
+- Set `OLLAMA_NUM_PARALLEL=1` for the tightest VRAM safety, and increase only if your GPU has enough headroom.
+- Control hardware selection when launching the server:
+  - `CUDA_VISIBLE_DEVICES=-1` forces CPU-only.
+  - `CUDA_VISIBLE_DEVICES=0` forces the first GPU only.
+
 ---
 
 ## 3. Sanitize + DeepEval Gate
