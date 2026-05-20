@@ -2,6 +2,49 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2789602",
+      "name": "Dataset · PID 2789602 · fitness_coach",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "fitness_coach",
+      "status": "running",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T19:09:03.084Z",
+      "startedAt": "2026-05-20T19:09:03.084Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --model llama3.1-3060-chat:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2789602] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --model llama3.1-3060-chat:latest"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
       "id": "ext_proc_2752872",
       "name": "Dataset · PID 2752872",
       "type": "Dataset",
@@ -53,7 +96,7 @@
       "type": "Dataset",
       "commandId": "dataset-generate",
       "npcKey": "astronomy_guide",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-20T18:57:12.010Z",
@@ -65,8 +108,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2720451] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -88,7 +133,9 @@
         "[EXTERNAL][PID 2720451] discovered active process",
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T19:09:03.084Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_2642548",

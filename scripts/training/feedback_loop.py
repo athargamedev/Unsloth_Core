@@ -420,16 +420,28 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
     tee = Tee() if json_output else None
 
     # ── 1. Load ────────────────────────────────────────────────────────
+    # Load feedback data first to resolve npc_key before constructing hook_recorder
+    try:
+        feedback_data = load_feedback_json(feedback_path)
+        resolved_npc_key = feedback_data.get("npc_key", "unknown")
+        resolved_spec_path = feedback_data.get("spec_path")
+    except Exception as e:
+        print(f"Error loading feedback file: {e}")
+        return {
+            "status": "error",
+            "message": f"Failed to load feedback file: {e}",
+            "npc_key": "unknown",
+        }
+
     hook_recorder = WorkflowHookRecorder(
         Path(workflow_hooks) if workflow_hooks else default_hook_path(Path(feedback_path).parent),
         tool="feedback_loop",
-        npc_key=None,
+        npc_key=resolved_npc_key,
         technique=technique,
-        spec_path=None,
+        spec_path=resolved_spec_path,
     )
     with hook_recorder.step("feedback_loop", feedback_path=str(feedback_path), auto_retrain=auto_retrain, dry_run=dry_run):
-        feedback_data = load_feedback_json(feedback_path)
-        npc_key = feedback_data.get("npc_key", "unknown")
+        npc_key = resolved_npc_key
         candidate_model = feedback_data.get("candidate", "")
 
         # ── 2. Analyze ─────────────────────────────────────────────────────

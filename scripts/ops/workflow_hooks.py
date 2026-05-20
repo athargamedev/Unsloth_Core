@@ -19,6 +19,7 @@ class WorkflowHookRecorder:
         npc_key: str | None = None,
         technique: str | None = None,
         spec_path: str | None = None,
+        run_id: str | None = None,
     ) -> None:
         env_path = os.getenv("WORKFLOW_HOOKS_PATH")
         path = hook_path or env_path
@@ -28,6 +29,7 @@ class WorkflowHookRecorder:
             "npc_key": npc_key,
             "technique": technique,
             "spec_path": spec_path,
+            "run_id": run_id,
         }
 
     def emit(self, step: str, status: str, **fields: Any) -> None:
@@ -54,7 +56,7 @@ class WorkflowHookRecorder:
         self.emit(step, "start", **fields)
         try:
             yield
-        except Exception as exc:
+        except (Exception, SystemExit) as exc:
             self.emit(step, "error", error=type(exc).__name__, message=str(exc), **fields)
             raise
         else:
@@ -169,6 +171,8 @@ class WorkflowHookReader:
             "tool": first.get("tool"),
             "npc_key": first.get("npc_key"),
             "technique": first.get("technique"),
+            "spec_path": first.get("spec_path"),
+            "run_id": first.get("run_id"),
             "start_ts": start_ts,
             "end_ts": end_ts,
             "total_duration_s": total_duration_s,
@@ -180,14 +184,13 @@ class WorkflowHookReader:
         }
 
     @classmethod
-    def pipeline_summary(cls, hook_path: str | Path) -> dict | list[dict]:
+    def pipeline_summary(cls, hook_path: str | Path) -> dict:
         """Read a hook file and return full summaries per trace.
 
-        Returns a single dict if one trace, or a list if multiple traces.
+        Returns {total_events: int, traces: list[dict]}.
         """
         events = cls.read(hook_path)
-        if not events:
-            return {"events": [], "traces": []}
-        traces = cls().group_by_trace(events)
-        summaries = [cls.trace_summary(trace) for trace in traces.values()]
-        return summaries[0] if len(summaries) == 1 else summaries
+        return {
+            "total_events": len(events),
+            "traces": [cls.trace_summary(trace) for trace in cls().group_by_trace(events).values()],
+        }

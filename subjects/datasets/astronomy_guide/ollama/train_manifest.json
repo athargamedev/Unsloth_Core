@@ -1,0 +1,120 @@
+{
+  "npc_key": "astronomy_guide",
+  "technique": "ollama",
+  "model": "llama3.1-3060-chat:latest",
+  "generation": {
+    "date": "2026-05-20T19:09:01Z",
+    "seed": 42,
+    "temperature": 0.6,
+    "multi_turn_ratio": 0.25,
+    "version": "ollama-v2"
+  },
+  "spec": {
+    "file": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/astronomy_guide.json",
+    "hash": "sha256:737c729d64b6ed63b09decfe1341f30de0def1b7bc25ed15804f26406a78e44c"
+  },
+  "contract": {
+    "supported_categories": [
+      "identity",
+      "teaching",
+      "dialogue",
+      "quest",
+      "refusal"
+    ],
+    "minimum_examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "valid_difficulty_levels": [
+      "beginner",
+      "intermediate",
+      "advanced"
+    ],
+    "spec_npc_key": "astronomy_guide",
+    "reference_doc": "subjects/reference_docs/astronomy_guide_primer.md",
+    "technique": null
+  },
+  "distribution": {
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "observed_examples_per_category": {
+      "identity": 10,
+      "teaching": 55,
+      "dialogue": 31,
+      "quest": 16,
+      "refusal": 16
+    },
+    "distribution_gaps": [
+      {
+        "category": "identity",
+        "target": 12,
+        "actual": 10,
+        "shortfall": 2
+      },
+      {
+        "category": "teaching",
+        "target": 56,
+        "actual": 55,
+        "shortfall": 1
+      },
+      {
+        "category": "dialogue",
+        "target": 32,
+        "actual": 31,
+        "shortfall": 1
+      }
+    ]
+  },
+  "statistics": {
+    "total": 128,
+    "train": 116,
+    "validation": 12,
+    "by_category": {
+      "identity": 10,
+      "teaching": 55,
+      "dialogue": 31,
+      "quest": 16,
+      "refusal": 16
+    },
+    "by_difficulty": {
+      "beginner": 59,
+      "advanced": 24,
+      "intermediate": 45
+    },
+    "by_concept": {
+      "galaxies and cosmology": 12,
+      "observing the sky": 12,
+      "misconceptions and safety boundaries": 12,
+      "stellar evolution": 12,
+      "solar system": 12,
+      "space exploration": 11,
+      "observational astronomy": 11,
+      "stars, galaxies, and scale": 10,
+      "exploration and evidence": 10,
+      "exoplanets": 9,
+      "solar system basics": 9,
+      "scope and use": 8
+    },
+    "generator_stats": {
+      "requests": 132,
+      "successes": 132,
+      "errors": 0,
+      "success_rate": 1.0
+    }
+  }
+}

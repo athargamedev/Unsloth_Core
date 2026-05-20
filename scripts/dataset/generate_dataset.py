@@ -1639,14 +1639,14 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
         refusal_boundaries = refusal_spec.get("boundaries", [])
 
         if generator:
-            hook_recorder.emit("generate_examples", "start", mode="async", total_expected=total_count)
-            examples = _run_coroutine_sync(
-                generate_dataset_async_runner(
-                    spec, concepts, examples_per_category, generator, multi_turn_ratio, temperature,
-                    technique, seed, quest_scenarios, refusal_boundaries, retriever, guardrail,
-                    checkpoint_store, telemetry_reporter
+            with hook_recorder.step("generate_examples", mode="async", total_expected=total_count):
+                examples = _run_coroutine_sync(
+                    generate_dataset_async_runner(
+                        spec, concepts, examples_per_category, generator, multi_turn_ratio, temperature,
+                        technique, seed, quest_scenarios, refusal_boundaries, retriever, guardrail,
+                        checkpoint_store, telemetry_reporter
+                    )
                 )
-            )
         else:
             examples = []
             current = 0
