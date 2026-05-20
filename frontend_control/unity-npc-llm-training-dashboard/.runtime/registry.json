@@ -103,7 +103,7 @@
       "type": "Pipeline",
       "commandId": "pipeline",
       "npcKey": "history_guide",
-      "status": "running",
+      "status": "stopped",
       "progress": 10,
       "loss": null,
       "createdAt": "2026-05-20T22:44:00.691Z",
@@ -115,12 +115,13 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
+          "status": "stopped",
           "logs": [
             "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)"
+            "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 4159403] Process no longer detected"
           ]
         },
         {
@@ -148,8 +149,10 @@
         "[EXTERNAL][PID 4159403] discovered active process",
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
       ],
-      "terminalReason": "external_detected",
-      "error": "Server restarted — job was still running"
+      "terminalReason": "external_process_not_found",
+      "error": "Server restarted — job was still running",
+      "exitCode": -15,
+      "finishedAt": "2026-05-20T22:57:57.851Z"
     },
     {
       "id": "ext_export_history_guide_history_guide-lora-f16.gguf",

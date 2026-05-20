@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-import type { Job } from '../api';
+import type { Job, WatchLogsSnapshot } from '../api';
 import { Card } from './Card';
 import { Badge } from './Badge';
 import { WorkflowVisualizer } from './WorkflowVisualizer';
@@ -16,6 +16,7 @@ interface OperationsMatrixProps {
     workflowCount: number;
     autoSyncExternal: boolean;
   };
+  watchLogs: WatchLogsSnapshot;
   isLoading?: boolean;
   uiError?: string | null;
   onSelectJob: (id: string) => void;
@@ -25,6 +26,7 @@ interface OperationsMatrixProps {
   onStopJob: (id: string) => void;
   onExportCsv: () => void;
   onOpenComparison: () => void;
+  onOpenLogs: () => void;
   onManageJob: (id: string) => void;
   onDeleteJob: (id: string) => void;
   onViewLogs: (job: any) => void;
@@ -40,6 +42,7 @@ export const OperationsMatrix = ({
   activeFilter,
   jobTypeFilter,
   registryState,
+  watchLogs,
   isLoading = false,
   uiError = null,
   onSelectJob,
@@ -49,6 +52,7 @@ export const OperationsMatrix = ({
   onStopJob,
   onExportCsv,
   onOpenComparison,
+  onOpenLogs,
   onManageJob,
   onDeleteJob,
   onViewLogs,
@@ -84,6 +88,10 @@ export const OperationsMatrix = ({
     job.stages.find((stage) => stage.status === 'running')?.name ||
     job.stages.find((stage) => stage.status === 'failed' || stage.status === 'stopped')?.name ||
     '';
+
+  const latestWatchRun = watchLogs.latestRun;
+  const latestWatchAlert = latestWatchRun?.alerts?.[0] ?? null;
+  const hasWatchAlert = watchLogs.totalAlerts > 0 || (latestWatchRun?.returncode !== null && latestWatchRun?.returncode !== undefined && latestWatchRun.returncode !== 0);
 
   return (
     <motion.div
@@ -136,6 +144,30 @@ export const OperationsMatrix = ({
                 {registryState.autoSyncExternal ? 'Auto-sync on' : 'Auto-sync paused'}
               </span>
               <span className="text-[12px] text-ink/40 font-mono">{registryState.workflowCount} workflows</span>
+            </div>
+            <div className="flex items-center gap-2 rounded border border-line bg-panel/70 px-2 py-1 max-w-[38rem]">
+              <span className="text-[12px] text-ink/45 font-bold uppercase tracking-wider">Watch</span>
+              <span className={cn(
+                "px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider border",
+                hasWatchAlert
+                  ? "bg-danger/10 text-danger border-danger/30"
+                  : "bg-success/10 text-success border-success/30",
+              )}>
+                {watchLogs.runs.length} runs
+              </span>
+              <span className="px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider border bg-panel border-line text-ink/55">
+                {watchLogs.totalAlerts} alerts
+              </span>
+              <span className="min-w-0 truncate text-[11px] text-ink/45 font-mono max-w-[20rem]">
+                {latestWatchAlert?.line || latestWatchRun?.watchDir || 'No watch logs yet'}
+              </span>
+              <button
+                onClick={onOpenLogs}
+                className="px-2 py-1 bg-panel border border-line text-[10px] text-ink/60 rounded hover:bg-white/5 transition-colors"
+                title="Open the console tab to inspect live watch alerts and stream output"
+              >
+                Open Console
+              </button>
             </div>
             <button
               onClick={() => onSyncJobs(!registryState.autoSyncExternal)}

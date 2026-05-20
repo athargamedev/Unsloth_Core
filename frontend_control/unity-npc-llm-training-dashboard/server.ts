@@ -161,6 +161,64 @@ const readJobLogs = (jobId: string, maxLines = 200): string[] => {
   } catch { return []; }
 };
 
+const readJsonFile = <T>(filePath: string, fallback: T): T => {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+  } catch {
+    return fallback;
+  }
+};
+
+const readTailLines = (filePath: string, maxLines = 40): string[] => {
+  try {
+    if (!fs.existsSync(filePath)) return [];
+    return fs.readFileSync(filePath, "utf8").split("\n").filter(Boolean).slice(-maxLines);
+  } catch {
+    return [];
+  }
+};
+
+const listWatchRuns = (limit = 10) => {
+  try {
+    if (!fs.existsSync(watchLogsRoot)) return [];
+    return fs.readdirSync(watchLogsRoot)
+      .map((entry) => path.join(watchLogsRoot, entry))
+      .filter((entryPath) => fs.existsSync(entryPath) && fs.statSync(entryPath).isDirectory())
+      .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)
+      .slice(0, limit)
+      .map((watchDir) => {
+        const summaryPath = path.join(watchDir, "summary.json");
+        const alertsPath = path.join(watchDir, "alerts.jsonl");
+        const streamPath = path.join(watchDir, "stream.log");
+        const summary = readJsonFile<Record<string, unknown>>(summaryPath, {});
+        const alerts = readTailLines(alertsPath, 100)
+          .map((line) => {
+            try { return JSON.parse(line) as { timestamp?: string; line?: string; command?: string }; }
+            catch { return null; }
+          })
+          .filter((alert): alert is { timestamp?: string; line?: string; command?: string } => Boolean(alert))
+          .map((alert) => ({
+            timestamp: typeof alert.timestamp === "string" ? alert.timestamp : "",
+            line: typeof alert.line === "string" ? alert.line : "",
+            command: typeof alert.command === "string" ? alert.command : "",
+          }));
+        return {
+          watchDir,
+          startedAt: typeof summary.started_at === "string" ? summary.started_at : null,
+          finishedAt: typeof summary.finished_at === "string" ? summary.finished_at : null,
+          returncode: typeof summary.returncode === "number" ? summary.returncode : null,
+          command: Array.isArray(summary.command) ? summary.command.map((item) => String(item)) : [],
+          alerts,
+          alertCount: alerts.length,
+          streamTail: readTailLines(streamPath, 40),
+        };
+      });
+  } catch {
+    return [];
+  }
+};
+
 const globalLog = (registry: Registry, line: string) => {
   const timestampedLine = `[${isoNow()}] ${line}`;
   registry.logs.unshift(timestampedLine);
@@ -2054,6 +2112,17 @@ const listRuns = () => {
     res.status(500).json({ error: "Failed to read job logs" });
   }
 });
+
+  app.get("/api/watch-logs", (_req, res) => {
+    const runs = listWatchRuns(12);
+    const totalAlerts = runs.reduce((sum, run) => sum + run.alertCount, 0);
+    res.json({
+      root: watchLogsRoot,
+      totalAlerts,
+      latestRun: runs[0] || null,
+      runs,
+    });
+  });
 
 app.get("/api/logs", (_req, res) => res.json(registry.logs));
   app.post("/api/logs/clear", (_req, res) => {

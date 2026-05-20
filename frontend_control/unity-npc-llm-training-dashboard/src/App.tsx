@@ -144,6 +144,7 @@ export default function App() {
   const {
     jobs,
     registryState,
+    watchLogs,
     selectedJobId,
     setSelectedJobId,
     selectedJobIds,
@@ -158,6 +159,7 @@ export default function App() {
     toggleJobSelection,
     exportJobsCsv,
     fetchJobs,
+    fetchWatchLogs,
     syncJobs,
     clearJobs,
   } = useJobs();
@@ -409,6 +411,7 @@ export default function App() {
           const logsData = await fetchJson<string[]>('/api/logs');
           setLogs(logsData);
         })(),
+        fetchWatchLogs(),
         (async () => {
           try {
             const healthData = await fetchJson<HealthCheck>('/api/health');
@@ -1222,6 +1225,7 @@ export default function App() {
                   activeFilter={activeFilter}
                   jobTypeFilter={jobTypeFilter}
                   registryState={registryState}
+                  watchLogs={watchLogs}
                   isLoading={isLoading}
                   uiError={uiError}
                   onSelectJob={handleSelectJob}
@@ -1231,6 +1235,7 @@ export default function App() {
                   onStopJob={handleStopJob}
                   onExportCsv={exportJobsCsv}
                   onOpenComparison={handleOpenComparison}
+                  onOpenLogs={() => setActiveTab('logs')}
                   onManageJob={handleManageJob}
                   onDeleteJob={handleDeleteJob}
                   onViewLogs={(job) => setSelectedJobForLogs(job)}
