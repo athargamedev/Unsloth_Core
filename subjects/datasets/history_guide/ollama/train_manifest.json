@@ -1,123 +1,129 @@
 {
   "npc_key": "history_guide",
   "technique": "ollama",
-  "model": "llama3.1:latest",
+  "sanitized": true,
+  "sanitizer": {
+    "version": "v2",
+    "date": "2026-05-20T04:34:05Z",
+    "argv": "/home/athar/Projects/Unsloth_Core/scripts/dataset/sanitize_dataset.py subjects/datasets/history_guide/ollama/train.jsonl --output subjects/datasets/history_guide/ollama/train_clean.jsonl",
+    "artifact_check_mode": "strict",
+    "strict_mode": false
+  },
+  "spec": {
+    "file": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/history_guide.json",
+    "hash": "sha256:340c8bc076eb90c5368ee09a68d0a56c646a18d1e88da116d2d6b0270351ac0e"
+  },
+  "input": {
+    "file": "subjects/datasets/history_guide/ollama/train.jsonl",
+    "hash": "sha256:52256058d770d0411e27b692ba5858a946b18655e7170ce4520874381304476f",
+    "total_examples": 128
+  },
+  "statistics": {
+    "total_input": 128,
+    "total_output": 42,
+    "total_train": 42,
+    "total_validation": 0,
+    "by_category": {
+      "identity": 3,
+      "teaching": 14,
+      "dialogue": 16,
+      "quest": 5,
+      "refusal": 4
+    },
+    "by_difficulty": {
+      "beginner": 19,
+      "advanced": 7,
+      "intermediate": 16
+    },
+    "by_safety_tag": {
+      "boundary_enforcement": 4
+    },
+    "quality_scores": {
+      "mean": 82.5,
+      "median": 82.0,
+      "min": 74,
+      "max": 92,
+      "std_dev": 4.5,
+      "passed_threshold": 42,
+      "flagged_for_review": 0,
+      "distribution": {
+        "0-9": 0,
+        "10-19": 0,
+        "20-29": 0,
+        "30-39": 0,
+        "40-49": 0,
+        "50-59": 0,
+        "60-69": 0,
+        "70-79": 12,
+        "80-89": 26,
+        "90-99": 4,
+        "100+": 0
+      }
+    }
+  },
+  "discarded": {
+    "total": 86,
+    "by_reason": {
+      "Assistant response too verbose (7 sentences, max 5)": 26,
+      "Assistant response too verbose (6 sentences, max 5)": 25,
+      "Duplicate content_hash": 11,
+      "Assistant response too verbose (8 sentences, max 5)": 11,
+      "Assistant response too verbose (9 sentences, max 5)": 7,
+      "Assistant response too verbose (10 sentences, max 5)": 4,
+      "Assistant response too long (848 chars, max 800)": 1,
+      "Refusal response lacks boundary-setting or safe redirect": 1
+    }
+  },
+  "content_hashes": [
+    "b3684a064752a0108624cc12c4b8f79ff8b592c15693de0994cb8996040281c0",
+    "56b0de6c784dbaa39fcdc4f680cdde0d72e78c666b552048132388ac31f61d0c",
+    "acf29b5ff07823f427bf380c1c107b745d9bad5dc23b0e9a726580af516f28a7",
+    "560aaded12eec8b275411a5fb54203f11375da3bdf9eec54bf90dd56e30e9681",
+    "c599a3e8dce3e40e17a502e04271b7d39e26eafa1998894c8c200c98d1772ce0",
+    "3043956f35f2eabc4c5d9607848f0b3c8c0659e6541290b9e093279a4aa1b4fb",
+    "b15b13551ed27fcdd2f0a02a5e5d66e1834b89e94edfb8819c5757468dee4f57",
+    "89b3ec35b4dca31265db10b7923516dd9983ab89922ed2358ab097c4387cff87",
+    "fc6cb64ae843b46af5b188016a1a436366336f92c0bca6f654975c0afd171090",
+    "1d01dbe1e131e600790d2bfd056e83f0980e353be4457cfab755536708677681",
+    "2592ea8817ec46b29ab5a39b882d08b2a5fe78994d7ced0abb04b95e2c673233",
+    "57ebc143fd4ac58b9c93528b7bf152e1cf2ec62bb5e8b81d502f5046f0dfd2bb",
+    "3c6d7531fec47598574ecdc938fe66c65d1b7a401bd50f223aad2b7842bd139b",
+    "22d2f2a114fbc9db109c71d918503ace09d4cbc63553859398c8b71c28397658",
+    "1c589412a4d0835cd5018251066afe1cb23736359ab633dc99b26735273a54e4",
+    "2e97b7b1c0a899896e6b5840826bf5ca1e4118f04d6642d4dcb03cd6e8bf65d6",
+    "97f5b9c775ba3c9d0d0e873087f8eea8d2a255770401a5b3c6b130c3b306d008",
+    "294b0f850a631316c1f9629e31f281029cda57b7c247b75d7deff2c2b9f8f790",
+    "1e210dcd816786c30149b1925eaf7d923a8e6d1fdd6c5cdcc9d43a442e057354",
+    "59a73eb690a1588f16f5ea1ef44fe41f2582d4c847bfa8e27ef06b8451f73211",
+    "e14b0091c5bc34c21e6e6c5d9b5b9702e4fc9c8e7af4ad160304c4376efb5408",
+    "757b6996b227ff147ccca790051c8e9e8efe53f9d779f20824ef44d1472aab55",
+    "bf95ca75611345835c64bcfb4bc5301cd9d3ae21d249f72be66f0b02e795994d",
+    "aba773f7eaa3b56ce87e54e494868b8cc5f0c66ef8fa95257b2f20313a73622c",
+    "d600d8b3365e7710cbda47bc2640d62974648c6775bc5d076229173d5e17ac3b",
+    "f2cac86a9fde1718625bc94e7e7792e318aa645e8179286484aad7c9fcece705",
+    "410608a2ccfe71f733ef16b4445c76b00b6bbf41091b59a58f751b8e873a1c43",
+    "93e8c45404bf49abfc727fe3f3932a2ab6f6d0006da4f154eb139e226561ec63",
+    "9e38aeff7fa08dafde4d611447c0cae7413450a04f620b07c9937177b4dbcac4",
+    "4c7484db73503ca6f7c48c51dcce95e304ac3c5fc5dc2124a58184d251622354",
+    "89ba97a1bf743fceb56dfc03d3da03f880a8d3c3ba94ae0a4ab397bde21bb37e",
+    "20878764f86eaed1b09c19e888f766c427819360d9e42b026a3452edee373f06",
+    "9a5f421b01e4ae8cb3fa41cadd29bbda176f16a7420a3cefa1f882b5bfb39e5c",
+    "4cd2c6da3d0eaad3607f56c3e576b7b9b1f993a13589a9c8035eeeb1e8b9e8a1",
+    "615c8f464f931a5fa6dfd4c088e94e19ff68af0b17697f69c429b3bc68f83641",
+    "92b2143cc1b9b3e533d938412e730b5cef6776d657af517dbac5669b8fb7d5dc",
+    "6198673bd40011b9f4bd2c27594e623a5528b88f9fecdafd125186a2a6765f7c",
+    "42a668d2af94821414b422627f6aba45dab5979e914f58a91a104da7e5112593",
+    "a3c54ab8a4cc84da0ae3cdbe3be3283312483a724fd5e464b0533b35c9d631ec",
+    "2f838184a0ba2865a577f39743fd0ed1587fab73275ffdaf075208dcc121fdd9",
+    "c5ac9734934068182a7f0e14b47d9ece85efc711a885c1c846310cbacc082928",
+    "28656fa68498adac9dfdc71cdeb2baa0324934b860f2806cb82bee15336cc0df"
+  ],
+  "content_hash_prefix": "sha256:",
   "generation": {
     "date": "2026-05-20T04:27:25Z",
     "seed": 42,
     "temperature": 0.7,
     "multi_turn_ratio": 0.25,
     "version": "ollama-v2"
-  },
-  "spec": {
-    "file": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/history_guide.json",
-    "hash": "sha256:340c8bc076eb90c5368ee09a68d0a56c646a18d1e88da116d2d6b0270351ac0e"
-  },
-  "contract": {
-    "supported_categories": [
-      "identity",
-      "teaching",
-      "dialogue",
-      "quest",
-      "refusal"
-    ],
-    "minimum_examples_per_category": {
-      "identity": 8,
-      "teaching": 32,
-      "dialogue": 16,
-      "quest": 8,
-      "refusal": 8
-    },
-    "expected_examples_per_category": {
-      "identity": 12,
-      "teaching": 56,
-      "dialogue": 32,
-      "quest": 16,
-      "refusal": 16
-    },
-    "valid_difficulty_levels": [
-      "beginner",
-      "intermediate",
-      "advanced"
-    ],
-    "spec_npc_key": "history_guide",
-    "reference_doc": "subjects/reference_docs/history_guide_primer.md",
-    "technique": null
-  },
-  "distribution": {
-    "expected_examples_per_category": {
-      "identity": 12,
-      "teaching": 56,
-      "dialogue": 32,
-      "quest": 16,
-      "refusal": 16
-    },
-    "observed_examples_per_category": {
-      "identity": 12,
-      "teaching": 53,
-      "dialogue": 31,
-      "quest": 16,
-      "refusal": 16
-    },
-    "distribution_gaps": [
-      {
-        "category": "teaching",
-        "target": 56,
-        "actual": 53,
-        "shortfall": 3
-      },
-      {
-        "category": "dialogue",
-        "target": 32,
-        "actual": 31,
-        "shortfall": 1
-      }
-    ]
-  },
-  "statistics": {
-    "total": 128,
-    "train": 128,
-    "validation": 0,
-    "by_category": {
-      "identity": 12,
-      "teaching": 53,
-      "dialogue": 31,
-      "quest": 16,
-      "refusal": 16
-    },
-    "by_difficulty": {
-      "beginner": 60,
-      "advanced": 23,
-      "intermediate": 45
-    },
-    "by_concept": {
-      "historical thinking": 8,
-      "guide identity": 8,
-      "medieval history": 7,
-      "ancient civilizations": 7,
-      "classical antiquity": 7,
-      "safety boundaries & misconceptions": 7,
-      "modern history": 7,
-      "historical methodology": 7,
-      "cultural history": 7,
-      "medieval period": 7,
-      "roman empire": 7,
-      "modern era": 6,
-      "renaissance & reformation": 6,
-      "early modern era": 6,
-      "historical thinking skills": 6,
-      "world wars": 5,
-      "cause and effect": 5,
-      "industrial revolution": 4,
-      "world history": 4,
-      "renaissance": 4,
-      "timeline analysis": 3
-    },
-    "generator_stats": {
-      "requests": 132,
-      "successes": 132,
-      "errors": 0,
-      "success_rate": 1.0
-    }
   }
 }

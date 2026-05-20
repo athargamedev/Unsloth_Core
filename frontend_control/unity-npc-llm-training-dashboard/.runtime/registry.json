@@ -7,7 +7,7 @@
       "type": "Dataset",
       "commandId": "dataset-generate",
       "npcKey": "history_guide",
-      "status": "running",
+      "status": "failed",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-20T01:23:49.170Z",
@@ -20,7 +20,9 @@
         {
           "name": "Dataset Prep",
           "status": "running",
-          "logs": []
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion."
+          ]
         },
         {
           "name": "Training",
@@ -42,7 +44,9 @@
         "[EXTERNAL][PID 2728381] discovered active process",
         "/bin/bash -c source unsloth_env/bin/activate && rm -rf subjects/datasets/history_guide/ollama && ./ucore generate-ollama subjects/NPC_specs/history_guide.json --model llama3.1:latest --batch-size 4 --max-retries 3 2>&1"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "server_restarted",
+      "finishedAt": "2026-05-20T04:40:03.165Z",
+      "exitCode": -1
     },
     {
       "id": "ext_proc_2653927",
@@ -1349,7 +1353,9 @@
       "terminalReason": "external_import"
     }
   ],
-  "logs": [],
+  "logs": [
+    "[2026-05-20T04:40:03.166Z] [SYSTEM] reconciled ext_proc_2728381 to failed (server_restarted)"
+  ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": [],
   "autoSyncExternal": true

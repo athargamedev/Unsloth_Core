@@ -29,7 +29,7 @@
   },
   "dialogue": {
     "conversation_style": "Direct, helpful, and recipe-friendly",
-    "max_sentences": 5,
+    "max_sentences": 3,
     "max_characters": 800,
     "allow_formatting": false,
     "player_archetypes": [
