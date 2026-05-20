@@ -343,18 +343,21 @@ class OllamaGeneratorV2:
             "errors": self.error_count,
             "success_rate": self.success_count / max(1, self.request_count)
         }
-    
-    def generate(self, system_prompt: str, user_prompt: str, 
-                temperature: float = 0.7, max_tokens: int = 512,
-                json_format: bool = False, stream: bool = False) -> str | None:
-        """Generate response with advanced retry logic."""
-        self.request_count += 1
-        
+
+    def _build_payload(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float,
+        max_tokens: int,
+        json_format: bool,
+        stream: bool,
+    ) -> dict:
         payload = {
             "model": self.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": user_prompt},
             ],
             "stream": stream,
             "options": {
@@ -362,42 +365,68 @@ class OllamaGeneratorV2:
                 "num_predict": max_tokens,
                 "top_k": 40,
                 "top_p": 0.9,
-            }
+            },
         }
-        
         if json_format:
             payload["format"] = "json"
-        
+        return payload
+
+    @staticmethod
+    def _extract_content(data: dict) -> str:
+        return data.get("message", {}).get("content", "").strip()
+
+    @staticmethod
+    def _retry_delay(attempt: int) -> float:
+        return float(min(2 ** attempt, 8))
+
+    def _retryable_errors(self):
+        errors = [requests.exceptions.RequestException, json.JSONDecodeError, asyncio.TimeoutError]
+        if aiohttp:
+            errors.append(aiohttp.ClientError)
+        return tuple(errors)
+
+    def _post_chat(self, payload: dict) -> dict:
+        response = requests.post(self.url, json=payload, timeout=120)
+        response.raise_for_status()
+        return response.json()
+
+    async def _post_chat_async(self, payload: dict, session):
+        async with session.post(self.url, json=payload, timeout=120) as response:
+            response.raise_for_status()
+            return await response.json()
+
+    def _log_retry(self, attempt: int, reason: str):
+        logger.warning(f"{reason} (attempt {attempt}/{self.max_retries})")
+
+    def _log_unexpected_error(self, attempt: int, error: Exception):
+        logger.error(f"Unexpected Ollama generation error (attempt {attempt}/{self.max_retries}): {error}")
+
+    def _record_success(self, content: str) -> str:
+        self.success_count += 1
+        return content
+    
+    def generate(self, system_prompt: str, user_prompt: str, 
+                temperature: float = 0.7, max_tokens: int = 512,
+                json_format: bool = False, stream: bool = False) -> str | None:
+        """Generate response with consolidated retry logic."""
+        self.request_count += 1
+        payload = self._build_payload(system_prompt, user_prompt, temperature, max_tokens, json_format, stream)
+
         for attempt in range(1, self.max_retries + 1):
             try:
-                response = requests.post(self.url, json=payload, timeout=120)
-                response.raise_for_status()
-                data = response.json()
-                
-                content = data.get("message", {}).get("content", "").strip()
+                content = self._extract_content(self._post_chat(payload))
                 if content:
-                    self.success_count += 1
-                    return content
-                else:
-                    logger.warning(f"Empty response from Ollama (attempt {attempt}/{self.max_retries})")
-                    
-            except requests.exceptions.Timeout:
-                logger.warning(f"Timeout on attempt {attempt}/{self.max_retries} (retrying...)")
-                time.sleep(2 ** attempt)  # Exponential backoff
-                
-            except requests.exceptions.ConnectionError as e:
-                logger.error(f"Connection error: {e}")
-                return None
-                
-            except json.JSONDecodeError:
-                logger.warning(f"Invalid JSON response on attempt {attempt}/{self.max_retries}")
-                time.sleep(1)
-                
-            except Exception as e:
-                logger.error(f"Generation error (attempt {attempt}/{self.max_retries}): {e}")
-                if attempt < self.max_retries:
-                    time.sleep(1)
-        
+                    return self._record_success(content)
+                self._log_retry(attempt, "Empty response from Ollama")
+            except self._retryable_errors() as exc:
+                self._log_retry(attempt, f"{type(exc).__name__} from Ollama: {exc}")
+            except Exception as exc:
+                self._log_unexpected_error(attempt, exc)
+                break
+
+            if attempt < self.max_retries:
+                time.sleep(self._retry_delay(attempt))
+
         self.error_count += 1
         logger.error(f"Failed to generate after {self.max_retries} attempts")
         return None
@@ -407,8 +436,25 @@ class OllamaGeneratorV2:
                             json_format: bool = False, session=None, executor=None) -> str | None:
         """Async generation wrapper."""
         if session and aiohttp:
-            return await self._generate_async_http(system_prompt, user_prompt, 
-                                                   temperature, max_tokens, json_format, session)
+            payload = self._build_payload(system_prompt, user_prompt, temperature, max_tokens, json_format, False)
+            for attempt in range(1, self.max_retries + 1):
+                try:
+                    content = self._extract_content(await self._post_chat_async(payload, session))
+                    if content:
+                        return self._record_success(content)
+                    self._log_retry(attempt, "Empty response from Ollama")
+                except self._retryable_errors() as exc:
+                    self._log_retry(attempt, f"{type(exc).__name__} from Ollama: {exc}")
+                except Exception as exc:
+                    self._log_unexpected_error(attempt, exc)
+                    break
+
+                if attempt < self.max_retries:
+                    await asyncio.sleep(self._retry_delay(attempt))
+
+            self.error_count += 1
+            logger.error(f"Failed to generate after {self.max_retries} attempts")
+            return None
         else:
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(
@@ -416,41 +462,6 @@ class OllamaGeneratorV2:
                 self.generate,
                 system_prompt, user_prompt, temperature, max_tokens, json_format
             )
-    
-    async def _generate_async_http(self, system_prompt: str, user_prompt: str,
-                                   temperature: float, max_tokens: int, 
-                                   json_format: bool, session):
-        """Internal async HTTP generation."""
-        payload = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            "stream": False,
-            "options": {
-                "temperature": temperature,
-                "num_predict": max_tokens,
-            }
-        }
-        
-        if json_format:
-            payload["format"] = "json"
-        
-        try:
-            async with session.post(self.url, json=payload, timeout=120) as response:
-                response.raise_for_status()
-                data = await response.json()
-                content = data.get("message", {}).get("content", "").strip()
-                if content:
-                    self.success_count += 1
-                    return content
-        except Exception as e:
-            logger.error(f"Async generation failed: {e}")
-            self.error_count += 1
-        
-        return None
-
 
 class ProgressTracker:
     """Track and report generation progress with ETA."""
