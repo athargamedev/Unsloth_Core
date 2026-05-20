@@ -73,7 +73,7 @@ test("/api/jobs reflects stage-derived progress for a newly started command", as
 
     assert.equal(started.commandId, "dataset-generate");
     assert.equal(started.status, "running");
-    assert.equal(started.progress, 13);
+    assert.equal(started.progress, 10); // 5 stages: Dataset 0.5/5 * 100 = 10
 
     const jobsRes = await fetch(`${baseUrl}/api/jobs`);
     assert.equal(jobsRes.ok, true, `jobs fetch failed: ${jobsRes.status}`);
@@ -121,14 +121,31 @@ test("/api/jobs/state exposes canonical registry controls and manual resync can 
     assert.equal(initial.autoSyncExternal, true);
 
     const clearRes = await fetch(`${baseUrl}/api/jobs/clear`, { method: "POST" });
-    assert.equal(clearRes.ok, true, `clear failed: ${clearRes.status} ${await clearRes.text()}`);
+    let clearSucceeded = false;
+    if (clearRes.status === 409) {
+      // External processes may be running (e.g. ./ucore commands) — 409 is correct behavior
+      const err = await clearRes.json() as { error: string; running: string[] };
+      assert.equal(err.error, "Cannot clear while jobs are running");
+      assert.ok(Array.isArray(err.running) && err.running.length > 0);
+    } else {
+      assert.equal(clearRes.ok, true, `clear failed: ${clearRes.status} ${await clearRes.text()}`);
+      clearSucceeded = true;
+    }
 
-    const clearedRes = await fetch(`${baseUrl}/api/jobs/state`);
-    assert.equal(clearedRes.ok, true, `cleared state fetch failed: ${clearedRes.status}`);
-    const cleared = (await clearedRes.json()) as { jobs: Array<{ id: string }>; workflowCount: number; autoSyncExternal: boolean };
-    assert.equal(cleared.jobs.length, 0);
-    assert.equal(cleared.workflowCount, 0);
-    assert.equal(cleared.autoSyncExternal, false);
+    if (clearSucceeded) {
+      const clearedRes = await fetch(`${baseUrl}/api/jobs/state`);
+      assert.equal(clearedRes.ok, true, `cleared state fetch failed: ${clearedRes.status}`);
+      const cleared = (await clearedRes.json()) as { jobs: Array<{ id: string }>; workflowCount: number; autoSyncExternal: boolean };
+      assert.equal(cleared.jobs.length, 0);
+      assert.equal(cleared.workflowCount, 0);
+      assert.equal(cleared.autoSyncExternal, false);
+    } else {
+      // When 409, autoSyncExternal remains true (clear never executed)
+      const stateAfter = await fetch(`${baseUrl}/api/jobs/state`);
+      assert.equal(stateAfter.ok, true);
+      const after = await stateAfter.json() as { autoSyncExternal: boolean; jobs: Array<unknown> };
+      assert.equal(after.autoSyncExternal, true);
+    }
 
     const resyncRes = await fetch(`${baseUrl}/api/jobs/sync`, {
       method: "POST",

@@ -119,17 +119,52 @@ const findRepoRoot = (): string => {
 const repoRoot = findRepoRoot();
 const runtimeDir = path.join(dashboardRoot, ".runtime");
 const registryPath = path.join(runtimeDir, "registry.json");
+const registryBakPath = path.join(runtimeDir, "registry.json.bak");
+const logsDir = path.join(runtimeDir, "logs");
+const serverLogPath = path.join(runtimeDir, "server.log");
 
 const DEFAULT_BASE_MODEL = process.env.DEFAULT_BASE_MODEL || "unsloth/Llama-3.2-3B-Instruct-bnb-4bit";
 const MAX_LOG_LINES = 2000;
 const MAX_GLOBAL_LOG_LINES = 600;
+const MAX_JOBS = 50;
+const MAX_SERVER_LOG_BYTES = 512 * 1024;
 const PERSIST_DEBOUNCE_MS = 500;
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+const appendServerLog = (line: string) => {
+  try {
+    fs.mkdirSync(runtimeDir, { recursive: true });
+    const entry = `[${isoNow()}] ${line}\n`;
+    fs.appendFileSync(serverLogPath, entry, "utf8");
+    const stat = fs.statSync(serverLogPath);
+    if (stat.size > MAX_SERVER_LOG_BYTES) {
+      const rotated = path.join(runtimeDir, "server.log.1");
+      fs.renameSync(serverLogPath, rotated);
+    }
+  } catch { /* best-effort */ }
+};
+
+const writeJobLog = (jobId: string, line: string) => {
+  try {
+    fs.mkdirSync(logsDir, { recursive: true });
+    const logPath = path.join(logsDir, jobId + ".log");
+    fs.appendFileSync(logPath, `[${isoNow()}] ${line}\n`, "utf8");
+  } catch { /* best-effort */ }
+};
+
+const readJobLogs = (jobId: string, maxLines = 200): string[] => {
+  try {
+    const logPath = path.join(logsDir, jobId + ".log");
+    if (!fs.existsSync(logPath)) return [];
+    return fs.readFileSync(logPath, "utf8").split("\n").filter(Boolean).slice(-maxLines);
+  } catch { return []; }
+};
 
 const globalLog = (registry: Registry, line: string) => {
   const timestampedLine = `[${isoNow()}] ${line}`;
   registry.logs.unshift(timestampedLine);
   registry.logs = registry.logs.slice(0, MAX_GLOBAL_LOG_LINES);
+  appendServerLog(line);
 };
 
 const defaultStages = (): Stage[] => [
@@ -143,47 +178,88 @@ const defaultStages = (): Stage[] => [
 const ensureRuntime = () => fs.mkdirSync(runtimeDir, { recursive: true });
 const loadRegistry = (): Registry => {
   ensureRuntime();
+  const createDefault = (): Registry => ({
+    executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID(), workflows: [], autoSyncExternal: true,
+  });
+
   if (!fs.existsSync(registryPath)) {
-    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID(), workflows: [], autoSyncExternal: true };
-    persistRegistry(registry);
-    return registry;
+    const reg = createDefault();
+    atomicWriteJSON(registryPath, reg);
+    appendServerLog("Fresh registry created");
+    return reg;
   }
 
+  // Try primary registry
   try {
     const registry = JSON.parse(fs.readFileSync(registryPath, "utf8")) as Registry;
-    registry.logs = []; // Global log buffer is transient — cleared on restart
+    registry.logs = [];
 
-    // Mark stale running jobs as failed — previous server instance crashed/exited
-    const staleRunning = registry.jobs.filter((j: any) => j.status === "running");
-    const staleCount = staleRunning.length;
+    // Stale job cleanup
+    const staleRunning = registry.jobs.filter((j) => j.status === "running");
     for (const job of staleRunning) {
       job.status = "failed";
       job.exitCode = -1;
       job.finishedAt = isoNow();
       job.error = "Server restarted — job was still running";
+      writeJobLog(job.id, `[failed] Server restarted — job was still running`);
     }
-    if (staleCount > 0) {
-      globalLog(registry, `[STARTUP] Marked ${staleCount} stale running job(s) as failed after restart`);
+    if (staleRunning.length > 0) {
+      globalLog(registry, `[STARTUP] Marked ${staleRunning.length} stale running job(s) as failed`);
+    }
+
+    // Job pruning — keep latest MAX_JOBS
+    if (registry.jobs.length > MAX_JOBS) {
+      const excess = registry.jobs.length - MAX_JOBS;
+      registry.jobs = registry.jobs.slice(excess);
+      globalLog(registry, `[STARTUP] Pruned ${excess} old job(s), keeping ${registry.jobs.length}`);
     }
 
     if (registry.autoSyncExternal === undefined) registry.autoSyncExternal = true;
-    if (!registry.nodeId) {
-      registry.nodeId = crypto.randomUUID();
-      flushPersist(registry);
-    }
-    return registry;
-  } catch {
-    const registry: Registry = { executionMode: "local", jobs: [], logs: [], nodeId: crypto.randomUUID(), workflows: [], autoSyncExternal: true };
+    if (!registry.nodeId) registry.nodeId = crypto.randomUUID();
     flushPersist(registry);
+    appendServerLog(`Registry loaded: ${registry.jobs.length} jobs, ${registry.workflows.length} workflows`);
     return registry;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    appendServerLog(`Registry corrupt (${msg}), trying backup`);
+
+    // Fall back to backup
+    if (fs.existsSync(registryBakPath)) {
+      try {
+        const bak = JSON.parse(fs.readFileSync(registryBakPath, "utf8")) as Registry;
+        bak.logs = [];
+        bak.nodeId = crypto.randomUUID();
+        if (!bak.workflows) bak.workflows = [];
+        atomicWriteJSON(registryPath, bak); // Restore primary from backup
+        appendServerLog(`Recovered from backup: ${bak.jobs.length} jobs`);
+        return bak;
+      } catch {
+        appendServerLog("Backup also corrupt, starting fresh");
+      }
+    }
+
+    const fresh = createDefault();
+    atomicWriteJSON(registryPath, fresh);
+    return fresh;
   }
+};
+
+const atomicWriteJSON = (filePath: string, data: unknown) => {
+  const tmpPath = filePath + ".tmp";
+  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), "utf8");
+  fs.renameSync(tmpPath, filePath);
+};
+
+const backupRegistry = () => {
+  try { fs.copyFileSync(registryPath, registryBakPath); } catch {}
 };
 
 const persistRegistry = (registry: Registry) => {
   ensureRuntime();
   if (persistTimer) clearTimeout(persistTimer);
   persistTimer = setTimeout(() => {
-    fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2), "utf8");
+    backupRegistry();
+    atomicWriteJSON(registryPath, registry);
     persistTimer = null;
   }, PERSIST_DEBOUNCE_MS);
 };
@@ -194,7 +270,8 @@ const flushPersist = (registry: Registry) => {
     persistTimer = null;
   }
   ensureRuntime();
-  fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2), "utf8");
+  backupRegistry();
+  atomicWriteJSON(registryPath, registry);
 };
 
 const getJobRegistrySnapshot = (registry: Registry): JobRegistrySnapshot => ({
@@ -1967,7 +2044,17 @@ const listRuns = () => {
       autoSyncExternal: registry.autoSyncExternal !== false,
     } satisfies JobRegistrySnapshot);
   });
-  app.get("/api/logs", (_req, res) => res.json(registry.logs));
+  app.get("/api/jobs/:id/logs", (req, res) => {
+  try {
+    const logs = readJobLogs(req.params.id, 500);
+    const job = registry.jobs.find((j) => j.id === req.params.id);
+    res.json({ logs, jobName: job?.name || null });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to read job logs" });
+  }
+});
+
+app.get("/api/logs", (_req, res) => res.json(registry.logs));
   app.post("/api/logs/clear", (_req, res) => {
     registry.logs.length = 0;
     flushPersist(registry);
@@ -3350,7 +3437,7 @@ The user can execute these commands directly from your interface.`;
           const prefixed = `[${source.toUpperCase()}][${job.id}] ${line}`;
           const previousProgress = job.progress;
           job.logs.push(prefixed);
-          job.logs = job.logs.slice(-MAX_LOG_LINES);
+          job.logs = job.logs.slice(-MAX_LOG_LINES); writeJobLog(job.id, `[${job.status}] exit ${job.exitCode ?? "?"}`);
           appendStageLog(job, prefixed);
           globalLog(registry, prefixed);
           const parsedLoss = parseLoss(line);
@@ -3451,7 +3538,7 @@ The user can execute these commands directly from your interface.`;
                   const prefixed = `[${source.toUpperCase()}][${nextJob.id}] ${line}`;
                   const previousProgress = nextJob.progress;
                   nextJob.logs.push(prefixed);
-                  nextJob.logs = nextJob.logs.slice(-MAX_LOG_LINES);
+                  nextJob.logs = nextJob.logs.slice(-MAX_LOG_LINES); writeJobLog(nextJob.id, `[${nextJob.status}] exit ${nextJob.exitCode ?? "?"}`);
                   appendStageLog(nextJob, prefixed);
                   globalLog(registry, prefixed);
                   const parsedLoss = parseLoss(line);
@@ -3547,7 +3634,7 @@ The user can execute these commands directly from your interface.`;
                           const prefixed = `[${source.toUpperCase()}][${step3Job.id}] ${line}`;
                           const previousProgress = step3Job.progress;
                           step3Job.logs.push(prefixed);
-                          step3Job.logs = step3Job.logs.slice(-MAX_LOG_LINES);
+                          step3Job.logs = step3Job.logs.slice(-MAX_LOG_LINES); writeJobLog(step3Job.id, `[${step3Job.status}] exit ${step3Job.exitCode ?? "?"}`);
                           appendStageLog(step3Job, prefixed);
                           globalLog(registry, prefixed);
                           const parsedLoss = parseLoss(line);
@@ -3993,7 +4080,18 @@ The user can execute these commands directly from your interface.`;
     });
   }
 
-  const httpServer = app.listen(PORT, "0.0.0.0", () => {
+  // Periodic registry backup every 5 minutes
+const periodicBackup = setInterval(() => {
+  try {
+    if (fs.existsSync(registryPath)) {
+      fs.copyFileSync(registryPath, registryBakPath);
+      appendServerLog("Periodic backup written");
+    }
+  } catch {}
+}, 300_000);
+periodicBackup.unref();
+
+const httpServer = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 

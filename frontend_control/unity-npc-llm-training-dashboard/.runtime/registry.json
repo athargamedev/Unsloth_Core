@@ -2,2844 +2,15 @@
   "executionMode": "local",
   "jobs": [
     {
-      "id": "ext_proc_4159403",
-      "name": "Pipeline · PID 4159403 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "running",
-      "progress": 70,
-      "loss": null,
-      "createdAt": "2026-05-20T22:18:09.600Z",
-      "startedAt": "2026-05-20T22:18:09.600Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": [
-            "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "running",
-          "logs": [
-            "[STATUS][export] substep=adapter_done state=completed"
-          ]
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 4159403] discovered active process",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
-      ],
-      "terminalReason": "external_detected"
-    },
-    {
-      "id": "ext_proc_3847590",
-      "name": "Pipeline · PID 3847590",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-20T21:33:27.588Z",
-      "startedAt": "2026-05-20T21:33:27.588Z",
-      "command": [
-        "external",
-        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore audit check --full"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 3847590] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3847590] discovered active process",
-        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore audit check --full"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T21:33:29.605Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_3846570",
-      "name": "Pipeline · PID 3846570",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-20T21:33:21.504Z",
-      "startedAt": "2026-05-20T21:33:21.504Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore audit check"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 3846570] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3846570] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore audit check"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T21:33:27.505Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_3819125",
-      "name": "Pipeline · PID 3819125 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "failed",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-20T21:30:03.465Z",
-      "startedAt": "2026-05-20T21:30:03.465Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "running",
-          "logs": [
-            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3819125] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
-      ],
-      "terminalReason": "external_detected",
-      "error": "Server restarted — job was still running",
-      "exitCode": -1,
-      "finishedAt": "2026-05-20T21:46:50.206Z"
-    },
-    {
-      "id": "ext_proc_3766024",
-      "name": "Pipeline · PID 3766024 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-20T21:23:42.090Z",
-      "startedAt": "2026-05-20T21:23:42.090Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 3766024] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3766024] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T21:29:55.572Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_3683486",
-      "name": "Pipeline · PID 3683486 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-20T21:13:20.492Z",
-      "startedAt": "2026-05-20T21:13:20.492Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3683486] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3683486] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T21:22:42.080Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_3683484",
-      "name": "Export · PID 3683484 · history_guide",
-      "type": "Export",
-      "commandId": "export",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 70,
-      "loss": null,
-      "createdAt": "2026-05-20T21:13:20.492Z",
-      "startedAt": "2026-05-20T21:13:20.492Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-532f11758578.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail' __hermes_ec=$? export -p > /tmp/hermes-snap-532f11758578.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-532f11758578.txt 2>/dev/null || true printf '\\n__HERMES_CWD_532f11758578__%s__HERMES_CWD_532f11758578__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "stopped",
-          "logs": [
-            "[STATUS][export] substep=adapter_done state=completed",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
-            "[EXTERNAL][PID 3683484] Process no longer detected",
-            "[STATUS][export] substep=adapter_done state=completed"
-          ]
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3683484] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-532f11758578.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail' __hermes_ec=$? export -p > /tmp/hermes-snap-532f11758578.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-532f11758578.txt 2>/dev/null || true printf '\\n__HERMES_CWD_532f11758578__%s__HERMES_CWD_532f11758578__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T21:22:42.080Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_3590320",
-      "name": "Pipeline · PID 3590320 · fitness_coach",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "fitness_coach",
-      "status": "failed",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-20T21:11:11.830Z",
-      "startedAt": "2026-05-20T21:11:11.830Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/fitness_coach.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "running",
-          "logs": [
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
-            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3590320] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/fitness_coach.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
-      ],
-      "terminalReason": "external_detected",
-      "error": "Server restarted — job was still running",
-      "exitCode": -1,
-      "finishedAt": "2026-05-20T21:46:50.206Z"
-    },
-    {
-      "id": "ext_proc_3193489",
-      "name": "Pipeline · PID 3193489 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "failed",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T20:11:21.413Z",
-      "startedAt": "2026-05-20T20:11:21.413Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "running",
-          "logs": [
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3193489] Process still running (re-classified as Pipeline)",
-            "[SYSTEM] Marked failed: server restarted before completion."
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3193489] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail"
-      ],
-      "terminalReason": "server_restarted",
-      "finishedAt": "2026-05-20T21:11:11.826Z",
-      "exitCode": -1
-    },
-    {
-      "id": "ext_proc_3193182",
-      "name": "Export · PID 3193182",
-      "type": "Export",
-      "commandId": "export",
-      "status": "failed",
-      "progress": 88,
-      "loss": null,
-      "createdAt": "2026-05-20T20:11:18.413Z",
-      "startedAt": "2026-05-20T20:11:18.413Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 logdir=/tmp/ucore-deepeval-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   ./ucore dataset-eval \"subjects/NPC_specs/${npc}.json\" --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "running",
-          "logs": [
-            "[SYSTEM] Marked failed: server restarted before completion.",
-            "[EXTERNAL][PID 3193182] Process still running (re-classified as Export)",
-            "[SYSTEM] Marked failed: server restarted before completion."
-          ]
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3193182] discovered active process",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 logdir=/tmp/ucore-deepeval-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   ./ucore dataset-eval \"subjects/NPC_specs/${npc}.json\" --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "terminalReason": "server_restarted",
-      "finishedAt": "2026-05-20T21:11:11.826Z",
-      "exitCode": -1
-    },
-    {
-      "id": "ext_proc_3084231",
-      "name": "Dataset · PID 3084231 · astronomy_guide",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T19:49:47.557Z",
-      "startedAt": "2026-05-20T19:49:47.557Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-fix-astronomy-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" stdbuf -oL -eL ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/astronomy_guide.log\" printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 3084231] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3084231] discovered active process",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-fix-astronomy-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" stdbuf -oL -eL ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/astronomy_guide.log\" printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T20:02:33.346Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2967805",
-      "name": "Dataset · PID 2967805 · fitness_coach",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "fitness_coach",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T19:35:39.238Z",
-      "startedAt": "2026-05-20T19:35:39.238Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --model llama3.1-3060-chat:latest"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2967805] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2967805] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --model llama3.1-3060-chat:latest"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T19:49:21.290Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2858335",
-      "name": "Dataset · PID 2858335 · astronomy_guide",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T19:22:39.165Z",
-      "startedAt": "2026-05-20T19:22:39.165Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2858335] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2858335] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T19:35:39.238Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2858019",
-      "name": "Dataset · PID 2858019",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T19:22:38.575Z",
-      "startedAt": "2026-05-20T19:22:38.575Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-fix-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   stdbuf -oL -eL ./ucore generate-ollama \"subjects/NPC_specs/${npc}.json\" --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2858019] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2858019] discovered active process",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-fix-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   stdbuf -oL -eL ./ucore generate-ollama \"subjects/NPC_specs/${npc}.json\" --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T19:49:21.290Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2853861",
-      "name": "Pipeline · PID 2853861",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T19:20:44.573Z",
-      "startedAt": "2026-05-20T19:20:44.573Z",
-      "command": [
-        "external",
-        "/bin/bash -c ./ucore audit check 2>&1 | head -20"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2853861] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2853861] discovered active process",
-        "/bin/bash -c ./ucore audit check 2>&1 | head -20"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T19:20:45.161Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2789602",
-      "name": "Dataset · PID 2789602 · fitness_coach",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "fitness_coach",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T19:09:03.084Z",
-      "startedAt": "2026-05-20T19:09:03.084Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --model llama3.1-3060-chat:latest"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2789602] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2789602] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --model llama3.1-3060-chat:latest"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T19:20:42.161Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2752872",
-      "name": "Dataset · PID 2752872",
-      "type": "Dataset",
-      "commandId": "dataset-sanitize",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T19:02:32.611Z",
-      "startedAt": "2026-05-20T19:02:32.611Z",
-      "command": [
-        "external",
-        "python -m py_compile scripts/dataset/sanitize_dataset.py"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2752872] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2752872] discovered active process",
-        "python -m py_compile scripts/dataset/sanitize_dataset.py"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T19:02:33.061Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2720451",
-      "name": "Dataset · PID 2720451 · astronomy_guide",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T18:57:12.010Z",
-      "startedAt": "2026-05-20T18:57:12.010Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2720451] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2720451] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T19:09:03.084Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2642548",
-      "name": "Dataset · PID 2642548 · chef_assistant",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "chef_assistant",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T18:45:20.965Z",
-      "startedAt": "2026-05-20T18:45:20.965Z",
-      "command": [
-        "external",
-        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore generate-ollama subjects/NPC_specs/chef_assistant.json --model llama3.1-3060-chat:latest"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2642548] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2642548] discovered active process",
-        "bash /home/athar/.pyenv/libexec/pyenv-exec python3 ./ucore generate-ollama subjects/NPC_specs/chef_assistant.json --model llama3.1-3060-chat:latest"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T18:57:12.010Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2572047",
-      "name": "Dataset · PID 2572047 · history_guide",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T18:33:38.583Z",
-      "startedAt": "2026-05-20T18:33:38.583Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/history_guide.json --model llama3.1-3060-chat:latest"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2572047] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2572047] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/history_guide.json --model llama3.1-3060-chat:latest"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T18:45:20.965Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2571758",
-      "name": "Dataset · PID 2571758",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T18:33:38.583Z",
-      "startedAt": "2026-05-20T18:33:38.583Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-regen-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   stdbuf -oL -eL ./ucore generate-ollama \"subjects/NPC_specs/${npc}.json\" --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2571758] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2571758] discovered active process",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-regen-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   stdbuf -oL -eL ./ucore generate-ollama \"subjects/NPC_specs/${npc}.json\" --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T19:20:42.161Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2559143",
-      "name": "Pipeline · PID 2559143 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T18:31:41.898Z",
-      "startedAt": "2026-05-20T18:31:41.898Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2559143] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2559143] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T18:33:05.901Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2558831",
-      "name": "Export · PID 2558831",
-      "type": "Export",
-      "commandId": "export",
-      "status": "stopped",
-      "progress": 88,
-      "loss": null,
-      "createdAt": "2026-05-20T18:31:41.898Z",
-      "startedAt": "2026-05-20T18:31:41.898Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 logdir=/tmp/ucore-deepeval-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   stdbuf -oL -eL ./ucore dataset-eval \"subjects/NPC_specs/${npc}.json\" --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2558831] Process no longer detected"
-          ]
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2558831] discovered active process",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 logdir=/tmp/ucore-deepeval-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   stdbuf -oL -eL ./ucore dataset-eval \"subjects/NPC_specs/${npc}.json\" --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T18:33:05.901Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2516117",
-      "name": "Pipeline · PID 2516117 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T18:26:00.569Z",
-      "startedAt": "2026-05-20T18:26:00.569Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2516117] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2516117] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T18:31:32.896Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2515790",
-      "name": "Export · PID 2515790",
-      "type": "Export",
-      "commandId": "export",
-      "status": "stopped",
-      "progress": 88,
-      "loss": null,
-      "createdAt": "2026-05-20T18:26:00.569Z",
-      "startedAt": "2026-05-20T18:26:00.569Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 logdir=/tmp/ucore-deepeval-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   ./ucore dataset-eval \"subjects/NPC_specs/${npc}.json\" --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2515790] Process no longer detected"
-          ]
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2515790] discovered active process",
-        "/usr/bin/bash -lic set +m; set -euo pipefail export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 logdir=/tmp/ucore-deepeval-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   ./ucore dataset-eval \"subjects/NPC_specs/${npc}.json\" --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T18:31:32.896Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2322009",
-      "name": "Export · PID 2322009",
-      "type": "Export",
-      "commandId": "export",
-      "status": "stopped",
-      "progress": 88,
-      "loss": null,
-      "createdAt": "2026-05-20T18:09:50.786Z",
-      "startedAt": "2026-05-20T18:09:50.786Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-8bc4f6f6c742.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'wc -c < '\\''/home/athar/Projects/Unsloth_Core/scripts/export/export.py'\\'' 2>/dev/null' __hermes_ec=$? export -p > /tmp/hermes-snap-8bc4f6f6c742.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-8bc4f6f6c742.txt 2>/dev/null || true printf '\\n__HERMES_CWD_8bc4f6f6c742__%s__HERMES_CWD_8bc4f6f6c742__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 2322009] Process no longer detected"
-          ]
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2322009] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-8bc4f6f6c742.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'wc -c < '\\''/home/athar/Projects/Unsloth_Core/scripts/export/export.py'\\'' 2>/dev/null' __hermes_ec=$? export -p > /tmp/hermes-snap-8bc4f6f6c742.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-8bc4f6f6c742.txt 2>/dev/null || true printf '\\n__HERMES_CWD_8bc4f6f6c742__%s__HERMES_CWD_8bc4f6f6c742__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T18:09:52.568Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1899581",
-      "name": "Dataset · PID 1899581 · history_guide · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T17:16:50.565Z",
-      "startedAt": "2026-05-20T17:16:50.565Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1-3060-chat"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1899581] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1899581] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1-3060-chat"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T17:34:53.282Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1899576",
-      "name": "Dataset · PID 1899576 · history_guide · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T17:16:48.558Z",
-      "startedAt": "2026-05-20T17:16:48.558Z",
-      "command": [
-        "external",
-        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1-3060-chat"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1899576] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1899576] discovered active process",
-        "/home/athar/.hermes/bin/tirith check --json --non-interactive --shell posix -- source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1-3060-chat"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T17:16:50.034Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1871908",
-      "name": "Dataset · PID 1871908 · history_guide · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T17:06:51.199Z",
-      "startedAt": "2026-05-20T17:06:51.199Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model qwen3:latest"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1871908] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1871908] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model qwen3:latest"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T17:16:38.032Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1785764",
-      "name": "Dataset · PID 1785764 · history_guide · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T16:56:33.769Z",
-      "startedAt": "2026-05-20T16:56:33.769Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1785764] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1785764] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T17:06:33.769Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_sanitize_astronomy_guide_ollama",
-      "name": "External Dataset Sanitize (astronomy_guide/ollama)",
-      "type": "Dataset",
-      "commandId": "dataset-sanitize",
-      "npcKey": "astronomy_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-19T23:53:58.422Z",
-      "startedAt": "2026-05-19T23:53:58.422Z",
-      "finishedAt": "2026-05-19T23:53:58.422Z",
-      "command": [
-        "./ucore",
-        "sanitize",
-        "subjects/datasets/astronomy_guide/ollama/train.jsonl"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/astronomy_guide/ollama/train_clean.jsonl"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_dataset_astronomy_guide_ollama",
-      "name": "External Dataset Generate (astronomy_guide/ollama)",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "astronomy_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-20T16:55:24.159Z",
-      "startedAt": "2026-05-20T16:55:24.159Z",
-      "finishedAt": "2026-05-20T16:55:24.159Z",
-      "command": [
-        "./ucore",
-        "generate",
-        "subjects/astronomy_guide.json",
-        "--technique",
-        "ollama"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] dataset artifact detected: datasets/astronomy_guide/ollama/train.jsonl"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_1602179",
-      "name": "Dataset · PID 1602179 · astronomy_guide · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T16:35:59.754Z",
-      "startedAt": "2026-05-20T16:35:59.754Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1602179] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1602179] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T16:55:25.734Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1520070",
-      "name": "Dataset · PID 1520070 · astronomy_guide · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T16:25:50.987Z",
-      "startedAt": "2026-05-20T16:25:50.987Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1520070] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1520070] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T16:35:51.019Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1435182",
-      "name": "Dataset · PID 1435182 · astronomy_guide · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T16:15:41.761Z",
-      "startedAt": "2026-05-20T16:15:41.761Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1435182] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1435182] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-89c0854b78fe.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/astronomy_guide.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-89c0854b78fe.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-89c0854b78fe.txt 2>/dev/null || true printf '\\n__HERMES_CWD_89c0854b78fe__%s__HERMES_CWD_89c0854b78fe__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T16:25:41.985Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_sanitize_chef_assistant_ollama",
-      "name": "External Dataset Sanitize (chef_assistant/ollama)",
-      "type": "Dataset",
-      "commandId": "dataset-sanitize",
-      "npcKey": "chef_assistant",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-19T23:53:58.419Z",
-      "startedAt": "2026-05-19T23:53:58.419Z",
-      "finishedAt": "2026-05-19T23:53:58.419Z",
-      "command": [
-        "./ucore",
-        "sanitize",
-        "subjects/datasets/chef_assistant/ollama/train.jsonl"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/chef_assistant/ollama/train_clean.jsonl"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_dataset_chef_assistant_ollama",
-      "name": "External Dataset Generate (chef_assistant/ollama)",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "chef_assistant",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-20T16:09:39.216Z",
-      "startedAt": "2026-05-20T16:09:39.216Z",
-      "finishedAt": "2026-05-20T16:09:39.216Z",
-      "command": [
-        "./ucore",
-        "generate",
-        "subjects/chef_assistant.json",
-        "--technique",
-        "ollama"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] dataset artifact detected: datasets/chef_assistant/ollama/train.jsonl"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_1329130",
-      "name": "Dataset · PID 1329130 · chef_assistant · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "chef_assistant",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T16:02:29.731Z",
-      "startedAt": "2026-05-20T16:02:29.731Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-9a2a020115bd.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-9a2a020115bd.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-9a2a020115bd.txt 2>/dev/null || true printf '\\n__HERMES_CWD_9a2a020115bd__%s__HERMES_CWD_9a2a020115bd__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1329130] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1329130] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-9a2a020115bd.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-9a2a020115bd.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-9a2a020115bd.txt 2>/dev/null || true printf '\\n__HERMES_CWD_9a2a020115bd__%s__HERMES_CWD_9a2a020115bd__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T16:09:39.728Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1238499",
-      "name": "Dataset · PID 1238499 · chef_assistant · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "chef_assistant",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T15:52:17.734Z",
-      "startedAt": "2026-05-20T15:52:17.734Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-9106d929ef8c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-9106d929ef8c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-9106d929ef8c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_9106d929ef8c__%s__HERMES_CWD_9106d929ef8c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1238499] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1238499] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-9106d929ef8c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-9106d929ef8c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-9106d929ef8c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_9106d929ef8c__%s__HERMES_CWD_9106d929ef8c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T16:02:17.741Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1209893",
-      "name": "Dataset · PID 1209893 · chef_assistant · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "chef_assistant",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T15:41:11.648Z",
-      "startedAt": "2026-05-20T15:41:11.648Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-120879ac52c4.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-120879ac52c4.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-120879ac52c4.txt 2>/dev/null || true printf '\\n__HERMES_CWD_120879ac52c4__%s__HERMES_CWD_120879ac52c4__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1209893] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1209893] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-120879ac52c4.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/chef_assistant.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-120879ac52c4.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-120879ac52c4.txt 2>/dev/null || true printf '\\n__HERMES_CWD_120879ac52c4__%s__HERMES_CWD_120879ac52c4__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T15:44:11.689Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1063597",
-      "name": "Pipeline · PID 1063597 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T10:19:30.098Z",
-      "startedAt": "2026-05-20T10:19:30.098Z",
-      "command": [
-        "external",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 1063597] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1063597] discovered active process",
-        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T10:19:31.219Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_sanitize_fitness_coach_ollama",
-      "name": "External Dataset Sanitize (fitness_coach/ollama)",
-      "type": "Dataset",
-      "commandId": "dataset-sanitize",
-      "npcKey": "fitness_coach",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-19T23:53:58.423Z",
-      "startedAt": "2026-05-19T23:53:58.423Z",
-      "finishedAt": "2026-05-19T23:53:58.423Z",
-      "command": [
-        "./ucore",
-        "sanitize",
-        "subjects/datasets/fitness_coach/ollama/train.jsonl"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/fitness_coach/ollama/train_clean.jsonl"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_dataset_fitness_coach_ollama",
-      "name": "External Dataset Generate (fitness_coach/ollama)",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "fitness_coach",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-20T10:11:45.562Z",
-      "startedAt": "2026-05-20T10:11:45.562Z",
-      "finishedAt": "2026-05-20T10:11:45.562Z",
-      "command": [
-        "./ucore",
-        "generate",
-        "subjects/fitness_coach.json",
-        "--technique",
-        "ollama"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] dataset artifact detected: datasets/fitness_coach/ollama/train.jsonl"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_988212",
-      "name": "Dataset · PID 988212 · fitness_coach · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "fitness_coach",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T10:10:02.037Z",
-      "startedAt": "2026-05-20T10:10:02.037Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-836c016e676e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-836c016e676e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-836c016e676e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_836c016e676e__%s__HERMES_CWD_836c016e676e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 988212] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 988212] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-836c016e676e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-836c016e676e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-836c016e676e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_836c016e676e__%s__HERMES_CWD_836c016e676e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T10:11:46.063Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_953874",
-      "name": "Dataset · PID 953874 · fitness_coach · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "fitness_coach",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T10:04:52.046Z",
-      "startedAt": "2026-05-20T10:04:52.046Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-836c016e676e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-836c016e676e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-836c016e676e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_836c016e676e__%s__HERMES_CWD_836c016e676e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 953874] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 953874] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-836c016e676e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-836c016e676e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-836c016e676e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_836c016e676e__%s__HERMES_CWD_836c016e676e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T10:09:52.053Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_906437",
-      "name": "Dataset · PID 906437 · fitness_coach · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "fitness_coach",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T09:59:40.072Z",
-      "startedAt": "2026-05-20T09:59:40.072Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-b3a539930fc4.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-b3a539930fc4.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b3a539930fc4.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b3a539930fc4__%s__HERMES_CWD_b3a539930fc4__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 906437] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 906437] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-b3a539930fc4.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-b3a539930fc4.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b3a539930fc4.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b3a539930fc4__%s__HERMES_CWD_b3a539930fc4__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T10:04:40.069Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_869124",
-      "name": "Dataset · PID 869124 · fitness_coach · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "fitness_coach",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T09:54:31.178Z",
-      "startedAt": "2026-05-20T09:54:31.178Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-b3a539930fc4.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-b3a539930fc4.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b3a539930fc4.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b3a539930fc4__%s__HERMES_CWD_b3a539930fc4__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 869124] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 869124] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-b3a539930fc4.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-b3a539930fc4.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b3a539930fc4.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b3a539930fc4__%s__HERMES_CWD_b3a539930fc4__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T09:59:31.178Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_849814",
-      "name": "Dataset · PID 849814 · fitness_coach · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "fitness_coach",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T09:51:22.011Z",
-      "startedAt": "2026-05-20T09:51:22.011Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-b3a539930fc4.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-b3a539930fc4.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b3a539930fc4.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b3a539930fc4__%s__HERMES_CWD_b3a539930fc4__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 849814] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 849814] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-b3a539930fc4.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-b3a539930fc4.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b3a539930fc4.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b3a539930fc4__%s__HERMES_CWD_b3a539930fc4__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T09:54:22.064Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_817842",
-      "name": "Dataset · PID 817842 · fitness_coach · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "fitness_coach",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T09:47:37.171Z",
-      "startedAt": "2026-05-20T09:47:37.171Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-b3a539930fc4.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-b3a539930fc4.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b3a539930fc4.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b3a539930fc4__%s__HERMES_CWD_b3a539930fc4__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 817842] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 817842] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-b3a539930fc4.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval './ucore generate subjects/NPC_specs/fitness_coach.json --technique ollama --model llama3.1-3060-chat' __hermes_ec=$? export -p > /tmp/hermes-snap-b3a539930fc4.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-b3a539930fc4.txt 2>/dev/null || true printf '\\n__HERMES_CWD_b3a539930fc4__%s__HERMES_CWD_b3a539930fc4__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T09:50:37.174Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_sanitize_history_guide_template",
-      "name": "External Dataset Sanitize (history_guide/template)",
-      "type": "Dataset",
-      "commandId": "dataset-sanitize",
-      "npcKey": "history_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-20T09:15:21.568Z",
-      "startedAt": "2026-05-20T09:15:21.568Z",
-      "finishedAt": "2026-05-20T09:15:21.568Z",
-      "command": [
-        "./ucore",
-        "sanitize",
-        "subjects/datasets/history_guide/template/train.jsonl"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/history_guide/template/train_clean.jsonl"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_dataset_history_guide_template",
-      "name": "External Dataset Generate (history_guide/template)",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "history_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-20T09:14:31.586Z",
-      "startedAt": "2026-05-20T09:14:31.586Z",
-      "finishedAt": "2026-05-20T09:14:31.586Z",
-      "command": [
-        "./ucore",
-        "generate",
-        "subjects/history_guide.json",
-        "--technique",
-        "template"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] dataset artifact detected: datasets/history_guide/template/train.jsonl"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_507915",
-      "name": "Dataset · PID 507915 · history_guide · technique:template",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T09:14:30.046Z",
-      "startedAt": "2026-05-20T09:14:30.046Z",
-      "command": [
-        "external",
-        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/dataset/generate_dataset.py subjects/NPC_specs/history_guide.json --technique template"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 507915] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 507915] discovered active process",
-        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/dataset/generate_dataset.py subjects/NPC_specs/history_guide.json --technique template"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T09:14:33.963Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_338954",
-      "name": "Dataset · PID 338954 · history_guide · technique:ollama",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T09:04:20.035Z",
-      "startedAt": "2026-05-20T09:04:20.035Z",
-      "command": [
-        "external",
-        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/dataset/generate_dataset.py subjects/NPC_specs/history_guide.json --technique ollama --ollama --model qwen2.5:7b"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 338954] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 338954] discovered active process",
-        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/dataset/generate_dataset.py subjects/NPC_specs/history_guide.json --technique ollama --ollama --model qwen2.5:7b"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T09:14:20.034Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_86469",
-      "name": "Pipeline · PID 86469 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T08:43:48.782Z",
-      "startedAt": "2026-05-20T08:43:48.782Z",
-      "command": [
-        "external",
-        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen2.5:7b"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 86469] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 86469] discovered active process",
-        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen2.5:7b"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T08:44:03.025Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_86466",
-      "name": "Export · PID 86466 · history_guide",
-      "type": "Export",
-      "commandId": "export",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 88,
-      "loss": null,
-      "createdAt": "2026-05-20T08:43:48.782Z",
-      "startedAt": "2026-05-20T08:43:48.782Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-5fce7337c31c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'export PYTHONPATH=/home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen2.5:7b' __hermes_ec=$? export -p > /tmp/hermes-snap-5fce7337c31c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-5fce7337c31c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_5fce7337c31c__%s__HERMES_CWD_5fce7337c31c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "stopped",
-          "logs": [
-            "[STATUS][export] substep=adapter_done state=completed",
-            "[EXTERNAL][PID 86466] Process no longer detected",
-            "[STATUS][export] substep=adapter_done state=completed"
-          ]
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 86466] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-5fce7337c31c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'export PYTHONPATH=/home/athar/Projects/Unsloth_Core && source unsloth_env/bin/activate && ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen2.5:7b' __hermes_ec=$? export -p > /tmp/hermes-snap-5fce7337c31c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-5fce7337c31c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_5fce7337c31c__%s__HERMES_CWD_5fce7337c31c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T08:44:03.025Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_81356",
-      "name": "Pipeline · PID 81356",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "status": "stopped",
-      "progress": 13,
-      "loss": null,
-      "createdAt": "2026-05-20T08:41:05.023Z",
-      "startedAt": "2026-05-20T08:41:05.023Z",
-      "command": [
-        "external",
-        "python3 ./ucore audit check"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "stopped",
-          "logs": [
-            "[EXTERNAL][PID 81356] Process no longer detected"
-          ]
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 81356] discovered active process",
-        "python3 ./ucore audit check"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T08:41:09.768Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_81353",
-      "name": "Export · PID 81353 · history_guide",
-      "type": "Export",
-      "commandId": "export",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 88,
-      "loss": null,
-      "createdAt": "2026-05-20T08:41:05.023Z",
-      "startedAt": "2026-05-20T08:41:05.023Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-5fce7337c31c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore audit check && ./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready && ./ucore validate-spec subjects/NPC_specs/chef_assistant.json --generation-ready && ./ucore validate-spec subjects/NPC_specs/astronomy_guide.json --generation-ready && ./ucore validate-spec subjects/NPC_specs/fitness_coach.json --generation-ready' __hermes_ec=$? export -p > /tmp/hermes-snap-5fce7337c31c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-5fce7337c31c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_5fce7337c31c__%s__HERMES_CWD_5fce7337c31c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "stopped",
-          "logs": [
-            "[STATUS][export] substep=adapter_done state=completed",
-            "[EXTERNAL][PID 81353] Process no longer detected",
-            "[STATUS][export] substep=adapter_done state=completed"
-          ]
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 81353] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-5fce7337c31c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore audit check && ./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready && ./ucore validate-spec subjects/NPC_specs/chef_assistant.json --generation-ready && ./ucore validate-spec subjects/NPC_specs/astronomy_guide.json --generation-ready && ./ucore validate-spec subjects/NPC_specs/fitness_coach.json --generation-ready' __hermes_ec=$? export -p > /tmp/hermes-snap-5fce7337c31c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-5fce7337c31c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_5fce7337c31c__%s__HERMES_CWD_5fce7337c31c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-20T08:41:09.768Z",
-      "exitCode": -15
-    },
-    {
-      "id": "job_1779266180536_kpm4z",
-      "name": "Train LoRA",
-      "type": "Training",
-      "commandId": "train",
-      "status": "failed",
-      "progress": 38,
-      "loss": null,
-      "createdAt": "2026-05-20T08:36:20.536Z",
-      "startedAt": "2026-05-20T08:36:20.536Z",
-      "command": [
-        "./ucore",
-        "train",
-        "subjects/NPC_specs/fitness_coach.json",
-        "--from-spec",
-        "--preset",
-        "fast-3b",
-        "--technique",
-        "ollama",
-        "--model",
-        "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
-        "--wandb",
-        "--lr",
-        "2e-4",
-        "--batch-size",
-        "1",
-        "--epochs",
-        "3",
-        "--lora-r",
-        "16",
-        "--lora-alpha",
-        "32",
-        "--lr-scheduler",
-        "cosine"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "completed",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "failed",
-          "logs": [
-            "[STDOUT][job_1779266180536_kpm4z] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/NPC_specs/fitness_coach.json --from-spec --preset fast-3b --technique ollama --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit --lr 0.0002 --batch-size 1 --epochs 3 --lora-r 16 --lora-alpha 32 --lr-scheduler cosine --wandb",
-            "[STDERR][job_1779266180536_kpm4z] /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python: can't open file '/home/athar/Projects/Unsloth_Core/scripts/train.py': [Errno 2] No such file or directory",
-            "[STDOUT][job_1779266180536_kpm4z] Error: Command failed with return code 2"
-          ]
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[STDOUT][job_1779266180536_kpm4z] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/NPC_specs/fitness_coach.json --from-spec --preset fast-3b --technique ollama --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit --lr 0.0002 --batch-size 1 --epochs 3 --lora-r 16 --lora-alpha 32 --lr-scheduler cosine --wandb",
-        "[STDERR][job_1779266180536_kpm4z] /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python: can't open file '/home/athar/Projects/Unsloth_Core/scripts/train.py': [Errno 2] No such file or directory",
-        "[STDOUT][job_1779266180536_kpm4z] Error: Command failed with return code 2"
-      ],
-      "exitCode": 2,
-      "finishedAt": "2026-05-20T08:36:20.624Z"
-    },
-    {
-      "id": "job_1779254469519_j8v4s",
+      "id": "job_1779317045066_wprre",
       "name": "Generate Dataset",
       "type": "Dataset",
       "commandId": "dataset-generate",
       "status": "stopped",
-      "progress": 13,
+      "progress": 10,
       "loss": null,
-      "createdAt": "2026-05-20T05:21:09.520Z",
-      "startedAt": "2026-05-20T05:21:09.520Z",
+      "createdAt": "2026-05-20T22:44:05.066Z",
+      "startedAt": "2026-05-20T22:44:05.066Z",
       "command": [
         "./ucore",
         "generate",
@@ -2865,13 +36,119 @@
           "name": "Export",
           "status": "pending",
           "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [],
       "stopRequested": true,
       "exitCode": -1,
-      "finishedAt": "2026-05-20T05:21:09.528Z",
+      "finishedAt": "2026-05-20T22:44:05.076Z",
       "terminalReason": "user_requested_stop"
+    },
+    {
+      "id": "job_1779317041042_h6e24",
+      "name": "Generate Dataset",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-20T22:44:01.042Z",
+      "startedAt": "2026-05-20T22:44:01.042Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/nonexistent_integration_spec.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [],
+      "stopRequested": true,
+      "exitCode": -1,
+      "finishedAt": "2026-05-20T22:44:01.098Z",
+      "terminalReason": "user_requested_stop"
+    },
+    {
+      "id": "ext_proc_4159403",
+      "name": "Pipeline · PID 4159403 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "history_guide",
+      "status": "running",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-20T22:44:00.691Z",
+      "startedAt": "2026-05-20T22:44:00.691Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "running",
+          "logs": [
+            "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 4159403] Process still running (re-classified as Pipeline)"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 4159403] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "terminalReason": "external_detected",
+      "error": "Server restarted — job was still running"
     },
     {
       "id": "ext_export_history_guide_history_guide-lora-f16.gguf",
@@ -2912,6 +189,11 @@
           "logs": [
             "[STATUS][export] substep=adapter_done state=completed"
           ]
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -2959,6 +241,11 @@
           "logs": [
             "[STATUS][export] substep=adapter_done state=completed"
           ]
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -3006,6 +293,11 @@
           "logs": [
             "[STATUS][export] substep=adapter_done state=completed"
           ]
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -3053,6 +345,11 @@
           "logs": [
             "[STATUS][export] substep=adapter_done state=completed"
           ]
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -3097,6 +394,11 @@
         },
         {
           "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
           "status": "pending",
           "logs": []
         }
@@ -3146,6 +448,11 @@
           "name": "Export",
           "status": "pending",
           "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -3191,6 +498,11 @@
         },
         {
           "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
           "status": "pending",
           "logs": []
         }
@@ -3240,6 +552,11 @@
           "name": "Export",
           "status": "pending",
           "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -3285,6 +602,11 @@
         },
         {
           "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
           "status": "pending",
           "logs": []
         }
@@ -3334,6 +656,11 @@
           "name": "Export",
           "status": "pending",
           "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -3379,6 +706,11 @@
         },
         {
           "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
           "status": "pending",
           "logs": []
         }
@@ -3428,6 +760,11 @@
           "name": "Export",
           "status": "pending",
           "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -3475,6 +812,11 @@
           "name": "Export",
           "status": "pending",
           "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -3493,9 +835,9 @@
       "status": "completed",
       "progress": 100,
       "loss": null,
-      "createdAt": "2026-05-20T04:34:05.675Z",
-      "startedAt": "2026-05-20T04:34:05.675Z",
-      "finishedAt": "2026-05-20T04:34:05.675Z",
+      "createdAt": "2026-05-20T21:27:36.567Z",
+      "startedAt": "2026-05-20T21:27:36.567Z",
+      "finishedAt": "2026-05-20T21:27:36.567Z",
       "command": [
         "./ucore",
         "sanitize",
@@ -3521,6 +863,11 @@
           "name": "Export",
           "status": "pending",
           "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -3538,9 +885,9 @@
       "status": "completed",
       "progress": 100,
       "loss": null,
-      "createdAt": "2026-05-20T04:27:25.485Z",
-      "startedAt": "2026-05-20T04:27:25.485Z",
-      "finishedAt": "2026-05-20T04:27:25.485Z",
+      "createdAt": "2026-05-20T21:28:39.262Z",
+      "startedAt": "2026-05-20T21:28:39.262Z",
+      "finishedAt": "2026-05-20T21:28:39.262Z",
       "command": [
         "./ucore",
         "generate",
@@ -3568,6 +915,11 @@
           "name": "Export",
           "status": "pending",
           "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
         }
       ],
       "logs": [
@@ -3575,10 +927,318 @@
       ],
       "exitCode": 0,
       "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_fitness_coach_ollama",
+      "name": "External Dataset Sanitize (fitness_coach/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "fitness_coach",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-20T20:09:24.530Z",
+      "startedAt": "2026-05-20T20:09:24.530Z",
+      "finishedAt": "2026-05-20T20:09:24.530Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/fitness_coach/ollama/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/fitness_coach/ollama/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_fitness_coach_ollama",
+      "name": "External Dataset Generate (fitness_coach/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "fitness_coach",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-20T20:09:14.469Z",
+      "startedAt": "2026-05-20T20:09:14.469Z",
+      "finishedAt": "2026-05-20T20:09:14.469Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/fitness_coach.json",
+        "--technique",
+        "ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/fitness_coach/ollama/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_chef_assistant_ollama",
+      "name": "External Dataset Sanitize (chef_assistant/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-20T20:10:58.464Z",
+      "startedAt": "2026-05-20T20:10:58.464Z",
+      "finishedAt": "2026-05-20T20:10:58.464Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/chef_assistant/ollama/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/chef_assistant/ollama/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_chef_assistant_ollama",
+      "name": "External Dataset Generate (chef_assistant/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-20T20:10:45.681Z",
+      "startedAt": "2026-05-20T20:10:45.681Z",
+      "finishedAt": "2026-05-20T20:10:45.681Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/chef_assistant.json",
+        "--technique",
+        "ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/chef_assistant/ollama/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_sanitize_astronomy_guide_ollama",
+      "name": "External Dataset Sanitize (astronomy_guide/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-20T20:08:31.768Z",
+      "startedAt": "2026-05-20T20:08:31.768Z",
+      "finishedAt": "2026-05-20T20:08:31.768Z",
+      "command": [
+        "./ucore",
+        "sanitize",
+        "subjects/datasets/astronomy_guide/ollama/train.jsonl"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/astronomy_guide/ollama/train_clean.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_dataset_astronomy_guide_ollama",
+      "name": "External Dataset Generate (astronomy_guide/ollama)",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-20T20:08:21.974Z",
+      "startedAt": "2026-05-20T20:08:21.974Z",
+      "finishedAt": "2026-05-20T20:08:21.974Z",
+      "command": [
+        "./ucore",
+        "generate",
+        "subjects/astronomy_guide.json",
+        "--technique",
+        "ollama"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] dataset artifact detected: datasets/astronomy_guide/ollama/train.jsonl"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
     }
   ],
-  "logs": [],
-  "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
+  "logs": [
+    "[2026-05-20T22:44:23.833Z] [STARTUP] Marked 1 stale running job(s) as failed"
+  ],
+  "nodeId": "5ecbf770-7a12-4eb4-a559-6491504274a9",
   "workflows": [],
   "autoSyncExternal": true
 }
