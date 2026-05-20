@@ -10,7 +10,7 @@ MIN_EXAMPLES_FOR_VALIDATION = 5   # Minimum examples needed to create a val spli
 DEFAULT_SEED = 42                 # Default random seed for reproducibility
 
 # ── Temperature defaults ──────────────────────────────────────────────────────
-LLM_GENERATOR_TEMPERATURE = 0.8   # Higher temp for LLM generators (creative)
+LLM_GENERATOR_TEMPERATURE = 0.6   # Lower temp for steadier dataset generation
 
 # ── Timeouts (seconds) ────────────────────────────────────────────────────────
 SUBPROCESS_TIMEOUT = 120          # For external tool subprocess calls

@@ -37,6 +37,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
 from _config.log_setup import log_info, log_warn, log_error, log_state
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 # ── Constraint checking ─────────────────────────────────────────────────────
 
@@ -1066,6 +1067,8 @@ def main():
 
     # Feedback loop
     parser.add_argument("--feedback-json", help="Save structured per-concept eval results to this JSON file for the feedback loop")
+    parser.add_argument("--workflow-hooks", default=None,
+                        help="Path to a JSONL hook log for step tracing (default: <report-dir>/workflow_hooks.jsonl)")
 
     # LoRA mode (evaluate adapter GGUFs without full-merge)
     parser.add_argument("--base-model", help="Base GGUF model path (required when --candidate is a LoRA adapter)")
@@ -1145,6 +1148,7 @@ def main():
 
     # Start baseline server
     print("\n[1/4] Starting baseline server...")
+    hook_recorder.emit("start_baseline_server", "start", port=args.port)
     baseline_kwargs = dict(port=args.port, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens)
     if args.base_model:
         base_model_path = Path(args.base_model)
@@ -1163,14 +1167,19 @@ def main():
     else:
         baseline_server = LlamaServer(baseline_gguf, **baseline_kwargs)
     if not baseline_server.start():
+        hook_recorder.emit("start_baseline_server", "error", port=args.port)
         sys.exit(1)
+    hook_recorder.emit("start_baseline_server", "complete", port=args.port)
 
     print("[2/4] Evaluating baseline...")
+    hook_recorder.emit("evaluate_baseline", "start", questions=len(questions))
     baseline_results = evaluate_model(baseline_server, questions, spec)
+    hook_recorder.emit("evaluate_baseline", "complete", questions=len(questions))
     baseline_server.stop()
 
     # Start candidate server
     print("\n[3/4] Starting candidate server...")
+    hook_recorder.emit("start_candidate_server", "start", port=args.port + 1)
     candidate_kwargs = dict(port=args.port + 1, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens)
     if args.base_model:
         # LoRA mode: candidate is an adapter, start server with base model + --lora
@@ -1186,20 +1195,26 @@ def main():
     else:
         candidate_server = LlamaServer(candidate_gguf, **candidate_kwargs)
     if not candidate_server.start():
+        hook_recorder.emit("start_candidate_server", "error", port=args.port + 1)
         sys.exit(1)
+    hook_recorder.emit("start_candidate_server", "complete", port=args.port + 1)
 
     print("[4/4] Evaluating candidate...")
+    hook_recorder.emit("evaluate_candidate", "start", questions=len(questions))
     candidate_results = evaluate_model(candidate_server, questions, spec)
+    hook_recorder.emit("evaluate_candidate", "complete", questions=len(questions))
     candidate_server.stop()
 
     # Compare and report
     print("\nComparing models...")
+    hook_recorder.emit("compare_models", "start", questions=len(questions))
     judge = None
     if args.judge:
         print(f"Initializing Ollama judge ({args.judge_model})...")
         judge = OllamaJudge(model=args.judge_model)
 
     comparison = compare_models(baseline_results, candidate_results, spec, judge=judge)
+    hook_recorder.emit("compare_models", "complete", total=comparison.get("total"), candidate_wins=comparison.get("candidate_wins"), baseline_wins=comparison.get("baseline_wins"), ties=comparison.get("ties"))
 
     if not "*" in args.baseline:
         baseline_path = Path(args.baseline)
@@ -1214,6 +1229,7 @@ def main():
         candidate_path = Path(str(candidate_gguf))
         candidate_name = f"{candidate_path.parent.name}/{candidate_path.stem}"
 
+    hook_recorder.emit("write_report", "start", report_path=args.output)
     report = generate_report(
         comparison,
         baseline_name=baseline_name,
@@ -1223,12 +1239,14 @@ def main():
     )
 
     print(report)
+    hook_recorder.emit("write_report", "complete", report_path=args.output)
 
     # Generate HTML report with loss curves if requested
     if args.report_html:
         html_path = Path(args.output).with_suffix(".html") if args.output else None
         if html_path is None and spec:
             html_path = paths.eval_report_path(spec["npc_key"], fmt="html")
+        hook_recorder.emit("write_html_report", "start", html_path=str(html_path) if html_path else None)
         generate_html_report(
             comparison,
             baseline_name=baseline_name,
@@ -1236,6 +1254,7 @@ def main():
             spec=spec,
             output_path=str(html_path) if html_path else None,
         )
+        hook_recorder.emit("write_html_report", "complete", html_path=str(html_path) if html_path else None)
 
     # Track results if requested
     if args.track and spec:

@@ -29,6 +29,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -1094,6 +1095,8 @@ def main():
     # Legacy flags
     parser.add_argument("--strict-canonical", action="store_true",
                         help="Error unless input is canonical subjects/datasets/{key}/{tech}/train.jsonl")
+    parser.add_argument("--workflow-hooks", default=None,
+                        help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
 
     args = parser.parse_args()
 
@@ -1133,6 +1136,15 @@ def main():
         print(f"Loaded spec: {spec_path}")
     elif args.spec:
         print(f"Warning: Spec file not found: {args.spec}")
+
+    hook_recorder = WorkflowHookRecorder(
+        args.workflow_hooks or default_hook_path(output_path.parent),
+        tool="sanitize_dataset",
+        npc_key=infer_npc_key_from_path(input_path),
+        technique=input_path.parent.name if input_path.parent else None,
+        spec_path=str(spec_path) if spec_path else None,
+    )
+    hook_recorder.emit("sanitize", "start", input_path=str(input_path), output_path=str(output_path))
 
     print(f"Sanitizing: {input_path}")
     print(f"Output:     {output_path}")
@@ -1319,6 +1331,7 @@ def main():
                     "ref_doc": spec_data.get("reference_doc"),
                 }
 
+        manifest_path = None
         if args.manifest_path:
             manifest_path = Path(args.manifest_path)
             write_manifest(manifest, manifest_path.parent, manifest_path.name)
@@ -1329,6 +1342,7 @@ def main():
             print(f"  Manifest:        {manifest_path}")
 
     # ── Statistics output ─────────────────────────────────────────────────
+    hook_recorder.emit("sanitize", "complete", kept=kept, discarded=discarded, output_path=str(output_path), manifest_path=str(manifest_path) if 'manifest_path' in locals() else None)
     total_processed = total_input
     discard_pct = (total_processed - kept) / total_processed * 100 if total_processed > 0 else 0
     print(f"\nStats:")

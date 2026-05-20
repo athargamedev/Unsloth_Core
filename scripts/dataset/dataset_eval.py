@@ -17,6 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.dataset.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 DEEPEVAL_TEST = PROJECT_ROOT / "tests" / "evals" / "test_dataset_generation_quality.py"
 DEFAULT_PRODUCTION_CASES_PER_CATEGORY = 5
@@ -288,6 +289,14 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
         args.display,
         "--skip-on-missing-params",
     ]
+    hook_recorder = WorkflowHookRecorder(
+        args.workflow_hooks or default_hook_path(dataset_dir(npc_key, args.technique)),
+        tool="dataset_eval",
+        npc_key=npc_key,
+        technique=args.technique,
+        spec_path=args.spec,
+    )
+    hook_recorder.emit("deepeval_run", "start", identifier=identifier, judge_model=args.judge_model, cases_per_category=args.cases_per_category)
     if args.ignore_errors:
         cmd.append("--ignore-errors")
 
@@ -353,6 +362,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     write_json(summary_path, summary)
     write_json(failures_path, failures)
     write_json(report_path, combined_report)
+    hook_recorder.emit("deepeval_run", "complete", summary_path=str(summary_path), failures_path=str(failures_path), report_path=str(report_path), pass_rate=summary["pass_rate"])
 
     print()
     print(f"DeepEval dataset quality: {summary['passed']}/{summary['total']} passed ({summary['pass_rate']:.0%})")
@@ -379,6 +389,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ignore-errors", action="store_true", help="Continue when individual DeepEval metric calls error")
     parser.add_argument("--soft-fail", action="store_true", help="Write artifacts but return 0 even when metrics fail")
     parser.add_argument("--output", help="Quality summary JSON path")
+    parser.add_argument("--workflow-hooks", default=None,
+                        help="Path to a JSONL hook log for step tracing (default: <dataset-dir>/workflow_hooks.jsonl)")
     return parser.parse_args()
 
 

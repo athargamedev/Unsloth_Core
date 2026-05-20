@@ -51,6 +51,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from _config import paths, constants as C
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.dataset.dataset_contracts import dataset_contract_from_spec, calculate_distribution_gaps
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from generate_dataset import (
     CATEGORY_TEMPLATES,
     ConceptExtractor,
@@ -864,8 +865,8 @@ Examples:
                        help="Concurrent generation tasks (default: 4)")
     parser.add_argument("--max-retries", type=int, default=3,
                        help="Max retries per generation (default: 3)")
-    parser.add_argument("--temperature", type=float, default=0.7,
-                       help="Generation temperature (default: 0.7)")
+    parser.add_argument("--temperature", type=float, default=0.6,
+                       help="Generation temperature (default: 0.6)")
     parser.add_argument("--multi-turn-ratio", type=float, default=0.25,
                        help="Fraction of rows to request as two-turn dialogues (default: 0.25)")
     parser.add_argument("--seed", type=int, default=42,
@@ -880,6 +881,8 @@ Examples:
                        help="Verify Ollama is running and model exists")
     parser.add_argument("--pull-model", action="store_true",
                        help="Auto-pull model if not found")
+    parser.add_argument("--workflow-hooks", default=None,
+                       help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
     parser.add_argument("--dry-run", action="store_true",
                        help="Dry-run: show generation plan without generating")
     
@@ -935,6 +938,14 @@ Examples:
     logger.info(f"Model: {args.model}")
     
     output_path = args.output or paths.dataset_train_path(npc_key, "ollama")
+    hook_recorder = WorkflowHookRecorder(
+        args.workflow_hooks or default_hook_path(Path(output_path).parent),
+        tool="generate_dataset_ollama",
+        npc_key=npc_key,
+        technique="ollama",
+        spec_path=args.spec,
+    )
+    hook_recorder.emit("prepare", "start", output_path=str(output_path), model=args.model)
     
     if args.dry_run:
             examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
@@ -950,9 +961,11 @@ Examples:
             logger.info(f"Temperature: {args.temperature}")
             logger.info(f"Batch size: {args.batch_size}")
             logger.info(f"Seed: {args.seed}\n")
+            hook_recorder.emit("prepare", "complete", mode="dry-run", total_expected=total)
             return
     # ── Generate dataset ──────────────────────────────────────────────────
     logger.info("Initializing generator...")
+    hook_recorder.emit("model_health", "start", model=args.model)
     generator = OllamaGeneratorV2(
         model=args.model,
         url=f"{args.url}/api/chat",
@@ -969,6 +982,7 @@ Examples:
 
     total_to_gen = sum(examples_per_category.values())
     logger.info(f"Generating {total_to_gen} examples with model '{args.model}'...")
+    hook_recorder.emit("generate_examples", "start", total_expected=total_to_gen, temperature=args.temperature, batch_size=args.batch_size)
     if args.concept_focus:
         logger.info(f"Focused on categories: {', '.join(args.concept_focus)}")
     logger.info(f"This may take several minutes depending on hardware and model size\n")
@@ -995,6 +1009,7 @@ Examples:
     # ── Write files ────────────────────────────────────────────────────────
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    val_path = None
     
     with open(output_path, "w") as f:
         for ex in train_examples:
@@ -1071,6 +1086,7 @@ Examples:
     with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=2)
     logger.info(f"✓ Wrote manifest to {manifest_path}")
+    hook_recorder.emit("write_artifacts", "complete", train_path=str(output_path), val_path=str(val_path) if val_path else None, manifest_path=str(manifest_path), total=len(examples))
     
     # ── Report errors ──────────────────────────────────────────────────────
     if dataset_gen.progress and dataset_gen.progress.errors:
@@ -1080,6 +1096,7 @@ Examples:
         logger.warning(f"⚠ {len(dataset_gen.progress.errors)} generation errors logged to {error_path}")
     
     logger.info("\n✓ Dataset generation complete!")
+    hook_recorder.emit("prepare", "complete", train_rows=len(train_examples), validation_rows=len(val_examples), total=len(examples))
     log_state("dataset_generated", npc_key=npc_key, total=len(examples),
              train=len(train_examples), validation=len(val_examples), technique="ollama")
 

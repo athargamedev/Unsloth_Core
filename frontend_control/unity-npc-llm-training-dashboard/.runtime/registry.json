@@ -7,7 +7,7 @@
       "type": "Dataset",
       "commandId": "dataset-generate",
       "npcKey": "history_guide",
-      "status": "running",
+      "status": "stopped",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-20T17:16:50.565Z",
@@ -19,8 +19,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 1899581] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -42,7 +44,9 @@
         "[EXTERNAL][PID 1899581] discovered active process",
         "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1-3060-chat"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T17:34:53.282Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_1899576",

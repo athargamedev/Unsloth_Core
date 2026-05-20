@@ -41,8 +41,8 @@ except ImportError:
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from _config import paths
-from _config import constants as C
+from _config import paths, constants as C
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.dataset.dataset_contracts import dataset_contract_from_spec, calculate_distribution_gaps
 from scripts.generate_workflow_dataset import (
@@ -1608,7 +1608,7 @@ async def generate_dataset_async_runner(spec, concepts, examples_per_category, g
     return examples
 
 
-def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.8, technique="template", spec_path=None, telemetry_ipc=None):
+def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.8, technique="template", spec_path=None, telemetry_ipc=None, workflow_hooks=None):
     """Generate a complete dataset from a subject spec."""
     random.seed(seed)
     
@@ -1621,6 +1621,15 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
     retriever = ReferenceDocRetriever(spec.get("reference_doc"))
     guardrail = DialogueGuardrail()
     telemetry_reporter = TelemetryReporter(telemetry_ipc)
+    hook_recorder = WorkflowHookRecorder(
+        workflow_hooks or default_hook_path(output_path_obj.parent),
+        tool="generate_dataset",
+        npc_key=spec.get("npc_key"),
+        technique=technique,
+        spec_path=spec_path,
+    )
+    total_count = sum(examples_per_category.values())
+    hook_recorder.emit("prepare", "start", output_path=str(output_path_obj), include_validation=include_validation, total_expected=total_count)
 
     quest_spec = spec.get("quest", {})
     quest_scenario_list = quest_spec.get("scenarios", [])
@@ -1630,6 +1639,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
     refusal_boundaries = refusal_spec.get("boundaries", [])
 
     if generator:
+        hook_recorder.emit("generate_examples", "start", mode="async", total_expected=total_count)
         examples = _run_coroutine_sync(
             generate_dataset_async_runner(
                 spec, concepts, examples_per_category, generator, multi_turn_ratio, temperature,
@@ -1639,7 +1649,6 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
         )
     else:
         examples = []
-        total_count = sum(examples_per_category.values())
         current = 0
         
         existing_examples = checkpoint_store.get_all_for_npc(spec["npc_key"]) if checkpoint_store else []
@@ -1722,6 +1731,8 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                 if current % 5 == 0 or current == total_count:
                     print(f"    Progress: {current}/{total_count}")
 
+        hook_recorder.emit("generate_examples", "complete", generated=len(examples), total_expected=total_count)
+
     # ── Split into train/validation (stratified by category) ─────────────
     if include_validation and len(examples) > 5:
         by_category = defaultdict(list)
@@ -1753,6 +1764,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
     # Write training set
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    hook_recorder.emit("write_artifacts", "start", train_target=str(output_path), validation_enabled=include_validation)
 
     train_path = output_path
     with open(train_path, "w") as f:
@@ -1830,6 +1842,9 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
 
     print(f"  Manifest:        {manifest_path}")
 
+    hook_recorder.emit("write_artifacts", "complete", train_rows=len(train_examples), validation_rows=len(val_examples), manifest_path=str(manifest_path))
+    hook_recorder.emit("prepare", "complete", total_examples=len(examples), train_rows=len(train_examples), validation_rows=len(val_examples))
+
     return {
         "spec": spec["npc_key"],
         "total": len(examples),
@@ -1892,7 +1907,7 @@ def main():
     parser.add_argument("--model", default="llama3.1:latest", help="Ollama model to use")
     parser.add_argument("--url", default="http://localhost:11434/api/chat", help="Ollama API URL")
     parser.add_argument("--multi-turn-ratio", type=float, default=0.2, help="Ratio of multi-turn dialogues (0.0 to 1.0)")
-    parser.add_argument("--temperature", type=float, default=0.8, help="Generation temperature")
+    parser.add_argument("--temperature", type=float, default=0.6, help="Generation temperature")
     parser.add_argument("--technique", default="template",
                         choices=["template", "ollama", "openai", "anthropic", "docs"],
                         help="Generation technique subdirectory (default: template)")
@@ -1902,6 +1917,8 @@ def main():
                         help="Focus generation on specific categories (repeatable, e.g. --concept-focus teaching --concept-focus dialogue). Boosts example count for those categories.")
     parser.add_argument("--telemetry-ipc", default=None,
                         help="Path to JSON IPC file for real-time dashboard telemetry reporting")
+    parser.add_argument("--workflow-hooks", default=None,
+                        help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
     parser.add_argument("--synthesize-goldens", action="store_true",
                         help="Generate synthetic evaluation goldens using DeepEval Synthesizer")
     args = parser.parse_args()
@@ -1994,6 +2011,7 @@ def main():
             technique=args.technique,
             spec_path=args.spec,
             telemetry_ipc=args.telemetry_ipc,
+            workflow_hooks=args.workflow_hooks,
         )
 
     log_state("dataset_generated", npc_key=result.get("npc_key", spec.get("npc_key", "unknown")),

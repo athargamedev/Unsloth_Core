@@ -37,6 +37,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 # ── llama.cpp toolchain paths ─────────────────────────────────────────────
 LLAMA_CPP_DIR = Path.home() / ".unsloth" / "llama.cpp"
@@ -498,6 +499,10 @@ def main():
         choices=["f32", "f16", "bf16", "q8_0"],
         help="LoRA adapter output format (default: f16). Only used in adapter mode.",
     )
+    parser.add_argument(
+        "--workflow-hooks", default=None,
+        help="Path to a JSONL hook log for step tracing (default: <export-dir>/workflow_hooks.jsonl)",
+    )
     args = parser.parse_args()
 
     # ── Determine adapter directory ─────────────────────────────────────────
@@ -521,6 +526,8 @@ def main():
         pid=os.getpid(),
         timeout_seconds=args.timeout_seconds,
     )
+    hook_recorder = WorkflowHookRecorder(args.workflow_hooks or default_hook_path(paths.export_dir(npc_key)), tool="export", npc_key=npc_key)
+    hook_recorder.emit("export_pipeline", "start", mode="full_merge" if args.full_merge else "adapter", quantization=args.quantization, resume=bool(args.resume), output_dir=str(output_dir))
 
     if not args.full_merge:
         # ── Adapter mode (default) — fast, no base model loading ─────────────
@@ -529,10 +536,12 @@ def main():
         print(f"  NPC:     {npc_key}")
         print(f"  Outtype: {args.outtype}")
 
+        hook_recorder.emit("export_adapter", "start", outtype=args.outtype, output_dir=str(output_dir))
         output_path = _export_adapter_gguf(
             output_dir, npc_key,
             outtype=args.outtype,
         )
+        hook_recorder.emit("export_adapter", "complete", outtype=args.outtype, output_path=str(output_path))
 
         # Write manifest
         write_manifest(
@@ -545,6 +554,7 @@ def main():
             artifacts=[str(output_path)],
             completed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         )
+        hook_recorder.emit("export_pipeline", "complete", mode="adapter", artifacts=[str(output_path)])
         print(f"\nExport complete! Adapter GGUF ready for Unity.")
         print(f"  Load in LLMUnity: base_model.gguf + lora_adapter.gguf")
         print(f"  Size: {output_path.stat().st_size / 1e6:.1f} MB")
@@ -583,10 +593,12 @@ def main():
         write_manifest(npc_key, model_id, quantizations, gguf_files, output_dir)
         _write_status(npc_key, state="completed", substep="resume_noop",
                       artifacts=[str(p) for p in gguf_files])
+        hook_recorder.emit("export_pipeline", "complete", mode="full_merge", resume=True, artifacts=[str(p) for p in gguf_files])
         print("Export resume complete (no-op).")
         return
 
     try:
+        hook_recorder.emit("export_full_merge", "start", model_id=model_id, quantization=args.quantization)
         # ── Load model ──────────────────────────────────────────────────────
         from unsloth import FastLanguageModel, save as unsloth_save
         from peft import PeftModel

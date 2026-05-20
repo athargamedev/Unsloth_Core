@@ -37,6 +37,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
 from _config.log_setup import log_info, log_warn, log_error, log_state
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 # ── Model-size-aware presets ────────────────────────────────────────────────
 # Each preset overrides the base YAML config for specific model sizes.
@@ -659,6 +660,8 @@ def main():
                         help="Enable W&B logging (overrides config)")
     parser.add_argument("--no-wandb", action="store_true", default=None,
                         dest="disable_wandb", help="Disable W&B logging (overrides config)")
+    parser.add_argument("--workflow-hooks", default=None,
+                        help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
 
     # Export
     parser.add_argument("--export-gguf", action="store_true",
@@ -737,6 +740,13 @@ def main():
     lora_r = config.get("lora", {}).get("r", config.get("training", {}).get("lora_r", "?"))
     lora_alpha_val = config.get("lora", {}).get("alpha", config.get("training", {}).get("lora_alpha", "?"))
     vram_gb, vram_notes = estimate_vram(config)
+    hook_recorder = WorkflowHookRecorder(
+        args.workflow_hooks or default_hook_path(Path(output_dir or paths.output_dir(npc_key))),
+        tool="train",
+        npc_key=npc_key,
+        technique=technique,
+        spec_path=str(config_path) if args.from_spec else None,
+    )
 
     print(f"\n{'='*60}")
     print(f"  Unsloth Training Launcher")
@@ -768,10 +778,13 @@ def main():
     # Write config snapshot
     log_config_snapshot(config, run_dir)
     log_state("training_start", npc_key=npc_key, run_id=run_id, model=model_name, preset=args.preset)
+    hook_recorder.emit("training_pipeline", "start", run_id=run_id, output_dir=run_dir, export_gguf=bool(args.export_gguf), preset=args.preset)
 
     # ── Load model ─────────────────────────────────────────────────────
     log_info("[1/4] Loading model and tokenizer...")
+    hook_recorder.emit("load_model", "start", model=model_name, preset=args.preset)
     model, tokenizer = get_model_and_tokenizer(config)
+    hook_recorder.emit("load_model", "complete", model=model_name, preset=args.preset)
     log_info("Model loaded")
 
     # ── Load dataset ───────────────────────────────────────────────────
@@ -784,22 +797,28 @@ def main():
         raw_candidate = paths.dataset_dir(npc_key) / technique / "train.jsonl"
         dataset_path = str(clean_candidate if clean_candidate.exists() else raw_candidate)
 
+    hook_recorder.emit("load_dataset", "start", dataset_path=dataset_path)
     dataset = load_dataset_from_jsonl(dataset_path, tokenizer, config)
     eval_dataset = None  # TODO: support eval split
     num_examples = len(dataset)
+    hook_recorder.emit("load_dataset", "complete", dataset_path=dataset_path, num_examples=num_examples)
     log_info("Dataset loaded: %d examples", num_examples)
 
     # ── Training ───────────────────────────────────────────────────────
     log_info("[3/4] Running training...")
+    hook_recorder.emit("run_training", "start", dataset_path=dataset_path, num_examples=num_examples)
     trainer, metrics = run_training(model, tokenizer, dataset, eval_dataset, config)
     training_loss = metrics.get("train_loss", 0.0)
+    hook_recorder.emit("run_training", "complete", dataset_path=dataset_path, num_examples=num_examples, training_loss=training_loss)
     log_info("Training complete: loss=%.4f", training_loss)
     log_state("training_complete", npc_key=npc_key, run_id=run_id, loss=training_loss, examples=num_examples)
 
     # ── Promotion check ────────────────────────────────────────────────
+    hook_recorder.emit("promotion_check", "start", training_loss=training_loss, num_examples=num_examples)
     promotion_passed, promotion_failures = check_promotion_rules(
         training_loss, config, num_examples
     )
+    hook_recorder.emit("promotion_check", "complete", training_loss=training_loss, num_examples=num_examples, passed=promotion_passed)
     run_pointer_target = Path("runs") / run_id
     if promotion_passed:
         log_info("Promotion rules passed")
@@ -816,6 +835,7 @@ def main():
     update_run_pointer(latest_link, run_pointer_target, "latest")
 
     # ── GGUF Export ────────────────────────────────────────────────────
+
     if args.export_gguf:
         log_info("[4/4] Exporting to GGUF (adapter mode for Unity)...")
         exports_dir = paths.export_dir(npc_key)
@@ -858,6 +878,8 @@ def main():
         log_info("  Manifest: %s", manifest_path)
     else:
         log_info("[4/4] Skipping GGUF export (use --export-gguf to enable)")
+
+    hook_recorder.emit("training_pipeline", "complete", run_id=run_id, output_dir=run_dir, export_gguf=bool(args.export_gguf))
 
     log_state("training_finished", npc_key=npc_key, run_id=run_id, loss=training_loss,
               export=bool(args.export_gguf), promoted=promotion_passed)

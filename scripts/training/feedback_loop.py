@@ -38,6 +38,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 
 # ── Default thresholds ──────────────────────────────────────────────────────
@@ -412,12 +413,21 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       deepeval_judge_model="qwen3:latest",
                       deepeval_ollama_url="http://localhost:11434",
                       deepeval_cases_per_category=5,
-                      deepeval_soft_fail=False):
+                      deepeval_soft_fail=False,
+                      workflow_hooks=None):
     """Full feedback loop: analyze → regenerate → optionally retrain."""
     # Capture human-readable output for --json mode
     tee = Tee() if json_output else None
 
     # ── 1. Load ────────────────────────────────────────────────────────
+    hook_recorder = WorkflowHookRecorder(
+        Path(workflow_hooks) if workflow_hooks else default_hook_path(Path(feedback_path).parent),
+        tool="feedback_loop",
+        npc_key=None,
+        technique=technique,
+        spec_path=None,
+    )
+    hook_recorder.emit("feedback_loop", "start", feedback_path=str(feedback_path), auto_retrain=auto_retrain, dry_run=dry_run)
     feedback_data = load_feedback_json(feedback_path)
     npc_key = feedback_data.get("npc_key", "unknown")
     candidate_model = feedback_data.get("candidate", "")
@@ -638,6 +648,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
     if json_output:
         print(json.dumps(result, indent=2))
 
+    hook_recorder.emit("feedback_loop", "complete", npc_key=npc_key, weak_concepts=len(weak_concepts), auto_retrain=auto_retrain)
     return 0
 
 
@@ -688,6 +699,8 @@ def main():
                         help="Cases per category for DeepEval dataset gating (default: 5)")
     parser.add_argument("--deepeval-soft-fail", action="store_true",
                         help="Do not abort dataset evaluation on metric failure; continue training")
+    parser.add_argument("--workflow-hooks", default=None,
+                        help="Path to a JSONL hook log for step tracing (default: <feedback-dir>/workflow_hooks.jsonl)")
 
     args = parser.parse_args()
 
@@ -722,6 +735,7 @@ def main():
         deepeval_ollama_url=args.deepeval_ollama_url,
         deepeval_cases_per_category=args.deepeval_cases_per_category,
         deepeval_soft_fail=args.deepeval_soft_fail,
+        workflow_hooks=args.workflow_hooks,
     ))
 
 
