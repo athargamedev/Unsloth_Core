@@ -698,9 +698,11 @@ def generate_report(comparison_result, baseline_name="baseline", candidate_name=
     report = "\n".join(output)
 
     if output_path:
-        with open(output_path, "w") as f:
+        output_file = Path(output_path)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_file, "w") as f:
             f.write(report)
-        print(f"\nReport saved to: {output_path}")
+        print(f"\nReport saved to: {output_file}")
 
     return report
 
@@ -1125,6 +1127,8 @@ def main():
             report_dir = paths.eval_report_dir(spec['npc_key'])
             report_dir.mkdir(parents=True, exist_ok=True)
             args.output = str(paths.eval_report_path(spec['npc_key']))
+        if not args.feedback_json and spec:
+            args.feedback_json = str(paths.eval_feedback_path(spec['npc_key']))
 
     if not questions and args.val_data:
         val_set = load_validation_set(args.val_data)

@@ -200,6 +200,11 @@ def eval_report_dir(npc_key: str) -> Path:
     return eval_root() / "reports" / npc_key
 
 
+def eval_feedback_path(npc_key: str) -> Path:
+    """Return eval/results/feedback/{npc_key}.json"""
+    return eval_root() / "results" / "feedback" / f"{npc_key}.json"
+
+
 def eval_report_path(npc_key: str, fmt: str = "md") -> Path:
     """Return eval/reports/{npc_key}/eval_{today}.{fmt}"""
     today = date.today().isoformat()

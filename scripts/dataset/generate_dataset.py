@@ -723,13 +723,59 @@ def _build_example_metadata(
 
 # ── LLM Generator Classes ──────────────────────────────────────────────────
 
-class OllamaGenerator:
-    def __init__(self, model="llama3.1:latest", url="http://localhost:11434/api/chat"):
+class RetryableAPIClient:
+    def _retryable_errors(self):
+        errors = [requests.exceptions.RequestException, json.JSONDecodeError, asyncio.TimeoutError]
+        if aiohttp:
+            errors.append(aiohttp.ClientError)
+        return tuple(errors)
+
+    @staticmethod
+    def _retry_delay(attempt: int, initial_delay: float = 1.0, cap: float = 8.0) -> float:
+        return float(min(initial_delay * (2 ** (attempt - 1)), cap))
+
+    def _retry_sync(self, label: str, max_retries: int, request_fn, extract_fn, initial_delay: float = 1.0):
+        for attempt in range(1, max_retries + 1):
+            try:
+                content = extract_fn(request_fn())
+                if content:
+                    return content.strip()
+                print(f"  [warn] Empty response from {label} (attempt {attempt}/{max_retries})")
+            except self._retryable_errors() as exc:
+                print(f"  [warn] {label} request failed (attempt {attempt}/{max_retries}): {exc}")
+            except Exception as exc:
+                print(f"  [error] {label} generation failed (attempt {attempt}/{max_retries}): {exc}")
+                break
+
+            if attempt < max_retries:
+                time.sleep(self._retry_delay(attempt, initial_delay))
+        return None
+
+    async def _retry_async(self, label: str, max_retries: int, request_fn, extract_fn, initial_delay: float = 1.0):
+        for attempt in range(1, max_retries + 1):
+            try:
+                content = extract_fn(await request_fn())
+                if content:
+                    return content.strip()
+                print(f"  [warn] Empty response from {label} (attempt {attempt}/{max_retries})")
+            except self._retryable_errors() as exc:
+                print(f"  [warn] {label} request failed (attempt {attempt}/{max_retries}): {exc}")
+            except Exception as exc:
+                print(f"  [error] {label} async generation failed (attempt {attempt}/{max_retries}): {exc}")
+                break
+
+            if attempt < max_retries:
+                await asyncio.sleep(self._retry_delay(attempt, initial_delay))
+        return None
+
+
+class OllamaGenerator(RetryableAPIClient):
+    def __init__(self, model="llama3.1:latest", url="http://localhost:11434/api/chat", max_retries: int = 3):
         self.model = model
         self.url = url
+        self.max_retries = max_retries
 
-    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
-        """Generate a response using local Ollama."""
+    def _build_payload(self, system_prompt, user_prompt, temperature, json_format):
         payload = {
             "model": self.model,
             "messages": [
@@ -744,40 +790,31 @@ class OllamaGenerator:
         }
         if json_format:
             payload["format"] = "json"
+        return payload
 
-        try:
-            response = requests.post(self.url, json=payload, timeout=120)
+    @staticmethod
+    def _extract_ollama_content(data):
+        return data.get("message", {}).get("content", "")
+
+    def _post(self, payload):
+        response = requests.post(self.url, json=payload, timeout=120)
+        response.raise_for_status()
+        return response.json()
+
+    async def _post_async(self, payload, session):
+        async with session.post(self.url, json=payload, timeout=120) as response:
             response.raise_for_status()
-            data = response.json()
-            return data["message"]["content"].strip()
-        except Exception as e:
-            print(f"  [error] Ollama generation failed: {e}")
-            return None
+            return await response.json()
+
+    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
+        """Generate a response using local Ollama."""
+        payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
+        return self._retry_sync("Ollama", self.max_retries, lambda: self._post(payload), self._extract_ollama_content, initial_delay=2.0)
 
     async def generate_async(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False, session=None, executor=None):
         if session and aiohttp:
-            payload = {
-                "model": self.model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "stream": False,
-                "options": {
-                    "temperature": temperature,
-                    "num_predict": 1024,
-                }
-            }
-            if json_format:
-                payload["format"] = "json"
-            try:
-                async with session.post(self.url, json=payload, timeout=120) as response:
-                    response.raise_for_status()
-                    data = await response.json()
-                    return data["message"]["content"].strip()
-            except Exception as e:
-                print(f"  [error] Ollama async generation failed: {e}")
-                return None
+            payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
+            return await self._retry_async("Ollama", self.max_retries, lambda: self._post_async(payload, session), self._extract_ollama_content, initial_delay=2.0)
         else:
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(
@@ -790,22 +827,15 @@ class OllamaGenerator:
             )
 
 
-class OpenAIGenerator:
-    def __init__(self, model="gpt-4o", api_key=None):
+class OpenAIGenerator(RetryableAPIClient):
+    def __init__(self, model="gpt-4o", api_key=None, max_retries: int = 3):
         self.model = model
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        self.max_retries = max_retries
         if not self.api_key:
             print("  [warn] OPENAI_API_KEY not found in environment")
 
-    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
-        """Generate a response using OpenAI API."""
-        if not self.api_key:
-            return None
-        
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+    def _build_payload(self, system_prompt, user_prompt, temperature, json_format):
         payload = {
             "model": self.model,
             "messages": [
@@ -816,42 +846,41 @@ class OpenAIGenerator:
         }
         if json_format:
             payload["response_format"] = {"type": "json_object"}
+        return payload
 
-        try:
-            response = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=60)
+    @staticmethod
+    def _extract_openai_content(data):
+        return data["choices"][0]["message"]["content"]
+
+    def _headers(self):
+        return {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+    def _post(self, payload):
+        response = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=self._headers(), timeout=60)
+        response.raise_for_status()
+        return response.json()
+
+    async def _post_async(self, payload, session):
+        async with session.post("https://api.openai.com/v1/chat/completions", json=payload, headers=self._headers(), timeout=60) as response:
             response.raise_for_status()
-            data = response.json()
-            return data["choices"][0]["message"]["content"].strip()
-        except Exception as e:
-            print(f"  [error] OpenAI generation failed: {e}")
+            return await response.json()
+
+    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
+        """Generate a response using OpenAI API."""
+        if not self.api_key:
             return None
+        payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
+        return self._retry_sync("OpenAI", self.max_retries, lambda: self._post(payload), self._extract_openai_content, initial_delay=1.0)
 
     async def generate_async(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False, session=None, executor=None):
         if not self.api_key:
             return None
         if session and aiohttp:
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "model": self.model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "temperature": temperature,
-            }
-            if json_format:
-                payload["response_format"] = {"type": "json_object"}
-            try:
-                async with session.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=60) as response:
-                    response.raise_for_status()
-                    data = await response.json()
-                    return data["choices"][0]["message"]["content"].strip()
-            except Exception as e:
-                print(f"  [error] OpenAI async generation failed: {e}")
-                return None
+            payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
+            return await self._retry_async("OpenAI", self.max_retries, lambda: self._post_async(payload, session), self._extract_openai_content, initial_delay=1.0)
         else:
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(
@@ -864,22 +893,13 @@ class OpenAIGenerator:
             )
 
 
-class AnthropicGenerator:
-    def __init__(self, model="claude-3-5-sonnet-20240620", api_key=None):
+class AnthropicGenerator(RetryableAPIClient):
+    def __init__(self, model="claude-3-5-sonnet-20240620", api_key=None, max_retries: int = 3):
         self.model = model
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        self.max_retries = max_retries
 
-    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
-        """Generate a response using Anthropic API."""
-        if not self.api_key:
-            print("  [warn] ANTHROPIC_API_KEY not found in environment")
-            return None
-        
-        headers = {
-            "x-api-key": self.api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json"
-        }
+    def _build_payload(self, system_prompt, user_prompt, temperature, json_format):
         payload = {
             "model": self.model,
             "system": system_prompt,
@@ -887,41 +907,43 @@ class AnthropicGenerator:
             "max_tokens": 1024,
             "temperature": temperature,
         }
+        return payload
 
-        try:
-            response = requests.post("https://api.anthropic.com/v1/messages", json=payload, headers=headers, timeout=60)
+    @staticmethod
+    def _extract_anthropic_content(data):
+        return data["content"][0]["text"]
+
+    def _headers(self):
+        return {
+            "x-api-key": self.api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json"
+        }
+
+    def _post(self, payload):
+        response = requests.post("https://api.anthropic.com/v1/messages", json=payload, headers=self._headers(), timeout=60)
+        response.raise_for_status()
+        return response.json()
+
+    async def _post_async(self, payload, session):
+        async with session.post("https://api.anthropic.com/v1/messages", json=payload, headers=self._headers(), timeout=60) as response:
             response.raise_for_status()
-            data = response.json()
-            content = data["content"][0]["text"].strip()
-            return content
-        except Exception as e:
-            print(f"  [error] Anthropic generation failed: {e}")
+            return await response.json()
+
+    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
+        """Generate a response using Anthropic API."""
+        if not self.api_key:
+            print("  [warn] ANTHROPIC_API_KEY not found in environment")
             return None
+        payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
+        return self._retry_sync("Anthropic", self.max_retries, lambda: self._post(payload), self._extract_anthropic_content, initial_delay=1.0)
 
     async def generate_async(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False, session=None, executor=None):
         if not self.api_key:
             return None
         if session and aiohttp:
-            headers = {
-                "x-api-key": self.api_key,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json"
-            }
-            payload = {
-                "model": self.model,
-                "system": system_prompt,
-                "messages": [{"role": "user", "content": user_prompt}],
-                "max_tokens": 1024,
-                "temperature": temperature,
-            }
-            try:
-                async with session.post("https://api.anthropic.com/v1/messages", json=payload, headers=headers, timeout=60) as response:
-                    response.raise_for_status()
-                    data = await response.json()
-                    return data["content"][0]["text"].strip()
-            except Exception as e:
-                print(f"  [error] Anthropic async generation failed: {e}")
-                return None
+            payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
+            return await self._retry_async("Anthropic", self.max_retries, lambda: self._post_async(payload, session), self._extract_anthropic_content, initial_delay=1.0)
         else:
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(
@@ -932,7 +954,6 @@ class AnthropicGenerator:
                 temperature,
                 json_format
             )
-
 
 # ── Concept Extraction ──────────────────────────────────────────────────────
 
