@@ -331,7 +331,7 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      className="flex-1 overflow-hidden p-4 flex flex-col gap-4"
+      className="flex-1 overflow-hidden p-4 flex flex-col gap-4 min-w-0 min-h-0"
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -352,10 +352,10 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden">
-        <Card className="col-span-12 xl:col-span-4 flex flex-col overflow-hidden" title="Run Library" subtitle={`${filteredRuns.length} runs`}>
+      <div className="grid grid-cols-12 gap-4 flex-1 overflow-hidden min-h-0 min-w-0">
+        <Card className="col-span-12 xl:col-span-4 flex flex-col overflow-hidden min-h-0 min-w-0" title="Run Library" subtitle={`${filteredRuns.length} runs`}>
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search run / dataset / model" className="col-span-2 rounded border border-line bg-bg/50 px-3 py-2 text-[11px] font-mono text-ink-bright outline-none focus:border-accent" />
               <select value={npcFilter} onChange={(e) => setNpcFilter(e.target.value)} className="rounded border border-line bg-bg/50 px-2 py-2 text-[11px] font-mono text-ink-bright outline-none">
                 <option value="all">All NPCs</option>
@@ -371,7 +371,7 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
               </select>
             </div>
 
-            <div className="max-h-[26rem] overflow-auto custom-scrollbar rounded border border-line/50 bg-bg/20">
+            <div className="max-h-[26rem] overflow-auto custom-scrollbar rounded border border-line/50 bg-bg/20 min-w-0">
               {filteredRuns.length === 0 ? (
                 <EmptyState title="No runs match the filters" subtitle="Try widening the NPC, technique, or model filters." />
               ) : (
@@ -430,8 +430,8 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
           </div>
         </Card>
 
-        <div className="col-span-12 xl:col-span-8 flex flex-col gap-4 overflow-hidden">
-          <Card className="flex-1 overflow-hidden" title="Selected Run" subtitle={primary ? `${primary.npcKey} · ${primary.runId}` : 'Choose a run'}>
+        <div className="col-span-12 xl:col-span-8 flex flex-col gap-4 overflow-hidden min-h-0 min-w-0">
+          <Card className="flex-1 overflow-hidden min-h-0 min-w-0" title="Selected Run" subtitle={primary ? `${primary.npcKey} · ${primary.runId}` : 'Choose a run'}>
             {!primary ? (
               <EmptyState title="No run selected" subtitle="Pick a run on the left to inspect its curve, dataset gate, and training configuration." />
             ) : (
@@ -477,8 +477,8 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
                         <div className="mb-2 text-[10px] uppercase tracking-widest text-ink/40">Loss curve</div>
                         {!hasLossData ? (
                           <EmptyState title="No loss curve" subtitle={primary.tbError || 'TensorBoard data is missing for this run.'} />
-                        ) : (
-                          <div className="h-56">
+) : (
+                          <div className="h-56 w-full min-w-0">
                             <ResponsiveContainer width="100%" height="100%">
                               <LineChart data={lossChart}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" opacity={0.25} />
@@ -508,8 +508,8 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
                         <div className="mb-2 text-[10px] uppercase tracking-widest text-ink/40">Learning rate</div>
                         {!hasLrData ? (
                           <EmptyState title="No learning-rate curve" subtitle="Learning-rate scalars were not found in the TensorBoard logs." />
-                        ) : (
-                          <div className="h-56">
+) : (
+                          <div className="h-56 w-full min-w-0">
                             <ResponsiveContainer width="100%" height="100%">
                               <AreaChart data={lrChart}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" opacity={0.25} />
@@ -605,7 +605,7 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
             )}
           </Card>
 
-          <Card className="h-[17rem] overflow-hidden" title="Run Comparison" subtitle={`${compareCount} active`}> 
+          <Card className="h-[17rem] overflow-hidden min-w-0" title="Run Comparison" subtitle={`${compareCount} active`}> 
             {selectedRuns.length === 0 ? (
               <EmptyState title="No comparison target" subtitle="Select at least one run to compare training loss, runtime, and dataset quality." />
             ) : (

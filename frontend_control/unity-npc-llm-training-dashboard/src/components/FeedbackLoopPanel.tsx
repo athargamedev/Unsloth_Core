@@ -110,7 +110,7 @@ export const FeedbackLoopPanel = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0">
       {/* Header */}
       <div className="p-4 border-b border-line bg-surface/30 flex items-center justify-between">
         <div>
@@ -129,9 +129,9 @@ export const FeedbackLoopPanel = () => {
         <div className="mx-4 mt-2 p-2 bg-danger/10 border border-danger/30 rounded text-[11px] text-danger">{apiError}</div>
       )}
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0 min-w-0">
         {/* Left sidebar: file list */}
-        <div className="w-56 border-r border-line overflow-y-auto p-2 space-y-1 custom-scrollbar bg-surface/20">
+        <div className="w-full lg:w-56 border-r-0 lg:border-r border-b lg:border-b-0 border-line overflow-y-auto p-2 space-y-1 custom-scrollbar bg-surface/20 min-h-0 min-w-0">
           <div className="text-[10px] font-bold text-ink/40 uppercase tracking-widest px-2 py-1">Results</div>
           {loading && <div className="text-[10px] text-ink/30 px-2 py-4 text-center">Loading…</div>}
           {!loading && feedbackFiles.length === 0 && (
@@ -159,7 +159,7 @@ export const FeedbackLoopPanel = () => {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar min-w-0 min-h-0">
           {detailLoading && (
             <div className="text-[12px] text-ink/40 text-center py-8">Loading feedback data…</div>
           )}
@@ -176,7 +176,7 @@ export const FeedbackLoopPanel = () => {
           {feedbackData && (
             <>
               {/* Summary cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 <div className="bg-surface border border-line rounded-sm p-3">
                   <div className="text-[10px] font-bold text-ink/40 uppercase">NPC</div>
                   <div className="text-sm font-bold text-ink-bright font-mono">{feedbackData.npc_key}</div>
@@ -198,7 +198,7 @@ export const FeedbackLoopPanel = () => {
               </div>
 
               {/* Baseline / Candidate labels */}
-              <div className="flex gap-4 text-[10px] text-ink/50 font-mono">
+              <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-4 text-[10px] text-ink/50 font-mono">
                 <span>Baseline: <span className="text-ink/80">{feedbackData.baseline}</span></span>
                 <span>Candidate: <span className="text-ink/80">{feedbackData.candidate}</span></span>
                 <span>Date: <span className="text-ink/80">{feedbackData.timestamp}</span></span>

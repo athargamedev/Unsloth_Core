@@ -212,7 +212,7 @@ export const EvalWorkflowPanel = ({
     : [];
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0">
       {/* Top config panel */}
       <div className="p-4 border-b border-line bg-surface/30 space-y-4">
         <div className="flex items-center justify-between">
@@ -235,7 +235,7 @@ export const EvalWorkflowPanel = ({
         )}
 
         {/* Config grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-[11px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-[11px]">
           {/* NPC / Spec */}
           <div>
             <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">NPC Subject</label>
@@ -359,7 +359,7 @@ export const EvalWorkflowPanel = ({
       </div>
 
       {/* Results area: reports list + inline HTML viewer */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex flex-col xl:flex-row flex-1 overflow-hidden min-h-0 min-w-0">
         {/* Report sidebar */}
         <div className="w-56 border-r border-line overflow-y-auto p-2 space-y-1 custom-scrollbar bg-surface/20">
           <div className="text-[10px] font-bold text-ink/40 uppercase tracking-widest px-2 py-1">Reports</div>

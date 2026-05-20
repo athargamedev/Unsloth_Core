@@ -111,6 +111,15 @@ export default function App() {
     }
   }, [logs, activeTab]);
 
+  useEffect(() => {
+    const raf1 = window.requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    const raf2 = window.requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+    };
+  }, [activeTab]);
+
   const [datasetViewNpc, setDatasetViewNpc] = useState<string>('');
   const [datasetViewTechnique, setDatasetViewTechnique] = useState<string>('');
   const [availableTechniques, setAvailableTechniques] = useState<Array<{ name: string; train_count: number; val_count: number }>>([]);
@@ -973,7 +982,7 @@ export default function App() {
         <AIAssistant />
 
         {/* Main Content: Matrix & Logs */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-bg">
+        <main className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0 bg-bg">
           {/* Tab Selection */}
           <div className="flex px-4 border-b border-line bg-surface/30 backdrop-blur-md overflow-x-auto whitespace-nowrap no-scrollbar">
             {[
@@ -1034,7 +1043,7 @@ export default function App() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className="flex-1 flex flex-col overflow-auto p-4 space-y-6 custom-scrollbar bg-bg/20"
+                className="flex-1 flex flex-col overflow-auto p-4 space-y-6 custom-scrollbar bg-bg/20 min-h-0 min-w-0"
               >
                 <div className="flex justify-between items-end mb-2">
                   <div>
@@ -1153,7 +1162,7 @@ export default function App() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className="flex-1 flex flex-col overflow-hidden"
+                className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0"
               >
                 <Suspense fallback={<div className="flex-1 flex items-center justify-center text-[12px] text-ink/40">Loading pipeline…</div>}>
                   <PipelineFlowPanel
@@ -1172,7 +1181,7 @@ export default function App() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className="flex-1 flex flex-col overflow-hidden"
+                className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0"
               >
                 <Suspense fallback={<div className="flex-1 flex items-center justify-center text-[12px] text-ink/40">Loading eval panel…</div>}>
                   <EvalWorkflowPanel
@@ -1189,7 +1198,7 @@ export default function App() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className="flex-1 flex flex-col overflow-hidden"
+                className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0"
               >
                 <Suspense fallback={<div className="flex-1 flex items-center justify-center text-[12px] text-ink/40">Loading feedback panel…</div>}>
                   <FeedbackLoopPanel />
@@ -1203,7 +1212,7 @@ export default function App() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col overflow-hidden"
+                className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0"
               >
                 <OperationsMatrix
                   jobs={jobs}
@@ -1237,7 +1246,7 @@ export default function App() {
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.98 }}
-                className="flex-1 flex flex-col overflow-hidden bg-black/40"
+                className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0 bg-black/40"
               >
                 <div className="p-3 border-b border-line bg-surface/30 flex justify-between items-center backdrop-blur-sm">
                   <div className="flex items-center gap-2">
@@ -1307,7 +1316,7 @@ export default function App() {
             )}
 
             {activeTab === 'commands' && (
-              <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0">
                 <div className="flex-1 overflow-auto">
                   <SystemHub
                     availableCommands={availableCommands}
@@ -1410,7 +1419,7 @@ export default function App() {
 
             {activeTab === 'datasets' && (
               <Suspense fallback={renderTabSkeleton('list')}>
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0">
                   <div className="flex-1 overflow-auto">
                     <DatasetFactory
                       datasets={datasets}
@@ -1500,7 +1509,7 @@ export default function App() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className="flex-1 flex flex-col overflow-hidden"
+                className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0"
               >
                 <WorkflowAssistantPanel
                   availableCommands={availableCommands}
@@ -1518,7 +1527,7 @@ export default function App() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className="flex-1 flex flex-col overflow-hidden"
+                className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0"
               >
                 <DatasetPipelinePanel
                   availableCommands={availableCommands}

@@ -41,7 +41,7 @@ export const ModelComparison = ({
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      className="flex-1 overflow-hidden p-4 flex flex-col gap-6"
+      className="flex-1 overflow-hidden p-4 flex flex-col gap-6 min-h-0 min-w-0"
     >
       <div className="flex justify-between items-end">
         <h3 className="text-xs font-bold text-ink-bright uppercase tracking-widest">Selected Model Comparison</h3>
@@ -79,7 +79,7 @@ export const ModelComparison = ({
               const jobExports = npcKey ? exportArtifacts.filter((artifact) => artifact.npcKey === npcKey) : [];
               const hasArtifactMetadata = jobRuns.length > 0 || jobExports.length > 0;
               return (
-                <div key={job.id} className="w-[320px] bg-surface border border-line rounded-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4">
+                <div key={job.id} className="w-full sm:w-[320px] min-w-0 bg-surface border border-line rounded-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4">
                   <div className="p-4 bg-header border-b border-line flex justify-between items-center">
                     <div className="truncate">
                       <h4 className="text-sm font-bold text-ink-bright truncate">{job.name}</h4>

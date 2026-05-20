@@ -38,9 +38,9 @@ export const EvalReportsPanel = () => {
       )}
 
       {data && !loading && (
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row min-w-0">
           {/* NPC list */}
-          <div className="w-48 shrink-0 space-y-1">
+          <div className="w-full lg:w-56 shrink-0 space-y-1 min-w-0">
             {data.reports.length === 0 && !error && (
               <div className="text-[10px] text-ink/40 py-2">No reports available.</div>
             )}
@@ -48,7 +48,7 @@ export const EvalReportsPanel = () => {
               <button
                 key={group.npcKey}
                 onClick={() => setSelectedNpc(group.npcKey)}
-                className={`w-full text-left px-3 py-2 text-[10px] font-mono rounded transition-colors ${
+                className={`w-full text-left px-3 py-2 text-[10px] font-mono rounded transition-colors min-w-0 ${
                   selectedNpc === group.npcKey
                     ? 'bg-accent/20 text-accent border border-accent/40'
                     : 'bg-surface border border-line hover:border-accent/30 text-ink/80'
@@ -56,28 +56,35 @@ export const EvalReportsPanel = () => {
               >
                 <span className="font-bold">{group.npcKey}</span>
                 <Badge variant="default" className="ml-2">{group.files.length}</Badge>
+                <div className="mt-1 text-[8px] text-ink/35 truncate">eval/reports/{group.npcKey}</div>
               </button>
             ))}
           </div>
 
           {/* File list */}
-          <div className="flex-1 space-y-1">
+          <div className="flex-1 min-w-0 space-y-1">
             {!selectedNpc && (
               <div className="text-[10px] text-ink/40 py-4 text-center">
                 Select an NPC to view reports
               </div>
             )}
+            {selectedGroup && (
+              <div className="px-3 py-2 rounded border border-line bg-bg/20 text-[9px] text-ink/45 font-mono break-all">
+                Path: eval/reports/{selectedGroup.npcKey}
+              </div>
+            )}
             {selectedGroup?.files.map((file) => (
               <div
                 key={file.name}
-                className="flex items-center gap-3 px-3 py-2 bg-surface border border-line rounded text-[10px]"
+                className="flex flex-col gap-1 px-3 py-2 bg-surface border border-line rounded text-[10px] min-w-0"
               >
                 <span className="font-mono text-ink/80 flex-1 truncate">{file.name}</span>
+                <span className="text-[8px] text-ink/35 truncate">{file.path}</span>
                 <a
                   href={`/api/eval-reports/file?path=${encodeURIComponent(file.path)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-accent underline shrink-0"
+                  className="text-accent underline shrink-0 self-start"
                   title="Opens in a new tab (external to dashboard)"
                 >
                   View
@@ -89,7 +96,7 @@ export const EvalReportsPanel = () => {
       )}
 
       {data && data.comparisons.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-line">
+        <div className="mt-4 pt-4 border-t border-line min-w-0">
           <h4 className="text-[10px] font-bold text-ink/40 uppercase tracking-widest mb-2">Comparisons</h4>
           <div className="space-y-1">
             {data.comparisons.map((comp) => (

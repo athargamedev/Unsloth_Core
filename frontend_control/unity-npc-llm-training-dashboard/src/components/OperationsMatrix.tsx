@@ -91,11 +91,11 @@ export const OperationsMatrix = ({
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 10 }}
-      className="flex-1 flex flex-col overflow-hidden"
+      className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0"
     >
       {/* Matrix Section */}
-      <section className="flex-1 p-4 flex flex-col overflow-hidden">
-        <div className="flex justify-between items-end mb-3">
+      <section className="flex-1 p-4 flex flex-col overflow-hidden min-h-0 min-w-0">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between mb-3 min-w-0">
           <div className="flex items-center gap-3">
             <h3 className="text-xs font-bold text-ink-bright uppercase tracking-widest">LoRA Training Performance Matrix</h3>
             {selectedJobIds.length >= 1 && (
@@ -107,7 +107,7 @@ export const OperationsMatrix = ({
               </button>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 min-w-0">
             <div className="flex items-center gap-2 rounded border border-line bg-panel/70 px-2 py-1">
               <span className="text-[12px] text-ink/45 font-bold uppercase tracking-wider">Types shown</span>
               {['Training', 'Dataset', 'Export', 'Evaluation'].map((t) => (
