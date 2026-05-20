@@ -109,7 +109,7 @@
       "type": "Pipeline",
       "commandId": "pipeline",
       "npcKey": "history_guide",
-      "status": "running",
+      "status": "failed",
       "progress": 10,
       "loss": null,
       "createdAt": "2026-05-20T21:30:03.465Z",
@@ -123,6 +123,9 @@
           "name": "Dataset Prep",
           "status": "running",
           "logs": [
+            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 3819125] Process still running (re-classified as Pipeline)"
@@ -154,7 +157,9 @@
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
       ],
       "terminalReason": "external_detected",
-      "error": "Server restarted — job was still running"
+      "error": "Server restarted — job was still running",
+      "exitCode": -1,
+      "finishedAt": "2026-05-20T21:46:50.206Z"
     },
     {
       "id": "ext_proc_3766024",
@@ -344,7 +349,7 @@
       "type": "Pipeline",
       "commandId": "pipeline",
       "npcKey": "fitness_coach",
-      "status": "running",
+      "status": "failed",
       "progress": 10,
       "loss": null,
       "createdAt": "2026-05-20T21:11:11.830Z",
@@ -371,6 +376,9 @@
             "[SYSTEM] Marked failed: server restarted before completion.",
             "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
             "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
             "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
@@ -403,7 +411,9 @@
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/fitness_coach.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
       ],
       "terminalReason": "external_detected",
-      "error": "Server restarted — job was still running"
+      "error": "Server restarted — job was still running",
+      "exitCode": -1,
+      "finishedAt": "2026-05-20T21:46:50.206Z"
     },
     {
       "id": "ext_proc_3193489",
@@ -3516,7 +3526,7 @@
     }
   ],
   "logs": [
-    "[2026-05-20T21:42:02.915Z] [STARTUP] Marked 2 stale running job(s) as failed after restart"
+    "[2026-05-20T21:46:50.206Z] [STARTUP] Marked 2 stale running job(s) as failed after restart"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": [],

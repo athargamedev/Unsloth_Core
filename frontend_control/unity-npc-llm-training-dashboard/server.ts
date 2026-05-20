@@ -52,6 +52,7 @@ interface Job {
   exitCode?: number;
   stopRequested?: boolean;
   terminalReason?: string;
+  error?: string;
   wandbUrl?: string | null;
 }
 
@@ -307,6 +308,22 @@ const fetchOllamaModel = async (updatedAt: string): Promise<LocalModelStatus | n
     clearTimeout(timeout);
   }
 };
+
+// Simple TTL cache for expensive operations (e.g., Ollama API calls)
+const ttlCache = new Map<string, { data: unknown; expires: number }>();
+const LOCAL_MODEL_CACHE_TTL_MS = 2000;
+async function withCache<T>(key: string, ttlMs: number, fetcher: () => Promise<T>): Promise<T> {
+  const cached = ttlCache.get(key);
+  if (cached && cached.expires > Date.now()) { console.error('[CACHE HIT]', key); return cached.data as T; }
+  const data = await fetcher();
+  ttlCache.set(key, { data, expires: Date.now() + Math.max(ttlMs, 500) });
+  if (ttlCache.size > 50) {
+    const now = Date.now();
+    for (const [k, v] of ttlCache) if (v.expires <= now) ttlCache.delete(k);
+  }
+  return data;
+}
+
 
 const detectLocalModel = async (): Promise<LocalModelStatus> => {
   const updatedAt = isoNow();
@@ -2642,7 +2659,7 @@ The user can execute these commands directly from your interface.`;
       runningJobs: registry.jobs.filter((job) => job.status === "running").length,
       totalJobs: registry.jobs.length,
       repoRoot,
-      localModel: await detectLocalModel(),
+      localModel: await withCache('detectLocalModel', LOCAL_MODEL_CACHE_TTL_MS, detectLocalModel),
       gpu: gpu ? {
         name: gpu.gpuName,
         load: gpu.gpuLoad,
