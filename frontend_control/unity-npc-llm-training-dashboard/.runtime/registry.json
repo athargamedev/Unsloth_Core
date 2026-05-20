@@ -2,6 +2,189 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_3084231",
+      "name": "Dataset · PID 3084231 · astronomy_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "astronomy_guide",
+      "status": "running",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T19:49:47.557Z",
+      "startedAt": "2026-05-20T19:49:47.557Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-fix-astronomy-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" stdbuf -oL -eL ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/astronomy_guide.log\" printf '\\nLogs: %s\\n' \"$logdir\""
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "running",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3084231] discovered active process",
+        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-fix-astronomy-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" stdbuf -oL -eL ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/astronomy_guide.log\" printf '\\nLogs: %s\\n' \"$logdir\""
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_2967805",
+      "name": "Dataset · PID 2967805 · fitness_coach",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "fitness_coach",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T19:35:39.238Z",
+      "startedAt": "2026-05-20T19:35:39.238Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --model llama3.1-3060-chat:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2967805] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2967805] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --model llama3.1-3060-chat:latest"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T19:49:21.290Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2858335",
+      "name": "Dataset · PID 2858335 · astronomy_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T19:22:39.165Z",
+      "startedAt": "2026-05-20T19:22:39.165Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2858335] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2858335] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --model llama3.1-3060-chat:latest"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T19:35:39.238Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2858019",
+      "name": "Dataset · PID 2858019",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "status": "stopped",
+      "progress": 13,
+      "loss": null,
+      "createdAt": "2026-05-20T19:22:38.575Z",
+      "startedAt": "2026-05-20T19:22:38.575Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-fix-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   stdbuf -oL -eL ./ucore generate-ollama \"subjects/NPC_specs/${npc}.json\" --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 2858019] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2858019] discovered active process",
+        "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 logdir=/tmp/ucore-fix-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   stdbuf -oL -eL ./ucore generate-ollama \"subjects/NPC_specs/${npc}.json\" --model llama3.1-3060-chat:latest 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T19:49:21.290Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_2853861",
       "name": "Pipeline · PID 2853861",
       "type": "Pipeline",

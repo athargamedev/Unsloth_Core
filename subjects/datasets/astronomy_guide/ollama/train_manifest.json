@@ -3,7 +3,7 @@
   "technique": "ollama",
   "model": "llama3.1-3060-chat:latest",
   "generation": {
-    "date": "2026-05-20T19:09:01Z",
+    "date": "2026-05-20T19:35:38Z",
     "seed": 42,
     "temperature": 0.6,
     "multi_turn_ratio": 0.25,
@@ -53,62 +53,50 @@
       "refusal": 16
     },
     "observed_examples_per_category": {
-      "identity": 10,
-      "teaching": 55,
-      "dialogue": 31,
-      "quest": 16,
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 15,
       "refusal": 16
     },
     "distribution_gaps": [
       {
-        "category": "identity",
-        "target": 12,
-        "actual": 10,
-        "shortfall": 2
-      },
-      {
-        "category": "teaching",
-        "target": 56,
-        "actual": 55,
-        "shortfall": 1
-      },
-      {
-        "category": "dialogue",
-        "target": 32,
-        "actual": 31,
+        "category": "quest",
+        "target": 16,
+        "actual": 15,
         "shortfall": 1
       }
     ]
   },
   "statistics": {
-    "total": 128,
-    "train": 116,
+    "total": 131,
+    "train": 119,
     "validation": 12,
     "by_category": {
-      "identity": 10,
-      "teaching": 55,
-      "dialogue": 31,
-      "quest": 16,
+      "identity": 12,
+      "teaching": 56,
+      "dialogue": 32,
+      "quest": 15,
       "refusal": 16
     },
     "by_difficulty": {
-      "beginner": 59,
+      "beginner": 62,
       "advanced": 24,
       "intermediate": 45
     },
     "by_concept": {
-      "galaxies and cosmology": 12,
+      "observational astronomy": 12,
       "observing the sky": 12,
+      "exploration and evidence": 12,
       "misconceptions and safety boundaries": 12,
       "stellar evolution": 12,
       "solar system": 12,
       "space exploration": 11,
-      "observational astronomy": 11,
+      "galaxies and cosmology": 11,
       "stars, galaxies, and scale": 10,
-      "exploration and evidence": 10,
       "exoplanets": 9,
-      "solar system basics": 9,
-      "scope and use": 8
+      "scope and use": 9,
+      "solar system basics": 9
     },
     "generator_stats": {
       "requests": 132,

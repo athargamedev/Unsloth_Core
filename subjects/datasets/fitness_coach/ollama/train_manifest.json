@@ -3,7 +3,7 @@
   "technique": "ollama",
   "model": "llama3.1-3060-chat:latest",
   "generation": {
-    "date": "2026-05-20T19:20:41Z",
+    "date": "2026-05-20T19:49:18Z",
     "seed": 42,
     "temperature": 0.6,
     "multi_turn_ratio": 0.25,
@@ -53,34 +53,27 @@
       "refusal": 16
     },
     "observed_examples_per_category": {
-      "identity": 11,
+      "identity": 12,
       "teaching": 56,
       "dialogue": 32,
       "quest": 16,
       "refusal": 16
     },
-    "distribution_gaps": [
-      {
-        "category": "identity",
-        "target": 12,
-        "actual": 11,
-        "shortfall": 1
-      }
-    ]
+    "distribution_gaps": []
   },
   "statistics": {
-    "total": 131,
-    "train": 119,
+    "total": 132,
+    "train": 120,
     "validation": 12,
     "by_category": {
-      "identity": 11,
+      "identity": 12,
       "teaching": 56,
       "dialogue": 32,
       "quest": 16,
       "refusal": 16
     },
     "by_difficulty": {
-      "beginner": 61,
+      "beginner": 62,
       "advanced": 24,
       "intermediate": 46
     },
@@ -89,14 +82,14 @@
       "mobility and recovery": 12,
       "nutrition and recovery": 12,
       "mobility and injury prevention": 12,
-      "misconceptions and refusals": 12,
       "strength training": 12,
+      "misconceptions and refusals": 12,
       "cardio": 12,
+      "programming": 11,
       "programming and progression": 10,
-      "programming": 10,
       "safety and injury prevention": 9,
-      "scope and use": 9,
-      "training fundamentals": 9
+      "training fundamentals": 9,
+      "scope and use": 9
     },
     "generator_stats": {
       "requests": 132,

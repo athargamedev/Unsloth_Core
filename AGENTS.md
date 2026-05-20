@@ -31,6 +31,7 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 | **Supabase** | `supabase/` | DB migrations and local Docker setup. |
 | **Frontend** | `frontend_control/` | Monitoring dashboard and React controls. |
 | **llama.cpp** | `~/.unsloth/llama.cpp/` | Prebuilt CUDA binaries: llama-server, llama-quantize, convert_lora_to_gguf.py. |
+| **Workflow Hooks** | `scripts/ops/workflow_hooks.py` | Lifecycle recording for all pipeline stages via step() context managers. `WorkflowHookReader` for parsing hook JSONL. |
 
 ## 🛠️ The Pipeline (7 Stages + Feedback Loop)
 Transforms a subject spec into a playable NPC:
@@ -86,6 +87,58 @@ Transforms a subject spec into a playable NPC:
 |----------|-------|-----|
 | `training_density` | Not enough training examples | Regenerate with `--concept-focus` |
 | `knowledge_gap` | Missing reference material | Add reference docs + re-index |
+
+## 🔍 Workflow Hook System
+
+Every pipeline script records its lifecycle in a `workflow_hooks.jsonl` file co-located with the stage output (e.g., alongside the dataset for generation, beside the adapter for training). The hook system replaces the previous ad-hoc `emit(start/complete)` pattern with a clean context manager convention.
+
+### Core API
+
+- **`WorkflowHookRecorder`** (`scripts/ops/workflow_hooks.py`): Entry point for recording. Instantiated per pipeline run, accepts `spec_path` and `run_id` that propagate through all events.
+- **`WorkflowHookReader`**: Companion class for consuming hook files. Provides:
+  - `read()` — parse all events from a JSONL file
+  - `group_by_trace()` — group events by trace ID for per-run analysis
+  - `trace_summary(trace_id)` — summary of a single trace with elapsed time, status, and step count
+  - `pipeline_summary(path)` — entry point returning `{"total_events": int, "traces": list[dict]}`
+
+### `step()` Context Manager Convention
+
+All 11 pipeline scripts use the `with hook_recorder.step(...)` pattern:
+
+```python
+with hook_recorder.step("generate_dataset", spec_path=spec, run_id=run_id) as ctx:
+    ctx.log("Starting generation...")
+    # ... pipeline work ...
+    # No explicit emit() needed — step() records start on enter,
+    # complete on normal exit, or error on (Exception, SystemExit)
+```
+
+The context manager:
+- Captures `start` event on entry (with timestamp, spec_path, run_id)
+- Captures `complete` event on clean exit
+- Captures `error` event on `(Exception, SystemExit)` — ensuring error exits are never missed
+- Supports `ctx.log(message)` for intermediate diagnostic messages
+
+### `FeedbackLoopExit` Pattern
+
+The feedback loop (`scripts/training/feedback_loop.py`) uses a custom `FeedbackLoopExit` exception for early termination paths that should record an `"error"` status in the hooks (as opposed to a clean `"complete"`). This ensures the hook file accurately reflects that the feedback loop exited early with a decision (e.g., "no gaps to address") rather than succeeding.
+
+### Documented Exception: `batch_export.py`
+
+`scripts/export/batch_export.py` uses per-sub-step `emit()` calls instead of the `step()` context manager because it processes multiple export targets in a single run and needs fine-grained event recording for each sub-step. This is the only exception to the `step()` convention.
+
+### Reading Hook Files
+
+```python
+from scripts.ops.workflow_hooks import WorkflowHookReader
+
+summary = WorkflowHookReader.pipeline_summary("outputs/history_guide/runs/run_20260520_123456/workflow_hooks.jsonl")
+# Returns: {"total_events": 24, "traces": [{"trace_id": "...", "steps": [...], "status": "complete", "elapsed": 12.34}, ...]}
+```
+
+### CLI Flag
+
+Pipeline scripts accept `--workflow-hooks <path>` to specify a custom output path for the hook JSONL. When omitted, the default path is derived from the stage output directory.
 
 ## 🏗️ NPC Scaffold Structure
 When creating a new NPC with `./ucore init <npc_key> --subject <subject>`:
@@ -148,6 +201,7 @@ A local Supabase instance can track:
 - **Dataset/Eval Decision Rules**: Do not increase NPC sentence/character limits to force generation success. Do not lower dataset minimums to hide missing rows. If generation misses rows, fix generator retry/repair/sanitize behavior or report the gap explicitly. If DeepEval fails, fix prompts, primers, concepts, or generated rows; do not weaken thresholds first.
 - **Frontend trust rule**: The dashboard must reflect canonical backend state and process artifacts so non-coder developers can operate the workflow intuitively.
 - **Local Ollama rule**: Benchmark and tune local Ollama on this machine before claiming the need for remote capacity; measure tokens/sec, latency, VRAM use, loaded models, and failure rate.
+- **Hook system**: All pipeline scripts record lifecycle events in `workflow_hooks.jsonl` via `step()` context managers. Use `WorkflowHookReader.pipeline_summary(path)` to read. Hook files contain start/complete/error events per step with timing, `spec_path`, `run_id`, and step-specific metadata.
 
 ## ⚡ Ollama Performance Tuning
 
