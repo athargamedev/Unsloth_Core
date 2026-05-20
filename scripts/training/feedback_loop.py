@@ -47,6 +47,10 @@ DEFAULT_QUALITY_THRESHOLD = 25.0
 DEFAULT_VIOLATION_THRESHOLD = 1
 DEFAULT_EXTRA_EXAMPLES = 8
 DEFAULT_TRAIN_PRESET = "fast-3b"
+DEFAULT_REGENERATION_TECHNIQUE = "template"
+DEFAULT_REGENERATION_MODEL = "qwen2.5:7b"
+DEFAULT_REGENERATION_URL = "http://localhost:11434"
+DEFAULT_REGENERATION_BATCH_SIZE = 4
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -174,26 +178,52 @@ def print_analysis(feedback_data, weak_concepts):
 
 # ── Regeneration ────────────────────────────────────────────────────────────
 
-def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_path=None):
+def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_path=None,
+                                technique=DEFAULT_REGENERATION_TECHNIQUE,
+                                model=DEFAULT_REGENERATION_MODEL,
+                                url=DEFAULT_REGENERATION_URL,
+                                batch_size=DEFAULT_REGENERATION_BATCH_SIZE):
     if not spec_path:
         spec_path = paths.spec_path(npc_key)
     if not Path(spec_path).exists():
         print(f"  [error] Subject spec not found: {spec_path}")
         return False
-    cmd = [
-        sys.executable,
-        str(PROJECT_ROOT / "scripts" / "dataset" / "generate_dataset.py"),
-        str(spec_path),
-        "--technique", "template",
-        "--model", "llama3.1:latest",
-    ]
+
+    if technique == "ollama":
+        script_path = PROJECT_ROOT / "scripts" / "dataset" / "generate_dataset_ollama.py"
+        cmd = [
+            sys.executable,
+            str(script_path),
+            str(spec_path),
+            "--model", model,
+            "--url", url,
+        ]
+        if batch_size is not None:
+            cmd.extend(["--batch-size", str(batch_size)])
+    else:
+        script_path = PROJECT_ROOT / "scripts" / "dataset" / "generate_dataset.py"
+        cmd = [
+            sys.executable,
+            str(script_path),
+            str(spec_path),
+            "--technique", technique,
+            "--model", model,
+            "--url", url,
+        ]
+
     for cat in sorted(focus_categories):
         cmd.extend(["--concept-focus", cat])
+
     print(f"\n  Target: {spec_path}")
+    print(f"  Regeneration technique: {technique}")
+    if technique == "ollama":
+        print(f"  Model: {model} | URL: {url} | batch-size: {batch_size}")
     print(f"  Focus categories: {', '.join(sorted(focus_categories))}")
+
     if dry_run:
         print(f"  [dry-run] Would execute: {' '.join(cmd)}")
         return True
+
     print(f"  Running generation with concept focus...")
     ok, stdout, stderr = run_cmd(cmd, timeout=1800)
     if ok:
@@ -338,7 +368,11 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       dry_run=False, auto_yes=False, skip_gap_detection=False,
                       save_gaps=None, json_output=False,
                       auto_retrain=False, train_preset=DEFAULT_TRAIN_PRESET,
-                      baseline_gguf=None):
+                      baseline_gguf=None,
+                      technique=DEFAULT_REGENERATION_TECHNIQUE,
+                      model=DEFAULT_REGENERATION_MODEL,
+                      url=DEFAULT_REGENERATION_URL,
+                      batch_size=DEFAULT_REGENERATION_BATCH_SIZE):
     """Full feedback loop: analyze → regenerate → optionally retrain."""
     # Capture human-readable output for --json mode
     tee = Tee() if json_output else None
@@ -360,7 +394,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
         "npc_key": npc_key,
         "weak_concepts": [],
         "gap_results": [],
-        "regeneration": {"ok": False, "focus_categories": []},
+        "regeneration": {"ok": False, "focus_categories": [], "technique": technique},
         "auto_retrain": None,
         "pipeline_state": None,
     }
@@ -426,8 +460,16 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
 
     # ── 6. Execute regeneration ────────────────────────────────────────
     print(f"\n{'─' * 40}")
-    ok = generate_targeted_dataset(npc_key, focus_categories, dry_run=dry_run)
-    result["regeneration"] = {"ok": ok, "focus_categories": focus_categories}
+    ok = generate_targeted_dataset(
+        npc_key,
+        focus_categories,
+        dry_run=dry_run,
+        technique=technique,
+        model=model,
+        url=url,
+        batch_size=batch_size,
+    )
+    result["regeneration"] = {"ok": ok, "focus_categories": focus_categories, "technique": technique}
 
     if not ok:
         print(f"\n  Regeneration failed.")
@@ -450,11 +492,11 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
 
         # Sanitize
         print(f"\n  Step 1: Sanitize dataset...")
-        run_sanitize(npc_key, dry_run=dry_run)
+        run_sanitize(npc_key, technique=technique, dry_run=dry_run)
 
         # Train
         print(f"\n  Step 2: Train new model...")
-        trained_gguf = run_training(npc_key, train_preset, dry_run=dry_run)
+        trained_gguf = run_training(npc_key, train_preset, technique=technique, dry_run=dry_run)
         result["auto_retrain"] = {"trained_gguf": trained_gguf}
 
         if trained_gguf and baseline_gguf:
@@ -491,6 +533,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
         "status": "regenerated",
         "weak_concepts_count": len(weak_concepts),
         "focus_categories": focus_categories,
+        "regeneration_technique": technique,
         "last_feedback": datetime.now(timezone.utc).isoformat(),
         "auto_retrain_complete": auto_retrain and trained_gguf is not None,
     }
@@ -546,6 +589,15 @@ def main():
     parser.add_argument("--json", action="store_true", help="Output machine-readable JSON summary")
 
     # Auto-retrain
+    parser.add_argument("--regeneration-technique", default=DEFAULT_REGENERATION_TECHNIQUE,
+                        choices=["template", "ollama"],
+                        help=f"Regeneration technique to use (default: {DEFAULT_REGENERATION_TECHNIQUE})")
+    parser.add_argument("--regeneration-model", default=DEFAULT_REGENERATION_MODEL,
+                        help=f"Ollama model to use when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_MODEL})")
+    parser.add_argument("--regeneration-url", default=DEFAULT_REGENERATION_URL,
+                        help=f"Ollama server URL when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_URL})")
+    parser.add_argument("--regeneration-batch-size", type=int, default=DEFAULT_REGENERATION_BATCH_SIZE,
+                        help=f"Ollama batch size when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_BATCH_SIZE})")
     parser.add_argument("--auto-retrain", action="store_true",
                         help="After regeneration, auto-retrain and re-evaluate")
     parser.add_argument("--train-preset", default=DEFAULT_TRAIN_PRESET,
@@ -576,6 +628,10 @@ def main():
         auto_retrain=args.auto_retrain,
         train_preset=args.train_preset,
         baseline_gguf=args.baseline,
+        technique=args.regeneration_technique,
+        model=args.regeneration_model,
+        url=args.regeneration_url,
+        batch_size=args.regeneration_batch_size,
     ))
 
 

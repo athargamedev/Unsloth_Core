@@ -32,6 +32,7 @@ import requests
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 import hashlib
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -71,6 +72,83 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
+def _ollama_host_from_url(url: str) -> str:
+    parsed = urlparse(url)
+    if not parsed.hostname:
+        return "127.0.0.1:11434"
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    return f"{parsed.hostname}:{port}"
+
+
+def _run_ollama_cli(args, url: str):
+    env = os.environ.copy()
+    env["OLLAMA_HOST"] = _ollama_host_from_url(url)
+    result = subprocess.run(
+        ["ollama"] + args,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    return result
+
+
+def parse_ollama_ps(output: str) -> list[str]:
+    lines = [line.strip() for line in output.splitlines() if line.strip()]
+    if not lines:
+        return []
+    if lines[0].lower().startswith("name"):
+        lines = lines[1:]
+    models = []
+    for line in lines:
+        parts = line.split()
+        if parts:
+            models.append(parts[0])
+    return models
+
+
+def list_running_ollama_models(url: str) -> list[str]:
+    result = _run_ollama_cli(["ps"], url)
+    if result.returncode != 0:
+        logger.warning(f"Unable to query Ollama running models: {result.stderr.strip()}")
+        return []
+    return parse_ollama_ps(result.stdout)
+
+
+def stop_ollama_model(model_name: str, url: str) -> bool:
+    result = _run_ollama_cli(["stop", model_name], url)
+    if result.returncode != 0:
+        logger.warning(f"Failed to stop Ollama model '{model_name}': {result.stderr.strip()}")
+        return False
+    logger.info(f"Stopped Ollama model: {model_name}")
+    return True
+
+
+def ensure_selected_ollama_model_loaded(model_name: str, url: str, dry_run: bool = False) -> bool:
+    running_models = list_running_ollama_models(url)
+    if not running_models:
+        logger.info("No Ollama model currently loaded.")
+        return True
+
+    if model_name in running_models:
+        logger.info(f"Selected Ollama model '{model_name}' is already loaded.")
+        for other in [m for m in running_models if m != model_name]:
+            if dry_run:
+                logger.info(f"[DRY-RUN] Would stop loaded Ollama model: {other}")
+            else:
+                stop_ollama_model(other, url)
+        return True
+
+    logger.info(f"Detected other Ollama model(s) loaded: {', '.join(running_models)}")
+    if dry_run:
+        logger.info(f"[DRY-RUN] Would stop all loaded models and load '{model_name}'")
+        return True
+
+    for other in running_models:
+        stop_ollama_model(other, url)
+    logger.info(f"Will load selected model '{model_name}' on first generation request.")
+    return True
 
 
 GENERIC_FILLER_REPLACEMENTS = [
@@ -126,6 +204,42 @@ def should_generate_multi_turn(category: str, index: int, ratio: float) -> bool:
         return True
     bucket = int(hashlib.sha256(f"{category}:{index}".encode()).hexdigest()[:8], 16) % 10_000
     return bucket < int(ratio * 10_000)
+
+
+def boost_examples_for_focus(examples_per_category: dict, focus_categories: list[str]) -> dict:
+    """Boost counts for focused categories to support regeneration and auto-improvement."""
+    result = dict(examples_per_category or {})
+    for cat in list(result.keys()):
+        if cat in (focus_categories or []):
+            original = result[cat]
+            result[cat] = max(original + 4, int(original * 2.0))
+    return result
+
+
+def stratified_train_val_split(examples: list[dict], val_split: float) -> tuple[list[dict], list[dict]]:
+    """Split examples by category while preserving a validation example for each category."""
+    if len(examples) <= 5:
+        return examples, []
+
+    by_category = defaultdict(list)
+    for ex in examples:
+        cat = ex.get("metadata", {}).get("category", "unknown")
+        by_category[cat].append(ex)
+
+    train_examples = []
+    val_examples = []
+    for cat, cat_examples in by_category.items():
+        random.shuffle(cat_examples)
+        if len(cat_examples) > 1:
+            split = max(1, min(len(cat_examples) - 1, int(len(cat_examples) * val_split)))
+        else:
+            split = 0
+        val_examples.extend(cat_examples[:split])
+        train_examples.extend(cat_examples[split:])
+
+    random.shuffle(train_examples)
+    random.shuffle(val_examples)
+    return train_examples, val_examples
 
 
 class OllamaHealthCheck:
@@ -427,6 +541,15 @@ class OllamaDatasetGenerator:
                 grounding = "\nContext:\n" + "\n".join(contexts[:2])
         
         category_prompt = build_category_generation_prompt(category, concept_str, npc_name, player_role)
+        if difficulty:
+            category_prompt += f" Use a {difficulty} tone and prioritize clarity."
+        if category == "dialogue" and dialogue_type:
+            category_prompt += f" The exchange should feel like a {dialogue_type} dialogue."
+        if category == "quest" and scenario_name:
+            category_prompt += f" The quest should relate to '{scenario_name}'."
+        if category == "refusal" and boundary:
+            category_prompt += f" Focus on politely refusing requests about '{boundary}'."
+
         turn_instruction = ""
         json_shape = f'  "user": "user message as a {player_role} (1-2 sentences)",\n  "assistant": "NPC response (1-{max_sentences} sentences, max {max_chars} chars, in character)"'
         if multi_turn:
@@ -576,14 +699,18 @@ Return JSON:
         
         semaphore = asyncio.Semaphore(max_workers)
         
-        async def gen_task(category: str, index: int, difficulty: str = None):
+        async def gen_task(category: str, index: int, difficulty: str = None,
+                           dialogue_type: str = None, scenario_name: str = None,
+                           boundary: str = None):
             async with semaphore:
                 try:
                     concept = self._pick_concept(category, index)
                     multi_turn = False if category in {"identity", "refusal"} else should_generate_multi_turn(category, index, multi_turn_ratio)
                     example = await self.generate_example_llm(
                         category, str(concept), difficulty=difficulty,
-                        session=session, executor=executor, temperature=temperature,
+                        dialogue_type=dialogue_type, scenario_name=scenario_name,
+                        boundary=boundary, session=session, executor=executor,
+                        temperature=temperature,
                         multi_turn=multi_turn,
                     )
                     if example:
@@ -596,14 +723,53 @@ Return JSON:
         
         tasks = []
         for category, count in examples_per_category.items():
+            difficulties = None
+            dialogue_types = None
+            scenario_names = None
+            boundaries = None
+
             if category == "teaching":
-                for i in range(count):
-                    diffs = ["beginner"] * int(count * 0.4) + ["intermediate"] * int(count * 0.35) + ["advanced"] * int(count * 0.25)
-                    diff = diffs[i % len(diffs)] if diffs else None
-                    tasks.append(gen_task(category, i, diff))
-            else:
-                for i in range(count):
-                    tasks.append(gen_task(category, i))
+                n_beg = int(count * 0.40)
+                n_int = int(count * 0.35)
+                n_adv = count - n_beg - n_int
+                difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                random.shuffle(difficulties)
+            elif category == "dialogue":
+                n_clar = int(count * 0.20)
+                n_dive = int(count * 0.30)
+                n_app = int(count * 0.30)
+                n_misc = count - n_clar - n_dive - n_app
+                dialogue_types = (["clarification"] * n_clar + ["deep_dive"] * n_dive
+                                + ["application"] * n_app + ["misconception"] * n_misc)
+                random.shuffle(dialogue_types)
+                n_beg = int(count * 0.40)
+                n_int = int(count * 0.35)
+                n_adv = count - n_beg - n_int
+                difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                random.shuffle(difficulties)
+            elif category == "quest":
+                quest_scenarios = self.spec.get("quest_scenarios") or []
+                if quest_scenarios:
+                    scenario_names = [quest_scenarios[i % len(quest_scenarios)] for i in range(count)]
+                    random.shuffle(scenario_names)
+                difficulties = ["intermediate"] * count
+            elif category == "refusal":
+                refusal_boundaries = self.spec.get("refusal_boundaries") or [
+                    "medical or dietary", "speculative claims", "historical certainty",
+                    "unsafe instructions", "conspiracy or misinformation"
+                ]
+                boundaries = [refusal_boundaries[i % len(refusal_boundaries)] for i in range(count)]
+                random.shuffle(boundaries)
+                difficulties = ["beginner"] * count
+            elif category == "identity":
+                difficulties = ["beginner"] * count
+
+            for i in range(count):
+                diff = difficulties[i] if difficulties else None
+                dt = dialogue_types[i] if dialogue_types else None
+                sn = scenario_names[i] if scenario_names else None
+                bd = boundaries[i] if boundaries else None
+                tasks.append(gen_task(category, i, diff, dt, sn, bd))
         
         await asyncio.gather(*tasks)
         return all_examples
@@ -661,6 +827,8 @@ Examples:
                        help="Fraction of rows to request as two-turn dialogues (default: 0.25)")
     parser.add_argument("--seed", type=int, default=42,
                        help="Random seed (default: 42)")
+    parser.add_argument("--concept-focus", action="append", dest="concept_focus",
+                       help="Focus regeneration on specific categories (repeatable, e.g. --concept-focus teaching --concept-focus dialogue)")
     parser.add_argument("--no-validation", action="store_true",
                        help="Skip validation split")
     parser.add_argument("--val-split", type=float, default=0.12,
@@ -679,34 +847,40 @@ Examples:
     # ── Health check ───────────────────────────────────────────────────────
     health_checker = OllamaHealthCheck(url=args.url)
     
-    if args.check_health or args.pull_model:
-        logger.info("Checking Ollama health...")
-        if not health_checker.is_running():
-            logger.error("❌ Ollama is not running at " + args.url)
-            logger.info("Start Ollama with: ollama serve")
-            sys.exit(1)
-        logger.info("✓ Ollama is running")
-        
-        # Get available models to help user select
-        available = health_checker.get_available_models()
-        if available:
-            logger.info(f"Available models: {', '.join(available)}")
-        
-        model_name = args.model.split(':')[0]  # Extract base model name (qwen2.5 from qwen2.5:7b)
-        if not health_checker.model_exists(model_name):
-            if args.pull_model:
-                logger.info(f"Model '{args.model}' not found, pulling...")
-                if health_checker.pull_model(args.model):
-                    logger.info(f"✓ Model '{args.model}' pulled successfully")
-                else:
-                    logger.error(f"Failed to pull model '{args.model}'")
-                    sys.exit(1)
+    logger.info("Checking Ollama health...")
+    if not health_checker.is_running():
+        logger.error("❌ Ollama is not running at " + args.url)
+        logger.info("Start Ollama with: ollama serve")
+        sys.exit(1)
+    logger.info("✓ Ollama is running")
+    
+    # Get available models to help user select
+    available = health_checker.get_available_models()
+    if available:
+        logger.info(f"Available models: {', '.join(available)}")
+    
+    model_name = args.model.split(':')[0]  # Extract base model name (qwen2.5 from qwen2.5:7b)
+    if not health_checker.model_exists(model_name):
+        if args.pull_model:
+            logger.info(f"Model '{args.model}' not found, pulling...")
+            if health_checker.pull_model(args.model):
+                logger.info(f"✓ Model '{args.model}' pulled successfully")
             else:
-                available = health_checker.get_available_models()
-                logger.error(f"Model '{args.model}' not found")
-                logger.info(f"Available models: {', '.join(available)}")
-                logger.info("Use --pull-model to auto-pull, or install with: ollama pull <model>")
+                logger.error(f"Failed to pull model '{args.model}'")
                 sys.exit(1)
+        else:
+            available = health_checker.get_available_models()
+            logger.error(f"Model '{args.model}' not found")
+            logger.info(f"Available models: {', '.join(available)}")
+            logger.info("Use --pull-model to auto-pull, or install with: ollama pull <model>")
+            sys.exit(1)
+    
+    if args.dry_run:
+        logger.info("[DRY-RUN] Checking loaded Ollama models without modifying runtime...")
+        ensure_selected_ollama_model_loaded(args.model, args.url, dry_run=True)
+    else:
+        logger.info("Ensuring selected Ollama model is isolated before generation...")
+        ensure_selected_ollama_model_loaded(args.model, args.url)
     
     # ── Load spec ──────────────────────────────────────────────────────────
     logger.info(f"Loading spec: {args.spec}")
@@ -720,17 +894,20 @@ Examples:
     output_path = args.output or paths.dataset_train_path(npc_key, "ollama")
     
     if args.dry_run:
-        examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
-        total = sum(examples_per_category.values())
-        logger.info(f"\n[DRY-RUN] Would generate {total} examples with model '{args.model}':")
-        for cat, count in examples_per_category.items():
-            logger.info(f"  {cat:12s}: {count:3d} examples")
-        logger.info(f"\nTotal: {total} examples")
-        logger.info(f"Temperature: {args.temperature}")
-        logger.info(f"Batch size: {args.batch_size}")
-        logger.info(f"Seed: {args.seed}\n")
-        return
-    
+            examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
+            if args.concept_focus:
+                examples_per_category = boost_examples_for_focus(examples_per_category, args.concept_focus)
+            total = sum(examples_per_category.values())
+            logger.info(f"\n[DRY-RUN] Would generate {total} examples with model '{args.model}':")
+            for cat, count in examples_per_category.items():
+                logger.info(f"  {cat:12s}: {count:3d} examples")
+            if args.concept_focus:
+                logger.info(f"  Focus categories: {', '.join(args.concept_focus)}")
+            logger.info(f"\nTotal: {total} examples")
+            logger.info(f"Temperature: {args.temperature}")
+            logger.info(f"Batch size: {args.batch_size}")
+            logger.info(f"Seed: {args.seed}\n")
+            return
     # ── Generate dataset ──────────────────────────────────────────────────
     logger.info("Initializing generator...")
     generator = OllamaGeneratorV2(
@@ -743,10 +920,14 @@ Examples:
     
     dataset_gen = OllamaDatasetGenerator(spec, generator, batch_size=args.batch_size)
     
-    examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
-    
+    examples_per_category = dict(spec.get("dataset", {}).get("examples_per_category", {}) or {})
+    if args.concept_focus:
+        examples_per_category = boost_examples_for_focus(examples_per_category, args.concept_focus)
+
     total_to_gen = sum(examples_per_category.values())
     logger.info(f"Generating {total_to_gen} examples with model '{args.model}'...")
+    if args.concept_focus:
+        logger.info(f"Focused on categories: {', '.join(args.concept_focus)}")
     logger.info(f"This may take several minutes depending on hardware and model size\n")
     examples = dataset_gen.generate_dataset_sync(
         examples_per_category,
@@ -766,10 +947,7 @@ Examples:
         train_examples = examples
         val_examples = []
     else:
-        val_count = max(1, int(len(examples) * args.val_split))
-        random.shuffle(examples)
-        val_examples = examples[:val_count]
-        train_examples = examples[val_count:]
+        train_examples, val_examples = stratified_train_val_split(examples, args.val_split)
     
     # ── Write files ────────────────────────────────────────────────────────
     output_path = Path(output_path)
@@ -793,6 +971,7 @@ Examples:
     # ── Write manifest ─────────────────────────────────────────────────────
     by_category = defaultdict(int)
     by_difficulty = defaultdict(int)
+    by_concept = defaultdict(int)
     
     for ex in examples:
         meta = ex.get("metadata", {})
@@ -800,8 +979,19 @@ Examples:
         diff = meta.get("difficulty")
         if diff:
             by_difficulty[diff] += 1
+        conc = meta.get("concept")
+        if conc:
+            by_concept[conc] += 1
     
     dataset_contract = dataset_contract_from_spec(spec)
+    spec_hash = None
+    try:
+        spec_path_resolved = Path(args.spec)
+        if spec_path_resolved.exists():
+            spec_hash = "sha256:" + hashlib.sha256(spec_path_resolved.read_bytes()).hexdigest()
+    except Exception:
+        pass
+
     manifest = {
         "npc_key": npc_key,
         "technique": "ollama",
@@ -812,6 +1002,10 @@ Examples:
             "temperature": args.temperature,
             "multi_turn_ratio": args.multi_turn_ratio,
             "version": "ollama-v2",
+        },
+        "spec": {
+            "file": str(Path(args.spec).resolve()),
+            "hash": spec_hash,
         },
         "contract": dataset_contract,
         "distribution": {
@@ -825,6 +1019,7 @@ Examples:
             "validation": len(val_examples),
             "by_category": dict(by_category),
             "by_difficulty": dict(by_difficulty),
+            "by_concept": dict(sorted(by_concept.items(), key=lambda x: -x[1])),
             "generator_stats": stats,
         },
     }

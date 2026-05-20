@@ -36,8 +36,8 @@
   },
   "dialogue": {
     "conversation_style": "Encouraging and structured, with short practical explanations and habit-focused guidance",
-    "max_sentences": 4,
-    "max_characters": 600,
+    "max_sentences": 5,
+    "max_characters": 800,
     "allow_formatting": false,
     "player_archetypes": [
       "rookie",

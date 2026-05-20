@@ -36,8 +36,8 @@
   },
   "dialogue": {
     "conversation_style": "Narrative and engaging with clear chronological framing",
-    "max_sentences": 4,
-    "max_characters": 600,
+    "max_sentences": 5,
+    "max_characters": 800,
     "allow_formatting": false,
     "player_archetypes": [
       "adventurer",
@@ -104,14 +104,86 @@
     }
   ],
   "concepts": [
-    {"name": "Ancient civilizations", "difficulty": "beginner", "category": "teaching", "aliases": ["Egypt", "Mesopotamia", "Indus Valley"]},
-    {"name": "Classical antiquity", "difficulty": "intermediate", "category": "teaching", "aliases": ["Greece", "Rome", "antiquity"]},
-    {"name": "Medieval history", "difficulty": "intermediate", "category": "teaching", "aliases": ["feudalism", "middle ages", "crusades"]},
-    {"name": "Modern history", "difficulty": "advanced", "category": "teaching", "aliases": ["world wars", "cold war", "industrial revolution"]},
-    {"name": "Historical methodology", "difficulty": "advanced", "category": "teaching", "aliases": ["primary sources", "historiography", "evidence"]},
-    {"name": "Cultural history", "difficulty": "intermediate", "category": "teaching", "aliases": ["renaissance", "reformation", "enlightenment"]},
-    {"name": "Historical thinking", "difficulty": "intermediate", "category": "teaching", "aliases": ["cause-effect", "chronology", "perspective"]},
-    {"name": "Guide identity", "difficulty": "beginner", "category": "identity", "aliases": ["persona", "role", "expertise"]}
+    {
+      "name": "Ancient civilizations",
+      "difficulty": "beginner",
+      "category": "teaching",
+      "aliases": [
+        "Egypt",
+        "Mesopotamia",
+        "Indus Valley"
+      ]
+    },
+    {
+      "name": "Classical antiquity",
+      "difficulty": "intermediate",
+      "category": "teaching",
+      "aliases": [
+        "Greece",
+        "Rome",
+        "antiquity"
+      ]
+    },
+    {
+      "name": "Medieval history",
+      "difficulty": "intermediate",
+      "category": "teaching",
+      "aliases": [
+        "feudalism",
+        "middle ages",
+        "crusades"
+      ]
+    },
+    {
+      "name": "Modern history",
+      "difficulty": "advanced",
+      "category": "teaching",
+      "aliases": [
+        "world wars",
+        "cold war",
+        "industrial revolution"
+      ]
+    },
+    {
+      "name": "Historical methodology",
+      "difficulty": "advanced",
+      "category": "teaching",
+      "aliases": [
+        "primary sources",
+        "historiography",
+        "evidence"
+      ]
+    },
+    {
+      "name": "Cultural history",
+      "difficulty": "intermediate",
+      "category": "teaching",
+      "aliases": [
+        "renaissance",
+        "reformation",
+        "enlightenment"
+      ]
+    },
+    {
+      "name": "Historical thinking",
+      "difficulty": "intermediate",
+      "category": "teaching",
+      "aliases": [
+        "cause-effect",
+        "chronology",
+        "perspective"
+      ]
+    },
+    {
+      "name": "Guide identity",
+      "difficulty": "beginner",
+      "category": "identity",
+      "aliases": [
+        "persona",
+        "role",
+        "expertise"
+      ]
+    }
   ],
   "dataset": {
     "examples_per_category": {
