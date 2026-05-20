@@ -138,7 +138,7 @@ export default function App() {
     alpha: 32,
     baseModel: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
     wandb: false,
-    technique: 'ollama',
+    technique: 'template',
   });
 
   const {
@@ -1479,10 +1479,11 @@ export default function App() {
             {activeTab === 'colab' && (
               <ColabNotebooksPanel
                 onTriggerCommand={async (payload) => {
+                  const colabNpcKey = trainingConfig.spec.split('/').pop()?.replace('.json', '') || 'history_guide';
                   await triggerCommand({
                     commandId: payload.commandId,
                     type: payload.type,
-                    spec: 'subjects/NPC_specs/chef_assistant.json',
+                    spec: `subjects/NPC_specs/${colabNpcKey}.json`,
                     preset: 'fast-3b',
                     options: payload.options
                   });

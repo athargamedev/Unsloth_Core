@@ -2,12 +2,205 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_3683486",
+      "name": "Pipeline · PID 3683486 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-20T21:13:20.492Z",
+      "startedAt": "2026-05-20T21:13:20.492Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "stopped",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683486] Process still running (re-classified as Pipeline)",
+            "[EXTERNAL][PID 3683486] Process no longer detected"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3683486] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T21:22:42.080Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3683484",
+      "name": "Export · PID 3683484 · history_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 70,
+      "loss": null,
+      "createdAt": "2026-05-20T21:13:20.492Z",
+      "startedAt": "2026-05-20T21:13:20.492Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-532f11758578.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail' __hermes_ec=$? export -p > /tmp/hermes-snap-532f11758578.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-532f11758578.txt 2>/dev/null || true printf '\\n__HERMES_CWD_532f11758578__%s__HERMES_CWD_532f11758578__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "completed",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "stopped",
+          "logs": [
+            "[STATUS][export] substep=adapter_done state=completed",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3683484] Process still running (re-classified as Export)",
+            "[EXTERNAL][PID 3683484] Process no longer detected",
+            "[STATUS][export] substep=adapter_done state=completed"
+          ]
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3683484] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-532f11758578.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail' __hermes_ec=$? export -p > /tmp/hermes-snap-532f11758578.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-532f11758578.txt 2>/dev/null || true printf '\\n__HERMES_CWD_532f11758578__%s__HERMES_CWD_532f11758578__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-20T21:22:42.080Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_3590320",
+      "name": "Pipeline · PID 3590320 · fitness_coach",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "fitness_coach",
+      "status": "running",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-20T21:11:11.830Z",
+      "startedAt": "2026-05-20T21:11:11.830Z",
+      "command": [
+        "external",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/fitness_coach.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "running",
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3590320] Process still running (re-classified as Pipeline)"
+          ]
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 3590320] discovered active process",
+        "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/fitness_coach.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
       "id": "ext_proc_3193489",
       "name": "Pipeline · PID 3193489 · history_guide",
       "type": "Pipeline",
       "commandId": "pipeline",
       "npcKey": "history_guide",
-      "status": "running",
+      "status": "failed",
       "progress": 13,
       "loss": null,
       "createdAt": "2026-05-20T20:11:21.413Z",
@@ -20,7 +213,11 @@
         {
           "name": "Dataset Prep",
           "status": "running",
-          "logs": []
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3193489] Process still running (re-classified as Pipeline)",
+            "[SYSTEM] Marked failed: server restarted before completion."
+          ]
         },
         {
           "name": "Training",
@@ -42,14 +239,16 @@
         "[EXTERNAL][PID 3193489] discovered active process",
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "server_restarted",
+      "finishedAt": "2026-05-20T21:11:11.826Z",
+      "exitCode": -1
     },
     {
       "id": "ext_proc_3193182",
       "name": "Export · PID 3193182",
       "type": "Export",
       "commandId": "export",
-      "status": "running",
+      "status": "failed",
       "progress": 88,
       "loss": null,
       "createdAt": "2026-05-20T20:11:18.413Z",
@@ -77,14 +276,20 @@
         {
           "name": "Export",
           "status": "running",
-          "logs": []
+          "logs": [
+            "[SYSTEM] Marked failed: server restarted before completion.",
+            "[EXTERNAL][PID 3193182] Process still running (re-classified as Export)",
+            "[SYSTEM] Marked failed: server restarted before completion."
+          ]
         }
       ],
       "logs": [
         "[EXTERNAL][PID 3193182] discovered active process",
         "/usr/bin/bash -lic set +m; set -euo pipefail export PYTHONUNBUFFERED=1 export OLLAMA_NUM_PARALLEL=4 export OLLAMA_FLASH_ATTENTION=1 export OLLAMA_KV_CACHE_TYPE=q8_0 logdir=/tmp/ucore-deepeval-$(date +%Y%m%d_%H%M%S) mkdir -p \"$logdir\" for npc in history_guide chef_assistant astronomy_guide fitness_coach; do   echo \"=== $npc ===\" | tee -a \"$logdir/summary.log\"   ./ucore dataset-eval \"subjects/NPC_specs/${npc}.json\" --technique ollama --judge-model qwen3:latest --cases-per-category 5 --soft-fail 2>&1 | tee \"$logdir/${npc}.log\"   echo \"---\" | tee -a \"$logdir/summary.log\" done printf '\\nLogs: %s\\n' \"$logdir\""
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "server_restarted",
+      "finishedAt": "2026-05-20T21:11:11.826Z",
+      "exitCode": -1
     },
     {
       "id": "ext_proc_3084231",
@@ -3100,12 +3305,9 @@
     }
   ],
   "logs": [
-    "[2026-05-20T08:36:20.624Z] [SYSTEM] job job_1779266180536_kpm4z failed (exit 2)",
-    "[2026-05-20T08:36:20.620Z] [STDOUT][job_1779266180536_kpm4z] Error: Command failed with return code 2",
-    "[2026-05-20T08:36:20.617Z] [STDERR][job_1779266180536_kpm4z] /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python: can't open file '/home/athar/Projects/Unsloth_Core/scripts/train.py': [Errno 2] No such file or directory",
-    "[2026-05-20T08:36:20.609Z] [STDOUT][job_1779266180536_kpm4z] Running: /home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/train.py subjects/NPC_specs/fitness_coach.json --from-spec --preset fast-3b --technique ollama --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit --lr 0.0002 --batch-size 1 --epochs 3 --lora-r 16 --lora-alpha 32 --lr-scheduler cosine --wandb",
-    "[2026-05-20T08:36:20.537Z] [SYSTEM] Could not query Ollama running models",
-    "[2026-05-20T08:36:20.536Z] [SYSTEM] starting job_1779266180536_kpm4z: ./ucore train subjects/NPC_specs/fitness_coach.json --from-spec --preset fast-3b --technique ollama --model unsloth/Llama-3.2-3B-Instruct-bnb-4bit --wandb --lr 2e-4 --batch-size 1 --epochs 3 --lora-r 16 --lora-alpha 32 --lr-scheduler cosine"
+    "[2026-05-20T21:22:21.029Z] [SYSTEM] reconciled ext_proc_3590320 to failed (server_restarted)",
+    "[2026-05-20T21:22:21.029Z] [SYSTEM] reconciled ext_proc_3683484 to failed (server_restarted)",
+    "[2026-05-20T21:22:21.029Z] [SYSTEM] reconciled ext_proc_3683486 to failed (server_restarted)"
   ],
   "nodeId": "26fe3e73-ddc7-4c06-a39b-63a30b2e3489",
   "workflows": [],

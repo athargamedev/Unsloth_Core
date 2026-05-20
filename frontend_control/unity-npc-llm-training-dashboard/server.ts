@@ -119,6 +119,7 @@ const repoRoot = findRepoRoot();
 const runtimeDir = path.join(dashboardRoot, ".runtime");
 const registryPath = path.join(runtimeDir, "registry.json");
 
+const DEFAULT_BASE_MODEL = process.env.DEFAULT_BASE_MODEL || "unsloth/Llama-3.2-3B-Instruct-bnb-4bit";
 const MAX_LOG_LINES = 2000;
 const MAX_GLOBAL_LOG_LINES = 600;
 const PERSIST_DEBOUNCE_MS = 500;
@@ -135,6 +136,7 @@ const defaultStages = (): Stage[] => [
   { name: "Training", status: "pending", logs: [] },
   { name: "Evaluation", status: "pending", logs: [] },
   { name: "Export", status: "pending", logs: [] },
+  { name: "Feedback", status: "pending", logs: [] },
 ];
 
 const ensureRuntime = () => fs.mkdirSync(runtimeDir, { recursive: true });
@@ -554,6 +556,27 @@ const parsedValData = (payload: StartCommandPayload): string => {
   return resolvePayloadPath(payload, "valData", [path.join(repoRoot, "subjects"), repoRoot]);
 };
 
+/**
+ * Recursively resolves {npcKey} templates in a defaults object.
+ * Used to make command schemas dynamic — defaults reflect the selected NPC.
+ */
+const resolveTemplateDefaults = <T>(obj: T, npcKey: string): T => {
+  if (typeof obj === "string") {
+    return obj.replace(/\{npcKey\}/g, npcKey) as T;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => resolveTemplateDefaults(item, npcKey)) as T;
+  }
+  if (obj && typeof obj === "object") {
+    const resolved: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      resolved[key] = resolveTemplateDefaults(value, npcKey);
+    }
+    return resolved as T;
+  }
+  return obj;
+};
+
 const commandDefinitions: CommandDefinition[] = [
   {
     id: "dataset-generate",
@@ -658,6 +681,18 @@ const commandDefinitions: CommandDefinition[] = [
       if (technique) cmd.push("--technique", sanitizeToken(technique, "technique"));
       if (track === "true" || track === "1") cmd.push("--track");
       if (wandb === "true" || wandb === "1") cmd.push("--wandb");
+      const modelFromOpts = String(optionValue(payload, "model") || "").trim();
+      if (modelFromOpts) cmd.push("--model", sanitizeToken(modelFromOpts, "model"));
+      if (payload.fullMergeExport === true || String(payload.fullMergeExport || "").toLowerCase() === "true") cmd.push("--full-merge-export");
+      if (payload.skipSpecValidate === true || String(payload.skipSpecValidate || "").toLowerCase() === "true") cmd.push("--skip-spec-validate");
+      if (payload.skipDatasetEval === true || String(payload.skipDatasetEval || "").toLowerCase() === "true") cmd.push("--skip-dataset-eval");
+      if (payload.skipEval === true || String(payload.skipEval || "").toLowerCase() === "true") cmd.push("--skip-eval");
+      if (payload.skipSmoke === true || String(payload.skipSmoke || "").toLowerCase() === "true") cmd.push("--skip-smoke");
+      const numEvalQuestions = String(optionValue(payload, "numEvalQuestions") || "5").trim();
+      if (numEvalQuestions && numEvalQuestions !== "5") cmd.push("--num-eval-questions", numEvalQuestions);
+      if (boolOptionValue(payload, "ollama")) cmd.push("--ollama");
+      const docsManifest = String(optionValue(payload, "manifest") || "").trim();
+      if (docsManifest) cmd.push("--docs-manifest", sanitizeToken(docsManifest, "manifest"));
       return cmd;
     },
   },
@@ -726,7 +761,7 @@ const commandDefinitions: CommandDefinition[] = [
     build: ({ options }) => {
       const args = ["./ucore", "deploy"];
       const unityProject = String(options?.unityProject || "").trim();
-      if (unityProject) args.push("--unity-project", resolvePathWithinRoots(unityProject, "unityProject", [path.resolve(repoRoot, ".."), repoRoot]));
+      if (unityProject) args.push("--unity-project", resolvePathWithinRoots(unityProject, "unityProject", [repoRoot]));
       if (options?.dryRun === true || options?.dryRun === "true") args.push("--dry-run");
       if (options?.skipExport === true || options?.skipExport === "true") args.push("--skip-export");
       if (options?.exportOnly === true || options?.exportOnly === "true") args.push("--export-only");
@@ -868,7 +903,7 @@ const commandDefinitions: CommandDefinition[] = [
       const batchSize = Number(optionValue(payload, "batchSize"));
       if (batchSize && batchSize !== 4) args.push("--batch-size", String(batchSize));
       const temperature = Number(optionValue(payload, "temperature"));
-      if (temperature && temperature !== 0.7) args.push("--temperature", String(temperature));
+      if (temperature && temperature !== 0.6) args.push("--temperature", String(temperature));
       const mtRatio = Number(optionValue(payload, "multiTurnRatio"));
       if (mtRatio && mtRatio !== 0.25) args.push("--multi-turn-ratio", String(mtRatio));
       const seed = Number(optionValue(payload, "seed"));
@@ -877,6 +912,116 @@ const commandDefinitions: CommandDefinition[] = [
       if (url && url !== "http://localhost:11434") args.push("--url", sanitizeToken(url, "url"));
       const maxRetries = Number(optionValue(payload, "maxRetries"));
       if (maxRetries && maxRetries !== 3) args.push("--max-retries", String(maxRetries));
+      return args;
+    },
+  },
+  {
+    id: "compare-runs",
+    label: "Compare Training Runs",
+    icon: "bar-chart",
+    color: "accent",
+    type: "Evaluation",
+    requiredFields: ["npcKey", "options.baselineRun", "options.candidateRun"],
+    build: ({ npcKey, options }) => {
+      const args = ["./ucore", "compare-runs", sanitizeToken(requireString(npcKey, "npcKey"), "npcKey"), "--baseline-run", sanitizeToken(requireString(String(options?.baselineRun || ""), "baselineRun"), "baselineRun"), "--candidate-run", sanitizeToken(requireString(String(options?.candidateRun || ""), "candidateRun"), "candidateRun")];
+      const specPath = String(options?.spec || "").trim();
+      if (specPath) args.push("--spec", sanitizeToken(specPath, "spec"));
+      const numQuestions = String(options?.numQuestions || "").trim();
+      if (numQuestions) args.push("--num-questions", numQuestions);
+      const judge = options?.judge;
+      if (judge === true || judge === "true" || judge === "1") args.push("--judge");
+      return args;
+    },
+  },
+  {
+    id: "export-resume",
+    label: "Export Resume",
+    icon: "external-link",
+    color: "success",
+    type: "Export",
+    requiredFields: ["npcKey"],
+    build: ({ npcKey, options }) => {
+      const args = ["./ucore", "export-resume", sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")];
+      const modelId = String(options?.modelId || "").trim();
+      if (modelId) args.push("--model", sanitizeToken(modelId, "modelId"));
+      const quantization = String(options?.quantization || "").trim();
+      if (quantization) args.push("--quantization", sanitizeToken(quantization, "quantization"));
+      if (options?.skipF16 === true || options?.skipF16 === "true") args.push("--skip-f16");
+      const timeoutSeconds = Number(options?.timeoutSeconds);
+      if (timeoutSeconds) args.push("--timeout-seconds", String(timeoutSeconds));
+      return args;
+    },
+  },
+  {
+    id: "track",
+    label: "Track Metrics",
+    icon: "activity",
+    color: "accent",
+    type: "Evaluation",
+    requiredFields: ["npcKey"],
+    build: ({ npcKey, options }) => {
+      const args = ["./ucore", "track", "--npc-key", sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")];
+      const model = String(options?.model || "").trim();
+      if (model) args.push("--model", sanitizeToken(model, "model"));
+      if (options?.show === true || options?.show === "true") args.push("--show");
+      const winRate = String(options?.winRate || "").trim();
+      if (winRate) args.push("--win-rate", winRate);
+      const avgQuality = String(options?.avgQuality || "").trim();
+      if (avgQuality) args.push("--avg-quality", avgQuality);
+      const valLoss = String(options?.valLoss || "").trim();
+      if (valLoss) args.push("--val-loss", valLoss);
+      const notes = String(options?.notes || "").trim();
+      if (notes) args.push("--notes", sanitizeToken(notes, "notes"));
+      return args;
+    },
+  },
+  {
+    id: "quick-eval",
+    label: "Quick Evaluation",
+    icon: "zap",
+    color: "warning",
+    type: "Evaluation",
+    requiredFields: ["options.adapterPath"],
+    build: ({ options }) => {
+      const args = ["./ucore", "quick-eval", sanitizeToken(requireString(String(options?.adapterPath || ""), "adapterPath"), "adapterPath")];
+      const samples = String(options?.samples || "").trim();
+      if (samples) args.push("--samples", samples);
+      const specPath = String(options?.spec || "").trim();
+      if (specPath) args.push("--spec", sanitizeToken(specPath, "spec"));
+      const valData = String(options?.valData || "").trim();
+      if (valData) args.push("--val-data", sanitizeToken(valData, "valData"));
+      return args;
+    },
+  },
+  {
+    id: "audit",
+    label: "Audit System",
+    icon: "shield",
+    color: "default",
+    type: "System",
+    requiredFields: [],
+    build: (payload) => {
+      const args = ["./ucore", "audit", "check"];
+      if (payload?.options?.full === true || payload?.full === true || String(payload?.options?.full || "").toLowerCase() === "true") args.push("--full");
+      return args;
+    },
+  },
+  {
+    id: "batch-export",
+    label: "Batch Export",
+    icon: "external-link",
+    color: "success",
+    type: "Export",
+    requiredFields: [],
+    build: (payload) => {
+      const args = ["./ucore", "batch-export"];
+      const npc = String(payload?.options?.npc || "").trim();
+      if (npc) args.push("--npc", sanitizeToken(npc, "npc"));
+      const quantization = String(payload?.options?.quantization || "").trim();
+      if (quantization) args.push("--quantization", sanitizeToken(quantization, "quantization"));
+      const model = String(payload?.options?.model || "").trim();
+      if (model) args.push("--model", sanitizeToken(model, "model"));
+      if (payload?.options?.skipF16 === true || payload?.options?.skipF16 === "true") args.push("--skip-f16");
       return args;
     },
   },
@@ -902,16 +1047,28 @@ const commandStageIndex = (job: Job): number => {
     case "dataset-sanitize":
     case "dataset-eval":
     case "validate-spec":
+    case "docs-manifest-generate":
+    case "init":
+    case "audit":
       return 0;
     case "validate-config":
     case "train":
       return 1;
     case "evaluate":
     case "smoke":
+    case "compare-runs":
+    case "track":
+    case "quick-eval":
       return 2;
+    case "feedback":
+      return 4;
     case "export":
     case "export-adapter":
     case "deploy":
+    case "supabase-check":
+    case "plan-batch":
+    case "export-resume":
+    case "batch-export":
       return 3;
     case "pipeline":
       return 0;
@@ -923,13 +1080,14 @@ const commandStageIndex = (job: Job): number => {
 const syncPipelineStageFromLogs = (job: Job): number => {
   for (let i = job.logs.length - 1; i >= 0; i -= 1) {
     const line = job.logs[i].toLowerCase();
-    const marker = line.match(/\[stage\]\s+(dataset|training|evaluation|export|complete)/i);
+    const marker = line.match(/\[stage\]\s+(dataset|training|evaluation|export|feedback|complete)/i);
     if (!marker) continue;
     const stage = marker[1];
     if (stage === "dataset") return 0;
     if (stage === "training") return 1;
     if (stage === "evaluation") return 2;
-    if (stage === "export" || stage === "complete") return 3;
+    if (stage === "export") return 3;
+    if (stage === "feedback" || stage === "complete") return 4;
   }
   return 0;
 };
@@ -1802,7 +1960,9 @@ const listRuns = () => {
     res.json(points);
   });
 
-  app.get("/api/available-commands", (_req, res) => res.json(commandDefinitions.map(({ build, ...rest }) => rest)));
+  app.get("/api/available-commands", (_req, res) => {
+    res.json(commandDefinitions.map(({ build, ...rest }) => rest));
+  });
 
   const listPresets = () => {
     const presetsDir = path.join(repoRoot, "configs", "presets");
@@ -1927,8 +2087,10 @@ const listRuns = () => {
   });
 
   app.get("/api/datasets/quality-summary/:npcKey/:technique", (req, res) => {
-    const npcKey = String(req.params.npcKey || "").replace(/\.\./g, "");
-    const technique = String(req.params.technique || "").replace(/\.\./g, "");
+    const npcKey = String(req.params.npcKey || "").trim();
+    const technique = String(req.params.technique || "").trim();
+    if (!/^[a-z][a-z0-9_]*$/.test(npcKey)) return res.status(400).json({ error: "Invalid NPC key" });
+    if (!/^[a-z][a-z0-9_]*$/.test(technique)) return res.status(400).json({ error: "Invalid technique" });
     if (!npcKey || !technique) {
       return res.status(400).json({ error: "npcKey and technique are required" });
     }
@@ -1948,8 +2110,10 @@ const listRuns = () => {
   });
 
   app.get("/api/datasets/quality-failures/:npcKey/:technique", (req, res) => {
-    const npcKey = String(req.params.npcKey || "").replace(/\.\./g, "");
-    const technique = String(req.params.technique || "").replace(/\.\./g, "");
+    const npcKey = String(req.params.npcKey || "").trim();
+    const technique = String(req.params.technique || "").trim();
+    if (!/^[a-z][a-z0-9_]*$/.test(npcKey)) return res.status(400).json({ error: "Invalid NPC key" });
+    if (!/^[a-z][a-z0-9_]*$/.test(technique)) return res.status(400).json({ error: "Invalid technique" });
     if (!npcKey || !technique) {
       return res.status(400).json({ error: "npcKey and technique are required" });
     }
@@ -2973,7 +3137,7 @@ The user can execute these commands directly from your interface.`;
       const cmd = ["./ucore", "deploy"];
       if (dryRun) cmd.push("--dry-run");
       if (req.body?.unityProject) {
-        cmd.push("--unity-project", resolvePathWithinRoots(String(req.body.unityProject), "unityProject", [path.resolve(repoRoot, ".."), repoRoot]));
+        cmd.push("--unity-project", resolvePathWithinRoots(String(req.body.unityProject), "unityProject", [repoRoot]));
       }
       if (req.body?.skipExport === true) cmd.push("--skip-export");
       if (req.body?.exportOnly === true) cmd.push("--export-only");
@@ -3126,7 +3290,7 @@ The user can execute these commands directly from your interface.`;
       broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
 
       unloadGemmaModel();
-      const child = spawn(command[0], command.slice(1), { cwd: repoRoot, shell: false, detached: true });
+      const child = spawn(command[0], command.slice(1), { cwd: repoRoot, shell: false, detached: true, env: { ...process.env, WORKFLOW_HOOKS_PATH: process.env.WORKFLOW_HOOKS_PATH || '' } });
       runningProcesses.set(job.id, child);
       terminalJobState.set(job.id, { stopRequested: false, terminal: false });
 
@@ -3227,7 +3391,7 @@ The user can execute these commands directly from your interface.`;
               broadcast("job_update", { id: nextJob.id, status: nextJob.status, loss: nextJob.loss, progress: nextJob.progress });
 
               unloadGemmaModel();
-              const nextChild = spawn(nextCommand[0], nextCommand.slice(1), { cwd: repoRoot, shell: false, detached: true });
+              const nextChild = spawn(nextCommand[0], nextCommand.slice(1), { cwd: repoRoot, shell: false, detached: true, env: { ...process.env, WORKFLOW_HOOKS_PATH: process.env.WORKFLOW_HOOKS_PATH || '' } });
               runningProcesses.set(nextJob.id, nextChild);
               terminalJobState.set(nextJob.id, { stopRequested: false, terminal: false });
 
@@ -3283,6 +3447,123 @@ The user can execute these commands directly from your interface.`;
                 } else if (stepIndex === steps.length - 1) {
                   workflow.overallStatus = "completed";
                   workflow.finishedAt = isoNow();
+                } else if (nextChain && nextCode === 0) {
+                  // Chain to step 3
+                  const step3Def = commandMap.get(nextChain.commandId);
+                  if (step3Def) {
+                    try {
+                      globalLog(registry, `[WORKFLOW] chaining to step 3: ${nextChain.commandId}`);
+                      const step3Command = step3Def.build(nextChain.payload as StartCommandPayload);
+                      const chainNext3 = steps.length > 3 ? {
+                        commandId: steps[3].commandId,
+                        payload: steps[3].payload,
+                      } : undefined;
+
+                      const step3Job: Job = {
+                        id: makeId(),
+                        name: `${step3Def.label} (${npcKey})`,
+                        type: step3Def.type,
+                        commandId: step3Def.id,
+                        npcKey,
+                        workflowId,
+                        chainNext: chainNext3,
+                        status: "running",
+                        progress: 5,
+                        loss: null,
+                        createdAt: isoNow(),
+                        startedAt: isoNow(),
+                        command: step3Command,
+                        stages: defaultStages(),
+                        logs: [],
+                      };
+                      updateStagesFromTruth(step3Job);
+
+                      const stepIndex = 2;
+                      steps[stepIndex].status = "running";
+                      steps[stepIndex].jobId = step3Job.id;
+                      registry.jobs.unshift(step3Job);
+                      globalLog(registry, `[WORKFLOW] starting step ${stepIndex + 1}/${steps.length}: ${step3Command.join(" ")}`);
+                      persistRegistry(registry);
+                      broadcast("job_update", { id: step3Job.id, status: step3Job.status, loss: step3Job.loss, progress: step3Job.progress });
+
+                      unloadGemmaModel();
+                      const step3Child = spawn(step3Command[0], step3Command.slice(1), { cwd: repoRoot, shell: false, detached: true, env: { ...process.env, WORKFLOW_HOOKS_PATH: process.env.WORKFLOW_HOOKS_PATH || '' } });
+                      runningProcesses.set(step3Job.id, step3Child);
+                      terminalJobState.set(step3Job.id, { stopRequested: false, terminal: false });
+
+                      const step3Consume = (chunk: Buffer, source: "stdout" | "stderr") => {
+                        const lines = chunk.toString().split("\n").map((l) => l.trim()).filter(Boolean);
+                        for (const line of lines) {
+                          const prefixed = `[${source.toUpperCase()}][${step3Job.id}] ${line}`;
+                          const previousProgress = step3Job.progress;
+                          step3Job.logs.push(prefixed);
+                          step3Job.logs = step3Job.logs.slice(-MAX_LOG_LINES);
+                          appendStageLog(step3Job, prefixed);
+                          globalLog(registry, prefixed);
+                          const parsedLoss = parseLoss(line);
+                          if (parsedLoss !== null) {
+                            step3Job.loss = parsedLoss;
+                          }
+                          updateStagesFromTruth(step3Job);
+                          if (step3Job.progress !== previousProgress || parsedLoss !== null) {
+                            broadcast("job_update", { id: step3Job.id, status: step3Job.status, loss: step3Job.loss, progress: step3Job.progress });
+                          }
+                        }
+                        persistRegistry(registry);
+                      };
+
+                      step3Child.stdout.on("data", (chunk) => step3Consume(chunk, "stdout"));
+                      step3Child.stderr.on("data", (chunk) => step3Consume(chunk, "stderr"));
+                      step3Child.on("close", (step3Code) => {
+                        const step3TerminalState = terminalJobState.get(step3Job.id);
+                        const step3EscalationTimer = stopEscalationTimers.get(step3Job.id);
+                        if (step3EscalationTimer) {
+                          clearTimeout(step3EscalationTimer);
+                          stopEscalationTimers.delete(step3Job.id);
+                        }
+                        runningProcesses.delete(step3Job.id);
+                        terminalJobState.delete(step3Job.id);
+                        if (step3TerminalState?.terminal) return;
+
+                        step3Job.exitCode = step3Code ?? -1;
+                        step3Job.finishedAt = isoNow();
+                        if (step3TerminalState?.stopRequested || step3Job.stopRequested) {
+                          step3Job.status = "stopped";
+                          step3Job.terminalReason = "user_requested_stop";
+                        } else {
+                          step3Job.status = step3Code === 0 ? "completed" : "failed";
+                        }
+
+                        steps[stepIndex].status = step3Code === 0 ? "completed" : "failed";
+                        workflow.currentStep = stepIndex + 1;
+
+                        if (step3Code !== 0) {
+                          workflow.overallStatus = "failed";
+                          workflow.finishedAt = isoNow();
+                        } else if (stepIndex === steps.length - 1) {
+                          workflow.overallStatus = "completed";
+                          workflow.finishedAt = isoNow();
+                        } else if (chainNext3 && step3Code === 0) {
+                          // Chain to step 4+
+                          globalLog(registry, `[WORKFLOW] step ${stepIndex + 2} chaining not yet implemented; pipeline complete`);
+                          workflow.overallStatus = "completed";
+                          workflow.finishedAt = isoNow();
+                        }
+
+                        updateStagesFromTruth(step3Job);
+                        globalLog(registry, `[SYSTEM] ${step3Job.id} ${step3Job.status} (exit ${step3Code})`);
+                        flushPersist(registry);
+                        invalidateJobsCache();
+                        broadcast("job_update", { id: step3Job.id, status: step3Job.status, loss: step3Job.loss, progress: step3Job.progress });
+                      });
+                    } catch (chainErr) {
+                      globalLog(registry, `[WORKFLOW] chaining to step 3 failed: ${chainErr instanceof Error ? chainErr.message : String(chainErr)}`);
+                      workflow.overallStatus = "failed";
+                      workflow.finishedAt = isoNow();
+                      flushPersist(registry);
+                      invalidateJobsCache();
+                    }
+                  }
                 }
 
                 updateStagesFromTruth(nextJob);
@@ -3322,7 +3603,8 @@ The user can execute these commands directly from your interface.`;
     res.json({ suggestions });
   });
 
-  app.get("/api/command-schemas", (_req, res) => {
+  app.get("/api/command-schemas", (req, res) => {
+    const npcKey = String(req.query.npcKey || "history_guide").trim() || "history_guide";
     type FieldSchema = {
       type: "string" | "number" | "boolean";
       required: boolean;
@@ -3335,47 +3617,47 @@ The user can execute these commands directly from your interface.`;
 
     const baseDefaultsByCommand: Record<string, Record<string, FieldSchema>> = {
       "dataset-generate": {
-        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json", description: "Subject spec path" },
-        "options.technique": { type: "string", required: false, default: "ollama", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path" },
+        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
       },
       "dataset-sanitize": {
-        "options.datasetPath": { type: "string", required: true, default: "subjects/datasets/history_guide/ollama/train.jsonl", description: "Train dataset path" },
+        "options.datasetPath": { type: "string", required: true, default: "subjects/datasets/{npcKey}/template/train.jsonl", description: "Train dataset path" },
       },
       train: {
-        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/{npcKey}.json" },
         preset: { type: "string", required: false, default: "fast-3b", ...(presetOptions.length ? { enum: presetOptions } : {}) },
         "options.learningRate": { type: "string", required: false, default: "2e-4" },
         "options.batchSize": { type: "number", required: false, default: 1 },
         "options.epochs": { type: "number", required: false, default: 3 },
         "options.rank": { type: "number", required: false, default: 16 },
         "options.alpha": { type: "number", required: false, default: 32 },
-        "options.baseModel": { type: "string", required: false, default: "unsloth/Llama-3.2-3B-Instruct-bnb-4bit" },
-        "options.technique": { type: "string", required: false, default: "ollama", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
+        "options.baseModel": { type: "string", required: false, default: DEFAULT_BASE_MODEL },
+        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
         "options.wandb": { type: "boolean", required: false, default: false },
       },
       pipeline: {
-        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/{npcKey}.json" },
         preset: { type: "string", required: false, default: "fast-3b", ...(presetOptions.length ? { enum: presetOptions } : {}) },
-        "options.technique": { type: "string", required: false, default: "ollama", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
+        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"] },
         "options.track": { type: "boolean", required: false, default: false },
         "options.wandb": { type: "boolean", required: false, default: false },
       },
       export: {
         npcKey: { type: "string", required: true, default: "history_guide" },
-        "options.modelId": { type: "string", required: true, default: "unsloth/Llama-3.2-3B-Instruct-bnb-4bit" },
+        "options.modelId": { type: "string", required: true, default: DEFAULT_BASE_MODEL },
       },
       "export-adapter": {
         npcKey: { type: "string", required: true, default: "history_guide" },
       },
       evaluate: {
-        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json" },
-        "options.baseline": { type: "string", required: true, default: "exports/history_guide/history_guide-lora-f16.gguf" },
-        "options.candidate": { type: "string", required: true, default: "exports/history_guide/history_guide-lora-f16.gguf" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/{npcKey}.json" },
+        "options.baseline": { type: "string", required: true, default: "exports/{npcKey}/{npcKey}-lora-f16.gguf" },
+        "options.candidate": { type: "string", required: true, default: "exports/{npcKey}/{npcKey}-lora-f16.gguf" },
         "options.valData": { type: "string", required: false, default: "" },
       },
       smoke: {
-        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json" },
-        "options.modelPath": { type: "string", required: true, default: "exports/history_guide/history_guide-lora-f16.gguf" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/{npcKey}.json" },
+        "options.modelPath": { type: "string", required: true, default: "exports/{npcKey}/{npcKey}-lora-f16.gguf" },
       },
       deploy: {
         "options.unityProject": { type: "string", required: false, default: "" },
@@ -3393,26 +3675,68 @@ The user can execute these commands directly from your interface.`;
         "options.name": { type: "string", required: false, default: "", description: "NPC Display Name" },
       },
       "validate-spec": {
-        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json", description: "Subject spec path" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path" },
       },
       "dataset-eval": {
-        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json", description: "Subject spec path" },
-        "options.technique": { type: "string", required: true, default: "ollama", enum: ["template", "docs", "ollama", "openai", "anthropic"], description: "Dataset generation technique" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path" },
+        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"], description: "Dataset generation technique" },
       },
       "docs-manifest-generate": {
-        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json", description: "Subject spec path" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path" },
         manifest: { type: "string", required: false, default: "docs/corpora/workflow_assistant_docs.json", description: "Corpus manifest path" },
         "options.technique": { type: "string", required: false, default: "docs", enum: ["docs"] },
       },
       "generate-ollama": {
-        spec: { type: "string", required: true, default: "subjects/NPC_specs/history_guide.json", description: "Subject spec path" },
-        "options.model": { type: "string", required: false, default: "llama3.2:3b", description: "Ollama model name" },
+        spec: { type: "string", required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path" },
+        "options.model": { type: "string", required: false, default: "llama3.1-3060-chat:latest", description: "Ollama model name" },
         "options.batchSize": { type: "number", required: false, default: 4, description: "Concurrent generation tasks" },
-        "options.temperature": { type: "number", required: false, default: 0.7, description: "Generation temperature (0.0-1.0)" },
+        "options.temperature": { type: "number", required: false, default: 0.6, description: "Generation temperature (0.0-1.0)" },
         "options.multiTurnRatio": { type: "number", required: false, default: 0.25, description: "Fraction of multi-turn dialogues" },
         "options.seed": { type: "number", required: false, default: 42, description: "Random seed for reproducibility" },
         "options.url": { type: "string", required: false, default: "http://localhost:11434", description: "Ollama server URL" },
         "options.maxRetries": { type: "number", required: false, default: 3, description: "Max retries per generation" },
+      },
+      "compare-runs": {
+        npcKey: { type: "string", required: true, default: "history_guide" },
+        "options.baselineRun": { type: "string", required: true, default: "" },
+        "options.candidateRun": { type: "string", required: true, default: "" },
+        "options.spec": { type: "string", required: false, default: "subjects/NPC_specs/{npcKey}.json" },
+        "options.numQuestions": { type: "number", required: false, default: 10 },
+      },
+      "export-resume": {
+        npcKey: { type: "string", required: true, default: "history_guide" },
+        "options.modelId": { type: "string", required: false, default: DEFAULT_BASE_MODEL },
+        "options.quantization": { type: "string", required: false, default: "q4_k_m" },
+        "options.timeoutSeconds": { type: "number", required: false, default: 5400 },
+      },
+      track: {
+        npcKey: { type: "string", required: true, default: "history_guide" },
+        "options.model": { type: "string", required: false, default: "" },
+      },
+      "quick-eval": {
+        "options.adapterPath": { type: "string", required: true, default: "" },
+        "options.samples": { type: "number", required: false, default: 20 },
+      },
+      audit: {
+        "options.full": { type: "boolean", required: false, default: false },
+      },
+      feedback: {
+        "feedback_json": { type: "string", required: true, default: "", description: "Path to feedback JSON from eval" },
+        "options.winRateThreshold": { type: "number", required: false, default: 0.5, description: "Win rate threshold for gap detection" },
+        "options.qualityThreshold": { type: "number", required: false, default: 25.0, description: "Quality score threshold" },
+        "options.violationThreshold": { type: "number", required: false, default: 1, description: "Violation count threshold" },
+        "train-preset": { type: "string", required: false, default: "fast-3b", description: "Training preset for retrain loop" },
+        "deepeval-judge-model": { type: "string", required: false, default: "qwen3:latest", description: "DeepEval judge model" },
+        "deepeval-ollama-url": { type: "string", required: false, default: "http://localhost:11434", description: "Ollama URL for DeepEval" },
+        "deepeval-cases-per-category": { type: "number", required: false, default: 5, description: "Cases per category for DeepEval" },
+        "regeneration-technique": { type: "string", required: false, default: "ollama", description: "Technique for regeneration" },
+        "regeneration-model": { type: "string", required: false, default: "llama3.1-3060-chat:latest", description: "Model for regeneration" },
+        "regeneration-url": { type: "string", required: false, default: "http://localhost:11434", description: "Ollama URL for regeneration" },
+        "regeneration-batch-size": { type: "number", required: false, default: 4, description: "Batch size for regeneration" },
+      },
+      "batch-export": {
+        "options.npc": { type: "string", required: false, default: "" },
+        "options.quantization": { type: "string", required: false, default: "q4_k_m" },
       },
     };
 
@@ -3444,7 +3768,9 @@ The user can execute these commands directly from your interface.`;
       schemas[id] = { fields };
     }
 
-    res.json(schemas);
+    // Resolve {npcKey} templates in defaults for the selected NPC
+    const resolved = resolveTemplateDefaults(schemas, npcKey);
+    res.json(resolved);
   });
 
   app.post("/api/commands/start", (req, res) => {
@@ -3672,7 +3998,7 @@ The user can execute these commands directly from your interface.`;
     broadcast("job_update", { id: job.id, status: job.status, loss: job.loss, progress: job.progress });
 
     unloadGemmaModel();
-    const child = spawn(job.command[0], job.command.slice(1), { cwd: repoRoot, shell: false, detached: true });
+    const child = spawn(job.command[0], job.command.slice(1), { cwd: repoRoot, shell: false, detached: true, env: { ...process.env, WORKFLOW_HOOKS_PATH: process.env.WORKFLOW_HOOKS_PATH || '' } });
     runningProcesses.set(job.id, child);
     terminalJobState.set(job.id, { stopRequested: false, terminal: false });
 
