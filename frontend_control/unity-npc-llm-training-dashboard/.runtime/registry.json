@@ -2,19 +2,19 @@
   "executionMode": "local",
   "jobs": [
     {
-      "id": "ext_proc_3078783",
-      "name": "External Evaluation · PID 3078783 · history_guide",
-      "type": "Evaluation",
-      "commandId": "evaluate",
+      "id": "ext_proc_1670007",
+      "name": "External Training · PID 1670007 · history_guide",
+      "type": "Training",
+      "commandId": "train",
       "npcKey": "history_guide",
-      "status": "stopped",
+      "status": "running",
       "progress": 10,
       "loss": null,
-      "createdAt": "2026-05-21T07:01:19.809Z",
-      "startedAt": "2026-05-21T07:01:19.809Z",
+      "createdAt": "2026-05-21T17:31:44.301Z",
+      "startedAt": "2026-05-21T17:31:44.301Z",
       "command": [
         "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate '/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf' --spec subjects/NPC_specs/history_guide.json --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --report-html --track --feedback-json eval/results/feedback/history_guide_final.json --gpu-layers 0 --port 8896 --num-questions 4"
+        "python3 ./ucore train subjects/NPC_specs/history_guide.json --from-spec --technique ollama --preset fast-3b --export-gguf"
       ],
       "stages": [
         {
@@ -44,674 +44,23 @@
         }
       ],
       "logs": [
-        "[EXTERNAL][PID 3078783] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate '/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf' --spec subjects/NPC_specs/history_guide.json --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --report-html --track --feedback-json eval/results/feedback/history_guide_final.json --gpu-layers 0 --port 8896 --num-questions 4"
+        "[EXTERNAL][PID 1670007] discovered active process",
+        "python3 ./ucore train subjects/NPC_specs/history_guide.json --from-spec --technique ollama --preset fast-3b --export-gguf"
       ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T07:01:52.814Z",
-      "exitCode": -15
+      "terminalReason": "external_detected"
     },
     {
-      "id": "ext_proc_3062494",
-      "name": "External Pipeline · PID 3062494 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T06:59:19.785Z",
-      "startedAt": "2026-05-21T06:59:19.785Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 3062494] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T10:29:06.930Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2986712",
-      "name": "External Pipeline · PID 2986712 · history_guide",
-      "type": "Pipeline",
-      "commandId": "pipeline",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T06:49:04.820Z",
-      "startedAt": "2026-05-21T06:49:04.820Z",
-      "command": [
-        "external",
-        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2986712] discovered active process",
-        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:59:07.782Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2986709",
-      "name": "External Export · PID 2986709 · history_guide",
-      "type": "Export",
-      "commandId": "export",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T06:49:04.820Z",
-      "startedAt": "2026-05-21T06:49:04.820Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-2555a45cca70.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-2555a45cca70.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-2555a45cca70.txt 2>/dev/null || true printf '\\n__HERMES_CWD_2555a45cca70__%s__HERMES_CWD_2555a45cca70__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2986709] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-2555a45cca70.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-2555a45cca70.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-2555a45cca70.txt 2>/dev/null || true printf '\\n__HERMES_CWD_2555a45cca70__%s__HERMES_CWD_2555a45cca70__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:59:07.782Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2984881",
-      "name": "External Evaluation · PID 2984881 · history_guide",
-      "type": "Evaluation",
-      "commandId": "evaluate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T06:48:10.805Z",
-      "startedAt": "2026-05-21T06:48:10.805Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate '/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf' --spec subjects/NPC_specs/history_guide.json --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --report-html --track --feedback-json eval/results/feedback/history_guide_final.json --gpu-layers 0 --port 8896 --num-questions 4"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2984881] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate '/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf' --spec subjects/NPC_specs/history_guide.json --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --report-html --track --feedback-json eval/results/feedback/history_guide_final.json --gpu-layers 0 --port 8896 --num-questions 4"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:48:37.813Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2964461",
-      "name": "External Evaluation · PID 2964461 · history_guide",
-      "type": "Evaluation",
-      "commandId": "evaluate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T06:45:13.748Z",
-      "startedAt": "2026-05-21T06:45:13.748Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate '/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf' --spec subjects/NPC_specs/history_guide.json --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --report-html --track --feedback-json eval/results/feedback/history_guide_final.json --gpu-layers 0 --port 8896 --num-questions 4"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2964461] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate '/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf' --spec subjects/NPC_specs/history_guide.json --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --report-html --track --feedback-json eval/results/feedback/history_guide_final.json --gpu-layers 0 --port 8896 --num-questions 4"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:45:49.763Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2935796",
-      "name": "External Evaluation · PID 2935796 · history_guide",
-      "type": "Evaluation",
-      "commandId": "evaluate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T06:41:37.706Z",
-      "startedAt": "2026-05-21T06:41:37.706Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate '/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf' --spec subjects/NPC_specs/history_guide.json --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --report-html --track --feedback-json eval/results/feedback/history_guide_final.json --gpu-layers 0 --port 8896 --num-questions 4"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2935796] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate '/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf' --spec subjects/NPC_specs/history_guide.json --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --report-html --track --feedback-json eval/results/feedback/history_guide_final.json --gpu-layers 0 --port 8896 --num-questions 4"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:42:13.717Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2858739",
-      "name": "External Evaluation · PID 2858739 · chef_assistant",
-      "type": "Evaluation",
-      "commandId": "evaluate",
-      "npcKey": "chef_assistant",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T06:32:16.632Z",
-      "startedAt": "2026-05-21T06:32:16.632Z",
-      "command": [
-        "external",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/chef_assistant.json --num-questions 4 --report-html --track --feedback-json eval/results/feedback/chef_assistant_final.json --gpu-layers 0 --port 8897"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2858739] discovered active process",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/chef_assistant.json --num-questions 4 --report-html --track --feedback-json eval/results/feedback/chef_assistant_final.json --gpu-layers 0 --port 8897"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:32:55.645Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2854126",
-      "name": "External Evaluation · PID 2854126 · astronomy_guide",
-      "type": "Evaluation",
-      "commandId": "evaluate",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T06:31:25.612Z",
-      "startedAt": "2026-05-21T06:31:25.612Z",
-      "command": [
-        "external",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/astronomy_guide.json --num-questions 4 --report-html --track --feedback-json eval/results/feedback/astronomy_guide_final.json --gpu-layers 0 --port 8898"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2854126] discovered active process",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/astronomy_guide.json --num-questions 4 --report-html --track --feedback-json eval/results/feedback/astronomy_guide_final.json --gpu-layers 0 --port 8898"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:32:07.630Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2831014",
-      "name": "External Evaluation · PID 2831014 · fitness_coach",
-      "type": "Evaluation",
-      "commandId": "evaluate",
-      "npcKey": "fitness_coach",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T06:28:19.561Z",
-      "startedAt": "2026-05-21T06:28:19.561Z",
-      "command": [
-        "external",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/fitness_coach/fitness_coach-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/fitness_coach.json --num-questions 4 --report-html --track --feedback-json eval/results/feedback/fitness_coach_final.json --gpu-layers 0 --port 8899"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2831014] discovered active process",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/fitness_coach/fitness_coach-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/fitness_coach.json --num-questions 4 --report-html --track --feedback-json eval/results/feedback/fitness_coach_final.json --gpu-layers 0 --port 8899"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:28:55.568Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2789577",
-      "name": "External Dataset · PID 2789577",
-      "type": "Dataset",
-      "commandId": "dataset-generate",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T06:22:16.554Z",
-      "startedAt": "2026-05-21T06:22:16.554Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-2555a45cca70.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/dataset/generate_dataset.py scripts/dataset/generate_dataset_ollama.py && source unsloth_env/bin/activate && pytest -q tests/test_pipeline_boundaries.py tests/test_scripts_legacy_alias_guard.py' __hermes_ec=$? export -p > /tmp/hermes-snap-2555a45cca70.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-2555a45cca70.txt 2>/dev/null || true printf '\\n__HERMES_CWD_2555a45cca70__%s__HERMES_CWD_2555a45cca70__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2789577] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-2555a45cca70.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'python -m py_compile scripts/dataset/generate_dataset.py scripts/dataset/generate_dataset_ollama.py && source unsloth_env/bin/activate && pytest -q tests/test_pipeline_boundaries.py tests/test_scripts_legacy_alias_guard.py' __hermes_ec=$? export -p > /tmp/hermes-snap-2555a45cca70.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-2555a45cca70.txt 2>/dev/null || true printf '\\n__HERMES_CWD_2555a45cca70__%s__HERMES_CWD_2555a45cca70__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:22:19.554Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2671533",
-      "name": "External Evaluation · PID 2671533 · history_guide",
-      "type": "Evaluation",
-      "commandId": "evaluate",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T05:59:49.375Z",
-      "startedAt": "2026-05-21T05:59:49.375Z",
-      "command": [
-        "external",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/history_guide.json --num-questions 10 --report-html --track --feedback-json eval/results/feedback/history_guide_final.json"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2671533] discovered active process",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/history_guide.json --num-questions 10 --report-html --track --feedback-json eval/results/feedback/history_guide_final.json"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:00:10.377Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2671530",
-      "name": "External Export · PID 2671530 · history_guide",
-      "type": "Export",
-      "commandId": "export",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T05:59:49.375Z",
-      "startedAt": "2026-05-21T05:59:49.375Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -c source /tmp/hermes-snap-2555a45cca70.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail source unsloth_env/bin/activate ./ucore evaluate \\   --baseline \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --candidate \"/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf\" \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --spec subjects/NPC_specs/history_guide.json \\   --num-questions 10 \\   --report-html \\   --track \\   --feedback-json eval/results/feedback/history_guide_final.json' __hermes_ec=$? export -p > /tmp/hermes-snap-2555a45cca70.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-2555a45cca70.txt 2>/dev/null || true printf '\\n__HERMES_CWD_2555a45cca70__%s__HERMES_CWD_2555a45cca70__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2671530] discovered active process",
-        "/usr/bin/bash -c source /tmp/hermes-snap-2555a45cca70.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail source unsloth_env/bin/activate ./ucore evaluate \\   --baseline \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --candidate \"/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf\" \\   --base-model \"/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf\" \\   --spec subjects/NPC_specs/history_guide.json \\   --num-questions 10 \\   --report-html \\   --track \\   --feedback-json eval/results/feedback/history_guide_final.json' __hermes_ec=$? export -p > /tmp/hermes-snap-2555a45cca70.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-2555a45cca70.txt 2>/dev/null || true printf '\\n__HERMES_CWD_2555a45cca70__%s__HERMES_CWD_2555a45cca70__\\n' \"$(pwd -P)\" exit $__hermes_ec"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T06:00:10.377Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2619634",
-      "name": "External Export · PID 2619634 · history_guide",
-      "type": "Export",
-      "commandId": "export",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T05:38:49.175Z",
-      "startedAt": "2026-05-21T05:38:49.175Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc && export TRITON_LIBCUDA_PATH=/lib/x86_64-linux-gnu && python scripts/export/export.py outputs/history_guide/runs/20260521_fast-3b_llama3.2-3b_006"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2619634] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc && export TRITON_LIBCUDA_PATH=/lib/x86_64-linux-gnu && python scripts/export/export.py outputs/history_guide/runs/20260521_fast-3b_llama3.2-3b_006"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T05:38:52.175Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_006",
-      "name": "External Train (history_guide/20260521_fast-3b_llama3.2-3b_006)",
+      "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_008",
+      "name": "External Train (history_guide/20260521_fast-3b_llama3.2-3b_008)",
       "type": "Training",
       "commandId": "train",
       "npcKey": "history_guide",
       "status": "completed",
       "progress": 100,
       "loss": null,
-      "createdAt": "2026-05-21T05:36:49.415Z",
-      "startedAt": "2026-05-21T05:36:49.415Z",
-      "finishedAt": "2026-05-21T05:36:49.415Z",
+      "createdAt": "2026-05-21T17:31:44.267Z",
+      "startedAt": "2026-05-21T17:31:44.267Z",
+      "finishedAt": "2026-05-21T17:31:44.267Z",
       "command": [
         "./ucore",
         "train",
@@ -746,25 +95,28 @@
         }
       ],
       "logs": [
-        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260521_fast-3b_llama3.2-3b_006/config_snapshot.yaml"
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260521_fast-3b_llama3.2-3b_008/config_snapshot.yaml"
       ],
       "exitCode": 0,
       "terminalReason": "external_import"
     },
     {
-      "id": "ext_proc_2612975",
-      "name": "External Training · PID 2612975 · history_guide",
+      "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_007",
+      "name": "External Train (history_guide/20260521_fast-3b_llama3.2-3b_007)",
       "type": "Training",
       "commandId": "train",
       "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
+      "status": "completed",
+      "progress": 100,
       "loss": null,
-      "createdAt": "2026-05-21T05:36:49.171Z",
-      "startedAt": "2026-05-21T05:36:49.171Z",
+      "createdAt": "2026-05-21T17:30:44.413Z",
+      "startedAt": "2026-05-21T17:30:44.413Z",
+      "finishedAt": "2026-05-21T17:30:44.413Z",
       "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc && export TRITON_LIBCUDA_PATH=/lib/x86_64-linux-gnu && python scripts/training/train.py subjects/NPC_specs/history_guide.json --from-spec --preset fast-3b --technique ollama --export-gguf --batch-size 1 --epochs 1 --max-seq-len 512 --lora-r 8 --lora-alpha 16 --no-wandb"
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
       ],
       "stages": [
         {
@@ -794,27 +146,75 @@
         }
       ],
       "logs": [
-        "[EXTERNAL][PID 2612975] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc && export TRITON_LIBCUDA_PATH=/lib/x86_64-linux-gnu && python scripts/training/train.py subjects/NPC_specs/history_guide.json --from-spec --preset fast-3b --technique ollama --export-gguf --batch-size 1 --epochs 1 --max-seq-len 512 --lora-r 8 --lora-alpha 16 --no-wandb"
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260521_fast-3b_llama3.2-3b_007/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_1667889",
+      "name": "External Training · PID 1667889 · history_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T17:30:44.017Z",
+      "startedAt": "2026-05-21T17:30:44.017Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; set -euo pipefail export PATH=/usr/local/bin:$PATH source unsloth_env/bin/activate ./ucore train subjects/NPC_specs/history_guide.json --from-spec --technique ollama --preset fast-3b --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1667889] discovered active process",
+        "/usr/bin/bash -lic set +m; set -euo pipefail export PATH=/usr/local/bin:$PATH source unsloth_env/bin/activate ./ucore train subjects/NPC_specs/history_guide.json --from-spec --technique ollama --preset fast-3b --export-gguf"
       ],
       "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T05:38:01.174Z",
+      "finishedAt": "2026-05-21T17:31:26.292Z",
       "exitCode": -15
     },
     {
-      "id": "ext_proc_2587903",
-      "name": "External Training · PID 2587903 · history_guide",
-      "type": "Training",
-      "commandId": "train",
+      "id": "ext_proc_1542557",
+      "name": "External Pipeline · PID 1542557 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
       "npcKey": "history_guide",
       "status": "stopped",
       "progress": 10,
       "loss": null,
-      "createdAt": "2026-05-21T05:32:01.136Z",
-      "startedAt": "2026-05-21T05:32:01.136Z",
+      "createdAt": "2026-05-21T16:45:10.576Z",
+      "startedAt": "2026-05-21T16:45:10.576Z",
       "command": [
         "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc && export TRITON_LIBCUDA_PATH=/lib/x86_64-linux-gnu && ./ucore train subjects/NPC_specs/history_guide.json --technique ollama --preset fast-3b --export-gguf"
+        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1"
       ],
       "stages": [
         {
@@ -844,12 +244,414 @@
         }
       ],
       "logs": [
-        "[EXTERNAL][PID 2587903] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc && export TRITON_LIBCUDA_PATH=/lib/x86_64-linux-gnu && ./ucore train subjects/NPC_specs/history_guide.json --technique ollama --preset fast-3b --export-gguf"
+        "[EXTERNAL][PID 1542557] discovered active process",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1"
       ],
       "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T05:32:52.140Z",
+      "finishedAt": "2026-05-21T16:54:52.640Z",
       "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1542554",
+      "name": "External Export · PID 1542554 · history_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T16:45:10.576Z",
+      "startedAt": "2026-05-21T16:45:10.576Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-11348e64390c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PATH=/usr/local/bin:$PATH export DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE=60 export PATH=/usr/local/bin:$PATH source unsloth_env/bin/activate ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1' __hermes_ec=$? export -p > /tmp/hermes-snap-11348e64390c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-11348e64390c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_11348e64390c__%s__HERMES_CWD_11348e64390c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1542554] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-11348e64390c.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PATH=/usr/local/bin:$PATH export DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE=60 export PATH=/usr/local/bin:$PATH source unsloth_env/bin/activate ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1' __hermes_ec=$? export -p > /tmp/hermes-snap-11348e64390c.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-11348e64390c.txt 2>/dev/null || true printf '\\n__HERMES_CWD_11348e64390c__%s__HERMES_CWD_11348e64390c__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T16:54:52.640Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1404117",
+      "name": "External Pipeline · PID 1404117 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T16:21:04.456Z",
+      "startedAt": "2026-05-21T16:21:04.456Z",
+      "command": [
+        "external",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 3"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1404117] discovered active process",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 3"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T16:31:04.494Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1404109",
+      "name": "External Export · PID 1404109 · history_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T16:21:04.456Z",
+      "startedAt": "2026-05-21T16:21:04.456Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6673b6b76d16.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PATH=/usr/local/bin:$PATH source unsloth_env/bin/activate ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 3' __hermes_ec=$? export -p > /tmp/hermes-snap-6673b6b76d16.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6673b6b76d16.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6673b6b76d16__%s__HERMES_CWD_6673b6b76d16__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1404109] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-6673b6b76d16.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PATH=/usr/local/bin:$PATH source unsloth_env/bin/activate ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 3' __hermes_ec=$? export -p > /tmp/hermes-snap-6673b6b76d16.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-6673b6b76d16.txt 2>/dev/null || true printf '\\n__HERMES_CWD_6673b6b76d16__%s__HERMES_CWD_6673b6b76d16__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T16:31:04.494Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1295337",
+      "name": "External Pipeline · PID 1295337 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T16:08:13.364Z",
+      "startedAt": "2026-05-21T16:08:13.364Z",
+      "command": [
+        "external",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1295337] discovered active process",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T16:20:55.455Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1140680",
+      "name": "External Pipeline · PID 1140680 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T15:44:46.244Z",
+      "startedAt": "2026-05-21T15:44:46.244Z",
+      "command": [
+        "external",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1140680] discovered active process",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T15:54:46.299Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1140677",
+      "name": "External Export · PID 1140677 · history_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T15:44:46.244Z",
+      "startedAt": "2026-05-21T15:44:46.244Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-22ad36d2be7e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PATH=/usr/local/bin:$PATH source unsloth_env/bin/activate ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-22ad36d2be7e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-22ad36d2be7e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_22ad36d2be7e__%s__HERMES_CWD_22ad36d2be7e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1140677] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-22ad36d2be7e.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PATH=/usr/local/bin:$PATH source unsloth_env/bin/activate ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-22ad36d2be7e.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-22ad36d2be7e.txt 2>/dev/null || true printf '\\n__HERMES_CWD_22ad36d2be7e__%s__HERMES_CWD_22ad36d2be7e__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T15:54:46.299Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_history_guide_20260521_smoke_qwen3-1.7b_002",
+      "name": "External Train (history_guide/20260521_smoke_qwen3-1.7b_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": 4.914706182479859,
+      "createdAt": "2026-05-21T05:26:09.192Z",
+      "startedAt": "2026-05-21T05:26:09.192Z",
+      "finishedAt": "2026-05-21T05:26:09.192Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260521_smoke_qwen3-1.7b_002/training_metrics.json"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_006",
+      "name": "External Train (history_guide/20260521_fast-3b_llama3.2-3b_006)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": 3.3097865364768286,
+      "createdAt": "2026-05-21T05:37:56.853Z",
+      "startedAt": "2026-05-21T05:37:56.853Z",
+      "finishedAt": "2026-05-21T05:37:56.853Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260521_fast-3b_llama3.2-3b_006/training_metrics.json"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
     },
     {
       "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_005",
@@ -903,56 +705,6 @@
       "terminalReason": "external_import"
     },
     {
-      "id": "ext_proc_2577740",
-      "name": "External Training · PID 2577740 · history_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T05:29:58.101Z",
-      "startedAt": "2026-05-21T05:29:58.101Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:$PATH && export CC=/usr/bin/gcc && export TRITON_LIBCUDA_PATH=/lib/x86_64-linux-gnu && ./ucore train subjects/NPC_specs/history_guide.json --technique ollama --preset fast-3b --export-gguf"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2577740] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:$PATH && export CC=/usr/bin/gcc && export TRITON_LIBCUDA_PATH=/lib/x86_64-linux-gnu && ./ucore train subjects/NPC_specs/history_guide.json --technique ollama --preset fast-3b --export-gguf"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T05:30:46.100Z",
-      "exitCode": -15
-    },
-    {
       "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_004",
       "name": "External Train (history_guide/20260521_fast-3b_llama3.2-3b_004)",
       "type": "Training",
@@ -1002,56 +754,6 @@
       ],
       "exitCode": 0,
       "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_2566288",
-      "name": "External Training · PID 2566288 · history_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T05:27:49.057Z",
-      "startedAt": "2026-05-21T05:27:49.057Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:$PATH && export CC=/usr/bin/gcc && export LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu && export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH && ./ucore train subjects/NPC_specs/history_guide.json --technique ollama --preset fast-3b --export-gguf"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2566288] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:$PATH && export CC=/usr/bin/gcc && export LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu && export LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH && ./ucore train subjects/NPC_specs/history_guide.json --technique ollama --preset fast-3b --export-gguf"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T05:28:37.067Z",
-      "exitCode": -15
     },
     {
       "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_003",
@@ -1105,56 +807,6 @@
       "terminalReason": "external_import"
     },
     {
-      "id": "ext_proc_2558090",
-      "name": "External Training · PID 2558090 · history_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T05:26:16.777Z",
-      "startedAt": "2026-05-21T05:26:16.777Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:$PATH && export CC=/usr/bin/gcc && ./ucore train subjects/NPC_specs/history_guide.json --technique ollama --preset fast-3b --export-gguf"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2558090] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && export PATH=/usr/local/bin:$PATH && export CC=/usr/bin/gcc && ./ucore train subjects/NPC_specs/history_guide.json --technique ollama --preset fast-3b --export-gguf"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T05:26:37.777Z",
-      "exitCode": -15
-    },
-    {
       "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_002",
       "name": "External Train (history_guide/20260521_fast-3b_llama3.2-3b_002)",
       "type": "Training",
@@ -1204,157 +856,6 @@
       ],
       "exitCode": 0,
       "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_2555716",
-      "name": "External Training · PID 2555716 · history_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T05:25:43.776Z",
-      "startedAt": "2026-05-21T05:25:43.776Z",
-      "command": [
-        "external",
-        "/bin/bash -c source unsloth_env/bin/activate 2>/dev/null && python scripts/training/train.py subjects/NPC_specs/history_guide.json --from-spec --model unsloth/Qwen3-1.7B-bnb-4bit --preset smoke 2>&1"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2555716] discovered active process",
-        "/bin/bash -c source unsloth_env/bin/activate 2>/dev/null && python scripts/training/train.py subjects/NPC_specs/history_guide.json --from-spec --model unsloth/Qwen3-1.7B-bnb-4bit --preset smoke 2>&1"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T05:26:13.777Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_train_history_guide_20260521_smoke_qwen3-1.7b_002",
-      "name": "External Train (history_guide/20260521_smoke_qwen3-1.7b_002)",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "history_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-21T05:25:05.522Z",
-      "startedAt": "2026-05-21T05:25:05.522Z",
-      "finishedAt": "2026-05-21T05:25:05.522Z",
-      "command": [
-        "./ucore",
-        "train",
-        "subjects/history_guide.json",
-        "--from-spec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260521_smoke_qwen3-1.7b_002/config_snapshot.yaml"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_2555078",
-      "name": "External Training · PID 2555078 · history_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "history_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T05:25:01.780Z",
-      "startedAt": "2026-05-21T05:25:01.780Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && PATH=/usr/local/bin:$PATH ./ucore train subjects/NPC_specs/history_guide.json --technique ollama --preset fast-3b --export-gguf"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2555078] discovered active process",
-        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && PATH=/usr/local/bin:$PATH ./ucore train subjects/NPC_specs/history_guide.json --technique ollama --preset fast-3b --export-gguf"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T05:25:40.776Z",
-      "exitCode": -15
     },
     {
       "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_001",
@@ -9720,606 +9221,7 @@
     }
   ],
   "logs": [
-    "[2026-05-21T02:03:41.097Z] [SYSTEM] job job_1779329020111_vqmmq failed (exit 1)",
-    "[2026-05-21T02:03:41.092Z] [STDOUT][job_1779329020111_vqmmq] Error: Command failed with return code 1",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] RecursionError: maximum recursion depth exceeded",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 417, in __enter__",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1357, in _find_and_load",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.907Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.906Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.905Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.904Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.903Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.902Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.901Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.900Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.899Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] return getattr(self._load(), item)",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 74, in __getattr__",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1316, in _find_and_load_unlocked",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] return _bootstrap._gcd_import(name[level:], package, level)",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py\", line 90, in import_module",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] ^^^^^^^^^^^^^^^^^^^^^",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] module = import_module(target)",
-    "[2026-05-21T02:03:40.898Z] [STDERR][job_1779329020111_vqmmq] File \"/home/athar/Projects/Unsloth_Core/scripts/__init__.py\", line 49, in _load"
+    "[2026-05-21T15:31:10.117Z] [STARTUP] Pruned 6 old job(s), keeping 50"
   ],
   "nodeId": "5ecbf770-7a12-4eb4-a559-6491504274a9",
   "workflows": [],

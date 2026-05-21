@@ -1,332 +1,146 @@
 [
   {
-    "category": "identity",
-    "concept": "medieval history",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:26:18.605183+00:00"
-  },
-  {
-    "category": "identity",
-    "concept": "historical methodology",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:26:25.938034+00:00"
-  },
-  {
-    "category": "identity",
-    "concept": "core timeline anchors",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:26:36.108072+00:00"
-  },
-  {
     "category": "teaching",
     "concept": "medieval history",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:27:08.223047+00:00"
+    "timestamp": "2026-05-21T16:34:52.447656+00:00"
   },
   {
     "category": "teaching",
-    "concept": "historical methodology",
+    "concept": "scope and use",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:27:18.919286+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "core timeline anchors",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:27:32.192452+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "safety and refusal boundaries",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:27:40.255442+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical methodology",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:28:09.867729+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical thinking",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:28:12.520253+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "medieval history",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:29:09.182527+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical methodology",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:29:17.407911+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical thinking",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:29:18.997002+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "core timeline anchors",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:29:31.613193+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "safety and refusal boundaries",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:29:39.593762+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical methodology",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:30:10.374088+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical methodology",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:31:00.630290+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "core timeline anchors",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:31:10.505280+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "useful vocabulary",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:31:22.542678+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "medieval history",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:31:50.499177+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical methodology",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:32:08.828668+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "core timeline anchors",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:32:30.487716+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "core timeline anchors",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:33:33.420453+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical methodology",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:34:09.815765+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "safety and refusal boundaries",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:34:29.509167+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "useful vocabulary",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:34:31.202165+00:00"
+    "timestamp": "2026-05-21T16:35:10.819486+00:00"
   },
   {
     "category": "teaching",
     "concept": "classical antiquity",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:34:41.471372+00:00"
+    "timestamp": "2026-05-21T16:35:28.186656+00:00"
   },
   {
     "category": "teaching",
     "concept": "historical thinking",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:34:59.728342+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "core timeline anchors",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:35:15.029126+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "useful vocabulary",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:35:24.771495+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "classical antiquity",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:35:34.990645+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical methodology",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:35:46.817851+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical thinking",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:35:55.648499+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "safety and refusal boundaries",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:36:08.193078+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "historical thinking",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:36:43.813252+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "core timeline anchors",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:36:59.873405+00:00"
-  },
-  {
-    "category": "teaching",
-    "concept": "safety and refusal boundaries",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:37:02.472879+00:00"
+    "timestamp": "2026-05-21T16:35:45.577395+00:00"
   },
   {
     "category": "teaching",
     "concept": "medieval history",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:37:30.967296+00:00"
+    "timestamp": "2026-05-21T16:36:12.918860+00:00"
   },
   {
-    "category": "dialogue",
-    "concept": "medieval history",
+    "category": "teaching",
+    "concept": "historical methodology",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:37:39.530754+00:00"
+    "timestamp": "2026-05-21T16:36:20.548970+00:00"
   },
   {
-    "category": "dialogue",
+    "category": "teaching",
+    "concept": "historical thinking",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-21T16:36:27.213930+00:00"
+  },
+  {
+    "category": "teaching",
     "concept": "core timeline anchors",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:38:05.483807+00:00"
+    "timestamp": "2026-05-21T16:36:32.455655+00:00"
   },
   {
-    "category": "dialogue",
-    "concept": "ancient civilizations",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:38:27.939830+00:00"
-  },
-  {
-    "category": "dialogue",
-    "concept": "modern history",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:38:37.325405+00:00"
-  },
-  {
-    "category": "dialogue",
+    "category": "teaching",
     "concept": "historical thinking",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:39:28.670996+00:00"
+    "timestamp": "2026-05-21T16:37:05.927614+00:00"
   },
   {
-    "category": "dialogue",
-    "concept": "safety and refusal boundaries",
+    "category": "teaching",
+    "concept": "useful vocabulary",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:39:46.423276+00:00"
+    "timestamp": "2026-05-21T16:37:25.275845+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "modern history",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-21T16:37:38.723130+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "historical thinking",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-21T16:37:48.591769+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-21T16:37:58.256630+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "modern history",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-21T16:38:19.962092+00:00"
   },
   {
     "category": "dialogue",
     "concept": "modern history",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:40:02.919726+00:00"
+    "timestamp": "2026-05-21T16:38:35.655847+00:00"
   },
   {
     "category": "dialogue",
-    "concept": "historical methodology",
+    "concept": "useful vocabulary",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:40:12.732212+00:00"
+    "timestamp": "2026-05-21T16:39:38.608717+00:00"
   },
   {
     "category": "dialogue",
     "concept": "modern history",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:41:30.075205+00:00"
+    "timestamp": "2026-05-21T16:39:50.963268+00:00"
   },
   {
     "category": "dialogue",
-    "concept": "historical methodology",
+    "concept": "scope and use",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:42:32.026522+00:00"
+    "timestamp": "2026-05-21T16:40:05.533839+00:00"
   },
   {
-    "category": "quest",
-    "concept": "ancient civilizations",
+    "category": "dialogue",
+    "concept": "useful vocabulary",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:42:43.253724+00:00"
+    "timestamp": "2026-05-21T16:40:09.807129+00:00"
   },
   {
-    "category": "quest",
+    "category": "dialogue",
     "concept": "safety and refusal boundaries",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:43:19.825987+00:00"
+    "timestamp": "2026-05-21T16:40:15.034642+00:00"
   },
   {
     "category": "quest",
     "concept": "useful vocabulary",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:43:29.197543+00:00"
+    "timestamp": "2026-05-21T16:40:34.592258+00:00"
   },
   {
     "category": "quest",
     "concept": "medieval history",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:43:38.063022+00:00"
-  },
-  {
-    "category": "quest",
-    "concept": "historical thinking",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:43:58.656852+00:00"
-  },
-  {
-    "category": "quest",
-    "concept": "safety and refusal boundaries",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:44:10.270463+00:00"
-  },
-  {
-    "category": "quest",
-    "concept": "safety and refusal boundaries",
-    "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:44:56.728346+00:00"
+    "timestamp": "2026-05-21T16:40:44.152795+00:00"
   },
   {
     "category": "quest",
     "concept": "useful vocabulary",
     "error": "Generation returned None",
-    "timestamp": "2026-05-21T06:44:58.101032+00:00"
+    "timestamp": "2026-05-21T16:41:08.237534+00:00"
+  },
+  {
+    "category": "quest",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-21T16:41:10.544111+00:00"
   }
 ]

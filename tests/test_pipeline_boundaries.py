@@ -164,25 +164,29 @@ def test_refusal_response_includes_boundary_and_redirect():
     lower = response.lower()
     assert any(marker in lower for marker in ["i can't", "i cannot", "outside my scope", "evidence-based", "not supported by evidence"])
     assert any(marker in lower for marker in ["instead", "let's focus", "i can help with", "what i can do", "a safer way"])
-    assert "world history" in lower
+    assert any(marker in lower for marker in ["world history", "chronology", "sources", "evidence"])
 
 
 def test_ollama_category_prompts_remain_short_and_specific():
     from scripts.generate_dataset_ollama import build_category_generation_prompt
 
+    identity = build_category_generation_prompt("identity", "ancient civilizations", "HistoryGuide")
     teaching = build_category_generation_prompt("teaching", "ancient civilizations", "HistoryGuide")
     dialogue = build_category_generation_prompt("dialogue", "ancient civilizations", "HistoryGuide")
     refusal = build_category_generation_prompt("refusal", "ancient civilizations", "HistoryGuide")
 
+    assert "name one historical method or focus" in identity or "chronology or sources" in identity
+    assert "generic storyteller language" in identity
     assert "1-2 short sentences" in teaching
     assert "one concrete fact or example" in teaching
     assert "Aim for 12-20 words" in teaching
     assert "under 200 characters" in dialogue
     assert "one specific detail or example" in dialogue
     assert "aim for 12-20 words" in dialogue
+    assert "do not add an unrelated history fact" in refusal.lower()
+    assert "drift to another topic" in refusal.lower()
     assert "Instead, I can help with" in refusal
-    assert "state the boundary" in refusal
-    assert "one concrete in-scope history topic" in refusal
+    assert "one concrete in-scope topic like chronology or sources" in refusal
 
 
 def test_ollama_multi_turn_selection_is_deterministic():

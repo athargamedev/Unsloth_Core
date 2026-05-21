@@ -15,7 +15,9 @@ import {
 import { RefreshCw, CheckCircle2, AlertTriangle, Layers3, Gauge, Database, Sparkles, Target } from 'lucide-react';
 import { Card } from './Card';
 import { cn } from '../lib/utils';
-import { fetchJson, type Job, type RunArtifact, type TensorBoardData } from '../api';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../hooks/useReactQuery';
+import type { Job, RunArtifact, TensorBoardData } from '../api';
 
 interface TensorBoardPanelProps {
   jobs: Job[];
@@ -125,6 +127,7 @@ const EmptyState = ({ title, subtitle }: { title: string; subtitle: string }) =>
 );
 
 export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardPanelProps) => {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [npcFilter, setNpcFilter] = useState('all');
   const [techniqueFilter, setTechniqueFilter] = useState('all');
@@ -204,10 +207,22 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
         const key = runKey(run);
         setLoadingCache((current) => ({ ...current, [key]: true }));
         try {
-          const tbPromise = fetchJson<TensorBoardData>(`/api/tensorboard?npcKey=${encodeURIComponent(run.npcKey)}&runId=${encodeURIComponent(run.runId || run.id)}`);
+          const tbPromise = queryClient.fetchQuery({
+            queryKey: [...queryKeys.tensorboard(run.npcKey, run.runId || run.id)],
+            queryFn: () =>
+              fetch(`/api/tensorboard?npcKey=${encodeURIComponent(run.npcKey)}&runId=${encodeURIComponent(run.runId || run.id)}`)
+                .then(r => { if (!r.ok) throw new Error('Failed to fetch tensorboard'); return r.json() as Promise<TensorBoardData>; }),
+            staleTime: 60_000,
+          });
           const technique = parseTechnique(run);
           const qualityPromise = technique && technique !== '--'
-            ? fetchJson<QualitySummary>(`/api/datasets/quality-summary/${encodeURIComponent(run.npcKey)}/${encodeURIComponent(technique)}`)
+            ? queryClient.fetchQuery({
+                queryKey: [...queryKeys.quality.summary(run.npcKey, technique)],
+                queryFn: () =>
+                  fetch(`/api/datasets/quality-summary/${encodeURIComponent(run.npcKey)}/${encodeURIComponent(technique)}`)
+                    .then(r => { if (!r.ok) throw new Error('Failed to load quality summary'); return r.json() as Promise<QualitySummary>; }),
+                staleTime: 30_000,
+              })
             : Promise.reject(new Error('missing technique'));
           const [tbData, qualityData] = await Promise.allSettled([tbPromise, qualityPromise]);
           if (cancelled) return;

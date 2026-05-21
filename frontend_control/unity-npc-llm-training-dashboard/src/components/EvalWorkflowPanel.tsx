@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { fetchJson, fetchOptionalJson } from '../api';
-import type { Subject, ExportArtifact, EvalReportsData, EvalReportFile } from '../api';
+import type { Subject, ExportArtifact, EvalReportFile } from '../api';
+import { useEvalReportsQuery } from '../hooks/useReactQuery';
 
 interface EvalConfig {
   npcKey: string;
@@ -42,17 +42,12 @@ export const EvalWorkflowPanel = ({
   });
   const [apiError, setApiError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
-  const [reports, setReports] = useState<EvalReportsData | null>(null);
   const [selectedReportHtml, setSelectedReportHtml] = useState<string | null>(null);
   const [activeReportFile, setActiveReportFile] = useState<EvalReportFile | null>(null);
   const [pendingReportNpcKey, setPendingReportNpcKey] = useState<string | null>(null);
-  const [presets, setPresets] = useState<Array<{ name: string; description: string; path?: string }>>([]);
   const [lastEvalTime, setLastEvalTime] = useState<number>(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const refreshReports = useCallback(async () => {
-    const data = await fetchOptionalJson<EvalReportsData>('/api/eval-reports');
-    if (data) setReports(data);
-  }, []);
+  const { data: reports, refetch: refreshReports } = useEvalReportsQuery();
   const pendingReportAttempts = useRef(0);
 
   // Load subjects, presets, reports
@@ -71,18 +66,10 @@ export const EvalWorkflowPanel = ({
   }, [subjects]);
 
   useEffect(() => {
-    const loadPresets = async () => {
-      const data = await fetchOptionalJson<Array<{ name: string; description: string; path?: string }>>('/api/presets');
-      if (data) setPresets(data);
-    };
-    loadPresets();
-  }, []);
-
-  useEffect(() => {
     refreshReports();
     const interval = setInterval(() => {
       void refreshReports();
-    }, 1000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [refreshReports]);
 

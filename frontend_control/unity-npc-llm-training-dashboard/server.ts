@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
+import { WebSocketServer, WebSocket } from "ws";
 
 import { createApp } from "./src/backend/index";
 import {
@@ -31,6 +32,7 @@ import {
   type RunnerDeps,
 } from "./src/backend/services/job-runner";
 import { readJobLogs, writeJobLog } from "./src/backend/lib/read-job-logs";
+import { buildTelemetryPayload } from "./src/backend/services/telemetry";
 import { JobQueue } from "./src/backend/services/job-queue";
 import type { Registry, Job, RouterDependencies } from "./src/backend/types";
 
@@ -86,10 +88,20 @@ const commandMap = new Map(
   buildCommandDefinitions(repoRoot).map((cmd) => [cmd.id, cmd]),
 );
 
-// ── Broadcast (no-op in modular — WS layer can be added later) ──────────────
+// ── WebSocket Clients ───────────────────────────────────────────────────────
 
-const broadcast = (_type: string, _payload: unknown): void => {
-  /* WebSocket broadcasting — ready for future WS layer */
+const clients = new Set<WebSocket>();
+let wss: WebSocketServer | null = null;
+
+// ── Broadcast ───────────────────────────────────────────────────────────────
+
+const broadcast = (type: string, payload: unknown): void => {
+  const message = JSON.stringify({ type, payload });
+  for (const client of clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
 };
 
 // ── Cache Helpers ───────────────────────────────────────────────────────────
@@ -285,12 +297,47 @@ async function main(): Promise<void> {
     );
   });
 
+  // ── WebSocket Server ──────────────────────────────────────────────────
+
+  wss = new WebSocketServer({ server, path: "/ws" });
+
+  wss.on("connection", (ws: WebSocket) => {
+    clients.add(ws);
+    ws.on("close", () => clients.delete(ws));
+    ws.on("error", () => clients.delete(ws));
+  });
+
+  // ── Telemetry Broadcasting ────────────────────────────────────────────
+
+  const telemetryBroadcastTimer = setInterval(() => {
+    broadcast("telemetry", buildTelemetryPayload(registry.nodeId));
+  }, 2000);
+  telemetryBroadcastTimer.unref();
+
+  // ── Wire JobQueue Updates ─────────────────────────────────────────────
+
+  queue.onUpdate((job) => {
+    broadcast("job_update", {
+      id: job.id,
+      status: job.status,
+      loss: job.loss,
+      progress: job.progress,
+    });
+  });
+
   // ── Graceful Shutdown ─────────────────────────────────────────────────
 
   const shutdown = async (signal: string): Promise<void> => {
     console.log(
       `[server] Received ${signal}, shutting down gracefully...`,
     );
+
+    // Close all WebSocket connections
+    for (const client of clients) {
+      client.close(1001, "Server shutting down");
+    }
+    clients.clear();
+    wss?.close();
 
     server.close(async () => {
       await queue.stop(10_000);

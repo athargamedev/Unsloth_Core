@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { Search, ArrowUp, ArrowDown, X, Clock, Hash, Database, Cpu, Package, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-import { fetchJson } from '../api';
 import { useAppStore } from '../stores/app-store';
+import { useSubjectsQuery, useDatasetsQuery, useRunsQuery, useExportsQuery, useJobsQuery } from '../hooks/useReactQuery';
 import type { Subject, Dataset, RunArtifact, ExportArtifact, Job } from '../api';
 
 interface SearchResult {
@@ -30,22 +30,6 @@ export function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [data, setData] = useState<{
-    subjects: Subject[];
-    datasets: Dataset[];
-    runs: RunArtifact[];
-    exports: ExportArtifact[];
-    jobs: Job[];
-  }>({
-    subjects: [],
-    datasets: [],
-    runs: [],
-    exports: [],
-    jobs: [],
-  });
-  const [loading, setLoading] = useState(false);
-  const [dataFetched, setDataFetched] = useState(false);
-
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -53,34 +37,27 @@ export function GlobalSearch() {
   const recentSearches = useAppStore((s) => s.recentSearches);
   const clearRecentSearches = useAppStore((s) => s.clearRecentSearches);
 
-  // Fetch all searchable data when modal opens
-  const fetchSearchData = useCallback(async () => {
-    if (dataFetched) return;
-    setLoading(true);
-    try {
-      const [subjects, datasets, runs, exports, jobs] = await Promise.all([
-        fetchJson<Subject[]>('/api/subjects').catch(() => [] as Subject[]),
-        fetchJson<Dataset[]>('/api/datasets').catch(() => [] as Dataset[]),
-        fetchJson<RunArtifact[]>('/api/runs').catch(() => [] as RunArtifact[]),
-        fetchJson<ExportArtifact[]>('/api/exports').catch(() => [] as ExportArtifact[]),
-        fetchJson<{ jobs: Job[] }>('/api/jobs')
-          .then((r) => r.jobs)
-          .catch(() => [] as Job[]),
-      ]);
-      setData({ subjects, datasets, runs, exports, jobs });
-      setDataFetched(true);
-    } catch {
-      // Data will be empty, that's fine
-    } finally {
-      setLoading(false);
-    }
-  }, [dataFetched]);
+  // Load all searchable data via React Query hooks
+  const { data: searchSubjects = [] as Subject[], isLoading: subjectsLoading } = useSubjectsQuery();
+  const { data: searchDatasets = [] as Dataset[], isLoading: datasetsLoading } = useDatasetsQuery();
+  const { data: searchRuns = [] as RunArtifact[], isLoading: runsLoading } = useRunsQuery();
+  const { data: searchExports = [] as ExportArtifact[], isLoading: exportsLoading } = useExportsQuery();
+  const { data: jobsSnapshot } = useJobsQuery();
+
+  const loading = subjectsLoading || datasetsLoading || runsLoading || exportsLoading;
+
+  const data = useMemo(() => ({
+    subjects: searchSubjects,
+    datasets: searchDatasets,
+    runs: searchRuns,
+    exports: searchExports,
+    jobs: (jobsSnapshot?.jobs ?? []) as Job[],
+  }), [searchSubjects, searchDatasets, searchRuns, searchExports, jobsSnapshot]);
 
   // Open/close handlers via custom event
   useEffect(() => {
     const handleOpen = () => {
       setOpen(true);
-      setDataFetched(false);
       setQuery('');
       setSelectedIndex(0);
     };
@@ -88,13 +65,12 @@ export function GlobalSearch() {
     return () => window.removeEventListener('open-search', handleOpen);
   }, []);
 
-  // Focus input and fetch data when opened
+  // Focus input when opened
   useEffect(() => {
     if (open) {
       inputRef.current?.focus();
-      fetchSearchData();
     }
-  }, [open, fetchSearchData]);
+  }, [open]);
 
   // Reset selected index when query changes
   useEffect(() => {

@@ -18,8 +18,8 @@ import {
   ListChecks,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { fetchJson, fetchOptionalJson } from '../api';
-import type { AvailableCommand, Subject, QualitySummary, QualityFailure } from '../api';
+import type { AvailableCommand, Subject } from '../api';
+import { useQualitySummaryQuery, useQualityFailuresQuery } from '../hooks/useReactQuery';
 
 interface DatasetPipelinePanelProps {
   availableCommands: AvailableCommand[];
@@ -45,10 +45,6 @@ type Technique = (typeof TECHNIQUES)[number];
 export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCommand, jobs }: DatasetPipelinePanelProps) {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedTechnique, setSelectedTechnique] = useState<Technique>('template');
-  const [qualitySummary, setQualitySummary] = useState<QualitySummary | null>(null);
-  const [qualityFailures, setQualityFailures] = useState<QualityFailure[]>([]);
-  const [loadingQuality, setLoadingQuality] = useState(false);
-  const [qualityError, setQualityError] = useState<string | null>(null);
   const [showFailures, setShowFailures] = useState(false);
   const [ollamaConfig, setOllamaConfig] = useState({
     model: 'llama3.2:3b',
@@ -176,36 +172,21 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
     }
   }, [pipelineSteps]);
 
-  // Fetch quality results when dataset-eval step completes
+  // Determine if the eval step has completed to trigger quality data fetching
+  const evalStepCompleted = pipelineSteps.some((s) => s.id === 'dataset-eval' && s.status === 'completed');
+
+  // Fetch quality results via React Query
+  const {
+    data: qualitySummary,
+    isLoading: loadingQuality,
+    error: qualityFetchError,
+  } = useQualitySummaryQuery(npcKey, selectedTechnique, evalStepCompleted);
+  const { data: rawQualityFailures } = useQualityFailuresQuery(npcKey, selectedTechnique, evalStepCompleted);
+  const qualityFailures = rawQualityFailures ?? [];
+  const qualityError = qualityFetchError ? (qualityFetchError instanceof Error ? qualityFetchError.message : 'Failed to load quality results') : null;
+
+  // Reset showFailures when NPC or technique changes
   useEffect(() => {
-    const evalStep = pipelineSteps.find((s) => s.id === 'dataset-eval');
-    if (!evalStep || evalStep.status !== 'completed' || !npcKey) return;
-
-    const fetchQualityResults = async () => {
-      setLoadingQuality(true);
-      setQualityError(null);
-      try {
-        const [summary, failures] = await Promise.all([
-          fetchOptionalJson<QualitySummary>(`/api/datasets/quality-summary/${npcKey}/${selectedTechnique}`),
-          fetchOptionalJson<QualityFailure[]>(`/api/datasets/quality-failures/${npcKey}/${selectedTechnique}`),
-        ]);
-        if (summary) setQualitySummary(summary);
-        if (failures) setQualityFailures(failures);
-      } catch (err) {
-        setQualityError(err instanceof Error ? err.message : 'Failed to load quality results');
-      } finally {
-        setLoadingQuality(false);
-      }
-    };
-
-    fetchQualityResults();
-  }, [pipelineSteps, npcKey, selectedTechnique]);
-
-  // Reset quality results when NPC or technique changes
-  useEffect(() => {
-    setQualitySummary(null);
-    setQualityFailures([]);
-    setQualityError(null);
     setShowFailures(false);
   }, [selectedSubjectId, selectedTechnique]);
 

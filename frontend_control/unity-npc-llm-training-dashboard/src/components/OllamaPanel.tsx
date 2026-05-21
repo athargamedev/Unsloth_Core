@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Wrench,
   RefreshCw,
@@ -12,10 +12,8 @@ import {
 import { Card } from './Card';
 import { Badge } from './Badge';
 import { cn } from '../lib/utils';
-import { fetchJson } from '../api';
+import { useOllamaStatusQuery, useOllamaModelsQuery } from '../hooks/useReactQuery';
 import type {
-  OllamaStatus,
-  OllamaModelList,
   OllamaApplyConfigPayload,
   OllamaApplyResult,
 } from '../api';
@@ -23,11 +21,9 @@ import type {
 type ApplyMode = 'restart' | 'no-restart';
 
 export function OllamaPanel() {
-  const [status, setStatus] = useState<OllamaStatus | null>(null);
-  const [models, setModels] = useState<OllamaModelList | null>(null);
-  const [statusLoading, setStatusLoading] = useState(true);
-  const [modelsLoading, setModelsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: status, isLoading: statusLoading, error: statusError, refetch: fetchStatus } = useOllamaStatusQuery();
+  const { data: models, isLoading: modelsLoading, refetch: fetchModels } = useOllamaModelsQuery();
+  const error = statusError ? (statusError instanceof Error ? statusError.message : 'Failed to fetch status') : null;
   const [applying, setApplying] = useState(false);
   const [applyMessage, setApplyMessage] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
@@ -48,36 +44,6 @@ export function OllamaPanel() {
     setKvCacheType((status.config.OLLAMA_KV_CACHE_TYPE as 'f16' | 'q8_0' | 'q4_0') || 'f16');
     setNumGpu(parseInt(status.config.num_gpu, 10) || 999);
   }, [status]);
-
-  const fetchStatus = useCallback(async () => {
-    setStatusLoading(true);
-    setError(null);
-    try {
-      const data = await fetchJson<OllamaStatus>('/api/ollama/status');
-      setStatus(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setStatusLoading(false);
-    }
-  }, []);
-
-  const fetchModels = useCallback(async () => {
-    setModelsLoading(true);
-    try {
-      const data = await fetchJson<OllamaModelList>('/api/ollama/models');
-      setModels(data);
-    } catch {
-      // Non-critical
-    } finally {
-      setModelsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchStatus();
-    fetchModels();
-  }, [fetchStatus, fetchModels]);
 
   const handleApply = async (mode: ApplyMode) => {
     setApplying(true);

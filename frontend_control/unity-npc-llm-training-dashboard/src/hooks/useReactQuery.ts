@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchJson,
+  fetchOptionalJson,
   type Job,
   type JobsSnapshot,
   type Telemetry,
@@ -11,6 +12,16 @@ import {
   type RunArtifact,
   type ExportArtifact,
   type WatchLogsSnapshot,
+  type OllamaStatus,
+  type OllamaModelList,
+  type PipelineState,
+  type PipelineRunsResponse,
+  type QualitySummary,
+  type QualityFailure,
+  type EvalReportsData,
+  type FeedbackFileInfo,
+  type TensorBoardData,
+  type PipelineRunDetail,
 } from '../api';
 
 // ============================================================
@@ -40,11 +51,16 @@ export const queryKeys = {
   presets: ['presets'] as const,
   quality: {
     summary: (npcKey?: string, technique?: string) => ['quality', npcKey, technique] as const,
+    failures: (npcKey?: string, technique?: string) => ['quality', 'failures', npcKey, technique] as const,
   },
   pipeline: {
     state: ['pipeline', 'state'] as const,
     npcStatus: (npcKey: string) => ['pipeline', 'npc', npcKey] as const,
+    runs: (npcKey?: string, limit?: number) => ['pipeline', 'runs', npcKey, limit] as const,
   },
+  evalReports: ['eval-reports'] as const,
+  feedbackResults: ['feedback-results'] as const,
+  tensorboard: (npcKey: string, runId: string) => ['tensorboard', npcKey, runId] as const,
   ollama: {
     status: ['ollama', 'status'] as const,
     models: ['ollama', 'models'] as const,
@@ -196,6 +212,154 @@ export function useLogsQuery() {
 }
 
 // ============================================================
+// Ollama Queries
+// ============================================================
+
+/**
+ * Ollama service status (running, config, active model).
+ */
+export function useOllamaStatusQuery() {
+  return useQuery({
+    queryKey: queryKeys.ollama.status,
+    queryFn: () => fetchJson<OllamaStatus>('/api/ollama/status'),
+    staleTime: 10_000,
+    retry: 2,
+  });
+}
+
+/**
+ * Ollama model inventory list.
+ */
+export function useOllamaModelsQuery() {
+  return useQuery({
+    queryKey: queryKeys.ollama.models,
+    queryFn: () => fetchJson<OllamaModelList>('/api/ollama/models'),
+    staleTime: 30_000,
+    retry: 2,
+  });
+}
+
+// ============================================================
+// Pipeline Queries
+// ============================================================
+
+/**
+ * Full pipeline state for all NPCs.
+ * Polls every 15 s.
+ */
+export function usePipelineStateQuery() {
+  return useQuery({
+    queryKey: queryKeys.pipeline.state,
+    queryFn: () =>
+      fetchJson<PipelineState>('/api/pipeline-state').catch(() => ({} as PipelineState)),
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+  });
+}
+
+/**
+ * Pipeline run detail for a specific run ID.
+ */
+export function usePipelineRunDetailQuery(runId: string | null) {
+  return useQuery({
+    queryKey: ['pipeline', 'run-detail', runId],
+    queryFn: () =>
+      fetchJson<PipelineRunDetail>(`/api/pipeline/runs/${encodeURIComponent(runId ?? '')}`),
+    staleTime: 10_000,
+    enabled: !!runId,
+  });
+}
+
+/**
+ * Pipeline run history.
+ */
+export function usePipelineRunsQuery(npcKey?: string, limit = 24) {
+  return useQuery({
+    queryKey: queryKeys.pipeline.runs(npcKey, limit),
+    queryFn: () =>
+      fetchJson<PipelineRunsResponse>(`/api/pipeline/runs?limit=${limit}${npcKey ? `&npcKey=${encodeURIComponent(npcKey)}` : ''}`),
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+    retry: 2,
+  });
+}
+
+// ============================================================
+// Dataset Quality Queries
+// ============================================================
+
+/**
+ * Quality summary for a specific NPC technique dataset.
+ * Pass `enabled = false` to defer loading until a condition is met.
+ */
+export function useQualitySummaryQuery(npcKey: string, technique: string, enabled = true) {
+  return useQuery({
+    queryKey: [...queryKeys.quality.summary(npcKey, technique)],
+    queryFn: () => fetchOptionalJson<QualitySummary>(`/api/datasets/quality-summary/${npcKey}/${technique}`),
+    staleTime: 30_000,
+    enabled: enabled && !!npcKey && !!technique,
+  });
+}
+
+/**
+ * Quality failures for a specific NPC technique dataset.
+ */
+export function useQualityFailuresQuery(npcKey: string, technique: string, enabled = true) {
+  return useQuery({
+    queryKey: [...queryKeys.quality.failures(npcKey, technique)],
+    queryFn: () =>
+      fetchOptionalJson<QualityFailure[]>(`/api/datasets/quality-failures/${npcKey}/${technique}`),
+    staleTime: 30_000,
+    enabled: enabled && !!npcKey && !!technique,
+  });
+}
+
+// ============================================================
+// Eval & Feedback Queries
+// ============================================================
+
+/**
+ * Eval reports index (HTML report files per NPC).
+ */
+export function useEvalReportsQuery() {
+  return useQuery({
+    queryKey: queryKeys.evalReports,
+    queryFn: () => fetchOptionalJson<EvalReportsData>('/api/eval-reports'),
+    staleTime: 15_000,
+  });
+}
+
+/**
+ * Feedback results file list.
+ */
+export function useFeedbackResultsQuery() {
+  return useQuery({
+    queryKey: queryKeys.feedbackResults,
+    queryFn: () => fetchJson<FeedbackFileInfo[]>('/api/feedback-results').catch(() => [] as FeedbackFileInfo[]),
+    staleTime: 15_000,
+  });
+}
+
+// ============================================================
+// TensorBoard Queries
+// ============================================================
+
+/**
+ * TensorBoard scalar data for a given NPC run.
+ */
+export function useTensorBoardQuery(npcKey: string, runId: string) {
+  return useQuery({
+    queryKey: queryKeys.tensorboard(npcKey, runId),
+    queryFn: () =>
+      fetchJson<TensorBoardData>(
+        `/api/tensorboard?npcKey=${encodeURIComponent(npcKey)}&runId=${encodeURIComponent(runId)}`,
+      ),
+    staleTime: 60_000,
+    enabled: !!npcKey && !!runId,
+  });
+}
+
+// ============================================================
 // Convenience: list of all active queries for a unified refresh
 // ============================================================
 
@@ -211,6 +375,11 @@ export const ALL_QUERY_KEYS: readonly (readonly unknown[])[] = [
   queryKeys.exports,
   queryKeys.presets,
   queryKeys.logs,
+  queryKeys.ollama.status,
+  queryKeys.ollama.models,
+  queryKeys.pipeline.state,
+  queryKeys.evalReports,
+  queryKeys.feedbackResults,
 ];
 
 // ============================================================

@@ -457,6 +457,12 @@ export interface QualityFailure {
   metric: QualityFailureMetric;
 }
 
+export interface FeedbackFileInfo {
+  name: string;
+  path: string;
+  lastModified: number;
+}
+
 // --- API helpers ---
 
 export const fetchJson = async <T,>(url: string): Promise<T> => {

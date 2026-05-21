@@ -1,18 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { fetchJson, fetchOptionalJson } from '../api';
-import type { FeedbackResult, FeedbackGapResult, ConceptFeedback } from '../api';
-
-interface FeedbackFileInfo {
-  name: string;
-  path: string;
-  lastModified: number;
-}
+import { useState, useEffect } from 'react';
+import { fetchOptionalJson } from '../api';
+import type { FeedbackResult, FeedbackGapResult, ConceptFeedback, FeedbackFileInfo } from '../api';
+import { useFeedbackResultsQuery } from '../hooks/useReactQuery';
 
 export const FeedbackLoopPanel = () => {
-  const [feedbackFiles, setFeedbackFiles] = useState<FeedbackFileInfo[]>([]);
   const [selectedFile, setSelectedFile] = useState<FeedbackFileInfo | null>(null);
   const [feedbackData, setFeedbackData] = useState<FeedbackResult | null>(null);
-  const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -24,25 +17,14 @@ export const FeedbackLoopPanel = () => {
     trainPreset: 'fast-3b',
   });
 
-  // Load feedback files
-  const loadFiles = useCallback(async () => {
-    try {
-      const files = await fetchJson<FeedbackFileInfo[]>('/api/feedback-results');
-      setFeedbackFiles(files);
-      // Auto-select most recent
-      if (files.length > 0 && !selectedFile) {
-        setSelectedFile(files[0]);
-      }
-    } catch {
-      // No feedback files yet
-      setFeedbackFiles([]);
-    }
-  }, [selectedFile]);
+  const { data: feedbackFiles = [], isLoading: loading, refetch: loadFiles } = useFeedbackResultsQuery();
 
+  // Auto-select most recent file
   useEffect(() => {
-    setLoading(true);
-    loadFiles().finally(() => setLoading(false));
-  }, []);
+    if (feedbackFiles.length > 0 && !selectedFile) {
+      setSelectedFile(feedbackFiles[0]);
+    }
+  }, [feedbackFiles, selectedFile]);
 
   // Load selected feedback content
   useEffect(() => {
@@ -118,7 +100,7 @@ export const FeedbackLoopPanel = () => {
           <p className="text-[10px] text-ink/40">Analyze evaluation results and trigger self-improvement</p>
         </div>
         <button
-          onClick={loadFiles}
+          onClick={() => loadFiles()}
           className="px-2 py-1 bg-line/20 text-ink/60 text-[10px] rounded hover:bg-line/40 transition-colors"
         >
           Refresh

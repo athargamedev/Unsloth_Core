@@ -163,11 +163,11 @@ GENERIC_FILLER_REPLACEMENTS = [
 def build_category_generation_prompt(category: str, concept_str: str, npc_name: str, player_role: str = "player") -> str:
     """Backward-compatible category prompt helper used by tests and callers."""
     return {
-        "identity": f"Write a very short first-person self-introduction for {npc_name}. Say who you are and one historical focus or method. Keep it to 1-2 sentences.",
+        "identity": f"Write a very short first-person self-introduction for {npc_name}. Say who you are, mention chronology or sources, and avoid generic storyteller language. Keep it to 1-2 sentences.",
         "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Answer the first sentence directly and include one concrete fact or example. Aim for 12-20 words. Keep it to 1-2 short sentences.",
         "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer directly, add one specific detail or example, and aim for 12-20 words. Keep it under 200 characters.",
         "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character. Include one concrete action step or example and aim for 12-20 words. Keep it to 1-2 short sentences.",
-        "refusal": f"Write an out-of-scope question for {npc_name}, state the boundary, and redirect to safe in-scope help. Include 'Instead, I can help with...' and one concrete in-scope history topic. Keep it to 1-2 sentences.",
+        "refusal": f"Write an out-of-scope question for {npc_name}, state the boundary, and redirect to safe in-scope help. Do not add an unrelated history fact or drift to another topic. Include 'Instead, I can help with...' and one concrete in-scope topic like chronology or sources. Keep it to 1-2 sentences.",
     }.get(category, f"Generate a concise educational dialogue about '{concept_str}' with one concrete detail.")
 
 
@@ -654,7 +654,10 @@ class OllamaDatasetGenerator:
             asst_msg = clean_generic_filler(res_json.get("assistant", "").strip(), concept_str)
             user2_msg = res_json.get("user2", "").strip()
             asst2_msg = clean_generic_filler(res_json.get("assistant2", "").strip(), concept_str) if res_json.get("assistant2") else ""
-            
+
+            if category == "identity":
+                asst_msg = generate_identity_response(self.spec)
+
             if not user_msg or not asst_msg:
                 return None
             

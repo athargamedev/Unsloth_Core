@@ -510,13 +510,24 @@ def generate_identity_response(spec):
     personality_short = personality.split("—")[0].split("-")[0].split(";")[0].split(",")[0].strip()
 
     templates = [
-        f"I'm {npc_name}, and I can help with {subject_short}.",
-        f"I'm {npc_name}, your {subject_short} guide.",
-        f"Hi, I'm {npc_name}. Ask me anything about {subject_short}.",
+        f"I'm {npc_name}, and I help with chronology, sources, and cause and effect in {subject_short}.",
+        f"I'm {npc_name}, your {subject_short} guide. I focus on evidence, timelines, and primary sources.",
+        f"Hi, I'm {npc_name}. Ask me about {subject_short}, one source, or a clear turning point.",
+        f"I'm {npc_name}, a careful {subject_short} guide who checks dates and evidence first.",
+        f"I'm {npc_name}; I help place events on a timeline and check what the sources actually say.",
+        f"I'm {npc_name}; I compare primary sources so you can see why historians disagree.",
+        f"I'm {npc_name}, and I help separate legend from evidence in {subject_short}.",
     ]
     if personality_short:
-        templates.append(f"I'm {npc_name}, a {personality_short.lower()} guide for {subject_short}.")
+        templates.append(f"I'm {npc_name}, a {personality_short.lower()} guide for {subject_short}, with a focus on chronology and sources.")
     return random.choice(templates)
+
+
+def _is_history_subject(spec) -> bool:
+    subject = _subject_focus(spec).lower()
+    subject_text = str(spec.get("subject", "")).lower()
+    npc_name = str(spec.get("npc_name", "")).lower()
+    return "history" in subject or "history" in subject_text or "history" in npc_name
 
 def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="beginner", retriever=None):
     """Generate teaching responses based on concepts and difficulty tier."""
@@ -636,6 +647,33 @@ def generate_refusal_response(spec, boundary=None):
 
     if boundary:
         boundary_lower = boundary.lower()
+        if _is_history_subject(spec):
+            if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
+                example = _example_topics(spec, limit=1)
+                example = example[0] if example else "the fall of Rome"
+                concrete = example.replace("What caused ", "").replace("?", "")
+                templates = [
+                    f"I can't treat counterfactuals as fact. Instead, we can stick to the real event and its sources, like {concrete}.",
+                    f"That is hypothetical, so I would mark it as speculation. I can still help with the documented event and its chronology.",
+                ]
+            elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
+                templates = [
+                    f"I can't help spread unsupported claims. Instead, I can help with verified chronology, sources, and evidence.",
+                    f"I need to stay with evidence-based history. Let's focus on the documented version and the sources behind it.",
+                ]
+            elif "unsupported certainty" in boundary_lower or "date range" in boundary_lower:
+                templates = [
+                    f"I can't give exact dates as if historians all agree, but I can share the commonly used range and why it is used.",
+                    f"That question asks for more certainty than the evidence supports. Instead, I can give the standard range and the reason behind it.",
+                ]
+            else:
+                templates = [
+                    f"That is outside my role as {npc_name}. Instead, I can help with chronology, sources, or evidence in world history.",
+                    f"I can't help with that request. Instead, I can explain a documented world history topic about chronology or sources.",
+                    f"I can't answer that directly. Let's focus on a real world history question about chronology, sources, or evidence.",
+                    f"That sits outside what I cover. What I can do is help with a documented world history topic.",
+                ]
+            return random.choice(templates)
         if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
             example = _example_topics(spec, limit=1)
             example = example[0] if example else "the fall of Rome"
@@ -676,16 +714,34 @@ def generate_refusal_response(spec, boundary=None):
                     f"That is outside my role as {npc_name}. I cannot prescribe diets, but I can cover safe meal-prep basics.",
                 ]
         elif "unsafe" in boundary_lower or "food preparation" in boundary_lower:
-            templates = [
-                f"I can't recommend unsafe preparation methods. Instead, I can help with a safer way to get a similar result.",
-                f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
-            ]
+            if _is_history_subject(spec):
+                templates = [
+                    f"I can't help with that safety question here. Instead, I can explain chronology, sources, or evidence in world history.",
+                    f"That is outside my history role. I can help with a documented world history topic about chronology or sources.",
+                    f"I can't answer that as a history guide. Instead, we can look at a source, a date range, or a turning point.",
+                    f"That question is outside my scope. I can still help with evidence-based world history or source analysis.",
+                ]
+            elif any(word in subject.lower() for word in ["cook", "culinary", "chef"]):
+                templates = [
+                    f"I can't recommend unsafe preparation methods. Instead, I can help with a safer way to get a similar result.",
+                    f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
+                ]
+            elif any(word in subject.lower() for word in ["fitness", "exercise"]):
+                templates = [
+                    f"I can't recommend unsafe preparation methods. Instead, I can help with a safer training or recovery alternative.",
+                    f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk fitness alternative.",
+                ]
+            else:
+                templates = [
+                    f"I can't recommend unsafe preparation methods. Instead, I can help with a safer way to get a similar result.",
+                    f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
+                ]
         else:
             templates = [
-                f"That is outside my role as {npc_name}. Instead, I can help with {subject}.",
-                f"I can't help with that request. Instead, I can help with a verified fact or a safe alternative about {subject}.",
-                f"I can't answer that directly. Let's focus on a documented {subject} example and the evidence behind it.",
-                f"That sits outside what I cover. What I can do is explain a safe, evidence-based {subject} fact.",
+                f"That is outside my role as {npc_name}. Instead, I can help with chronology, sources, or evidence in {subject}.",
+                f"I can't help with that request. Instead, I can explain a documented {subject} topic about chronology or sources.",
+                f"I can't answer that directly. Let's focus on a real {subject} question about chronology, sources, or evidence.",
+                f"That sits outside what I cover. What I can do is help with a documented {subject} topic.",
             ]
         return random.choice(templates)
 

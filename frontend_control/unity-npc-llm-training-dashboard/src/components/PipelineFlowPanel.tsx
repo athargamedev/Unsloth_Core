@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { fetchJson } from '../api';
-import type { PipelineState, PipelineNpcState, Subject, Dataset, RunArtifact, ExportArtifact, PipelineRunsResponse, PipelineRunDetail, PipelineRunRecord } from '../api';
+import type { PipelineState, PipelineNpcState, Subject, Dataset, RunArtifact, ExportArtifact, PipelineRunRecord } from '../api';
+import { usePipelineStateQuery, usePipelineRunsQuery, usePipelineRunDetailQuery } from '../hooks/useReactQuery';
 
 // Each stage in the pipeline lifecycle
 interface PipelineStage {
@@ -37,52 +37,19 @@ export const PipelineFlowPanel = ({
   runs: RunArtifact[];
   exportArtifacts: ExportArtifact[];
 }) => {
-  const [pipelineState, setPipelineState] = useState<PipelineState | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [pipelineRuns, setPipelineRuns] = useState<PipelineRunRecord[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-  const [selectedRunDetail, setSelectedRunDetail] = useState<PipelineRunDetail | null>(null);
 
+  const { data: pipelineState, isLoading: loading } = usePipelineStateQuery();
+  const { data: pipelineRunsResponse } = usePipelineRunsQuery();
+  const pipelineRuns: PipelineRunRecord[] = pipelineRunsResponse?.runs ?? [];
+  const { data: selectedRunDetail } = usePipelineRunDetailQuery(selectedRunId);
+
+  // Auto-select first run when pipeline runs first load
   useEffect(() => {
-    const load = async () => {
-      try {
-        const state = await fetchJson<PipelineState>('/api/pipeline-state');
-        setPipelineState(state);
-      } catch {
-        setPipelineState({});
-      }
-
-      try {
-        const response = await fetchJson<PipelineRunsResponse>('/api/pipeline/runs?limit=24');
-        setPipelineRuns(response.runs ?? []);
-        const firstRunId = response.runs?.[0]?.run_id ?? null;
-        setSelectedRunId((current) => current ?? firstRunId);
-      } catch {
-        setPipelineRuns([]);
-      }
-
-      setLoading(false);
-    };
-    load();
-    const interval = setInterval(load, 15000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (!selectedRunId) {
-      setSelectedRunDetail(null);
-      return;
+    if (!selectedRunId && pipelineRuns.length > 0) {
+      setSelectedRunId(pipelineRuns[0].run_id ?? null);
     }
-    const loadRunDetail = async () => {
-      try {
-        const detail = await fetchJson<PipelineRunDetail>(`/api/pipeline/runs/${encodeURIComponent(selectedRunId)}`);
-        setSelectedRunDetail(detail);
-      } catch {
-        setSelectedRunDetail(null);
-      }
-    };
-    loadRunDetail();
-  }, [selectedRunId]);
+  }, [pipelineRuns, selectedRunId]);
 
   // Collect all NPC keys from subjects, datasets, runs, exports, and pipeline state
   const allNpcKeys = new Set<string>();
