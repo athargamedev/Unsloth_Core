@@ -243,7 +243,7 @@ def main():
     print(f"Smoke test complete: {success_count}/{len(test_prompts)} prompts passed basic sanity check.")
 
     if args.track:
-        from scripts.track_eval_results import track_result, track_per_example_result
+        from scripts.evaluation.track_eval_results import track_result, track_per_example_result
         print(f"[track] Storing smoke test results in Supabase...")
         
         track_result(

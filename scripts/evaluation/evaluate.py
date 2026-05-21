@@ -1252,7 +1252,7 @@ def main():
 
         # Track results if requested
         if args.track and spec:
-            from scripts.track_eval_results import track_result, track_per_example_result
+            from scripts.evaluation.track_eval_results import track_result, track_per_example_result
             
             npc_key = spec.get("npc_key", "unknown")
             cw = comparison["candidate_wins"]

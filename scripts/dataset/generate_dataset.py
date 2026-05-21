@@ -45,7 +45,7 @@ from _config import paths, constants as C
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.dataset.dataset_contracts import dataset_contract_from_spec, calculate_distribution_gaps
-from scripts.generate_workflow_dataset import (
+from scripts.dataset.generate_workflow_dataset import (
     default_manifest_path,
     generate_workflow_dataset_from_manifest,
 )

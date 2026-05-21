@@ -19,7 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
-from scripts.train import load_config, get_available_presets
+from scripts.training.train import load_config, get_available_presets
 
 
 def _is_canonical_dataset_path(path_str: str) -> bool:
