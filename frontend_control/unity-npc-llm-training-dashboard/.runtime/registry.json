@@ -2,12 +2,160 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2507100",
+      "name": "External Evaluation · PID 2507100 · chef_assistant",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chef_assistant",
+      "status": "running",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:39:50.898Z",
+      "startedAt": "2026-05-21T22:39:50.898Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; /bin/bash -lc 'export PATH=/usr/bin:/bin:/usr/local/cuda/bin:/home/athar/Projects/Unsloth_Core/unsloth_env/bin:$PATH; source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate; ts=$(date +%Y%m%d_%H%M%S); ./ucore evaluate --baseline /home/athar/Projects/Unsloth_Core/.models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Projects/Unsloth_Core/.models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/chef_assistant.json --num-questions 4 --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/chef_assistant/chef_assistant_${ts}.html --feedback-json eval/results/feedback/chef_assistant_${ts}.json'"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2507100] discovered active process",
+        "/usr/bin/bash -lic set +m; /bin/bash -lc 'export PATH=/usr/bin:/bin:/usr/local/cuda/bin:/home/athar/Projects/Unsloth_Core/unsloth_env/bin:$PATH; source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate; ts=$(date +%Y%m%d_%H%M%S); ./ucore evaluate --baseline /home/athar/Projects/Unsloth_Core/.models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Projects/Unsloth_Core/.models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/chef_assistant.json --num-questions 4 --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/chef_assistant/chef_assistant_${ts}.html --feedback-json eval/results/feedback/chef_assistant_${ts}.json'"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_proc_2503145",
+      "name": "External Evaluation · PID 2503145 · chef_assistant",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:37:20.880Z",
+      "startedAt": "2026-05-21T22:37:20.880Z",
+      "command": [
+        "external",
+        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/chef_assistant.json --num-questions 4 --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/chef_assistant/chef_assistant_20260521_193720.html --feedback-json eval/results/feedback/chef_assistant_20260521_193720.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2503145] discovered active process",
+        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/chef_assistant.json --num-questions 4 --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/chef_assistant/chef_assistant_20260521_193720.html --feedback-json eval/results/feedback/chef_assistant_20260521_193720.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:38:53.892Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2424034",
+      "name": "External Evaluation · PID 2424034 · chef_assistant",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:30:27.329Z",
+      "startedAt": "2026-05-21T22:30:27.329Z",
+      "command": [
+        "external",
+        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/chef_assistant.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/chef_assistant/chef_assistant_20260521_193025.html --feedback-json eval/results/feedback/chef_assistant_20260521_193025.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2424034] discovered active process",
+        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/chef_assistant.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/chef_assistant/chef_assistant_20260521_193025.html --feedback-json eval/results/feedback/chef_assistant_20260521_193025.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:36:59.875Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_2416723",
       "name": "External Training · PID 2416723 · fitness_coach",
       "type": "Training",
       "commandId": "train",
       "npcKey": "fitness_coach",
-      "status": "running",
+      "status": "stopped",
       "progress": 10,
       "loss": null,
       "createdAt": "2026-05-21T22:26:27.322Z",
@@ -47,7 +195,9 @@
         "[EXTERNAL][PID 2416723] discovered active process",
         "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/home/athar/Projects/Unsloth_Core/.toolchain/gcc-with-path.sh ./ucore train subjects/NPC_specs/fitness_coach.json --technique ollama --preset safe-any --export-gguf --wandb"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:29:12.324Z",
+      "exitCode": -15
     },
     {
       "id": "ext_train_fitness_coach_20260521_safe-any_llama3.2-3b_001",
