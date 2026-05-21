@@ -149,13 +149,22 @@ def test_refusal_structural_check_requires_boundary_or_redirect():
     assert not refusal_response_has_boundary("The possibility is exciting, so let's explore moons and asteroids that might support life.")
 
 
-def test_ollama_generation_refusal_prompt_demands_boundary_and_redirect():
-    from scripts.generate_dataset_ollama import build_category_generation_prompt
+def test_refusal_response_includes_boundary_and_redirect():
+    from importlib import import_module
 
-    prompt = build_category_generation_prompt("refusal", "solar system", "AstronomyGuide")
+    gd = import_module("scripts.generate_dataset")
 
-    assert "boundary" in prompt.lower()
-    assert "redirect" in prompt.lower()
+    spec = {
+        "npc_name": "HistoryGuide",
+        "subject": "world history",
+    }
+
+    response = gd.generate_refusal_response(spec, boundary="misinformation or conspiracy")
+
+    lower = response.lower()
+    assert any(marker in lower for marker in ["i can't", "i cannot", "outside my scope", "evidence-based", "not supported by evidence"])
+    assert any(marker in lower for marker in ["instead", "let's focus", "i can help with", "what i can do", "a safer way"])
+    assert "world history" in lower
 
 
 def test_ollama_cleaner_replaces_generic_filler():

@@ -623,44 +623,44 @@ def generate_refusal_response(spec, boundary=None):
             ]
         elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
             templates = [
-                f"I can't help spread unsupported claims. I can only discuss verified {subject} information.",
-                f"I need to stay with evidence-based {subject}. I can give you the documented version instead.",
+                f"I can't help spread unsupported claims. Instead, I can help with verified {subject} information.",
+                f"I need to stay with evidence-based {subject}. Let's focus on the documented version instead.",
             ]
         elif "aliens" in boundary_lower or "extraterrestrial" in boundary_lower:
             templates = [
-                f"I can't confirm alien existence or appearance. I can explain how astronomers search for life using exoplanets and biosignatures.",
-                f"That claim isn't something I can verify. I can stay with astronomy facts and current evidence.",
+                f"I can't confirm alien existence or appearance. Instead, I can explain how astronomers search for life using exoplanets and biosignatures.",
+                f"That claim isn't something I can verify. Let's focus on astronomy facts and current evidence.",
             ]
         elif "unsupported certainty" in boundary_lower or "date range" in boundary_lower:
             templates = [
                 f"I can't give exact dates as if historians all agree, but I can share the commonly used range and why it is used.",
-                f"That question asks for more certainty than the evidence supports. I can give the standard range and the reason behind it.",
+                f"That question asks for more certainty than the evidence supports. Instead, I can give the standard range and the reason behind it.",
             ]
         elif "medical" in boundary_lower or "dietary" in boundary_lower:
             if any(word in subject.lower() for word in ["cook", "culinary", "chef"]):
                 templates = [
-                    f"I can't make a diet plan or treat a medical condition, but I can help with safe recipes and meal prep.",
+                    f"I can't make a diet plan or treat a medical condition. Instead, I can help with safe recipes and meal prep.",
                     f"I can't prescribe a diet, but I can walk you through a cooking technique or a simple balanced meal.",
                 ]
             elif any(word in subject.lower() for word in ["fitness", "exercise"]):
                 templates = [
-                    f"I can't give personalized medical or dietary advice. I can still help with safe training habits and recovery.",
+                    f"I can't give personalized medical or dietary advice. Instead, I can help with safe training habits and recovery.",
                     f"That is outside my role as {npc_name}. I can explain form, consistency, and general fitness basics instead.",
                 ]
             else:
                 templates = [
-                    f"I can't give personalized medical or dietary advice. I can still help with general nutrition basics.",
+                    f"I can't give personalized medical or dietary advice. Instead, I can help with general nutrition basics.",
                     f"That is outside my role as {npc_name}. I cannot prescribe diets, but I can cover safe meal-prep basics.",
                 ]
         elif "unsafe" in boundary_lower or "food preparation" in boundary_lower:
             templates = [
-                f"I can't recommend unsafe preparation methods. I can help with a safer way to get a similar result.",
-                f"Safety comes first, so I wouldn't endorse that approach. I can suggest a lower-risk alternative.",
+                f"I can't recommend unsafe preparation methods. Instead, I can help with a safer way to get a similar result.",
+                f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
             ]
         else:
             templates = [
-                f"That is outside my role as {npc_name}. I only answer questions about {subject}.",
-                f"I can't help with that request. Ask me for a verified fact or a safe alternative about {subject}.",
+                f"That is outside my role as {npc_name}. Instead, I can help with {subject}.",
+                f"I can't help with that request. Instead, I can help with a verified fact or a safe alternative about {subject}.",
             ]
         return random.choice(templates)
 

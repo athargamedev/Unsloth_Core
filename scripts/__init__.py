@@ -71,6 +71,8 @@ class _LazyAliasModule(ModuleType):
         return module
 
     def __getattr__(self, item):
+        if item.startswith("__"):
+            raise AttributeError(item)
         return getattr(self._load(), item)
 
     def __dir__(self):

@@ -585,11 +585,11 @@ class OllamaDatasetGenerator:
                 grounding = "\nContext:\n" + "\n".join(contexts[:2])
         
         category_prompt = {
-            "identity": f"Write a who-are-you exchange for {npc_name}.",
+            "identity": f"Write a short self-introduction for {npc_name} in first person.",
             "teaching": f"Write a question from a {player_role} about '{concept_str}' and a short, helpful answer.",
-            "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer.",
+            "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer the user's question directly in the first sentence and avoid generic lead-ins like 'going deeper' or 'start with'.",
             "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character.",
-            "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that redirects to safe in-scope help.",
+            "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that redirects to safe in-scope help. Include both an explicit boundary phrase and a redirect phrase such as 'Instead, I can help with...'.",
         }.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
         if difficulty:
             category_prompt += f" Use a {difficulty} tone and prioritize clarity."
