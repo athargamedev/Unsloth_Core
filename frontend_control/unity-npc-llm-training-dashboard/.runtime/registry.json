@@ -2,12 +2,212 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2416723",
+      "name": "External Training · PID 2416723 · fitness_coach",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "fitness_coach",
+      "status": "running",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:26:27.322Z",
+      "startedAt": "2026-05-21T22:26:27.322Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/home/athar/Projects/Unsloth_Core/.toolchain/gcc-with-path.sh ./ucore train subjects/NPC_specs/fitness_coach.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2416723] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/home/athar/Projects/Unsloth_Core/.toolchain/gcc-with-path.sh ./ucore train subjects/NPC_specs/fitness_coach.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_train_fitness_coach_20260521_safe-any_llama3.2-3b_001",
+      "name": "External Train (fitness_coach/20260521_safe-any_llama3.2-3b_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "fitness_coach",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T22:26:26.687Z",
+      "startedAt": "2026-05-21T22:26:26.687Z",
+      "finishedAt": "2026-05-21T22:26:26.687Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/fitness_coach.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/fitness_coach/runs/20260521_safe-any_llama3.2-3b_001/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2410550",
+      "name": "External Training · PID 2410550 · chef_assistant",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:23:09.315Z",
+      "startedAt": "2026-05-21T22:23:09.315Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/home/athar/Projects/Unsloth_Core/.toolchain/gcc-with-path.sh ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2410550] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/home/athar/Projects/Unsloth_Core/.toolchain/gcc-with-path.sh ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:25:48.318Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chef_assistant_20260521_safe-any_llama3.2-3b_005",
+      "name": "External Train (chef_assistant/20260521_safe-any_llama3.2-3b_005)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T22:23:07.776Z",
+      "startedAt": "2026-05-21T22:23:07.776Z",
+      "finishedAt": "2026-05-21T22:23:07.776Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260521_safe-any_llama3.2-3b_005/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_proc_2406710",
       "name": "External Training · PID 2406710 · chef_assistant",
       "type": "Training",
       "commandId": "train",
       "npcKey": "chef_assistant",
-      "status": "running",
+      "status": "stopped",
       "progress": 10,
       "loss": null,
       "createdAt": "2026-05-21T22:20:54.307Z",
@@ -47,7 +247,9 @@
         "[EXTERNAL][PID 2406710] discovered active process",
         "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/home/athar/Projects/Unsloth_Core/.toolchain/gcc-with-path.sh ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:21:54.306Z",
+      "exitCode": -15
     },
     {
       "id": "ext_train_chef_assistant_20260521_safe-any_llama3.2-3b_004",
