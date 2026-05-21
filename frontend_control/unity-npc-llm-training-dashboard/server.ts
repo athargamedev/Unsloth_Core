@@ -54,6 +54,7 @@ interface Job {
   terminalReason?: string;
   error?: string;
   wandbUrl?: string | null;
+  runId?: string | null;
 }
 
 interface Registry {
@@ -177,6 +178,87 @@ const readTailLines = (filePath: string, maxLines = 40): string[] => {
   } catch {
     return [];
   }
+};
+
+interface PipelineRunRecord {
+  ts?: string;
+  event?: string;
+  run_id?: string;
+  npc_key?: string;
+  stage?: string;
+  technique?: string | null;
+  spec_path?: string | null;
+  preset?: string | null;
+  entrypoint?: string | null;
+  frontend_job_id?: string | null;
+  pid?: number | null;
+  run_dir?: string | null;
+  status?: string | null;
+  error?: string | null;
+  message?: string | null;
+  artifacts?: Record<string, unknown>;
+  metrics?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+const pipelineRoot = path.join(repoRoot, ".pipeline");
+const pipelineRunsRoot = path.join(pipelineRoot, "runs");
+const pipelineIndexPath = path.join(pipelineRoot, "runs.jsonl");
+
+const readPipelineRunRecords = (limit = 200, npcKey?: string, stage?: string): PipelineRunRecord[] => {
+  const lines = readTailLines(pipelineIndexPath, limit * 3);
+  const records = lines
+    .map((line) => {
+      try { return JSON.parse(line) as PipelineRunRecord; }
+      catch { return null; }
+    })
+    .filter((record): record is PipelineRunRecord => Boolean(record))
+    .filter((record) => !npcKey || record.npc_key === npcKey)
+    .filter((record) => !stage || record.stage === stage);
+  return records.slice(-limit);
+};
+
+const readPipelineRunEvents = (runId: string): PipelineRunRecord[] => readPipelineRunRecords(1000)
+  .filter((record) => record.run_id === runId);
+
+const readPipelineRunHooks = (runId: string) => readTailLines(path.join(pipelineRunsRoot, runId, "workflow_hooks.jsonl"), 1000)
+  .map((line) => {
+    try { return JSON.parse(line); }
+    catch { return null; }
+  })
+  .filter(Boolean);
+
+const readPipelineRunLog = (runId: string) => readTailLines(path.join(pipelineRunsRoot, runId, "log_state.jsonl"), 1000);
+
+const summarizePipelineNpc = (npcKey: string) => {
+  const records = readPipelineRunRecords(1000, npcKey);
+  const latestComplete: Record<string, PipelineRunRecord> = {};
+  const latestError: Record<string, PipelineRunRecord> = {};
+  for (const record of records) {
+    const stage = record.stage || "";
+    if (record.event === "complete") latestComplete[stage] = record;
+    if (record.event === "error") latestError[stage] = record;
+  }
+  const stages = ["generate", "sanitize", "dataset_eval", "train", "export", "evaluate", "feedback"];
+  const completedCore = ["generate", "sanitize", "dataset_eval", "train", "export"].filter((stage) => latestComplete[stage]).length;
+  const hasErrors = Object.keys(latestError).length > 0;
+  const pipelineHealth = completedCore === 5 ? "healthy" : completedCore > 0 && !hasErrors ? "partial" : hasErrors ? "error" : "empty";
+  return {
+    npc_key: npcKey,
+    pipeline_health: pipelineHealth,
+    stages: Object.fromEntries(stages.map((stage) => [stage, {
+      latest_complete: latestComplete[stage] ?? null,
+      latest_error: latestError[stage] ?? null,
+    }])),
+  };
+};
+
+const latestPipelineRunByFrontendJobId = () => {
+  const map = new Map<string, string>();
+  for (const record of readPipelineRunRecords(5000)) {
+    if (record.frontend_job_id && record.run_id) map.set(String(record.frontend_job_id), String(record.run_id));
+  }
+  return map;
 };
 
 const listWatchRuns = (limit = 10) => {
@@ -2097,11 +2179,45 @@ const listRuns = () => {
   });
   app.get("/api/jobs/state", (_req, res) => {
     const jobs = refreshJobsCacheIfStale();
+    const runByFrontendJobId = latestPipelineRunByFrontendJobId();
+    const jobsWithRunIds = jobs.map((job) => ({
+      ...job,
+      runId: runByFrontendJobId.get(job.id) ?? null,
+    }));
     res.json({
-      jobs,
+      jobs: jobsWithRunIds,
       workflowCount: registry.workflows.length,
       autoSyncExternal: registry.autoSyncExternal !== false,
     } satisfies JobRegistrySnapshot);
+  });
+  app.get("/api/pipeline/runs", (req, res) => {
+    const npcKey = typeof req.query.npc_key === "string" ? req.query.npc_key : undefined;
+    const stage = typeof req.query.stage === "string" ? req.query.stage : undefined;
+    const limit = Number.parseInt(typeof req.query.limit === "string" ? req.query.limit : "50", 10);
+    const records = readPipelineRunRecords(Number.isFinite(limit) ? limit : 50, npcKey, stage);
+    res.json({ runs: records, total_events: records.length });
+  });
+  app.get("/api/pipeline/runs/:run_id", (req, res) => {
+    const runId = req.params.run_id;
+    const events = readPipelineRunEvents(runId);
+    const runDir = path.join(pipelineRunsRoot, runId);
+    const metaPath = path.join(runDir, "meta.json");
+    const meta = readJsonFile<Record<string, unknown>>(metaPath, {});
+    res.json({
+      run: meta,
+      events,
+      hooks: readPipelineRunHooks(runId),
+      log: readPipelineRunLog(runId),
+    });
+  });
+  app.get("/api/pipeline/runs/:run_id/hooks", (req, res) => {
+    res.json({ events: readPipelineRunHooks(req.params.run_id) });
+  });
+  app.get("/api/pipeline/runs/:run_id/log", (req, res) => {
+    res.json({ lines: readPipelineRunLog(req.params.run_id) });
+  });
+  app.get("/api/npc/:npc_key/status", (req, res) => {
+    res.json(summarizePipelineNpc(req.params.npc_key));
   });
   app.get("/api/jobs/:id/logs", (req, res) => {
   try {

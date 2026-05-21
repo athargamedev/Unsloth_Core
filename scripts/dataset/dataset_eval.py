@@ -300,6 +300,11 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
         entrypoint="cli"
     ) as run:
         set_active_run(run.run_id, run.run_dir)
+        output_dir = dataset_dir(npc_key, args.technique)
+        summary_path = output_dir / "quality_summary.json"
+        failures_path = output_dir / "quality_failures.json"
+        report_path = output_dir / "quality_report.json"
+        summary = {"passed": 0, "total": 0, "pass_rate": 0.0}
         try:
             hook_recorder = WorkflowHookRecorder(
                 args.workflow_hooks or run.hook_path,

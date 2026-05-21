@@ -262,6 +262,39 @@ export interface PipelineNpcState {
 
 export type PipelineState = Record<string, PipelineNpcState>;
 
+export interface PipelineRunRecord {
+  ts?: string;
+  event?: string;
+  run_id?: string;
+  npc_key?: string;
+  stage?: string;
+  technique?: string | null;
+  spec_path?: string | null;
+  preset?: string | null;
+  entrypoint?: string | null;
+  frontend_job_id?: string | null;
+  pid?: number | null;
+  run_dir?: string | null;
+  status?: string | null;
+  error?: string | null;
+  message?: string | null;
+  artifacts?: Record<string, unknown>;
+  metrics?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface PipelineRunsResponse {
+  runs: PipelineRunRecord[];
+  total_events: number;
+}
+
+export interface PipelineRunDetail {
+  run: Record<string, unknown>;
+  events: PipelineRunRecord[];
+  hooks: unknown[];
+  log: string[];
+}
+
 // --- Feedback types ---
 
 export interface ConceptFeedback {

@@ -24,6 +24,38 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
+# ── Pipeline registry (unified run/log source of truth) ──────────────────────
+
+def pipeline_root() -> Path:
+    """Return .pipeline/ — unified runtime registry root."""
+    return PROJECT_ROOT / ".pipeline"
+
+
+def pipeline_index_path() -> Path:
+    """Return .pipeline/runs.jsonl — append-only pipeline index."""
+    return pipeline_root() / "runs.jsonl"
+
+
+def pipeline_runs_root() -> Path:
+    """Return .pipeline/runs/ — per-run directories."""
+    return pipeline_root() / "runs"
+
+
+def pipeline_run_dir(run_id: str) -> Path:
+    """Return .pipeline/runs/{run_id}/."""
+    return pipeline_runs_root() / run_id
+
+
+def pipeline_hook_path(run_id: str) -> Path:
+    """Return the workflow hook log for a pipeline run."""
+    return pipeline_run_dir(run_id) / "workflow_hooks.jsonl"
+
+
+def pipeline_log_state_path(run_id: str) -> Path:
+    """Return the structured log_state JSONL for a pipeline run."""
+    return pipeline_run_dir(run_id) / "log_state.jsonl"
+
+
 # ── Shared validation constants ──────────────────────────────────────────────
 
 SNAKE_CASE_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")

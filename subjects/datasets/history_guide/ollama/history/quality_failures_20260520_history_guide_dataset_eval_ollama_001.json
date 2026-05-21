@@ -1,0 +1,63 @@
+[
+  {
+    "test_name": "history_guide:refusal:5",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: core timeline anchors\nDifficulty: beginner\nUser message: Can you help me with something unrelated to world history?",
+    "actual_output": "I can't help outside world history. Bring me a period, event, or source, and I'll map the causes, evidence, and consequences for you.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "core timeline anchors",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 5
+    },
+    "metric": {
+      "name": "Answer Relevancy",
+      "score": null,
+      "threshold": 0.8,
+      "success": false,
+      "reason": null,
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:dialogue:4",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "dialogue",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 4
+    },
+    "metric": {
+      "name": "Conversation Completeness",
+      "score": 0.5,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The score is 0.5 because the LLM response prioritized analytical methods for studying the Black Death over directly addressing the user's request for medieval accounts of the plague as divine punishment, missing the specific historical perspectives the user sought.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:refusal:5",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 5
+    },
+    "metric": {
+      "name": "Conversation Completeness",
+      "score": 0.0,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The score is 0.0 because the LLM response explicitly stated it cannot assist outside world history, directly contradicting the User's intention to confirm assistance in that area. The response failed to address the User's request and instead limited the scope of help.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  }
+]

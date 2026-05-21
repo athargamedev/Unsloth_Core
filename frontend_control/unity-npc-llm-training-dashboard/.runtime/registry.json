@@ -7,7 +7,7 @@
       "type": "Pipeline",
       "commandId": "pipeline",
       "npcKey": "history_guide",
-      "status": "running",
+      "status": "stopped",
       "progress": 10,
       "loss": null,
       "createdAt": "2026-05-20T23:52:09.612Z",
@@ -19,8 +19,10 @@
       "stages": [
         {
           "name": "Dataset Prep",
-          "status": "running",
-          "logs": []
+          "status": "stopped",
+          "logs": [
+            "[EXTERNAL][PID 774159] Process no longer detected"
+          ]
         },
         {
           "name": "Training",
@@ -47,7 +49,9 @@
         "[EXTERNAL][PID 774159] discovered active process",
         "/home/athar/.pyenv/versions/unsloth_core_env/bin/python3 ./ucore --watch dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest --cases-per-category 1 --soft-fail"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T00:20:04.689Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_335107",

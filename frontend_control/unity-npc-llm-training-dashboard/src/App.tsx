@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import {
   Play,
   Square,
@@ -40,9 +40,14 @@ import { ColabNotebooksPanel } from './components/ColabNotebooksPanel';
 import { OllamaPanel } from './components/OllamaPanel';
 import { WorkflowAssistantPanel } from './components/WorkflowAssistantPanel';
 import { DatasetPipelinePanel } from './components/DatasetPipelinePanel';
+import { NotificationCenter } from './components/NotificationCenter';
+import { GlobalSearch } from './components/GlobalSearch';
+import { LoadingSpinner } from './components/LoadingSpinner';
 
 import { DatasetFactory } from './components/DatasetFactory';
 import { TabChrome } from './components/TabChrome';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useAppStore } from './stores/app-store';
 const PipelineFlowPanel = lazy(() => import('./components/PipelineFlowPanel').then(m => ({ default: m.PipelineFlowPanel })));
 const EvalWorkflowPanel = lazy(() => import('./components/EvalWorkflowPanel').then(m => ({ default: m.EvalWorkflowPanel })));
 const FeedbackLoopPanel = lazy(() => import('./components/FeedbackLoopPanel').then(m => ({ default: m.FeedbackLoopPanel })));
@@ -58,7 +63,6 @@ const RemoteConfigPanel = lazy(() => import('./components/RemoteConfigPanel').th
 export default function App() {
   const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands' | 'colab' | 'ollama' | 'workflow_assistant' | 'dataset_pipeline'>('overview');
   const [logs, setLogs] = useState<string[]>([]);
-  const [uiError, setUiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const fetchInFlightRef = useRef(false);
   const [commandModalOpen, setCommandModalOpen] = useState(false);
@@ -66,6 +70,8 @@ export default function App() {
   const [commandPayload, setCommandPayload] = useState<any>({});
   const [selectedJobForLogs, setSelectedJobForLogs] = useState<Job | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
+
+  const addToast = useAppStore((s) => s.addToast);
 
   const renderTabSkeleton = (variant: 'chart' | 'table' | 'form' | 'list') => (
     <div className="flex-1 p-4 space-y-3 animate-pulse">
@@ -198,6 +204,8 @@ export default function App() {
       fetchStatus();
     },
   });
+
+  useKeyboardShortcuts();
 
   const selectedJob = selectedJobId ? jobs.find((job) => job.id === selectedJobId) ?? jobs[0] ?? null : jobs[0] ?? null;
   const selectedDataset = datasetViewNpc ? datasets.find((dataset) => dataset.id === datasetViewNpc) ?? null : null;
@@ -397,7 +405,7 @@ export default function App() {
     datasetsRef.current = datasets;
   }, [datasets]);
 
-  const fetchData = async (showLoading = false) => {
+  const fetchData = useCallback(async (showLoading = false) => {
     if (fetchInFlightRef.current) return;  // prevent overlapping fetches
     fetchInFlightRef.current = true;
     if (showLoading) setIsLoading(true);
@@ -433,14 +441,13 @@ export default function App() {
           } catch { }
         })(),
       ]);
-      setUiError(null);
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Failed to fetch data');
+      addToast(error instanceof Error ? error.message : 'Failed to fetch data', 'error');
     } finally {
       fetchInFlightRef.current = false;
       if (showLoading) setIsLoading(false);
     }
-  };
+  }, [fetchJobs, fetchStatus, fetchTelemetry, fetchDatasets, fetchWatchLogs, addToast]);
 
   useEffect(() => {
     fetchData(true);
@@ -487,19 +494,26 @@ export default function App() {
     };
     window.addEventListener('navigate-pipeline-action', handlePipelineAction);
 
+    const handleStopAllJobs = () => { stopAllJobs(); };
+    const handleRefreshData = () => { fetchData(false); };
+    window.addEventListener('stop-all-jobs', handleStopAllJobs);
+    window.addEventListener('refresh-data', handleRefreshData);
+
     return () => {
       clearInterval(interval);
       window.removeEventListener('navigate-tab', handleNavigate);
       window.removeEventListener('navigate-pipeline-action', handlePipelineAction);
+      window.removeEventListener('stop-all-jobs', handleStopAllJobs);
+      window.removeEventListener('refresh-data', handleRefreshData);
     };
   }, []);
 
   // --- Handlers ---
 
-  const stopAllJobs = async () => {
+  const stopAllJobs = useCallback(async () => {
     const runningJobs = jobs.filter((job) => job.status === 'running');
     if (runningJobs.length === 0) {
-      setUiError('No running jobs to stop.');
+      addToast('No running jobs to stop.', 'warning');
       return;
     }
     setIsLoading(true);
@@ -516,28 +530,28 @@ export default function App() {
       }));
       const failures = stopResults.filter((result) => !result.ok);
       if (failures.length > 0) {
-        setUiError(`Failed to stop ${failures.length} job(s): ${failures.map((failure) => `${failure.id} (${failure.message})`).join(', ')}`);
+        addToast(`Failed to stop ${failures.length} job(s): ${failures.map((failure) => `${failure.id} (${failure.message})`).join(', ')}`, 'error');
       }
       await fetchData(true);
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Failed to stop running jobs');
+      addToast(error instanceof Error ? error.message : 'Failed to stop running jobs', 'error');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [jobs, addToast, fetchData]);
 
-  const handleToggleExecutionMode = async () => {
+  const handleToggleExecutionMode = useCallback(async () => {
     try {
       if (status?.executionMode === 'local') {
         const confirmed = window.confirm('Remote runner is not implemented yet. Remote command starts return 501. Switch anyway for configuration testing?');
         if (!confirmed) return;
       }
       await toggleExecutionMode();
-      setUiError(status?.executionMode === 'local' ? 'Remote mode selected for configuration only. Remote runner is not implemented; command starts are blocked.' : null);
+      addToast('Remote mode selected for configuration only. Remote runner is not implemented; command starts are blocked.', 'info');
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Failed to toggle execution mode');
+      addToast(error instanceof Error ? error.message : 'Failed to toggle execution mode', 'error');
     }
-  };
+  }, [status, toggleExecutionMode, addToast]);
 
   const triggerCommand = async (payload: Record<string, unknown>) => {
     if (status?.executionMode === 'remote') {
@@ -618,75 +632,73 @@ export default function App() {
     }
   };
 
-  const handleStopJob = async (id: string) => {
+  const handleStopJob = useCallback(async (id: string) => {
     try {
       await stopJob(id);
       await fetchData(true);
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Failed to stop job');
+      addToast(error instanceof Error ? error.message : 'Failed to stop job', 'error');
     }
-  };
+  }, [stopJob, fetchData, addToast]);
 
-  const handleDeleteJob = async (id: string) => {
+  const handleDeleteJob = useCallback(async (id: string) => {
     try {
       await deleteJob(id);
       if (selectedJobId === id) setSelectedJobId(null);
       setSelectedJobIds(prev => prev.filter(jId => jId !== id));
       await fetchData(true);
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Failed to clear job');
+      addToast(error instanceof Error ? error.message : 'Failed to clear job', 'error');
     }
-  };
+  }, [deleteJob, selectedJobId, fetchData, addToast]);
 
-  const handleSyncJobs = async (force = false) => {
+  const handleSyncJobs = useCallback(async (force = false) => {
     try {
-      setUiError(null);
       await syncJobs(force);
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Failed to sync jobs');
+      addToast(error instanceof Error ? error.message : 'Failed to sync jobs', 'error');
     }
-  };
+  }, [syncJobs, addToast]);
 
-  const handleClearJobs = async () => {
+  const handleClearJobs = useCallback(async () => {
     try {
-      setUiError(null);
       await clearJobs();
       setLogs([]);
       setSelectedJobForLogs(null);
       await fetchData(true);
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Failed to clear jobs');
+      addToast(error instanceof Error ? error.message : 'Failed to clear jobs', 'error');
     }
-  };
+  }, [clearJobs, fetchData, addToast]);
 
-  const handleClearLogs = async () => {
+  const handleClearLogs = useCallback(async () => {
     setLogs([]);
     try {
       await fetch('/api/logs/clear', { method: 'POST' });
     } catch {
       // Server endpoint may not exist yet — logs cleared locally regardless
     }
-  };
+  }, []);
 
-  const handleSelectJob = (id: string) => {
+  const handleSelectJob = useCallback((id: string) => {
     setSelectedJobId(id);
-  };
+  }, []);
 
-  const handleSetActiveFilter = () => {
+  const handleSetActiveFilter = useCallback(() => {
     setActiveFilter((prev) => (prev === 'all' ? 'running' : 'all'));
-  };
+  }, []);
 
-  const handleOpenComparison = () => {
+  const handleOpenComparison = useCallback(() => {
     setActiveTab('compare');
-  };
+  }, []);
 
-  const handleManageJob = (id: string) => {
+  const handleManageJob = useCallback((id: string) => {
     setSelectedJobId(id);
     setSelectedJobIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
     setActiveTab('compare');
-  };
+  }, []);
 
-  const handleLaunchTraining = async () => {
+  const handleLaunchTraining = useCallback(async () => {
     try {
       await triggerCommand({
         commandId: 'train',
@@ -707,11 +719,11 @@ export default function App() {
       });
       setActiveTab('overview');
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Training launch failed');
+      addToast(error instanceof Error ? error.message : 'Training launch failed', 'error');
     }
-  };
+  }, [trainingConfig, triggerCommand, addToast]);
 
-  const handleGenerateDataset = async () => {
+  const handleGenerateDataset = useCallback(async () => {
     try {
       const commandId = trainingConfig.technique === 'ollama' ? 'generate-ollama' : 'dataset-generate';
       await triggerCommand({ 
@@ -725,18 +737,29 @@ export default function App() {
         } 
       });
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Dataset generation failed');
+      addToast(error instanceof Error ? error.message : 'Dataset generation failed', 'error');
     }
-  };
+  }, [trainingConfig, triggerCommand, addToast]);
 
-  const handleInitNpc = () => {
+  const triggerCommandFromSystemHub = useCallback(async (cmd: AvailableCommand) => {
+    const payload = {
+      commandId: cmd.id,
+      type: cmd.type,
+      ...getDefaultPayloadForCommand(cmd.id),
+    };
+    setSelectedCommand(cmd.id);
+    setCommandPayload(payload);
+    setCommandModalOpen(true);
+  }, []);
+
+  const handleInitNpc = useCallback(() => {
     const cmd = availableCommands.find(c => c.id === 'init');
     if (cmd) {
       triggerCommandFromSystemHub(cmd);
     }
-  };
+  }, [availableCommands, triggerCommandFromSystemHub]);
 
-  const handleViewDataset = (npcKey: string, technique: string) => {
+  const handleViewDataset = useCallback((npcKey: string, technique: string) => {
     if (!npcKey || !technique) return;
     setDatasetViewNpc(npcKey);
     setDatasetViewTechnique(technique);
@@ -747,59 +770,48 @@ export default function App() {
         ds.versions.map((v) => ({ name: v.tag, train_count: v.entries, val_count: 0 }))
       );
     }
-  };
+  }, [datasets]);
 
-  const handlePrepareTrainingFromDataset = (npcKey: string, technique: string) => {
+  const handlePrepareTrainingFromDataset = useCallback((npcKey: string, technique: string) => {
     if (!npcKey || !technique) return;
     setTrainingConfig((prev) => ({
       ...prev,
       spec: `subjects/NPC_specs/${npcKey}.json`,
       technique,
     }));
-    setUiError(`Training Suite preselected for ${npcKey} using ${technique}. Review settings, then launch training.`);
+    addToast(`Training Suite preselected for ${npcKey} using ${technique}.`, 'success');
     setActiveTab('training');
-  };
+  }, [addToast]);
 
-  const handleClearSelection = () => {
+  const handleClearSelection = useCallback(() => {
     setSelectedJobIds([]);
-  };
+  }, []);
 
-  const handleQuickStartOpenPrepareData = () => {
+  const handleQuickStartOpenPrepareData = useCallback(() => {
     setActiveTab('dataset_params');
-  };
+  }, []);
 
-  const handleQuickStartOpenTraining = () => {
+  const handleQuickStartOpenTraining = useCallback(() => {
     setActiveTab('training');
-  };
+  }, []);
 
-  const handleQuickStartOpenEvaluate = () => {
+  const handleQuickStartOpenEvaluate = useCallback(() => {
     setActiveTab('eval');
-  };
+  }, []);
 
-  const handleQuickStartOpenFeedback = () => {
+  const handleQuickStartOpenFeedback = useCallback(() => {
     setActiveTab('feedback');
-  };
+  }, []);
 
-  const handleQuickStartOpenDeployOps = () => {
+  const handleQuickStartOpenDeployOps = useCallback(() => {
     setActiveTab('jobs');
-  };
+  }, []);
 
-  const triggerCommandFromSystemHub = async (cmd: AvailableCommand) => {
-    const payload = {
-      commandId: cmd.id,
-      type: cmd.type,
-      ...getDefaultPayloadForCommand(cmd.id),
-    };
-    setSelectedCommand(cmd.id);
-    setCommandPayload(payload);
-    setCommandModalOpen(true);
-  };
-
-  const handleUpdateTrainingConfig = (config: Partial<TrainingConfig>) => {
+  const handleUpdateTrainingConfig = useCallback((config: Partial<TrainingConfig>) => {
     setTrainingConfig((prev) => ({ ...prev, ...config }));
-  };
+  }, []);
 
-  const handleRightSidebarLaunchTraining = async () => {
+  const handleRightSidebarLaunchTraining = useCallback(async () => {
     try {
       await triggerCommand({
         commandId: 'train',
@@ -819,11 +831,11 @@ export default function App() {
         },
       });
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Training start failed');
+      addToast(error instanceof Error ? error.message : 'Training start failed', 'error');
     }
-  };
+  }, [trainingConfig, triggerCommand, addToast]);
 
-  const handleRightSidebarExport = async () => {
+  const handleRightSidebarExport = useCallback(async () => {
     try {
       await triggerCommand({
         commandId: 'export',
@@ -832,11 +844,11 @@ export default function App() {
         options: { modelId: trainingConfig.baseModel },
       });
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Export failed');
+      addToast(error instanceof Error ? error.message : 'Export failed', 'error');
     }
-  };
+  }, [trainingConfig, triggerCommand, addToast]);
 
-  const handleRightSidebarGenerateDataset = async () => {
+  const handleRightSidebarGenerateDataset = useCallback(async () => {
     try {
       const commandId = trainingConfig.technique === 'ollama' ? 'generate-ollama' : 'dataset-generate';
       await triggerCommand({ 
@@ -850,17 +862,17 @@ export default function App() {
         } 
       });
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Dataset generation failed');
+      addToast(error instanceof Error ? error.message : 'Dataset generation failed', 'error');
     }
-  };
+  }, [trainingConfig, triggerCommand, addToast]);
 
-  const handleSystemHubCommand = async (cmd: AvailableCommand) => {
+  const handleSystemHubCommand = useCallback(async (cmd: AvailableCommand) => {
     try {
       await triggerCommandFromSystemHub(cmd);
     } catch (error) {
-      setUiError(error instanceof Error ? error.message : 'Command failed');
+      addToast(error instanceof Error ? error.message : 'Command failed', 'error');
     }
-  };
+  }, [triggerCommandFromSystemHub, addToast]);
 
   const validateCommandPayload = (commandId: string, payload: Record<string, unknown>): string[] => {
     const fields = commandSchemas[commandId]?.fields as Record<string, { required?: boolean }> | undefined;
@@ -877,7 +889,7 @@ export default function App() {
     return missing;
   };
 
-  const handleSetCommandPayload = (field: string, value: string) => {
+  const handleSetCommandPayload = useCallback((field: string, value: string) => {
     const selectedSchema = selectedCommand ? commandSchemas[selectedCommand]?.fields?.[field] : undefined;
 
     let typedValue: unknown = value;
@@ -889,7 +901,7 @@ export default function App() {
     }
 
     setCommandPayload((prev: Record<string, unknown>) => setNestedValue(prev, field, typedValue));
-  };
+  }, [selectedCommand, commandSchemas]);
 
   const localModel = status?.localModel;
   const isLocalModelLoaded = Boolean(localModel?.loaded);
@@ -971,6 +983,7 @@ export default function App() {
             <span className="text-[10px] font-mono font-bold text-ink/60">{telemetry ? `${telemetry.networkRxMBps.toFixed(1)}MB/s` : '---'}</span>
           </div>
           <div className="h-8 w-px bg-line/50" />
+          <NotificationCenter />
           <button onClick={stopAllJobs} className="px-3 py-1 bg-danger/10 text-danger border border-danger/30 text-[12px] font-bold rounded-sm uppercase tracking-wider hover:bg-danger/30 transition-all active:scale-95 shadow-lg shadow-danger/5">
             Emergency Kill
           </button>
@@ -1227,7 +1240,7 @@ export default function App() {
                   registryState={registryState}
                   watchLogs={watchLogs}
                   isLoading={isLoading}
-                  uiError={uiError}
+                  uiError={null}
                   onSelectJob={handleSelectJob}
                   onToggleJobSelection={toggleJobSelection}
                   onSetActiveFilter={handleSetActiveFilter}
@@ -1565,8 +1578,7 @@ export default function App() {
               </div>
             </div>
             <div className="flex-1 bg-black/40 border border-line rounded p-2 overflow-y-auto font-mono text-[10px] leading-tight space-y-0.5 custom-scrollbar">
-              {uiError && <div className="text-danger">[ERROR] {uiError}</div>}
-              {isLoading && <div className="text-warning">[INFO] Refreshing dashboard state...</div>}
+              {isLoading && <div className="flex items-center gap-2 text-warning/70"><LoadingSpinner size="sm" /><span className="text-[10px]">Refreshing dashboard state...</span></div>}
               {logs.map((log, i) => (
                 <div key={i} className="flex gap-2 hover:bg-white/5 px-1 rounded transition-colors">
                   <span className="text-accent opacity-60">[{new Date().toLocaleTimeString([], { hour12: false })}]</span>
@@ -1752,6 +1764,9 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Global Search (Ctrl+K) */}
+      <GlobalSearch />
+
       {/* Command Modal */}
       <AnimatePresence>
         {commandModalOpen && selectedCommand && (
@@ -1855,7 +1870,7 @@ export default function App() {
                         setSelectedCommand(null);
                         setCommandPayload({});
                       } catch (error) {
-                        setUiError(error instanceof Error ? error.message : 'Command execution failed');
+                        addToast(error instanceof Error ? error.message : 'Command execution failed', 'error');
                       }
                     }}
                     disabled={isRemoteMode}

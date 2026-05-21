@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchJson } from '../api';
-import type { PipelineState, PipelineNpcState, Subject, Dataset, RunArtifact, ExportArtifact } from '../api';
+import type { PipelineState, PipelineNpcState, Subject, Dataset, RunArtifact, ExportArtifact, PipelineRunsResponse, PipelineRunDetail, PipelineRunRecord } from '../api';
 
 // Each stage in the pipeline lifecycle
 interface PipelineStage {
@@ -39,6 +39,9 @@ export const PipelineFlowPanel = ({
 }) => {
   const [pipelineState, setPipelineState] = useState<PipelineState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pipelineRuns, setPipelineRuns] = useState<PipelineRunRecord[]>([]);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [selectedRunDetail, setSelectedRunDetail] = useState<PipelineRunDetail | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -48,12 +51,38 @@ export const PipelineFlowPanel = ({
       } catch {
         setPipelineState({});
       }
+
+      try {
+        const response = await fetchJson<PipelineRunsResponse>('/api/pipeline/runs?limit=24');
+        setPipelineRuns(response.runs ?? []);
+        const firstRunId = response.runs?.[0]?.run_id ?? null;
+        setSelectedRunId((current) => current ?? firstRunId);
+      } catch {
+        setPipelineRuns([]);
+      }
+
       setLoading(false);
     };
     load();
-    const interval = setInterval(load, 10000);
+    const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!selectedRunId) {
+      setSelectedRunDetail(null);
+      return;
+    }
+    const loadRunDetail = async () => {
+      try {
+        const detail = await fetchJson<PipelineRunDetail>(`/api/pipeline/runs/${encodeURIComponent(selectedRunId)}`);
+        setSelectedRunDetail(detail);
+      } catch {
+        setSelectedRunDetail(null);
+      }
+    };
+    loadRunDetail();
+  }, [selectedRunId]);
 
   // Collect all NPC keys from subjects, datasets, runs, exports, and pipeline state
   const allNpcKeys = new Set<string>();
@@ -191,6 +220,72 @@ export const PipelineFlowPanel = ({
           </div>
         );
       })}
+
+      <div className="bg-surface border border-line rounded-sm p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h4 className="text-sm font-bold text-ink-bright uppercase tracking-widest">Pipeline History</h4>
+            <p className="text-[10px] text-ink/40">Unified run index and per-run artifacts from .pipeline/runs.jsonl</p>
+          </div>
+          <span className="text-[10px] text-ink/40 font-mono">{pipelineRuns.length} runs</span>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-3 min-h-[260px]">
+          <div className="border border-line/40 rounded-sm overflow-hidden">
+            <div className="max-h-[220px] overflow-auto custom-scrollbar">
+              {pipelineRuns.length > 0 ? (
+                pipelineRuns.map((run) => {
+                  const isSelected = run.run_id === selectedRunId;
+                  return (
+                    <button
+                      key={`${run.run_id}-${run.event}-${run.ts}`}
+                      onClick={() => run.run_id && setSelectedRunId(run.run_id)}
+                      className={`w-full text-left px-3 py-2 border-b border-line/20 hover:bg-white/5 transition-colors ${isSelected ? 'bg-accent/10' : ''}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[10px] font-mono text-ink-bright truncate">{run.run_id || 'unknown-run'}</div>
+                          <div className="text-[9px] text-ink/40 font-mono truncate">{run.npc_key || 'unknown'} · {run.stage || 'stage?'} · {run.event || 'event?'}</div>
+                        </div>
+                        <div className="text-[9px] text-right text-ink/50 font-mono shrink-0">
+                          {run.status || run.event || '—'}
+                          <div>{run.ts ? new Date(run.ts).toLocaleString() : ''}</div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="p-4 text-[11px] text-ink/40">No pipeline runs found yet.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="border border-line/40 rounded-sm p-3 text-[10px] text-ink/70 space-y-2 bg-black/10">
+            {selectedRunDetail ? (
+              <>
+                <div className="font-mono text-ink-bright break-all">{String(selectedRunDetail.run.run_id || selectedRunId || 'run')}</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div><span className="text-ink/40">Events:</span> {selectedRunDetail.events.length}</div>
+                  <div><span className="text-ink/40">Hooks:</span> {selectedRunDetail.hooks.length}</div>
+                  <div><span className="text-ink/40">Log lines:</span> {selectedRunDetail.log.length}</div>
+                  <div><span className="text-ink/40">NPC:</span> {String(selectedRunDetail.run.npc_key || '—')}</div>
+                </div>
+                <div>
+                  <div className="text-[9px] uppercase tracking-widest text-ink/40 mb-1">Latest Log</div>
+                  <div className="max-h-[120px] overflow-auto custom-scrollbar font-mono text-[9px] bg-black/20 rounded p-2 space-y-1">
+                    {selectedRunDetail.log.slice(-8).map((line, idx) => (
+                      <div key={idx} className="whitespace-pre-wrap break-all">{line}</div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-ink/40">Select a run to inspect its metadata, hook timeline, and structured log lines.</div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
