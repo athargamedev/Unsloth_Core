@@ -527,7 +527,7 @@ def main():
         timeout_seconds=args.timeout_seconds,
     )
     hook_recorder = WorkflowHookRecorder(args.workflow_hooks or default_hook_path(paths.export_dir(npc_key)), tool="export", npc_key=npc_key)
-    with hook_recorder.step("export_pipeline", mode="full_merge" if args.full_merge else "adapter", quantization=args.quantization, resume=bool(args.resume), output_dir=str(output_dir)):
+    with hook_recorder.step("export_pipeline", technique="export", mode="full_merge" if args.full_merge else "adapter", quantization=args.quantization, resume=bool(args.resume), output_dir=str(output_dir)):
 
         if not args.full_merge:
             # ── Adapter mode (default) — fast, no base model loading ─────────────

@@ -1135,7 +1135,7 @@ def main():
 
     hook_root = Path(args.output).parent if args.output else (paths.eval_report_dir(spec['npc_key']) if spec else PROJECT_ROOT / "eval" / "reports")
     hook_recorder = WorkflowHookRecorder(args.workflow_hooks or default_hook_path(hook_root), tool="evaluate", npc_key=spec["npc_key"] if spec else None, spec_path=args.spec)
-    with hook_recorder.step("evaluate_pipeline", technique="evaluation", baseline=str(baseline_gguf), candidate=str(candidate_gguf), report_path=args.output, html=bool(args.report_html), track=bool(args.track)):
+    with hook_recorder.step("evaluate_pipeline", technique="evaluation", baseline=str(baseline_gguf), candidate=str(candidate_gguf), report_path=args.output, html=bool(args.report_html), track=bool(args.track), feedback_json=args.feedback_json):
 
         if not questions and args.val_data:
             val_set = load_validation_set(args.val_data)

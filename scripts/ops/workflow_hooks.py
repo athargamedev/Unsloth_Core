@@ -215,18 +215,50 @@ class WorkflowHookRecorder:
  
         # ── EVAL SESSION lifecycle ────────────────────────────────────
         if step == "evaluate_pipeline" and status == "complete" and not self._db_eval_session_created:
-            # Try to read feedback JSON for structured results
+            # Read structured eval data from the feedback JSON file (written by evaluate.py)
+            # rather than relying on step fields, which don't contain the comparison results.
             import json as _json
             from pathlib import Path as _Path
-            feedback_path = None
+
+            feedback_path: str | None = None
             report_html = fields.get("report_path")
-            if report_html:
+            fb_path_str = fields.get("feedback_json")
+
+            # Try explicit feedback_json field first, then fall back to scanning report_dir/feedback/
+            if fb_path_str:
+                fb_candidate = _Path(fb_path_str)
+                if fb_candidate.exists():
+                    feedback_path = str(fb_candidate)
+            if not feedback_path and report_html:
                 fb_dir = _Path(report_html).parent / "feedback"
                 if fb_dir.exists():
                     fb_files = sorted(fb_dir.glob("*.json"))
                     if fb_files:
                         feedback_path = str(fb_files[-1])
- 
+
+            # Extract structured data from the feedback JSON if available
+            total_examples: int | None = None
+            baseline_wins: int | None = None
+            candidate_wins: int | None = None
+            ties: int | None = None
+            win_rate: float | None = None
+            per_concept: dict | None = None
+            weak_concepts: list | None = None
+
+            if feedback_path:
+                try:
+                    with _Path(feedback_path).open("r", encoding="utf-8") as _f:
+                        fb_data = _json.load(_f)
+                    total_examples = fb_data.get("total_examples")
+                    baseline_wins = fb_data.get("baseline_wins")
+                    candidate_wins = fb_data.get("candidate_wins")
+                    ties = fb_data.get("ties")
+                    win_rate = fb_data.get("win_rate")
+                    per_concept = fb_data.get("per_concept")
+                    weak_concepts = fb_data.get("weak_concepts")
+                except Exception as _exc:
+                    logger.debug("Failed to read feedback JSON: %s", _exc)
+
             metadata = {
                 "html": fields.get("html", False),
                 "track": fields.get("track", False),
@@ -239,6 +271,13 @@ class WorkflowHookRecorder:
                 npc_key=npc_key,
                 report_html_path=report_html,
                 feedback_json_path=feedback_path,
+                total_examples=total_examples,
+                baseline_wins=baseline_wins,
+                candidate_wins=candidate_wins,
+                ties=ties,
+                win_rate=win_rate,
+                per_concept=per_concept,
+                weak_concepts=weak_concepts,
                 metadata=metadata,
             )
             self._db_eval_session_created = True

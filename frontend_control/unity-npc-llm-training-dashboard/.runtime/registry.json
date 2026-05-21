@@ -2,6 +2,105 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_006",
+      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_006)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T19:12:42.188Z",
+      "startedAt": "2026-05-21T19:12:42.188Z",
+      "finishedAt": "2026-05-21T19:12:42.188Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_006/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_1986801",
+      "name": "External Training · PID 1986801 · astronomy_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "running",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T19:12:42.033Z",
+      "startedAt": "2026-05-21T19:12:42.033Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; /bin/bash -c 'source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate && export PATH=/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc CXX=/usr/bin/g++ AS=/usr/bin/as PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True && cd /home/athar/Projects/Unsloth_Core && ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset safe-any --epochs 16 --lr 1e-4'"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1986801] discovered active process",
+        "/usr/bin/bash -lic set +m; /bin/bash -c 'source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate && export PATH=/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc CXX=/usr/bin/g++ AS=/usr/bin/as PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True && cd /home/athar/Projects/Unsloth_Core && ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset safe-any --epochs 16 --lr 1e-4'"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
       "id": "ext_proc_1984263",
       "name": "External Evaluation · PID 1984263 · astronomy_guide",
       "type": "Evaluation",
