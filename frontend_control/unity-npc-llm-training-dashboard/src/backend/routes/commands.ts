@@ -1,3 +1,5 @@
+import path from "node:path";
+import fs from "node:fs";
 import type { Express, Request, Response } from "express";
 import type { RouterDependencies, StartCommandPayload, Job } from "../types";
 import { launchJob, stopJob, updateStagesFromTruth, makeId, isoNow } from "../services/job-runner";
@@ -54,15 +56,15 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
       "unsloth/Llama-3.2-3B-Instruct-bnb-4bit";
 
     // Load presets for enum options
-    const presetsDir = require("path").join(
+    const presetsDir = path.join(
       repoRoot,
       "configs",
       "presets",
     );
     const presetOptions: string[] = [];
     try {
-      if (require("fs").existsSync(presetsDir)) {
-        for (const file of require("fs").readdirSync(presetsDir)) {
+      if (fs.existsSync(presetsDir)) {
+        for (const file of fs.readdirSync(presetsDir)) {
           if (
             !(
               file.endsWith(".yaml") || file.endsWith(".yml")
