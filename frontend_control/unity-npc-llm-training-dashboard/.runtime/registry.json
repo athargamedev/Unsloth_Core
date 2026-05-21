@@ -2,6 +2,106 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_1708967",
+      "name": "External Pipeline · PID 1708967 · astronomy_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T17:51:44.425Z",
+      "startedAt": "2026-05-21T17:51:44.425Z",
+      "command": [
+        "external",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/astronomy_guide.json --technique ollama --judge-model qwen3:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1708967] discovered active process",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/astronomy_guide.json --technique ollama --judge-model qwen3:latest"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T18:01:44.523Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1708964",
+      "name": "External Export · PID 1708964 · astronomy_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T17:51:44.425Z",
+      "startedAt": "2026-05-21T17:51:44.425Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-30cc9d209dbd.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore dataset-eval subjects/NPC_specs/astronomy_guide.json --technique ollama --judge-model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-30cc9d209dbd.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-30cc9d209dbd.txt 2>/dev/null || true printf '\\n__HERMES_CWD_30cc9d209dbd__%s__HERMES_CWD_30cc9d209dbd__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1708964] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-30cc9d209dbd.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore dataset-eval subjects/NPC_specs/astronomy_guide.json --technique ollama --judge-model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-30cc9d209dbd.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-30cc9d209dbd.txt 2>/dev/null || true printf '\\n__HERMES_CWD_30cc9d209dbd__%s__HERMES_CWD_30cc9d209dbd__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T18:01:44.523Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_1697867",
       "name": "External Dataset · PID 1697867 · chef_assistant",
       "type": "Dataset",

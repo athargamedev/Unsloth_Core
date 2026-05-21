@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -99,13 +100,16 @@ class WorkflowHookRecorder:
     @contextmanager
     def step(self, step: str, **fields: Any) -> Iterator[None]:
         self.emit(step, "start", **fields)
+        _start_time = time.monotonic()
         try:
             yield
         except (Exception, SystemExit) as exc:
-            self.emit(step, "error", error=type(exc).__name__, message=str(exc), **fields)
+            duration_s = time.monotonic() - _start_time
+            self.emit(step, "error", error=type(exc).__name__, message=str(exc), duration_s=duration_s, **fields)
             raise
         else:
-            self.emit(step, "complete", **fields)
+            duration_s = time.monotonic() - _start_time
+            self.emit(step, "complete", duration_s=duration_s, **fields)
 
     # ── PipelineDB integration ─────────────────────────────────────────
 
