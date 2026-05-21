@@ -305,8 +305,15 @@ class WorkflowHookRecorder:
                 weak_concepts=weak_concepts,
                 metadata=metadata,
             )
+            # Also update pipeline_jobs.loss with the eval win_rate
+            if win_rate is not None and self._db_job_uuid:
+                try:
+                    self.db.update_job_status(self._db_job_uuid, loss=float(win_rate))
+                except Exception:
+                    pass
+
             self._db_eval_session_created = True
- 
+
     def _db_emit_run(
         self,
         npc_key: str,
@@ -391,11 +398,14 @@ class WorkflowHookRecorder:
 
         elif status in ("complete", "error") and self._db_job_created and self._db_job_uuid:
             error_msg = fields.get("error") if status == "error" else None
-            self.db.update_job_status(
-                self._db_job_uuid,
+            job_loss = fields.get("loss")
+            kwargs = dict(
                 status="completed" if status == "complete" else "failed",
                 error=error_msg,
             )
+            if job_loss is not None:
+                kwargs["loss"] = job_loss
+            self.db.update_job_status(self._db_job_uuid, **kwargs)
 
     def _db_flush_logs(self, messages: list[str]) -> None:
         """Flush accumulated log messages to the pipeline_jobs.logs column.

@@ -193,6 +193,7 @@ class PipelineDB:
         "baseline_path", "full_config", "run_dir",
         "total_examples", "baseline_wins", "candidate_wins", "ties", "win_rate",
         "per_concept", "weak_concepts", "feedback_json_path", "report_html_path",
+        "loss",
     }
 
     @staticmethod
