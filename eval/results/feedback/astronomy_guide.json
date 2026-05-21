@@ -4,25 +4,25 @@
   "candidate": "astronomy_guide/astronomy_guide-lora-f16",
   "total_examples": 10,
   "baseline_wins": 5,
-  "candidate_wins": 3,
-  "ties": 2,
-  "win_rate": 0.3,
+  "candidate_wins": 1,
+  "ties": 4,
+  "win_rate": 0.1,
   "per_concept": {
     "dialogue/misconceptions and safety boundaries": {
       "total": 1,
-      "baseline_wins": 1,
+      "baseline_wins": 0,
       "candidate_wins": 0,
-      "ties": 0,
+      "ties": 1,
       "win_rate": 0.0,
-      "avg_baseline_quality": 42.9,
-      "avg_candidate_quality": 32.96,
+      "avg_baseline_quality": 37.38,
+      "avg_candidate_quality": 32.58,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "Hey AstronomyGuide, I've been reading about black holes and it says they suck up everything nearby. Is that true?",
-          "winner": "baseline",
-          "candidate_quality": 32.96,
-          "candidate_words": 29,
+          "winner": "tie",
+          "candidate_quality": 32.58,
+          "candidate_words": 26,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -30,19 +30,19 @@
     },
     "teaching/stars, galaxies, and scale": {
       "total": 1,
-      "baseline_wins": 0,
+      "baseline_wins": 1,
       "candidate_wins": 0,
-      "ties": 1,
+      "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 36.64,
-      "avg_candidate_quality": 34.66,
+      "avg_baseline_quality": 37.38,
+      "avg_candidate_quality": 34.97,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I don't get how stars can be so far away. Can't we just see them up close?",
-          "winner": "tie",
-          "candidate_quality": 34.66,
-          "candidate_words": 36,
+          "winner": "baseline",
+          "candidate_quality": 34.97,
+          "candidate_words": 41,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -51,18 +51,18 @@
     "identity/exploration and evidence": {
       "total": 1,
       "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 36.64,
-      "avg_candidate_quality": 34.34,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 34.34,
+      "avg_candidate_quality": 31.35,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I've seen some crazy claims about astrology online. Can you tell me what's real?",
-          "winner": "candidate",
-          "candidate_quality": 34.34,
-          "candidate_words": 35,
+          "winner": "tie",
+          "candidate_quality": 31.35,
+          "candidate_words": 23,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -70,19 +70,19 @@
     },
     "teaching/observational astronomy": {
       "total": 1,
-      "baseline_wins": 1,
+      "baseline_wins": 0,
       "candidate_wins": 0,
-      "ties": 0,
+      "ties": 1,
       "win_rate": 0.0,
-      "avg_baseline_quality": 39.32,
-      "avg_candidate_quality": 35.55,
+      "avg_baseline_quality": 37.14,
+      "avg_candidate_quality": 35.26,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I've heard that astronomy is just about looking at the stars and guessing what they are. How does it actually work?",
-          "winner": "baseline",
-          "candidate_quality": 35.55,
-          "candidate_words": 45,
+          "winner": "tie",
+          "candidate_quality": 35.26,
+          "candidate_words": 42,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -90,19 +90,19 @@
     },
     "dialogue/solar system basics": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 35.84,
-      "avg_candidate_quality": 34.01,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 32.96,
+      "avg_candidate_quality": 33.67,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "Hey AstronomyGuide, I'm trying to wrap my head around the solar system. Can you start with the basics?",
-          "winner": "baseline",
-          "candidate_quality": 34.01,
-          "candidate_words": 36,
+          "winner": "candidate",
+          "candidate_quality": 33.67,
+          "candidate_words": 32,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -111,18 +111,18 @@
     "teaching/space exploration": {
       "total": 1,
       "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 38.07,
-      "avg_candidate_quality": 34.01,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 37.14,
+      "avg_candidate_quality": 37.84,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I don't get how space exploration can be so expensive when we still don't even know if there's life elsewhere. Can't we just use the money to fix problems on Earth?",
-          "winner": "candidate",
-          "candidate_quality": 34.01,
-          "candidate_words": 33,
+          "winner": "tie",
+          "candidate_quality": 37.84,
+          "candidate_words": 46,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -130,20 +130,20 @@
     },
     "teaching/stellar evolution": {
       "total": 1,
-      "baseline_wins": 0,
+      "baseline_wins": 1,
       "candidate_wins": 0,
-      "ties": 1,
+      "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 32.58,
-      "avg_candidate_quality": 34.97,
-      "constraint_violations": 0,
+      "avg_baseline_quality": 36.11,
+      "avg_candidate_quality": 35.84,
+      "constraint_violations": 1,
       "examples": [
         {
           "question": "I'm trying to understand how stars change over time. Do they just get bigger and brighter?",
-          "winner": "tie",
-          "candidate_quality": 34.97,
-          "candidate_words": 35,
-          "sentences_ok": true,
+          "winner": "baseline",
+          "candidate_quality": 35.84,
+          "candidate_words": 39,
+          "sentences_ok": false,
           "no_ai_disclaimer": true
         }
       ]
@@ -154,15 +154,15 @@
       "candidate_wins": 0,
       "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 39.89,
-      "avg_candidate_quality": 35.55,
+      "avg_baseline_quality": 37.38,
+      "avg_candidate_quality": 34.97,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I'm lost with all these planets. Can you explain the solar system basics to me?",
           "winner": "baseline",
-          "candidate_quality": 35.55,
-          "candidate_words": 35,
+          "candidate_quality": 34.97,
+          "candidate_words": 33,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -174,15 +174,15 @@
       "candidate_wins": 0,
       "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 30.45,
-      "avg_candidate_quality": 34.97,
+      "avg_baseline_quality": 32.19,
+      "avg_candidate_quality": 33.32,
       "constraint_violations": 1,
       "examples": [
         {
           "question": "I'm trying to spot the Andromeda Galaxy. How far away is it from us?",
           "winner": "baseline",
-          "candidate_quality": 34.97,
-          "candidate_words": 35,
+          "candidate_quality": 33.32,
+          "candidate_words": 31,
           "sentences_ok": false,
           "no_ai_disclaimer": true
         }
@@ -190,19 +190,19 @@
     },
     "dialogue/stars, galaxies, and scale": {
       "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
       "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 39.89,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 35.55,
       "avg_candidate_quality": 35.55,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I'm trying to wrap my head around the scale of stars and galaxies. Can you help me understand how big they really are?",
-          "winner": "candidate",
+          "winner": "baseline",
           "candidate_quality": 35.55,
-          "candidate_words": 37,
+          "candidate_words": 38,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -212,11 +212,13 @@
   "weak_concepts": [
     "dialogue/misconceptions and safety boundaries",
     "teaching/stars, galaxies, and scale",
+    "identity/exploration and evidence",
     "teaching/observational astronomy",
-    "dialogue/solar system basics",
+    "teaching/space exploration",
     "teaching/stellar evolution",
     "teaching/solar system basics",
-    "quest/observing the sky"
+    "quest/observing the sky",
+    "dialogue/stars, galaxies, and scale"
   ],
-  "timestamp": "2026-05-21T19:25:37.059739+00:00"
+  "timestamp": "2026-05-21T19:36:48.258592+00:00"
 }
