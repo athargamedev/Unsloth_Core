@@ -1,0 +1,94 @@
+
+============================================================
+  Unsloth Training Launcher
+============================================================
+  NPC:            astronomy_guide
+  Model:          unsloth/Llama-3.2-3B-Instruct-bnb-4bit
+  Technique:      ollama
+  LoRA Rank:      8
+  LoRA Alpha:     16
+  LR Scheduler:   cosine
+  Estimated VRAM: 3.1GB (Fits 12GB+ cards)
+  Preset:         safe-any
+  W&B:            enabled
+  Export GGUF:    yes
+============================================================
+
+{"ts": "2026-05-21T21:31:07.776620+00:00", "event": "training_start", "npc_key": "astronomy_guide", "run_id": "20260521_safe-any_llama3.2-3b_015", "model": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit", "preset": "safe-any"}
+18:31:07 [INFO ] ucore: [1/4] Loading model and tokenizer...
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+Unsloth: Your Flash Attention 2 installation seems to be broken. Using Xformers instead. No performance changes will be seen.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+  Loading model: unsloth/Llama-3.2-3B-Instruct-bnb-4bit
+  Max seq length: 1024
+  LoRA rank: 8, alpha: 16
+  GPU memory utilization: 0.9
+==((====))==  Unsloth 2026.5.2: Fast Llama patching. Transformers: 5.5.0.
+   \\   /|    NVIDIA GeForce RTX 3060 Laptop GPU. Num GPUs = 1. Max memory: 5.67 GB. Platform: Linux.
+O^O/ \_/ \    Torch: 2.10.0+cu130. CUDA: 8.6. CUDA Toolkit: 13.0. Triton: 3.6.0
+\        /    Bfloat16 = TRUE. FA [Xformers = 0.0.35. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:  54%|█████▍    | 138/254 [00:00<00:00, 1352.79it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 1408.29it/s]
+Unsloth: Will load unsloth/Llama-3.2-3B-Instruct-bnb-4bit as a legacy tokenizer.
+Unsloth 2026.5.2 patched 28 layers with 28 QKV layers, 28 O layers and 28 MLP layers.
+18:31:43 [INFO ] ucore: Model loaded
+[ucore|INFO]Model loaded
+18:31:43 [INFO ] ucore: [2/4] Loading dataset...
+[ucore|INFO][2/4] Loading dataset...
+18:31:43 [INFO ] ucore: Loading dataset from: /home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/train_clean.jsonl
+[ucore|INFO]Loading dataset from: /home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/train_clean.jsonl
+18:31:43 [INFO ] ucore: Dataset loaded: 139 examples
+[ucore|INFO]Dataset loaded: 139 examples
+18:31:43 [INFO ] ucore: [3/4] Running training...
+[ucore|INFO][3/4] Running training...
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/athar/.netrc.
+wandb: Currently logged in as: andreabenathar (andreabenathar-twl-games) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run ii0qjuc1
+wandb: Tracking run with wandb version 0.26.1
+wandb: Run data is saved locally in /home/athar/Projects/Unsloth_Core/wandb/run-20260521_183144-ii0qjuc1
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run train-astronomy_guide-ollama-safe-any-20260521_safe-any_llama3.2-3b_015
+wandb: ⭐️ View project at https://wandb.ai/andreabenathar-twl-games/unsloth-core
+wandb: 🚀 View run at https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/ii0qjuc1
+wandb: Initializing weave.
+[36m[1mweave[0m: weave version 0.52.41 is available!  To upgrade, please run:
+[36m[1mweave[0m:  $ pip install weave --upgrade
+[weave.trace.init_message|INFO]weave version 0.52.41 is available!  To upgrade, please run:
+ $ pip install weave --upgrade
+[36m[1mweave[0m: Logged in as Weights & Biases user: andreabenathar.
+[36m[1mweave[0m: View Weave data at https://wandb.ai/andreabenathar-twl-games/unsloth-core/weave
+[weave.trace.init_message|INFO]Logged in as Weights & Biases user: andreabenathar.
+View Weave data at https://wandb.ai/andreabenathar-twl-games/unsloth-core/weave
+  Loaded 139 training examples
+  Output: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_015
+  [wandb] Run URL: https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/ii0qjuc1
+Traceback (most recent call last):
+  File "/home/athar/Projects/Unsloth_Core/scripts/training/train.py", line 1018, in <module>
+    main()
+  File "/home/athar/Projects/Unsloth_Core/scripts/training/train.py", line 931, in main
+    trainer, metrics = run_training(model, tokenizer, dataset, eval_dataset, config, preset_name=preset_name)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/scripts/training/train.py", line 677, in run_training
+    model = model.to("cuda")
+            ^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1381, in to
+    return self._apply(convert)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/nn/modules/module.py", line 933, in _apply
+    module._apply(fn)
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/nn/modules/module.py", line 933, in _apply
+    module._apply(fn)
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/nn/modules/module.py", line 933, in _apply
+    module._apply(fn)
+  [Previous line repeated 1 more time]
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/nn/modules/module.py", line 964, in _apply
+    param_applied = fn(param)
+                    ^^^^^^^^^
+  File "/home/athar/Projects/Unsloth_Core/unsloth_env/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1367, in convert
+    return t.to(
+           ^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 752.00 MiB. GPU 0 has a total capacity of 5.67 GiB of which 570.56 MiB is free. Process 2206469 has 3.87 GiB memory in use. Including non-PyTorch memory, this process has 244.00 MiB memory in use. Of the allocated memory 44.13 MiB is allocated by PyTorch, and 37.87 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+[1;34mwandb[0m: 
+[1;34mwandb[0m: 🚀 View run [33mtrain-astronomy_guide-ollama-safe-any-20260521_safe-any_llama3.2-3b_015[0m at: [34mhttps://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/ii0qjuc1[0m
+[1;34mwandb[0m: Find logs at: [1;35mwandb/run-20260521_183144-ii0qjuc1/logs[0m

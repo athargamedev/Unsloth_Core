@@ -2,11 +2,15 @@
   "npc_key": "astronomy_guide",
   "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
   "candidate": "astronomy_guide/astronomy_guide-lora-f16",
+  "wandb_url": "https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/9vve7zna",
+  "wandb_run_id": "9vve7zna",
+  "wandb_project": "unsloth-core",
+  "wandb_entity": null,
   "total_examples": 4,
-  "baseline_wins": 1,
-  "candidate_wins": 1,
-  "ties": 2,
-  "win_rate": 0.25,
+  "baseline_wins": 2,
+  "candidate_wins": 2,
+  "ties": 0,
+  "win_rate": 0.5,
   "per_concept": {
     "dialogue/misconceptions and safety boundaries": {
       "total": 1,
@@ -14,15 +18,15 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 39.7,
-      "avg_candidate_quality": 31.35,
+      "avg_baseline_quality": 38.29,
+      "avg_candidate_quality": 34.34,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "Hey AstronomyGuide, I've been reading about black holes and it says they suck up everything nearby. Is that true?",
           "winner": "candidate",
-          "candidate_quality": 31.35,
-          "candidate_words": 25,
+          "candidate_quality": 34.34,
+          "candidate_words": 33,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -31,18 +35,18 @@
     "teaching/stars, galaxies, and scale": {
       "total": 1,
       "baseline_wins": 0,
-      "candidate_wins": 0,
-      "ties": 1,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 32.58,
-      "avg_candidate_quality": 32.19,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 39.51,
+      "avg_candidate_quality": 40.6,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I don't get how stars can be so far away. Can't we just see them up close?",
-          "winner": "tie",
-          "candidate_quality": 32.19,
-          "candidate_words": 26,
+          "winner": "candidate",
+          "candidate_quality": 40.6,
+          "candidate_words": 62,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -50,19 +54,19 @@
     },
     "identity/exploration and evidence": {
       "total": 1,
-      "baseline_wins": 0,
+      "baseline_wins": 1,
       "candidate_wins": 0,
-      "ties": 1,
+      "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 36.11,
-      "avg_candidate_quality": 36.11,
+      "avg_baseline_quality": 33.67,
+      "avg_candidate_quality": 28.33,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I've seen some crazy claims about astrology online. Can you tell me what's real?",
-          "winner": "tie",
-          "candidate_quality": 36.11,
-          "candidate_words": 41,
+          "winner": "baseline",
+          "candidate_quality": 28.33,
+          "candidate_words": 17,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -74,15 +78,15 @@
       "candidate_wins": 0,
       "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 41.59,
-      "avg_candidate_quality": 34.01,
+      "avg_baseline_quality": 32.96,
+      "avg_candidate_quality": 36.11,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I've heard that astronomy is just about looking at the stars and guessing what they are. How does it actually work?",
           "winner": "baseline",
-          "candidate_quality": 34.01,
-          "candidate_words": 35,
+          "candidate_quality": 36.11,
+          "candidate_words": 43,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -90,9 +94,8 @@
     }
   },
   "weak_concepts": [
-    "teaching/stars, galaxies, and scale",
     "identity/exploration and evidence",
     "teaching/observational astronomy"
   ],
-  "timestamp": "2026-05-21T20:12:15.374287+00:00"
+  "timestamp": "2026-05-21T21:29:13.617717+00:00"
 }

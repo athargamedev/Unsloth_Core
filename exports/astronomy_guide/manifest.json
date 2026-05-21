@@ -8,9 +8,9 @@
   "gguf_files": [
     "astronomy_guide-lora-f16.gguf"
   ],
-  "exported_at": "2026-05-21T19:36:19.963051+00:00",
+  "exported_at": "2026-05-21T21:27:00.490066+00:00",
   "npc_name": "AstronomyGuide",
   "checksums": {
-    "astronomy_guide-lora-f16.gguf": "sha256:718f3c26031296fac3ea6c9b0bf426401ee3a1192f07172b0b87f40bd293306f"
+    "astronomy_guide-lora-f16.gguf": "sha256:5b09476ffaef8f2a26c753051332fb6dfada470328cbaaf555370b54e1e2a122"
   }
 }

@@ -4,7 +4,7 @@
   "sanitized": true,
   "sanitizer": {
     "version": "v2",
-    "date": "2026-05-21T20:51:39Z",
+    "date": "2026-05-21T21:30:49Z",
     "argv": "/home/athar/Projects/Unsloth_Core/scripts/dataset/sanitize_dataset.py /home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/train.jsonl --output /home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/train_clean.jsonl --strict-canonical --require-complete-metadata",
     "artifact_check_mode": "strict",
     "strict_mode": false
@@ -15,25 +15,25 @@
   },
   "input": {
     "file": "/home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/train.jsonl",
-    "hash": "sha256:0847b4c468189d554b487c1f57f1a2b47315bff9ea4d2a4ac43a92378e6b15fc",
-    "total_examples": 138
+    "hash": "sha256:ceddf5b3aeb9a02060eab2d9395d26c2473b1d4b23d67a7757cf0e6c351a1a0f",
+    "total_examples": 140
   },
   "statistics": {
-    "total_input": 138,
-    "total_output": 137,
-    "total_train": 137,
+    "total_input": 140,
+    "total_output": 139,
+    "total_train": 139,
     "total_validation": 12,
     "by_category": {
-      "teaching": 58,
+      "teaching": 59,
       "refusal": 17,
       "quest": 17,
       "dialogue": 32,
-      "identity": 13
+      "identity": 14
     },
     "by_difficulty": {
-      "beginner": 66,
+      "beginner": 67,
       "advanced": 23,
-      "intermediate": 48
+      "intermediate": 49
     },
     "by_safety_tag": {
       "boundary_enforcement": 18
@@ -44,7 +44,7 @@
       "min": 72,
       "max": 92,
       "std_dev": 4.1,
-      "passed_threshold": 137,
+      "passed_threshold": 139,
       "flagged_for_review": 0,
       "distribution": {
         "0-9": 0,
@@ -55,7 +55,7 @@
         "50-59": 0,
         "60-69": 0,
         "70-79": 40,
-        "80-89": 87,
+        "80-89": 89,
         "90-99": 10,
         "100+": 0
       }
@@ -204,7 +204,9 @@
     "21464df2883e903abb59b78eaf2b793057bdf3260f50124b1d3462216b773ea3",
     "62166e3b88068bc6e6635c7262dfee74b1f00a79813076c54fdd20ce27cd3bac",
     "339680f41b28a204c7e63ffccb51473207d3e1617c639df4bb89be650c6af165",
-    "e9885ec466cfd52b07c22d719d5cbf017668c91bd22785e0e2bf49fee2431778"
+    "e9885ec466cfd52b07c22d719d5cbf017668c91bd22785e0e2bf49fee2431778",
+    "bd3aaf7c7977328e6610d21cd484e06cdc80f3fe4b5771e92874482abc9eb105",
+    "edf0aaf88bc742177c868e687b2c53a19591f81c0f7e690b62adfa89e0f69c12"
   ],
   "content_hash_prefix": "sha256:",
   "generation": {

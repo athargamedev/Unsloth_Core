@@ -46,6 +46,39 @@ from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 # Presets are loaded from configs/presets/ as override-only YAML files.
 PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"  # TODO: consider centralizing
 
+_TOKENIZER_PLACEHOLDER_MAP = {
+    "<EOS_TOKEN>": "eos_token",
+    "<PAD_TOKEN>": "pad_token",
+}
+
+
+def _patch_tokenizers_backend_special_tokens(tokenizer) -> None:
+    """Map TRL placeholder special tokens onto the real tokenizer ids.
+
+    Some recent TRL/Unsloth combinations validate the literal placeholder tokens
+    <EOS_TOKEN> and <PAD_TOKEN> against the tokenizer vocab before preparing the
+    dataset. The underlying tokenizer already has real EOS/PAD tokens; we map the
+    placeholders to those ids so validation succeeds without resizing embeddings.
+    """
+    tokenizer_cls = tokenizer.__class__
+    if getattr(tokenizer_cls, "_unsloth_special_token_patch", False):
+        return
+
+    original_convert = tokenizer_cls.convert_tokens_to_ids
+
+    def convert_tokens_to_ids(self, token):
+        if token in _TOKENIZER_PLACEHOLDER_MAP:
+            target_attr = _TOKENIZER_PLACEHOLDER_MAP[token]
+            target_token = getattr(self, target_attr, None)
+            if target_token:
+                target_id = original_convert(self, target_token)
+                if target_id is not None:
+                    return target_id
+        return original_convert(self, token)
+
+    tokenizer_cls.convert_tokens_to_ids = convert_tokens_to_ids
+    tokenizer_cls._unsloth_special_token_patch = True
+
 
 def deep_merge(base, override):
     """Deep merge two dicts. override values take precedence."""
@@ -497,6 +530,11 @@ def get_model_and_tokenizer(config):
         device_map="auto",
         gpu_memory_utilization=gpu_memory_utilization,
     )
+    _patch_tokenizers_backend_special_tokens(tokenizer)
+    # Ensure tokenizer.eos_token/pad_token strings are the real values,
+    # not placeholder strings that Unsloth's patching may have injected.
+    tokenizer.eos_token = tokenizer.convert_ids_to_tokens(tokenizer.eos_token_id)
+    tokenizer.pad_token = tokenizer.convert_ids_to_tokens(tokenizer.pad_token_id)
 
     if use_lora:
         model = FastLanguageModel.get_peft_model(
@@ -630,11 +668,9 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
         remove_unused_columns=False,
         dataloader_pin_memory=False,
         dataset_text_field=training.get("dataset_text_field", "text"),
-        dataset_num_proc=training.get("dataset_num_proc", 2),
+        dataset_num_proc=training.get("dataset_num_proc", 0),
         max_length=training.get("max_seq_length", 2048),
         packing=training.get("packing", True),
-        eos_token=getattr(tokenizer, "eos_token", None),
-        pad_token=getattr(tokenizer, "pad_token", None),
     )
 
     if torch.cuda.is_available():
