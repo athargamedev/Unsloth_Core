@@ -27,6 +27,9 @@ _ARTIFACT_TYPE_MAP: dict[str, str] = {
     "export_pipeline": "gguf_adapter",
     "evaluate_model": "eval_report",
     "feedback_loop": "feedback_json",
+    "deepeval_run": "quality_report",
+    "evaluate_pipeline": "eval_report",
+    "compare_models": "eval_report",
 }
 
 
@@ -58,6 +61,9 @@ class WorkflowHookRecorder:
         self.db = db or create_pipeline_db()              # Auto-connect if caller didn't provide one
         self._db_run_created: bool = False                # NEW
         self._db_job_created: bool = False                # NEW
+        self._db_config_saved: bool = False                # pipeline_config_snapshots
+        self._db_quality_gate_created: bool = False        # dataset_quality_gates
+        self._db_eval_session_created: bool = False        # eval_sessions
 
     def emit(self, step: str, status: str, **fields: Any) -> None:
         if not self.path:
@@ -137,7 +143,97 @@ class WorkflowHookRecorder:
                     technique=technique_val,
                     run_id=run_id,
                 )
-
+ 
+        # ── CONFIG SNAPSHOT lifecycle ─────────────────────────────────
+        if step == "training_pipeline" and status == "start" and not self._db_config_saved:
+            full_config = {
+                "preset": fields.get("preset"),
+                "technique": technique_val,
+                "output_dir": fields.get("output_dir"),
+                "export_gguf": fields.get("export_gguf"),
+                "run_id": run_id,
+            }
+            self.db.save_config_snapshot(
+                npc_key=npc_key,
+                full_config=full_config,
+                preset=fields.get("preset"),
+                technique=technique_val,
+                file_path=fields.get("output_dir"),
+            )
+            self._db_config_saved = True
+ 
+        # ── QUALITY GATE lifecycle ────────────────────────────────────
+        if step == "deepeval_run" and status == "complete" and not self._db_quality_gate_created:
+            # Try to read quality_summary.json from well-known path
+            import json as _json
+            from pathlib import Path as _Path
+            qa_path = (
+                _Path(f"subjects/datasets/{npc_key}/{technique_val}/quality_summary.json")
+                if npc_key and technique_val else None
+            )
+            if qa_path and qa_path.exists():
+                try:
+                    with qa_path.open("r", encoding="utf-8") as _f:
+                        qa_data = _json.load(_f)
+                    self.db.create_quality_gate(
+                        npc_key=npc_key,
+                        technique=technique_val,
+                        total_samples=qa_data.get("total", 0),
+                        passed=qa_data.get("passed", 0),
+                        failed=qa_data.get("failed", 0),
+                        pass_rate=float(qa_data.get("pass_rate", 0.0)),
+                        metrics=qa_data.get("metrics"),
+                        categories=qa_data.get("categories"),
+                        failures=qa_data.get("failures"),
+                        judge_model=qa_data.get("judge_model", fields.get("judge_model", "qwen3:latest")),
+                        dataset_path=str(qa_path),
+                    )
+                except Exception as _exc:
+                    logger.debug("Failed to read quality_summary.json: %s", _exc)
+            else:
+                # No file yet — record what we know from step fields
+                self.db.create_quality_gate(
+                    npc_key=npc_key,
+                    technique=technique_val or "unknown",
+                    total_samples=0,
+                    passed=0,
+                    failed=0,
+                    pass_rate=0.0,
+                    judge_model=fields.get("judge_model", "qwen3:latest"),
+                )
+            self._db_quality_gate_created = True
+ 
+        # ── EVAL SESSION lifecycle ────────────────────────────────────
+        if step == "evaluate_pipeline" and status == "complete" and not self._db_eval_session_created:
+            # Try to read feedback JSON for structured results
+            import json as _json
+            from pathlib import Path as _Path
+            feedback_path = None
+            report_html = fields.get("report_path")
+            if report_html:
+                fb_dir = _Path(report_html).parent / "feedback"
+                if fb_dir.exists():
+                    fb_files = sorted(fb_dir.glob("*.json"))
+                    if fb_files:
+                        feedback_path = str(fb_files[-1])
+ 
+            metadata = {
+                "html": fields.get("html", False),
+                "track": fields.get("track", False),
+            }
+ 
+            self.db.create_eval_session(
+                npc_key=npc_key,
+                status="completed",
+                candidate_path=fields.get("candidate"),
+                baseline_path=fields.get("baseline"),
+                judge_model=fields.get("judge_model", "qwen2.5:7b"),
+                report_html_path=report_html,
+                feedback_json_path=feedback_path,
+                metadata=metadata,
+            )
+            self._db_eval_session_created = True
+ 
     def _db_emit_run(
         self,
         npc_key: str,

@@ -191,6 +191,8 @@ class PipelineDB:
         "nextRetryAt", "cwd", "artifact_type", "file_path", "file_size_bytes",
         "metadata", "dataset_path", "judge_model", "candidate_path",
         "baseline_path", "full_config", "run_dir",
+        "total_examples", "baseline_wins", "candidate_wins", "ties", "win_rate",
+        "per_concept", "weak_concepts", "feedback_json_path", "report_html_path",
     }
 
     @staticmethod
