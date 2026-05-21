@@ -1343,9 +1343,7 @@
       "terminalReason": "external_import"
     }
   ],
-  "logs": [
-    "[2026-05-20T22:45:57.456Z] [STARTUP] Marked 1 stale running job(s) as failed"
-  ],
+  "logs": [],
   "nodeId": "5ecbf770-7a12-4eb4-a559-6491504274a9",
   "workflows": [],
   "autoSyncExternal": true

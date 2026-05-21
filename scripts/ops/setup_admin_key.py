@@ -22,6 +22,7 @@ retrieved from the database later (only the bcrypt hash is stored).
 import argparse
 import os
 import secrets
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -30,12 +31,44 @@ from datetime import datetime, timezone
 
 DEFAULT_DB_URL = "postgresql://postgres:postgres@localhost:15434/postgres"
 DASHBOARD_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     "frontend_control",
     "unity-npc-llm-training-dashboard",
 )
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
+
+
+def _find_node() -> str | None:
+    """Find Node.js executable on this system.
+
+    Checks PATH first, then common installation locations, then nvm-managed
+    versions. Returns the first viable path or None if not found.
+    """
+    # 1. Check PATH
+    node = shutil.which("node")
+    if node:
+        return node
+
+    # 2. Check common static locations
+    common_paths = [
+        "/usr/bin/node",
+        "/usr/local/bin/node",
+    ]
+    for p in common_paths:
+        if os.path.isfile(p):
+            return p
+
+    # 3. Check nvm-managed installations (~/.nvm/versions/node/*/bin/node)
+    nvm_dir = os.path.expanduser("~/.nvm/versions/node")
+    if os.path.isdir(nvm_dir):
+        versions = sorted(os.listdir(nvm_dir), reverse=True)
+        for v in versions:
+            candidate = os.path.join(nvm_dir, v, "bin", "node")
+            if os.path.isfile(candidate):
+                return candidate
+
+    return None
 
 
 def parse_args() -> argparse.Namespace:
@@ -63,6 +96,13 @@ def hash_with_bcrypt_node(key: str) -> str:
     The key is passed through stdin to avoid leaking it into the process
     environment (which is visible to other processes via /proc/PID/environ).
     """
+    node_path = _find_node()
+    if not node_path:
+        raise RuntimeError(
+            "Node.js not found on PATH or at any common location. "
+            "Install Node.js or run:  pip install bcrypt"
+        )
+
     node_script = """
         const bcrypt = require('bcrypt');
         const chunks = [];
@@ -74,7 +114,7 @@ def hash_with_bcrypt_node(key: str) -> str:
     """
     try:
         result = subprocess.run(
-            ["node", "-e", node_script],
+            [node_path, "-e", node_script],
             input=key.encode("utf-8"),
             capture_output=True,
             cwd=DASHBOARD_DIR,
@@ -86,10 +126,17 @@ def hash_with_bcrypt_node(key: str) -> str:
         if not hashed:
             raise RuntimeError("Node.js subprocess produced empty output")
         return hashed
-    except FileNotFoundError:
+    except FileNotFoundError as e:
+        # Distinguish between a missing node executable and a bad cwd
+        if node_path and not os.path.isfile(node_path):
+            msg = "Node.js not found at resolved path."
+        elif not os.path.isdir(DASHBOARD_DIR):
+            msg = f"Dashboard directory does not exist: {DASHBOARD_DIR}"
+        else:
+            msg = f"Subprocess failed to start: {e}"
         raise RuntimeError(
-            "Node.js is not installed or not found in PATH. "
-            "Install Node.js or `pip install bcrypt` to use the Python path."
+            f"{msg} "
+            "Install Node.js or run:  pip install bcrypt"
         ) from None
 
 

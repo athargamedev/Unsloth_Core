@@ -16,22 +16,34 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 ## 📂 Project Logic Map (Where things live)
 | Component | Directory / File | Description |
 | :--- | :--- | :--- |
-| **Unified CLI** | `ucore` | Main entry point for all operations. |
+| **Auth & API Keys** | `src/backend/middleware/auth.ts`, `src/backend/routes/auth.ts` | Bearer token auth with bcrypt, role-based access (admin/operator/viewer), API key management endpoints (GET/POST/DELETE /api/auth/keys) |
+| **Audit Logging** | `src/backend/middleware/audit.ts` | Automatic audit logging to `api_audit_log` table — captures method, path, status, body (with sensitive field redaction), IP, duration |
 | **Core Scripts** | `scripts/` | Python implementation of the pipeline stages. |
-| **NPC Specs** | `subjects/NPC_specs/` | JSON files defining NPC identity and knowledge. |
+| **Dashboard Auth** | `scripts/ops/setup_admin_key.py` | Bootstrap script to generate the initial admin API key (stores bcrypt hash in `api_keys` table, key passed via stdin not env vars) |
+| **Dashboard Enhancement** | `src/components/NotificationCenter.tsx`, `src/components/GlobalSearch.tsx`, `src/components/LoadingSpinner.tsx`, `src/components/EmptyState.tsx` | Toast notification system (bell icon, auto-dismiss, type-colored), Ctrl+K global search across NPCs/datasets/runs/exports/jobs, loading spinner, empty state components |
 | **Datasets** | `subjects/datasets/{npc}/{technique}/` | Generated training/validation data (JSONL). `template/` = default dataset directory. |
-| **Reference Docs** | `subjects/reference_docs/` | Centralized primer files for grounding dataset generation. |
-| **Schemas** | `subjects/schemas/` | JSON Schema validators for training data format. |
-| **Training Configs**| `configs/` | YAML base configs and presets. |
 | **DeepEval Dataset Gate** | `tests/evals/`, `scripts/dataset/dataset_eval.py` | Local dataset-quality evals using the `qwen3:latest` Ollama judge. |
-| **LoRA Adapters** | `outputs/` | Checkpoints and final adapters from training. |
-| **GGUF Exports** | `exports/` | LoRA adapter GGUFs (MBs) for Unity/LLMUnity. |
 | **Evaluations** | `eval/reports/`, `eval/results/feedback/` | HTML/markdown eval reports, structured per-concept feedback JSON. |
 | **Feedback Gaps** | `eval/results/gaps/` | Knowledge gap analysis JSON reports from feedback loop. |
-| **Supabase** | `supabase/` | DB migrations and local Docker setup. |
 | **Frontend** | `frontend_control/` | Monitoring dashboard and React controls. |
+| **GGUF Exports** | `exports/` | LoRA adapter GGUFs (MBs) for Unity/LLMUnity. |
+| **Keyboard Shortcuts** | `src/hooks/useKeyboardShortcuts.ts` | Ctrl+K (search), Ctrl+S (stop all jobs), Alt+1-4 (navigate tabs), Ctrl+R (refresh data) — input-aware (ignored when input focused) |
 | **llama.cpp** | `~/.unsloth/llama.cpp/` | Prebuilt CUDA binaries: llama-server, llama-quantize, convert_lora_to_gguf.py. |
+| **LoRA Adapters** | `outputs/` | Checkpoints and final adapters from training. |
+| **Modular Backend** | `src/backend/` | 27-file modular Express backend under `src/backend/` (routes/, services/, middleware/, lib/) — additive alongside existing server.ts |
+| **Modular Entry Point** | `server-modular.ts` | Production-ready Express server wiring modular backend with CORS, rate limiting, security headers, Vite dev middleware, job queue, and graceful shutdown |
+| **NPC Specs** | `subjects/NPC_specs/` | JSON files defining NPC identity and knowledge. |
+| **Pipeline DB (Python)** | `scripts/ops/pipeline_db.py` | Dual-mode DB client (direct PostgreSQL via psycopg2 + REST API fallback) for all pipeline tables — 20 methods, auto-detection from env vars, filesystem sync |
+| **Pipeline DB Tables** | `supabase/migrations/20260521000001_create_pipeline_tables.sql` | 8 pipeline tables: `pipeline_jobs`, `pipeline_runs`, `pipeline_artifacts`, `dataset_quality_gates`, `eval_sessions`, `pipeline_config_snapshots`, `api_keys`, `api_audit_log` — with 3 helper functions, 14 indexes, 8 RLS policies |
+| **React Query Hooks** | `src/hooks/useReactQuery.ts`, `src/hooks/useWebSocketQuery.ts` | React Query wrappers for 11 API endpoints + 6 mutations; WebSocket-to-React-Query bridge with stale-time management |
+| **Reference Docs** | `subjects/reference_docs/` | Centralized primer files for grounding dataset generation. |
+| **Schemas** | `subjects/schemas/` | JSON Schema validators for training data format. |
+| **Supabase** | `supabase/` | DB migrations and local Docker setup. |
+| **Training Configs**| `configs/` | YAML base configs and presets. |
+| **Unified CLI** | `ucore` | Main entry point for all operations. |
+| **Workflow Chaining** | `src/backend/routes/workflow.ts` (chainToNextStep), `src/backend/services/job-queue.ts` | Multi-step workflow chaining (generate → sanitize → train → export) with auto-progression, DB-persistent job queue with PID liveness checks, FOR UPDATE SKIP LOCKED polling, exponential backoff retry |
 | **Workflow Hooks** | `scripts/ops/workflow_hooks.py` | Lifecycle recording for all pipeline stages via step() context managers. `WorkflowHookReader` for parsing hook JSONL. |
+| **Zustand Store** | `src/stores/app-store.ts` | UI state management (tabs, filters, toasts, selection, recent searches with localStorage persistence) |
 
 ## 🛠️ The Pipeline (7 Stages + Feedback Loop)
 Transforms a subject spec into a playable NPC:
@@ -202,6 +214,89 @@ A local Supabase instance can track:
 - **Frontend trust rule**: The dashboard must reflect canonical backend state and process artifacts so non-coder developers can operate the workflow intuitively.
 - **Local Ollama rule**: Benchmark and tune local Ollama on this machine before claiming the need for remote capacity; measure tokens/sec, latency, VRAM use, loaded models, and failure rate.
 - **Hook system**: All pipeline scripts record lifecycle events in `workflow_hooks.jsonl` via `step()` context managers. Use `WorkflowHookReader.pipeline_summary(path)` to read. Hook files contain start/complete/error events per step with timing, `spec_path`, `run_id`, and step-specific metadata.
+- **Auth**: After a fresh Supabase migration, run `python scripts/ops/setup_admin_key.py` to create the initial admin API key. Use the key with `curl -H "Authorization: Bearer <key>"` for all /api calls.
+- **Modular backend**: Prefer `npm run dev:modular` over `npm run dev` for new work — the modular backend (`server-modular.ts`) includes auth, rate limiting, audit logging, and a job queue. The legacy `server.ts` remains for backward compatibility.
+- **Job queue**: All pipeline operations use `JobQueue` from `src/backend/services/job-queue.ts` for process lifecycle management. Jobs survive server restarts. Monitor at `/api/jobs`.
+- **Code review gates**: Code review findings from `reviewer` agent use severity labels CRITICAL, MAJOR, MINOR. All CRITICAL and MAJOR issues must be resolved before merging. Fix using targeted coder tasks based on the review findings.
+
+## 🔐 Pipeline Infrastructure
+
+### Database (PostgreSQL via Supabase)
+
+The pipeline tracks all operations in 8 PostgreSQL tables:
+
+| Table | Purpose | Key Columns |
+|-------|---------|-------------|
+| `pipeline_jobs` | Job queue with process lifecycle | status, progress, logs, pid, workflow_id, retry_count |
+| `pipeline_runs` | Training/eval run metadata | status, loss, metrics, npc_key, technique |
+| `pipeline_artifacts` | Generated artifacts (GGUFs, datasets) | artifact_type, file_path, checksum, size_bytes |
+| `dataset_quality_gates` | DeepEval quality gate results | pass_rate, total/passed/failed, recommendation |
+| `eval_sessions` | Evaluation session tracking | judge_model, win_rate, per_category_results |
+| `pipeline_config_snapshots` | Frozen config at time of run | config_json, technique, preset, base_model |
+| `api_keys` | API key management | key_hash, key_prefix, name, role, last_used_at |
+| `api_audit_log` | Request audit trail | method, path, status_code, api_key_id, duration_ms |
+
+**Connection:**
+- Python scripts: `PipelineDB` auto-detects direct pg (`PIPELINE_DB_URL`) or Supabase REST (`SUPABASE_URL` + `SUPABASE_SERVICE_KEY`)
+- TS backend: Uses `pg.Pool` via `src/backend/lib/db.ts`
+- Local Supabase: `http://127.0.0.1:16437` (port may vary — check `supabase status`)
+
+### Job Queue (PostgreSQL-backed, no Redis required)
+
+The job queue at `src/backend/services/job-queue.ts` provides:
+
+- **DB-persistent queue**: Jobs survive server restarts (backed by `pipeline_jobs` table)
+- **Process lifecycle**: `spawn` with PID tracking, SIGTERM → 30s → SIGKILL escalation
+- **Concurrency control**: Max concurrent jobs, per-startup PID recovery (checks `/proc/PID` liveness)
+- **Polling**: `FOR UPDATE SKIP LOCKED` query (default 2s interval) with incremental stats counters
+- **Retry**: Exponential backoff (2^n * 1s, max 5 attempts) for failed jobs
+- **Graceful shutdown**: Drains running jobs before exit, 10s force-kill timeout
+
+To swap to BullMQ (Redis), replace `JobQueue` with BullMQ's `Queue/Worker` — API-compatible.
+
+### Auth System
+
+The auth middleware at `src/backend/middleware/auth.ts` implements:
+
+- **Bearer token auth**: `Authorization: Bearer <64-char-hex-key>` header validation
+- **bcrypt hashing**: Keys hashed with bcrypt (cost 10) for constant-time comparison
+- **Prefix-based lookup**: First 8 hex chars indexed for efficient key lookup
+- **Three roles**: `admin` (full access), `operator` (manage jobs), `viewer` (read-only, write ops blocked)
+- **Optional auth**: `optionalAuth` middleware for public-read endpoints
+
+Bootstrap flow:
+```bash
+# Generate initial admin key (saves hash to DB, prints raw key to stdout)
+python scripts/ops/setup_admin_key.py
+
+# Use the key in all subsequent requests
+curl -H "Authorization: Bearer <key>" http://localhost:3100/api/auth/keys
+```
+
+### Frontend Architecture
+
+The dashboard uses a layered state architecture:
+
+- **React Query** (`@tanstack/react-query`): Server state — 11 query hooks, 6 mutations, staleTime=5s, retry=2
+- **Zustand**: UI-only state — active tab, filters, toasts, selection, sidebar state
+- **WebSocket bridge** (`useWebSocketQuery.ts`): WS events invalidate React Query caches
+- **Notifications**: `NotificationCenter` component with auto-dismiss (8s), type colors, badge count read state
+- **Global search**: Ctrl+K modal searching across NPCs, datasets, runs, exports, jobs with localStorage recent searches
+- **Keyboard shortcuts**: Input-aware shortcuts for navigation, search, refresh, stop-all
+
+### Running in Modular Mode
+
+```bash
+# Development (Vite dev server + modular backend)
+npm run dev:modular
+
+# Production (serve built static files + modular backend)
+npm run build
+npm run start:modular
+
+# Generate admin API key
+python scripts/ops/setup_admin_key.py
+```
 
 ## ⚡ Ollama Performance Tuning
 
@@ -265,10 +360,17 @@ Weights & Biases tracks every training run with:
 - **GGUF artifact**: Exported GGUF as `gguf-{npc_key}` artifact.
 
 **Dashboard:** Runs at `http://localhost:3100` (React SPA in `frontend_control/`):
+- Notification center with toast system (bell icon, auto-dismiss, type-colored alerts)
+- Ctrl+K global search across NPCs, datasets, runs, exports, jobs
+- Keyboard shortcuts: Ctrl+K (search), Ctrl+S (stop jobs), Alt+1-4 (navigate tabs), Ctrl+R (refresh)
 - Operations Matrix with pipeline control, W&B links, real-time job table
 - Training Suite hyperparameter panel
 - TensorBoard charts and W&B links
 - GPU telemetry and system monitoring
+- React Query for server state caching + Zustand for UI state
+
+**Modular Server (dev):** `npm run dev:modular` starts the new modular backend at port 3100 with Vite dev middleware, rate limiting, auth, and job queue.
+**Legacy Server:** `npm run dev` still starts the existing monolithic `server.ts` for backward compatibility.
 
 ## 🖥️ Active NPCs
 | NPC | Key | Subject | Current local state |

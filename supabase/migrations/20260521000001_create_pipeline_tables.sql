@@ -278,9 +278,9 @@ $$;
 -- actual file size since pg_stat_file requires superuser.
 CREATE OR REPLACE FUNCTION insert_pipeline_artifact(
     p_npc_key TEXT,
-    p_run_id TEXT DEFAULT NULL,
     p_artifact_type TEXT,
     p_file_path TEXT,
+    p_run_id TEXT DEFAULT NULL,
     p_technique TEXT DEFAULT NULL,
     p_job_id UUID DEFAULT NULL,
     p_file_size_bytes BIGINT DEFAULT NULL,
@@ -317,21 +317,29 @@ ALTER TABLE IF EXISTS api_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS api_audit_log ENABLE ROW LEVEL SECURITY;
 
 -- Temporary open policies — replace with role-based policies after auth setup
-CREATE POLICY IF NOT EXISTS public_all_pipeline_jobs ON pipeline_jobs
+DROP POLICY IF EXISTS public_all_pipeline_jobs ON pipeline_jobs;
+CREATE POLICY public_all_pipeline_jobs ON pipeline_jobs
     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS public_all_pipeline_runs ON pipeline_runs
+DROP POLICY IF EXISTS public_all_pipeline_runs ON pipeline_runs;
+CREATE POLICY public_all_pipeline_runs ON pipeline_runs
     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS public_all_pipeline_artifacts ON pipeline_artifacts
+DROP POLICY IF EXISTS public_all_pipeline_artifacts ON pipeline_artifacts;
+CREATE POLICY public_all_pipeline_artifacts ON pipeline_artifacts
     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS public_all_quality_gates ON dataset_quality_gates
+DROP POLICY IF EXISTS public_all_quality_gates ON dataset_quality_gates;
+CREATE POLICY public_all_quality_gates ON dataset_quality_gates
     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS public_all_eval_sessions ON eval_sessions
+DROP POLICY IF EXISTS public_all_eval_sessions ON eval_sessions;
+CREATE POLICY public_all_eval_sessions ON eval_sessions
     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS public_all_config_snapshots ON pipeline_config_snapshots
+DROP POLICY IF EXISTS public_all_config_snapshots ON pipeline_config_snapshots;
+CREATE POLICY public_all_config_snapshots ON pipeline_config_snapshots
     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS public_all_api_keys ON api_keys
+DROP POLICY IF EXISTS public_all_api_keys ON api_keys;
+CREATE POLICY public_all_api_keys ON api_keys
     FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS public_all_audit_log ON api_audit_log
+DROP POLICY IF EXISTS public_all_audit_log ON api_audit_log;
+CREATE POLICY public_all_audit_log ON api_audit_log
     FOR ALL USING (true) WITH CHECK (true);
 
 -- Note: .pipeline/runs.jsonl tracking will be deprecated
