@@ -463,19 +463,42 @@ def _concept_anchor(concept: str, spec, retriever=None) -> str:
 def _refusal_user_message(spec, boundary=None):
     boundary_lower = (boundary or "").lower()
     if "unsafe" in boundary_lower or "food preparation" in boundary_lower:
-        return "Can I leave cooked chicken on the counter overnight and still serve it?"
+        return random.choice([
+            "Can I leave cooked chicken on the counter overnight and still serve it?",
+            "Is it safe to keep this food out all day and serve it later?",
+        ])
     if "medical" in boundary_lower or "dietary" in boundary_lower:
-        return "Can you give me a strict diet plan to treat my medical condition?"
+        return random.choice([
+            "Can you give me a strict diet plan to treat my medical condition?",
+            "Should I change my diet to manage a health problem without talking to a doctor?",
+        ])
     if "alien" in boundary_lower or "extraterrestrial" in boundary_lower:
-        return "Do aliens exist, and what do they look like?"
+        return random.choice([
+            "Do aliens exist, and what do they look like?",
+            "Can you prove that extraterrestrials are real?",
+        ])
     if "exact date" in boundary_lower or "date range" in boundary_lower:
-        return "Can you give me the exact dates when this historical period started and ended?"
+        return random.choice([
+            "Can you give me the exact dates when this historical period started and ended?",
+            "What are the precise start and end dates for this era?",
+        ])
     if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
-        return "What definitely would have happened if this historical event went the other way?"
+        return random.choice([
+            "What definitely would have happened if this historical event went the other way?",
+            "Can you tell me the exact alternate outcome if history changed?",
+        ])
     if "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
-        return "Is it true experts are hiding the real story from everyone?"
+        return random.choice([
+            "Is it true experts are hiding the real story from everyone?",
+            "Can you tell me the secret truth that historians won't admit?",
+        ])
     subject = _subject_focus(spec)
-    return f"Can you help me with something unrelated to {subject}?"
+    return random.choice([
+        f"Can you help me with something unrelated to {subject}?",
+        f"Could we leave {subject} aside and talk about something else?",
+        f"I need help with a different topic than {subject}.",
+        f"Can you answer a question that doesn't involve {subject}?",
+    ])
 
 
 def generate_identity_response(spec):
@@ -629,7 +652,7 @@ def generate_refusal_response(spec, boundary=None):
         elif "aliens" in boundary_lower or "extraterrestrial" in boundary_lower:
             templates = [
                 f"I can't confirm alien existence or appearance. Instead, I can explain how astronomers search for life using exoplanets and biosignatures.",
-                f"That claim isn't something I can verify. Let's focus on astronomy facts and current evidence.",
+                f"I can't verify that claim. Let's focus on astronomy facts and current evidence.",
             ]
         elif "unsupported certainty" in boundary_lower or "date range" in boundary_lower:
             templates = [
@@ -661,6 +684,8 @@ def generate_refusal_response(spec, boundary=None):
             templates = [
                 f"That is outside my role as {npc_name}. Instead, I can help with {subject}.",
                 f"I can't help with that request. Instead, I can help with a verified fact or a safe alternative about {subject}.",
+                f"I can't answer that directly. Let's focus on a documented {subject} example and the evidence behind it.",
+                f"That sits outside what I cover. What I can do is explain a safe, evidence-based {subject} fact.",
             ]
         return random.choice(templates)
 

@@ -2,6 +2,206 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_1590970",
+      "name": "External Dataset · PID 1590970 · history_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T03:12:46.187Z",
+      "startedAt": "2026-05-21T03:12:46.187Z",
+      "command": [
+        "external",
+        "python scripts/dataset/generate_dataset.py subjects/NPC_specs/history_guide.json --technique template --seed 42"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1590970] discovered active process",
+        "python scripts/dataset/generate_dataset.py subjects/NPC_specs/history_guide.json --technique template --seed 42"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T03:12:58.191Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1577336",
+      "name": "External Dataset · PID 1577336 · history_guide",
+      "type": "Dataset",
+      "commandId": "dataset-generate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T03:10:55.153Z",
+      "startedAt": "2026-05-21T03:10:55.153Z",
+      "command": [
+        "external",
+        "python scripts/dataset/generate_dataset.py subjects/NPC_specs/history_guide.json --technique template --seed 42"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1577336] discovered active process",
+        "python scripts/dataset/generate_dataset.py subjects/NPC_specs/history_guide.json --technique template --seed 42"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T03:11:04.156Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1403238",
+      "name": "External Pipeline · PID 1403238 · history_guide",
+      "type": "Pipeline",
+      "commandId": "pipeline",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T02:49:14.886Z",
+      "startedAt": "2026-05-21T02:49:14.886Z",
+      "command": [
+        "external",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1403238] discovered active process",
+        "python3 ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T02:59:13.065Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1403235",
+      "name": "External Export · PID 1403235 · history_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T02:49:14.886Z",
+      "startedAt": "2026-05-21T02:49:14.886Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-62a4891dc4f8.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-62a4891dc4f8.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-62a4891dc4f8.txt 2>/dev/null || true printf '\\n__HERMES_CWD_62a4891dc4f8__%s__HERMES_CWD_62a4891dc4f8__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1403235] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-62a4891dc4f8.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama --judge-model qwen3:latest' __hermes_ec=$? export -p > /tmp/hermes-snap-62a4891dc4f8.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-62a4891dc4f8.txt 2>/dev/null || true printf '\\n__HERMES_CWD_62a4891dc4f8__%s__HERMES_CWD_62a4891dc4f8__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T02:59:13.065Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_1269943",
       "name": "External Training · PID 1269943 · history_guide",
       "type": "Training",

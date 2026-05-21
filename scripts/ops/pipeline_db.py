@@ -166,6 +166,16 @@ class PipelineDB:
         self._supabase_key = resolved_supabase_key or ""
         self._last_status: Optional[int] = None
 
+    @property
+    def connected(self) -> bool:
+        """Return True if a connection mode has been established.
+
+        Once ensure_connected() successfully probes the database, _mode is
+        set to \"direct\" or \"rest\". This property reflects that state
+        without performing additional I/O.
+        """
+        return self._mode is not None
+
     # ── Column name allowlist ──────────────────────────────────────────
     # Only these column names may be used as dynamic SQL identifiers from
     # **kwargs. Any key not in this set is skipped with a warning.
@@ -175,6 +185,8 @@ class PipelineDB:
         "spec_path", "run_id", "technique", "preset", "base_model",
         "npc_key", "category", "score", "pass_rate", "total", "passed",
         "failed", "failure_reason", "recommendation", "stage", "model",
+        "model_id", "duration_s", "step", "tool", "output_dir",
+        "command_id", "command_args",
         "pid", "recoveredAt", "retryCount", "retryMax", "retryDelayBaseMs",
         "nextRetryAt", "cwd", "artifact_type", "file_path", "file_size_bytes",
         "metadata", "dataset_path", "judge_model", "candidate_path",
@@ -334,6 +346,10 @@ class PipelineDB:
         if self._supabase_key:
             headers["apikey"] = self._supabase_key
             headers["Authorization"] = f"Bearer {self._supabase_key}"
+
+        # Auto-add Prefer header for mutations to get the created row back
+        if method in ("POST", "PATCH"):
+            headers["Prefer"] = "return=representation"
 
         if params:
             query_string = urlencode(params, doseq=True)
