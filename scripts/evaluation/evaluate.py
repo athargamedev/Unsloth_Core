@@ -209,7 +209,7 @@ class LlamaServer:
         self.process = None
         self.api_url = f"http://{host}:{port}/v1/chat/completions"
 
-    def start(self, timeout=60):
+    def start(self, timeout=180):
         """Start the llama.cpp server and wait until it's ready."""
         # Try to find llama-server binary
         candidates = [
@@ -277,7 +277,7 @@ class LlamaServer:
                 continue
             # Probe the HTTP endpoint until it responds
             probe_start = time.time()
-            while time.time() - probe_start < 30:
+            while time.time() - probe_start < 90:
                 try:
                     with urllib.request.urlopen(
                         urllib.request.Request(health_url), timeout=5

@@ -2,12 +2,60 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2074895",
+      "name": "External Evaluation · PID 2074895 · astronomy_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "astronomy_guide",
+      "status": "running",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T20:08:18.914Z",
+      "startedAt": "2026-05-21T20:08:18.914Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --spec subjects/NPC_specs/astronomy_guide.json --report-html --track"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2074895] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --spec subjects/NPC_specs/astronomy_guide.json --report-html --track"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
       "id": "ext_proc_2071178",
       "name": "External Evaluation · PID 2071178 · astronomy_guide",
       "type": "Evaluation",
       "commandId": "evaluate",
       "npcKey": "astronomy_guide",
-      "status": "running",
+      "status": "stopped",
       "progress": 10,
       "loss": null,
       "createdAt": "2026-05-21T20:06:21.895Z",
@@ -47,7 +95,9 @@
         "[EXTERNAL][PID 2071178] discovered active process",
         "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --spec subjects/NPC_specs/astronomy_guide.json --report-html --track"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T20:07:30.907Z",
+      "exitCode": -15
     },
     {
       "id": "ext_train_history_guide_20260521_smoke_qwen3-1.7b_002",
