@@ -325,6 +325,10 @@ async function main(): Promise<void> {
     });
   });
 
+  queue.onLog((jobId, line) => {
+    broadcast("job_log", { jobId, line, timestamp: new Date().toISOString() });
+  });
+
   // ── Graceful Shutdown ─────────────────────────────────────────────────
 
   const shutdown = async (signal: string): Promise<void> => {

@@ -30,6 +30,7 @@ import { useSystemStatus } from './hooks/useSystemStatus';
 import { useTelemetry } from './hooks/useTelemetry';
 import { useDatasets } from './hooks/useDatasets';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useWebSocketQuery } from './hooks/useWebSocketQuery';
 import { AIAssistant } from './components/AIAssistant';
 import { OperationsMatrix } from './components/OperationsMatrix';
 import { TrainingSuite } from './components/TrainingSuite';
@@ -194,7 +195,7 @@ export default function App() {
   } = useDatasets();
   const datasetsRef = useRef(datasets);
 
-  const { connectionQuality } = useWebSocket({
+  const { connectionQuality, wsRef } = useWebSocket({
     onTelemetry: (data) => setTelemetry(data),
     onJobUpdate: () => fetchJobs(),
     onLogsCleared: () => setLogs([]),
@@ -204,6 +205,9 @@ export default function App() {
       fetchStatus();
     },
   });
+
+  // Wire WebSocket events to React Query cache invalidation
+  useWebSocketQuery(wsRef.current);
 
   useKeyboardShortcuts();
 

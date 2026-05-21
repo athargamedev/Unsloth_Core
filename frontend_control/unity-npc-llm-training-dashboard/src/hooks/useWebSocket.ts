@@ -136,5 +136,5 @@ export function useWebSocket(options: UseWebSocketOptions) {
     };
   }, [connect]);
 
-  return { isConnected, connectionQuality };
+  return { isConnected, connectionQuality, wsRef };
 }

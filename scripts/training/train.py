@@ -526,8 +526,7 @@ def load_dataset_from_jsonl(path, tokenizer, config):
 
 def run_training(model, tokenizer, dataset, eval_dataset, config):
     """Run the SFT training loop."""
-    from trl import SFTTrainer
-    from transformers import TrainingArguments
+    from trl import SFTTrainer, SFTConfig
     import torch
 
     training = config.get("training", {})
@@ -543,7 +542,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
         report_targets.append("wandb")
     report_to = report_targets if report_targets else "none"
 
-    args = TrainingArguments(
+    args = SFTConfig(
         output_dir=output_dir,
         num_train_epochs=training.get("num_epochs", 3),
         max_steps=training.get("max_steps", -1) if training.get("max_steps", -1) > 0 else -1,
@@ -569,17 +568,22 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
         ddp_find_unused_parameters=False if torch.cuda.device_count() > 1 else None,
         remove_unused_columns=False,
         dataloader_pin_memory=False,
+        dataset_text_field=training.get("dataset_text_field", "text"),
+        dataset_num_proc=training.get("dataset_num_proc", 2),
+        max_length=training.get("max_seq_length", 2048),
+        packing=training.get("packing", True),
+        eos_token=getattr(tokenizer, "eos_token", None),
+        pad_token=getattr(tokenizer, "pad_token", None),
     )
+
+    if torch.cuda.is_available():
+        model = model.to("cuda")
 
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         train_dataset=dataset,
         eval_dataset=eval_dataset,
-        dataset_text_field="text",
-        max_seq_length=training.get("max_seq_length", 2048),
-        dataset_num_proc=2,
-        packing=training.get("packing", True),
         args=args,
     )
 

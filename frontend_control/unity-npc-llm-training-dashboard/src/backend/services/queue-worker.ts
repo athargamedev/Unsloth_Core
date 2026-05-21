@@ -216,12 +216,15 @@ async function finalizeJob(
  *                     (used by JobQueue for cancellation).
  * @param onUpdate   - Optional callback fired on every meaningful job state
  *                     change (used for WebSocket broadcasts).
+ * @param onLog      - Optional callback fired on each log line (used for
+ *                     real-time WebSocket log streaming).
  */
 export async function processJob(
   job: QueueJob,
   pool: pg.Pool,
   tracker: JobProcessTracker,
   onUpdate?: (job: QueueJob) => void,
+  onLog?: (jobId: string, line: string) => void,
 ): Promise<void> {
   const jobId = job.id;
 
@@ -303,6 +306,7 @@ export async function processJob(
     for (const rawLine of lines) {
       const prefixed = `[${source.toUpperCase()}] ${rawLine}`;
       lineBuffer.push(prefixed);
+      onLog?.(jobId, prefixed);        // real-time log streaming
       lineCount += 1;
 
       const parsed = parseLoss(rawLine);

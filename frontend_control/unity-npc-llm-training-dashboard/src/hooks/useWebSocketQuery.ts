@@ -8,6 +8,7 @@ import type { Telemetry, WsMessage } from '../api';
  *
  * - `telemetry` → `queryClient.setQueryData` (avoids a network round-trip)
  * - `job_update` → `queryClient.invalidateQueries` (triggers a fresh fetch)
+ * - `job_log` → invalidates jobs so the next read picks up fresh logs
  * - `logs_cleared` → invalidates logs so the next read is empty
  *
  * Attach this once at the app root after establishing a WebSocket connection.
@@ -38,6 +39,9 @@ export function useWebSocketQuery(ws: WebSocket | null) {
         }
       } else if (msgType === 'job_update') {
         // A job's status / progress changed — refetch the full job list.
+        queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
+      } else if (msgType === 'job_log') {
+        // Invalidate jobs query so the next read picks up fresh logs
         queryClient.invalidateQueries({ queryKey: queryKeys.jobs.all });
       } else if (msgType === 'logs_cleared') {
         queryClient.invalidateQueries({ queryKey: queryKeys.logs });

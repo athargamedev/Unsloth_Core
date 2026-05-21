@@ -56,6 +56,7 @@ export class JobQueue {
 
   // ── Callbacks ──────────────────────────────────────────────────────
   private readonly updateCallbacks = new Set<(job: QueueJob) => void>();
+  private readonly logCallbacks = new Set<(jobId: string, line: string) => void>();
 
   // ── Cached stats ───────────────────────────────────────────────────
   // Incrementally updated on job state transitions to avoid full-table
@@ -475,6 +476,14 @@ export class JobQueue {
   }
 
   /**
+   * Registers a callback that fires on every log line emitted by a running job.
+   * Useful for real-time WebSocket log streaming.
+   */
+  onLog(callback: (jobId: string, line: string) => void): void {
+    this.logCallbacks.add(callback);
+  }
+
+  /**
    * Removes (archives) jobs that are terminal (completed, failed, stopped)
    * and older than the given number of days. Returns the number of rows
    * deleted.
@@ -555,15 +564,23 @@ export class JobQueue {
     this.jobStatuses.set(job.id, job.status);
 
     try {
-      await processJob(job, this.pool, tracker, (updatedJob) => {
-        // Detect state transitions for incremental stats update
-        const prevStatus = this.jobStatuses.get(job.id);
-        if (prevStatus && prevStatus !== updatedJob.status) {
-          this.adjustStats(prevStatus, updatedJob.status);
-        }
-        this.jobStatuses.set(job.id, updatedJob.status);
-        this.notifyUpdateCallbacks(updatedJob);
-      });
+      await processJob(
+        job,
+        this.pool,
+        tracker,
+        (updatedJob) => {
+          // Detect state transitions for incremental stats update
+          const prevStatus = this.jobStatuses.get(job.id);
+          if (prevStatus && prevStatus !== updatedJob.status) {
+            this.adjustStats(prevStatus, updatedJob.status);
+          }
+          this.jobStatuses.set(job.id, updatedJob.status);
+          this.notifyUpdateCallbacks(updatedJob);
+        },
+        (jobId, line) => {
+          this.notifyLogCallbacks(jobId, line);
+        },
+      );
     } finally {
       this.jobStatuses.delete(job.id);
       this.cleanupJob(job.id);
@@ -843,6 +860,21 @@ export class JobQueue {
         cb(job);
       } catch (err) {
         logger.error("Queue: update callback error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+  }
+
+  /**
+   * Fires all registered log callbacks with the job ID and log line.
+   */
+  private notifyLogCallbacks(jobId: string, line: string): void {
+    for (const cb of this.logCallbacks) {
+      try {
+        cb(jobId, line);
+      } catch (err) {
+        logger.error("Queue: log callback error", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
