@@ -3,7 +3,7 @@ import express from "express";
 import type { RouterDependencies } from "./types";
 import { pathTraversalMiddleware, rateLimitMiddleware, jsonBodyParser } from "./middleware/security";
 import { auditLog } from "./middleware/audit";
-import { requireAuth } from "./middleware/auth";
+import { optionalAuth } from "./middleware/auth";
 
 // Route modules
 import { registerRoutes as registerAuthRoutes } from "./routes/auth";
@@ -34,7 +34,7 @@ export function createApp(deps: RouterDependencies): Express {
   // Only require auth for /api/* paths — frontend static files must be public
   app.use((req, res, next) => {
     if (!req.path.startsWith("/api/")) return next();
-    return requireAuth(req, res, next);
+    return optionalAuth(req, res, next);
   });
   app.use(jsonBodyParser);
 

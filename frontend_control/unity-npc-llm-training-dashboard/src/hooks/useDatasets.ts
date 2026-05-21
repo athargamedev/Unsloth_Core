@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  fetchJson,
   fetchOptionalJson,
   type Dataset,
   type Subject,
@@ -19,18 +18,18 @@ export function useDatasets() {
 
   const fetchDatasets = async () => {
     const [datasetsData, commandsData, subjectsData, commandSchemasData] = await Promise.all([
-      fetchJson<Dataset[]>('/api/datasets'),
-      fetchJson<AvailableCommand[]>('/api/available-commands'),
-      fetchJson<Subject[]>('/api/subjects'),
+      fetchOptionalJson<Dataset[]>('/api/datasets'),
+      fetchOptionalJson<AvailableCommand[]>('/api/available-commands'),
+      fetchOptionalJson<Subject[]>('/api/subjects'),
       fetchOptionalJson<Record<string, any>>('/api/command-schemas'),
     ]);
     const [runsData, exportsData] = await Promise.all([
       fetchOptionalJson<RunArtifact[]>('/api/runs'),
       fetchOptionalJson<ExportArtifact[]>('/api/exports'),
     ]);
-    setDatasets(datasetsData);
-    setAvailableCommands(commandsData);
-    setSubjects(subjectsData);
+    setDatasets(datasetsData ?? []);
+    setAvailableCommands(commandsData ?? []);
+    setSubjects(subjectsData ?? []);
     setCommandSchemas(commandSchemasData ?? {});
     setRuns(runsData ?? []);
     setExportArtifacts(exportsData ?? []);

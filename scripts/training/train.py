@@ -741,7 +741,7 @@ def main():
     lora_alpha_val = config.get("lora", {}).get("alpha", config.get("training", {}).get("lora_alpha", "?"))
     vram_gb, vram_notes = estimate_vram(config)
     hook_recorder = WorkflowHookRecorder(
-        args.workflow_hooks or default_hook_path(Path(output_dir or paths.output_dir(npc_key))),
+        args.workflow_hooks or default_hook_path(Path(config.get("output_dir") or paths.output_dir(npc_key))),
         tool="train",
         npc_key=npc_key,
         technique=technique,
