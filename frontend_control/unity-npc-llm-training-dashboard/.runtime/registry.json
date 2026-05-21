@@ -2,6 +2,1061 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2406710",
+      "name": "External Training · PID 2406710 · chef_assistant",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "running",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:20:54.307Z",
+      "startedAt": "2026-05-21T22:20:54.307Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/home/athar/Projects/Unsloth_Core/.toolchain/gcc-with-path.sh ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2406710] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/home/athar/Projects/Unsloth_Core/.toolchain/gcc-with-path.sh ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "terminalReason": "external_detected"
+    },
+    {
+      "id": "ext_train_chef_assistant_20260521_safe-any_llama3.2-3b_004",
+      "name": "External Train (chef_assistant/20260521_safe-any_llama3.2-3b_004)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T22:20:52.610Z",
+      "startedAt": "2026-05-21T22:20:52.610Z",
+      "finishedAt": "2026-05-21T22:20:52.610Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260521_safe-any_llama3.2-3b_004/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2401887",
+      "name": "External Training · PID 2401887 · chef_assistant",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:17:45.291Z",
+      "startedAt": "2026-05-21T22:17:45.291Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/home/athar/Projects/Unsloth_Core/unsloth_env/bin/gcc AS=/home/athar/Projects/Unsloth_Core/unsloth_env/bin/as ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2401887] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/home/athar/Projects/Unsloth_Core/unsloth_env/bin/gcc AS=/home/athar/Projects/Unsloth_Core/unsloth_env/bin/as ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:18:33.291Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chef_assistant_20260521_safe-any_llama3.2-3b_003",
+      "name": "External Train (chef_assistant/20260521_safe-any_llama3.2-3b_003)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T22:17:43.547Z",
+      "startedAt": "2026-05-21T22:17:43.547Z",
+      "finishedAt": "2026-05-21T22:17:43.547Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260521_safe-any_llama3.2-3b_003/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2399140",
+      "name": "External Training · PID 2399140 · chef_assistant",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:16:15.282Z",
+      "startedAt": "2026-05-21T22:16:15.282Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2399140] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:17:00.282Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chef_assistant_20260521_safe-any_llama3.2-3b_002",
+      "name": "External Train (chef_assistant/20260521_safe-any_llama3.2-3b_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T22:16:14.585Z",
+      "startedAt": "2026-05-21T22:16:14.585Z",
+      "finishedAt": "2026-05-21T22:16:14.585Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260521_safe-any_llama3.2-3b_002/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2395178",
+      "name": "External Training · PID 2395178 · chef_assistant",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:13:42.262Z",
+      "startedAt": "2026-05-21T22:13:42.262Z",
+      "command": [
+        "external",
+        "python3 ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2395178] discovered active process",
+        "python3 ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:14:30.262Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chef_assistant_20260521_safe-any_llama3.2-3b_001",
+      "name": "External Train (chef_assistant/20260521_safe-any_llama3.2-3b_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T22:13:41.151Z",
+      "startedAt": "2026-05-21T22:13:41.151Z",
+      "finishedAt": "2026-05-21T22:13:41.151Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260521_safe-any_llama3.2-3b_001/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2391839",
+      "name": "External Training · PID 2391839 · chef_assistant",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:11:48.248Z",
+      "startedAt": "2026-05-21T22:11:48.248Z",
+      "command": [
+        "external",
+        "python3 ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset fast-3b --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2391839] discovered active process",
+        "python3 ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset fast-3b --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:12:30.247Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chef_assistant_20260521_fast-3b_llama3.2-3b_003",
+      "name": "External Train (chef_assistant/20260521_fast-3b_llama3.2-3b_003)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T22:11:45.760Z",
+      "startedAt": "2026-05-21T22:11:45.760Z",
+      "finishedAt": "2026-05-21T22:11:45.760Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260521_fast-3b_llama3.2-3b_003/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2385927",
+      "name": "External Training · PID 2385927 · chef_assistant",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:08:30.237Z",
+      "startedAt": "2026-05-21T22:08:30.237Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/usr/bin/gcc AS=/usr/bin/as ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset fast-3b --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2385927] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/usr/bin/gcc AS=/usr/bin/as ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset fast-3b --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:09:18.229Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chef_assistant_20260521_fast-3b_llama3.2-3b_002",
+      "name": "External Train (chef_assistant/20260521_fast-3b_llama3.2-3b_002)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T22:08:27.824Z",
+      "startedAt": "2026-05-21T22:08:27.824Z",
+      "finishedAt": "2026-05-21T22:08:27.824Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260521_fast-3b_llama3.2-3b_002/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2381701",
+      "name": "External Training · PID 2381701 · chef_assistant",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:06:06.231Z",
+      "startedAt": "2026-05-21T22:06:06.231Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/usr/bin/gcc AS=/usr/bin/as ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset fast-3b --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2381701] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && CC=/usr/bin/gcc AS=/usr/bin/as ./ucore train subjects/NPC_specs/chef_assistant.json --technique ollama --preset fast-3b --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:07:18.228Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_chef_assistant_20260521_fast-3b_llama3.2-3b_001",
+      "name": "External Train (chef_assistant/20260521_fast-3b_llama3.2-3b_001)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "chef_assistant",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T22:06:06.023Z",
+      "startedAt": "2026-05-21T22:06:06.023Z",
+      "finishedAt": "2026-05-21T22:06:06.023Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/chef_assistant.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/chef_assistant/runs/20260521_fast-3b_llama3.2-3b_001/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2379682",
+      "name": "External Dataset · PID 2379682 · fitness_coach",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "fitness_coach",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T22:04:36.222Z",
+      "startedAt": "2026-05-21T22:04:36.222Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-f55036caba55.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore sanitize subjects/datasets/fitness_coach/ollama/train.jsonl --output subjects/datasets/fitness_coach/ollama/train_clean.jsonl --strict-canonical' __hermes_ec=$? export -p > /tmp/hermes-snap-f55036caba55.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-f55036caba55.txt 2>/dev/null || true printf '\\n__HERMES_CWD_f55036caba55__%s__HERMES_CWD_f55036caba55__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2379682] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-f55036caba55.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ./ucore sanitize subjects/datasets/fitness_coach/ollama/train.jsonl --output subjects/datasets/fitness_coach/ollama/train_clean.jsonl --strict-canonical' __hermes_ec=$? export -p > /tmp/hermes-snap-f55036caba55.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-f55036caba55.txt 2>/dev/null || true printf '\\n__HERMES_CWD_f55036caba55__%s__HERMES_CWD_f55036caba55__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:04:39.223Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2245230",
+      "name": "External Evaluation · PID 2245230 · history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T21:52:33.834Z",
+      "startedAt": "2026-05-21T21:52:33.834Z",
+      "command": [
+        "external",
+        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_20260521_185233.html --feedback-json eval/results/feedback/history_guide_20260521_185233.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2245230] discovered active process",
+        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_20260521_185233.html --feedback-json eval/results/feedback/history_guide_20260521_185233.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:02:36.211Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2245226",
+      "name": "External Export · PID 2245226 · history_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T21:52:33.834Z",
+      "startedAt": "2026-05-21T21:52:33.834Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-3cc18c260d09.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ts=$(date +%Y%m%d_%H%M%S) && ./ucore evaluate --baseline '\\''/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf'\\'' --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --base-model '\\''/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf'\\'' --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_${ts}.html --feedback-json eval/results/feedback/history_guide_${ts}.json' __hermes_ec=$? export -p > /tmp/hermes-snap-3cc18c260d09.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-3cc18c260d09.txt 2>/dev/null || true printf '\\n__HERMES_CWD_3cc18c260d09__%s__HERMES_CWD_3cc18c260d09__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2245226] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-3cc18c260d09.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ts=$(date +%Y%m%d_%H%M%S) && ./ucore evaluate --baseline '\\''/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf'\\'' --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --base-model '\\''/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf'\\'' --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_${ts}.html --feedback-json eval/results/feedback/history_guide_${ts}.json' __hermes_ec=$? export -p > /tmp/hermes-snap-3cc18c260d09.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-3cc18c260d09.txt 2>/dev/null || true printf '\\n__HERMES_CWD_3cc18c260d09__%s__HERMES_CWD_3cc18c260d09__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:02:36.211Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2239259",
+      "name": "External Evaluation · PID 2239259 · history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T21:48:39.811Z",
+      "startedAt": "2026-05-21T21:48:39.811Z",
+      "command": [
+        "external",
+        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_20260521_184837.html --feedback-json eval/results/feedback/history_guide_20260521_184837.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2239259] discovered active process",
+        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_20260521_184837.html --feedback-json eval/results/feedback/history_guide_20260521_184837.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T21:52:18.832Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2239255",
+      "name": "External Export · PID 2239255 · history_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T21:48:39.811Z",
+      "startedAt": "2026-05-21T21:48:39.811Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-3cc18c260d09.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ts=$(date +%Y%m%d_%H%M%S) && ./ucore evaluate --baseline '\\''/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf'\\'' --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_${ts}.html --feedback-json eval/results/feedback/history_guide_${ts}.json' __hermes_ec=$? export -p > /tmp/hermes-snap-3cc18c260d09.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-3cc18c260d09.txt 2>/dev/null || true printf '\\n__HERMES_CWD_3cc18c260d09__%s__HERMES_CWD_3cc18c260d09__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2239255] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-3cc18c260d09.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ts=$(date +%Y%m%d_%H%M%S) && ./ucore evaluate --baseline '\\''/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf'\\'' --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_${ts}.html --feedback-json eval/results/feedback/history_guide_${ts}.json' __hermes_ec=$? export -p > /tmp/hermes-snap-3cc18c260d09.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-3cc18c260d09.txt 2>/dev/null || true printf '\\n__HERMES_CWD_3cc18c260d09__%s__HERMES_CWD_3cc18c260d09__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T21:52:18.832Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2233668",
+      "name": "External Evaluation · PID 2233668 · history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T21:45:03.800Z",
+      "startedAt": "2026-05-21T21:45:03.800Z",
+      "command": [
+        "external",
+        "python3 ./ucore evaluate --baseline Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_20260521_184503.html --feedback-json eval/results/feedback/history_guide_20260521_184503.json"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2233668] discovered active process",
+        "python3 ./ucore evaluate --baseline Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_20260521_184503.html --feedback-json eval/results/feedback/history_guide_20260521_184503.json"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T21:48:03.811Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_2233663",
+      "name": "External Export · PID 2233663 · history_guide",
+      "type": "Export",
+      "commandId": "export",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T21:45:03.800Z",
+      "startedAt": "2026-05-21T21:45:03.800Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-3cc18c260d09.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ts=$(date +%Y%m%d_%H%M%S) && mkdir -p eval/reports/history_guide eval/results/feedback && ./ucore evaluate --baseline Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_${ts}.html --feedback-json eval/results/feedback/history_guide_${ts}.json' __hermes_ec=$? export -p > /tmp/hermes-snap-3cc18c260d09.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-3cc18c260d09.txt 2>/dev/null || true printf '\\n__HERMES_CWD_3cc18c260d09__%s__HERMES_CWD_3cc18c260d09__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2233663] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-3cc18c260d09.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'source unsloth_env/bin/activate && ts=$(date +%Y%m%d_%H%M%S) && mkdir -p eval/reports/history_guide eval/results/feedback && ./ucore evaluate --baseline Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/history_guide/history_guide_${ts}.html --feedback-json eval/results/feedback/history_guide_${ts}.json' __hermes_ec=$? export -p > /tmp/hermes-snap-3cc18c260d09.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-3cc18c260d09.txt 2>/dev/null || true printf '\\n__HERMES_CWD_3cc18c260d09__%s__HERMES_CWD_3cc18c260d09__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T21:48:03.811Z",
+      "exitCode": -15
+    },
+    {
       "id": "ext_proc_2215359",
       "name": "External Training · PID 2215359 · astronomy_guide",
       "type": "Training",
