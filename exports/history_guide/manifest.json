@@ -8,9 +8,9 @@
   "gguf_files": [
     "history_guide-lora-f16.gguf"
   ],
-  "exported_at": "2026-05-21T05:38:50.862222+00:00",
+  "exported_at": "2026-05-21T17:36:11.954014+00:00",
   "npc_name": "HistoryGuide",
   "checksums": {
-    "history_guide-lora-f16.gguf": "sha256:9164282fc1d8e1202e0bba8e88b4c4b1af8f8da431570d31853716514ed967e4"
+    "history_guide-lora-f16.gguf": "sha256:3e356e2ebbe60bfbf21c1acc364f33ff732c892e66f56d06f11c3f3e6a710f32"
   }
 }

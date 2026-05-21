@@ -27,7 +27,7 @@
 </head>
 <body>
 <h1>NPC Evaluation Report: HistoryGuide</h1>
-<p class="meta">Generated: 2026-05-21 06:48:35 UTC | Baseline: Models/llama-3.2-3b-instruct-q4_k_m | Candidate: history_guide/history_guide-lora-f16</p>
+<p class="meta">Generated: 2026-05-21 17:38:06 UTC | Baseline: Models/llama-3.2-3b-instruct-q4_k_m | Candidate: history_guide/history_guide-lora-f16</p>
 
 <div class="summary">
   <div class="card">
@@ -36,15 +36,15 @@
   </div>
   <div class="card">
     <h3>Candidate Wins</h3>
-    <div class="value winner">2/4</div>
+    <div class="value winner">4/4</div>
   </div>
   <div class="card">
     <h3>Win Rate</h3>
-    <div class="value winner">50%</div>
+    <div class="value winner">100%</div>
   </div>
   <div class="card">
     <h3>Ties</h3>
-    <div class="value">1</div>
+    <div class="value">0</div>
   </div>
 </div>
 
@@ -69,31 +69,31 @@
 </tr>
 <tr>
   <td>1</td>
-  <td>I'm trying to understand how historians think. Can you explain what they mean by</td>
-  <td>27.08</td>
-  <td>29.44</td>
+  <td>What were the key events that led to World War II?</td>
+  <td>43.17</td>
+  <td>31.35</td>
   <td class="winner">candidate</td>
 </tr>
 <tr>
   <td>2</td>
-  <td>I've been studying the rise of city-states in ancient Greece. Can you tell me ab</td>
-  <td>34.66</td>
-  <td>31.78</td>
-  <td class="">tie</td>
+  <td>I've heard the Chronos Spire holds secrets of the past. Can you tell me about yo</td>
+  <td>35.26</td>
+  <td>29.96</td>
+  <td class="winner">candidate</td>
 </tr>
 <tr>
   <td>3</td>
-  <td>Can you help me with something unrelated to world history?</td>
-  <td>33.32</td>
-  <td>36.38</td>
+  <td>What's the scope of your knowledge here at the Chronos Spire archives? I'm tryin</td>
+  <td>36.89</td>
+  <td>29.96</td>
   <td class="winner">candidate</td>
 </tr>
 <tr>
   <td>4</td>
-  <td>I've heard tales of ancient Greece and Rome, but what truly drove their rise to </td>
-  <td>39.51</td>
-  <td>20.79</td>
-  <td class="loser">baseline</td>
+  <td>I've heard of ancient civilizations, but what about the modern world? How did it</td>
+  <td>36.89</td>
+  <td>26.39</td>
+  <td class="winner">candidate</td>
 </tr>
 </table>
 
@@ -106,14 +106,14 @@ new Chart(document.getElementById('metricsChart'), {
     datasets: [
       {
         label: 'Baseline',
-        data: [33.6, 39, 2.2],
+        data: [38.1, 62, 2.8],
         backgroundColor: 'rgba(54, 162, 235, 0.5)',
         borderColor: 'rgba(54, 162, 235, 1)',
         borderWidth: 1
       },
       {
         label: 'Candidate',
-        data: [29.6, 25, 1.8],
+        data: [29.4, 20, 1.0],
         backgroundColor: 'rgba(255, 99, 132, 0.5)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1
@@ -136,12 +136,12 @@ new Chart(document.getElementById('qualityChart'), {
     datasets: [
       {
         label: 'Baseline',
-        data: [[1, 27.08], [2, 34.66], [3, 33.32], [4, 39.51]],
+        data: [[1, 43.17], [2, 35.26], [3, 36.89], [4, 36.89]],
         backgroundColor: 'rgba(54, 162, 235, 0.5)',
       },
       {
         label: 'Candidate',
-        data: [[1, 29.44], [2, 31.78], [3, 36.38], [4, 20.79]],
+        data: [[1, 31.35], [2, 29.96], [3, 29.96], [4, 26.39]],
         backgroundColor: 'rgba(255, 99, 132, 0.5)',
       }
     ]

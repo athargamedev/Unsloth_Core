@@ -3,14 +3,14 @@
   "updated_at": "2026-05-16T02:28:50Z",
   "state": "completed",
   "substep": "adapter_done",
-  "started_at": "2026-05-21T05:38:47Z",
+  "started_at": "2026-05-21T17:36:08Z",
   "mode": "adapter",
   "quantization": "q4_k_m",
   "resume": false,
-  "pid": 2619871,
+  "pid": 1678163,
   "timeout_seconds": 5400,
   "artifacts": [
     "/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf"
   ],
-  "completed_at": "2026-05-21T05:38:50Z"
+  "completed_at": "2026-05-21T17:36:11Z"
 }

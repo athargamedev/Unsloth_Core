@@ -3,83 +3,92 @@
   "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
   "candidate": "history_guide/history_guide-lora-f16",
   "total_examples": 4,
-  "baseline_wins": 1,
-  "candidate_wins": 2,
-  "ties": 1,
-  "win_rate": 0.5,
+  "baseline_wins": 0,
+  "candidate_wins": 4,
+  "ties": 0,
+  "win_rate": 1.0,
   "per_concept": {
-    "teaching/historical thinking": {
+    "dialogue/modern history": {
       "total": 1,
       "baseline_wins": 0,
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 27.08,
-      "avg_candidate_quality": 29.44,
+      "avg_baseline_quality": 43.17,
+      "avg_candidate_quality": 31.35,
       "constraint_violations": 0,
       "examples": [
         {
-          "question": "I'm trying to understand how historians think. Can you explain what they mean by 'historical thinking'?",
+          "question": "What were the key events that led to World War II?",
           "winner": "candidate",
-          "candidate_quality": 29.44,
-          "candidate_words": 19,
+          "candidate_quality": 31.35,
+          "candidate_words": 24,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     },
-    "teaching/classical antiquity": {
-      "total": 2,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
-      "ties": 1,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 37.084999999999994,
-      "avg_candidate_quality": 26.285,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "I've been studying the rise of city-states in ancient Greece. Can you tell me about their impact on Western philosophy?",
-          "winner": "tie",
-          "candidate_quality": 31.78,
-          "candidate_words": 26,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        },
-        {
-          "question": "I've heard tales of ancient Greece and Rome, but what truly drove their rise to power?",
-          "winner": "baseline",
-          "candidate_quality": 20.79,
-          "candidate_words": 8,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
-    "refusal/modern history": {
+    "identity/medieval history": {
       "total": 1,
       "baseline_wins": 0,
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 33.32,
-      "avg_candidate_quality": 36.38,
-      "constraint_violations": 1,
+      "avg_baseline_quality": 35.26,
+      "avg_candidate_quality": 29.96,
+      "constraint_violations": 0,
       "examples": [
         {
-          "question": "Can you help me with something unrelated to world history?",
+          "question": "I've heard the Chronos Spire holds secrets of the past. Can you tell me about your role here?",
           "winner": "candidate",
-          "candidate_quality": 36.38,
-          "candidate_words": 48,
-          "sentences_ok": false,
+          "candidate_quality": 29.96,
+          "candidate_words": 20,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/scope and use": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 36.89,
+      "avg_candidate_quality": 29.96,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "What's the scope of your knowledge here at the Chronos Spire archives? I'm trying to understand how it all fits together.",
+          "winner": "candidate",
+          "candidate_quality": 29.96,
+          "candidate_words": 20,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/modern history": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 36.89,
+      "avg_candidate_quality": 26.39,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I've heard of ancient civilizations, but what about the modern world? How did it change from the past?",
+          "winner": "candidate",
+          "candidate_quality": 26.39,
+          "candidate_words": 14,
+          "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     }
   },
-  "weak_concepts": [
-    "teaching/classical antiquity",
-    "refusal/modern history"
-  ],
-  "timestamp": "2026-05-21T06:48:35.210030+00:00"
+  "weak_concepts": [],
+  "timestamp": "2026-05-21T17:38:06.828443+00:00"
 }

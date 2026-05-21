@@ -2,12 +2,262 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_1697867",
+      "name": "External Dataset · PID 1697867 · chef_assistant",
+      "type": "Dataset",
+      "commandId": "dataset-sanitize",
+      "npcKey": "chef_assistant",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T17:42:17.398Z",
+      "startedAt": "2026-05-21T17:42:17.398Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-5a7adfc43761.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PATH=/usr/bin:/bin:/usr/local/bin:$PATH source unsloth_env/bin/activate python scripts/dataset/sanitize_dataset.py subjects/datasets/chef_assistant/ollama/train.jsonl --output subjects/datasets/chef_assistant/ollama/train_clean.jsonl --strict-canonical --require-complete-metadata' __hermes_ec=$? export -p > /tmp/hermes-snap-5a7adfc43761.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-5a7adfc43761.txt 2>/dev/null || true printf '\\n__HERMES_CWD_5a7adfc43761__%s__HERMES_CWD_5a7adfc43761__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1697867] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-5a7adfc43761.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PATH=/usr/bin:/bin:/usr/local/bin:$PATH source unsloth_env/bin/activate python scripts/dataset/sanitize_dataset.py subjects/datasets/chef_assistant/ollama/train.jsonl --output subjects/datasets/chef_assistant/ollama/train_clean.jsonl --strict-canonical --require-complete-metadata' __hermes_ec=$? export -p > /tmp/hermes-snap-5a7adfc43761.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-5a7adfc43761.txt 2>/dev/null || true printf '\\n__HERMES_CWD_5a7adfc43761__%s__HERMES_CWD_5a7adfc43761__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T17:42:20.398Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1679256",
+      "name": "External Evaluation · PID 1679256 · history_guide",
+      "type": "Evaluation",
+      "commandId": "evaluate",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T17:36:44.365Z",
+      "startedAt": "2026-05-21T17:36:44.365Z",
+      "command": [
+        "external",
+        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/history_guide.json --num-questions 4 --report-html --track --feedback-json eval/results/feedback/history_guide_final.json --gpu-layers 0 --port 8896 --judge --judge-model llama3.1:latest"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1679256] discovered active process",
+        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/history_guide.json --num-questions 4 --report-html --track --feedback-json eval/results/feedback/history_guide_final.json --gpu-layers 0 --port 8896 --judge --judge-model llama3.1:latest"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T17:38:08.375Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1678159",
+      "name": "External Export · PID 1678159",
+      "type": "Export",
+      "commandId": "export",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T17:36:11.331Z",
+      "startedAt": "2026-05-21T17:36:11.331Z",
+      "command": [
+        "external",
+        "/usr/bin/bash -c source /tmp/hermes-snap-5a7adfc43761.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PATH=/usr/bin:/bin:/usr/local/bin:$PATH source unsloth_env/bin/activate ./ucore export history_guide' __hermes_ec=$? export -p > /tmp/hermes-snap-5a7adfc43761.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-5a7adfc43761.txt 2>/dev/null || true printf '\\n__HERMES_CWD_5a7adfc43761__%s__HERMES_CWD_5a7adfc43761__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1678159] discovered active process",
+        "/usr/bin/bash -c source /tmp/hermes-snap-5a7adfc43761.sh >/dev/null 2>&1 || true builtin cd -- /home/athar/Projects/Unsloth_Core || exit 126 eval 'set -euo pipefail export PATH=/usr/bin:/bin:/usr/local/bin:$PATH source unsloth_env/bin/activate ./ucore export history_guide' __hermes_ec=$? export -p > /tmp/hermes-snap-5a7adfc43761.sh 2>/dev/null || true pwd -P > /tmp/hermes-cwd-5a7adfc43761.txt 2>/dev/null || true printf '\\n__HERMES_CWD_5a7adfc43761__%s__HERMES_CWD_5a7adfc43761__\\n' \"$(pwd -P)\" exit $__hermes_ec"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T17:36:14.330Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_proc_1673307",
+      "name": "External Training · PID 1673307 · history_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T17:33:35.313Z",
+      "startedAt": "2026-05-21T17:33:35.313Z",
+      "command": [
+        "external",
+        "python3 ./ucore train subjects/NPC_specs/history_guide.json --from-spec --technique ollama --preset fast-3b --export-gguf"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 1673307] discovered active process",
+        "python3 ./ucore train subjects/NPC_specs/history_guide.json --from-spec --technique ollama --preset fast-3b --export-gguf"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T17:35:53.328Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_009",
+      "name": "External Train (history_guide/20260521_fast-3b_llama3.2-3b_009)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "history_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T17:33:34.175Z",
+      "startedAt": "2026-05-21T17:33:34.175Z",
+      "finishedAt": "2026-05-21T17:33:34.175Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/history_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/history_guide/runs/20260521_fast-3b_llama3.2-3b_009/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_proc_1670007",
       "name": "External Training · PID 1670007 · history_guide",
       "type": "Training",
       "commandId": "train",
       "npcKey": "history_guide",
-      "status": "running",
+      "status": "stopped",
       "progress": 10,
       "loss": null,
       "createdAt": "2026-05-21T17:31:44.301Z",
@@ -47,7 +297,9 @@
         "[EXTERNAL][PID 1670007] discovered active process",
         "python3 ./ucore train subjects/NPC_specs/history_guide.json --from-spec --technique ollama --preset fast-3b --export-gguf"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T17:32:17.296Z",
+      "exitCode": -15
     },
     {
       "id": "ext_train_history_guide_20260521_fast-3b_llama3.2-3b_008",
