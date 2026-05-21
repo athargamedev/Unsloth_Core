@@ -1,162 +1,165 @@
 # Unsloth_Core
 
-A professional, "agent-first" pipeline for building the best GGUF LoRA adapters for the llama3.2 3B base model, so Unity NPCs can load at runtime in LLMUnity and manage dialogue sessions through local Supabase.
+A professional, "agent-first" pipeline for building the best GGUF LoRA adapters for the `llama-3.2-3b-instruct` base model, so Unity NPCs can load at runtime in LLMUnity and manage dialogue sessions through local Supabase.
 
-## 🎯 Project North Star
+## North Star
 
 - Train and export high-quality LoRA adapters as GGUF for `llama-3.2-3b-instruct`.
 - Load those adapters in Unity through the LLMUnity plugin at runtime.
 - Support persistent NPC dialogue sessions backed by the local Supabase container.
 - Keep dataset generation, DeepEval gating, training, export, and runtime integration aligned to that deployment target.
 
-## 🚀 Quick Start
-
-1. **Activate Environment**
-   ```bash
-   source unsloth_env/bin/activate
-   ```
-
-2. **Run the Full Pipeline**
-   ```bash
-   ./ucore pipeline subjects/NPC_specs/chemistry_instructor.json --preset fast-3b
-   ```
-
-3. **Deploy to Unity**
-   ```bash
-   ./ucore deploy --unity-project /path/to/my_game
-   ```
-
----
-
-## 📂 Project Structure
-
-- `ucore`: The unified CLI entry point.
-- `subjects/NPC_specs/`: NPC identity and knowledge specifications (.json).
-- `subjects/datasets/`: Generated training and validation data (.jsonl).
-- `subjects/schemas/`: JSON Schema validators for training data format.
-- `subjects/reference_docs/`: Reference materials for NotebookLM dataset generation.
-- `scripts/`: Core Python implementation of the 4-stage pipeline.
-- `configs/`: YAML presets for different hardware and model targets.
-- `outputs/`: LoRA adapters and training logs.
-- `exports/`: Quantized GGUF models ready for Unity.
-
----
-
-## 📖 Documentation
-
-The project documentation is structured for both human developers and AI agents:
-
-- **[AGENTS.md](AGENTS.md)**: Primary reference for AI models (Start here if you are an agent).
-- **[docs/MAP.md](docs/MAP.md)**: Central index of all technical documentation.
-
-### Key References
-- [Architecture: Pipeline Flow](docs/architecture/PIPELINE_FLOW.md)
-- [Architecture: Supabase Schema](docs/architecture/SUPABASE_SCHEMA.md)
-- [Reference: CLI Manual (ucore)](docs/reference/CLI_REFERENCE.md)
-- [Reference: Subject Spec Schema](docs/reference/SUBJECT_SPEC.md)
-
----
-
-## 🛠️ Unified CLI (`ucore`)
+## Quick Start
 
 ```bash
-./ucore generate subjects/NPC_specs/workflow_assistant.json --technique docs
-./ucore generate subjects/NPC_specs/subject.json --technique template
-./ucore sanitize subjects/datasets/subject/template/train.jsonl --strict-canonical
-./ucore dataset-eval subjects/NPC_specs/subject.json --technique template --judge-model qwen2.5:7b
-./ucore train subjects/NPC_specs/subject.json --preset fast-3b
-./ucore smoke exports/subject/model.gguf
-./ucore evaluate --baseline old.gguf --candidate new.gguf
-./ucore feedback eval/results/feedback/subject.json --dry-run
+# 1. Start the modular backend (port 3100)
+npm run dev
+
+# 2. Activate the Python environment
+source unsloth_env/bin/activate
+
+# 3. Verify everything is ready
+./ucore audit check
 ```
 
-### Local Dataset Quality Loop
+## Full Pipeline
 
-DeepEval is the local build-loop gate before training:
-
-1. **Validate generation readiness** from the spec, reference doc, and dataset counts.
-2. **Generate** a canonical dataset under `subjects/datasets/{npc}/{technique}/`.
-3. **Sanitize** to `train_clean.jsonl` with complete metadata.
-4. **Dataset-eval** with local Ollama `qwen2.5:7b`.
-5. **Fix generation** from `quality_failures.json`, then rerun before training.
-
-### Decision Rules
-- Do not increase NPC sentence/character limits to force generation success.
-- Do not lower dataset minimums to hide missing rows.
-- If generation misses rows, fix the generator/retry/sanitize path or report the gap explicitly.
-- If DeepEval fails, fix prompts, primers, concepts, or generated rows; do not weaken thresholds first.
-
-### Frontend and Ollama priorities
-- The dashboard must be intuitive enough for non-coder collaborators to operate the workflow without guessing.
-- Reports and job state shown in the UI must come from canonical backend sources.
-- Local Ollama performance should be benchmarked and tuned before claiming the need for remote capacity.
+The pipeline transforms an NPC subject spec into a deployable GGUF LoRA adapter in 7 stages:
 
 ```bash
+# 1. Validate generation readiness
 ./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready
+
+# 2. Generate dataset (template, docs, or ollama technique)
 ./ucore generate subjects/NPC_specs/history_guide.json --technique template
+
+# 3. Sanitize and validate ChatML format
 ./ucore sanitize subjects/datasets/history_guide/template/train.jsonl \
   --output subjects/datasets/history_guide/template/train_clean.jsonl \
-  --strict-canonical \
-  --require-complete-metadata
-./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique template --soft-fail
+  --strict-canonical --require-complete-metadata
+
+# 4. DeepEval quality gate (uses qwen3:latest judge)
+./ucore dataset-eval subjects/NPC_specs/history_guide.json \
+  --technique template --judge-model qwen3:latest
+
+# 5. Train LoRA adapter
+./ucore train subjects/NPC_specs/history_guide.json \
+  --technique template --preset fast-3b --export-gguf
+
+# 6. Smoke test the exported adapter
+./ucore smoke exports/history_guide/history_guide-lora-f16.gguf
+
+# 7. Full evaluation vs baseline
+./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf \
+  --spec subjects/NPC_specs/history_guide.json --report-html
 ```
 
-Outputs:
-- `subjects/datasets/{npc}/{technique}/quality_summary.json`
-- `subjects/datasets/{npc}/{technique}/quality_failures.json`
+## Infrastructure
 
-Generation contract:
-- `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md`
+### Modular Backend
+`npm run dev` starts the Express dashboard at **port 3100** with:
+- **Auth**: Bearer token API keys (bcrypt hashed, prefix-indexed lookup)
+- **Job queue**: PostgreSQL-backed with `FOR UPDATE SKIP LOCKED` polling, PID tracking, retry with exponential backoff
+- **Audit logging**: All mutations logged to `api_audit_log` with sensitive field redaction
 
-### Self-Improving Model Feedback Loop
+### Supabase
+The local Supabase instance manages two schema domains:
+- **Runtime tables** (port 15434 Postgres, 16437 Kong API): `npc_profiles`, `dialogue_sessions`, `npc_memories` for Unity NPC runtime
+- **Pipeline tables** (same Postgres): `pipeline_jobs`, `pipeline_runs`, `pipeline_artifacts`, `dataset_quality_gates`, `eval_sessions`, `pipeline_config_snapshots`, `api_keys`, `api_audit_log`
 
-The model feedback loop closes the gap between trained model evaluation and dataset generation:
+### Pipeline DB
+Python pipeline scripts auto-connect to Supabase via the `PipelineDB` class (`scripts/ops/pipeline_db.py`):
+- Direct mode: `psycopg2` via `SUPABASE_DB_URL` or `PIPELINE_DB_URL`
+- REST mode: Supabase REST API via `SUPABASE_URL` + `SUPABASE_KEY`
+- Fallback: localhost `127.0.0.1:15434`
+- **Best-effort**: All DB writes are wrapped in try/except — never block the pipeline
 
-1. **Generate** datasets with canonical local techniques (`template`, `docs`, `ollama`, `openai`, `anthropic`)
-2. **Evaluate** with structured output (`--feedback-json`)
-3. **Feedback** auto-detects weak concepts, classifies as training density vs knowledge gaps, and triggers targeted regeneration
-
+### Auth
+API key authentication with bcrypt-hashed 64-char hex keys:
 ```bash
-# Full loop
-./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/NPC_specs/npc.json --feedback-json eval/results/feedback/npc.json
-./ucore feedback eval/results/feedback/npc.json --auto
-# Then retrain and re-evaluate to measure improvement
+# Bootstrap the first admin key
+python scripts/ops/setup_admin_key.py
 
-# One-shot auto-retrain (CI mode):
-./ucore feedback eval/results/feedback/npc.json --auto --auto-retrain --baseline old.gguf --train-preset fast-3b
-# Chains: regenerate → sanitize → dataset-eval → train → evaluate → pipeline state
-
-# Skip the dataset quality gate before training:
-./ucore feedback eval/results/feedback/npc.json --auto --auto-retrain --baseline old.gguf --skip-dataset-eval
-
-# Override the DeepEval judge settings or continue training even on gate failures:
-./ucore feedback eval/results/feedback/npc.json --auto --auto-retrain --baseline old.gguf \
-  --deepeval-judge-model qwen3:latest --deepeval-ollama-url http://localhost:11434 \
-  --deepeval-cases-per-category 5 --deepeval-soft-fail
-
-# Machine-readable output for dashboards:
-./ucore feedback eval/results/feedback/npc.json --json --skip-gap-detection
+# Use the key for all API requests
+curl -H "Authorization: Bearer <key>" http://localhost:3100/api/jobs
 ```
 
-### Workflow Assistant tool
-The Workflow Assistant is a dedicated local tool for mastering Unsloth_Core, not a Unity NPC dataset. It lives in `workflow_assistant/` and uses local Onyx retrieval to ground the frontend assistant in indexed repo docs and workflow sources.
+## Dashboard
 
-For offline artifact generation and corpus auditing, the legacy docs-backed workflow assistant path remains available:
+The React frontend provides full pipeline visibility:
 
-```bash
-./ucore validate-spec subjects/NPC_specs/workflow_assistant.json
-./ucore generate subjects/NPC_specs/workflow_assistant.json --technique docs
-./ucore sanitize subjects/datasets/workflow_assistant/docs/train.jsonl --strict-canonical
-./ucore validate-config --spec subjects/NPC_specs/workflow_assistant.json --preset smoke --data subjects/datasets/workflow_assistant/docs/train_clean.jsonl --require-canonical
+| Tab | Purpose |
+|-----|---------|
+| Training Suite | Configure and launch training runs |
+| Operations Matrix | Pipeline control, job table, W&B links |
+| Dataset Pipeline | Generate, sanitize, and gate datasets |
+| Eval | Side-by-side model evaluation and reports |
+| System Hub | GPU telemetry, Supabase status, Ollama management |
+| Feedback Loop | Gap analysis and auto-retrain |
+| Colab Notebooks | Integration with Google Colab |
+
+Key UI features:
+- **NotificationCenter**: Bell-icon toast system with type-colored alerts and auto-dismiss
+- **GlobalSearch**: Ctrl+K to search across NPCs, datasets, runs, exports, and jobs
+- **Keyboard shortcuts**: Ctrl+K (search), Ctrl+S (stop jobs), Alt+1-4 (tabs), Ctrl+R (refresh)
+- **State management**: Zustand for UI state, React Query (11 queries + 6 mutations) for server state, WebSocket bridge for real-time updates
+
+## Active NPCs
+
+| NPC | Key | Subject | Export State |
+|-----|-----|---------|-------------|
+| History Guide | `history_guide` | World history | LoRA GGUF exported |
+| Chef Assistant | `chef_assistant` | Culinary arts | LoRA GGUF exported |
+| Astronomy Guide | `astronomy_guide` | Astronomy and space science | LoRA GGUF exported |
+| Fitness Coach | `fitness_coach` | Fitness, exercise science, and nutrition | LoRA GGUF exported |
+
+## GGUF Naming Conventions
+
+- **Adapter mode**: `{npc_key}-lora-f16.gguf` (MBs, loaded via `llama-server --lora`)
+- **Full-merge**: `{npc_key}-{model_short}-{quant}.gguf` (GBs, standalone, default quant `q4_k_m`)
+
+## Project Structure
+
+```
+ucore                     — Unified CLI entry point
+scripts/                  — Pipeline Python scripts
+  dataset/                — Generation and sanitization
+  training/               — Unsloth SFTTrainer with LoRA
+  evaluation/             — Model evaluation and reporting
+  export/                 — GGUF export and batch export
+  ops/                    — Pipeline DB, hooks, auth bootstrap
+frontend_control/         — Dashboard (React + Express)
+  unity-npc-llm-training-dashboard/
+    src/backend/          — Modular Express backend (27 files)
+      routes/             — 12 route modules
+      services/           — Job queue, runner, registry, telemetry
+      middleware/          — Auth, audit, security, validation
+      lib/                — DB pool, logger, path utils
+    src/components/       — 30 React components
+    src/hooks/            — React Query + WebSocket hooks
+    src/stores/           — Zustand app store
+subjects/                 — NPC specs, datasets, reference docs
+supabase/migrations/      — 8 migration files
+configs/                  — YAML presets for training
+exports/                  — GGUF LoRA adapters for Unity
+outputs/                  — Training checkpoints and logs
+docs/                     — Full documentation suite
 ```
 
-This path is for audit and tooling support only; `workflow_assistant` is not intended for Unity model export.
+## Documentation
 
-Its safe corpus manifest lives at `docs/corpora/workflow_assistant_docs.json`.
+- **[AGENTS.md](AGENTS.md)**: Primary reference for AI assistants
+- **[docs/MAP.md](docs/MAP.md)**: Central index of all technical documentation
+- **[docs/architecture/PIPELINE_FLOW.md](docs/architecture/PIPELINE_FLOW.md)**: 7-stage pipeline flow
+- **[docs/architecture/SUPABASE_SCHEMA.md](docs/architecture/SUPABASE_SCHEMA.md)**: Database schema (runtime + pipeline)
+- **[docs/architecture/MODULAR_BACKEND.md](docs/architecture/MODULAR_BACKEND.md)**: Express backend design
+- **[docs/architecture/AUTH_SYSTEM.md](docs/architecture/AUTH_SYSTEM.md)**: API key auth system
+- **[docs/architecture/JOB_QUEUE.md](docs/architecture/JOB_QUEUE.md)**: PostgreSQL-backed job queue
+- **[docs/architecture/PIPELINE_DB.md](docs/architecture/PIPELINE_DB.md)**: Python database integration
+- **[docs/integration/FRONTEND_DASHBOARD.md](docs/integration/FRONTEND_DASHBOARD.md)**: Dashboard architecture
+- **[docs/reference/CLI_REFERENCE.md](docs/reference/CLI_REFERENCE.md)**: Full `./ucore` command reference
+- **[docs/reference/SUBJECT_SPEC.md](docs/reference/SUBJECT_SPEC.md)**: NPC spec schema
 
-For a full list of commands, see the [CLI Reference](docs/reference/CLI_REFERENCE.md).
+## License
 
----
-
-## ⚖️ License
 MIT. See [LICENSE](LICENSE) for details.

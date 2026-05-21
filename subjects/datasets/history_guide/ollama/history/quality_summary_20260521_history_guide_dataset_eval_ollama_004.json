@@ -1,0 +1,172 @@
+{
+  "created_at": "2026-05-21T04:43:05.604627+00:00",
+  "npc_key": "history_guide",
+  "technique": "ollama",
+  "judge_model": "qwen3:latest",
+  "deepeval_identifier": "dataset-quality-history_guide-ollama-20260521-004145",
+  "deepeval_result_identifier": "dataset-quality-history_guide-ollama-20260521-005116",
+  "command": [
+    "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+    "test",
+    "run",
+    "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+    "--identifier",
+    "dataset-quality-history_guide-ollama-20260521-004145",
+    "--display",
+    "all",
+    "--skip-on-missing-params"
+  ],
+  "total": 16,
+  "passed": 5,
+  "failed": 11,
+  "pass_rate": 0.3125,
+  "metrics": {
+    "Answer Relevancy": {
+      "count": 2,
+      "average_score": 1.0,
+      "pass_rate": 1.0
+    },
+    "Bias": {
+      "count": 7,
+      "average_score": 0.0,
+      "pass_rate": 1.0
+    },
+    "Conversation Completeness": {
+      "count": 7,
+      "average_score": 0.5714,
+      "pass_rate": 0.5714
+    },
+    "Faithfulness": {
+      "count": 1,
+      "average_score": 1.0,
+      "pass_rate": 1.0
+    },
+    "Hallucination": {
+      "count": 7,
+      "average_score": 0.1905,
+      "pass_rate": 1.0
+    },
+    "Knowledge Retention": {
+      "count": 7,
+      "average_score": 1.0,
+      "pass_rate": 1.0
+    },
+    "Persona and Category Fit [GEval]": {
+      "count": 5,
+      "average_score": 0.94,
+      "pass_rate": 0.8
+    },
+    "Toxicity": {
+      "count": 7,
+      "average_score": 0.0,
+      "pass_rate": 1.0
+    },
+    "Training Usefulness and Specificity [GEval]": {
+      "count": 3,
+      "average_score": 0.7333,
+      "pass_rate": 0.6667
+    }
+  },
+  "categories": {
+    "dialogue": {
+      "total": 4,
+      "passed": 2,
+      "pass_rate": 0.5
+    },
+    "identity": {
+      "total": 3,
+      "passed": 1,
+      "pass_rate": 0.3333
+    },
+    "quest": {
+      "total": 3,
+      "passed": 1,
+      "pass_rate": 0.3333
+    },
+    "refusal": {
+      "total": 3,
+      "passed": 1,
+      "pass_rate": 0.3333
+    },
+    "teaching": {
+      "total": 3,
+      "passed": 0,
+      "pass_rate": 0.0
+    }
+  },
+  "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/quality_failures.json",
+  "dataset_summary": {
+    "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/train_clean.jsonl",
+    "exists": true,
+    "total": 118,
+    "by_category": {
+      "dialogue": 29,
+      "identity": 11,
+      "quest": 15,
+      "refusal": 13,
+      "teaching": 50
+    },
+    "by_difficulty": {
+      "advanced": 20,
+      "beginner": 56,
+      "intermediate": 42
+    },
+    "by_split": {
+      "train": 118
+    },
+    "by_concept": {
+      "medieval history": 15,
+      "modern history": 14,
+      "classical antiquity": 12,
+      "core timeline anchors": 12,
+      "historical thinking": 12,
+      "scope and use": 12,
+      "ancient civilizations": 11,
+      "useful vocabulary": 11,
+      "historical methodology": 10,
+      "safety and refusal boundaries": 9
+    },
+    "unknown_rows": 0
+  },
+  "expected_distribution": {
+    "identity": 12,
+    "teaching": 56,
+    "dialogue": 32,
+    "quest": 16,
+    "refusal": 16
+  },
+  "distribution_gaps": [
+    {
+      "category": "identity",
+      "target": 12,
+      "actual": 11,
+      "shortfall": 1
+    },
+    {
+      "category": "teaching",
+      "target": 56,
+      "actual": 50,
+      "shortfall": 6
+    },
+    {
+      "category": "dialogue",
+      "target": 32,
+      "actual": 29,
+      "shortfall": 3
+    },
+    {
+      "category": "quest",
+      "target": 16,
+      "actual": 15,
+      "shortfall": 1
+    },
+    {
+      "category": "refusal",
+      "target": 16,
+      "actual": 13,
+      "shortfall": 3
+    }
+  ],
+  "dataset_total_rows": 118,
+  "dataset_unknown_rows": 0
+}

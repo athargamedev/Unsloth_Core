@@ -1,0 +1,97 @@
+{
+  "npc_key": "fitness_coach",
+  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
+  "candidate": "fitness_coach/fitness_coach-lora-f16",
+  "total_examples": 4,
+  "baseline_wins": 0,
+  "candidate_wins": 3,
+  "ties": 1,
+  "win_rate": 0.75,
+  "per_concept": {
+    "teaching/programming": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 31.35,
+      "avg_candidate_quality": 31.78,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I'm really struggling to stick to my workout plan, can you help me with programming? I have a lot on my plate and don't want to get overwhelmed.",
+          "winner": "candidate",
+          "candidate_quality": 31.78,
+          "candidate_words": 25,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/mobility and recovery": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 34.01,
+      "avg_candidate_quality": 33.67,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "I'm trying to get back into fitness but I have a desk job and barely any time. Can you tell me about mobility and recovery?",
+          "winner": "candidate",
+          "candidate_quality": 33.67,
+          "candidate_words": 32,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/programming and progression": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 33.32,
+      "avg_candidate_quality": 27.73,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Hey FitnessCoach, I'm trying to get back into working out after a few months off. Can you help me with programming and progression?",
+          "winner": "candidate",
+          "candidate_quality": 27.73,
+          "candidate_words": 16,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/training fundamentals": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 33.67,
+      "avg_candidate_quality": 26.39,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I'm new to strength training and I don't know where to start. What's the most important thing I should focus on?",
+          "winner": "tie",
+          "candidate_quality": 26.39,
+          "candidate_words": 14,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    }
+  },
+  "weak_concepts": [
+    "teaching/mobility and recovery",
+    "dialogue/training fundamentals"
+  ],
+  "timestamp": "2026-05-21T06:28:52.728501+00:00"
+}

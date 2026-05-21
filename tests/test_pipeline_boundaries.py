@@ -167,14 +167,22 @@ def test_refusal_response_includes_boundary_and_redirect():
     assert "world history" in lower
 
 
-def test_ollama_cleaner_replaces_generic_filler():
-    from scripts.generate_dataset_ollama import clean_generic_filler
+def test_ollama_category_prompts_remain_short_and_specific():
+    from scripts.generate_dataset_ollama import build_category_generation_prompt
 
-    raw = "Great question. Once you understand this, everything falls into place naturally."
-    cleaned = clean_generic_filler(raw, concept="telescopes")
+    teaching = build_category_generation_prompt("teaching", "ancient civilizations", "HistoryGuide")
+    dialogue = build_category_generation_prompt("dialogue", "ancient civilizations", "HistoryGuide")
+    refusal = build_category_generation_prompt("refusal", "ancient civilizations", "HistoryGuide")
 
-    assert "everything falls into place" not in cleaned.lower()
-    assert "telescopes" in cleaned.lower()
+    assert "1-2 short sentences" in teaching
+    assert "one concrete fact or example" in teaching
+    assert "Aim for 12-20 words" in teaching
+    assert "under 200 characters" in dialogue
+    assert "one specific detail or example" in dialogue
+    assert "aim for 12-20 words" in dialogue
+    assert "Instead, I can help with" in refusal
+    assert "state the boundary" in refusal
+    assert "one concrete in-scope history topic" in refusal
 
 
 def test_ollama_multi_turn_selection_is_deterministic():

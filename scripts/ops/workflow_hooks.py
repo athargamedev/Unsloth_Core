@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -61,9 +62,11 @@ class WorkflowHookRecorder:
         self.db = db or create_pipeline_db()              # Auto-connect if caller didn't provide one
         self._db_run_created: bool = False                # NEW
         self._db_job_created: bool = False                # NEW
+        self._db_job_uuid: str | None = None               # UUID of created job
         self._db_config_saved: bool = False                # pipeline_config_snapshots
         self._db_quality_gate_created: bool = False        # dataset_quality_gates
         self._db_eval_session_created: bool = False        # eval_sessions
+        self._db_ephemeral_run_id: str | None = None       # evaluate_pipeline fallback run_id
 
     def emit(self, step: str, status: str, **fields: Any) -> None:
         if not self.path:
@@ -118,10 +121,13 @@ class WorkflowHookRecorder:
         run_id = fields.get("run_id") or self.base_event.get("run_id")
         technique_val = fields.get("technique") or self.base_event.get("technique")
 
-        if not npc_key:
-            return  # Cannot write to DB without an NPC key
+        if step == "evaluate_pipeline" and not run_id:
+            if self._db_ephemeral_run_id is None:
+                self._db_ephemeral_run_id = f"evaluate_pipeline_{uuid.uuid4().hex}"
+            run_id = self._db_ephemeral_run_id
 
         # ── RUN lifecycle ─────────────────────────────────────────────
+
         # All pipeline scripts fire step() events. The FIRST "start" event
         # creates a pipeline_runs row, and subsequent "complete"/"error"
         # events update it. This works universally without a hardcoded
@@ -220,14 +226,13 @@ class WorkflowHookRecorder:
             metadata = {
                 "html": fields.get("html", False),
                 "track": fields.get("track", False),
+                "candidate_path": fields.get("candidate"),
+                "baseline_path": fields.get("baseline"),
+                "judge_model": fields.get("judge_model", "qwen2.5:7b"),
             }
- 
+
             self.db.create_eval_session(
                 npc_key=npc_key,
-                status="completed",
-                candidate_path=fields.get("candidate"),
-                baseline_path=fields.get("baseline"),
-                judge_model=fields.get("judge_model", "qwen2.5:7b"),
                 report_html_path=report_html,
                 feedback_json_path=feedback_path,
                 metadata=metadata,
@@ -245,18 +250,21 @@ class WorkflowHookRecorder:
     ) -> None:
         """Handle pipeline_runs lifecycle events."""
         if status == "start" and not self._db_run_created:
+            preset = fields.get("preset") or fields.get("technique") or "default"
             self.db.create_run(
                 npc_key=npc_key,
                 run_id=run_id or step,
                 run_dir=fields.get("output_dir", ""),
-                preset=fields.get("preset"),
+                preset=preset,
                 model_id=fields.get("model"),
                 technique=technique_val,
                 spec_path=self.base_event.get("spec_path"),
+                status=status,
             )
             self._db_run_created = True
 
         elif status in ("complete", "error") and self._db_run_created:
+            resolved_status = "ok" if status == "complete" else "failed"
             metrics: dict[str, Any] = {"step": step}
             if "training_loss" in fields:
                 metrics["loss"] = fields["training_loss"]
@@ -264,7 +272,7 @@ class WorkflowHookRecorder:
                 metrics["num_examples"] = fields["num_examples"]
             if "duration_s" in fields:
                 metrics["duration_s"] = fields["duration_s"]
-            metrics["status"] = "ok" if status == "complete" else "failed"
+            metrics["status"] = resolved_status
             if status == "error":
                 metrics["error"] = fields.get("error", "Unknown error")
 
@@ -272,6 +280,7 @@ class WorkflowHookRecorder:
                 npc_key=npc_key,
                 run_id=run_id or step,
                 metrics=metrics,
+                status=resolved_status,
             )
 
     def _db_emit_job(
@@ -284,8 +293,6 @@ class WorkflowHookRecorder:
         fields: dict[str, Any],
     ) -> None:
         """Handle pipeline_jobs lifecycle events."""
-        job_id = run_id or self.base_event.get("run_id")
-
         if status == "start" and not self._db_job_created:
             # Map step to job type
             job_type = "Pipeline"
@@ -300,18 +307,20 @@ class WorkflowHookRecorder:
             elif "feedback" in step or step == "feedback_loop":
                 job_type = "Feedback"
 
-            self.db.create_job(
+            result = self.db.create_job(
                 npc_key=npc_key,
                 type=job_type,
                 command_id=run_id or step,
                 command_args=[npc_key, technique_val],
             )
+            if result and "id" in result:
+                self._db_job_uuid = result["id"]
             self._db_job_created = True
 
-        elif status in ("complete", "error") and self._db_job_created and job_id:
+        elif status in ("complete", "error") and self._db_job_created and self._db_job_uuid:
             error_msg = fields.get("error") if status == "error" else None
             self.db.update_job_status(
-                job_id,
+                self._db_job_uuid,
                 status="completed" if status == "complete" else "failed",
                 error=error_msg,
             )

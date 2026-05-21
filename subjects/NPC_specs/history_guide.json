@@ -29,8 +29,8 @@
   },
   "dialogue": {
     "conversation_style": "Short, vivid, and chronological",
-    "max_sentences": 3,
-    "max_characters": 800,
+    "max_sentences": 2,
+    "max_characters": 200,
     "allow_formatting": false,
     "player_archetypes": [
       "adventurer",

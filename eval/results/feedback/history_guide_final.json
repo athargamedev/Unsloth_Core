@@ -1,0 +1,85 @@
+{
+  "npc_key": "history_guide",
+  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
+  "candidate": "history_guide/history_guide-lora-f16",
+  "total_examples": 4,
+  "baseline_wins": 1,
+  "candidate_wins": 2,
+  "ties": 1,
+  "win_rate": 0.5,
+  "per_concept": {
+    "teaching/historical thinking": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 27.08,
+      "avg_candidate_quality": 29.44,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I'm trying to understand how historians think. Can you explain what they mean by 'historical thinking'?",
+          "winner": "candidate",
+          "candidate_quality": 29.44,
+          "candidate_words": 19,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/classical antiquity": {
+      "total": 2,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 37.084999999999994,
+      "avg_candidate_quality": 26.285,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I've been studying the rise of city-states in ancient Greece. Can you tell me about their impact on Western philosophy?",
+          "winner": "tie",
+          "candidate_quality": 31.78,
+          "candidate_words": 26,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        },
+        {
+          "question": "I've heard tales of ancient Greece and Rome, but what truly drove their rise to power?",
+          "winner": "baseline",
+          "candidate_quality": 20.79,
+          "candidate_words": 8,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "refusal/modern history": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 33.32,
+      "avg_candidate_quality": 36.38,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "Can you help me with something unrelated to world history?",
+          "winner": "candidate",
+          "candidate_quality": 36.38,
+          "candidate_words": 48,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    }
+  },
+  "weak_concepts": [
+    "teaching/classical antiquity",
+    "refusal/modern history"
+  ],
+  "timestamp": "2026-05-21T06:48:35.210030+00:00"
+}

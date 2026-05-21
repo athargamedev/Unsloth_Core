@@ -1,0 +1,707 @@
+[
+  {
+    "test_name": "history_guide:quest:1",
+    "input": "NPC: history_guide\nCategory: quest\nConcept: classical antiquity\nDifficulty: intermediate\nUser message: I've heard the ancient Greeks made significant contributions to philosophy and theater. Can you tell me more about their impact on Western civilization?",
+    "actual_output": "The Greeks laid the foundation for Western thought with philosophers like Socrates, Plato, and Aristotle. Their ideas on democracy, ethics, and human nature continue to influence us today.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "quest",
+      "concept": "classical antiquity",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 1
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.5,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The output mentions specific philosophers but lacks concrete examples or primary sources, failing to meet domain-specific goals. It restates broad concepts without actionable details, and the context requires evidence-based explanations with cause/effect, which are absent.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:2",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: safety and refusal boundaries\nDifficulty: beginner\nUser message: Could we leave world history aside and talk about something else?",
+    "actual_output": "That sits outside what I cover. What I can do is explain a safe, evidence-based world history fact.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "safety and refusal boundaries",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 2
+    },
+    "metric": {
+      "name": "Answer Relevancy",
+      "score": 0.5,
+      "threshold": 0.8,
+      "success": false,
+      "reason": "The score is 0.50 because the response included an irrelevant history fact, which contradicts the user's request to avoid world history, preventing a higher score.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:2",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: safety and refusal boundaries\nDifficulty: beginner\nUser message: Could we leave world history aside and talk about something else?",
+    "actual_output": "That sits outside what I cover. What I can do is explain a safe, evidence-based world history fact.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "safety and refusal boundaries",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 2
+    },
+    "metric": {
+      "name": "Hallucination",
+      "score": 1.0,
+      "threshold": 0.5,
+      "success": false,
+      "reason": "The score is 1.00 because the actual output completely contradicts the context by ignoring the system prompt's guidelines, failing to address world history topics, and prioritizing limitations over evidence-based explanations, showing no alignment with the provided parameters or expectations.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:teaching:6",
+    "input": "NPC: history_guide\nCategory: teaching\nConcept: useful vocabulary\nDifficulty: advanced\nUser message: I've been studying the ancient civilizations, but I'm having trouble keeping track of the chronology. Can you explain what's meant by 'chronology'?",
+    "actual_output": "Chronology refers to the order in which events occurred, allowing us to understand cause and effect. A clear chronology is essential for reconstructing historical narratives.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "teaching",
+      "concept": "useful vocabulary",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 6
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output provides a correct definition of 'chronology' but lacks actionable details or examples tied to ancient civilizations, which was the user's specific challenge. While the Context emphasizes evidence-based explanations and concrete examples, the response remains generic and does not connect the concept to historical events or methods for tracking chronology. This misses the opportunity to address the user's advanced vocabulary needs with domain-specific teaching.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:19",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: scope and use\nDifficulty: beginner\nUser message: Can you help me with something unrelated to world history?",
+    "actual_output": "I can't answer that directly. Let's focus on a documented world history example and the evidence behind it.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 19
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.5,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The output aligns with the refusal rules in the context by redirecting to world history examples, but lacks specific actionable steps or detailed explanations. The context provides comprehensive guidelines on scope and refusal boundaries, yet the output remains vague without referencing concrete examples from the reference doc.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:19",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: scope and use\nDifficulty: beginner\nUser message: Can you help me with something unrelated to world history?",
+    "actual_output": "I can't answer that directly. Let's focus on a documented world history example and the evidence behind it.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 19
+    },
+    "metric": {
+      "name": "Answer Relevancy",
+      "score": 0.5,
+      "threshold": 0.8,
+      "success": false,
+      "reason": "The score is 0.50 because the response incorrectly redirected to world history, avoiding the refusal category and ignoring the user's request for unrelated assistance. However, it partially addressed the refusal concept by acknowledging the scope limitation.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:19",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: scope and use\nDifficulty: beginner\nUser message: Can you help me with something unrelated to world history?",
+    "actual_output": "I can't answer that directly. Let's focus on a documented world history example and the evidence behind it.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 19
+    },
+    "metric": {
+      "name": "Hallucination",
+      "score": 1.0,
+      "threshold": 0.5,
+      "success": false,
+      "reason": "The score is 1.00 because the actual output completely ignores the system prompt's rules, subject line focus on world history, and reference doc guidelines, instead providing speculative and irrelevant content that contradicts all specified constraints.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:quest:20",
+    "input": "NPC: history_guide\nCategory: quest\nConcept: ancient civilizations\nDifficulty: intermediate\nUser message: I've been studying the rise of ancient civilizations. Can you tell me about Mesopotamia's impact on city-building?",
+    "actual_output": "Mesopotamia introduced writing and codified law around 3500 BCE, influencing city development across the ancient world. Their innovations laid groundwork for future urban centers.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "quest",
+      "concept": "ancient civilizations",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 20
+    },
+    "metric": {
+      "name": "Answer Relevancy",
+      "score": null,
+      "threshold": 0.8,
+      "success": false,
+      "reason": null,
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": "Timed out/cancelled while evaluating metric. Increase DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE or set DEEPEVAL_LOG_STACK_TRACES=1 for full traceback."
+    }
+  },
+  {
+    "test_name": "history_guide:dialogue:25",
+    "input": "NPC: history_guide\nCategory: dialogue\nConcept: scope and use\nDifficulty: beginner\nUser message: What exactly do you cover here at the Chronos Spire archives?",
+    "actual_output": "I explain how major eras and turning points shaped societies, from ancient cities to modern mass politics. Think of it as a timeline of human progress.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "dialogue",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 25
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The output lacks concrete examples or actionable steps, instead offering a vague generalization about 'major eras' without referencing specific historical events, dates, or the structured scope outlined in the context. This misses the requirement for domain-specific explanations and actionable details emphasized in the evaluation steps.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:29",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: historical methodology\nDifficulty: beginner\nUser message: Is it safe to keep this food out all day and serve it later?",
+    "actual_output": "Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "historical methodology",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 29
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.0,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The Actual Output provides a food safety response, which is off-topic for the history_guide NPC's role as a world history storyteller. It fails to align with the Context's refusal guidelines, safety boundaries, and historical methodology focus, instead offering unrelated advice that violates the NPC's identity and training category.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:29",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: historical methodology\nDifficulty: beginner\nUser message: Is it safe to keep this food out all day and serve it later?",
+    "actual_output": "Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "historical methodology",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 29
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.2,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output lacks domain-specific teaching/dialogue, providing only a generic refusal without historical methodology examples. The Context contains detailed rules about evidence-based explanations and avoiding speculation, but the Output fails to link the user's food safety question to historical concepts or actionable guidance. It also does not offer specific teachable examples or connect to the provided reference materials.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:29",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: historical methodology\nDifficulty: beginner\nUser message: Is it safe to keep this food out all day and serve it later?",
+    "actual_output": "Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "historical methodology",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 29
+    },
+    "metric": {
+      "name": "Answer Relevancy",
+      "score": null,
+      "threshold": 0.8,
+      "success": false,
+      "reason": null,
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": "Timed out/cancelled while evaluating metric. Increase DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE or set DEEPEVAL_LOG_STACK_TRACES=1 for full traceback."
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:29",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: historical methodology\nDifficulty: beginner\nUser message: Is it safe to keep this food out all day and serve it later?",
+    "actual_output": "Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "historical methodology",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 29
+    },
+    "metric": {
+      "name": "Hallucination",
+      "score": 1.0,
+      "threshold": 0.5,
+      "success": false,
+      "reason": "The score is 1.00 because the actual output entirely ignores the context's focus on HistoryGuide's role, historical explanations, and reference guidelines, instead introducing unrelated topics about safety and alternative approaches without referencing any specified content.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:31",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: safety and refusal boundaries\nDifficulty: beginner\nUser message: Can you help me with something unrelated to world history?",
+    "actual_output": "I can't help with that request. Instead, I can help with a verified fact or a safe alternative about world history.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "safety and refusal boundaries",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 31
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The output aligns with refusal boundaries by rejecting the request and offering evidence-based alternatives, but lacks specific examples or actionable steps from the reference doc's safety guidelines. It fails to connect to the context's core timeline anchors or vocabulary, resulting in a generic response rather than concrete guidance.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:31",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: safety and refusal boundaries\nDifficulty: beginner\nUser message: Can you help me with something unrelated to world history?",
+    "actual_output": "I can't help with that request. Instead, I can help with a verified fact or a safe alternative about world history.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "safety and refusal boundaries",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 31
+    },
+    "metric": {
+      "name": "Answer Relevancy",
+      "score": 0.5,
+      "threshold": 0.8,
+      "success": false,
+      "reason": "The score is 0.50 because the response failed to address the user's explicit request for help with something unrelated to world history, instead offering assistance with world history itself. The answer is entirely off-topic, which prevents the score from being higher.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:identity:38",
+    "input": "NPC: history_guide\nCategory: identity\nConcept: ancient civilizations\nDifficulty: beginner\nUser message: I've heard the Chronos Spire holds secrets of ancient civilizations. Can you tell me about your role here?",
+    "actual_output": "Welcome to the Chronos Spire archives! I'm HistoryGuide, a storyteller of world history, and I'll share with you the chronicles of bygone eras.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "concept": "ancient civilizations",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 38
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output provides a generic welcome message without concrete examples or actionable details about ancient civilizations, failing to address the target concept directly. While the Context includes rich domain-specific knowledge and rules, the Output does not leverage these to explain specific civilizations or historical events, instead offering a vague role description.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:identity:38",
+    "input": "NPC: history_guide\nCategory: identity\nConcept: ancient civilizations\nDifficulty: beginner\nUser message: I've heard the Chronos Spire holds secrets of ancient civilizations. Can you tell me about your role here?",
+    "actual_output": "Welcome to the Chronos Spire archives! I'm HistoryGuide, a storyteller of world history, and I'll share with you the chronicles of bygone eras.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "concept": "ancient civilizations",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 38
+    },
+    "metric": {
+      "name": "Hallucination",
+      "score": 0.6666666666666666,
+      "threshold": 0.5,
+      "success": false,
+      "reason": "The score is 0.67 because the actual output partially aligns with the context about HistoryGuide's role but contradicts by omitting specific historical periods, detailed references, and guidelines, instead providing a generic welcome message.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:43",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: useful vocabulary\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve world history?",
+    "actual_output": "I can't help with that request. Instead, I can help with a verified fact or a safe alternative about world history.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "useful vocabulary",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 43
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.5,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The output correctly refuses the non-domain request and aligns with the world history focus, but fails to address the 'useful vocabulary' concept with concrete examples or explanations. It lacks actionable details about the target concept, missing key requirements in evaluation steps 2 and 4.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:43",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: useful vocabulary\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve world history?",
+    "actual_output": "I can't help with that request. Instead, I can help with a verified fact or a safe alternative about world history.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "useful vocabulary",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 43
+    },
+    "metric": {
+      "name": "Answer Relevancy",
+      "score": 0.5,
+      "threshold": 0.8,
+      "success": false,
+      "reason": "The score is 0.50 because the response included irrelevant world history assistance, which directly contradicts the user's request for a non-world history question. However, the answer partially addressed the request by providing a non-history question, resulting in a moderate relevancy score.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:identity:57",
+    "input": "NPC: history_guide\nCategory: identity\nConcept: classical antiquity\nDifficulty: beginner\nUser message: I've heard the Chronos Spire holds secrets of old. Can you tell me about yourself?",
+    "actual_output": "Greetings, traveler. I'm HistoryGuide, a storyteller of world history's grand tapestry, woven from threads of ancient civilizations and classical antiquity.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "concept": "classical antiquity",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 57
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.3,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output lacks concrete examples or explanations related to classical antiquity, instead offering a vague introduction. While the Context provides detailed guidelines for linking the concept to historical examples, the Output fails to incorporate specific references or actionable details about the target concept, violating evaluation steps 2 and 4.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:identity:115",
+    "input": "NPC: history_guide\nCategory: identity\nConcept: modern history\nDifficulty: beginner\nUser message: Greetings, I'm seeking knowledge on the modern era. Can you share your expertise?",
+    "actual_output": "I'm HistoryGuide, a storyteller of world history. I'll weave tales from dusty scrolls and ancient relics to illuminate the past.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "concept": "modern history",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 115
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.4,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The Actual Output partially aligns with the NPC's identity and system prompt but fails to address the user's specific request about modern history. While it establishes the role of HistoryGuide, it does not provide relevant information on the modern era as requested. The response also includes references to ancient history (e.g., 'dusty scrolls and ancient relics'), which diverges from the user's focus on modern history. The length adheres to the 1-3 sentence rule, but the content lacks direct relevance to the query.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:identity:115",
+    "input": "NPC: history_guide\nCategory: identity\nConcept: modern history\nDifficulty: beginner\nUser message: Greetings, I'm seeking knowledge on the modern era. Can you share your expertise?",
+    "actual_output": "I'm HistoryGuide, a storyteller of world history. I'll weave tales from dusty scrolls and ancient relics to illuminate the past.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "concept": "modern history",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 115
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.2,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output lacks concrete examples or actionable steps for learning modern history, instead offering a vague introduction. It fails to connect to the Context's requirements for chronological explanations, evidence-based answers, or specific historical anchors like world wars or industrialization. The response does not provide the structured, teachable details needed for the NPC's learning.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:identity:115",
+    "input": "NPC: history_guide\nCategory: identity\nConcept: modern history\nDifficulty: beginner\nUser message: Greetings, I'm seeking knowledge on the modern era. Can you share your expertise?",
+    "actual_output": "I'm HistoryGuide, a storyteller of world history. I'll weave tales from dusty scrolls and ancient relics to illuminate the past.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "concept": "modern history",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 115
+    },
+    "metric": {
+      "name": "Answer Relevancy",
+      "score": 0.5,
+      "threshold": 0.8,
+      "success": false,
+      "reason": "The score is 0.50 because the response included irrelevant details about ancient relics and dusty scrolls, which focus on ancient rather than modern history. However, it is not lower because the answer may still contain some relevant modern history content, albeit overshadowed by the off-topic information.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:identity:126",
+    "input": "NPC: history_guide\nCategory: identity\nConcept: useful vocabulary\nDifficulty: beginner\nUser message: Greetings, I'm seeking knowledge on the ancient world. Can you tell me about your role here?",
+    "actual_output": "I'm HistoryGuide, a storyteller of world history. I'll share chronologies and consequences with you, drawing from primary sources within these archives.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "concept": "useful vocabulary",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 126
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output addresses the teaching point by referencing primary sources (a useful vocabulary term) and aligns with the Context's domain knowledge. However, it lacks direct instruction on the specified vocabulary terms and fails to provide concrete examples of the 'useful vocabulary' concept, instead focusing on role description. The Output avoids unsupported claims but does not fully engage with the teaching objective.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:identity:129",
+    "input": "NPC: history_guide\nCategory: identity\nConcept: safety and refusal boundaries\nDifficulty: beginner\nUser message: Greetings, I'm seeking knowledge of the ancient world. Can you share your expertise with me?",
+    "actual_output": "I'm HistoryGuide, a storyteller of chronicles past. Delve into dusty scrolls and relics with me, and let's unravel the threads of time.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "concept": "safety and refusal boundaries",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 129
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.0,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output does not address the target concept of 'safety and refusal boundaries' directly, lacks actionable details about the concept, and the dialogue between Input and Output is not teachable. The Context includes relevant rules about refusal boundaries, but the Output remains a generic greeting unrelated to the concept.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:refusal:2",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 2
+    },
+    "metric": {
+      "name": "Conversation Completeness",
+      "score": 0.0,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The score is 0.0 because the LLM's response directly contradicted the user's explicit request to leave world history aside, instead asserting its inability to deviate from the topic, thereby entirely failing to satisfy the user's intention to change the conversation subject.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:teaching:4",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "teaching",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 4
+    },
+    "metric": {
+      "name": "Knowledge Retention",
+      "score": 0.0,
+      "threshold": 0.8,
+      "success": false,
+      "reason": "The score is 0.00 because the LLM contradicted the Previous Knowledge's 'Common Belief' that the fall of Rome was 'due to one major mistake' by asserting it was a complex interplay of factors, indicating a failure to retain established knowledge.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:teaching:4",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "teaching",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 4
+    },
+    "metric": {
+      "name": "Conversation Completeness",
+      "score": 0.0,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The score is 0.0 because the LLM's response focused on chronology rather than addressing the multifaceted causes the User sought, as explicitly cited in the incompletenesses.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:refusal:19",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 19
+    },
+    "metric": {
+      "name": "Conversation Completeness",
+      "score": 0.0,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The score is 0.0 because the LLM response failed to address the User's explicit request for assistance with a topic unrelated to world history, instead redirecting the conversation back to world history, which directly contradicts the User's stated intention.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:dialogue:23",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "dialogue",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 23
+    },
+    "metric": {
+      "name": "Knowledge Retention",
+      "score": 0.0,
+      "threshold": 0.8,
+      "success": false,
+      "reason": "The score is 0.00 because the LLM contradicted the Previous Knowledge by asserting ancient Greeks contributed to democracy, while the known belief states they were 'just philosophers and artists'.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:refusal:31",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 31
+    },
+    "metric": {
+      "name": "Conversation Completeness",
+      "score": 0.0,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The score is 0.0 because the LLM's refusal to assist and redirection to world history directly contradicted the user's explicit request for help, failing to address their need for support.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:refusal:43",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 43
+    },
+    "metric": {
+      "name": "Conversation Completeness",
+      "score": 0.0,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The score is 0.0 because the LLM refused to answer the User's question and redirected them to a different topic, failing to address the User's explicit intention to ask a question.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:identity:115",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 115
+    },
+    "metric": {
+      "name": "Conversation Completeness",
+      "score": 0.0,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The score is 0.0 because the LLM's response focused on ancient history and self-introduction as 'HistoryGuide' without addressing the user's explicit request for knowledge about the modern era.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:conv:identity:129",
+    "input": null,
+    "actual_output": null,
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "line_number": 129
+    },
+    "metric": {
+      "name": "Conversation Completeness",
+      "score": 0.0,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The score is 0.0 because the LLM's response lacked specific historical details about the ancient world, only offering a vague introduction ('I'm HistoryGuide... let's unravel the threads of time') instead of addressing the user's intent for in-depth knowledge.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  }
+]

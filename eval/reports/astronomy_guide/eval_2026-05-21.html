@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluation Report: AstronomyGuide</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; color: #333; }
+  h1 { color: #1a1a2e; border-bottom: 2px solid #e94560; padding-bottom: 10px; }
+  h2 { color: #16213e; margin-top: 30px; }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+  .card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .card h3 { margin: 0 0 5px 0; font-size: 14px; color: #666; text-transform: uppercase; }
+  .card .value { font-size: 28px; font-weight: bold; color: #1a1a2e; }
+  .card .winner { color: #2ecc71; }
+  .card .loser { color: #e74c3c; }
+  table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  th { background: #16213e; color: white; padding: 12px; text-align: left; }
+  td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+  tr:hover { background: #f0f0f0; }
+  .chart-container { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .constraint-ok { color: #2ecc71; }
+  .constraint-fail { color: #e74c3c; }
+  .meta { color: #666; font-size: 14px; }
+</style>
+</head>
+<body>
+<h1>NPC Evaluation Report: AstronomyGuide</h1>
+<p class="meta">Generated: 2026-05-21 06:32:05 UTC | Baseline: Models/llama-3.2-3b-instruct-q4_k_m | Candidate: astronomy_guide/astronomy_guide-lora-f16</p>
+
+<div class="summary">
+  <div class="card">
+    <h3>Total Examples</h3>
+    <div class="value">4</div>
+  </div>
+  <div class="card">
+    <h3>Candidate Wins</h3>
+    <div class="value loser">0/4</div>
+  </div>
+  <div class="card">
+    <h3>Win Rate</h3>
+    <div class="value loser">0%</div>
+  </div>
+  <div class="card">
+    <h3>Ties</h3>
+    <div class="value">0</div>
+  </div>
+</div>
+
+<h2>Metrics Comparison</h2>
+<div class="chart-container">
+  <canvas id="metricsChart"></canvas>
+</div>
+
+<h2>Quality Distribution</h2>
+<div class="chart-container">
+  <canvas id="qualityChart"></canvas>
+</div>
+
+<h2>Detailed Results</h2>
+<table>
+<tr>
+  <th>#</th>
+  <th>Question</th>
+  <th>Baseline Qual</th>
+  <th>Candidate Qual</th>
+  <th>Winner</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td>Hey AstronomyGuide, I've been reading about black holes and it says they suck up</td>
+  <td>36.64</td>
+  <td>32.58</td>
+  <td class="loser">baseline</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>I don't get how stars can be so far away. Can't we just see them up close?</td>
+  <td>38.07</td>
+  <td>29.96</td>
+  <td class="loser">baseline</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>I've seen some crazy claims about astrology online. Can you tell me what's real?</td>
+  <td>32.96</td>
+  <td>24.85</td>
+  <td class="loser">baseline</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>I've heard that astronomy is just about looking at the stars and guessing what t</td>
+  <td>39.7</td>
+  <td>30.91</td>
+  <td class="loser">baseline</td>
+</tr>
+</table>
+
+<script>
+// Metrics comparison chart
+new Chart(document.getElementById('metricsChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Quality Score', 'Word Count', 'Sentence Count'],
+    datasets: [
+      {
+        label: 'Baseline',
+        data: [36.8, 45, 3.2],
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      },
+      {
+        label: 'Candidate',
+        data: [29.6, 20, 2.5],
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Aggregate Metrics Comparison' }
+    }
+  }
+});
+
+// Quality distribution chart (per-example quality scores)
+new Chart(document.getElementById('qualityChart'), {
+  type: 'scatter',
+  data: {
+    datasets: [
+      {
+        label: 'Baseline',
+        data: [[1, 36.64], [2, 38.07], [3, 32.96], [4, 39.7]],
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+      },
+      {
+        label: 'Candidate',
+        data: [[1, 32.58], [2, 29.96], [3, 24.85], [4, 30.91]],
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Per-Example Quality Scores' }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Example #' } },
+      y: { title: { display: true, text: 'Quality Score' } }
+    }
+  }
+});
+</script>
+</body>
+</html>

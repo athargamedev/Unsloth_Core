@@ -1365,6 +1365,8 @@ class PipelineDB:
             values: list[Any] = [session_id, npc_key, now]
 
             for key, val in self._filter_extra(extra).items():
+                if key in {"metadata", "per_concept"} and isinstance(val, (dict, list, tuple)):
+                    val = json.dumps(val)
                 columns.append(key)
                 placeholders.append("%s")
                 values.append(val)

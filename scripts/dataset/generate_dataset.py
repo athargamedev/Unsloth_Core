@@ -529,36 +529,36 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
     if difficulty == "beginner":
         if concept_b:
             templates = [
-                f"{concept_a} is about {detail_a}, while {concept_b} is about {detail_b}.",
-                f"Compare them like this: {concept_a} means {detail_a}, and {concept_b} means {detail_b}.",
+                f"{concept_a} is about {detail_a}, while {concept_b} is about {detail_b}; one uses {detail_a} and the other uses {detail_b}.",
+                f"Compare them like this: {concept_a} means {detail_a}, and {concept_b} means {detail_b} in a concrete case.",
             ]
         else:
             templates = [
-                f"{concept_a} matters because {detail_a}.",
-                f"The key idea behind {concept_a} is {detail_a}.",
-                f"In {subject}, {concept_a} shows up when {detail_a}.",
+                f"{concept_a} matters because {detail_a}; one clear example is how it changes the outcome.",
+                f"The key idea behind {concept_a} is {detail_a}, which you can see in a real-world example.",
+                f"In {subject}, {concept_a} shows up when {detail_a}, especially in practical cases.",
             ]
     elif difficulty == "intermediate":
         if concept_b:
             templates = [
-                f"A useful difference is that {concept_a} focuses on {detail_a}, while {concept_b} focuses on {detail_b}.",
-                f"Look at {concept_a} and {concept_b} through {detail_a} versus {detail_b}.",
+                f"A useful difference is that {concept_a} focuses on {detail_a}, while {concept_b} focuses on {detail_b}, so they lead to different outcomes.",
+                f"Look at {concept_a} and {concept_b} through {detail_a} versus {detail_b}, using one concrete example.",
             ]
         else:
             templates = [
-                f"A deeper look at {concept_a}: {detail_a}.",
-                f"{concept_a} works this way in practice: {detail_a}.",
+                f"A deeper look at {concept_a}: {detail_a}, with one concrete example to show it in action.",
+                f"{concept_a} works this way in practice: {detail_a}, which you can see in a specific case.",
             ]
     else:
         if concept_b:
             templates = [
-                f"At a deeper level, {concept_a} and {concept_b} can be tested against cases like {detail_a} and {detail_b}.",
-                f"Compare {concept_a} and {concept_b} by checking how {detail_a} and {detail_b} behave in a real example.",
+                f"At a deeper level, {concept_a} and {concept_b} can be tested against cases like {detail_a} and {detail_b}, which leads to different answers.",
+                f"Compare {concept_a} and {concept_b} by checking how {detail_a} and {detail_b} behave in one real example.",
             ]
         else:
             templates = [
-                f"At a deeper level, {concept_a} is more subtle because {detail_a}.",
-                f"One limitation of the usual explanation is that {detail_a}.",
+                f"At a deeper level, {concept_a} is more subtle because {detail_a}, which matters in a real case.",
+                f"One limitation of the usual explanation is that {detail_a}, so a concrete example helps.",
             ]
     return random.choice(templates)
 
@@ -571,23 +571,23 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriev
 
     if dialogue_type == "clarification":
         templates = [
-            f"Sure — {concept} means {detail}.",
-            f"Another way to say it: {concept} is about {detail}.",
+            f"Sure — {concept} means {detail}, and a concrete example makes it easier to see.",
+            f"Another way to say it: {concept} is about {detail}, as you can see in a real case.",
         ]
     elif dialogue_type == "deep_dive":
         templates = [
-            f"Going deeper: {detail}.",
-            f"Start with {detail}, then build from there.",
+            f"Going deeper: {detail}, which you can test against one specific example.",
+            f"Start with {detail}, then build from there using a concrete case.",
         ]
     elif dialogue_type == "application":
         templates = [
-            f"Use {concept} by focusing on {detail}.",
-            f"A practical way to apply {concept} is to check whether {detail} fits the case.",
+            f"Use {concept} by focusing on {detail}, and test it on one real example.",
+            f"A practical way to apply {concept} is to check whether {detail} fits the case you have.",
         ]
     elif dialogue_type == "misconception":
         templates = [
-            f"That is a common misconception. {detail} is the better explanation.",
-            f"Not quite — {concept} really works like this: {detail}.",
+            f"That is a common misconception. {detail} is the better explanation in a real case.",
+            f"Not quite — {concept} really works like this: {detail}, and a concrete example shows why.",
         ]
 
     return random.choice(templates)
@@ -622,9 +622,9 @@ def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
 
     # Fallback to generic quest templates
     templates = [
-        f"What is one real-world example of {concept}?",
-        f"Use {detail} to solve a practical problem.",
-        f"Describe one way {concept} changes the outcome of a real situation.",
+        f"What is one real-world example of {concept}, and why does it matter?",
+        f"Use {detail} to solve a practical problem in one concrete case.",
+        f"Describe one way {concept} changes the outcome of a real situation with a specific example.",
         f"Give a short explanation of {concept} using a concrete case like {detail}.",
     ]
     return random.choice(templates)

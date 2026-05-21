@@ -163,12 +163,12 @@ GENERIC_FILLER_REPLACEMENTS = [
 def build_category_generation_prompt(category: str, concept_str: str, npc_name: str, player_role: str = "player") -> str:
     """Backward-compatible category prompt helper used by tests and callers."""
     return {
-        "identity": f"Write a who-are-you exchange for {npc_name}.",
-        "teaching": f"Write a question from a {player_role} about '{concept_str}' and a short, helpful answer.",
-        "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer.",
-        "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character.",
-        "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that redirects to safe in-scope help.",
-    }.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
+        "identity": f"Write a very short first-person self-introduction for {npc_name}. Say who you are and one historical focus or method. Keep it to 1-2 sentences.",
+        "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Answer the first sentence directly and include one concrete fact or example. Aim for 12-20 words. Keep it to 1-2 short sentences.",
+        "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer directly, add one specific detail or example, and aim for 12-20 words. Keep it under 200 characters.",
+        "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character. Include one concrete action step or example and aim for 12-20 words. Keep it to 1-2 short sentences.",
+        "refusal": f"Write an out-of-scope question for {npc_name}, state the boundary, and redirect to safe in-scope help. Include 'Instead, I can help with...' and one concrete in-scope history topic. Keep it to 1-2 sentences.",
+    }.get(category, f"Generate a concise educational dialogue about '{concept_str}' with one concrete detail.")
 
 
 def _build_generation_prompt(

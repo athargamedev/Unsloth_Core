@@ -1,0 +1,96 @@
+{
+  "npc_key": "chef_assistant",
+  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
+  "candidate": "chef_assistant/chef_assistant-lora-f16",
+  "total_examples": 4,
+  "baseline_wins": 0,
+  "candidate_wins": 3,
+  "ties": 1,
+  "win_rate": 0.75,
+  "per_concept": {
+    "teaching/kitchen workflow": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 37.84,
+      "avg_candidate_quality": 32.58,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I'm trying to prep for the week, but I feel overwhelmed by all the ingredients and steps. Can you help me with a simple kitchen workflow?",
+          "winner": "candidate",
+          "candidate_quality": 32.58,
+          "candidate_words": 28,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/flavor balance": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 25.65,
+      "avg_candidate_quality": 34.66,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I'm trying to make a balanced sauce but it keeps tasting flat. I added salt and some acidity from lemon juice, but it's still not right.",
+          "winner": "candidate",
+          "candidate_quality": 34.66,
+          "candidate_words": 35,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/misconceptions and refusals": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 35.84,
+      "avg_candidate_quality": 28.33,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "But what if I don't have a thermometer? How can I be sure it's cooked through?",
+          "winner": "candidate",
+          "candidate_quality": 28.33,
+          "candidate_words": 18,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/food safety": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 34.97,
+      "avg_candidate_quality": 30.45,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I'm worried about storing leftovers safely. What's the best way to keep them fresh?",
+          "winner": "tie",
+          "candidate_quality": 30.45,
+          "candidate_words": 23,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    }
+  },
+  "weak_concepts": [
+    "dialogue/food safety"
+  ],
+  "timestamp": "2026-05-21T06:32:55.576205+00:00"
+}
