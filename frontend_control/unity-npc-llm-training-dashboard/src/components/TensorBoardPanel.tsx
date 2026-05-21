@@ -189,6 +189,11 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
 
   const selectedRuns = useMemo(() => {
     const selected: RunArtifact[] = [];
+    // If primaryRunId is set but doesn't match any filtered run, return empty
+    // (e.g. during filter change — useEffects will sync the IDs on next render)
+    if (primaryRunId && !filteredRuns.some((run) => runKey(run) === primaryRunId)) {
+      return selected;
+    }
     // Primary run goes first
     if (primaryRunId) {
       const primary = filteredRuns.find((run) => runKey(run) === primaryRunId);

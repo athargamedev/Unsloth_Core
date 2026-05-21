@@ -1347,10 +1347,16 @@ def main():
                     } for c in comps],
                 }
 
+            wandb_url = None
+            wandb_run = None
             feedback_data = {
                 "npc_key": npc_key,
                 "baseline": baseline_name,
                 "candidate": candidate_name,
+                "wandb_url": wandb_url,
+                "wandb_run_id": wandb_run.id if wandb_run else None,
+                "wandb_project": args.wandb_project or "unsloth-core",
+                "wandb_entity": args.wandb_entity,
                 "total_examples": comparison["total"],
                 "baseline_wins": comparison["baseline_wins"],
                 "candidate_wins": comparison["candidate_wins"],
@@ -1399,7 +1405,7 @@ def main():
             }
             if wandb_group_env:
                 config["wandb_group"] = wandb_group_env
-            wandb.init(
+            wandb_run = wandb.init(
                 project=args.wandb_project or "unsloth-core",
                 entity=args.wandb_entity,
                 group=os.environ.get("WANDB_GROUP"),
@@ -1408,6 +1414,23 @@ def main():
                 name=f"eval-{npc_key}-{baseline_name}-vs-{candidate_name}",
                 tags=["eval", npc_key, baseline_name, candidate_name],
             )
+            wandb_url = getattr(wandb_run, "url", None)
+            if wandb_url:
+                print(f"  [wandb] Run URL: {wandb_url}")
+            if feedback_path and os.path.exists(feedback_path):
+                try:
+                    with open(feedback_path, "r") as f:
+                        existing_feedback = json.load(f)
+                    existing_feedback.update({
+                        "wandb_url": wandb_url,
+                        "wandb_run_id": wandb_run.id if wandb_run else None,
+                        "wandb_project": args.wandb_project or "unsloth-core",
+                        "wandb_entity": args.wandb_entity,
+                    })
+                    with open(feedback_path, "w") as f:
+                        json.dump(existing_feedback, f, indent=2)
+                except Exception as exc:
+                    print(f"  [wandb] Could not update feedback JSON with run metadata: {exc}")
             # Log comparison summary
             wandb.log({
                 "eval/baseline_wins": bw,
@@ -1476,6 +1499,8 @@ def main():
                             "candidate": candidate_name,
                             "win_rate": win_rate,
                             "total_questions": total,
+                            "wandb_url": wandb_url,
+                            "wandb_run_id": wandb_run.id if wandb_run else None,
                         },
                     )
                     report_artifact.add_file(args.output)

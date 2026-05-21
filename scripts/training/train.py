@@ -114,6 +114,48 @@ def ensure_wandb_noninteractive(config: dict) -> None:
     print("  [WARN] W&B enabled but no WANDB_API_KEY or ~/.netrc was found; using WANDB_MODE=offline so training will not crash.")
 
 
+def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_name: str, run_id: str, output_dir: str):
+    """Initialize W&B with a consistent training naming/tagging scheme."""
+    if not config.get("wandb", {}).get("enabled", False):
+        return None
+
+    import wandb
+
+    wandb_cfg = {
+        "npc_key": npc_key,
+        "technique": technique,
+        "preset": preset_name,
+        "run_id": run_id,
+        "output_dir": output_dir,
+        "model": config.get("model"),
+        "dataset_path": config.get("dataset_path"),
+        "lora_r": config.get("lora", {}).get("r", config.get("training", {}).get("lora_r")),
+        "lora_alpha": config.get("lora", {}).get("alpha", config.get("training", {}).get("lora_alpha")),
+        "learning_rate": config.get("training", {}).get("learning_rate"),
+        "batch_size": config.get("training", {}).get("batch_size"),
+        "gradient_accumulation_steps": config.get("training", {}).get("gradient_accumulation_steps"),
+        "max_seq_length": config.get("training", {}).get("max_seq_length"),
+        "packing": config.get("training", {}).get("packing"),
+        "train_on_responses_only": config.get("training", {}).get("train_on_responses_only"),
+    }
+    base_tags = [tag for tag in (config.get("wandb", {}).get("tags") or []) if tag]
+    tags = list(dict.fromkeys(["train", npc_key, technique, preset_name, *base_tags]))
+    group = os.environ.get("WANDB_RUN_GROUP") or os.environ.get("WANDB_GROUP") or npc_key
+
+    run = wandb.init(
+        project=config.get("wandb", {}).get("project", "unsloth-core"),
+        entity=config.get("wandb", {}).get("entity"),
+        group=group,
+        job_type="train",
+        config=wandb_cfg,
+        name=f"train-{npc_key}-{technique}-{preset_name}-{run_id}",
+        tags=tags,
+    )
+    if run and getattr(run, "url", None):
+        print(f"  [wandb] Run URL: {run.url}")
+    return run
+
+
 def check_promotion_rules(training_loss: float, config: dict, num_train_examples: int) -> tuple[bool, list[str]]:
     """Check if the model meets minimum quality thresholds for promotion to 'best'.
 
@@ -524,7 +566,7 @@ def load_dataset_from_jsonl(path, tokenizer, config):
     return Dataset.from_list(rows)
 
 
-def run_training(model, tokenizer, dataset, eval_dataset, config):
+def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: str = "default"):
     """Run the SFT training loop."""
     from trl import SFTTrainer, SFTConfig
     import torch
@@ -533,6 +575,20 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
     output_dir = training.get("output_dir", str(paths.output_dir("default")))
     print(f"  Output: {os.path.relpath(output_dir, PROJECT_ROOT)}")
     os.makedirs(output_dir, exist_ok=True)
+
+    wandb_run = None
+    wandb_module = None
+    if config.get("wandb", {}).get("enabled", False):
+        wandb_run = init_wandb_tracking(
+            config,
+            npc_key=config.get("npc_key", "unknown"),
+            technique=config.get("technique", "unknown"),
+            preset_name=preset_name,
+            run_id=config.get("run_id", "unknown"),
+            output_dir=output_dir,
+        )
+        if wandb_run is not None:
+            wandb_module = sys.modules.get("wandb")
 
     # Report targets
     report_targets = []
@@ -596,21 +652,42 @@ def run_training(model, tokenizer, dataset, eval_dataset, config):
             print("  [WARN] train_on_responses_only requested, but current trainer API does not expose it; continuing without response-only masking")
 
     print(f"  Starting training ({training.get('num_epochs', 3)} epochs, {training.get('batch_size', 1)} batch)...")
-    train_result = trainer.train()
+    try:
+        train_result = trainer.train()
 
-    # Save the final model
-    print("  Saving model...")
-    trainer.save_model(output_dir)
-    tokenizer.save_pretrained(output_dir)
+        # Save the final model
+        print("  Saving model...")
+        trainer.save_model(output_dir)
+        tokenizer.save_pretrained(output_dir)
 
-    # Save training metrics
-    metrics = {}
-    if train_result:
-        metrics = train_result.metrics
-    with open(os.path.join(output_dir, "training_metrics.json"), "w") as f:
-        json.dump(metrics, f, indent=2, default=str)
+        # Save training metrics
+        metrics = {}
+        if train_result:
+            metrics = train_result.metrics
+        wandb_url = None
+        if wandb_run is not None:
+            wandb_url = getattr(wandb_run, "url", None) or getattr(getattr(wandb_module, "run", None), "url", None)
+            if wandb_url:
+                print(f"  [wandb] Logged run: {wandb_url}")
+                if wandb_module is not None and getattr(wandb_module, "run", None) is not None:
+                    try:
+                        wandb_module.run.summary["train/wandb_url"] = wandb_url
+                        wandb_module.run.summary["train/output_dir"] = output_dir
+                        wandb_module.run.summary["train/final_loss"] = metrics.get("train_loss", 0.0)
+                        wandb_module.run.summary["train/num_examples"] = len(dataset)
+                    except Exception:
+                        pass
+        metrics["wandb_url"] = wandb_url
+        with open(os.path.join(output_dir, "training_metrics.json"), "w") as f:
+            json.dump(metrics, f, indent=2, default=str)
 
-    return trainer, metrics
+        return trainer, metrics
+    finally:
+        if wandb_module is not None:
+            try:
+                wandb_module.finish()
+            except Exception:
+                pass
 
 
 def main():
@@ -778,6 +855,7 @@ def main():
 
     config.setdefault("training", {})["output_dir"] = run_dir
     config["run_id"] = run_id
+    config["preset"] = preset_name
 
     # Write config snapshot
     log_config_snapshot(config, run_dir)
@@ -809,8 +887,11 @@ def main():
         # ── Training ───────────────────────────────────────────────────────
         log_info("[3/4] Running training...")
         with hook_recorder.step("run_training", dataset_path=dataset_path, num_examples=num_examples):
-            trainer, metrics = run_training(model, tokenizer, dataset, eval_dataset, config)
+            trainer, metrics = run_training(model, tokenizer, dataset, eval_dataset, config, preset_name=preset_name)
         training_loss = metrics.get("train_loss", 0.0)
+        wandb_url = metrics.get("wandb_url")
+        if wandb_url:
+            log_info("W&B run: %s", wandb_url)
         log_info("Training complete: loss=%.4f", training_loss)
         log_state("training_complete", npc_key=npc_key, run_id=run_id, loss=training_loss, examples=num_examples)
 
@@ -868,6 +949,7 @@ def main():
                 "technique": technique,
                 "training_loss": training_loss,
                 "num_examples": num_examples,
+                "wandb_url": wandb_url,
                 "created_at": datetime.now().isoformat(),
                 "mode": "full_merge" if getattr(args, 'full_merge_export', False) else "adapter",
                 "gguf_files": [str(gf) for gf in gguf_files],
