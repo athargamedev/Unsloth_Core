@@ -15,6 +15,8 @@ from deepeval.metrics import (
     ToxicityMetric,
 )
 from deepeval.models import OllamaModel
+
+from scripts.ops.ollama_lifecycle import register_ollama_unload
 from deepeval.test_case import SingleTurnParams
 
 
@@ -27,6 +29,7 @@ def _ollama_judge() -> OllamaModel:
 
 
 JUDGE_MODEL = _ollama_judge()
+register_ollama_unload(os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen3:latest"), os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"))
 
 DATASET_QUALITY_METRICS = [
     GEval(

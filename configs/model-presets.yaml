@@ -1,0 +1,18 @@
+# Model-family defaults for training preset selection.
+# Explicit CLI presets still win. These mappings are the automatic fallback.
+
+default: fast-3b
+
+exact_models:
+  "unsloth/Llama-3.2-3B-Instruct-bnb-4bit": fast-3b
+  "unsloth/Llama-3.2-1B-Instruct-bnb-4bit": safe-any
+  "unsloth/Llama-3.2-1.7B-Instruct-bnb-4bit": safe-any
+  "unsloth/Llama-3.1-8B-Instruct-bnb-4bit": premium-3b
+
+buckets:
+  "0.5b": safe-any
+  "1b": safe-any
+  "1.7b": safe-any
+  "3b": fast-3b
+  "7b": premium-3b
+  "8b": premium-3b

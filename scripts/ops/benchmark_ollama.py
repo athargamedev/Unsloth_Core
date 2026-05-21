@@ -24,6 +24,8 @@ from typing import Any
 
 import requests
 
+from scripts.ops.ollama_lifecycle import register_ollama_unload
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
@@ -166,6 +168,8 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     gpu_usage = get_gpu_usage()
 
     selected_model = args.model or (running_models["models"][0] if running_models["models"] else None)
+    if selected_model:
+        register_ollama_unload(selected_model, args.host)
     chat_results: list[dict[str, Any]] = []
     if selected_model:
         prompts = args.prompt if args.prompt else [

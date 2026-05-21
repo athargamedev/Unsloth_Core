@@ -38,6 +38,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
+from scripts.ops.model_presets import resolve_training_preset
 
 # ── Model-size-aware presets ────────────────────────────────────────────────
 # Each preset overrides the base YAML config for specific model sizes.
@@ -339,6 +340,9 @@ def get_config_from_spec(spec_path, preset=None, overrides=None):
         or spec.get("llm", {}).get("base_model")
         or "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
     )
+    spec_preset = spec.get("preset") or spec.get("training", {}).get("preset")
+    effective_model = (overrides or {}).get("model") or model_id
+    resolved_preset = resolve_training_preset(effective_model, preset=preset, spec_preset=spec_preset)
 
     # Dataset path
     train_path = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
@@ -380,9 +384,11 @@ def get_config_from_spec(spec_path, preset=None, overrides=None):
         },
     }
 
-    if preset:
-        preset_config = load_preset(preset)
+    if resolved_preset:
+        preset_config = load_preset(resolved_preset)
         config = deep_merge(config, preset_config)
+
+    config["preset"] = resolved_preset
 
     if overrides:
         # Only set non-None overrides
@@ -429,9 +435,17 @@ def load_config(config_path, preset=None, overrides=None):
     with open(config_path) as f:
         config = yaml.safe_load(f) or {}
 
-    if preset:
-        preset_config = load_preset(preset)
+    effective_model = (overrides or {}).get("model") or config.get("model")
+    resolved_preset = resolve_training_preset(
+        effective_model,
+        preset=preset,
+        spec_preset=config.get("preset") or config.get("training", {}).get("preset"),
+    )
+    if resolved_preset:
+        preset_config = load_preset(resolved_preset)
         config = deep_merge(config, preset_config)
+
+    config["preset"] = resolved_preset
 
     if overrides:
         for key, value in overrides.items():
@@ -859,6 +873,7 @@ def main():
     npc_key = config.get("npc_key", "unknown")
     model_name = config.get("model", "unknown")
     technique = config.get("technique", "unknown")
+    preset_name = config.get("preset") or args.preset or "default"
     lora_r = config.get("lora", {}).get("r", config.get("training", {}).get("lora_r", "?"))
     lora_alpha_val = config.get("lora", {}).get("alpha", config.get("training", {}).get("lora_alpha", "?"))
     vram_gb, vram_notes = estimate_vram(config)
@@ -870,9 +885,10 @@ def main():
         spec_path=str(config_path) if args.from_spec else None,
     )
 
-    print(f"\n{'='*60}")
-    print(f"  Unsloth Training Launcher")
-    print(f"{'='*60}")
+    print()
+    print("=" * 60)
+    print("  Unsloth Training Launcher")
+    print("=" * 60)
     print(f"  NPC:            {npc_key}")
     print(f"  Model:          {model_name}")
     print(f"  Technique:      {technique}")
@@ -880,14 +896,13 @@ def main():
     print(f"  LoRA Alpha:     {lora_alpha_val}")
     print(f"  LR Scheduler:   {config.get('training', {}).get('lr_scheduler_type', 'cosine')}")
     print(f"  Estimated VRAM: {vram_gb}GB ({vram_notes})")
-    print(f"  Preset:         {args.preset or 'none'}")
+    print(f"  Preset:         {preset_name}")
     print(f"  W&B:            {'enabled' if config.get('wandb', {}).get('enabled') else 'disabled'}")
     print(f"  Export GGUF:    {'yes' if args.export_gguf else 'no'}")
-    print(f"{'='*60}\n")
+    print("=" * 60)
+    print()
 
     # ── Resolve output paths ───────────────────────────────────────────
-    preset_name = args.preset or "default"
-    model_name = config.get("model")
     output_dir = config.get("output_dir")
     if output_dir:
         run_dir, run_id = get_run_output_path(output_dir, preset_name=preset_name, model_name=model_name)
@@ -900,12 +915,12 @@ def main():
 
     # Write config snapshot
     log_config_snapshot(config, run_dir)
-    log_state("training_start", npc_key=npc_key, run_id=run_id, model=model_name, preset=args.preset)
-    with hook_recorder.step("training_pipeline", run_id=run_id, output_dir=run_dir, export_gguf=bool(args.export_gguf), preset=args.preset):
+    log_state("training_start", npc_key=npc_key, run_id=run_id, model=model_name, preset=preset_name)
+    with hook_recorder.step("training_pipeline", run_id=run_id, output_dir=run_dir, export_gguf=bool(args.export_gguf), preset=preset_name):
 
         # ── Load model ─────────────────────────────────────────────────────
         log_info("[1/4] Loading model and tokenizer...")
-        with hook_recorder.step("load_model", model=model_name, preset=args.preset):
+        with hook_recorder.step("load_model", model=model_name, preset=preset_name):
             model, tokenizer = get_model_and_tokenizer(config)
         log_info("Model loaded")
 

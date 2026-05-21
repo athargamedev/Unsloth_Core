@@ -1948,11 +1948,14 @@ def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, outp
     text = Path(ref_doc_path).read_text(encoding="utf-8")
     chunks = [c.strip() for c in text.split("\n\n") if len(c.strip()) > 50]
 
+    judge_model = os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen2.5:7b")
+    judge_base_url = os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434")
     judge = OllamaModel(
-        model=os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen2.5:7b"),
-        base_url=os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"),
+        model=judge_model,
+        base_url=judge_base_url,
         temperature=float(os.getenv("DEEPEVAL_OLLAMA_TEMPERATURE", "0")),
     )
+    register_ollama_unload(judge_model, judge_base_url)
 
     synthesizer = Synthesizer(model=judge, async_mode=True)
     print(f"Synthesizing goldens for {npc_key} using DeepEval...")
@@ -1972,6 +1975,7 @@ def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, outp
 
 
 from scripts.ops.run_registry import PipelineRun
+from scripts.ops.ollama_lifecycle import register_ollama_unload
 
 def main():
     parser = argparse.ArgumentParser(description="Generate ChatML dataset from a subject spec")

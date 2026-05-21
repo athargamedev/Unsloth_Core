@@ -7,7 +7,7 @@
       "type": "Evaluation",
       "commandId": "evaluate",
       "npcKey": "chef_assistant",
-      "status": "running",
+      "status": "stopped",
       "progress": 10,
       "loss": null,
       "createdAt": "2026-05-21T22:39:50.898Z",
@@ -47,7 +47,9 @@
         "[EXTERNAL][PID 2507100] discovered active process",
         "/usr/bin/bash -lic set +m; /bin/bash -lc 'export PATH=/usr/bin:/bin:/usr/local/cuda/bin:/home/athar/Projects/Unsloth_Core/unsloth_env/bin:$PATH; source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate; ts=$(date +%Y%m%d_%H%M%S); ./ucore evaluate --baseline /home/athar/Projects/Unsloth_Core/.models/llama-3.2-3b-instruct-q4_k_m.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/chef_assistant/chef_assistant-lora-f16.gguf --base-model /home/athar/Projects/Unsloth_Core/.models/llama-3.2-3b-instruct-q4_k_m.gguf --spec subjects/NPC_specs/chef_assistant.json --num-questions 4 --report-html --track --wandb --judge --judge-model qwen3:latest --gpu-layers 0 --output eval/reports/chef_assistant/chef_assistant_${ts}.html --feedback-json eval/results/feedback/chef_assistant_${ts}.json'"
       ],
-      "terminalReason": "external_detected"
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T22:41:23.908Z",
+      "exitCode": -15
     },
     {
       "id": "ext_proc_2503145",

@@ -52,6 +52,7 @@ from _config import paths, constants as C
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.dataset.dataset_contracts import dataset_contract_from_spec, calculate_distribution_gaps
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
+from scripts.ops.ollama_lifecycle import register_ollama_unload
 from generate_dataset import (
     CATEGORY_TEMPLATES,
     ConceptExtractor,
@@ -930,6 +931,7 @@ Examples:
     else:
         logger.info("Ensuring selected Ollama model is isolated before generation...")
         ensure_selected_ollama_model_loaded(args.model, args.url)
+        register_ollama_unload(args.model, args.url)
     
     # ── Load spec ──────────────────────────────────────────────────────────
     logger.info(f"Loading spec: {args.spec}")

@@ -22,6 +22,8 @@ from typing import Any
 
 import yaml
 
+from scripts.ops.model_presets import resolve_training_preset
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"
 BASE_CONFIG_PATH = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"
@@ -123,12 +125,16 @@ def load_resolved_config(spec: dict[str, Any], preset_name: str | None) -> dict[
 
     resolved = deep_merge(base, {"model": model_id, "dataset": {"technique": technique}})
 
-    if preset_name:
-        preset_path = PRESETS_DIR / f"{preset_name}.yaml"
+    spec_preset = spec.get("preset") or spec.get("training", {}).get("preset")
+    resolved_preset = resolve_training_preset(model_id, preset=preset_name, spec_preset=spec_preset)
+
+    if resolved_preset:
+        preset_path = PRESETS_DIR / f"{resolved_preset}.yaml"
         if not preset_path.exists():
-            raise ValueError(f"Unknown preset: {preset_name}")
+            raise ValueError(f"Unknown preset: {resolved_preset}")
         resolved = deep_merge(resolved, parse_yaml(preset_path))
 
+    resolved["preset"] = resolved_preset
     return resolved
 
 
@@ -179,7 +185,7 @@ def recommend(spec: dict[str, Any], preset: str | None, local_vram_gb: float | N
 
     return {
         "npc_key": spec.get("npc_key"),
-        "preset": preset,
+        "preset": config.get("preset") or preset,
         "technique": technique,
         "dataset_examples_total": examples,
         "local_vram_gb": local_vram_gb,

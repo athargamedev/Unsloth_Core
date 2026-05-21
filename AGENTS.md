@@ -206,6 +206,7 @@ A local Supabase instance can track:
   - `--preset smoke` for debugging/testing.
   - `--preset fast-3b` for standard NPC training (tuned for RTX 3060 6GB).
   - `--preset safe-any` if CUDA OOM occurs. Use this if Ollama is running in the background, or manually unload Ollama first with `curl http://localhost:11434/api/generate -d '{"model": "llama3.1:latest", "keep_alive": 0}'`.
+  - If Triton fails before real training with `CudaUtils`, `gcc`, or `as` errors, use the PATH-safe compiler wrapper at `.toolchain/gcc-with-path.sh` instead of relying on ambient shell PATH.
   - `--wandb` for W&B experiment tracking.
 - **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. `llama-server` (inference with `--lora` support), `llama-quantize` (fast local quantization), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary.
 - **Error Handling**: Check `outputs/{npc_key}/runs/` for TensorBoard logs, `eval/results/` for validation metrics.
@@ -214,7 +215,7 @@ A local Supabase instance can track:
 - **Frontend trust rule**: The dashboard must reflect canonical backend state and process artifacts so non-coder developers can operate the workflow intuitively.
 - **Local Ollama rule**: Benchmark and tune local Ollama on this machine before claiming the need for remote capacity; measure tokens/sec, latency, VRAM use, loaded models, and failure rate.
 - **Hook system**: All pipeline scripts record lifecycle events in `workflow_hooks.jsonl` via `step()` context managers. Use `WorkflowHookReader.pipeline_summary(path)` to read. Hook files contain start/complete/error events per step with timing, `spec_path`, `run_id`, and step-specific metadata.
-- **Auth**: After a fresh Supabase migration, run `python scripts/ops/setup_admin_key.py` to create the initial admin API key. Use the key with `curl -H "Authorization: Bearer <key>"` for all /api calls.
+- **Auth**: After a fresh Supabase migration, run `python scripts/ops/setup_admin_key.py` to create the initial admin API key. Use the key with `curl -H "Authorization: Bearer <key>"` for all `/api` calls.
 - **Modular backend**: Prefer `npm run dev:modular` over `npm run dev` for new work — the modular backend (`server-modular.ts`) includes auth, rate limiting, audit logging, and a job queue. The legacy `server.ts` remains for backward compatibility.
 - **Job queue**: All pipeline operations use `JobQueue` from `src/backend/services/job-queue.ts` for process lifecycle management. Jobs survive server restarts. Monitor at `/api/jobs`.
 - **Code review gates**: Code review findings from `reviewer` agent use severity labels CRITICAL, MAJOR, MINOR. All CRITICAL and MAJOR issues must be resolved before merging. Fix using targeted coder tasks based on the review findings.
