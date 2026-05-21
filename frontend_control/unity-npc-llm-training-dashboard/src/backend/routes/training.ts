@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import path from "path";
 import fs from "fs";
+import { execFileSync } from "child_process";
 import type { RouterDependencies } from "../types";
 
 /**
@@ -200,7 +201,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
     }
 
     try {
-      const { execFileSync } = require("child_process");
+      // execFileSync is imported at top of file
       const result = execFileSync(
         "python",
         [
@@ -274,6 +275,20 @@ function readRunMetadata(
     ),
     hasTensorBoard: false,
   };
+
+  // Check for TensorBoard event files (may be nested in subdirectories)
+  const hasEventFiles = (dir: string): boolean => {
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isFile() && entry.name.startsWith("events.out.tfevents")) return true;
+        if (entry.isDirectory() && hasEventFiles(fullPath)) return true;
+      }
+    } catch { /* ignore permission errors */ }
+    return false;
+  };
+  metadata.hasTensorBoard = hasEventFiles(runDir);
 
   const configPath = path.join(runDir, "config_snapshot.yaml");
   if (fs.existsSync(configPath)) {

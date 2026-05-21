@@ -188,8 +188,20 @@ export const TensorBoardPanel = ({ jobs, runs, onRefresh, isLive }: TensorBoardP
   }, [filteredRuns, primaryRunId]);
 
   const selectedRuns = useMemo(() => {
-    return filteredRuns.slice(0, 3);
-  }, [filteredRuns]);
+    const selected: RunArtifact[] = [];
+    // Primary run goes first
+    if (primaryRunId) {
+      const primary = filteredRuns.find((run) => runKey(run) === primaryRunId);
+      if (primary) selected.push(primary);
+    }
+    // Compare runs follow (max 3 total)
+    for (const id of compareRunIds) {
+      if (selected.length >= 3) break;
+      const found = filteredRuns.find((run) => runKey(run) === id);
+      if (found) selected.push(found);
+    }
+    return selected;
+  }, [filteredRuns, primaryRunId, compareRunIds]);
 
   useEffect(() => {
     let cancelled = false;
