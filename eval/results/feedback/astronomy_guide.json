@@ -1,168 +1,128 @@
 {
   "npc_key": "astronomy_guide",
-  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
+  "baseline": "StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M",
   "candidate": "astronomy_guide/astronomy_guide-lora-f16",
   "total_examples": 10,
   "baseline_wins": 7,
-  "candidate_wins": 3,
-  "ties": 0,
-  "win_rate": 0.3,
+  "candidate_wins": 2,
+  "ties": 1,
+  "win_rate": 0.2,
   "per_concept": {
-    "teaching/celestial phenomena": {
-      "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 46.54,
-      "avg_candidate_quality": 35.55,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "Why do we see different constellations at night during different seasons?",
-          "winner": "candidate",
-          "candidate_quality": 35.55,
-          "candidate_words": 41,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
-    "teaching/galaxies and nebulae": {
-      "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 48.9,
-      "avg_candidate_quality": 36.38,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "How do galaxies and nebulae form?",
-          "winner": "candidate",
-          "candidate_quality": 36.38,
-          "candidate_words": 49,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
-    "dialogue/solar system": {
+    "dialogue/misconceptions and safety boundaries": {
       "total": 1,
       "baseline_wins": 1,
       "candidate_wins": 0,
       "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 47.1,
-      "avg_candidate_quality": 35.55,
+      "avg_baseline_quality": 36.64,
+      "avg_candidate_quality": 34.34,
       "constraint_violations": 0,
       "examples": [
         {
-          "question": "Ah, so that's why! Can you tell me more about how these rings formed?",
+          "question": "Hey AstronomyGuide, I've been reading about black holes and it says they suck up everything nearby. Is that true?",
           "winner": "baseline",
-          "candidate_quality": 35.55,
-          "candidate_words": 39,
+          "candidate_quality": 34.34,
+          "candidate_words": 32,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     },
-    "teaching/solar system": {
+    "teaching/stars, galaxies, and scale": {
       "total": 1,
       "baseline_wins": 1,
       "candidate_wins": 0,
       "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 48.36,
-      "avg_candidate_quality": 35.55,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "Why is Pluto not considered a planet anymore?",
-          "winner": "baseline",
-          "candidate_quality": 35.55,
-          "candidate_words": 39,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
-    "quest/cosmology and universe origins": {
-      "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
-      "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 48.98,
-      "avg_candidate_quality": 30.91,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "Can you explain how we know the universe started with the Big Bang?",
-          "winner": "baseline",
-          "candidate_quality": 30.91,
-          "candidate_words": 26,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
-    "teaching/astronomy and space science": {
-      "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
-      "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 47.18,
-      "avg_candidate_quality": 34.66,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "Why are the constellations not really aligned like they appear in the sky?",
-          "winner": "baseline",
-          "candidate_quality": 34.66,
-          "candidate_words": 36,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
-    "identity/cosmology": {
-      "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
-      "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 42.05,
-      "avg_candidate_quality": 29.96,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "Who are you and what do you teach about?",
-          "winner": "baseline",
-          "candidate_quality": 29.96,
-          "candidate_words": 23,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
-    "quest/galaxies and nebulae": {
-      "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
-      "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 48.2,
+      "avg_baseline_quality": 38.92,
       "avg_candidate_quality": 30.45,
       "constraint_violations": 0,
       "examples": [
         {
-          "question": "Can you tell me about galaxies and nebulae?",
+          "question": "I don't get how stars can be so far away. Can't we just see them up close?",
           "winner": "baseline",
           "candidate_quality": 30.45,
-          "candidate_words": 24,
+          "candidate_words": 22,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "identity/exploration and evidence": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 34.97,
+      "avg_candidate_quality": 34.01,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I've seen some crazy claims about astrology online. Can you tell me what's real?",
+          "winner": "baseline",
+          "candidate_quality": 34.01,
+          "candidate_words": 32,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/observational astronomy": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 36.11,
+      "avg_candidate_quality": 34.34,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I've heard that astronomy is just about looking at the stars and guessing what they are. How does it actually work?",
+          "winner": "candidate",
+          "candidate_quality": 34.34,
+          "candidate_words": 34,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/solar system basics": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 32.96,
+      "avg_candidate_quality": 31.35,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Hey AstronomyGuide, I'm trying to wrap my head around the solar system. Can you start with the basics?",
+          "winner": "tie",
+          "candidate_quality": 31.35,
+          "candidate_words": 25,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/space exploration": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 38.07,
+      "avg_candidate_quality": 35.55,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I don't get how space exploration can be so expensive when we still don't even know if there's life elsewhere. Can't we just use the money to fix problems on Earth?",
+          "winner": "candidate",
+          "candidate_quality": 35.55,
+          "candidate_words": 39,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -174,49 +134,90 @@
       "candidate_wins": 0,
       "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 48.36,
-      "avg_candidate_quality": 36.89,
+      "avg_baseline_quality": 40.25,
+      "avg_candidate_quality": 30.45,
       "constraint_violations": 0,
       "examples": [
         {
-          "question": "What happens after a star becomes a red giant?",
+          "question": "I'm trying to understand how stars change over time. Do they just get bigger and brighter?",
           "winner": "baseline",
-          "candidate_quality": 36.89,
-          "candidate_words": 47,
+          "candidate_quality": 30.45,
+          "candidate_words": 22,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     },
-    "dialogue/stars": {
+    "teaching/solar system basics": {
       "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
       "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 49.7,
-      "avg_candidate_quality": 34.66,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 35.84,
+      "avg_candidate_quality": 34.97,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "I'm lost with all these planets. Can you explain the solar system basics to me?",
+          "winner": "baseline",
+          "candidate_quality": 34.97,
+          "candidate_words": 34,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "quest/observing the sky": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 36.89,
+      "avg_candidate_quality": 31.78,
       "constraint_violations": 0,
       "examples": [
         {
-          "question": "I thought stars are just big balls of gas, but then why do they stay in the same place and not fall into each other like planets do around the Sun?",
-          "winner": "candidate",
-          "candidate_quality": 34.66,
-          "candidate_words": 34,
+          "question": "I'm trying to spot the Andromeda Galaxy. How far away is it from us?",
+          "winner": "baseline",
+          "candidate_quality": 31.78,
+          "candidate_words": 26,
           "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/stars, galaxies, and scale": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 40.07,
+      "avg_candidate_quality": 33.67,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "I'm trying to wrap my head around the scale of stars and galaxies. Can you help me understand how big they really are?",
+          "winner": "baseline",
+          "candidate_quality": 33.67,
+          "candidate_words": 31,
+          "sentences_ok": false,
           "no_ai_disclaimer": true
         }
       ]
     }
   },
   "weak_concepts": [
-    "dialogue/solar system",
-    "teaching/solar system",
-    "quest/cosmology and universe origins",
-    "teaching/astronomy and space science",
-    "identity/cosmology",
-    "quest/galaxies and nebulae",
-    "teaching/stellar evolution"
+    "dialogue/misconceptions and safety boundaries",
+    "teaching/stars, galaxies, and scale",
+    "identity/exploration and evidence",
+    "dialogue/solar system basics",
+    "teaching/stellar evolution",
+    "teaching/solar system basics",
+    "quest/observing the sky",
+    "dialogue/stars, galaxies, and scale"
   ],
-  "timestamp": "2026-05-19T19:18:47.105042+00:00"
+  "timestamp": "2026-05-21T18:59:37.177860+00:00"
 }
