@@ -2,6 +2,410 @@
   "executionMode": "local",
   "jobs": [
     {
+      "id": "ext_proc_2149786",
+      "name": "External Training · PID 2149786 · astronomy_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T20:57:53.975Z",
+      "startedAt": "2026-05-21T20:57:53.975Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/train.py /home/athar/Projects/Unsloth_Core/subjects/NPC_specs/astronomy_guide.json --from-spec --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2149786] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/train.py /home/athar/Projects/Unsloth_Core/subjects/NPC_specs/astronomy_guide.json --from-spec --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T20:58:23.973Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_010",
+      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_010)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T20:57:51.405Z",
+      "startedAt": "2026-05-21T20:57:51.405Z",
+      "finishedAt": "2026-05-21T20:57:51.405Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_010/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2143396",
+      "name": "External Training · PID 2143396 · astronomy_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T20:54:14.959Z",
+      "startedAt": "2026-05-21T20:54:14.959Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/train.py /home/athar/Projects/Unsloth_Core/subjects/NPC_specs/astronomy_guide.json --from-spec --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2143396] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/train.py /home/athar/Projects/Unsloth_Core/subjects/NPC_specs/astronomy_guide.json --from-spec --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T20:54:53.960Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_009",
+      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_009)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T20:54:12.940Z",
+      "startedAt": "2026-05-21T20:54:12.940Z",
+      "finishedAt": "2026-05-21T20:54:12.940Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_009/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2141768",
+      "name": "External Training · PID 2141768 · astronomy_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T20:53:26.955Z",
+      "startedAt": "2026-05-21T20:53:26.955Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/train.py /home/athar/Projects/Unsloth_Core/subjects/NPC_specs/astronomy_guide.json --from-spec --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2141768] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/train.py /home/athar/Projects/Unsloth_Core/subjects/NPC_specs/astronomy_guide.json --from-spec --technique ollama --preset safe-any --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T20:53:44.954Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_008",
+      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_008)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T20:53:26.601Z",
+      "startedAt": "2026-05-21T20:53:26.601Z",
+      "finishedAt": "2026-05-21T20:53:26.601Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_008/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_proc_2140330",
+      "name": "External Training · PID 2140330 · astronomy_guide",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "stopped",
+      "progress": 10,
+      "loss": null,
+      "createdAt": "2026-05-21T20:52:50.953Z",
+      "startedAt": "2026-05-21T20:52:50.953Z",
+      "command": [
+        "external",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/train.py /home/athar/Projects/Unsloth_Core/subjects/NPC_specs/astronomy_guide.json --from-spec --technique ollama --preset fast-3b --export-gguf --wandb"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL][PID 2140330] discovered active process",
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python /home/athar/Projects/Unsloth_Core/scripts/training/train.py /home/athar/Projects/Unsloth_Core/subjects/NPC_specs/astronomy_guide.json --from-spec --technique ollama --preset fast-3b --export-gguf --wandb"
+      ],
+      "terminalReason": "external_process_not_found",
+      "finishedAt": "2026-05-21T20:53:11.951Z",
+      "exitCode": -15
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260521_fast-3b_llama3.2-3b_006",
+      "name": "External Train (astronomy_guide/20260521_fast-3b_llama3.2-3b_006)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T20:52:50.075Z",
+      "startedAt": "2026-05-21T20:52:50.075Z",
+      "finishedAt": "2026-05-21T20:52:50.075Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_fast-3b_llama3.2-3b_006/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_train_history_guide_20260521_smoke_qwen3-1.7b_002",
       "name": "External Train (history_guide/20260521_smoke_qwen3-1.7b_002)",
       "type": "Training",

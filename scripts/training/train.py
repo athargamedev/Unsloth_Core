@@ -485,12 +485,17 @@ def get_model_and_tokenizer(config):
     print(f"  Max seq length: {max_seq_length}")
     if use_lora:
         print(f"  LoRA rank: {lora_config.get('r', 16)}, alpha: {lora_config.get('alpha', 32)}")
+    print(f"  GPU memory utilization: {config.get('training', {}).get('gpu_memory_utilization', 0.9)}")
+
+    gpu_memory_utilization = float(config.get("training", {}).get("gpu_memory_utilization", 0.9))
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model_name,
         max_seq_length=max_seq_length,
         dtype=None,
         load_in_4bit=True,
+        device_map="auto",
+        gpu_memory_utilization=gpu_memory_utilization,
     )
 
     if use_lora:
