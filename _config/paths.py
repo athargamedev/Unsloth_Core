@@ -16,7 +16,7 @@ Naming conventions:
 
 import re
 
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 # ── Project root ─────────────────────────────────────────────────────────────
@@ -237,10 +237,15 @@ def eval_feedback_path(npc_key: str) -> Path:
     return eval_root() / "results" / "feedback" / f"{npc_key}.json"
 
 
-def eval_report_path(npc_key: str, fmt: str = "md") -> Path:
-    """Return eval/reports/{npc_key}/eval_{today}.{fmt}"""
-    today = date.today().isoformat()
-    return eval_report_dir(npc_key) / f"eval_{today}.{fmt}"
+def eval_timestamp() -> str:
+    """Return a UTC timestamp suitable for eval report filenames."""
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
+
+
+def eval_report_path(npc_key: str, fmt: str = "md", timestamp: str | None = None) -> Path:
+    """Return eval/reports/{npc_key}/eval_{timestamp}.{fmt}"""
+    ts = timestamp or eval_timestamp()
+    return eval_report_dir(npc_key) / f"eval_{ts}.{fmt}"
 
 
 def eval_comparison_dir() -> Path:
@@ -248,10 +253,10 @@ def eval_comparison_dir() -> Path:
     return eval_root() / "comparisons"
 
 
-def eval_comparison_path(npc_key: str, baseline_label: str) -> Path:
-    """Return eval/comparisons/{npc_key}_vs_{baseline}_{today}.md"""
-    today = date.today().isoformat()
-    return eval_comparison_dir() / f"{npc_key}_vs_{baseline_label}_{today}.md"
+def eval_comparison_path(npc_key: str, baseline_label: str, timestamp: str | None = None) -> Path:
+    """Return eval/comparisons/{npc_key}_vs_{baseline}_{timestamp}.md"""
+    ts = timestamp or eval_timestamp()
+    return eval_comparison_dir() / f"{npc_key}_vs_{baseline_label}_{ts}.md"
 
 
 def eval_results_path() -> Path:

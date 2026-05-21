@@ -32,10 +32,18 @@ def _comparison_result():
 
 
 def test_eval_paths_resolve_under_project_eval_root():
-    report_path = paths.eval_report_path("history_guide")
+    report_path = paths.eval_report_path("history_guide", timestamp="20260521T123456_123456Z")
+    html_path = paths.eval_report_path("history_guide", fmt="html", timestamp="20260521T123456_123456Z")
+    comparison_path = paths.eval_comparison_path(
+        "history_guide",
+        "baseline_vs_candidate",
+        timestamp="20260521T123456_123456Z",
+    )
     feedback_path = paths.eval_feedback_path("history_guide")
 
-    assert report_path == PROJECT_ROOT / "eval" / "reports" / "history_guide" / f"eval_{report_path.stem.split('_', 1)[1]}.md"
+    assert report_path == PROJECT_ROOT / "eval" / "reports" / "history_guide" / "eval_20260521T123456_123456Z.md"
+    assert html_path == PROJECT_ROOT / "eval" / "reports" / "history_guide" / "eval_20260521T123456_123456Z.html"
+    assert comparison_path == PROJECT_ROOT / "eval" / "comparisons" / "history_guide_vs_baseline_vs_candidate_20260521T123456_123456Z.md"
     assert feedback_path == PROJECT_ROOT / "eval" / "results" / "feedback" / "history_guide.json"
 
 

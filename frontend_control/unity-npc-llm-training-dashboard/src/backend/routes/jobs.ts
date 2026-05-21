@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import type { RouterDependencies, JobRegistrySnapshot } from "../types";
 import { getJobRegistrySnapshot } from "../services/registry";
-import { readJobLogs as readJobLogsFromFile } from "../lib/read-job-logs";
+import { readJobLogs } from "../lib/read-job-logs";
 
 /**
  * Registers /api/jobs/* routes.
@@ -51,9 +51,9 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
   });
 
   // ── GET /api/jobs/:id/logs ─────────────────────────────────────────────
-  app.get("/api/jobs/:id/logs", (req: Request, res: Response) => {
+  app.get("/api/jobs/:id/logs", async (req: Request, res: Response) => {
     try {
-      const logEntries = readJobLogsFromFile(req.params.id);
+      const logEntries = await readJobLogs(req.params.id);
       const job = registry.jobs.find((j) => j.id === req.params.id);
       res.json({ logs: logEntries, jobName: job?.name || null });
     } catch {

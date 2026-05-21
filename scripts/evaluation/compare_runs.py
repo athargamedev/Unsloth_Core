@@ -21,7 +21,6 @@ import argparse
 import json
 import subprocess
 import sys
-from datetime import date
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -136,10 +135,13 @@ def main():
         if not args.output:
             report_dir = paths.eval_comparison_dir()
             report_dir.mkdir(parents=True, exist_ok=True)
-            today = date.today().isoformat()
+            report_stamp = paths.eval_timestamp()
             args.output = str(
-                report_dir
-                / f"{args.npc_key}_{args.baseline_run}_vs_{args.candidate_run}_{today}.md"
+                paths.eval_comparison_path(
+                    args.npc_key,
+                    f"{args.baseline_run}_vs_{args.candidate_run}",
+                    timestamp=report_stamp,
+                )
             )
         cmd.extend(["--output", args.output])
 

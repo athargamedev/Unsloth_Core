@@ -2,19 +2,19 @@
   "executionMode": "local",
   "jobs": [
     {
-      "id": "ext_proc_2027410",
-      "name": "External Evaluation · PID 2027410 · astronomy_guide",
+      "id": "ext_proc_2071178",
+      "name": "External Evaluation · PID 2071178 · astronomy_guide",
       "type": "Evaluation",
       "commandId": "evaluate",
       "npcKey": "astronomy_guide",
-      "status": "stopped",
+      "status": "running",
       "progress": 10,
       "loss": null,
-      "createdAt": "2026-05-21T19:36:30.081Z",
-      "startedAt": "2026-05-21T19:36:30.081Z",
+      "createdAt": "2026-05-21T20:06:21.895Z",
+      "startedAt": "2026-05-21T20:06:21.895Z",
       "command": [
         "external",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --spec subjects/NPC_specs/astronomy_guide.json --report-html --num-questions 10"
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --spec subjects/NPC_specs/astronomy_guide.json --report-html --track"
       ],
       "stages": [
         {
@@ -44,1019 +44,10 @@
         }
       ],
       "logs": [
-        "[EXTERNAL][PID 2027410] discovered active process",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --spec subjects/NPC_specs/astronomy_guide.json --report-html --num-questions 10"
+        "[EXTERNAL][PID 2071178] discovered active process",
+        "/usr/bin/bash -lic set +m; source unsloth_env/bin/activate && ./ucore evaluate --baseline '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --candidate exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model '/home/athar/Setup Guide In-Editor Tutorial/Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf' --spec subjects/NPC_specs/astronomy_guide.json --report-html --track"
       ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T19:36:51.083Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2026750",
-      "name": "External Export · PID 2026750 · astronomy_guide",
-      "type": "Export",
-      "commandId": "export",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T19:36:18.081Z",
-      "startedAt": "2026-05-21T19:36:18.081Z",
-      "command": [
-        "external",
-        "python scripts/export/export.py outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_007"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2026750] discovered active process",
-        "python scripts/export/export.py outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_007"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T19:36:21.081Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2011760",
-      "name": "External Training · PID 2011760 · astronomy_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T19:27:03.061Z",
-      "startedAt": "2026-05-21T19:27:03.061Z",
-      "command": [
-        "external",
-        "python3 ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset safe-any --epochs 12 --lr 1e-4"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2011760] discovered active process",
-        "python3 ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset safe-any --epochs 12 --lr 1e-4"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T19:36:12.081Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_007",
-      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_007)",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-21T19:27:02.494Z",
-      "startedAt": "2026-05-21T19:27:02.494Z",
-      "finishedAt": "2026-05-21T19:27:02.494Z",
-      "command": [
-        "./ucore",
-        "train",
-        "subjects/astronomy_guide.json",
-        "--from-spec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_007/config_snapshot.yaml"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_2008644",
-      "name": "External Evaluation · PID 2008644 · astronomy_guide",
-      "type": "Evaluation",
-      "commandId": "evaluate",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T19:25:18.052Z",
-      "startedAt": "2026-05-21T19:25:18.052Z",
-      "command": [
-        "external",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --spec subjects/NPC_specs/astronomy_guide.json --report-html --num-questions 10"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2008644] discovered active process",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --spec subjects/NPC_specs/astronomy_guide.json --report-html --num-questions 10"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T19:25:39.053Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_2008051",
-      "name": "External Export · PID 2008051 · astronomy_guide",
-      "type": "Export",
-      "commandId": "export",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T19:25:09.051Z",
-      "startedAt": "2026-05-21T19:25:09.051Z",
-      "command": [
-        "external",
-        "python scripts/export/export.py outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_006"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 2008051] discovered active process",
-        "python scripts/export/export.py outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_006"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T19:25:12.051Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_006",
-      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_006)",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-21T19:12:42.188Z",
-      "startedAt": "2026-05-21T19:12:42.188Z",
-      "finishedAt": "2026-05-21T19:12:42.188Z",
-      "command": [
-        "./ucore",
-        "train",
-        "subjects/astronomy_guide.json",
-        "--from-spec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_006/config_snapshot.yaml"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_1986801",
-      "name": "External Training · PID 1986801 · astronomy_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T19:12:42.033Z",
-      "startedAt": "2026-05-21T19:12:42.033Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; /bin/bash -c 'source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate && export PATH=/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc CXX=/usr/bin/g++ AS=/usr/bin/as PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True && cd /home/athar/Projects/Unsloth_Core && ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset safe-any --epochs 16 --lr 1e-4'"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1986801] discovered active process",
-        "/usr/bin/bash -lic set +m; /bin/bash -c 'source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate && export PATH=/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc CXX=/usr/bin/g++ AS=/usr/bin/as PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True && cd /home/athar/Projects/Unsloth_Core && ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset safe-any --epochs 16 --lr 1e-4'"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T19:24:48.051Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1984263",
-      "name": "External Evaluation · PID 1984263 · astronomy_guide",
-      "type": "Evaluation",
-      "commandId": "evaluate",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T19:11:18.018Z",
-      "startedAt": "2026-05-21T19:11:18.018Z",
-      "command": [
-        "external",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --spec subjects/NPC_specs/astronomy_guide.json --report-html --num-questions 10"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1984263] discovered active process",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --spec subjects/NPC_specs/astronomy_guide.json --report-html --num-questions 10"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T19:11:39.032Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1983523",
-      "name": "External Export · PID 1983523 · astronomy_guide",
-      "type": "Export",
-      "commandId": "export",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T19:10:56.973Z",
-      "startedAt": "2026-05-21T19:10:56.973Z",
-      "command": [
-        "external",
-        "python scripts/export/export.py outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_005"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1983523] discovered active process",
-        "python scripts/export/export.py outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_005"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T19:11:02.989Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1968484",
-      "name": "External Training · PID 1968484 · astronomy_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T19:01:47.807Z",
-      "startedAt": "2026-05-21T19:01:47.807Z",
-      "command": [
-        "external",
-        "python3 ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset safe-any --epochs 12 --lr 1e-4"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1968484] discovered active process",
-        "python3 ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset safe-any --epochs 12 --lr 1e-4"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T19:10:53.973Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_005",
-      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_005)",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-21T19:01:46.248Z",
-      "startedAt": "2026-05-21T19:01:46.248Z",
-      "finishedAt": "2026-05-21T19:01:46.248Z",
-      "command": [
-        "./ucore",
-        "train",
-        "subjects/astronomy_guide.json",
-        "--from-spec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_005/config_snapshot.yaml"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_1963962",
-      "name": "External Evaluation · PID 1963962 · astronomy_guide",
-      "type": "Evaluation",
-      "commandId": "evaluate",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T18:59:14.782Z",
-      "startedAt": "2026-05-21T18:59:14.782Z",
-      "command": [
-        "external",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --spec subjects/NPC_specs/astronomy_guide.json --report-html --num-questions 10"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1963962] discovered active process",
-        "python3 ./ucore evaluate --baseline /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --candidate /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/astronomy_guide-lora-f16.gguf --base-model /home/athar/Setup Guide In-Editor Tutorial/Builds/Build_Linux/Build_Linux_Data/StreamingAssets/Llama-3.2-3B-Instruct.Q4_K_M.gguf --spec subjects/NPC_specs/astronomy_guide.json --report-html --num-questions 10"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T18:59:38.784Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1957173",
-      "name": "External Training · PID 1957173 · astronomy_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T18:56:02.779Z",
-      "startedAt": "2026-05-21T18:56:02.779Z",
-      "command": [
-        "external",
-        "python3 ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset safe-any --export-gguf"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1957173] discovered active process",
-        "python3 ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset safe-any --export-gguf"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T18:58:29.774Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_004",
-      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_004)",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-21T18:56:02.648Z",
-      "startedAt": "2026-05-21T18:56:02.648Z",
-      "finishedAt": "2026-05-21T18:56:02.648Z",
-      "command": [
-        "./ucore",
-        "train",
-        "subjects/astronomy_guide.json",
-        "--from-spec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_004/config_snapshot.yaml"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_train_astronomy_guide_20260521_fast-3b_llama3.2-3b_005",
-      "name": "External Train (astronomy_guide/20260521_fast-3b_llama3.2-3b_005)",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-21T18:55:09.048Z",
-      "startedAt": "2026-05-21T18:55:09.048Z",
-      "finishedAt": "2026-05-21T18:55:09.048Z",
-      "command": [
-        "./ucore",
-        "train",
-        "subjects/astronomy_guide.json",
-        "--from-spec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_fast-3b_llama3.2-3b_005/config_snapshot.yaml"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_1955104",
-      "name": "External Training · PID 1955104 · astronomy_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T18:55:08.764Z",
-      "startedAt": "2026-05-21T18:55:08.764Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; /bin/bash -c 'source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate && export PATH=/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc CXX=/usr/bin/g++ AS=/usr/bin/as PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True && cd /home/athar/Projects/Unsloth_Core && ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset fast-3b --export-gguf'"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1955104] discovered active process",
-        "/usr/bin/bash -lic set +m; /bin/bash -c 'source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate && export PATH=/usr/bin:/bin:$PATH && export CC=/usr/bin/gcc CXX=/usr/bin/g++ AS=/usr/bin/as PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True && cd /home/athar/Projects/Unsloth_Core && ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset fast-3b --export-gguf'"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T18:55:44.765Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_proc_1951644",
-      "name": "External Training · PID 1951644 · astronomy_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T18:53:29.764Z",
-      "startedAt": "2026-05-21T18:53:29.764Z",
-      "command": [
-        "external",
-        "python3 ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset fast-3b --export-gguf"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1951644] discovered active process",
-        "python3 ./ucore train subjects/NPC_specs/astronomy_guide.json --technique ollama --preset fast-3b --export-gguf"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T18:53:59.761Z",
-      "exitCode": -15
-    },
-    {
-      "id": "ext_train_astronomy_guide_20260521_fast-3b_llama3.2-3b_004",
-      "name": "External Train (astronomy_guide/20260521_fast-3b_llama3.2-3b_004)",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-21T18:53:29.215Z",
-      "startedAt": "2026-05-21T18:53:29.215Z",
-      "finishedAt": "2026-05-21T18:53:29.215Z",
-      "command": [
-        "./ucore",
-        "train",
-        "subjects/astronomy_guide.json",
-        "--from-spec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_fast-3b_llama3.2-3b_004/config_snapshot.yaml"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_train_astronomy_guide_20260521_fast-3b_llama3.2-3b_003",
-      "name": "External Train (astronomy_guide/20260521_fast-3b_llama3.2-3b_003)",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "completed",
-      "progress": 100,
-      "loss": null,
-      "createdAt": "2026-05-21T18:52:36.043Z",
-      "startedAt": "2026-05-21T18:52:36.043Z",
-      "finishedAt": "2026-05-21T18:52:36.043Z",
-      "command": [
-        "./ucore",
-        "train",
-        "subjects/astronomy_guide.json",
-        "--from-spec"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_fast-3b_llama3.2-3b_003/config_snapshot.yaml"
-      ],
-      "exitCode": 0,
-      "terminalReason": "external_import"
-    },
-    {
-      "id": "ext_proc_1949619",
-      "name": "External Training · PID 1949619 · astronomy_guide",
-      "type": "Training",
-      "commandId": "train",
-      "npcKey": "astronomy_guide",
-      "status": "stopped",
-      "progress": 10,
-      "loss": null,
-      "createdAt": "2026-05-21T18:52:35.757Z",
-      "startedAt": "2026-05-21T18:52:35.757Z",
-      "command": [
-        "external",
-        "/usr/bin/bash -lic set +m; /bin/bash -c 'source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate && export CC=/usr/bin/gcc CXX=/usr/bin/g++ AS=/usr/bin/as PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True && cd /home/athar/Projects/Unsloth_Core && ./ucore train subjects/NPC_specs/astronomy_guide.json --technique template --preset fast-3b --export-gguf'"
-      ],
-      "stages": [
-        {
-          "name": "Dataset Prep",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Training",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Evaluation",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Export",
-          "status": "pending",
-          "logs": []
-        },
-        {
-          "name": "Feedback",
-          "status": "pending",
-          "logs": []
-        }
-      ],
-      "logs": [
-        "[EXTERNAL][PID 1949619] discovered active process",
-        "/usr/bin/bash -lic set +m; /bin/bash -c 'source /home/athar/Projects/Unsloth_Core/unsloth_env/bin/activate && export CC=/usr/bin/gcc CXX=/usr/bin/g++ AS=/usr/bin/as PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True && cd /home/athar/Projects/Unsloth_Core && ./ucore train subjects/NPC_specs/astronomy_guide.json --technique template --preset fast-3b --export-gguf'"
-      ],
-      "terminalReason": "external_process_not_found",
-      "finishedAt": "2026-05-21T18:53:02.757Z",
-      "exitCode": -15
+      "terminalReason": "external_detected"
     },
     {
       "id": "ext_train_history_guide_20260521_smoke_qwen3-1.7b_002",
@@ -1518,6 +509,210 @@
       "terminalReason": "external_import"
     },
     {
+      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_007",
+      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_007)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": 1.2656695425510407,
+      "createdAt": "2026-05-21T19:36:07.184Z",
+      "startedAt": "2026-05-21T19:36:07.184Z",
+      "finishedAt": "2026-05-21T19:36:07.184Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_007/training_metrics.json"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_006",
+      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_006)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": 1.2005871166475117,
+      "createdAt": "2026-05-21T19:24:45.519Z",
+      "startedAt": "2026-05-21T19:24:45.519Z",
+      "finishedAt": "2026-05-21T19:24:45.519Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_006/training_metrics.json"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_005",
+      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_005)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": 1.4592277444899082,
+      "createdAt": "2026-05-21T19:10:49.697Z",
+      "startedAt": "2026-05-21T19:10:49.697Z",
+      "finishedAt": "2026-05-21T19:10:49.697Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_005/training_metrics.json"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_004",
+      "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_004)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": 2.8144801954428353,
+      "createdAt": "2026-05-21T18:58:25.714Z",
+      "startedAt": "2026-05-21T18:58:25.714Z",
+      "finishedAt": "2026-05-21T18:58:25.714Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_004/training_metrics.json"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
       "id": "ext_train_astronomy_guide_20260521_safe-any_llama3.2-3b_003",
       "name": "External Train (astronomy_guide/20260521_safe-any_llama3.2-3b_003)",
       "type": "Training",
@@ -1666,6 +861,159 @@
       ],
       "logs": [
         "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_001/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260521_fast-3b_llama3.2-3b_005",
+      "name": "External Train (astronomy_guide/20260521_fast-3b_llama3.2-3b_005)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T18:55:09.048Z",
+      "startedAt": "2026-05-21T18:55:09.048Z",
+      "finishedAt": "2026-05-21T18:55:09.048Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_fast-3b_llama3.2-3b_005/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260521_fast-3b_llama3.2-3b_004",
+      "name": "External Train (astronomy_guide/20260521_fast-3b_llama3.2-3b_004)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T18:53:29.215Z",
+      "startedAt": "2026-05-21T18:53:29.215Z",
+      "finishedAt": "2026-05-21T18:53:29.215Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_fast-3b_llama3.2-3b_004/config_snapshot.yaml"
+      ],
+      "exitCode": 0,
+      "terminalReason": "external_import"
+    },
+    {
+      "id": "ext_train_astronomy_guide_20260521_fast-3b_llama3.2-3b_003",
+      "name": "External Train (astronomy_guide/20260521_fast-3b_llama3.2-3b_003)",
+      "type": "Training",
+      "commandId": "train",
+      "npcKey": "astronomy_guide",
+      "status": "completed",
+      "progress": 100,
+      "loss": null,
+      "createdAt": "2026-05-21T18:52:36.043Z",
+      "startedAt": "2026-05-21T18:52:36.043Z",
+      "finishedAt": "2026-05-21T18:52:36.043Z",
+      "command": [
+        "./ucore",
+        "train",
+        "subjects/astronomy_guide.json",
+        "--from-spec"
+      ],
+      "stages": [
+        {
+          "name": "Dataset Prep",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Training",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Evaluation",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Export",
+          "status": "pending",
+          "logs": []
+        },
+        {
+          "name": "Feedback",
+          "status": "pending",
+          "logs": []
+        }
+      ],
+      "logs": [
+        "[EXTERNAL] run artifact detected: outputs/astronomy_guide/runs/20260521_fast-3b_llama3.2-3b_003/config_snapshot.yaml"
       ],
       "exitCode": 0,
       "terminalReason": "external_import"
@@ -10136,7 +9484,7 @@
     }
   ],
   "logs": [
-    "[2026-05-21T18:40:08.629Z] [STARTUP] Pruned 14 old job(s), keeping 50"
+    "[2026-05-21T20:05:54.883Z] [STARTUP] Pruned 21 old job(s), keeping 50"
   ],
   "nodeId": "5ecbf770-7a12-4eb4-a559-6491504274a9",
   "workflows": [],

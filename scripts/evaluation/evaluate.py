@@ -1129,7 +1129,9 @@ def main():
         if not args.output and spec:
             report_dir = paths.eval_report_dir(spec['npc_key'])
             report_dir.mkdir(parents=True, exist_ok=True)
-            args.output = str(paths.eval_report_path(spec['npc_key']))
+            report_stamp = paths.eval_timestamp()
+            args.output = str(paths.eval_report_path(spec['npc_key'], timestamp=report_stamp))
+            args._report_stamp = report_stamp
         if not args.feedback_json and spec:
             args.feedback_json = str(paths.eval_feedback_path(spec['npc_key']))
 

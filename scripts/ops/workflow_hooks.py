@@ -6,6 +6,7 @@ import os
 import time
 import uuid
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, TYPE_CHECKING
@@ -33,6 +34,23 @@ _ARTIFACT_TYPE_MAP: dict[str, str] = {
     "evaluate_pipeline": "eval_report",
     "compare_models": "eval_report",
 }
+
+
+@dataclass
+class StepContext:
+    """Context object yielded by step() for intermediate diagnostic messages.
+
+    Usage:
+        with hook_recorder.step("train", ...) as ctx:
+            ctx.log("Loading dataset...")
+            ctx.log("Starting training loop...")
+    """
+
+    messages: list[str] = field(default_factory=list)
+
+    def log(self, message: str) -> None:
+        """Record an intermediate diagnostic message for this step."""
+        self.messages.append(message)
 
 
 class WorkflowHookRecorder:
@@ -98,18 +116,25 @@ class WorkflowHookRecorder:
                 logger.debug("DB emit failed for step=%s status=%s", step, status)
 
     @contextmanager
-    def step(self, step: str, **fields: Any) -> Iterator[None]:
+    def step(self, step: str, **fields: Any) -> Iterator[StepContext]:
+        ctx = StepContext()
         self.emit(step, "start", **fields)
         _start_time = time.monotonic()
         try:
-            yield
+            yield ctx
         except (Exception, SystemExit) as exc:
             duration_s = time.monotonic() - _start_time
             self.emit(step, "error", error=type(exc).__name__, message=str(exc), duration_s=duration_s, **fields)
+            flush_logs = getattr(self, "_db_flush_logs", None)
+            if callable(flush_logs):
+                flush_logs(ctx.messages)
             raise
         else:
             duration_s = time.monotonic() - _start_time
             self.emit(step, "complete", duration_s=duration_s, **fields)
+            flush_logs = getattr(self, "_db_flush_logs", None)
+            if callable(flush_logs):
+                flush_logs(ctx.messages)
 
     # ── PipelineDB integration ─────────────────────────────────────────
 
@@ -358,6 +383,10 @@ class WorkflowHookRecorder:
             )
             if result and "id" in result:
                 self._db_job_uuid = result["id"]
+                # Immediately mark as running to prevent the queue poller
+                # (which polls WHERE status = 'pending' every 2s) from picking
+                # up this job and trying to spawn npc_key as an executable.
+                self.db.update_job_status(self._db_job_uuid, status="running")
             self._db_job_created = True
 
         elif status in ("complete", "error") and self._db_job_created and self._db_job_uuid:
@@ -367,6 +396,32 @@ class WorkflowHookRecorder:
                 status="completed" if status == "complete" else "failed",
                 error=error_msg,
             )
+
+    def _db_flush_logs(self, messages: list[str]) -> None:
+        """Flush accumulated log messages to the pipeline_jobs.logs column.
+
+        Called from step() on both complete and error paths so that
+        intermediate ctx.log() calls are persisted to the database.
+        """
+        if not messages or not self.db or not self._db_job_uuid:
+            return
+        try:
+            self.db.update_job_status(
+                self._db_job_uuid,
+                status=self._resolve_log_status(),
+                logs=messages,
+            )
+        except Exception:
+            # Best-effort — never break the pipeline
+            pass
+
+    def _resolve_log_status(self) -> str:
+        """Return the current job status for log-flush updates.
+
+        If the job was already completed or failed, keep that status so
+        the log update doesn't overwrite the terminal state.
+        """
+        return "running"
 
 
 def default_hook_path(
