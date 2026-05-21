@@ -31,7 +31,11 @@ export function createApp(deps: RouterDependencies): Express {
   // ── Global Middleware (order matters) ────────────────────────────────────
   app.use(pathTraversalMiddleware);
   app.use(auditLog);
-  app.use(requireAuth);
+  // Only require auth for /api/* paths — frontend static files must be public
+  app.use((req, res, next) => {
+    if (!req.path.startsWith("/api/")) return next();
+    return requireAuth(req, res, next);
+  });
   app.use(jsonBodyParser);
 
   // Optional: apply rate limiting globally (commented out by default — enable in production)

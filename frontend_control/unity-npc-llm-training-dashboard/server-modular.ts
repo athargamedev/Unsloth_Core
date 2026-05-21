@@ -253,7 +253,7 @@ async function main(): Promise<void> {
   // ── Mount Modular API Routes ──────────────────────────────────────────
 
   const apiApp = createApp(deps);
-  app.use("/api", apiApp);
+  app.use(apiApp);
 
   // ── Static Files (production) / Vite Dev Middleware (development) ──────
 
