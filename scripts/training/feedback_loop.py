@@ -39,6 +39,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from scripts.ops.ollama_model_presets import resolve_ollama_model
 from scripts.ops.run_registry import make_pipeline_run_id
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
@@ -300,7 +301,7 @@ def run_training(npc_key, preset, technique="template", dry_run=False):
     return None
 
 
-def run_dataset_eval(npc_key, technique="template", judge_model="qwen3:latest",
+def run_dataset_eval(npc_key, technique="template", judge_model="qwen2.5:7b",
                      ollama_base_url="http://localhost:11434",
                      cases_per_category=5, dry_run=False, soft_fail=False):
     """Run the dataset quality gate on the sanitized dataset."""
@@ -418,7 +419,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       url=DEFAULT_REGENERATION_URL,
                       batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
                       skip_dataset_eval=False,
-                      deepeval_judge_model="qwen3:latest",
+                      deepeval_judge_model="qwen2.5:7b",
                       deepeval_ollama_url="http://localhost:11434",
                       deepeval_cases_per_category=5,
                       deepeval_soft_fail=False,
@@ -703,8 +704,12 @@ def main():
     parser.add_argument("--regeneration-technique", default=DEFAULT_REGENERATION_TECHNIQUE,
                         choices=["template", "ollama"],
                         help=f"Regeneration technique to use (default: {DEFAULT_REGENERATION_TECHNIQUE})")
+    parser.add_argument("--regeneration-preset",
+                        default=None,
+                        choices=["generate-qwen25", "generate-llama31", "generate-qwen35-exp", "generate-qwen3-exp"],
+                        help="Named Ollama regeneration preset (default: generate-qwen25)")
     parser.add_argument("--regeneration-model", default=DEFAULT_REGENERATION_MODEL,
-                        help=f"Ollama model to use when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_MODEL})")
+                        help=f"Exact Ollama model to use when --regeneration-technique=ollama (wins over --regeneration-preset; default: {DEFAULT_REGENERATION_MODEL})")
     parser.add_argument("--regeneration-url", default=DEFAULT_REGENERATION_URL,
                         help=f"Ollama server URL when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_URL})")
     parser.add_argument("--regeneration-batch-size", type=int, default=DEFAULT_REGENERATION_BATCH_SIZE,
@@ -716,8 +721,12 @@ def main():
     parser.add_argument("--baseline", help="Baseline GGUF path for auto-evaluation after retrain")
     parser.add_argument("--skip-dataset-eval", action="store_true",
                         help="Skip dataset quality evaluation before training during auto-retrain")
-    parser.add_argument("--deepeval-judge-model", default="qwen3:latest",
-                        help="Judge model to use for dataset evaluation (default: qwen3:latest)")
+    parser.add_argument("--deepeval-judge-preset",
+                        default=None,
+                        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
+                        help="Named Ollama judge preset (default: judge-qwen25)")
+    parser.add_argument("--deepeval-judge-model", default=None,
+                        help="Exact Ollama judge model to use for dataset evaluation (wins over --deepeval-judge-preset)")
     parser.add_argument("--deepeval-ollama-url", default="http://localhost:11434",
                         help="Ollama base URL for dataset evaluation (default: http://localhost:11434)")
     parser.add_argument("--deepeval-cases-per-category", type=int, default=5,
@@ -738,6 +747,17 @@ def main():
     if args.auto_retrain and not args.baseline and not args.dry_run:
         print("Warning: --auto-retrain without --baseline will train but skip evaluation.")
 
+    regeneration_model = resolve_ollama_model(
+        preset=args.regeneration_preset,
+        model=args.regeneration_model,
+        role="generation",
+    )
+    deepeval_judge_model = resolve_ollama_model(
+        preset=args.deepeval_judge_preset,
+        model=args.deepeval_judge_model,
+        role="judge",
+    )
+
     sys.exit(run_feedback_loop(
         args.feedback_json,
         win_rate_threshold=args.win_rate_threshold,
@@ -752,11 +772,11 @@ def main():
         train_preset=args.train_preset,
         baseline_gguf=args.baseline,
         technique=args.regeneration_technique,
-        model=args.regeneration_model,
+        model=regeneration_model,
         url=args.regeneration_url,
         batch_size=args.regeneration_batch_size,
         skip_dataset_eval=args.skip_dataset_eval,
-        deepeval_judge_model=args.deepeval_judge_model,
+        deepeval_judge_model=deepeval_judge_model,
         deepeval_ollama_url=args.deepeval_ollama_url,
         deepeval_cases_per_category=args.deepeval_cases_per_category,
         deepeval_soft_fail=args.deepeval_soft_fail,

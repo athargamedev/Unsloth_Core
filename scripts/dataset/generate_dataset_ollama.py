@@ -51,8 +51,9 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from _config import paths, constants as C
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.dataset.dataset_contracts import dataset_contract_from_spec, calculate_distribution_gaps
-from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from scripts.ops.ollama_lifecycle import register_ollama_unload
+from scripts.ops.ollama_model_presets import resolve_ollama_model
+from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from generate_dataset import (
     CATEGORY_TEMPLATES,
     ConceptExtractor,
@@ -859,8 +860,17 @@ Examples:
     )
     
     parser.add_argument("spec", help="Path to subject spec JSON")
-    parser.add_argument("--model", default="llama3.1-3060-chat:latest", 
-                       help="Ollama model to use (default: llama3.1-3060-chat:latest)")
+    parser.add_argument(
+        "--preset",
+        default=None,
+        choices=["generate-qwen25", "generate-llama31", "generate-qwen35-exp", "generate-qwen3-exp"],
+        help="Named Ollama generation preset (default: generate-qwen25)",
+    )
+    parser.add_argument(
+        "--model",
+        default=None,
+        help="Exact Ollama model override (wins over --preset)",
+    )
     parser.add_argument("--url", default="http://localhost:11434",
                        help="Ollama server URL (default: http://localhost:11434)")
     parser.add_argument("--output", "-o", default=None,
@@ -909,29 +919,30 @@ Examples:
     if available:
         logger.info(f"Available models: {', '.join(available)}")
     
-    model_name = args.model.split(':')[0]  # Extract base model name (e.g. llama3.1-3060-chat from llama3.1-3060-chat:latest)
+    resolved_model = resolve_ollama_model(preset=args.preset, model=args.model, role="generation")
+    model_name = resolved_model.split(':')[0]  # Extract base model name for health checks
     if not health_checker.model_exists(model_name):
         if args.pull_model:
-            logger.info(f"Model '{args.model}' not found, pulling...")
-            if health_checker.pull_model(args.model):
-                logger.info(f"✓ Model '{args.model}' pulled successfully")
+            logger.info(f"Model '{resolved_model}' not found, pulling...")
+            if health_checker.pull_model(resolved_model):
+                logger.info(f"✓ Model '{resolved_model}' pulled successfully")
             else:
-                logger.error(f"Failed to pull model '{args.model}'")
+                logger.error(f"Failed to pull model '{resolved_model}'")
                 sys.exit(1)
         else:
             available = health_checker.get_available_models()
-            logger.error(f"Model '{args.model}' not found")
+            logger.error(f"Model '{resolved_model}' not found")
             logger.info(f"Available models: {', '.join(available)}")
             logger.info("Use --pull-model to auto-pull, or install with: ollama pull <model>")
             sys.exit(1)
     
     if args.dry_run:
         logger.info("[DRY-RUN] Checking loaded Ollama models without modifying runtime...")
-        ensure_selected_ollama_model_loaded(args.model, args.url, dry_run=True)
+        ensure_selected_ollama_model_loaded(resolved_model, args.url, dry_run=True)
     else:
         logger.info("Ensuring selected Ollama model is isolated before generation...")
-        ensure_selected_ollama_model_loaded(args.model, args.url)
-        register_ollama_unload(args.model, args.url)
+        ensure_selected_ollama_model_loaded(resolved_model, args.url)
+        register_ollama_unload(resolved_model, args.url)
     
     # ── Load spec ──────────────────────────────────────────────────────────
     logger.info(f"Loading spec: {args.spec}")
@@ -940,7 +951,7 @@ Examples:
     
     logger.info(f"Generating dataset for NPC: {spec['npc_name']}")
     logger.info(f"Subject: {spec['subject']}")
-    logger.info(f"Model: {args.model}")
+    logger.info(f"Model: {resolved_model}")
     
     output_path = args.output or paths.dataset_train_path(npc_key, "ollama")
     hook_recorder = WorkflowHookRecorder(

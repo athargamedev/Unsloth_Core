@@ -18,6 +18,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.dataset.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
 from scripts.ops.preflight import run_preflight
+from scripts.ops.ollama_model_presets import resolve_ollama_model
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 DEEPEVAL_TEST = PROJECT_ROOT / "tests" / "evals" / "test_dataset_generation_quality.py"
@@ -317,6 +318,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
         summary = {"passed": 0, "total": 0, "pass_rate": 0.0}
         completed = subprocess.CompletedProcess(args=[], returncode=0)
         try:
+            resolved_judge_model = resolve_ollama_model(preset=args.judge_preset, model=args.judge_model, role="judge")
             hook_recorder = WorkflowHookRecorder(
                 args.workflow_hooks or run.hook_path,
                 tool="dataset_eval",
@@ -325,7 +327,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 spec_path=args.spec,
                 run_id=run.run_id,
             )
-            with hook_recorder.step("deepeval_run", identifier=identifier, judge_model=args.judge_model, cases_per_category=args.cases_per_category):
+            with hook_recorder.step("deepeval_run", identifier=identifier, judge_model=resolved_judge_model, cases_per_category=args.cases_per_category):
                 preflight = run_preflight(
                     phase="dataset_eval",
                     preset=None,
@@ -367,7 +369,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         "DEEPEVAL_DATASET_NPC_KEYS": npc_key,
                         "DEEPEVAL_DATASET_TECHNIQUE": args.technique,
                         "DEEPEVAL_DATASET_CASES_PER_CATEGORY": str(args.cases_per_category),
-                        "DEEPEVAL_OLLAMA_MODEL": args.judge_model,
+                        "DEEPEVAL_OLLAMA_MODEL": resolved_judge_model,
                         "DEEPEVAL_OLLAMA_BASE_URL": args.ollama_base_url,
                         "DEEPEVAL_OLLAMA_TEMPERATURE": str(args.judge_temperature),
                         "DEEPEVAL_TELEMETRY_OPT_OUT": "1",
@@ -385,7 +387,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     result,
                     npc_key=npc_key,
                     technique=args.technique,
-                    judge_model=args.judge_model,
+                    judge_model=resolved_judge_model,
                     command=cmd,
                 )
                 dataset_summary = summarize_jsonl_dataset(clean_path)
@@ -447,7 +449,17 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run local DeepEval checks on a generated dataset")
     parser.add_argument("spec", help="Path to subject spec JSON")
     parser.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"])
-    parser.add_argument("--judge-model", default="qwen3:latest", help="Local Ollama judge model")
+    parser.add_argument(
+        "--judge-preset",
+        default=None,
+        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
+        help="Named Ollama judge preset (default: judge-qwen25)",
+    )
+    parser.add_argument(
+        "--judge-model",
+        default=None,
+        help="Exact Ollama judge model override (wins over --judge-preset)",
+    )
     parser.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
     parser.add_argument("--judge-temperature", type=float, default=0.0)
     parser.add_argument("--cases-per-category", type=int, default=DEFAULT_PRODUCTION_CASES_PER_CATEGORY)
