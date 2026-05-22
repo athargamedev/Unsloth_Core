@@ -1,0 +1,212 @@
+{
+  "npc_key": "chef_assistant",
+  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
+  "candidate": "chef_assistant/chef_assistant-lora-f16",
+  "wandb_url": "https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/r0rli2ky",
+  "wandb_run_id": "r0rli2ky",
+  "wandb_project": "unsloth-core",
+  "wandb_entity": null,
+  "total_examples": 10,
+  "baseline_wins": 2,
+  "candidate_wins": 8,
+  "ties": 0,
+  "win_rate": 0.8,
+  "per_concept": {
+    "teaching/kitchen workflow": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 34.34,
+      "avg_candidate_quality": 31.78,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I'm trying to prep for the week, but I feel overwhelmed by all the ingredients and steps. Can you help me with a simple kitchen workflow?",
+          "winner": "candidate",
+          "candidate_quality": 31.78,
+          "candidate_words": 28,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/flavor balance": {
+      "total": 2,
+      "baseline_wins": 0,
+      "candidate_wins": 2,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 31.765,
+      "avg_candidate_quality": 32.495,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "I'm trying to make a balanced sauce but it keeps tasting flat. I added salt and some acidity from lemon juice, but it's still not right.",
+          "winner": "candidate",
+          "candidate_quality": 35.55,
+          "candidate_words": 40,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        },
+        {
+          "question": "Hey ChefAssistant, I'm making a rich beef stew and it tastes really flat. How can I balance the flavors?",
+          "winner": "candidate",
+          "candidate_quality": 29.44,
+          "candidate_words": 19,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/misconceptions and refusals": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 36.64,
+      "avg_candidate_quality": 31.78,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "But what if I don't have a thermometer? How can I be sure it's cooked through?",
+          "winner": "baseline",
+          "candidate_quality": 31.78,
+          "candidate_words": 31,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/food safety": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 34.01,
+      "avg_candidate_quality": 30.45,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I'm worried about storing leftovers safely. What's the best way to keep them fresh?",
+          "winner": "candidate",
+          "candidate_quality": 30.45,
+          "candidate_words": 21,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/kitchen organization": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 34.34,
+      "avg_candidate_quality": 31.78,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "I'm having trouble keeping track of all the ingredients and utensils. Can you help me with kitchen organization?",
+          "winner": "baseline",
+          "candidate_quality": 31.78,
+          "candidate_words": 25,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "identity/kitchen organization": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 32.58,
+      "avg_candidate_quality": 30.91,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Hi, I'm new here. Can you tell me who you are and what you do?",
+          "winner": "candidate",
+          "candidate_quality": 30.91,
+          "candidate_words": 24,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/kitchen workflow": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 24.85,
+      "avg_candidate_quality": 33.32,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "Hey ChefAssistant, I'm trying to get this dish done but I don't know what order to do things. Can you help me with the workflow?",
+          "winner": "candidate",
+          "candidate_quality": 33.32,
+          "candidate_words": 29,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "refusal/core kitchen flow": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 13.86,
+      "avg_candidate_quality": 33.32,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Can you help me with something unrelated to cooking fundamentals?",
+          "winner": "candidate",
+          "candidate_quality": 33.32,
+          "candidate_words": 32,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/flavor and ingredient logic": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 34.97,
+      "avg_candidate_quality": 36.64,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "But won't adding acid make it taste sour? And how do I know when to use fat instead of salt?",
+          "winner": "candidate",
+          "candidate_quality": 36.64,
+          "candidate_words": 43,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    }
+  },
+  "weak_concepts": [
+    "teaching/flavor balance",
+    "teaching/misconceptions and refusals",
+    "dialogue/kitchen organization",
+    "dialogue/kitchen workflow",
+    "teaching/flavor and ingredient logic"
+  ],
+  "timestamp": "2026-05-22T03:25:22.310669+00:00"
+}

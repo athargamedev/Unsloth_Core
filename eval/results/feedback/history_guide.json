@@ -1,32 +1,32 @@
 {
   "npc_key": "history_guide",
-  "baseline": ".models/llama-3.2-3b-instruct-q4_k_m",
+  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
   "candidate": "history_guide/history_guide-lora-f16",
-  "wandb_url": null,
-  "wandb_run_id": null,
+  "wandb_url": "https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/srujfk1h",
+  "wandb_run_id": "srujfk1h",
   "wandb_project": "unsloth-core",
   "wandb_entity": null,
   "total_examples": 10,
-  "baseline_wins": 5,
-  "candidate_wins": 3,
-  "ties": 2,
-  "win_rate": 0.3,
+  "baseline_wins": 0,
+  "candidate_wins": 10,
+  "ties": 0,
+  "win_rate": 1.0,
   "per_concept": {
     "dialogue/modern history": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 39.12,
-      "avg_candidate_quality": 32.19,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 41.59,
+      "avg_candidate_quality": 26.39,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "What were the key events that led to World War II?",
-          "winner": "baseline",
-          "candidate_quality": 32.19,
-          "candidate_words": 28,
+          "winner": "candidate",
+          "candidate_quality": 26.39,
+          "candidate_words": 15,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -38,15 +38,15 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 30.45,
-      "avg_candidate_quality": 27.73,
+      "avg_baseline_quality": 29.96,
+      "avg_candidate_quality": 25.65,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I've heard the Chronos Spire holds secrets of the past. Can you tell me about your role here?",
           "winner": "candidate",
-          "candidate_quality": 27.73,
-          "candidate_words": 16,
+          "candidate_quality": 25.65,
+          "candidate_words": 13,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -54,19 +54,19 @@
     },
     "teaching/scope and use": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 41.27,
-      "avg_candidate_quality": 31.35,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 38.5,
+      "avg_candidate_quality": 28.33,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "What's the scope of your knowledge here at the Chronos Spire archives? I'm trying to understand how it all fits together.",
-          "winner": "baseline",
-          "candidate_quality": 31.35,
-          "candidate_words": 25,
+          "winner": "candidate",
+          "candidate_quality": 28.33,
+          "candidate_words": 17,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -75,18 +75,18 @@
     "teaching/modern history": {
       "total": 1,
       "baseline_wins": 0,
-      "candidate_wins": 0,
-      "ties": 1,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 30.91,
-      "avg_candidate_quality": 27.08,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 39.89,
+      "avg_candidate_quality": 32.58,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I've heard of ancient civilizations, but what about the modern world? How did it change from the past?",
-          "winner": "tie",
-          "candidate_quality": 27.08,
-          "candidate_words": 16,
+          "winner": "candidate",
+          "candidate_quality": 32.58,
+          "candidate_words": 31,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -95,18 +95,18 @@
     "refusal/core timeline anchors": {
       "total": 1,
       "baseline_wins": 0,
-      "candidate_wins": 0,
-      "ties": 1,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 38.29,
-      "avg_candidate_quality": 28.9,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 38.92,
+      "avg_candidate_quality": 23.98,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "Do aliens exist, and what do they look like?",
-          "winner": "tie",
-          "candidate_quality": 28.9,
-          "candidate_words": 18,
+          "winner": "candidate",
+          "candidate_quality": 23.98,
+          "candidate_words": 11,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -118,15 +118,15 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 39.7,
-      "avg_candidate_quality": 32.58,
+      "avg_baseline_quality": 39.89,
+      "avg_candidate_quality": 33.32,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I'm studying the medieval period and I'm having trouble understanding how feudalism worked. Can you explain it to me?",
           "winner": "candidate",
-          "candidate_quality": 32.58,
-          "candidate_words": 28,
+          "candidate_quality": 33.32,
+          "candidate_words": 33,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -134,19 +134,19 @@
     },
     "dialogue/ancient civilizations": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 37.61,
-      "avg_candidate_quality": 26.39,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 34.01,
+      "avg_candidate_quality": 31.35,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I thought ancient civilizations were just about pyramids and pharaohs. What's the real story?",
-          "winner": "baseline",
-          "candidate_quality": 26.39,
-          "candidate_words": 14,
+          "winner": "candidate",
+          "candidate_quality": 31.35,
+          "candidate_words": 24,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -158,15 +158,15 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 30.91,
-      "avg_candidate_quality": 26.39,
+      "avg_baseline_quality": 37.61,
+      "avg_candidate_quality": 23.03,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I've heard of the Chronos Spire archives being a treasure trove of historical knowledge. Can you tell me about yourself?",
           "winner": "candidate",
-          "candidate_quality": 26.39,
-          "candidate_words": 14,
+          "candidate_quality": 23.03,
+          "candidate_words": 10,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -174,19 +174,19 @@
     },
     "teaching/ancient civilizations": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 34.97,
-      "avg_candidate_quality": 32.96,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 36.38,
+      "avg_candidate_quality": 30.45,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I'm studying ancient civilizations. Can you tell me about the earliest cities?",
-          "winner": "baseline",
-          "candidate_quality": 32.96,
-          "candidate_words": 29,
+          "winner": "candidate",
+          "candidate_quality": 30.45,
+          "candidate_words": 22,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -194,33 +194,25 @@
     },
     "quest/historical methodology": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
+      "win_rate": 1.0,
       "avg_baseline_quality": 34.97,
-      "avg_candidate_quality": 28.9,
+      "avg_candidate_quality": 29.44,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I've been studying the accounts of ancient historians like Herodotus and Thucydides. How did they approach recording events?",
-          "winner": "baseline",
-          "candidate_quality": 28.9,
-          "candidate_words": 20,
+          "winner": "candidate",
+          "candidate_quality": 29.44,
+          "candidate_words": 21,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     }
   },
-  "weak_concepts": [
-    "dialogue/modern history",
-    "teaching/scope and use",
-    "teaching/modern history",
-    "refusal/core timeline anchors",
-    "dialogue/ancient civilizations",
-    "teaching/ancient civilizations",
-    "quest/historical methodology"
-  ],
-  "timestamp": "2026-05-22T02:19:18.457682+00:00"
+  "weak_concepts": [],
+  "timestamp": "2026-05-22T03:16:44.138764+00:00"
 }
