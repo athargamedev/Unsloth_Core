@@ -220,7 +220,7 @@ class WorkflowHookRecorder:
                         metrics=qa_data.get("metrics"),
                         categories=qa_data.get("categories"),
                         failures=qa_data.get("failures"),
-                        judge_model=qa_data.get("judge_model", fields.get("judge_model", "qwen2.5:7b")),
+                        judge_model=qa_data.get("judge_model", fields.get("judge_model", "qwen3:latest")),
                         dataset_path=str(qa_path),
                     )
                 except Exception as _exc:
@@ -234,7 +234,7 @@ class WorkflowHookRecorder:
                     passed=0,
                     failed=0,
                     pass_rate=0.0,
-                    judge_model=fields.get("judge_model", "qwen2.5:7b"),
+                    judge_model=fields.get("judge_model", "qwen3:latest"),
                 )
             self._db_quality_gate_created = True
  
@@ -289,7 +289,7 @@ class WorkflowHookRecorder:
                 "track": fields.get("track", False),
                 "candidate_path": fields.get("candidate"),
                 "baseline_path": fields.get("baseline"),
-                "judge_model": fields.get("judge_model", "qwen2.5:7b"),
+                "judge_model": fields.get("judge_model", "qwen3:latest"),
             }
 
             self.db.create_eval_session(

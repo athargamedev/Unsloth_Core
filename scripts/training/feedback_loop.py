@@ -304,7 +304,7 @@ def run_training(npc_key, preset, technique="template", dry_run=False, allow_ung
     return None
 
 
-def run_dataset_eval(npc_key, technique="template", judge_model="qwen2.5:7b",
+def run_dataset_eval(npc_key, technique="template", judge_model="qwen3:latest",
                      ollama_base_url="http://localhost:11434",
                      cases_per_category=5, dry_run=False, soft_fail=False):
     """Run the dataset quality gate on the sanitized dataset."""
@@ -422,7 +422,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       url=DEFAULT_REGENERATION_URL,
                       batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
                       skip_dataset_eval=False,
-                      deepeval_judge_model="qwen2.5:7b",
+                      deepeval_judge_model="qwen3:latest",
                       deepeval_ollama_url="http://localhost:11434",
                       deepeval_cases_per_category=5,
                       deepeval_soft_fail=False,
@@ -802,7 +802,7 @@ def main():
     parser.add_argument("--deepeval-judge-preset",
                         default=None,
                         choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
-                        help="Named Ollama judge preset (default: judge-qwen25)")
+                        help="Named Ollama judge preset (default: judge-qwen3-exp)")
     parser.add_argument("--deepeval-judge-model", default=None,
                         help="Exact Ollama judge model to use for dataset evaluation (wins over --deepeval-judge-preset)")
     parser.add_argument("--deepeval-ollama-url", default="http://localhost:11434",

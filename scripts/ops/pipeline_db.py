@@ -1175,7 +1175,7 @@ class PipelineDB:
         metrics: Optional[dict[str, Any]] = None,
         categories: Optional[dict[str, Any]] = None,
         failures: Optional[list[dict[str, Any]]] = None,
-        judge_model: str = "qwen2.5:7b",
+        judge_model: str = "qwen3:latest",
         dataset_path: Optional[str] = None,
         **kwargs: Any,
     ) -> dict:

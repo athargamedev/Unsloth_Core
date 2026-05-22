@@ -63,6 +63,7 @@ from generate_dataset import (
     ConceptExtractor,
     ReferenceDocRetriever,
     DialogueGuardrail,
+    fallback_generation_run_id,
     generate_identity_response,
     generate_teaching_response,
     generate_dialogue_response,
@@ -976,6 +977,7 @@ Examples:
         npc_key=npc_key,
         technique="ollama",
         spec_path=args.spec,
+        run_id=fallback_generation_run_id(npc_key, "ollama"),
     )
     with hook_recorder.step("prepare", output_path=str(output_path), model=args.model):
         

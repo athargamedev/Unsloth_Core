@@ -37,7 +37,7 @@ Use it when you are about to touch dataset generation, training, export, evaluat
 
 4. Run dataset quality gating
    ```bash
-   ./ucore dataset-eval subjects/NPC_specs/<npc>.json --technique <technique> --judge-model qwen2.5:7b
+   ./ucore dataset-eval subjects/NPC_specs/<npc>.json --technique <technique> --judge-model qwen3:latest
    ```
 
 5. Train
@@ -51,7 +51,7 @@ Use it when you are about to touch dataset generation, training, export, evaluat
      --baseline /path/to/base.gguf \
      --candidate /path/to/outputs/<npc>/runs/<run_id> \
      --spec subjects/NPC_specs/<npc>.json \
-     --report-html --track --judge --judge-model qwen2.5:7b
+     --report-html --track --judge --judge-model qwen3:latest
    ```
 
 ## Output layout

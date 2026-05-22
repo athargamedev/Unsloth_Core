@@ -200,6 +200,56 @@ def test_ollama_multi_turn_selection_is_deterministic():
     assert not all(first)
 
 
+def test_template_generation_avoids_duplicate_refusal_rows(tmp_path):
+    from scripts.dataset.generate_dataset import generate_dataset
+    from scripts.dataset.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
+
+    spec = {
+        "npc_key": "history_guide",
+        "npc_name": "HistoryGuide",
+        "subject": "World history: ancient civilizations and historical thinking",
+        "system_prompt": "## IDENTITY\nName: HistoryGuide\n## VOICE\nConcise\n## KNOWLEDGE\nWorld history\n## RULES\nUse evidence.",
+        "identity": {"personality": "Careful", "background": "History tutor", "mannerisms": "Uses sources"},
+        "dialogue": {"max_sentences": 3, "max_characters": 220, "example_topics": ["What caused the fall of Rome?"]},
+        "teaching": {"difficulty_levels": ["beginner", "intermediate"]},
+        "quest": {"scenarios": [{"name": "timeline_analysis", "description": "Practice sequence"}]},
+        "refusal": {
+            "boundaries": [
+                "Will not present speculation as fact",
+                "Will not promote conspiracy theories or historical misinformation",
+            ]
+        },
+        "concepts": [
+            {"name": "ancient civilizations", "category": "teaching", "difficulty": "beginner"},
+            {"name": "historical thinking", "category": "dialogue", "difficulty": "intermediate"},
+            {"name": "timeline analysis", "category": "quest", "difficulty": "intermediate"},
+        ],
+        "dataset": {"examples_per_category": {"identity": 2, "teaching": 4, "dialogue": 4, "quest": 3, "refusal": 8}},
+    }
+
+    output_path = tmp_path / "train.jsonl"
+    result = generate_dataset(
+        spec,
+        output_path,
+        include_validation=False,
+        seed=42,
+        technique="template",
+        workflow_hooks=tmp_path / "workflow_hooks.jsonl",
+    )
+    summary = summarize_jsonl_dataset(output_path)
+    hashes = set()
+    for line in output_path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        hashes.add(row["metadata"]["content_hash"])
+
+    assert result["total"] == 21
+    assert summary["by_category"]["refusal"] == 8
+    assert len(hashes) == summary["total"]
+    assert calculate_distribution_gaps(expected_examples_per_category(spec), summary["by_category"]) == []
+
+
 def test_export_resolution_keeps_npc_key(monkeypatch, tmp_path):
     from _config import paths
 

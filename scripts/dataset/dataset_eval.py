@@ -539,7 +539,7 @@ def parse_args() -> argparse.Namespace:
         "--judge-preset",
         default=None,
         choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
-        help="Named Ollama judge preset (default: judge-qwen25)",
+        help="Named Ollama judge preset (default: judge-qwen3-exp)",
     )
     parser.add_argument(
         "--judge-model",

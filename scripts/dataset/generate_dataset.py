@@ -23,6 +23,7 @@ import re
 import subprocess
 import sys
 import time
+import uuid
 import requests
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -1273,6 +1274,14 @@ def compute_content_hash(messages):
     return hashlib.sha256(content_string.encode()).hexdigest()
 
 
+def example_content_hash(example: dict) -> str:
+    """Return the canonical content hash for a generated example."""
+    metadata = example.get("metadata") if isinstance(example, dict) else None
+    if isinstance(metadata, dict) and metadata.get("content_hash"):
+        return str(metadata["content_hash"]).removeprefix("sha256:")
+    return compute_content_hash(example.get("messages", []) if isinstance(example, dict) else [])
+
+
 async def generate_example_async(spec, category, concepts, generator=None, temperature=0.8,
                                  difficulty=None, dialogue_type=None, scenario_name=None,
                                  boundary=None, seed=None, technique="template", session=None, executor=None, retriever=None, guardrail=None, checkpoint_store=None):
@@ -1733,7 +1742,12 @@ async def generate_dataset_async_runner(spec, concepts, examples_per_category, g
     return examples
 
 
-def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.6, technique="template", spec_path=None, telemetry_ipc=None, workflow_hooks=None):
+def fallback_generation_run_id(npc_key: str | None, technique: str) -> str:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return f"{stamp}_{npc_key or 'unknown'}_generate_{technique}_{uuid.uuid4().hex[:8]}"
+
+
+def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.6, technique="template", spec_path=None, telemetry_ipc=None, workflow_hooks=None, run_id=None):
     """Generate a complete dataset from a subject spec."""
     random.seed(seed)
     
@@ -1756,6 +1770,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
         npc_key=spec.get("npc_key"),
         technique=technique,
         spec_path=spec_path,
+        run_id=run_id or fallback_generation_run_id(spec.get("npc_key"), technique),
     )
     total_count = sum(examples_per_category.values())
     with hook_recorder.step("prepare", output_path=str(output_path_obj), include_validation=include_validation, total_expected=total_count):
@@ -1780,6 +1795,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
             with hook_recorder.step("generate_examples", mode="template", total_expected=total_count):
                 examples = []
                 current = 0
+                seen_hashes = set()
             
                 existing_examples = checkpoint_store.get_all_for_npc(spec["npc_key"]) if checkpoint_store else []
                 existing_by_cat = defaultdict(list)
@@ -1792,7 +1808,15 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                         print(f"  [warn] Unknown category '{category}', skipping")
                         continue
 
-                    recovered = existing_by_cat.get(category, [])[:count]
+                    recovered = []
+                    for recovered_example in existing_by_cat.get(category, []):
+                        content_hash = example_content_hash(recovered_example)
+                        if content_hash in seen_hashes:
+                            continue
+                        seen_hashes.add(content_hash)
+                        recovered.append(recovered_example)
+                        if len(recovered) >= count:
+                            break
                     examples.extend(recovered)
                     remaining_count = count - len(recovered)
                     if recovered:
@@ -1838,7 +1862,12 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                         difficulties = ["beginner"] * remaining_count
 
                     print(f"  Generating {remaining_count} examples for '{category}'...")
-                    for i in range(remaining_count):
+                    accepted = 0
+                    attempts = 0
+                    max_attempts = max(remaining_count * 8, remaining_count + 10)
+                    while accepted < remaining_count and attempts < max_attempts:
+                        i = attempts % remaining_count
+                        attempts += 1
                         diff = difficulties[i] if difficulties else None
                         dt = dialogue_types[i] if dialogue_types else None
                         sn = scenario_names[i] if scenario_names else None
@@ -1853,13 +1882,23 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                             )
                         )
 
+                        content_hash = example_content_hash(example)
+                        if content_hash in seen_hashes:
+                            continue
+                        seen_hashes.add(content_hash)
                         example["metadata"]["category"] = category
                         examples.append(example)
+                        accepted += 1
                         current += 1
                         if telemetry_reporter:
                             telemetry_reporter.report(total_count, current, category)
                         if current % 5 == 0 or current == total_count:
                             print(f"    Progress: {current}/{total_count}")
+                    if accepted < remaining_count:
+                        print(
+                            f"  [warn] Only generated {accepted}/{remaining_count} unique examples for '{category}' "
+                            f"after {attempts} attempts. Add more templates or source material."
+                        )
 
 
         # ── Split into train/validation (stratified by category) ─────────────
@@ -1997,7 +2036,7 @@ def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, outp
     text = Path(ref_doc_path).read_text(encoding="utf-8")
     chunks = [c.strip() for c in text.split("\n\n") if len(c.strip()) > 50]
 
-    judge_model = os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen2.5:7b")
+    judge_model = os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen3:latest")
     judge_base_url = os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434")
     judge = OllamaModel(
         model=judge_model,
@@ -2156,6 +2195,7 @@ def main():
                     spec_path=args.spec,
                     telemetry_ipc=args.telemetry_ipc,
                     workflow_hooks=args.workflow_hooks or str(run.hook_path),
+                    run_id=run.run_id,
                 )
 
             run.set_artifacts(

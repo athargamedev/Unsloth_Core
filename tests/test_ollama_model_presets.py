@@ -8,9 +8,11 @@ def test_generation_presets_resolve_expected_models():
 
 
 def test_judge_presets_resolve_expected_models():
+    assert resolve_ollama_model(role="judge") == "qwen3:latest"
     assert resolve_ollama_model(preset="judge-qwen25", role="judge") == "qwen2.5:7b"
     assert resolve_ollama_model(preset="judge-llama31-exp", role="judge") == "llama3.1:8b"
     assert resolve_ollama_model(preset="judge-qwen35-exp", role="judge") == "qwen3.5:latest"
+    assert resolve_ollama_model(preset="judge-qwen3-exp", role="judge") == "qwen3:latest"
 
 
 def test_explicit_model_overrides_preset():

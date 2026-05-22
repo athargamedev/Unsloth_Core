@@ -69,12 +69,12 @@ model validation step.
 ```bash
 ./ucore dataset-eval subjects/NPC_specs/history_guide.json \
   --technique template \
-  --judge-model qwen2.5:7b \
+  --judge-model qwen3:latest \
   --cases-per-category 1
 ```
 
 **Local defaults:**
-- Judge: `qwen2.5:7b` via Ollama, temperature 0.
+- Judge: `qwen3:latest` via Ollama, temperature 0.
 - Confident AI: disabled by default.
 - Dataset input: `subjects/datasets/{npc_key}/{technique}/train_clean.jsonl`.
 - Test suite: `tests/evals/test_dataset_generation_quality.py`.
