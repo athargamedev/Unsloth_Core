@@ -607,8 +607,8 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriev
             ]
         elif dialogue_type == "deep_dive":
             templates = [
-                f"Start with {detail}, then name one cause and one consequence so the idea stays concrete.",
-                f"A good next step is to connect {detail} to one event, date, or source.",
+                f"Go deeper by placing {concept} in context: {detail}. One source, cause, and consequence show why it matters.",
+                f"{concept.capitalize()} reaches beyond a definition when {detail}; connect one event or source to its consequence.",
             ]
         elif dialogue_type == "application":
             templates = [
