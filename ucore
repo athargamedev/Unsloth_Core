@@ -175,20 +175,60 @@ def main():
     gen_ollama_p.add_argument("--val-split", type=float, default=0.12, help="Validation split ratio")
     gen_ollama_p.add_argument("--check-health", action="store_true", help="Verify Ollama is running")
     gen_ollama_p.add_argument("--pull-model", action="store_true", help="Auto-pull model if not found")
+    gen_ollama_p.add_argument("--concept-focus", action="append", dest="concept_focus",
+                              help="Focus regeneration on specific categories (repeatable)")
     gen_ollama_p.add_argument("--dry-run", action="store_true", help="Dry-run: show plan without generating")
 
     # Sanitize
     san_p = subparsers.add_parser("sanitize", help="Sanitize a dataset")
     san_p.add_argument("input", help="Path to input JSONL")
-    san_p.add_argument("--output", "-o", help="Path to output JSONL")
-    san_p.add_argument("--strict-canonical", action="store_true", help="Require canonical dataset path")
+    san_p.add_argument("--output", "-o", help="Path to output JSONL (defaults to *_clean.jsonl)")
+    san_p.add_argument("--min-length", type=int, default=10,
+                       help="Min chars for assistant response (default: 10)")
+    san_p.add_argument("--max-sentences", type=int, default=5,
+                       help="Max sentences for assistant response (default: 5)")
+    san_p.add_argument("--verbose", "-v", action="store_true",
+                       help="Print discarded examples and metadata warnings")
+    san_p.add_argument("--spec", help="Path to NPC spec JSON (better quality scoring)")
+    san_p.add_argument("--strict-canonical", action="store_true",
+                       help="Require canonical dataset path")
+    san_p.add_argument("--strict-mode", action="store_true",
+                       help="Raise on structural validation errors instead of discarding")
+    san_p.add_argument("--artifact-check", default="strict", choices=["strict", "warn", "off"],
+                       help="How to handle AI artifacts (default: strict)")
+    san_p.add_argument("--verbose-artifacts", action="store_true",
+                       help="Show the exact artifact pattern matched")
+    san_p.add_argument("--quality-threshold-pass", type=int, default=70,
+                       help="Minimum total score to pass (default: 70)")
+    san_p.add_argument("--quality-threshold-flag", type=int, default=50,
+                       help="Below this total, examples are flagged for review (default: 50)")
+    san_p.add_argument("--quality-report", action="store_true",
+                       help="Print quality score distribution at the end")
+    san_p.add_argument("--discard-below-score", type=int, default=0,
+                       help="Discard examples below this total score (default: 0 = keep all)")
+    san_p.add_argument("--no-fix-metadata", action="store_true",
+                       help="Disable auto-repair of missing metadata fields")
+    san_p.add_argument("--require-complete-metadata", action="store_true",
+                       help="Error out if any metadata field is missing")
+    san_p.add_argument("--dedup", default=True, action=argparse.BooleanOptionalAction,
+                       help="Enable/disable content_hash deduplication (default: True)")
+    san_p.add_argument("--dedup-report", action="store_true",
+                       help="Show which content hashes were removed during dedup")
+    san_p.add_argument("--write-manifest", default=True, action=argparse.BooleanOptionalAction,
+                       help="Enable/disable enriched manifest writing (default: True)")
+    san_p.add_argument("--manifest-path", help="Override manifest output path")
+    san_p.add_argument("--debug", action="store_true",
+                       help="Re-raise exceptions with traceback for debugging")
 
     # Dataset quality eval (DeepEval, local-first)
     de_p = subparsers.add_parser("dataset-eval", help="Run DeepEval quality checks on a generated dataset")
     de_p.add_argument("spec", help="Path to subject spec JSON")
     de_p.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"],
                       help="Dataset technique to evaluate")
-    de_p.add_argument("--judge-model", default="qwen3", help="Local Ollama judge model")
+    de_p.add_argument("--judge-model", default=None, help="Local Ollama judge model (default: auto — resolves from configs/ollama-model-presets.yaml)")
+    de_p.add_argument("--judge-preset", default=None,
+                      choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
+                      help="Named Ollama judge preset (default: auto — resolves from configs/ollama-model-presets.yaml)")
     de_p.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
     de_p.add_argument("--judge-temperature", type=float, default=0.0, help="Judge temperature")
     de_p.add_argument("--cases-per-category", type=int, default=5, help="Rows sampled per category")
@@ -198,6 +238,9 @@ def main():
     de_p.add_argument("--ignore-errors", action="store_true", help="Continue when individual metric calls error")
     de_p.add_argument("--soft-fail", action="store_true", help="Write artifacts but return 0 even when metrics fail")
     de_p.add_argument("--output", help="Quality summary JSON path")
+    de_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
+    de_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    de_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
 
     # Train
     train_p = subparsers.add_parser("train", help="Train a model")
@@ -213,6 +256,8 @@ def main():
                          help="Enable W&B logging (overrides config)")
     train_p.add_argument("--no-wandb", action="store_true", default=None,
                          dest="no_wandb", help="Disable W&B logging (overrides config)")
+    train_p.add_argument("--wandb-project", default=None, help="W&B project (default: unsloth-core)")
+    train_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
     train_p.add_argument("--lr", type=float, help="Learning rate")
     train_p.add_argument("--batch-size", type=int, help="Batch size")
     train_p.add_argument("--epochs", type=int, help="Number of epochs")
@@ -312,13 +357,22 @@ def main():
     eval_p.add_argument("--feedback-json", help="Save structured per-concept eval results for the feedback loop")
     eval_p.add_argument("--base-model", help="Base GGUF path (required when --candidate is a LoRA adapter)")
     eval_p.add_argument("--lora-weight", type=float, default=1.0, help="LoRA adapter weight (default: 1.0)")
-
+    eval_p.add_argument("--host", default="127.0.0.1",
+                        help="llama-server host (default: 127.0.0.1)")
+    eval_p.add_argument("--training-metrics", nargs="?", const="",
+                        help="Show training metrics from TensorBoard logs (optional: runs dir)")
+    eval_p.add_argument("--wandb-entity", default=None,
+                        help="W&B entity (default: auto-detect)")
+    eval_p.add_argument("--npc-key", help="NPC key for per-model TensorBoard runs lookup")
     # Quick-eval
     qe_p = subparsers.add_parser("quick-eval", help="Quick local evaluation (llama-cpp-python)")
-    qe_p.add_argument("adapter_path", help="Path to LoRA adapter or merged GGUF")
+    qe_p.add_argument("--adapter", required=True, help="Path to LoRA adapter directory")
     qe_p.add_argument("--samples", "-n", type=int, default=20, help="Number of validation samples")
-    qe_p.add_argument("--spec", "-s", help="Subject spec JSON")
+    qe_p.add_argument("--spec", "-s", required=True, help="Subject spec JSON")
     qe_p.add_argument("--val-data", help="Validation JSONL (auto-detected if omitted)")
+    qe_p.add_argument("--output", help="Output report path (default: eval/results/{npc_key}_eval_report.json)")
+    qe_p.add_argument("--feedback-json",
+                      help="Save structured per-concept eval results for the feedback loop")
 
     # Track
     track_p = subparsers.add_parser("track", help="Track or show evaluation results")
@@ -357,6 +411,31 @@ def main():
     fb_p.add_argument("--train-preset", default="fast-3b",
                        help="Training preset for auto-retrain (default: fast-3b)")
     fb_p.add_argument("--baseline", help="Baseline GGUF for auto-evaluation after retrain")
+    fb_p.add_argument("--regeneration-technique", default="template", choices=["template", "ollama"],
+                       help="Regeneration technique to use (default: template)")
+    fb_p.add_argument("--regeneration-preset", default=None,
+                       choices=["generate-qwen25", "generate-llama31", "generate-qwen35-exp", "generate-qwen3-exp"],
+                       help="Named Ollama regeneration preset (default: generate-qwen25)")
+    fb_p.add_argument("--regeneration-model", default="qwen2.5:7b",
+                       help="Exact Ollama regeneration model (wins over --regeneration-preset)")
+    fb_p.add_argument("--regeneration-url", default="http://localhost:11434",
+                       help="Ollama base URL for regeneration")
+    fb_p.add_argument("--regeneration-batch-size", type=int, default=4,
+                       help="Ollama batch size for regeneration")
+    fb_p.add_argument("--deepeval-judge-preset", default=None,
+                       choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
+                       help="Named Ollama judge preset (default: judge-qwen25)")
+    fb_p.add_argument("--deepeval-judge-model", default=None,
+                       help="Exact Ollama judge model (wins over --deepeval-judge-preset)")
+    fb_p.add_argument("--deepeval-ollama-url", default="http://localhost:11434",
+                       help="Ollama base URL for DeepEval")
+    fb_p.add_argument("--deepeval-cases-per-category", type=int, default=5,
+                       help="Cases per category for DeepEval")
+    fb_p.add_argument("--deepeval-soft-fail", action="store_true",
+                       help="Do not abort dataset evaluation on metric failure; continue training")
+    fb_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
+    fb_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    fb_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
 
     # Supabase integration check
     sb_p = subparsers.add_parser("supabase-check", help="Verify NPC profile + dialogue memory path in Supabase")
@@ -493,6 +572,9 @@ def main():
             cmd.extend(["--seed", str(args.seed)])
         if args.output:
             cmd.extend(["--output", args.output])
+        if args.concept_focus:
+            for cf in args.concept_focus:
+                cmd.extend(["--concept-focus", cf])
         if args.no_validation:
             cmd.append("--no-validation")
         if args.val_split and args.val_split != 0.12:
@@ -508,13 +590,37 @@ def main():
     elif args.command == "sanitize":
         cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), args.input]
         if args.output: cmd.extend(["--output", args.output])
+        if args.min_length != 10: cmd.extend(["--min-length", str(args.min_length)])
+        if args.max_sentences != 5: cmd.extend(["--max-sentences", str(args.max_sentences)])
+        if args.verbose: cmd.append("--verbose")
+        if args.spec: cmd.extend(["--spec", args.spec])
         if args.strict_canonical: cmd.append("--strict-canonical")
+        if args.strict_mode: cmd.append("--strict-mode")
+        if args.artifact_check != "strict": cmd.extend(["--artifact-check", args.artifact_check])
+        if args.verbose_artifacts: cmd.append("--verbose-artifacts")
+        if args.quality_threshold_pass != 70: cmd.extend(["--quality-threshold-pass", str(args.quality_threshold_pass)])
+        if args.quality_threshold_flag != 50: cmd.extend(["--quality-threshold-flag", str(args.quality_threshold_flag)])
+        if args.quality_report: cmd.append("--quality-report")
+        if args.discard_below_score != 0: cmd.extend(["--discard-below-score", str(args.discard_below_score)])
+        if args.no_fix_metadata: cmd.append("--no-fix-metadata")
+        if args.require_complete_metadata: cmd.append("--require-complete-metadata")
+        if args.dedup is False:
+            cmd.append("--no-dedup")
+        elif args.dedup is True:
+            cmd.append("--dedup")
+        if args.dedup_report: cmd.append("--dedup-report")
+        if args.write_manifest is False: cmd.append("--no-write-manifest")
+        if args.manifest_path: cmd.extend(["--manifest-path", args.manifest_path])
+        if args.debug: cmd.append("--debug")
+        if args.workflow_hooks: cmd.extend(["--workflow-hooks", args.workflow_hooks])
         run_cmd(cmd)
 
     elif args.command == "dataset-eval":
         cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "dataset_eval.py"), args.spec]
         cmd.extend(["--technique", args.technique])
-        cmd.extend(["--judge-model", args.judge_model])
+        if args.judge_model is not None:
+            cmd.extend(["--judge-model", args.judge_model])
+        if args.judge_preset: cmd.extend(["--judge-preset", args.judge_preset])
         cmd.extend(["--ollama-base-url", args.ollama_base_url])
         cmd.extend(["--judge-temperature", str(args.judge_temperature)])
         cmd.extend(["--cases-per-category", str(args.cases_per_category)])
@@ -524,6 +630,10 @@ def main():
         if args.ignore_errors: cmd.append("--ignore-errors")
         if args.soft_fail: cmd.append("--soft-fail")
         if args.output: cmd.extend(["--output", args.output])
+        if args.workflow_hooks: cmd.extend(["--workflow-hooks", args.workflow_hooks])
+        if args.wandb: cmd.append("--wandb")
+        if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
+        if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
         run_cmd(cmd)
 
     elif args.command == "train":
@@ -542,6 +652,8 @@ def main():
         if getattr(args, 'full_merge_export', False): cmd.append("--full-merge-export")
         if args.wandb: cmd.append("--wandb")
         if args.no_wandb: cmd.append("--no-wandb")
+        if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
+        if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
         run_cmd(cmd)
 
     elif args.command == "smoke":
@@ -672,13 +784,24 @@ def main():
         if args.feedback_json: cmd.extend(["--feedback-json", args.feedback_json])
         if args.base_model: cmd.extend(["--base-model", args.base_model])
         if args.lora_weight: cmd.extend(["--lora-weight", str(args.lora_weight)])
+        if args.host != "127.0.0.1": cmd.extend(["--host", args.host])
+        if args.training_metrics is not None:
+            cmd.append("--training-metrics")
+            if args.training_metrics: cmd.append(args.training_metrics)
+        if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
+        if args.npc_key: cmd.extend(["--npc-key", args.npc_key])
+        if args.workflow_hooks: cmd.extend(["--workflow-hooks", args.workflow_hooks])
         run_cmd(cmd)
 
     elif args.command == "quick-eval":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "quick_eval.py"), args.adapter_path]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "quick_eval.py")]
+        cmd.extend(["--adapter", args.adapter])
         if args.samples: cmd.extend(["--samples", str(args.samples)])
-        if args.spec: cmd.extend(["--spec", args.spec])
+        cmd.extend(["--spec", args.spec])
         if args.val_data: cmd.extend(["--val-data", args.val_data])
+        if args.output: cmd.extend(["--output", args.output])
+        if args.feedback_json: cmd.extend(["--feedback-json", args.feedback_json])
+        if args.workflow_hooks: cmd.extend(["--workflow-hooks", args.workflow_hooks])
         run_cmd(cmd)
 
     elif args.command == "track":
@@ -727,6 +850,19 @@ def main():
         if args.auto_retrain: cmd.append("--auto-retrain")
         if args.train_preset: cmd.extend(["--train-preset", args.train_preset])
         if args.baseline: cmd.extend(["--baseline", args.baseline])
+        if args.regeneration_technique: cmd.extend(["--regeneration-technique", args.regeneration_technique])
+        if args.regeneration_preset: cmd.extend(["--regeneration-preset", args.regeneration_preset])
+        if args.regeneration_model: cmd.extend(["--regeneration-model", args.regeneration_model])
+        if args.regeneration_url: cmd.extend(["--regeneration-url", args.regeneration_url])
+        if args.regeneration_batch_size is not None: cmd.extend(["--regeneration-batch-size", str(args.regeneration_batch_size)])
+        if args.deepeval_judge_preset: cmd.extend(["--deepeval-judge-preset", args.deepeval_judge_preset])
+        if args.deepeval_judge_model: cmd.extend(["--deepeval-judge-model", args.deepeval_judge_model])
+        if args.deepeval_ollama_url: cmd.extend(["--deepeval-ollama-url", args.deepeval_ollama_url])
+        if args.deepeval_cases_per_category is not None: cmd.extend(["--deepeval-cases-per-category", str(args.deepeval_cases_per_category)])
+        if args.deepeval_soft_fail: cmd.append("--deepeval-soft-fail")
+        if args.wandb: cmd.append("--wandb")
+        if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
+        if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
         run_cmd(cmd)
 
     elif args.command == "pipeline":

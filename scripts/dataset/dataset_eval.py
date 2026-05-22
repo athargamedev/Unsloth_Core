@@ -422,6 +422,88 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 archive_quality_artifact(failures_path, run.run_id)
                 archive_quality_artifact(report_path, run.run_id)
 
+            # ── W&B Dataset Quality Gate Tracking ──────────────────────────────
+            if args.wandb:
+                try:
+                    import wandb
+                    wandb_run = wandb.init(
+                        project=args.wandb_project or "unsloth-core",
+                        entity=args.wandb_entity,
+                        group=os.environ.get("WANDB_GROUP"),
+                        job_type="dataset-quality-gate",
+                        config={
+                            "npc_key": npc_key,
+                            "technique": args.technique,
+                            "judge_model": resolved_judge_model,
+                            "cases_per_category": args.cases_per_category,
+                            "total": summary["total"],
+                            "passed": summary["passed"],
+                            "failed": summary["failed"],
+                            "pass_rate": summary["pass_rate"],
+                        },
+                        name=f"dataset-quality-{npc_key}-{args.technique}",
+                        tags=["dataset-quality", npc_key, args.technique],
+                    )
+                    if wandb_run and getattr(wandb_run, "url", None):
+                        print(f"  [wandb] Run URL: {wandb_run.url}")
+
+                    # Log summary metrics
+                    wandb.log({
+                        "quality/pass_rate": summary["pass_rate"],
+                        "quality/total": summary["total"],
+                        "quality/passed": summary["passed"],
+                        "quality/failed": summary["failed"],
+                        "quality/null_metric_count": summary.get("null_metric_count", 0),
+                        "quality/null_metric_rate": summary.get("null_metric_rate", 0),
+                        "quality/total_rows": summary.get("dataset_total_rows", 0),
+                        "quality/unknown_rows": summary.get("dataset_unknown_rows", 0),
+                    })
+
+                    # Log per-category metrics
+                    for cat, cat_stats in summary.get("categories", {}).items():
+                        cat_pass_rate = cat_stats.get("pass_rate", 0) or 0
+                        wandb.log({
+                            f"quality/category/{cat}/pass_rate": cat_pass_rate,
+                            f"quality/category/{cat}/total": cat_stats.get("total", 0),
+                            f"quality/category/{cat}/passed": cat_stats.get("passed", 0),
+                            f"quality/category/{cat}/failed": cat_stats.get("total", 0) - cat_stats.get("passed", 0),
+                        })
+
+                    # Log quality_summary.json as artifact
+                    if summary_path.exists():
+                        summary_artifact = wandb.Artifact(
+                            f"quality-summary-{npc_key}-{args.technique}",
+                            type="quality-report",
+                            description=f"DeepEval quality summary for {npc_key} ({args.technique})",
+                            metadata={
+                                "npc_key": npc_key,
+                                "technique": args.technique,
+                                "pass_rate": summary["pass_rate"],
+                                "total": summary["total"],
+                            }
+                        )
+                        summary_artifact.add_file(str(summary_path))
+                        wandb.log_artifact(summary_artifact)
+
+                    # Log quality_failures.json as artifact
+                    if failures_path.exists():
+                        failures_artifact = wandb.Artifact(
+                            f"quality-failures-{npc_key}-{args.technique}",
+                            type="quality-failures",
+                            description=f"DeepEval quality failures for {npc_key} ({args.technique})",
+                            metadata={
+                                "npc_key": npc_key,
+                                "technique": args.technique,
+                                "failure_count": len(failures),
+                            }
+                        )
+                        failures_artifact.add_file(str(failures_path))
+                        wandb.log_artifact(failures_artifact)
+
+                    wandb.finish()
+                except Exception:
+                    print("  [wandb] W&B logging failed (non-fatal)")
+
             print()
             print(f"DeepEval dataset quality: {summary['passed']}/{summary['total']} passed ({summary['pass_rate']:.0%})")
             if summary.get("status") == "inconclusive":
@@ -471,6 +553,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", help="Quality summary JSON path")
     parser.add_argument("--workflow-hooks", default=None,
                         help="Path to a JSONL hook log for step tracing (default: <dataset-dir>/workflow_hooks.jsonl)")
+    parser.add_argument("--wandb", action="store_true", help="Enable W&B logging")
+    parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
     return parser.parse_args()
 
 

@@ -8,6 +8,8 @@ const DEFAULT_TRAINING_CONFIG: TrainingConfig = {
   preset: 'fast-3b',
   technique: 'template',
   baseModel: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
+  modelId: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
+  modelPreset: '',
   learningRate: '2e-4',
   scheduler: 'cosine',
   batchSize: 1,
@@ -15,6 +17,14 @@ const DEFAULT_TRAINING_CONFIG: TrainingConfig = {
   rank: 16,
   alpha: 32,
   wandb: false,
+  exportGguf: true,
+  fullMergeExport: false,
+  datasetEvalSkip: false,
+  datasetEvalJudgeModel: '',
+  datasetEvalJudgePreset: '',
+  deepevalSoftFail: false,
+  deepevalOllamaUrl: 'http://localhost:11434',
+  deepevalCasesPerCategory: 5,
 };
 
 export interface UIState {

@@ -70,6 +70,13 @@ const parsedValData = (payload: StartCommandPayload, repoRoot: string): string =
   return resolvePayloadPath(payload, "valData", [path.join(repoRoot, "subjects"), repoRoot], repoRoot);
 };
 
+const appendWorkflowHooks = (args: string[], payload: StartCommandPayload): void => {
+  const workflowHooks = optionValue(payload, "workflowHooks");
+  if (workflowHooks) {
+    args.push("--workflow-hooks", sanitizeToken(workflowHooks, "workflow-hooks"));
+  }
+};
+
 /**
  * Recursively resolves {npcKey} templates in a defaults object.
  */
@@ -108,6 +115,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (technique) args.push("--technique", sanitizeToken(technique, "technique"));
         if (model) args.push("--model", sanitizeToken(model, "model"));
         if (technique === "ollama") args.push("--ollama");
+        appendWorkflowHooks(args, payload);
         return args;
       },
     },
@@ -118,7 +126,63 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "warning",
       type: "Dataset",
       requiredFields: ["options.datasetPath"],
-      build: (payload) => ["./ucore", "sanitize", parsedDatasetPath(payload, repoRoot)],
+      build: (payload) => {
+        const args = ["./ucore", "sanitize", parsedDatasetPath(payload, repoRoot)];
+
+        const output = optionValue(payload, "output");
+        if (output) args.push("--output", sanitizeToken(output, "output"));
+
+        const minLength = optionValue(payload, "minLength");
+        if (minLength) args.push("--min-length", minLength);
+
+        const maxSentences = optionValue(payload, "maxSentences");
+        if (maxSentences) args.push("--max-sentences", maxSentences);
+
+        if (boolOptionValue(payload, "verbose")) args.push("--verbose");
+
+        const spec = optionValue(payload, "spec");
+        if (spec) args.push("--spec", sanitizeToken(spec, "spec"));
+
+        if (boolOptionValue(payload, "strictCanonical")) args.push("--strict-canonical");
+        if (boolOptionValue(payload, "strictMode")) args.push("--strict-mode");
+
+        const artifactCheck = optionValue(payload, "artifactCheck");
+        if (artifactCheck) args.push("--artifact-check", sanitizeToken(artifactCheck, "artifactCheck"));
+
+        if (boolOptionValue(payload, "verboseArtifacts")) args.push("--verbose-artifacts");
+
+        const qualityThresholdPass = optionValue(payload, "qualityThresholdPass");
+        if (qualityThresholdPass) args.push("--quality-threshold-pass", qualityThresholdPass);
+
+        const qualityThresholdFlag = optionValue(payload, "qualityThresholdFlag");
+        if (qualityThresholdFlag) args.push("--quality-threshold-flag", qualityThresholdFlag);
+
+        if (boolOptionValue(payload, "qualityReport")) args.push("--quality-report");
+
+        const discardBelowScore = optionValue(payload, "discardBelowScore");
+        if (discardBelowScore) args.push("--discard-below-score", discardBelowScore);
+
+        if (boolOptionValue(payload, "noFixMetadata")) args.push("--no-fix-metadata");
+        if (boolOptionValue(payload, "requireCompleteMetadata")) args.push("--require-complete-metadata");
+
+        const dedup = optionValue(payload, "dedup");
+        if (dedup === "false") args.push("--no-dedup");
+        else if (dedup === "true") args.push("--dedup");
+
+        if (boolOptionValue(payload, "dedupReport")) args.push("--dedup-report");
+
+        const writeManifest = optionValue(payload, "writeManifest");
+        if (writeManifest === "false") args.push("--no-write-manifest");
+        else if (writeManifest === "true") args.push("--write-manifest");
+
+        const manifestPath = optionValue(payload, "manifestPath");
+        if (manifestPath) args.push("--manifest-path", sanitizeToken(manifestPath, "manifestPath"));
+
+        if (boolOptionValue(payload, "debug")) args.push("--debug");
+
+        appendWorkflowHooks(args, payload);
+        return args;
+      },
     },
     {
       id: "dataset-eval",
@@ -127,13 +191,49 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "warning",
       type: "Dataset",
       requiredFields: ["spec", "options.technique"],
-      build: (payload) => [
-        "./ucore",
-        "dataset-eval",
-        parsedSpec(payload, repoRoot),
-        "--technique",
-        sanitizeToken(String(optionValue(payload, "technique") || "template"), "technique"),
-      ],
+      build: (payload) => {
+        const args = [
+          "./ucore",
+          "dataset-eval",
+          parsedSpec(payload, repoRoot),
+        ];
+
+        const technique = String(optionValue(payload, "technique") || "template").trim();
+        if (technique) args.push("--technique", sanitizeToken(technique, "technique"));
+
+        const judgeModel = optionValue(payload, "judgeModel");
+        if (judgeModel) args.push("--judge-model", sanitizeToken(judgeModel, "judgeModel"));
+
+        const judgePreset = optionValue(payload, "judgePreset");
+        if (judgePreset) args.push("--judge-preset", sanitizeToken(judgePreset, "judgePreset"));
+
+        const ollamaBaseUrl = optionValue(payload, "ollamaBaseUrl");
+        if (ollamaBaseUrl && ollamaBaseUrl !== "http://localhost:11434") args.push("--ollama-base-url", sanitizeToken(ollamaBaseUrl, "ollamaBaseUrl"));
+
+        const judgeTemperature = optionValue(payload, "judgeTemperature");
+        if (judgeTemperature && judgeTemperature !== "0") args.push("--judge-temperature", judgeTemperature);
+
+        const casesPerCategory = optionValue(payload, "casesPerCategory");
+        if (casesPerCategory && casesPerCategory !== "5") args.push("--cases-per-category", casesPerCategory);
+
+        const categories = optionValue(payload, "categories");
+        if (categories) args.push("--categories", sanitizeToken(categories, "categories"));
+
+        const identifier = optionValue(payload, "identifier");
+        if (identifier) args.push("--identifier", sanitizeToken(identifier, "identifier"));
+
+        const display = optionValue(payload, "display");
+        if (display && display !== "all") args.push("--display", sanitizeToken(display, "display"));
+
+        if (boolOptionValue(payload, "ignoreErrors")) args.push("--ignore-errors");
+        if (boolOptionValue(payload, "softFail")) args.push("--soft-fail");
+
+        const output = optionValue(payload, "output");
+        if (output) args.push("--output", sanitizeToken(output, "output"));
+
+        appendWorkflowHooks(args, payload);
+        return args;
+      },
     },
     {
       id: "validate-spec",
@@ -142,7 +242,11 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "accent",
       type: "Validation",
       requiredFields: ["spec"],
-      build: (payload) => ["./ucore", "validate-spec", parsedSpec(payload, repoRoot), "--generation-ready"],
+      build: (payload) => {
+        const args = ["./ucore", "validate-spec", parsedSpec(payload, repoRoot), "--generation-ready"];
+        appendWorkflowHooks(args, payload);
+        return args;
+      },
     },
     {
       id: "validate-config",
@@ -160,6 +264,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (boolOptionValue(payload, "requireCanonical")) {
           args.push("--require-canonical");
         }
+        appendWorkflowHooks(args, payload);
         return args;
       },
     },
@@ -181,15 +286,47 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (preset) args.push("--preset", sanitizeToken(preset, "preset"));
         const opts = payload.options || {};
         if (opts.technique) args.push("--technique", String(opts.technique));
-        const baseModel = String(opts.baseModel || opts.model || "").trim();
-        if (baseModel) args.push("--model", sanitizeToken(baseModel, "model"));
-        if (opts.wandb === true || opts.wandb === "true") args.push("--wandb");
+
+        // --model: HF model ID (e.g., unsloth/Qwen3-1.7B-bnb-4bit)
+        // --base-model: GGUF path (for eval/LoRA loading, not for training override)
+        // For training: frontend uses modelId/HF ID -> passed as --model
+        const hfModel = String(opts.modelId || opts.model || "").trim();
+        if (hfModel) args.push("--model", sanitizeToken(hfModel, "model"));
+
+        // W&B: BooleanOptionalAction --wandb / --no-wandb
+        const wandbOpt = opts.wandb;
+        if (wandbOpt === true || wandbOpt === "true" || wandbOpt === "1") args.push("--wandb");
+        if (wandbOpt === false || wandbOpt === "false" || wandbOpt === "0") args.push("--no-wandb");
+
+        // Training hyperparameters
         if (opts.learningRate) args.push("--lr", String(opts.learningRate));
         if (opts.batchSize) args.push("--batch-size", String(opts.batchSize));
         if (opts.epochs) args.push("--epochs", String(opts.epochs));
         if (opts.rank) args.push("--lora-r", String(opts.rank));
         if (opts.alpha) args.push("--lora-alpha", String(opts.alpha));
         if (opts.scheduler && ["cosine", "linear", "constant"].includes(String(opts.scheduler))) args.push("--lr-scheduler", String(opts.scheduler));
+
+        // Export flags
+        if (boolOptionValue(payload, "exportGguf")) args.push("--export-gguf");
+        if (boolOptionValue(payload, "fullMergeExport")) args.push("--full-merge-export");
+
+        // Model preset
+        const modelPreset = String(opts.modelPreset || "").trim();
+        if (modelPreset) args.push("--model-preset", sanitizeToken(modelPreset, "modelPreset"));
+
+        // Dataset eval controls
+        if (boolOptionValue(payload, "datasetEvalSkip") || boolOptionValue(payload, "skipDatasetEval")) args.push("--dataset-eval-skip");
+        const datasetEvalJudgeModel = String(opts.datasetEvalJudgeModel || "").trim();
+        if (datasetEvalJudgeModel) args.push("--dataset-eval-judge-model", sanitizeToken(datasetEvalJudgeModel, "datasetEvalJudgeModel"));
+        const datasetEvalJudgePreset = String(opts.datasetEvalJudgePreset || "").trim();
+        if (datasetEvalJudgePreset) args.push("--dataset-eval-judge-preset", sanitizeToken(datasetEvalJudgePreset, "datasetEvalJudgePreset"));
+        if (boolOptionValue(payload, "deepevalSoftFail")) args.push("--deepeval-soft-fail");
+        const deepevalOllamaUrl = String(opts.deepevalOllamaUrl || "").trim();
+        if (deepevalOllamaUrl) args.push("--deepeval-ollama-url", sanitizeToken(deepevalOllamaUrl, "deepevalOllamaUrl"));
+        const deepevalCasesPerCategory = String(opts.deepevalCasesPerCategory || "").trim();
+        if (deepevalCasesPerCategory) args.push("--deepeval-cases-per-category", deepevalCasesPerCategory);
+
+        appendWorkflowHooks(args, payload);
         return args;
       },
     },
@@ -222,6 +359,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (boolOptionValue(payload, "ollama")) cmd.push("--ollama");
         const docsManifest = String(optionValue(payload, "manifest") || "").trim();
         if (docsManifest) cmd.push("--docs-manifest", sanitizeToken(docsManifest, "manifest"));
+        appendWorkflowHooks(cmd, payload);
         return cmd;
       },
     },
@@ -232,13 +370,18 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "success",
       type: "Export",
       requiredFields: ["npcKey", "options.modelId"],
-      build: ({ npcKey, options }) => [
-        "./ucore",
-        "export",
-        sanitizeToken(requireString(npcKey, "npcKey"), "npcKey"),
-        "--model",
-        sanitizeToken(requireString(String(options?.modelId || ""), "modelId"), "modelId"),
-      ],
+      build: ({ npcKey, options }) => {
+        const args = [
+          "./ucore",
+          "export",
+          sanitizeToken(requireString(npcKey, "npcKey"), "npcKey"),
+          "--model",
+          sanitizeToken(requireString(String(options?.modelId || ""), "modelId"), "modelId"),
+        ];
+        const payload = { npcKey, options } as unknown as StartCommandPayload;
+        appendWorkflowHooks(args, payload);
+        return args;
+      },
     },
     {
       id: "export-adapter",
@@ -247,11 +390,16 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "default",
       type: "Export",
       requiredFields: ["npcKey"],
-      build: ({ npcKey }) => [
-        "./ucore",
-        "export-adapter",
-        `outputs/${sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")}`,
-      ],
+      build: ({ npcKey }) => {
+        const args = [
+          "./ucore",
+          "export-adapter",
+          `outputs/${sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")}`,
+        ];
+        const payload = { npcKey } as unknown as StartCommandPayload;
+        appendWorkflowHooks(args, payload);
+        return args;
+      },
     },
     {
       id: "evaluate",
@@ -259,31 +407,93 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       icon: "bar-chart",
       color: "accent",
       type: "Evaluation",
-      requiredFields: ["options.baseline", "options.candidate", "spec"],
+      // Single-model mode uses "options.model" instead of baseline/candidate
+      requiredFields: [],
       build: (payload) => {
-        const command = [
-          "./ucore",
-          "evaluate",
-          "--baseline", parsedBaseline(payload, repoRoot),
-          "--candidate", parsedCandidate(payload, repoRoot),
-          "--spec", parsedSpec(payload, repoRoot),
-        ];
+        const opts = payload.options || {};
+        const singleModel = String(opts.model || "").trim();
+        const baseline = String(opts.baseline || "").trim();
+        const candidate = String(opts.candidate || "").trim();
+
+        // --model (single model mode) is alternative to --baseline / --candidate
+        const command: string[] = ["./ucore", "evaluate"];
+
+        if (singleModel && !baseline && !candidate) {
+          // Single model mode
+          command.push("--model", resolvePathWithinRoots(singleModel, "model", [path.join(repoRoot, "exports"), path.join(repoRoot, "outputs"), repoRoot], repoRoot));
+        } else {
+          // Compare mode: baseline + candidate (existing behavior)
+          if (baseline) command.push("--baseline", parsedBaseline(payload, repoRoot));
+          if (candidate) command.push("--candidate", parsedCandidate(payload, repoRoot));
+        }
+
+        const spec = String(payload.spec || "").trim();
+        if (spec) command.push("--spec", parsedSpec(payload, repoRoot));
+
         if (optionValue(payload, "valData").trim()) command.push("--val-data", parsedValData(payload, repoRoot));
+
+        const output = optionValue(payload, "output").trim();
+        if (output) command.push("--output", resolvePathWithinRoots(output, "output", [repoRoot], repoRoot));
+
         if (boolOptionValue(payload, "reportHtml")) command.push("--report-html");
         if (boolOptionValue(payload, "track")) command.push("--track");
+
+        // W&B: BooleanOptionalAction --wandb / --no-wandb
+        const wandbOpt = opts.wandb;
+        if (wandbOpt === true || wandbOpt === "true" || wandbOpt === "1") command.push("--wandb");
+        if (wandbOpt === false || wandbOpt === "false" || wandbOpt === "0") command.push("--no-wandb");
+
+        const wandbProject = String(opts.wandbProject || "").trim();
+        if (wandbProject) command.push("--wandb-project", sanitizeToken(wandbProject, "wandbProject"));
+        const wandbEntity = String(opts.wandbEntity || "").trim();
+        if (wandbEntity) command.push("--wandb-entity", sanitizeToken(wandbEntity, "wandbEntity"));
+
+        if (boolOptionValue(payload, "interactive")) command.push("--interactive");
+
         if (boolOptionValue(payload, "judge")) {
           command.push("--judge");
           const judgeModel = optionValue(payload, "judgeModel").trim();
           if (judgeModel) command.push("--judge-model", sanitizeToken(judgeModel, "judgeModel"));
         }
+
+        // llama-server connection options
+        const host = String(opts.host || "").trim();
+        if (host) command.push("--host", sanitizeToken(host, "host"));
+        const port = String(opts.port || "").trim();
+        if (port) command.push("--port", port);
+        const gpuLayers = String(opts.gpuLayers || "").trim();
+        if (gpuLayers) command.push("--gpu-layers", gpuLayers);
+        const maxTokens = String(opts.maxTokens || "").trim();
+        if (maxTokens) command.push("--max-tokens", maxTokens);
+
+        // LoRA adapter options
         const baseModel = optionValue(payload, "baseModel").trim();
         if (baseModel) command.push("--base-model", parsedBaseModel(payload, repoRoot));
         const loraWeight = optionValue(payload, "loraWeight").trim();
         if (loraWeight) command.push("--lora-weight", loraWeight);
+
         const numQuestions = optionValue(payload, "numQuestions").trim();
         if (numQuestions) command.push("--num-questions", numQuestions);
+
+        const npcKey = String(opts.npcKey || payload.npcKey || "").trim();
+        if (npcKey) command.push("--npc-key", sanitizeToken(npcKey, "npcKey"));
+
+        // --training-metrics: nargs="?", so it can be:
+        // - Not present → not passed
+        // - Present with no value → --training-metrics (const="")
+        // - Present with value → --training-metrics <value>
+        // Check raw value first: can be boolean true, or string "true", or a path
+        const rawTrainingMetrics = (payload as Record<string, unknown>).trainingMetrics ?? payload.options?.trainingMetrics;
+        if (rawTrainingMetrics === true || rawTrainingMetrics === "true") {
+          command.push("--training-metrics");
+        } else if (typeof rawTrainingMetrics === "string" && rawTrainingMetrics.trim() && rawTrainingMetrics.trim() !== "false") {
+          command.push("--training-metrics", resolvePathWithinRoots(rawTrainingMetrics.trim(), "trainingMetrics", [repoRoot], repoRoot));
+        }
+
         const feedbackJson = optionValue(payload, "feedbackJson").trim();
         if (feedbackJson) command.push("--feedback-json", resolvePathWithinRoots(feedbackJson, "feedbackJson", [repoRoot], repoRoot));
+
+        appendWorkflowHooks(command, payload);
         return command;
       },
     },
@@ -294,7 +504,11 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "warning",
       type: "Validation",
       requiredFields: ["options.modelPath", "spec"],
-      build: (payload) => ["./ucore", "smoke", parsedModelPath(payload, repoRoot), "--spec", parsedSpec(payload, repoRoot)],
+      build: (payload) => {
+        const args = ["./ucore", "smoke", parsedModelPath(payload, repoRoot), "--spec", parsedSpec(payload, repoRoot)];
+        appendWorkflowHooks(args, payload);
+        return args;
+      },
     },
     {
       id: "deploy",
@@ -310,6 +524,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (boolOptionValue({ options } as unknown as StartCommandPayload, "dryRun")) args.push("--dry-run");
         if (boolOptionValue({ options } as unknown as StartCommandPayload, "skipExport")) args.push("--skip-export");
         if (boolOptionValue({ options } as unknown as StartCommandPayload, "exportOnly")) args.push("--export-only");
+        appendWorkflowHooks(args, { options } as unknown as StartCommandPayload);
         return args;
       },
     },
@@ -324,6 +539,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         const args = ["./ucore", "supabase-check", "--npc-key", sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")];
         const playerId = String(options?.playerId || "").trim();
         if (playerId) args.push("--player-id", sanitizeToken(playerId, "playerId"));
+        appendWorkflowHooks(args, { npcKey, options } as unknown as StartCommandPayload);
         return args;
       },
     },
@@ -340,6 +556,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         const name = String(options?.name || "").trim();
         if (subject) args.push("--subject", subject);
         if (name) args.push("--name", name);
+        appendWorkflowHooks(args, { npcKey, options } as unknown as StartCommandPayload);
         return args;
       },
     },
@@ -358,6 +575,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (presets) args.push("--presets", presets);
         const localVram = String(payload.options?.localVram || "4.0").trim();
         if (localVram) args.push("--local-vram-gb", localVram);
+        appendWorkflowHooks(args, payload);
         return args;
       },
     },
@@ -372,6 +590,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         const args = ["./ucore", "generate", parsedSpec(payload, repoRoot), "--technique", "docs"];
         const manifest = String(optionValue(payload, "manifest") || "").trim();
         if (manifest) args.push("--docs-manifest", sanitizeToken(manifest, "manifest"));
+        appendWorkflowHooks(args, payload);
         return args;
       },
     },
@@ -381,41 +600,81 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       icon: "refresh-cw",
       color: "accent",
       type: "Feedback",
-      requiredFields: ["feedback_json"],
+      requiredFields: [], // feedback_json OR spec + candidate depending on mode
       build: (payload) => {
-        const feedbackJson = resolvePathWithinRoots(
-          sanitizeToken(String(requireString(payload.feedback_json, "feedback_json")), "feedback_json"),
-          "feedback_json",
-          [repoRoot],
-          repoRoot,
-        );
-        const args = ["./ucore", "feedback", feedbackJson];
-        if (boolOptionValue(payload, "dry-run")) args.push("--dry-run");
-        if (boolOptionValue(payload, "skip-gap-detection")) args.push("--skip-gap-detection");
-        if (boolOptionValue(payload, "auto-retrain")) args.push("--auto-retrain");
-        const trainPreset = String(payload.options?.["train-preset"] || payload["train-preset"] || "").trim();
+        const opts = payload.options || {};
+
+        // Primary: feedback_json path; alternatively --spec + --candidate
+        const feedbackJson = String(payload.feedback_json || opts.feedbackJson || "").trim();
+        const spec = String(payload.spec || opts.spec || "").trim();
+        const candidate = String(opts.candidate || "").trim();
+
+        let args: string[];
+        if (feedbackJson) {
+          args = ["./ucore", "feedback", resolvePathWithinRoots(
+            sanitizeToken(feedbackJson, "feedback_json"),
+            "feedback_json",
+            [repoRoot],
+            repoRoot,
+          )];
+        } else {
+          args = ["./ucore", "feedback"];
+        }
+
+        // Thresholds
+        const winRateThreshold = String(opts.winRateThreshold || "").trim();
+        if (winRateThreshold) args.push("--win-rate-threshold", winRateThreshold);
+        const qualityThreshold = String(opts.qualityThreshold || "").trim();
+        if (qualityThreshold) args.push("--quality-threshold", qualityThreshold);
+        const violationThreshold = String(opts.violationThreshold || "").trim();
+        if (violationThreshold) args.push("--violation-threshold", violationThreshold);
+
+        if (boolOptionValue(payload, "dry-run") || boolOptionValue(payload, "dryRun")) args.push("--dry-run");
+        if (boolOptionValue(payload, "auto")) args.push("--auto");
+        if (boolOptionValue(payload, "skip-gap-detection") || boolOptionValue(payload, "skipGapDetection")) args.push("--skip-gap-detection");
+        if (boolOptionValue(payload, "auto-retrain") || boolOptionValue(payload, "autoRetrain")) args.push("--auto-retrain");
+
+        // Alternative mode: --spec + --candidate (when no feedback_json)
+        if (spec && !feedbackJson) {
+          args.push("--spec", resolvePathWithinRoots(spec, "spec", [path.join(repoRoot, "subjects")], repoRoot));
+        }
+        if (candidate) {
+          args.push("--candidate", resolvePathWithinRoots(candidate, "candidate", [path.join(repoRoot, "exports"), repoRoot], repoRoot));
+        }
+
+        const trainPreset = String(payload.options?.trainPreset || payload.options?.["train-preset"] || payload["train-preset"] || "").trim();
         if (trainPreset) args.push("--train-preset", sanitizeToken(trainPreset, "train-preset"));
         const baseline = String(payload.options?.baseline || payload.baseline || "").trim();
         if (baseline) args.push("--baseline", sanitizeToken(baseline, "baseline"));
         const saveGaps = String(payload.options?.saveGaps || payload["save-gaps"] || "").trim();
-        if (saveGaps) args.push("--save-gaps", sanitizeToken(saveGaps, "save-gaps"));
+        if (saveGaps) args.push("--save-gaps", resolvePathWithinRoots(saveGaps, "save-gaps", [repoRoot], repoRoot));
         if (boolOptionValue(payload, "json")) args.push("--json");
-        if (boolOptionValue(payload, "skip-dataset-eval")) args.push("--skip-dataset-eval");
+        if (boolOptionValue(payload, "skip-dataset-eval") || boolOptionValue(payload, "skipDatasetEval")) args.push("--skip-dataset-eval");
+
+        // DeepEval judge
         const deepevalJudgeModel = String(payload.options?.deepevalJudgeModel || payload["deepeval-judge-model"] || "").trim();
         if (deepevalJudgeModel) args.push("--deepeval-judge-model", sanitizeToken(deepevalJudgeModel, "deepeval-judge-model"));
+        const deepevalJudgePreset = String(payload.options?.deepevalJudgePreset || payload["deepeval-judge-preset"] || "").trim();
+        if (deepevalJudgePreset) args.push("--deepeval-judge-preset", sanitizeToken(deepevalJudgePreset, "deepeval-judge-preset"));
         const deepevalOllamaUrl = String(payload.options?.deepevalOllamaUrl || payload["deepeval-ollama-url"] || "").trim();
         if (deepevalOllamaUrl) args.push("--deepeval-ollama-url", sanitizeToken(deepevalOllamaUrl, "deepeval-ollama-url"));
         const deepevalCasesPerCategory = String(payload.options?.deepevalCasesPerCategory || payload["deepeval-cases-per-category"] || "").trim();
-        if (deepevalCasesPerCategory) args.push("--deepeval-cases-per-category", sanitizeToken(deepevalCasesPerCategory, "deepeval-cases-per-category"));
-        if (boolOptionValue(payload, "deepeval-soft-fail")) args.push("--deepeval-soft-fail");
+        if (deepevalCasesPerCategory) args.push("--deepeval-cases-per-category", deepevalCasesPerCategory);
+        if (boolOptionValue(payload, "deepeval-soft-fail") || boolOptionValue(payload, "deepevalSoftFail")) args.push("--deepeval-soft-fail");
+
+        // Regeneration options
         const regenerationTechnique = String(payload.options?.regenerationTechnique || payload["regeneration-technique"] || "").trim();
         if (regenerationTechnique) args.push("--regeneration-technique", sanitizeToken(regenerationTechnique, "regeneration-technique"));
+        const regenerationPreset = String(payload.options?.regenerationPreset || "").trim();
+        if (regenerationPreset) args.push("--regeneration-preset", sanitizeToken(regenerationPreset, "regeneration-preset"));
         const regenerationModel = String(payload.options?.regenerationModel || payload["regeneration-model"] || "").trim();
         if (regenerationModel) args.push("--regeneration-model", sanitizeToken(regenerationModel, "regeneration-model"));
         const regenerationUrl = String(payload.options?.regenerationUrl || payload["regeneration-url"] || "").trim();
         if (regenerationUrl) args.push("--regeneration-url", sanitizeToken(regenerationUrl, "regeneration-url"));
         const regenerationBatchSize = String(payload.options?.regenerationBatchSize || payload["regeneration-batch-size"] || "").trim();
-        if (regenerationBatchSize) args.push("--regeneration-batch-size", sanitizeToken(regenerationBatchSize, "regeneration-batch-size"));
+        if (regenerationBatchSize) args.push("--regeneration-batch-size", regenerationBatchSize);
+
+        appendWorkflowHooks(args, payload);
         return args;
       },
     },
@@ -442,6 +701,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (url && url !== "http://localhost:11434") args.push("--url", sanitizeToken(url, "url"));
         const maxRetries = Number(optionValue(payload, "maxRetries"));
         if (maxRetries && maxRetries !== 3) args.push("--max-retries", String(maxRetries));
+        appendWorkflowHooks(args, payload);
         return args;
       },
     },
@@ -468,6 +728,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (numQuestions) args.push("--num-questions", numQuestions);
         const judge = options?.judge;
         if (judge === true || judge === "true" || judge === "1") args.push("--judge");
+        appendWorkflowHooks(args, { npcKey, options } as unknown as StartCommandPayload);
         return args;
       },
     },
@@ -487,6 +748,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (boolOptionValue({ options } as unknown as StartCommandPayload, "skipF16")) args.push("--skip-f16");
         const timeoutSeconds = Number(options?.timeoutSeconds);
         if (timeoutSeconds) args.push("--timeout-seconds", String(timeoutSeconds));
+        appendWorkflowHooks(args, { npcKey, options } as unknown as StartCommandPayload);
         return args;
       },
     },
@@ -510,6 +772,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (valLoss) args.push("--val-loss", valLoss);
         const notes = String(options?.notes || "").trim();
         if (notes) args.push("--notes", sanitizeToken(notes, "notes"));
+        appendWorkflowHooks(args, { npcKey, options } as unknown as StartCommandPayload);
         return args;
       },
     },
@@ -521,13 +784,14 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       type: "Evaluation",
       requiredFields: ["options.adapterPath"],
       build: ({ options }) => {
-        const args = ["./ucore", "quick-eval", sanitizeToken(requireString(String(options?.adapterPath || ""), "adapterPath"), "adapterPath")];
+        const args = ["./ucore", "quick-eval", "--adapter", sanitizeToken(requireString(String(options?.adapterPath || ""), "adapterPath"), "adapterPath")];
         const samples = String(options?.samples || "").trim();
         if (samples) args.push("--samples", samples);
         const specPath = String(options?.spec || "").trim();
         if (specPath) args.push("--spec", sanitizeToken(specPath, "spec"));
         const valData = String(options?.valData || "").trim();
         if (valData) args.push("--val-data", sanitizeToken(valData, "valData"));
+        appendWorkflowHooks(args, { options } as unknown as StartCommandPayload);
         return args;
       },
     },
@@ -541,6 +805,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       build: (payload) => {
         const args = ["./ucore", "audit", "check"];
         if (boolOptionValue(payload, "full")) args.push("--full");
+        appendWorkflowHooks(args, payload);
         return args;
       },
     },
@@ -560,6 +825,41 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         const model = String(payload?.options?.model || "").trim();
         if (model) args.push("--model", sanitizeToken(model, "model"));
         if (boolOptionValue(payload, "skipF16")) args.push("--skip-f16");
+        appendWorkflowHooks(args, payload);
+        return args;
+      },
+    },
+    {
+      id: "plan-execution",
+      label: "Plan Execution",
+      icon: "book-open",
+      color: "success",
+      type: "Pipeline",
+      requiredFields: ["spec"],
+      build: (payload) => {
+        const args = ["./ucore", "plan-execution", "--spec", parsedSpec(payload, repoRoot)];
+        const preset = String(payload.preset || "").trim();
+        if (preset) args.push("--preset", sanitizeToken(preset, "preset"));
+        const localVramGb = optionValue(payload, "localVramGb");
+        if (localVramGb) args.push("--local-vram-gb", localVramGb);
+        if (boolOptionValue(payload, "json")) args.push("--json");
+        appendWorkflowHooks(args, payload);
+        return args;
+      },
+    },
+    {
+      id: "tb-reader",
+      label: "TensorBoard Reader",
+      icon: "bar-chart",
+      color: "accent",
+      type: "Evaluation",
+      requiredFields: ["options.runDir"],
+      build: (payload) => {
+        const args = ["./ucore", "tb-reader", "--run-dir", sanitizeToken(
+          requireString(optionValue(payload, "runDir"), "runDir"), "runDir")];
+        const indent = Number(optionValue(payload, "indent"));
+        if (indent && indent !== 2) args.push("--indent", String(indent));
+        appendWorkflowHooks(args, payload);
         return args;
       },
     },

@@ -144,8 +144,18 @@ export default function App() {
     rank: 16,
     alpha: 32,
     baseModel: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
+    modelId: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
+    modelPreset: '',
     wandb: false,
     technique: 'template',
+    exportGguf: true,
+    fullMergeExport: false,
+    datasetEvalSkip: false,
+    datasetEvalJudgeModel: '',
+    datasetEvalJudgePreset: '',
+    deepevalSoftFail: false,
+    deepevalOllamaUrl: 'http://localhost:11434',
+    deepevalCasesPerCategory: 5,
   });
 
   const {
@@ -823,7 +833,8 @@ export default function App() {
         spec: trainingConfig.spec,
         preset: trainingConfig.preset,
         options: {
-          model: trainingConfig.baseModel,
+          modelId: trainingConfig.modelId,
+          modelPreset: trainingConfig.modelPreset,
           wandb: trainingConfig.wandb ? 'true' : 'false',
           learningRate: trainingConfig.learningRate,
           scheduler: trainingConfig.scheduler,
@@ -832,6 +843,8 @@ export default function App() {
           rank: trainingConfig.rank,
           alpha: trainingConfig.alpha,
           technique: trainingConfig.technique,
+          exportGguf: String(trainingConfig.exportGguf),
+          fullMergeExport: String(trainingConfig.fullMergeExport),
         },
       });
     } catch (error) {
@@ -839,18 +852,26 @@ export default function App() {
     }
   }, [trainingConfig, triggerCommand, addToast]);
 
+  const [exportFullMerge, setExportFullMerge] = useState(false);
+  const [exportQuantization, setExportQuantization] = useState('f16');
+
   const handleRightSidebarExport = useCallback(async () => {
     try {
+      const npcKey = trainingConfig.spec.split('/').pop()?.replace('.json', '') || '';
       await triggerCommand({
-        commandId: 'export',
+        commandId: exportFullMerge ? 'batch-export' : 'export',
         type: 'Export',
-        npcKey: trainingConfig.spec.split('/').pop()?.replace('.json', '') || '',
-        options: { modelId: trainingConfig.baseModel },
+        npcKey,
+        options: {
+          modelId: trainingConfig.modelId,
+          quantization: exportQuantization,
+          npc: npcKey,
+        },
       });
     } catch (error) {
       addToast(error instanceof Error ? error.message : 'Export failed', 'error');
     }
-  }, [trainingConfig, triggerCommand, addToast]);
+  }, [trainingConfig, triggerCommand, addToast, exportFullMerge, exportQuantization]);
 
   const handleRightSidebarGenerateDataset = useCallback(async () => {
     try {
@@ -1655,6 +1676,40 @@ export default function App() {
                 >
                   Launch Train
                 </button>
+                <div className="pt-2 border-t border-line mt-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={exportFullMerge}
+                        onChange={e => setExportFullMerge(e.target.checked)}
+                        className="accent-accent"
+                      />
+                      <span className="text-[10px] text-ink/60">Full Merge</span>
+                    </label>
+                    <select
+                      value={exportQuantization}
+                      onChange={e => setExportQuantization(e.target.value)}
+                      className="bg-bg border border-line rounded px-1 py-0.5 text-[9px]"
+                    >
+                      <option value="f16">f16</option>
+                      <option value="f32">f32</option>
+                      <option value="bf16">bf16</option>
+                      <option value="q8_0">q8_0</option>
+                      <option value="q4_k_m">q4_k_m</option>
+                      <option value="q4_0">q4_0</option>
+                      <option value="q5_k_m">q5_k_m</option>
+                      <option value="q6_k">q6_k</option>
+                    </select>
+                  </div>
+                  <button
+                    onClick={handleRightSidebarExport}
+                    disabled={isRemoteMode}
+                    className="w-full py-1.5 bg-success/20 border border-success/30 text-success text-[10px] font-bold rounded-sm uppercase tracking-tighter hover:bg-success/30 active:scale-95 transition-all disabled:opacity-40"
+                  >
+                    Export {exportFullMerge ? 'Merged GGUF' : 'LoRA Adapter'}
+                  </button>
+                </div>
               </div>
             </details>
 

@@ -3,6 +3,63 @@ import { fetchOptionalJson } from '../api';
 import type { FeedbackResult, FeedbackGapResult, ConceptFeedback, FeedbackFileInfo } from '../api';
 import { useFeedbackResultsQuery } from '../hooks/useReactQuery';
 
+interface FeedbackConfig {
+  // Execution modes
+  dryRun: boolean;
+  skipGapDetection: boolean;
+  autoRetrain: boolean;
+  auto: boolean;
+  // Thresholds
+  winRateThreshold: number;
+  qualityThreshold: number;
+  violationThreshold: number;
+  // Training
+  trainPreset: string;
+  // Alternative mode
+  spec: string;
+  candidate: string;
+  // Regeneration
+  regenerationTechnique: string;
+  regenerationPreset: string;
+  regenerationModel: string;
+  regenerationUrl: string;
+  regenerationBatchSize: number;
+  // DeepEval
+  deepevalJudgePreset: string;
+  deepevalJudgeModel: string;
+  deepevalOllamaUrl: string;
+  deepevalCasesPerCategory: number;
+  deepevalSoftFail: boolean;
+  skipDatasetEval: boolean;
+  // Output
+  saveGaps: boolean;
+  json: boolean;
+}
+
+const JUDGE_PRESETS = [
+  { value: '', label: 'Default' },
+  { value: 'strict', label: 'Strict' },
+  { value: 'lenient', label: 'Lenient' },
+  { value: 'balanced', label: 'Balanced' },
+];
+
+const REGEN_TECHNIQUES = [
+  { value: 'template', label: 'Template' },
+  { value: 'docs', label: 'Docs' },
+  { value: 'ollama', label: 'Ollama' },
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'anthropic', label: 'Anthropic' },
+];
+
+const TRAIN_PRESETS = [
+  { value: 'smoke', label: 'Smoke' },
+  { value: 'fast-3b', label: 'Fast 3B' },
+  { value: 'safe-any', label: 'Safe Any' },
+  { value: 'quality', label: 'Quality' },
+  { value: 'premium-3b', label: 'Premium 3B' },
+  { value: 'premium-8b', label: 'Premium 8B' },
+];
+
 export const FeedbackLoopPanel = () => {
   const [selectedFile, setSelectedFile] = useState<FeedbackFileInfo | null>(null);
   const [feedbackData, setFeedbackData] = useState<FeedbackResult | null>(null);
@@ -10,11 +67,30 @@ export const FeedbackLoopPanel = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
-  const [fbConfig, setFbConfig] = useState({
+  const [fbConfig, setFbConfig] = useState<FeedbackConfig>({
     dryRun: true,
     skipGapDetection: false,
     autoRetrain: false,
+    auto: false,
+    winRateThreshold: 0.5,
+    qualityThreshold: 25.0,
+    violationThreshold: 1,
     trainPreset: 'fast-3b',
+    spec: '',
+    candidate: '',
+    regenerationTechnique: 'template',
+    regenerationPreset: '',
+    regenerationModel: '',
+    regenerationUrl: '',
+    regenerationBatchSize: 4,
+    deepevalJudgePreset: '',
+    deepevalJudgeModel: '',
+    deepevalOllamaUrl: '',
+    deepevalCasesPerCategory: 5,
+    deepevalSoftFail: false,
+    skipDatasetEval: false,
+    saveGaps: false,
+    json: false,
   });
 
   const { data: feedbackFiles = [], isLoading: loading, refetch: loadFiles } = useFeedbackResultsQuery();
@@ -42,9 +118,14 @@ export const FeedbackLoopPanel = () => {
       .finally(() => setDetailLoading(false));
   }, [selectedFile]);
 
+  const updateConfig = <K extends keyof FeedbackConfig>(key: K, value: FeedbackConfig[K]) => {
+    setFbConfig(prev => ({ ...prev, [key]: value }));
+  };
+
   const handleRunFeedback = async () => {
-    if (!selectedFile) {
-      setApiError('Select a feedback result first');
+    // Validate: either a feedback file or spec+candidate must be provided
+    if (!selectedFile && !fbConfig.spec.trim() && !fbConfig.candidate.trim()) {
+      setApiError('Select a feedback result OR provide spec + candidate for alternative mode');
       return;
     }
     setRunning(true);
@@ -53,14 +134,88 @@ export const FeedbackLoopPanel = () => {
       const payload: Record<string, unknown> = {
         commandId: 'feedback',
         type: 'Feedback',
-        feedback_json: `eval/results/feedback/${selectedFile.name}`,
+        options: {},
       };
+
+      // Primary mode: feedback_json
+      if (selectedFile) {
+        payload.feedback_json = `eval/results/feedback/${selectedFile.name}`;
+      }
+
+      // Alternative mode: spec + candidate
+      if (fbConfig.spec.trim()) {
+        payload.spec = fbConfig.spec.trim();
+        (payload.options as Record<string, unknown>).spec = fbConfig.spec.trim();
+      }
+      if (fbConfig.candidate.trim()) {
+        (payload.options as Record<string, unknown>).candidate = fbConfig.candidate.trim();
+      }
+
+      // Execution modes
       if (fbConfig.dryRun) payload['dry-run'] = true;
+      if (fbConfig.auto) {
+        payload['auto'] = true;
+        (payload.options as Record<string, unknown>).auto = true;
+      }
       if (fbConfig.skipGapDetection) payload['skip-gap-detection'] = true;
       if (fbConfig.autoRetrain) {
         payload['auto-retrain'] = true;
         payload['train-preset'] = fbConfig.trainPreset;
+        (payload.options as Record<string, unknown>).trainPreset = fbConfig.trainPreset;
       }
+
+      // Thresholds
+      if (fbConfig.winRateThreshold !== 0.5) {
+        (payload.options as Record<string, unknown>).winRateThreshold = String(fbConfig.winRateThreshold);
+      }
+      if (fbConfig.qualityThreshold !== 25.0) {
+        (payload.options as Record<string, unknown>).qualityThreshold = String(fbConfig.qualityThreshold);
+      }
+      if (fbConfig.violationThreshold !== 1) {
+        (payload.options as Record<string, unknown>).violationThreshold = String(fbConfig.violationThreshold);
+      }
+
+      // Regeneration
+      if (fbConfig.regenerationTechnique && fbConfig.regenerationTechnique !== 'template') {
+        (payload.options as Record<string, unknown>).regenerationTechnique = fbConfig.regenerationTechnique;
+      }
+      if (fbConfig.regenerationPreset) {
+        (payload.options as Record<string, unknown>).regenerationPreset = fbConfig.regenerationPreset;
+      }
+      if (fbConfig.regenerationModel) {
+        (payload.options as Record<string, unknown>).regenerationModel = fbConfig.regenerationModel;
+      }
+      if (fbConfig.regenerationUrl) {
+        (payload.options as Record<string, unknown>).regenerationUrl = fbConfig.regenerationUrl;
+      }
+      if (fbConfig.regenerationBatchSize !== 4) {
+        (payload.options as Record<string, unknown>).regenerationBatchSize = String(fbConfig.regenerationBatchSize);
+      }
+
+      // DeepEval
+      if (fbConfig.deepevalJudgePreset) {
+        (payload.options as Record<string, unknown>).deepevalJudgePreset = fbConfig.deepevalJudgePreset;
+      }
+      if (fbConfig.deepevalJudgeModel) {
+        (payload.options as Record<string, unknown>).deepevalJudgeModel = fbConfig.deepevalJudgeModel;
+      }
+      if (fbConfig.deepevalOllamaUrl) {
+        (payload.options as Record<string, unknown>).deepevalOllamaUrl = fbConfig.deepevalOllamaUrl;
+      }
+      if (fbConfig.deepevalCasesPerCategory !== 5) {
+        (payload.options as Record<string, unknown>).deepevalCasesPerCategory = String(fbConfig.deepevalCasesPerCategory);
+      }
+      if (fbConfig.deepevalSoftFail) {
+        (payload.options as Record<string, unknown>).deepevalSoftFail = true;
+      }
+      if (fbConfig.skipDatasetEval) {
+        payload['skip-dataset-eval'] = true;
+        (payload.options as Record<string, unknown>).skipDatasetEval = true;
+      }
+
+      // Output
+      if (fbConfig.saveGaps) payload['save-gaps'] = true;
+      if (fbConfig.json) payload['json'] = true;
 
       const response = await fetch('/api/commands/start', {
         method: 'POST',
@@ -259,47 +414,280 @@ export const FeedbackLoopPanel = () => {
                 </button>
 
                 {showConfig && (
-                  <div className="mt-3 p-3 bg-surface border border-line rounded-sm space-y-3">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={fbConfig.dryRun}
-                          onChange={e => setFbConfig(prev => ({ ...prev, dryRun: e.target.checked }))}
-                        />
-                        <span>Dry Run</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={fbConfig.skipGapDetection}
-                          onChange={e => setFbConfig(prev => ({ ...prev, skipGapDetection: e.target.checked }))}
-                        />
-                        <span>Skip Gap Detection</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={fbConfig.autoRetrain}
-                          onChange={e => setFbConfig(prev => ({ ...prev, autoRetrain: e.target.checked }))}
-                        />
-                        <span>Auto-Retrain</span>
-                      </label>
-                      {fbConfig.autoRetrain && (
+                  <div className="mt-3 space-y-4">
+                    {/* Thresholds section */}
+                    <div className="p-3 bg-surface border border-line rounded-sm space-y-3">
+                      <h5 className="text-[10px] font-bold text-ink/40 uppercase tracking-wider">Thresholds</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-[10px] text-ink/40 mb-1">Train Preset</label>
-                          <select
-                            value={fbConfig.trainPreset}
-                            onChange={e => setFbConfig(prev => ({ ...prev, trainPreset: e.target.value }))}
-                            className="bg-bg border border-line rounded px-2 py-1 text-[11px]"
-                          >
-                            <option value="smoke">Smoke</option>
-                            <option value="fast-3b">Fast 3B</option>
-                            <option value="quality">Quality</option>
-                            <option value="safe-any">Safe Any</option>
-                          </select>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">
+                            Win Rate Threshold: {fbConfig.winRateThreshold.toFixed(2)}
+                          </label>
+                          <input
+                            type="range"
+                            min={0} max={1} step={0.05}
+                            value={fbConfig.winRateThreshold}
+                            onChange={e => updateConfig('winRateThreshold', parseFloat(e.target.value))}
+                            className="w-full accent-accent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">
+                            Quality Threshold: {fbConfig.qualityThreshold.toFixed(1)}
+                          </label>
+                          <input
+                            type="range"
+                            min={0} max={100} step={0.5}
+                            value={fbConfig.qualityThreshold}
+                            onChange={e => updateConfig('qualityThreshold', parseFloat(e.target.value))}
+                            className="w-full accent-accent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Violation Threshold</label>
+                          <input
+                            type="number"
+                            min={0} max={100}
+                            value={fbConfig.violationThreshold}
+                            onChange={e => updateConfig('violationThreshold', parseInt(e.target.value) || 1)}
+                            className="w-20 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Execution modes */}
+                    <div className="p-3 bg-surface border border-line rounded-sm space-y-3">
+                      <h5 className="text-[10px] font-bold text-ink/40 uppercase tracking-wider">Execution Modes</h5>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={fbConfig.dryRun}
+                            onChange={e => updateConfig('dryRun', e.target.checked)}
+                          />
+                          <span>Dry Run</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={fbConfig.skipGapDetection}
+                            onChange={e => updateConfig('skipGapDetection', e.target.checked)}
+                          />
+                          <span>Skip Gap Detection</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={fbConfig.autoRetrain}
+                            onChange={e => updateConfig('autoRetrain', e.target.checked)}
+                          />
+                          <span>Auto-Retrain</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={fbConfig.auto}
+                            onChange={e => updateConfig('auto', e.target.checked)}
+                          />
+                          <span>Auto-Accept Decisions</span>
+                        </label>
+                      </div>
+                      {fbConfig.autoRetrain && (
+                        <div className="grid grid-cols-2 gap-3 text-[11px]">
+                          <div>
+                            <label className="block text-[10px] text-ink/40 mb-1">Train Preset</label>
+                            <select
+                              value={fbConfig.trainPreset}
+                              onChange={e => updateConfig('trainPreset', e.target.value)}
+                              className="bg-bg border border-line rounded px-2 py-1 text-[11px] w-full"
+                            >
+                              {TRAIN_PRESETS.map(tp => (
+                                <option key={tp.value} value={tp.value}>{tp.label}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                       )}
+                    </div>
+
+                    {/* Alternative Mode */}
+                    <div className="p-3 bg-surface border border-line rounded-sm space-y-3">
+                      <h5 className="text-[10px] font-bold text-ink/40 uppercase tracking-wider">Alternative Mode (without feedback.json)</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Spec</label>
+                          <input
+                            type="text"
+                            value={fbConfig.spec}
+                            onChange={e => updateConfig('spec', e.target.value)}
+                            placeholder="subjects/NPC_specs/{npc}.json"
+                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Candidate</label>
+                          <input
+                            type="text"
+                            value={fbConfig.candidate}
+                            onChange={e => updateConfig('candidate', e.target.value)}
+                            placeholder="exports/{npc}/{npc}-lora-f16.gguf"
+                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Regeneration Config */}
+                    <div className="p-3 bg-surface border border-line rounded-sm space-y-3">
+                      <h5 className="text-[10px] font-bold text-ink/40 uppercase tracking-wider">Regeneration Config</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-[11px]">
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Technique</label>
+                          <select
+                            value={fbConfig.regenerationTechnique}
+                            onChange={e => updateConfig('regenerationTechnique', e.target.value)}
+                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                          >
+                            {REGEN_TECHNIQUES.map(rt => (
+                              <option key={rt.value} value={rt.value}>{rt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Preset</label>
+                          <select
+                            value={fbConfig.regenerationPreset}
+                            onChange={e => updateConfig('regenerationPreset', e.target.value)}
+                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                          >
+                            <option value="">Default</option>
+                            {TRAIN_PRESETS.map(tp => (
+                              <option key={tp.value} value={tp.value}>{tp.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Model</label>
+                          <input
+                            type="text"
+                            value={fbConfig.regenerationModel}
+                            onChange={e => updateConfig('regenerationModel', e.target.value)}
+                            placeholder="e.g., qwen3:latest"
+                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">URL</label>
+                          <input
+                            type="text"
+                            value={fbConfig.regenerationUrl}
+                            onChange={e => updateConfig('regenerationUrl', e.target.value)}
+                            placeholder="http://localhost:11434"
+                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Batch Size</label>
+                          <input
+                            type="number"
+                            value={fbConfig.regenerationBatchSize}
+                            onChange={e => updateConfig('regenerationBatchSize', parseInt(e.target.value) || 4)}
+                            min={1} max={32}
+                            className="w-20 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* DeepEval Config */}
+                    <div className="p-3 bg-surface border border-line rounded-sm space-y-3">
+                      <h5 className="text-[10px] font-bold text-ink/40 uppercase tracking-wider">DeepEval Config</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-[11px]">
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Judge Preset</label>
+                          <select
+                            value={fbConfig.deepevalJudgePreset}
+                            onChange={e => updateConfig('deepevalJudgePreset', e.target.value)}
+                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                          >
+                            {JUDGE_PRESETS.map(jp => (
+                              <option key={jp.value} value={jp.value}>{jp.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Judge Model</label>
+                          <input
+                            type="text"
+                            value={fbConfig.deepevalJudgeModel}
+                            onChange={e => updateConfig('deepevalJudgeModel', e.target.value)}
+                            placeholder="qwen3:latest"
+                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Ollama URL</label>
+                          <input
+                            type="text"
+                            value={fbConfig.deepevalOllamaUrl}
+                            onChange={e => updateConfig('deepevalOllamaUrl', e.target.value)}
+                            placeholder="http://localhost:11434"
+                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Cases per Category</label>
+                          <input
+                            type="number"
+                            value={fbConfig.deepevalCasesPerCategory}
+                            onChange={e => updateConfig('deepevalCasesPerCategory', parseInt(e.target.value) || 5)}
+                            min={1} max={20}
+                            className="w-20 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                          />
+                        </div>
+                        <div className="flex items-end gap-3">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={fbConfig.deepevalSoftFail}
+                              onChange={e => updateConfig('deepevalSoftFail', e.target.checked)}
+                            />
+                            <span>Soft Fail</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={fbConfig.skipDatasetEval}
+                              onChange={e => updateConfig('skipDatasetEval', e.target.checked)}
+                            />
+                            <span>Skip Dataset Eval</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Output options */}
+                    <div className="p-3 bg-surface border border-line rounded-sm space-y-3">
+                      <h5 className="text-[10px] font-bold text-ink/40 uppercase tracking-wider">Output Options</h5>
+                      <div className="flex items-end gap-4 text-[11px]">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={fbConfig.saveGaps}
+                            onChange={e => updateConfig('saveGaps', e.target.checked)}
+                          />
+                          <span>Save Gaps to File</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={fbConfig.json}
+                            onChange={e => updateConfig('json', e.target.checked)}
+                          />
+                          <span>JSON Output</span>
+                        </label>
+                      </div>
                     </div>
 
                     <button

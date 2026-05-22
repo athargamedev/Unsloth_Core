@@ -49,7 +49,7 @@ from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 DEFAULT_WIN_RATE_THRESHOLD = 0.5
 DEFAULT_QUALITY_THRESHOLD = 25.0
 DEFAULT_VIOLATION_THRESHOLD = 1
-DEFAULT_EXTRA_EXAMPLES = 8
+DEFAULT_EXTRA_EXAMPLES = 4
 DEFAULT_TRAIN_PRESET = "fast-3b"
 DEFAULT_REGENERATION_TECHNIQUE = "template"
 DEFAULT_REGENERATION_MODEL = "qwen2.5:7b"
@@ -98,7 +98,7 @@ def load_feedback_json(path):
 
 
 def identify_weak_concepts(feedback_data, win_rate_threshold, quality_threshold,
-                           violation_threshold):
+                           violation_threshold, extra_examples=DEFAULT_EXTRA_EXAMPLES):
     weak = []
     per_concept = feedback_data.get("per_concept", {})
 
@@ -121,7 +121,7 @@ def identify_weak_concepts(feedback_data, win_rate_threshold, quality_threshold,
                 "action": {
                     "category": concept.split("/")[0] if "/" in concept else "teaching",
                     "concept_focus": concept.split("/")[1] if "/" in concept else concept,
-                    "extra_examples": DEFAULT_EXTRA_EXAMPLES,
+                    "extra_examples": extra_examples,
                 }
             })
 
@@ -137,7 +137,7 @@ def identify_weak_concepts(feedback_data, win_rate_threshold, quality_threshold,
             "action": {
                 "category": category,
                 "concept_focus": category,
-                "extra_examples": max(DEFAULT_EXTRA_EXAMPLES, int(shortfall)),
+                "extra_examples": max(extra_examples, int(shortfall)),
             },
         })
     return weak
@@ -186,7 +186,8 @@ def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_pat
                                 technique=DEFAULT_REGENERATION_TECHNIQUE,
                                 model=DEFAULT_REGENERATION_MODEL,
                                 url=DEFAULT_REGENERATION_URL,
-                                batch_size=DEFAULT_REGENERATION_BATCH_SIZE):
+                                batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
+                                extra_examples=DEFAULT_EXTRA_EXAMPLES):
     if not spec_path:
         spec_path = paths.spec_path(npc_key)
     if not Path(spec_path).exists():
@@ -423,7 +424,9 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       deepeval_ollama_url="http://localhost:11434",
                       deepeval_cases_per_category=5,
                       deepeval_soft_fail=False,
-                      workflow_hooks=None):
+                      extra_examples=DEFAULT_EXTRA_EXAMPLES,
+                      workflow_hooks=None,
+                      wandb=False, wandb_project="unsloth-core", wandb_entity=None):
     """Full feedback loop: analyze → regenerate → optionally retrain."""
     # Capture human-readable output for --json mode
     tee = Tee() if json_output else None
@@ -455,7 +458,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
 
             # ── 2. Analyze ─────────────────────────────────────────────────────
             weak_concepts = identify_weak_concepts(
-                feedback_data, win_rate_threshold, quality_threshold, violation_threshold
+                feedback_data, win_rate_threshold, quality_threshold, violation_threshold, extra_examples
             )
             print_analysis(feedback_data, weak_concepts)
 
@@ -505,6 +508,70 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                 else:
                     print("\n  (gap detection skipped)")
 
+                # ── W&B Feedback Loop Tracking ──────────────────────────────────
+                if wandb:
+                    try:
+                        import wandb as _wandb
+                        training_density_gaps = sum(1 for wc in weak_concepts if "win_rate" in " ".join(wc.get("reasons", [])))
+                        knowledge_gaps = sum(1 for wc in weak_concepts if "quality" in " ".join(wc.get("reasons", [])))
+                        _wandb_run = _wandb.init(
+                            project=wandb_project or "unsloth-core",
+                            entity=wandb_entity,
+                            group=os.environ.get("WANDB_GROUP"),
+                            job_type="feedback-loop",
+                            config={
+                                "npc_key": resolved_npc_key,
+                                "win_rate_threshold": win_rate_threshold,
+                                "quality_threshold": quality_threshold,
+                                "violation_threshold": violation_threshold,
+                                "total_weak_concepts": len(weak_concepts),
+                                "auto_retrain": auto_retrain,
+                                "technique": technique,
+                            },
+                            name=f"feedback-{resolved_npc_key}",
+                            tags=["feedback", resolved_npc_key],
+                        )
+                        if _wandb_run and getattr(_wandb_run, "url", None):
+                            print(f"  [wandb] Run URL: {_wandb_run.url}")
+
+                        _wandb.log({
+                            "feedback/total_weak_concepts": len(weak_concepts),
+                            "feedback/training_density_gaps": training_density_gaps,
+                            "feedback/knowledge_gaps": knowledge_gaps,
+                        })
+
+                        # Log per-concept metrics
+                        for wc in weak_concepts:
+                            concept = wc.get("concept", "unknown")
+                            data = wc.get("data", {})
+                            _wandb.log({
+                                f"feedback/{concept}/win_rate": data.get("win_rate", 0),
+                                f"feedback/{concept}/avg_quality": data.get("avg_candidate_quality", 0),
+                                f"feedback/{concept}/violations": data.get("constraint_violations", 0),
+                                f"feedback/{concept}/gap_type": "knowledge_gap" if knowledge_gaps else "training_density",
+                            })
+
+                        # Log gap analysis as artifact if saved
+                        if save_gaps and Path(save_gaps).exists():
+                            try:
+                                gap_artifact = _wandb.Artifact(
+                                    f"feedback-gaps-{resolved_npc_key}",
+                                    type="feedback-gaps",
+                                    description=f"Feedback gap analysis for {resolved_npc_key}",
+                                    metadata={
+                                        "npc_key": resolved_npc_key,
+                                        "weak_concepts": len(weak_concepts),
+                                    }
+                                )
+                                gap_artifact.add_file(save_gaps)
+                                _wandb.log_artifact(gap_artifact)
+                            except Exception:
+                                pass
+
+                        _wandb.finish()
+                    except Exception:
+                        print("  [wandb] Feedback loop W&B logging failed (non-fatal)")
+
                 # ── 4. Plan regeneration ───────────────────────────────────────────
                 print(f"\n{'=' * 60}")
                 print(f"  REGENERATION PLAN")
@@ -540,6 +607,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                     model=model,
                     url=url,
                     batch_size=batch_size,
+                    extra_examples=extra_examples,
                 )
                 result["regeneration"] = {"ok": ok, "focus_categories": focus_categories, "technique": technique}
 
@@ -718,7 +786,9 @@ def main():
                         help="After regeneration, auto-retrain and re-evaluate")
     parser.add_argument("--train-preset", default=DEFAULT_TRAIN_PRESET,
                         help=f"Training preset (default: {DEFAULT_TRAIN_PRESET})")
-    parser.add_argument("--baseline", help="Baseline GGUF path for auto-evaluation after retrain")
+    parser.add_argument("--baseline", help="Baseline GGUF for auto-evaluation after retrain")
+    parser.add_argument("--extra-examples", type=int, default=DEFAULT_EXTRA_EXAMPLES,
+                       help=f"Target extra examples per weak concept (default: {DEFAULT_EXTRA_EXAMPLES})")
     parser.add_argument("--skip-dataset-eval", action="store_true",
                         help="Skip dataset quality evaluation before training during auto-retrain")
     parser.add_argument("--deepeval-judge-preset",
@@ -735,6 +805,9 @@ def main():
                         help="Do not abort dataset evaluation on metric failure; continue training")
     parser.add_argument("--workflow-hooks", default=None,
                         help="Path to a JSONL hook log for step tracing (default: <feedback-dir>/workflow_hooks.jsonl)")
+    parser.add_argument("--wandb", action="store_true", help="Enable W&B logging")
+    parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
 
     args = parser.parse_args()
 
@@ -780,7 +853,11 @@ def main():
         deepeval_ollama_url=args.deepeval_ollama_url,
         deepeval_cases_per_category=args.deepeval_cases_per_category,
         deepeval_soft_fail=args.deepeval_soft_fail,
+        extra_examples=args.extra_examples,
         workflow_hooks=args.workflow_hooks,
+        wandb=args.wandb,
+        wandb_project=args.wandb_project,
+        wandb_entity=args.wandb_entity,
     ))
 
 

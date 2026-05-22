@@ -149,7 +149,8 @@ def ensure_wandb_noninteractive(config: dict) -> None:
     print("  [WARN] W&B enabled but no WANDB_API_KEY or ~/.netrc was found; using WANDB_MODE=offline so training will not crash.")
 
 
-def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_name: str, run_id: str, output_dir: str):
+def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_name: str, run_id: str, output_dir: str,
+                        project: str | None = None, entity: str | None = None):
     """Initialize W&B with a consistent training naming/tagging scheme."""
     if not config.get("wandb", {}).get("enabled", False):
         return None
@@ -178,8 +179,8 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
     group = os.environ.get("WANDB_RUN_GROUP") or os.environ.get("WANDB_GROUP") or npc_key
 
     run = wandb.init(
-        project=config.get("wandb", {}).get("project", "unsloth-core"),
-        entity=config.get("wandb", {}).get("entity"),
+        project=project or config.get("wandb", {}).get("project", "unsloth-core"),
+        entity=entity or config.get("wandb", {}).get("entity"),
         group=group,
         job_type="train",
         config=wandb_cfg,
@@ -650,6 +651,8 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
             preset_name=preset_name,
             run_id=config.get("run_id", "unknown"),
             output_dir=output_dir,
+            project=config.get("wandb", {}).get("project"),
+            entity=config.get("wandb", {}).get("entity"),
         )
         if wandb_run is not None:
             wandb_module = sys.modules.get("wandb")
@@ -673,7 +676,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
         lr_scheduler_type=training.get("lr_scheduler_type", "cosine"),
         weight_decay=training.get("weight_decay", 0.01),
         neftune_noise_alpha=training.get("neftune_noise_alpha", None),
-        logging_steps=1,
+        logging_steps=10,
         save_steps=training.get("save_steps", 50),
         eval_steps=training.get("eval_steps", 50),
         eval_strategy="steps" if eval_dataset else "no",
@@ -754,6 +757,79 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
         with open(os.path.join(output_dir, "training_metrics.json"), "w") as f:
             json.dump(metrics, f, indent=2, default=str)
 
+        # ── W&B Artifact Logging ──────────────────────────────────────────────
+        if wandb_module is not None and getattr(wandb_module, "run", None) is not None:
+            try:
+                # Dataset artifact
+                dataset_path = config.get("dataset_path", "")
+                if os.path.isfile(dataset_path):
+                    dataset_artifact = wandb_module.Artifact(
+                        f"dataset-{config.get('npc_key', 'unknown')}",
+                        type="dataset",
+                        description=f"Training dataset for {config.get('npc_key', 'unknown')}: {config.get('technique', 'unknown')}, {len(dataset)} examples",
+                        metadata={
+                            "npc_key": config.get("npc_key", "unknown"),
+                            "technique": config.get("technique", "unknown"),
+                            "num_examples": len(dataset),
+                        }
+                    )
+                    dataset_artifact.add_file(dataset_path)
+                    wandb_module.log_artifact(dataset_artifact)
+                elif os.path.isdir(dataset_path):
+                    dataset_artifact = wandb_module.Artifact(
+                        f"dataset-{config.get('npc_key', 'unknown')}",
+                        type="dataset",
+                        description=f"Training dataset for {config.get('npc_key', 'unknown')}: {config.get('technique', 'unknown')}, {len(dataset)} examples",
+                        metadata={
+                            "npc_key": config.get("npc_key", "unknown"),
+                            "technique": config.get("technique", "unknown"),
+                            "num_examples": len(dataset),
+                        }
+                    )
+                    dataset_artifact.add_dir(dataset_path)
+                    wandb_module.log_artifact(dataset_artifact)
+            except Exception:
+                pass
+
+            try:
+                # Config snapshot artifact
+                snapshot_path = os.path.join(output_dir, "config_snapshot.yaml")
+                if os.path.isfile(snapshot_path):
+                    cfg_artifact = wandb_module.Artifact(
+                        f"config-{config.get('npc_key', 'unknown')}",
+                        type="config",
+                        description=f"Training config snapshot for {config.get('npc_key', 'unknown')}",
+                        metadata={
+                            "npc_key": config.get("npc_key", "unknown"),
+                            "preset": preset_name,
+                        }
+                    )
+                    cfg_artifact.add_file(snapshot_path)
+                    wandb_module.log_artifact(cfg_artifact)
+            except Exception:
+                pass
+
+            try:
+                # LoRA adapter artifact
+                if os.path.exists(output_dir):
+                    final_loss_val = metrics.get("train_loss", 0.0)
+                    lora_artifact = wandb_module.Artifact(
+                        f"lora-{config.get('npc_key', 'unknown')}",
+                        type="model",
+                        description=f"LoRA adapter for {config.get('npc_key', 'unknown')}",
+                        metadata={
+                            "npc_key": config.get("npc_key", "unknown"),
+                            "technique": config.get("technique", "unknown"),
+                            "preset": preset_name,
+                            "final_loss": final_loss_val,
+                            "num_examples": len(dataset),
+                        }
+                    )
+                    lora_artifact.add_dir(output_dir)
+                    wandb_module.log_artifact(lora_artifact)
+            except Exception:
+                pass
+
         return trainer, metrics
     finally:
         if wandb_module is not None:
@@ -814,6 +890,10 @@ def main():
                         help="Enable W&B logging (overrides config)")
     parser.add_argument("--no-wandb", action="store_true", default=None,
                         dest="disable_wandb", help="Disable W&B logging (overrides config)")
+    parser.add_argument("--wandb-project", default=None,
+                        help="W&B project name (default: unsloth-core)")
+    parser.add_argument("--wandb-entity", default=None,
+                        help="W&B entity name (default: auto-detect)")
     parser.add_argument("--workflow-hooks", default=None,
                         help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
 
@@ -907,6 +987,12 @@ def main():
     elif args.disable_wandb:
         config["wandb"] = config.get("wandb", {})
         config["wandb"]["enabled"] = False
+
+    # Set W&B project/entity from CLI if provided
+    if getattr(args, "wandb_project", None):
+        config.setdefault("wandb", {})["project"] = args.wandb_project
+    if getattr(args, "wandb_entity", None):
+        config.setdefault("wandb", {})["entity"] = args.wandb_entity
 
     ensure_wandb_noninteractive(config)
 
@@ -1061,6 +1147,31 @@ def main():
             with open(manifest_path, "w") as f:
                 json.dump(manifest, f, indent=2)
             log_info("  Manifest: %s", manifest_path)
+
+            # ── W&B GGUF Artifact ────────────────────────────────────────────────
+            if config.get("wandb", {}).get("enabled", False) and gguf_files:
+                try:
+                    import wandb as _wandb
+                    gguf_artifact = _wandb.Artifact(
+                        f"gguf-{npc_key}",
+                        type="gguf-export",
+                        description=f"GGUF export for {npc_key}: {len(gguf_files)} file(s)",
+                        metadata={
+                            "npc_key": npc_key,
+                            "technique": technique,
+                            "preset": preset_name,
+                            "training_loss": training_loss,
+                            "num_examples": num_examples,
+                            "mode": "full_merge" if getattr(args, 'full_merge_export', False) else "adapter",
+                            "run_id": run_id,
+                        }
+                    )
+                    for gf in gguf_files:
+                        gguf_artifact.add_file(str(gf))
+                    _wandb.log_artifact(gguf_artifact)
+                    log_info("  [wandb] Logged GGUF artifact")
+                except Exception:
+                    log_warn("  [wandb] GGUF artifact logging failed")
         else:
             log_info("[4/4] Skipping GGUF export (use --export-gguf to enable)")
 

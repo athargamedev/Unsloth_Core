@@ -41,9 +41,11 @@ archive/
 .DS_Store
 Thumbs.db
 
-# W&B local runs (keep wandb/ dir but ignore run folders)
-wandb/run-*
-wandb/**/.gitkeep
+# W&B run directories (keep sweeps.yaml)
+wandb/run-*/
+wandb/wandb/
+wandb/latest-run/
+wandb/debug*.log
 
 # Morph (code analysis tool)
 .morph/

@@ -75,6 +75,9 @@ def main():
     parser.add_argument("--feedback-json", default=None, help="Feedback JSON output path")
     parser.add_argument("--workflow-hooks", default=None,
                         help="Path to a JSONL hook log for step tracing (default: <adapter-dir>/workflow_hooks.jsonl)")
+    parser.add_argument("--wandb", action="store_true", help="Enable W&B logging")
+    parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
     args = parser.parse_args()
 
     hook_recorder = WorkflowHookRecorder(
@@ -188,6 +191,58 @@ def main():
             with open(fb_path, "w") as f:
                 json.dump(feedback, f, indent=2)
             print(f"  Feedback JSON saved: {fb_path}")
+
+        # ── W&B Quick Eval Tracking ─────────────────────────────────────────
+        if args.wandb:
+            try:
+                import wandb as _wandb
+                import re as _re
+                qualities = []
+                lengths = []
+                sentences_ok = 0
+                no_ai_disclaimers = 0
+                total_q = len(results)
+                for r in results:
+                    resp = r.get("response", "")
+                    lengths.append(len(resp))
+                    quality = max(0, min(50, len(resp) / 5))
+                    qualities.append(quality)
+                    sentence_count = len(_re.split(r'[.!?]+', resp.strip())) - 1
+                    if sentence_count > 1:
+                        sentences_ok += 1
+                    if not ("cannot" in resp.lower() and "teach" in resp.lower()):
+                        no_ai_disclaimers += 1
+                avg_quality = sum(qualities) / total_q if total_q else 0
+                avg_length = sum(lengths) / total_q if total_q else 0
+
+                _wandb_run = _wandb.init(
+                    project=args.wandb_project or "unsloth-core",
+                    entity=args.wandb_entity,
+                    group=os.environ.get("WANDB_GROUP"),
+                    job_type="quick-eval",
+                    config={
+                        "npc_key": npc_key,
+                        "adapter": args.adapter,
+                        "total_questions": total_q,
+                    },
+                    name=f"quick-eval-{npc_key}",
+                    tags=["quick-eval", npc_key],
+                )
+                if _wandb_run and getattr(_wandb_run, "url", None):
+                    print(f"  [wandb] Run URL: {_wandb_run.url}")
+                _wandb.log({
+                    "quick_eval/avg_quality": avg_quality,
+                    "quick_eval/avg_sentences": sentences_ok / total_q if total_q else 0,
+                    "quick_eval/avg_length": avg_length,
+                    "quick_eval/sentences_ok": sentences_ok,
+                    "quick_eval/sentences_fail": total_q - sentences_ok,
+                    "quick_eval/no_ai_disclaimer": no_ai_disclaimers,
+                    "quick_eval/ai_disclaimer_violations": total_q - no_ai_disclaimers,
+                    "quick_eval/total": total_q,
+                })
+                _wandb.finish()
+            except Exception:
+                print("  [wandb] Quick eval W&B logging failed (non-fatal)")
 
         # Print summary
         print(f"\n{'=' * 50}")

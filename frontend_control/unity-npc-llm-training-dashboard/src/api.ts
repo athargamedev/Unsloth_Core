@@ -177,6 +177,8 @@ export interface TrainingConfig {
   preset: string;
   technique: string;
   baseModel: string;
+  modelId: string;
+  modelPreset: string;
   learningRate: string;
   scheduler: 'cosine' | 'linear' | 'constant';
   batchSize: number;
@@ -184,6 +186,14 @@ export interface TrainingConfig {
   rank: number;
   alpha: number;
   wandb?: boolean;
+  exportGguf?: boolean;
+  fullMergeExport?: boolean;
+  datasetEvalSkip?: boolean;
+  datasetEvalJudgeModel?: string;
+  datasetEvalJudgePreset?: string;
+  deepevalSoftFail?: boolean;
+  deepevalOllamaUrl?: string;
+  deepevalCasesPerCategory?: number;
 }
 
 export interface CommandPayload {
