@@ -413,6 +413,13 @@ def _capitalize_first(text: str) -> str:
     return text[0].upper() + text[1:]
 
 
+def _lower_first(text: str) -> str:
+    """Ensure text fits naturally in the middle of a sentence."""
+    if not text:
+        return text
+    return text[0].lower() + text[1:]
+
+
 def _concept_detail(spec, concept):
     subject = _subject_focus(spec)
     topics = _example_topics(spec)
@@ -453,11 +460,13 @@ def _concept_anchor(concept: str, spec, retriever=None) -> str:
         ("recovery", "Resting and sleeping well after a hard workout"),
         ("nutrition", "Balancing protein, carbohydrates, and fats for steady energy"),
         ("ancient civilizations", "Mesopotamia, early cities, writing, and codified law"),
+        ("classical antiquity", "Greek city-states, Roman law, republican government, and empire"),
         ("roman empire", "Greece and Rome, with democracy, empire, republican government, and legal legacy"),
         ("medieval history", "feudalism, the Byzantine world, crusades, and the Black Death"),
         ("industrial revolution", "industrialization, world wars, and the Cold War"),
         ("world war", "industrialization, world wars, and the Cold War"),
         ("modern history", "industrialization, world wars, and the Cold War"),
+        ("core timeline anchors", "placing events in order so causes, dates, and consequences stay connected"),
         ("scope and use", "major eras, turning points, and why events changed societies"),
         ("historical methodology", "primary sources, eyewitness accounts, and uncertainty"),
         ("historical thinking", "the big picture, the main cause, and one consequence"),
@@ -543,6 +552,7 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
     detail_b = _concept_anchor(concept_b, spec, retriever) if concept_b else None
     if "methodology" in concept_a.lower():
         detail_a = "Comparing sources carefully and checking for bias"
+    detail_a_lower = _lower_first(detail_a)
 
     if _is_history_subject(spec):
         if concept_b:
@@ -552,9 +562,9 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
             ]
         else:
             templates = [
-                f"{concept_a.capitalize()} is about {detail_a}, which changed society in a major way.",
-                f"Start with {detail_a}, then name one cause and one consequence.",
-                f"The key idea behind {concept_a} is {detail_a}; that is why it matters.",
+                f"{concept_a.capitalize()} shows up through {detail_a_lower}; trace one cause and one consequence to see why it mattered.",
+                f"A concrete example of {concept_a} is {detail_a_lower}. Use it to connect a date, a source, and a consequence.",
+                f"The key idea behind {concept_a} is {detail_a_lower}; it matters because it links evidence to historical change.",
             ]
     elif difficulty == "beginner":
         if concept_b:
@@ -598,17 +608,18 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriev
     npc_name = spec["npc_name"]
     subject = _subject_focus(spec)
     detail = _concept_anchor(concept, spec, retriever)
+    detail_lower = _lower_first(detail)
 
     if _is_history_subject(spec):
         if dialogue_type == "clarification":
             templates = [
-                f"Sure — {concept} means {detail}, and a concrete example makes it easier to see.",
-                f"Another way to say it: {concept} is about {detail}, so the pattern stays clear.",
+                f"If you apply {concept} incorrectly, causes can look backwards and evidence can support the wrong claim. Check the date and source.",
+                f"A mistake with {concept} can turn an effect into a cause. Re-anchor the event with one date, one source, and one consequence.",
             ]
         elif dialogue_type == "deep_dive":
             templates = [
-                f"Go deeper by placing {concept} in context: {detail}. One source, cause, and consequence show why it matters.",
-                f"{concept.capitalize()} reaches beyond a definition when {detail}; connect one event or source to its consequence.",
+                f"Go deeper by linking {concept} to {detail_lower}. One source, cause, and consequence show why it matters.",
+                f"{concept.capitalize()} is clearer with a case such as {detail_lower}; connect the event or source to its consequence.",
             ]
         elif dialogue_type == "application":
             templates = [
@@ -647,20 +658,21 @@ def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
     """Generate quest/challenge responses based on scenario."""
     subject = _subject_focus(spec)
     detail = _concept_anchor(concept, spec, retriever)
+    detail_lower = _lower_first(detail)
 
     if scenario_name:
         scenario_templates = {
             "timeline_analysis": [
-                f"Pick one event related to {concept}, like {detail}, and explain one cause and one consequence.",
-                f"Use {detail} to describe the sequence of events and why it mattered.",
+                f"Pick one event related to {concept}, like {detail_lower}, and explain one cause and one consequence.",
+                f"Use {detail_lower} to describe the sequence of events and why it mattered.",
             ],
             "primary_source": [
-                f"Look at a source about {concept} and explain what it shows about {detail}.",
-                f"What evidence would you use to teach {concept} using {detail}?",
+                f"Scenario: two sources date one event differently. Use {concept} to place it, cite one source, and explain one consequence.",
+                f"Try this: use {concept} to order one event, cite one source for its date, then explain what changed next.",
             ],
             "technique_mastery": [
-                f"What is one key step in {concept}, and why does it matter for {subject}?",
-                f"Name one common mistake with {concept} and how {detail} helps avoid it.",
+                f"Your challenge: apply {concept} to {detail_lower}, then explain one cause and one consequence.",
+                f"Name one mistake with {concept}, then use {detail_lower} to correct the timeline or evidence.",
             ],
             "meal_planning": [
                 f"Use {concept} to plan one practical solution and explain why {detail} fits.",
