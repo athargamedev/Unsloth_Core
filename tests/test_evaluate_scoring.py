@@ -5,13 +5,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.evaluate import (
+    check_no_think_tags,
     compare_models,
     identity_prompt_requires_name,
     response_specificity_score,
 )
 
 
-def metrics(*, sentences_ok=True, name_ok=True, no_ai_disclaimer=True, length=20, quality=30, sentences=2):
+def metrics(*, sentences_ok=True, name_ok=True, no_ai_disclaimer=True, has_think_tags=False, length=20, quality=30, sentences=2):
     return {
         "sentences_ok": sentences_ok,
         "name_ok": name_ok,
@@ -19,7 +20,7 @@ def metrics(*, sentences_ok=True, name_ok=True, no_ai_disclaimer=True, length=20
         "length": length,
         "quality": quality,
         "sentences": sentences,
-        "has_think_tags": False,
+        "has_think_tags": has_think_tags,
     }
 
 
@@ -41,6 +42,12 @@ def test_response_specificity_penalizes_generic_filler_and_rewards_domain_terms(
     specific = "Telescopes gather light so we can see faint planets, galaxies, and details in the solar system."
 
     assert response_specificity_score(specific, spec=spec) > response_specificity_score(generic, spec=spec)
+
+
+def test_think_tag_check_catches_common_reasoning_delimiters():
+    assert check_no_think_tags("Use evidence and keep the answer short.") is True
+    assert check_no_think_tags("<think>draft reasoning</think> Final answer") is False
+    assert check_no_think_tags("draft<｜end▁of▁thinking｜> Final answer") is False
 
 
 def test_compare_models_specificity_breaks_tie_against_short_generic_candidate():
@@ -74,3 +81,27 @@ def test_compare_models_specificity_breaks_tie_against_short_generic_candidate()
     assert result["baseline_wins"] == 1
     assert result["candidate_wins"] == 0
     assert result["comparisons"][0]["winner"] == "baseline"
+
+
+def test_compare_models_penalizes_reasoning_tag_leaks():
+    baseline_results = [
+        {
+            "question": "Explain evidence.",
+            "response": "Evidence helps check whether a claim matches the source.",
+            "metrics": metrics(),
+            "metadata": {"concept": "evidence", "category": "teaching"},
+        }
+    ]
+    candidate_results = [
+        {
+            "question": "Explain evidence.",
+            "response": "<think>compose answer</think> Evidence checks claims against sources.",
+            "metrics": metrics(has_think_tags=True),
+            "metadata": {"concept": "evidence", "category": "teaching"},
+        }
+    ]
+
+    result = compare_models(baseline_results, candidate_results, judge=None)
+
+    assert result["baseline_wins"] == 1
+    assert result["candidate_wins"] == 0

@@ -264,6 +264,8 @@ def main():
     train_p.add_argument("--lora-r", type=int, help="LoRA rank")
     train_p.add_argument("--lora-alpha", type=int, help="LoRA alpha")
     train_p.add_argument("--lr-scheduler", help="Learning rate scheduler type")
+    train_p.add_argument("--allow-ungated-dataset", action="store_true",
+                         help="Train without a fresh passing dataset-eval artifact")
 
     # Smoke Test
     smoke_p = subparsers.add_parser("smoke", help="Smoke test a GGUF model")
@@ -648,6 +650,7 @@ def main():
         if getattr(args, "lora_r", None): cmd.extend(["--lora-r", str(args.lora_r)])
         if getattr(args, "lora_alpha", None): cmd.extend(["--lora-alpha", str(args.lora_alpha)])
         if getattr(args, "lr_scheduler", None): cmd.extend(["--lr-scheduler", args.lr_scheduler])
+        if getattr(args, "allow_ungated_dataset", False): cmd.append("--allow-ungated-dataset")
         if args.export_gguf: cmd.append("--export-gguf")
         if getattr(args, 'full_merge_export', False): cmd.append("--full-merge-export")
         if args.wandb: cmd.append("--wandb")
@@ -915,6 +918,8 @@ def main():
         print(f"\n--- Phase 4: Training Model ---")
         train_cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "train.py"), args.spec, "--from-spec",
                      "--technique", technique, "--preset", args.preset]
+        if args.skip_dataset_eval:
+            train_cmd.append("--allow-ungated-dataset")
         if args.full_merge_export:
             train_cmd.append("--full-merge-export")
         else:

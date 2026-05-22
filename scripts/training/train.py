@@ -37,6 +37,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
 from _config.log_setup import log_info, log_warn, log_error, log_state
+from scripts.dataset.dataset_contracts import file_sha256
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from scripts.ops.preflight import run_preflight
 from scripts.ops.model_presets import resolve_training_preset
@@ -271,6 +272,75 @@ def update_run_pointer(pointer_path: Path, target: Path, label: str) -> bool:
     except OSError as exc:
         log_warn("Could not update '%s' symlink at %s: %s", label, pointer_path, exc)
         return False
+
+
+def resolve_dataset_path(config: dict, npc_key: str) -> str:
+    """Resolve the training JSONL path from config and repository layout."""
+    dataset_path = config.get("dataset_path", "")
+    if dataset_path and os.path.exists(dataset_path):
+        return str(dataset_path)
+
+    technique = config.get("technique", "template")
+    clean_candidate = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
+    raw_candidate = paths.dataset_dir(npc_key) / technique / "train.jsonl"
+    return str(clean_candidate if clean_candidate.exists() else raw_candidate)
+
+
+def validation_dataset_path(dataset_path: str | Path) -> Path | None:
+    """Return the best sibling validation split for a training dataset."""
+    dataset_path = Path(dataset_path)
+    candidates = []
+    if dataset_path.name == "train_clean.jsonl":
+        candidates.append(dataset_path.with_name("validation_clean.jsonl"))
+    candidates.append(dataset_path.with_name("validation.jsonl"))
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def dataset_quality_gate_errors(dataset_path: str | Path) -> list[str]:
+    """Validate that DeepEval passed for this exact sanitized train dataset."""
+    dataset_path = Path(dataset_path)
+    summary_path = dataset_path.parent / "quality_summary.json"
+    errors: list[str] = []
+
+    if dataset_path.name != "train_clean.jsonl":
+        errors.append(f"dataset is not sanitized train_clean.jsonl: {dataset_path}")
+    if not dataset_path.exists():
+        errors.append(f"dataset does not exist: {dataset_path}")
+        return errors
+    if not summary_path.exists():
+        errors.append(f"quality summary is missing: {summary_path}")
+        return errors
+
+    try:
+        with summary_path.open(encoding="utf-8") as handle:
+            summary = json.load(handle)
+    except (OSError, json.JSONDecodeError) as exc:
+        return [f"quality summary is unreadable: {summary_path} ({exc})"]
+
+    if summary.get("status") != "ok":
+        errors.append(f"quality summary status is {summary.get('status')!r}, expected 'ok'")
+    if int(summary.get("total", 0) or 0) <= 0:
+        errors.append("quality summary has no evaluated test cases")
+    if int(summary.get("failed", 0) or 0) > 0:
+        errors.append(f"quality summary still has {summary.get('failed')} failing DeepEval cases")
+    if summary.get("distribution_gaps"):
+        errors.append("quality summary reports category distribution gaps")
+    unknown_rows = summary.get("dataset_unknown_rows")
+    if unknown_rows is None:
+        unknown_rows = (summary.get("dataset_summary") or {}).get("unknown_rows", 0)
+    if int(unknown_rows or 0) > 0:
+        errors.append(f"quality summary reports {unknown_rows} unknown dataset rows")
+
+    recorded_hash = (summary.get("dataset_summary") or {}).get("content_sha256")
+    current_hash = file_sha256(dataset_path)
+    if not recorded_hash:
+        errors.append("quality summary has no sanitized dataset hash; rerun dataset-eval")
+    elif recorded_hash != current_hash:
+        errors.append("quality summary does not match the current sanitized dataset hash")
+    return errors
 
 
 def estimate_vram(config: dict) -> tuple[float, str]:
@@ -578,7 +648,7 @@ def get_model_and_tokenizer(config):
     return model, tokenizer
 
 
-def load_dataset_from_jsonl(path, tokenizer, config):
+def load_dataset_from_jsonl(path, tokenizer, config, label="training"):
     """Load and tokenize a JSONL dataset."""
     from datasets import Dataset
 
@@ -627,7 +697,7 @@ def load_dataset_from_jsonl(path, tokenizer, config):
         print("  [ERROR] No valid training examples found in dataset.")
         sys.exit(1)
 
-    print(f"  Loaded {len(rows)} training examples")
+    print(f"  Loaded {len(rows)} {label} examples")
     return Dataset.from_list(rows)
 
 
@@ -896,6 +966,8 @@ def main():
                         help="W&B entity name (default: auto-detect)")
     parser.add_argument("--workflow-hooks", default=None,
                         help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
+    parser.add_argument("--allow-ungated-dataset", action="store_true",
+                        help="Allow training without a fresh passing dataset-eval artifact")
 
     # Export
     parser.add_argument("--export-gguf", action="store_true",
@@ -1045,6 +1117,21 @@ def main():
     config.setdefault("training", {})["output_dir"] = run_dir
     config["run_id"] = run_id
     config["preset"] = preset_name
+    dataset_path = resolve_dataset_path(config, npc_key)
+
+    if args.from_spec and args.allow_ungated_dataset:
+        log_warn("Training without verifying a fresh dataset-eval artifact for %s", dataset_path)
+    elif args.from_spec:
+        quality_errors = dataset_quality_gate_errors(dataset_path)
+        if quality_errors:
+            log_error("Dataset quality gate is not ready for training:")
+            for error in quality_errors:
+                log_error("  - %s", error)
+            log_error(
+                "Run sanitize and dataset-eval again, or pass --allow-ungated-dataset for an intentional bypass."
+            )
+            sys.exit(1)
+        log_info("Dataset quality gate verified for: %s", dataset_path)
 
     # Write config snapshot
     log_config_snapshot(config, run_dir)
@@ -1059,17 +1146,13 @@ def main():
 
         # ── Load dataset ───────────────────────────────────────────────────
         log_info("[2/4] Loading dataset...")
-        dataset_path = config.get("dataset_path", "")
-        if not dataset_path or not os.path.exists(dataset_path):
-            # Try to derive dataset path
-            technique = config.get("technique", "template")
-            clean_candidate = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
-            raw_candidate = paths.dataset_dir(npc_key) / technique / "train.jsonl"
-            dataset_path = str(clean_candidate if clean_candidate.exists() else raw_candidate)
-
         with hook_recorder.step("load_dataset", dataset_path=dataset_path):
-            dataset = load_dataset_from_jsonl(dataset_path, tokenizer, config)
-            eval_dataset = None  # TODO: support eval split
+            dataset = load_dataset_from_jsonl(dataset_path, tokenizer, config, label="training")
+            eval_dataset = None
+            validation_path = validation_dataset_path(dataset_path)
+            if validation_path:
+                eval_dataset = load_dataset_from_jsonl(validation_path, tokenizer, config, label="validation")
+                log_info("Validation dataset loaded from: %s", validation_path)
             num_examples = len(dataset)
         log_info("Dataset loaded: %d examples", num_examples)
 

@@ -50,7 +50,11 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 from _config import paths, constants as C
 from _config.log_setup import log_info, log_warn, log_error, log_state
-from scripts.dataset.dataset_contracts import dataset_contract_from_spec, calculate_distribution_gaps
+from scripts.dataset.dataset_contracts import (
+    calculate_distribution_gaps,
+    dataset_contract_from_spec,
+    generation_request_counts_for_training_targets,
+)
 from scripts.ops.ollama_lifecycle import register_ollama_unload
 from scripts.ops.ollama_model_presets import resolve_ollama_model
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
@@ -166,11 +170,11 @@ GENERIC_FILLER_REPLACEMENTS = [
 def build_category_generation_prompt(category: str, concept_str: str, npc_name: str, player_role: str = "player") -> str:
     """Backward-compatible category prompt helper used by tests and callers."""
     return {
-        "identity": f"Write a very short first-person self-introduction for {npc_name}. Say who you are, directly answer what you do, mention one concrete way you help, and keep it to 1-2 sentences.",
-        "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Answer the first sentence directly, include one concrete fact or example from the reference doc, and avoid inventing new details. Keep it to 1-2 short sentences.",
+        "identity": f"Write a very short first-person self-introduction for {npc_name}. Say who you are, directly answer what you do, name one historical method or focus such as chronology or sources, avoid generic storyteller language, and keep it to 1-2 sentences.",
+        "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Answer the first sentence directly, include one concrete fact or example from the reference doc, and avoid inventing new details. Aim for 12-20 words. Keep it to 1-2 short sentences.",
         "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer directly, add one specific detail or example grounded in the spec, and aim for 12-20 words. Keep it under 200 characters.",
         "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character. Include one concrete action step or example and aim for 12-20 words. Keep it to 1-2 short sentences.",
-        "refusal": f"Write an out-of-scope question for {npc_name}, state the boundary clearly, and redirect to a safe in-scope alternative. Include 'Instead, I can help with...' plus one concrete history topic such as ancient civilizations, medieval history, or modern history. Keep it to 1-2 sentences.",
+        "refusal": f"Write an out-of-scope question for {npc_name}, state the boundary clearly, and redirect to a safe in-scope alternative. Do not add an unrelated history fact or drift to another topic. Include 'Instead, I can help with...' plus one concrete in-scope topic like chronology or sources. Keep it to 1-2 sentences.",
     }.get(category, f"Generate a concise educational dialogue about '{concept_str}' with one concrete detail.")
 
 
@@ -979,6 +983,11 @@ Examples:
             examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
             if args.concept_focus:
                 examples_per_category = boost_examples_for_focus(examples_per_category, args.concept_focus)
+            examples_per_category = generation_request_counts_for_training_targets(
+                examples_per_category,
+                val_split=args.val_split,
+                include_validation=not args.no_validation,
+            )
             total = sum(examples_per_category.values())
             logger.info(f"\n[DRY-RUN] Would generate {total} examples with model '{args.model}':")
             for cat, count in examples_per_category.items():
@@ -1005,6 +1014,11 @@ Examples:
         examples_per_category = dict(spec.get("dataset", {}).get("examples_per_category", {}) or {})
         if args.concept_focus:
             examples_per_category = boost_examples_for_focus(examples_per_category, args.concept_focus)
+        examples_per_category = generation_request_counts_for_training_targets(
+            examples_per_category,
+            val_split=args.val_split,
+            include_validation=not args.no_validation,
+        )
 
         total_to_gen = sum(examples_per_category.values())
         logger.info(f"Generating {total_to_gen} examples with model '{args.model}'...")
@@ -1095,6 +1109,7 @@ Examples:
                 "contract": dataset_contract,
                 "distribution": {
                     "expected_examples_per_category": dataset_contract["expected_examples_per_category"],
+                    "generation_request_examples_per_category": dict(examples_per_category),
                     "observed_examples_per_category": dict(by_category),
                     "distribution_gaps": calculate_distribution_gaps(dataset_contract["expected_examples_per_category"], dict(by_category)),
                 },

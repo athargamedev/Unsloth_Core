@@ -162,9 +162,18 @@ def check_no_ai_disclaimer(text):
     return True, None
 
 
+THINK_TAG_MARKERS = (
+    "<think>",
+    "</think>",
+    "<|end_of_thinking|>",
+    "<｜end▁of▁thinking｜>",
+)
+
+
 def check_no_think_tags(text):
-    """Check if the response has think tags (should not have them)."""
-    return "<｜end▁of▁thinking｜>" not in text
+    """Check if the response leaks model reasoning delimiters."""
+    normalized = (text or "").lower()
+    return not any(marker.lower() in normalized for marker in THINK_TAG_MARKERS)
 
 
 def diversity_score(text):
@@ -494,7 +503,7 @@ def evaluate_model(server, questions, spec=None):
         metrics["no_ai_disclaimer"] = ai_ok
         metrics["ai_pattern"] = ai_pattern
 
-        metrics["has_think_tags"] = " response" in response
+        metrics["has_think_tags"] = not check_no_think_tags(response)
 
         results.append({
             "question": question,
@@ -558,6 +567,8 @@ def compare_models(baseline_results, candidate_results, spec=None, judge=None):
             if c["metrics"].get("name_ok", True): c_score += 1
             if b["metrics"].get("no_ai_disclaimer", True): b_score += 1
             if c["metrics"].get("no_ai_disclaimer", True): c_score += 1
+            if not b["metrics"].get("has_think_tags", False): b_score += 1
+            if not c["metrics"].get("has_think_tags", False): c_score += 1
 
             b_specificity = response_specificity_score(b["response"], spec=spec, expected=expected)
             c_specificity = response_specificity_score(c["response"], spec=spec, expected=expected)
@@ -1336,6 +1347,7 @@ def main():
                         1 for c in comps
                         if not c["candidate_metrics"].get("sentences_ok", True)
                         or not c["candidate_metrics"].get("no_ai_disclaimer", True)
+                        or c["candidate_metrics"].get("has_think_tags", False)
                     ),
                     "examples": [{
                         "question": c["question"],

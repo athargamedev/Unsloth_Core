@@ -9,6 +9,7 @@ multiple stages.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -47,12 +48,52 @@ def expected_examples_per_category(spec: dict[str, Any] | None = None) -> dict[s
     return dict(MIN_DATASET_EXAMPLES_PER_CATEGORY)
 
 
+def file_sha256(path: str | Path) -> str | None:
+    """Return a stable content hash for a file when it exists."""
+    file_path = Path(path)
+    if not file_path.exists():
+        return None
+
+    digest = hashlib.sha256()
+    with file_path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return f"sha256:{digest.hexdigest()}"
+
+
+def generation_request_counts_for_training_targets(
+    target_counts: dict[str, int],
+    *,
+    val_split: float,
+    include_validation: bool,
+) -> dict[str, int]:
+    """Inflate generation requests so the training split still meets targets.
+
+    Subject specs describe the useful training rows needed per category. The
+    generators also hold out a stratified validation split, so requesting exactly
+    the spec target would make the train set underfill the same contract.
+    """
+    requests: dict[str, int] = {}
+    for category, target_value in target_counts.items():
+        target = max(0, int(target_value or 0))
+        requested = target
+        if include_validation and target > 0 and val_split > 0:
+            while requested > 1:
+                held_out = max(1, min(requested - 1, int(requested * val_split)))
+                if requested - held_out >= target:
+                    break
+                requested += 1
+        requests[category] = requested
+    return requests
+
+
 def summarize_jsonl_dataset(jsonl_path: str | Path) -> dict[str, Any]:
     """Summarize category/difficulty/concept distribution from a JSONL dataset."""
     path = Path(jsonl_path)
     summary: dict[str, Any] = {
         "path": str(path),
         "exists": path.exists(),
+        "content_sha256": file_sha256(path),
         "total": 0,
         "by_category": {},
         "by_difficulty": {},

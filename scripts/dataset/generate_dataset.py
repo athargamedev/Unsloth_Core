@@ -44,7 +44,11 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths, constants as C
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from _config.log_setup import log_info, log_warn, log_error, log_state
-from scripts.dataset.dataset_contracts import dataset_contract_from_spec, calculate_distribution_gaps
+from scripts.dataset.dataset_contracts import (
+    calculate_distribution_gaps,
+    dataset_contract_from_spec,
+    generation_request_counts_for_training_targets,
+)
 from scripts.dataset.generate_workflow_dataset import (
     default_manifest_path,
     generate_workflow_dataset_from_manifest,
@@ -1734,7 +1738,11 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
     random.seed(seed)
     
     concepts = ConceptExtractor(spec).extract()
-    examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
+    examples_per_category = generation_request_counts_for_training_targets(
+        dict(spec.get("dataset", {}).get("examples_per_category", {}) or {}),
+        val_split=val_split,
+        include_validation=include_validation,
+    )
 
     output_path_obj = Path(output_path)
     checkpoint_db_path = output_path_obj.parent / ".checkpoint.db"
@@ -1944,6 +1952,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                 "contract": dataset_contract,
                 "distribution": {
                     "expected_examples_per_category": dataset_contract["expected_examples_per_category"],
+                    "generation_request_examples_per_category": dict(examples_per_category),
                     "observed_examples_per_category": dict(by_category),
                     "distribution_gaps": calculate_distribution_gaps(dataset_contract["expected_examples_per_category"], dict(by_category)),
                 },

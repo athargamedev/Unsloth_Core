@@ -402,6 +402,8 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         "dataset_unknown_rows": dataset_summary.get("unknown_rows", 0),
                     }
                 )
+                if distribution_gaps or dataset_summary.get("unknown_rows", 0):
+                    summary["status"] = "structural_failure" if summary.get("status") == "ok" else summary.get("status")
                 output_dir = dataset_dir(npc_key, args.technique)
                 summary_path = Path(args.output) if args.output else output_dir / "quality_summary.json"
                 failures_path = output_dir / "quality_failures.json"
@@ -522,6 +524,8 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
 
     if args.soft_fail:
         return 0
+    if summary.get("distribution_gaps") or summary.get("dataset_unknown_rows", 0):
+        return completed.returncode or 2
     if summary.get("status") == "inconclusive" and completed.returncode == 0:
         return 2
     return completed.returncode

@@ -266,7 +266,7 @@ def run_sanitize(npc_key, technique="template", dry_run=False):
         return True
 
 
-def run_training(npc_key, preset, technique="template", dry_run=False):
+def run_training(npc_key, preset, technique="template", dry_run=False, allow_ungated_dataset=False):
     """Train a new model with the regenerated dataset."""
     spec_path = paths.spec_path(npc_key)
     if not spec_path.exists():
@@ -282,6 +282,8 @@ def run_training(npc_key, preset, technique="template", dry_run=False):
         "--preset", preset,
         "--export-gguf",
     ]
+    if allow_ungated_dataset:
+        cmd.append("--allow-ungated-dataset")
     if dry_run:
         print(f"  [dry-run] Would train: {' '.join(cmd)}")
         return None
@@ -671,7 +673,13 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
 
                     # Train
                     print(f"\n  Step 2: Train new model...")
-                    trained_gguf = run_training(npc_key, train_preset, technique=technique, dry_run=dry_run)
+                    trained_gguf = run_training(
+                        npc_key,
+                        train_preset,
+                        technique=technique,
+                        dry_run=dry_run,
+                        allow_ungated_dataset=skip_dataset_eval or deepeval_soft_fail,
+                    )
                     result["auto_retrain"] = {"trained_gguf": trained_gguf}
 
                     if trained_gguf and baseline_gguf:

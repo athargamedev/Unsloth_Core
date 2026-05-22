@@ -9,6 +9,7 @@ from scripts.dataset.dataset_contracts import (
     MIN_DATASET_EXAMPLES_PER_CATEGORY,
     calculate_distribution_gaps,
     expected_examples_per_category,
+    generation_request_counts_for_training_targets,
     summarize_jsonl_dataset,
 )
 
@@ -44,6 +45,21 @@ def test_calculate_distribution_gaps_reports_shortfalls():
     assert next(gap for gap in gaps if gap["category"] == "quest")["shortfall"] == 3
 
 
+def test_generation_requests_leave_room_for_stratified_validation_split():
+    requests = generation_request_counts_for_training_targets(
+        {"identity": 12, "teaching": 56},
+        val_split=0.12,
+        include_validation=True,
+    )
+
+    assert requests == {"identity": 13, "teaching": 63}
+    assert generation_request_counts_for_training_targets(
+        {"identity": 12},
+        val_split=0.12,
+        include_validation=False,
+    ) == {"identity": 12}
+
+
 def test_summarize_jsonl_dataset_counts_rows(tmp_path: Path):
     dataset_path = tmp_path / "train_clean.jsonl"
     rows = [
@@ -58,3 +74,4 @@ def test_summarize_jsonl_dataset_counts_rows(tmp_path: Path):
     assert summary["by_category"] == {"identity": 1, "teaching": 1}
     assert summary["by_difficulty"] == {"beginner": 1, "intermediate": 1}
     assert summary["by_split"] == {"train": 1, "validation": 1}
+    assert summary["content_sha256"].startswith("sha256:")
