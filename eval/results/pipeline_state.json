@@ -1,8 +1,16 @@
 {
   "history_guide": {
-    "status": "regeneration_failed",
-    "weak_concepts_count": 10,
-    "last_feedback": "2026-05-19T20:52:43.184381+00:00",
-    "last_updated": "2026-05-19T20:52:43.184409+00:00"
+    "status": "regenerated",
+    "weak_concepts_count": 7,
+    "last_feedback": "2026-05-22T03:03:06.555880+00:00",
+    "last_updated": "2026-05-22T03:03:06.556059+00:00",
+    "focus_categories": [
+      "dialogue",
+      "quest",
+      "refusal",
+      "teaching"
+    ],
+    "regeneration_technique": "template",
+    "auto_retrain_complete": false
   }
 }

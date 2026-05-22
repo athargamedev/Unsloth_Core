@@ -327,6 +327,12 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     )
 
                 env = os.environ.copy()
+                existing_pythonpath = env.get("PYTHONPATH", "")
+                env["PYTHONPATH"] = (
+                    f"{PROJECT_ROOT}{os.pathsep}{existing_pythonpath}"
+                    if existing_pythonpath
+                    else str(PROJECT_ROOT)
+                )
                 env.update(
                     {
                         "DEEPEVAL_DATASET_NPC_KEYS": npc_key,

@@ -31,6 +31,7 @@ import os
 import subprocess
 import sys
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -38,6 +39,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from scripts.ops.run_registry import make_pipeline_run_id
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 
@@ -442,9 +444,10 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
         technique=technique,
         spec_path=resolved_spec_path,
     )
+    feedback_run_id = f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{resolved_npc_key}_feedback_{technique}_{uuid.uuid4().hex[:8]}"
     exit_code = 1
     try:
-        with hook_recorder.step("feedback_loop", feedback_path=str(feedback_path), auto_retrain=auto_retrain, dry_run=dry_run):
+        with hook_recorder.step("feedback_loop", run_id=feedback_run_id, feedback_path=str(feedback_path), auto_retrain=auto_retrain, dry_run=dry_run):
             completed_early = False
             npc_key = resolved_npc_key
             candidate_model = feedback_data.get("candidate", "")

@@ -452,6 +452,9 @@ def _concept_anchor(concept: str, spec, retriever=None) -> str:
         ("medieval history", "Looking at how feudal societies organized power and land"),
         ("industrial revolution", "Tracing how steam power and factories transformed labor"),
         ("world war", "Analyzing the causes and global consequences of the world wars"),
+        ("modern history", "Tracing how the Enlightenment, industrialization, and world wars reshaped politics and daily life"),
+        ("scope and use", "Looking at how historians define a topic, set boundaries, and choose evidence"),
+        ("historical methodology", "Comparing sources carefully and checking for bias"),
         ("historical thinking", "Examining how historians use primary sources and context"),
     ]
     for needle, anchor in anchors:
@@ -563,13 +566,13 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
     else:
         if concept_b:
             templates = [
-                f"At a deeper level, {concept_a} and {concept_b} can be tested against cases like {detail_a} and {detail_b}, which leads to different answers.",
-                f"Compare {concept_a} and {concept_b} by checking how {detail_a} and {detail_b} behave in one real example.",
+                f"Compare {concept_a} and {concept_b} by checking one concrete case, like {detail_a} versus {detail_b}.",
+                f"A useful contrast is that {concept_a} shows up when {detail_a}, while {concept_b} shows up when {detail_b}.",
             ]
         else:
             templates = [
-                f"At a deeper level, {concept_a} is more subtle because {detail_a}, which matters in a real case.",
-                f"One limitation of the usual explanation is that {detail_a}, so a concrete example helps.",
+                f"{concept_a} is easier to understand when you start with one concrete example, like {detail_a}.",
+                f"In practice, {concept_a} matters because {detail_a}, which changes the outcome in a real case.",
             ]
     return random.choice(templates)
 
@@ -587,18 +590,18 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriev
         ]
     elif dialogue_type == "deep_dive":
         templates = [
-            f"Going deeper: {detail}, which you can test against one specific example.",
-            f"Start with {detail}, then build from there using a concrete case.",
+            f"Start with {detail}, then name one cause and one consequence so the idea stays concrete.",
+            f"A good next step is to connect {detail} to one event, date, or source.",
         ]
     elif dialogue_type == "application":
         templates = [
-            f"Use {concept} by focusing on {detail}, and test it on one real example.",
-            f"A practical way to apply {concept} is to check whether {detail} fits the case you have.",
+            f"Use {concept} by matching it to one specific case, like {detail}.",
+            f"A practical way to apply {concept} is to test it against a real example and explain the result.",
         ]
     elif dialogue_type == "misconception":
         templates = [
-            f"That is a common misconception. {detail} is the better explanation in a real case.",
-            f"Not quite — {concept} really works like this: {detail}, and a concrete example shows why.",
+            f"That is a common misconception. A better explanation is {detail}, with one real example to prove it.",
+            f"Not quite — {concept} works best when you connect it to a specific case such as {detail}.",
         ]
 
     return random.choice(templates)
@@ -611,8 +614,8 @@ def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
     if scenario_name:
         scenario_templates = {
             "timeline_analysis": [
-                f"Pick one event related to {concept} and explain why it changed the timeline.",
-                f"Use {detail} to describe the sequence of events and its consequence.",
+                f"Pick one event related to {concept}, like {detail}, and explain one cause and one consequence.",
+                f"Use {detail} to describe the sequence of events and why it mattered.",
             ],
             "primary_source": [
                 f"Look at a source about {concept} and explain what it shows about {detail}.",
