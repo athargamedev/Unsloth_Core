@@ -1,26 +1,512 @@
 [
   {
     "category": "teaching",
-    "concept": "core timeline anchors",
+    "concept": "scope and use",
     "error": "Generation returned None",
-    "timestamp": "2026-05-22T07:01:48.967814+00:00"
+    "timestamp": "2026-05-22T14:28:56.964913+00:00"
   },
   {
     "category": "teaching",
     "concept": "core timeline anchors",
     "error": "Generation returned None",
-    "timestamp": "2026-05-22T07:02:23.855042+00:00"
+    "timestamp": "2026-05-22T14:29:00.689756+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:29:03.181397+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:29:06.003794+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:29:09.649952+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:29:29.445939+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:29:33.277408+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:29:35.696601+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:29:38.731759+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:29:44.248305+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:30:03.513173+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:30:09.822668+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:30:14.796271+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:30:17.260207+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:30:20.828451+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:30:43.795481+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:30:47.924026+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:30:50.183226+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:30:52.876945+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:30:57.802495+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:31:15.612381+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:31:19.620701+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:31:22.174237+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:31:25.217279+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:31:30.187949+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:31:52.418609+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:31:56.340484+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:31:58.894408+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:32:01.676320+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:32:04.965747+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:32:23.863208+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:32:26.502749+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:32:29.181910+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:32:34.463256+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:32:38.390494+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:33:03.711426+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:33:07.590833+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:33:10.380528+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:33:12.947973+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:33:16.576082+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:33:38.366925+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:33:41.685585+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:33:45.020951+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:33:47.989555+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:33:50.934484+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:34:13.052736+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:34:18.359285+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:34:20.978573+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:34:23.323817+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:34:26.365861+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:34:45.245501+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:34:48.588057+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:34:52.731905+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:34:56.086747+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:34:59.018320+00:00"
   },
   {
     "category": "dialogue",
-    "concept": "modern history",
+    "concept": "scope and use",
     "error": "Generation returned None",
-    "timestamp": "2026-05-22T07:05:15.783714+00:00"
+    "timestamp": "2026-05-22T14:35:20.761771+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:35:25.695194+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:35:30.793804+00:00"
   },
   {
     "category": "dialogue",
     "concept": "useful vocabulary",
     "error": "Generation returned None",
-    "timestamp": "2026-05-22T07:08:01.810570+00:00"
+    "timestamp": "2026-05-22T14:35:36.228596+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:35:39.437992+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:36:00.385761+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:36:05.562008+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:36:10.512509+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:36:33.845469+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:36:38.036758+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:36:43.063380+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:36:45.480258+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:36:48.202312+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:37:11.211021+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:37:20.831422+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:37:23.300316+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:37:25.929932+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:37:45.284575+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:37:49.561815+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:37:54.888726+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:38:01.221008+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:38:26.519494+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:38:29.804258+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:38:35.201609+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "ancient civilizations",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:38:37.693208+00:00"
+  },
+  {
+    "category": "quest",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:38:58.578515+00:00"
+  },
+  {
+    "category": "quest",
+    "concept": "scope and use",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:39:22.173660+00:00"
+  },
+  {
+    "category": "quest",
+    "concept": "core timeline anchors",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:39:27.974677+00:00"
+  },
+  {
+    "category": "quest",
+    "concept": "safety and refusal boundaries",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:39:30.791828+00:00"
+  },
+  {
+    "category": "quest",
+    "concept": "useful vocabulary",
+    "error": "Generation returned None",
+    "timestamp": "2026-05-22T14:39:33.722861+00:00"
   }
 ]

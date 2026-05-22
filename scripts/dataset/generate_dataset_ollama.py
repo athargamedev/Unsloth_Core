@@ -65,6 +65,7 @@ from generate_dataset import (
     generate_quest_response,
     generate_refusal_response,
     _refusal_user_message,
+    _is_history_subject,
     compute_content_hash,
     load_subject_spec,
 )
@@ -165,11 +166,11 @@ GENERIC_FILLER_REPLACEMENTS = [
 def build_category_generation_prompt(category: str, concept_str: str, npc_name: str, player_role: str = "player") -> str:
     """Backward-compatible category prompt helper used by tests and callers."""
     return {
-        "identity": f"Write a very short first-person self-introduction for {npc_name}. Say who you are, mention chronology or sources, and avoid generic storyteller language. Keep it to 1-2 sentences.",
-        "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Answer the first sentence directly and include one concrete fact or example. Aim for 12-20 words. Keep it to 1-2 short sentences.",
-        "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer directly, add one specific detail or example, and aim for 12-20 words. Keep it under 200 characters.",
+        "identity": f"Write a very short first-person self-introduction for {npc_name}. Say who you are, directly answer what you do, mention one concrete way you help, and keep it to 1-2 sentences.",
+        "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Answer the first sentence directly, include one concrete fact or example from the reference doc, and avoid inventing new details. Keep it to 1-2 short sentences.",
+        "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer directly, add one specific detail or example grounded in the spec, and aim for 12-20 words. Keep it under 200 characters.",
         "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character. Include one concrete action step or example and aim for 12-20 words. Keep it to 1-2 short sentences.",
-        "refusal": f"Write an out-of-scope question for {npc_name}, state the boundary, and redirect to safe in-scope help. Do not add an unrelated history fact or drift to another topic. Include 'Instead, I can help with...' and one concrete in-scope topic like chronology or sources. Keep it to 1-2 sentences.",
+        "refusal": f"Write an out-of-scope question for {npc_name}, state the boundary clearly, and redirect to a safe in-scope alternative. Include 'Instead, I can help with...' plus one concrete history topic such as ancient civilizations, medieval history, or modern history. Keep it to 1-2 sentences.",
     }.get(category, f"Generate a concise educational dialogue about '{concept_str}' with one concrete detail.")
 
 
@@ -559,6 +560,8 @@ class OllamaDatasetGenerator:
             return "speculate or counterfactual"
         if any(k in text for k in ["hiding", "conspiracy", "misinformation", "experts are hiding", "true story"]):
             return "misinformation or conspiracy"
+        if any(k in text for k in ["different topic", "something else", "leave world history aside", "talk about something else", "change the topic"]):
+            return "topic change request"
         return "generic boundary"
 
     async def generate_example_llm(self, category: str, concept_str: str, 
@@ -587,11 +590,11 @@ class OllamaDatasetGenerator:
                 grounding = "\nContext:\n" + "\n".join(contexts[:2])
         
         category_prompt = {
-            "identity": f"Write a short self-introduction for {npc_name} in first person.",
+            "identity": f"Write a short self-introduction for {npc_name} in first person. Include one concrete history topic you can help with, such as ancient civilizations, medieval history, or modern history.",
             "teaching": f"Write a question from a {player_role} about '{concept_str}' and a short, helpful answer.",
             "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer the user's question directly in the first sentence and avoid generic lead-ins like 'going deeper' or 'start with'.",
             "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character.",
-            "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that redirects to safe in-scope help. Include both an explicit boundary phrase and a redirect phrase such as 'Instead, I can help with...'.",
+            "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that directly acknowledges the topic change and offers another in-scope history topic. Include both an explicit boundary phrase and a redirect phrase such as 'Instead, I can help with...'.",
         }.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
         if difficulty:
             category_prompt += f" Use a {difficulty} tone and prioritize clarity."
@@ -630,10 +633,13 @@ class OllamaDatasetGenerator:
             json_shape=json_shape,
         )
         
+        history_subject = _is_history_subject(self.spec)
+        effective_temperature = min(temperature, 0.25) if history_subject else temperature
+
         response = await self.generator.generate_async(
             system_prompt="You are a training data generator for educational NPCs. Output valid JSON.",
             user_prompt=generation_prompt,
-            temperature=temperature,
+            temperature=effective_temperature,
             max_tokens=512,
             json_format=True,
             session=session,
@@ -659,6 +665,12 @@ class OllamaDatasetGenerator:
 
             if category == "identity":
                 asst_msg = generate_identity_response(self.spec)
+            elif history_subject and category == "teaching":
+                asst_msg = generate_teaching_response(self.spec, concept_str, difficulty=difficulty, retriever=self.retriever)
+            elif history_subject and category == "dialogue":
+                asst_msg = generate_dialogue_response(self.spec, concept_str, dialogue_type=dialogue_type or "deep_dive", retriever=self.retriever)
+            elif history_subject and category == "quest":
+                asst_msg = generate_quest_response(self.spec, concept_str, scenario_name=scenario_name, retriever=self.retriever)
 
             if not user_msg or not asst_msg:
                 return None

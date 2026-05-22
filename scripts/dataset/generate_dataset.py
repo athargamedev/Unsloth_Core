@@ -447,15 +447,15 @@ def _concept_anchor(concept: str, spec, retriever=None) -> str:
         ("cardio", "Doing brisk walking or cycling to raise your heart rate safely"),
         ("recovery", "Resting and sleeping well after a hard workout"),
         ("nutrition", "Balancing protein, carbohydrates, and fats for steady energy"),
-        ("ancient civilizations", "Studying how early societies formed around river valleys"),
-        ("roman empire", "Understanding how Roman law and engineering shaped later societies"),
-        ("medieval history", "Looking at how feudal societies organized power and land"),
-        ("industrial revolution", "Tracing how steam power and factories transformed labor"),
-        ("world war", "Analyzing the causes and global consequences of the world wars"),
-        ("modern history", "Tracing how the Enlightenment, industrialization, and world wars reshaped politics and daily life"),
-        ("scope and use", "Looking at how historians define a topic, set boundaries, and choose evidence"),
-        ("historical methodology", "Comparing sources carefully and checking for bias"),
-        ("historical thinking", "Examining how historians use primary sources and context"),
+        ("ancient civilizations", "Mesopotamia, early cities, writing, and codified law"),
+        ("roman empire", "Greece and Rome, with democracy, empire, republican government, and legal legacy"),
+        ("medieval history", "feudalism, the Byzantine world, crusades, and the Black Death"),
+        ("industrial revolution", "industrialization, world wars, and the Cold War"),
+        ("world war", "industrialization, world wars, and the Cold War"),
+        ("modern history", "industrialization, world wars, and the Cold War"),
+        ("scope and use", "major eras, turning points, and why events changed societies"),
+        ("historical methodology", "primary sources, eyewitness accounts, and uncertainty"),
+        ("historical thinking", "the big picture, the main cause, and one consequence"),
     ]
     for needle, anchor in anchors:
         if needle in concept_l:
@@ -513,16 +513,15 @@ def generate_identity_response(spec):
     personality_short = personality.split("—")[0].split("-")[0].split(";")[0].split(",")[0].strip()
 
     templates = [
-        f"I'm {npc_name}, and I help with chronology, sources, and cause and effect in {subject_short}.",
-        f"I'm {npc_name}, your {subject_short} guide. I focus on evidence, timelines, and primary sources.",
-        f"Hi, I'm {npc_name}. Ask me about {subject_short}, one source, or a clear turning point.",
-        f"I'm {npc_name}, a careful {subject_short} guide who checks dates and evidence first.",
-        f"I'm {npc_name}; I help place events on a timeline and check what the sources actually say.",
-        f"I'm {npc_name}; I compare primary sources so you can see why historians disagree.",
-        f"I'm {npc_name}, and I help separate legend from evidence in {subject_short}.",
+        f"I'm {npc_name}, and I help you study {subject_short} by comparing sources, tracing cause and effect, and showing why events mattered, like the fall of Rome.",
+        f"I'm {npc_name}, your {subject_short} guide. I answer directly, then point to evidence and one concrete example like ancient civilizations or medieval history.",
+        f"Hi, I'm {npc_name}. If you ask about {subject_short}, I can walk you through a topic, a source, or a turning point like the printing press.",
+        f"I'm {npc_name}, a careful {subject_short} guide who checks dates, evidence, and historical importance first, especially for modern history.",
+        f"I'm {npc_name}; I help place events on a timeline and compare primary sources so you can see why historians disagree about ancient civilizations.",
+        f"I'm {npc_name}; I help separate legend from evidence in {subject_short} and show why details matter in medieval history.",
     ]
     if personality_short:
-        templates.append(f"I'm {npc_name}, a {personality_short.lower()} guide for {subject_short}, with a focus on chronology and sources.")
+        templates.append(f"I'm {npc_name}, a {personality_short.lower()} guide for {subject_short}, with a focus on chronology, sources, and why the history matters. I can also point to concrete topics like ancient civilizations, medieval history, or modern history.")
     return random.choice(templates)
 
 
@@ -540,7 +539,19 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
     if "methodology" in concept_a.lower():
         detail_a = "Comparing sources carefully and checking for bias"
 
-    if difficulty == "beginner":
+    if _is_history_subject(spec):
+        if concept_b:
+            templates = [
+                f"Compare {concept_a} and {concept_b} by looking at how each changed society.",
+                f"A useful contrast is that {concept_a} centers on {detail_a}, while {concept_b} centers on {detail_b}.",
+            ]
+        else:
+            templates = [
+                f"{concept_a.capitalize()} is about {detail_a}, which changed society in a major way.",
+                f"Start with {detail_a}, then name one cause and one consequence.",
+                f"The key idea behind {concept_a} is {detail_a}; that is why it matters.",
+            ]
+    elif difficulty == "beginner":
         if concept_b:
             templates = [
                 f"{concept_a} is about {detail_a}, while {concept_b} is about {detail_b}; one uses {detail_a} and the other uses {detail_b}.",
@@ -583,7 +594,28 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriev
     subject = _subject_focus(spec)
     detail = _concept_anchor(concept, spec, retriever)
 
-    if dialogue_type == "clarification":
+    if _is_history_subject(spec):
+        if dialogue_type == "clarification":
+            templates = [
+                f"Sure — {concept} means {detail}, and a concrete example makes it easier to see.",
+                f"Another way to say it: {concept} is about {detail}, so the pattern stays clear.",
+            ]
+        elif dialogue_type == "deep_dive":
+            templates = [
+                f"Start with {detail}, then name one cause and one consequence so the idea stays concrete.",
+                f"A good next step is to connect {detail} to one event, date, or source.",
+            ]
+        elif dialogue_type == "application":
+            templates = [
+                f"Use {concept} by matching it to one specific case, like {detail}.",
+                f"A practical way to apply {concept} is to test it against a real example and explain the result.",
+            ]
+        else:
+            templates = [
+                f"That is a common misconception. A better explanation is {detail}, with one real example to prove it.",
+                f"Not quite — {concept} works best when you connect it to a specific case such as {detail}.",
+            ]
+    elif dialogue_type == "clarification":
         templates = [
             f"Sure — {concept} means {detail}, and a concrete example makes it easier to see.",
             f"Another way to say it: {concept} is about {detail}, as you can see in a real case.",
@@ -598,7 +630,7 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriev
             f"Use {concept} by matching it to one specific case, like {detail}.",
             f"A practical way to apply {concept} is to test it against a real example and explain the result.",
         ]
-    elif dialogue_type == "misconception":
+    else:
         templates = [
             f"That is a common misconception. A better explanation is {detail}, with one real example to prove it.",
             f"Not quite — {concept} works best when you connect it to a specific case such as {detail}.",
@@ -669,12 +701,17 @@ def generate_refusal_response(spec, boundary=None):
                     f"I can't give exact dates as if historians all agree, but I can share the commonly used range and why it is used.",
                     f"That question asks for more certainty than the evidence supports. Instead, I can give the standard range and the reason behind it.",
                 ]
+            elif "topic change" in boundary_lower or "different topic" in boundary_lower:
+                templates = [
+                    f"Absolutely — we can switch topics, and I can still help with a history topic like ancient civilizations, medieval history, or modern history.",
+                    f"Yes, let's change direction. If you'd like, we can talk about the fall of Rome, the Middle Ages, or the printing press instead.",
+                ]
             else:
                 templates = [
-                    f"That is outside my role as {npc_name}. Instead, I can help with chronology, sources, or evidence in world history.",
-                    f"I can't help with that request. Instead, I can explain a documented world history topic about chronology or sources.",
-                    f"I can't answer that directly. Let's focus on a real world history question about chronology, sources, or evidence.",
-                    f"That sits outside what I cover. What I can do is help with a documented world history topic.",
+                    f"That is outside my role as {npc_name}. Instead, I can help with chronology, sources, or evidence in {subject}.",
+                    f"I can't help with that request. Instead, I can explain a documented {subject} topic about chronology or sources.",
+                    f"I can't answer that directly. Let's focus on a real {subject} question about chronology, sources, or evidence.",
+                    f"That sits outside what I cover. What I can do is help with a documented {subject} topic.",
                 ]
             return random.choice(templates)
         if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
