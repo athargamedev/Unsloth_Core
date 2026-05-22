@@ -1,6 +1,7 @@
 """Shared DeepEval metrics for generated NPC training datasets."""
 
 import os
+from typing import Optional, Tuple, Union
 
 from deepeval.metrics import (
     AnswerRelevancyMetric,
@@ -15,16 +16,67 @@ from deepeval.metrics import (
     ToxicityMetric,
 )
 from deepeval.models import OllamaModel
+from deepeval.models.llms.ollama_model import retry_ollama
 
 from scripts.ops.ollama_lifecycle import register_ollama_unload
 from deepeval.test_case import SingleTurnParams
+from pydantic import BaseModel
 
 
-def _ollama_judge() -> OllamaModel:
-    return OllamaModel(
+def _ollama_think_enabled() -> bool:
+    return os.getenv("DEEPEVAL_OLLAMA_THINK", "false").strip().lower() in {"1", "true", "yes", "on"}
+
+
+class DatasetJudgeOllamaModel(OllamaModel):
+    """DeepEval Ollama judge with explicit control over thinking models."""
+
+    def __init__(self, *args, think: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.think = think
+
+    def _chat_kwargs(self, prompt: str, schema: Optional[type[BaseModel]]) -> dict:
+        return {
+            "model": self.name,
+            "messages": [{"role": "user", "content": prompt}],
+            "format": schema.model_json_schema() if schema else None,
+            "options": {
+                "temperature": self.temperature,
+                **self.generation_kwargs,
+            },
+            "think": self.think,
+        }
+
+    @retry_ollama
+    def generate(
+        self, prompt: str, schema: Optional[type[BaseModel]] = None
+    ) -> Tuple[Union[str, BaseModel], float]:
+        response = self.load_model().chat(**self._chat_kwargs(prompt, schema))
+        return (
+            schema.model_validate_json(response.message.content)
+            if schema
+            else response.message.content,
+            0,
+        )
+
+    @retry_ollama
+    async def a_generate(
+        self, prompt: str, schema: Optional[type[BaseModel]] = None
+    ) -> Tuple[Union[str, BaseModel], float]:
+        response = await self.load_model(async_mode=True).chat(**self._chat_kwargs(prompt, schema))
+        return (
+            schema.model_validate_json(response.message.content)
+            if schema
+            else response.message.content,
+            0,
+        )
+
+
+def _ollama_judge() -> DatasetJudgeOllamaModel:
+    return DatasetJudgeOllamaModel(
         model=os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen3:latest"),
         base_url=os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"),
         temperature=float(os.getenv("DEEPEVAL_OLLAMA_TEMPERATURE", "0")),
+        think=_ollama_think_enabled(),
     )
 
 
