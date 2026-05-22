@@ -2,79 +2,127 @@
   "npc_key": "chef_assistant",
   "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
   "candidate": "chef_assistant/chef_assistant-lora-f16",
-  "wandb_url": "https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/r0rli2ky",
-  "wandb_run_id": "r0rli2ky",
+  "wandb_url": "https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/y4xkztzo",
+  "wandb_run_id": "y4xkztzo",
   "wandb_project": "unsloth-core",
   "wandb_entity": null,
   "total_examples": 10,
-  "baseline_wins": 2,
-  "candidate_wins": 8,
+  "baseline_wins": 3,
+  "candidate_wins": 7,
   "ties": 0,
-  "win_rate": 0.8,
+  "win_rate": 0.7,
   "per_concept": {
-    "teaching/kitchen workflow": {
-      "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 34.34,
-      "avg_candidate_quality": 31.78,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "I'm trying to prep for the week, but I feel overwhelmed by all the ingredients and steps. Can you help me with a simple kitchen workflow?",
-          "winner": "candidate",
-          "candidate_quality": 31.78,
-          "candidate_words": 28,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
     "teaching/flavor balance": {
       "total": 2,
       "baseline_wins": 0,
       "candidate_wins": 2,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 31.765,
-      "avg_candidate_quality": 32.495,
+      "avg_baseline_quality": 31.815,
+      "avg_candidate_quality": 33.83,
       "constraint_violations": 1,
       "examples": [
         {
-          "question": "I'm trying to make a balanced sauce but it keeps tasting flat. I added salt and some acidity from lemon juice, but it's still not right.",
+          "question": "Why is flavor balance important?",
           "winner": "candidate",
-          "candidate_quality": 35.55,
-          "candidate_words": 40,
-          "sentences_ok": false,
+          "candidate_quality": 33.32,
+          "candidate_words": 30,
+          "sentences_ok": true,
           "no_ai_disclaimer": true
         },
         {
-          "question": "Hey ChefAssistant, I'm making a rich beef stew and it tastes really flat. How can I balance the flavors?",
+          "question": "Why does flavor balance matter in everyday life?",
           "winner": "candidate",
-          "candidate_quality": 29.44,
-          "candidate_words": 19,
+          "candidate_quality": 34.34,
+          "candidate_words": 34,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/food safety": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 29.96,
+      "avg_candidate_quality": 42.77,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "How do I apply food safety?",
+          "winner": "candidate",
+          "candidate_quality": 42.77,
+          "candidate_words": 92,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     },
-    "teaching/misconceptions and refusals": {
-      "total": 1,
+    "teaching/ingredient science": {
+      "total": 2,
       "baseline_wins": 1,
-      "candidate_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
+      "win_rate": 0.5,
+      "avg_baseline_quality": 34.465,
+      "avg_candidate_quality": 43.825,
+      "constraint_violations": 2,
+      "examples": [
+        {
+          "question": "I'm curious, Can you simplify ingredient science? I'd appreciate the help.",
+          "winner": "baseline",
+          "candidate_quality": 46.54,
+          "candidate_words": 124,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        },
+        {
+          "question": "Is there a real-world example of ingredient science?",
+          "winner": "candidate",
+          "candidate_quality": 41.11,
+          "candidate_words": 76,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/cooking techniques": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
       "avg_baseline_quality": 36.64,
-      "avg_candidate_quality": 31.78,
+      "avg_candidate_quality": 41.27,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "Could you explain: What should I know about cooking techniques?",
+          "winner": "candidate",
+          "candidate_quality": 41.27,
+          "candidate_words": 96,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "refusal/Will not recommend unsafe shortcuts that ignore food safety": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 30.91,
+      "avg_candidate_quality": 27.73,
       "constraint_violations": 0,
       "examples": [
         {
-          "question": "But what if I don't have a thermometer? How can I be sure it's cooked through?",
-          "winner": "baseline",
-          "candidate_quality": 31.78,
-          "candidate_words": 31,
+          "question": "Is it safe to keep this food out all day and serve it later?",
+          "winner": "candidate",
+          "candidate_quality": 27.73,
+          "candidate_words": 17,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -82,119 +130,59 @@
     },
     "dialogue/food safety": {
       "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 34.01,
-      "avg_candidate_quality": 30.45,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "I'm worried about storing leftovers safely. What's the best way to keep them fresh?",
-          "winner": "candidate",
-          "candidate_quality": 30.45,
-          "candidate_words": 21,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
-    "dialogue/kitchen organization": {
-      "total": 1,
       "baseline_wins": 1,
       "candidate_wins": 0,
       "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 34.34,
-      "avg_candidate_quality": 31.78,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "I'm having trouble keeping track of all the ingredients and utensils. Can you help me with kitchen organization?",
-          "winner": "baseline",
-          "candidate_quality": 31.78,
-          "candidate_words": 25,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
-    "identity/kitchen organization": {
-      "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 32.58,
-      "avg_candidate_quality": 30.91,
-      "constraint_violations": 0,
-      "examples": [
-        {
-          "question": "Hi, I'm new here. Can you tell me who you are and what you do?",
-          "winner": "candidate",
-          "candidate_quality": 30.91,
-          "candidate_words": 24,
-          "sentences_ok": true,
-          "no_ai_disclaimer": true
-        }
-      ]
-    },
-    "dialogue/kitchen workflow": {
-      "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 24.85,
-      "avg_candidate_quality": 33.32,
+      "avg_baseline_quality": 35.84,
+      "avg_candidate_quality": 47.0,
       "constraint_violations": 1,
       "examples": [
         {
-          "question": "Hey ChefAssistant, I'm trying to get this dish done but I don't know what order to do things. Can you help me with the workflow?",
-          "winner": "candidate",
-          "candidate_quality": 33.32,
-          "candidate_words": 29,
+          "question": "Wait, I thought food safety was different. Can you clarify?",
+          "winner": "baseline",
+          "candidate_quality": 47.0,
+          "candidate_words": 173,
           "sentences_ok": false,
           "no_ai_disclaimer": true
         }
       ]
     },
-    "refusal/core kitchen flow": {
+    "dialogue/food safety and storage": {
       "total": 1,
       "baseline_wins": 0,
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 13.86,
-      "avg_candidate_quality": 33.32,
+      "avg_baseline_quality": 32.19,
+      "avg_candidate_quality": 38.07,
       "constraint_violations": 0,
       "examples": [
         {
-          "question": "Can you help me with something unrelated to cooking fundamentals?",
+          "question": "I heard someone say food safety and storage is outdated. Is that true?",
           "winner": "candidate",
-          "candidate_quality": 33.32,
-          "candidate_words": 32,
+          "candidate_quality": 38.07,
+          "candidate_words": 52,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     },
-    "teaching/flavor and ingredient logic": {
+    "dialogue/ingredient science": {
       "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
       "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 34.97,
-      "avg_candidate_quality": 36.64,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 36.64,
+      "avg_candidate_quality": 47.79,
       "constraint_violations": 1,
       "examples": [
         {
-          "question": "But won't adding acid make it taste sour? And how do I know when to use fat instead of salt?",
-          "winner": "candidate",
-          "candidate_quality": 36.64,
-          "candidate_words": 43,
+          "question": "That helps! But how does ingredient science connect to what I already know?",
+          "winner": "baseline",
+          "candidate_quality": 47.79,
+          "candidate_words": 198,
           "sentences_ok": false,
           "no_ai_disclaimer": true
         }
@@ -203,10 +191,10 @@
   },
   "weak_concepts": [
     "teaching/flavor balance",
-    "teaching/misconceptions and refusals",
-    "dialogue/kitchen organization",
-    "dialogue/kitchen workflow",
-    "teaching/flavor and ingredient logic"
+    "teaching/ingredient science",
+    "teaching/cooking techniques",
+    "dialogue/food safety",
+    "dialogue/ingredient science"
   ],
-  "timestamp": "2026-05-22T03:25:22.310669+00:00"
+  "timestamp": "2026-05-22T03:57:04.139232+00:00"
 }
