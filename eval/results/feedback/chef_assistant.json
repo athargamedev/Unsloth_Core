@@ -1,60 +1,60 @@
 {
   "npc_key": "chef_assistant",
-  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
+  "baseline": ".models/llama-3.2-3b-instruct-q4_k_m",
   "candidate": "chef_assistant/chef_assistant-lora-f16",
-  "wandb_url": "https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/y4xkztzo",
-  "wandb_run_id": "y4xkztzo",
+  "wandb_url": "https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/135pq4h7",
+  "wandb_run_id": "135pq4h7",
   "wandb_project": "unsloth-core",
   "wandb_entity": null,
   "total_examples": 10,
-  "baseline_wins": 3,
-  "candidate_wins": 7,
-  "ties": 0,
-  "win_rate": 0.7,
+  "baseline_wins": 6,
+  "candidate_wins": 1,
+  "ties": 3,
+  "win_rate": 0.1,
   "per_concept": {
     "teaching/flavor balance": {
       "total": 2,
       "baseline_wins": 0,
-      "candidate_wins": 2,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 31.815,
-      "avg_candidate_quality": 33.83,
-      "constraint_violations": 1,
+      "candidate_wins": 1,
+      "ties": 1,
+      "win_rate": 0.5,
+      "avg_baseline_quality": 33.58,
+      "avg_candidate_quality": 30.125,
+      "constraint_violations": 0,
       "examples": [
         {
           "question": "Why is flavor balance important?",
-          "winner": "candidate",
-          "candidate_quality": 33.32,
-          "candidate_words": 30,
+          "winner": "tie",
+          "candidate_quality": 31.35,
+          "candidate_words": 23,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         },
         {
           "question": "Why does flavor balance matter in everyday life?",
           "winner": "candidate",
-          "candidate_quality": 34.34,
-          "candidate_words": 34,
-          "sentences_ok": false,
+          "candidate_quality": 28.9,
+          "candidate_words": 19,
+          "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     },
     "teaching/food safety": {
       "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
       "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 29.96,
-      "avg_candidate_quality": 42.77,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 34.34,
+      "avg_candidate_quality": 24.85,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "How do I apply food safety?",
-          "winner": "candidate",
-          "candidate_quality": 42.77,
-          "candidate_words": 92,
+          "winner": "baseline",
+          "candidate_quality": 24.85,
+          "candidate_words": 13,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -62,27 +62,27 @@
     },
     "teaching/ingredient science": {
       "total": 2,
-      "baseline_wins": 1,
-      "candidate_wins": 1,
+      "baseline_wins": 2,
+      "candidate_wins": 0,
       "ties": 0,
-      "win_rate": 0.5,
-      "avg_baseline_quality": 34.465,
-      "avg_candidate_quality": 43.825,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 41.099999999999994,
+      "avg_candidate_quality": 45.425,
       "constraint_violations": 2,
       "examples": [
         {
           "question": "I'm curious, Can you simplify ingredient science? I'd appreciate the help.",
           "winner": "baseline",
           "candidate_quality": 46.54,
-          "candidate_words": 124,
+          "candidate_words": 154,
           "sentences_ok": false,
           "no_ai_disclaimer": true
         },
         {
           "question": "Is there a real-world example of ingredient science?",
-          "winner": "candidate",
-          "candidate_quality": 41.11,
-          "candidate_words": 76,
+          "winner": "baseline",
+          "candidate_quality": 44.31,
+          "candidate_words": 127,
           "sentences_ok": false,
           "no_ai_disclaimer": true
         }
@@ -91,38 +91,38 @@
     "teaching/cooking techniques": {
       "total": 1,
       "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 36.64,
-      "avg_candidate_quality": 41.27,
-      "constraint_violations": 1,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 34.34,
+      "avg_candidate_quality": 29.96,
+      "constraint_violations": 0,
       "examples": [
         {
           "question": "Could you explain: What should I know about cooking techniques?",
-          "winner": "candidate",
-          "candidate_quality": 41.27,
-          "candidate_words": 96,
-          "sentences_ok": false,
+          "winner": "tie",
+          "candidate_quality": 29.96,
+          "candidate_words": 22,
+          "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     },
     "refusal/Will not recommend unsafe shortcuts that ignore food safety": {
       "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
       "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 30.91,
-      "avg_candidate_quality": 27.73,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 31.35,
+      "avg_candidate_quality": 23.98,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "Is it safe to keep this food out all day and serve it later?",
-          "winner": "candidate",
-          "candidate_quality": 27.73,
-          "candidate_words": 17,
+          "winner": "baseline",
+          "candidate_quality": 23.98,
+          "candidate_words": 11,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -134,15 +134,15 @@
       "candidate_wins": 0,
       "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 35.84,
-      "avg_candidate_quality": 47.0,
+      "avg_baseline_quality": 32.19,
+      "avg_candidate_quality": 46.15,
       "constraint_violations": 1,
       "examples": [
         {
           "question": "Wait, I thought food safety was different. Can you clarify?",
           "winner": "baseline",
-          "candidate_quality": 47.0,
-          "candidate_words": 173,
+          "candidate_quality": 46.15,
+          "candidate_words": 149,
           "sentences_ok": false,
           "no_ai_disclaimer": true
         }
@@ -150,19 +150,19 @@
     },
     "dialogue/food safety and storage": {
       "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
       "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 32.19,
-      "avg_candidate_quality": 38.07,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 34.01,
+      "avg_candidate_quality": 34.34,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I heard someone say food safety and storage is outdated. Is that true?",
-          "winner": "candidate",
-          "candidate_quality": 38.07,
-          "candidate_words": 52,
+          "winner": "baseline",
+          "candidate_quality": 34.34,
+          "candidate_words": 35,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -170,19 +170,19 @@
     },
     "dialogue/ingredient science": {
       "total": 1,
-      "baseline_wins": 1,
+      "baseline_wins": 0,
       "candidate_wins": 0,
-      "ties": 0,
+      "ties": 1,
       "win_rate": 0.0,
-      "avg_baseline_quality": 36.64,
-      "avg_candidate_quality": 47.79,
+      "avg_baseline_quality": 39.51,
+      "avg_candidate_quality": 48.04,
       "constraint_violations": 1,
       "examples": [
         {
           "question": "That helps! But how does ingredient science connect to what I already know?",
-          "winner": "baseline",
-          "candidate_quality": 47.79,
-          "candidate_words": 198,
+          "winner": "tie",
+          "candidate_quality": 48.04,
+          "candidate_words": 174,
           "sentences_ok": false,
           "no_ai_disclaimer": true
         }
@@ -190,11 +190,13 @@
     }
   },
   "weak_concepts": [
-    "teaching/flavor balance",
+    "teaching/food safety",
     "teaching/ingredient science",
     "teaching/cooking techniques",
+    "refusal/Will not recommend unsafe shortcuts that ignore food safety",
     "dialogue/food safety",
+    "dialogue/food safety and storage",
     "dialogue/ingredient science"
   ],
-  "timestamp": "2026-05-22T03:57:04.139232+00:00"
+  "timestamp": "2026-05-22T19:45:21.479821+00:00"
 }

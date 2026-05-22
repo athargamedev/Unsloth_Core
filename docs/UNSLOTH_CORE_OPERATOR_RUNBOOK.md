@@ -7,6 +7,9 @@ Use it when you are about to touch dataset generation, training, export, evaluat
 
 ## Canonical facts
 
+- **Active NPCs (2 total):** `history_guide` and `chef_assistant`. Previously active NPCs
+  (`astronomy_guide`, `fitness_coach`) have been removed — their specs and datasets no
+  longer exist in the repository.
 - NPC specs live at `subjects/NPC_specs/{npc_key}.json`
 - Primers live at `subjects/reference_docs/{npc_key}_primer.md`
 - Canonical training runs live at `outputs/{npc_key}/runs/{run_id}/`

@@ -1,0 +1,136 @@
+{
+  "created_at": "2026-05-22T19:32:19.267612+00:00",
+  "npc_key": "chef_assistant",
+  "technique": "template",
+  "judge_model": "qwen3:latest",
+  "deepeval_identifier": "dataset-quality-chef_assistant-template-20260522-162342",
+  "deepeval_result_identifier": "dataset-quality-chef_assistant-template-20260522-162342",
+  "command": [
+    "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+    "test",
+    "run",
+    "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+    "--identifier",
+    "dataset-quality-chef_assistant-template-20260522-162342",
+    "--display",
+    "all",
+    "--skip-on-missing-params"
+  ],
+  "total": 25,
+  "passed": 12,
+  "failed": 13,
+  "pass_rate": 0.48,
+  "metric_count": 50,
+  "null_metric_count": 0,
+  "null_metric_rate": 0.0,
+  "status": "structural_failure",
+  "metrics": {
+    "Persona and Category Fit [GEval]": {
+      "count": 25,
+      "average_score": 0.668,
+      "pass_rate": 0.6
+    },
+    "Training Usefulness and Specificity [GEval]": {
+      "count": 25,
+      "average_score": 0.588,
+      "pass_rate": 0.56
+    }
+  },
+  "categories": {
+    "dialogue": {
+      "total": 5,
+      "passed": 2,
+      "pass_rate": 0.4
+    },
+    "identity": {
+      "total": 5,
+      "passed": 2,
+      "pass_rate": 0.4
+    },
+    "quest": {
+      "total": 5,
+      "passed": 1,
+      "pass_rate": 0.2
+    },
+    "refusal": {
+      "total": 5,
+      "passed": 5,
+      "pass_rate": 1.0
+    },
+    "teaching": {
+      "total": 5,
+      "passed": 2,
+      "pass_rate": 0.4
+    }
+  },
+  "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/template/quality_failures.json",
+  "dataset_summary": {
+    "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/template/train_clean.jsonl",
+    "exists": true,
+    "content_sha256": "sha256:5359751499d5e99e58e716a75e37f32240dcd3ef5f5222dcbccc4dc345a4b6cb",
+    "total": 189,
+    "by_category": {
+      "dialogue": 56,
+      "identity": 11,
+      "quest": 15,
+      "refusal": 10,
+      "teaching": 97
+    },
+    "by_difficulty": {
+      "advanced": 40,
+      "beginner": 79,
+      "intermediate": 70
+    },
+    "by_split": {
+      "train": 189
+    },
+    "by_concept": {
+      "food safety": 28,
+      "kitchen workflow": 28,
+      "cooking techniques": 22,
+      "knife skills": 20,
+      "flavor balance": 18,
+      "ingredient science": 13,
+      "scope and use": 12,
+      "chef_assistant": 11,
+      "Will not help with crash diets or eating-disorder advice": 6,
+      "core kitchen flow": 5,
+      "kitchen organization": 5,
+      "knife skills and techniques": 5,
+      "Will not recommend unsafe shortcuts that ignore food safety": 4,
+      "flavor and ingredient logic": 4,
+      "food safety and storage": 4,
+      "misconceptions and refusals": 4
+    },
+    "unknown_rows": 0
+  },
+  "expected_distribution": {
+    "identity": 12,
+    "teaching": 56,
+    "dialogue": 32,
+    "quest": 16,
+    "refusal": 16
+  },
+  "distribution_gaps": [
+    {
+      "category": "identity",
+      "target": 12,
+      "actual": 11,
+      "shortfall": 1
+    },
+    {
+      "category": "quest",
+      "target": 16,
+      "actual": 15,
+      "shortfall": 1
+    },
+    {
+      "category": "refusal",
+      "target": 16,
+      "actual": 10,
+      "shortfall": 6
+    }
+  ],
+  "dataset_total_rows": 189,
+  "dataset_unknown_rows": 0
+}

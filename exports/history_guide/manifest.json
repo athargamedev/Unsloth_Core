@@ -1,16 +1,14 @@
 {
   "npc_key": "history_guide",
-  "model_id": "adapter",
-  "model_short": "adapter",
-  "quantizations": [
-    "lora-f16"
-  ],
+  "run_id": "20260522_safe-any_llama3.2-3b_002",
+  "base_model": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+  "technique": "template",
+  "training_loss": 3.4845887819925943,
+  "num_examples": 132,
+  "wandb_url": "https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/8wabhgbk",
+  "created_at": "2026-05-22T16:06:55.662151",
+  "mode": "adapter",
   "gguf_files": [
-    "history_guide-lora-f16.gguf"
-  ],
-  "exported_at": "2026-05-21T17:36:11.954014+00:00",
-  "npc_name": "HistoryGuide",
-  "checksums": {
-    "history_guide-lora-f16.gguf": "sha256:3e356e2ebbe60bfbf21c1acc364f33ff732c892e66f56d06f11c3f3e6a710f32"
-  }
+    "/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf"
+  ]
 }

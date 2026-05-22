@@ -397,7 +397,7 @@ Located in `subjects/NPC_specs/*.json`. Structure (using history_guide as exampl
 
 ---
 
-## 3. Quick Commands
+## 11. Quick Commands
 
 ```bash
 # 1. Activate
@@ -435,7 +435,7 @@ source unsloth_env/bin/activate
 
 ---
 
-## 4. Output Artifacts
+## 12. Output Artifacts
 
 | Stage | Output Path | Format |
 |-------|-------------|--------|
@@ -449,7 +449,7 @@ source unsloth_env/bin/activate
 
 ---
 
-## 5. Data Flow Diagram
+## 13. Data Flow Diagram
 
 ```
 subjects/NPC_specs/{npc_key}.json ──── subjects/reference_docs/{npc_key}_primer.md
@@ -484,7 +484,7 @@ subjects/NPC_specs/{npc_key}.json ──── subjects/reference_docs/{npc_key}
 
 ---
 
-## 6. Config Hierarchy
+## 14. Config Hierarchy
 
 Training configs are intentionally simple now:
 
@@ -511,7 +511,7 @@ lora:
 
 ---
 
-## 7. Docs Integration
+## 15. Docs Integration
 
 Docs is the grounded generation path. The pipeline uses it to:
 
@@ -530,7 +530,7 @@ Docs is the grounded generation path. The pipeline uses it to:
 
 ---
 
-## 8. Documentation
+## 16. Documentation
 
 | Document | Purpose |
 |----------|---------|
