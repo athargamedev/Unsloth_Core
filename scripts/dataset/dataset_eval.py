@@ -17,6 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.dataset.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
+from scripts.ops.preflight import run_preflight
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 DEEPEVAL_TEST = PROJECT_ROOT / "tests" / "evals" / "test_dataset_generation_quality.py"
@@ -89,6 +90,8 @@ def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, jud
     failures: list[dict] = []
     metric_totals: dict[str, dict[str, float]] = {}
     category_totals: dict[str, dict[str, int]] = {}
+    metric_count = 0
+    null_metric_count = 0
     result_identifier = result.get("identifier")
     requested_identifier = None
     if "--identifier" in command:
@@ -105,9 +108,12 @@ def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, jud
             category_totals[category]["passed"] += 1
 
         for metric in case.get("metricsData") or case.get("metrics_data") or []:
+            metric_count += 1
             name = metric.get("name") or "unknown"
             score = metric.get("score")
-            if isinstance(score, (int, float)):
+            if score is None:
+                null_metric_count += 1
+            elif isinstance(score, (int, float)):
                 agg = metric_totals.setdefault(name, {"count": 0, "score_sum": 0.0, "passed": 0})
                 agg["count"] += 1
                 agg["score_sum"] += float(score)
@@ -152,6 +158,10 @@ def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, jud
         "passed": passed,
         "failed": failed,
         "pass_rate": round(passed / total, 4) if total else 0.0,
+        "metric_count": metric_count,
+        "null_metric_count": null_metric_count,
+        "null_metric_rate": round(null_metric_count / metric_count, 4) if metric_count else 0.0,
+        "status": "inconclusive" if metric_count and (null_metric_count / metric_count) > 0.5 else "ok",
         "metrics": metric_summary,
         "categories": category_summary,
         "failures_path": str(dataset_dir(npc_key, technique) / "quality_failures.json"),
@@ -305,6 +315,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
         failures_path = output_dir / "quality_failures.json"
         report_path = output_dir / "quality_report.json"
         summary = {"passed": 0, "total": 0, "pass_rate": 0.0}
+        completed = subprocess.CompletedProcess(args=[], returncode=0)
         try:
             hook_recorder = WorkflowHookRecorder(
                 args.workflow_hooks or run.hook_path,
@@ -315,6 +326,24 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 run_id=run.run_id,
             )
             with hook_recorder.step("deepeval_run", identifier=identifier, judge_model=args.judge_model, cases_per_category=args.cases_per_category):
+                preflight = run_preflight(
+                    phase="dataset_eval",
+                    preset=None,
+                    spec_path=args.spec,
+                    technique=args.technique,
+                    ollama_url=args.ollama_base_url,
+                    auto_unload_ollama=True,
+                    require_gcc=False,
+                )
+                if preflight.stopped_ollama_models:
+                    print(
+                        f"Stopped Ollama model(s) before DeepEval: {', '.join(preflight.stopped_ollama_models)}",
+                        flush=True,
+                    )
+                if preflight.warnings:
+                    for warning in preflight.warnings:
+                        print(f"[preflight] {warning}", flush=True)
+
                 if args.ignore_errors:
                     cmd.append("--ignore-errors")
 
@@ -393,6 +422,11 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
 
             print()
             print(f"DeepEval dataset quality: {summary['passed']}/{summary['total']} passed ({summary['pass_rate']:.0%})")
+            if summary.get("status") == "inconclusive":
+                print(
+                    f"DeepEval status: INCONCLUSIVE ({summary['null_metric_count']}/{summary['metric_count']} metric scores were null)",
+                    flush=True,
+                )
             print(f"Summary:  {summary_path}")
             print(f"Failures: {failures_path}")
             print(f"Report:   {report_path}")
@@ -404,6 +438,8 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
 
     if args.soft_fail:
         return 0
+    if summary.get("status") == "inconclusive" and completed.returncode == 0:
+        return 2
     return completed.returncode
 
 

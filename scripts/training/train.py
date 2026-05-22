@@ -38,6 +38,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
+from scripts.ops.preflight import run_preflight
 from scripts.ops.model_presets import resolve_training_preset
 
 # ── Model-size-aware presets ────────────────────────────────────────────────
@@ -860,6 +861,35 @@ def main():
         # Standard load_config for YAML
         config = load_config(config_path, preset=args.preset, overrides=cli_overrides)
 
+    spec_path = Path(config_path)
+    if not (args.from_spec or spec_path.suffix.lower() == ".json"):
+        spec_path = None
+    elif not spec_path.exists():
+        spec_path = None
+
+    resolved_preset = config.get("preset") or args.preset or "default"
+    preflight = run_preflight(
+        phase="train",
+        preset=resolved_preset,
+        spec_path=spec_path,
+        technique=args.technique or config.get("technique") or "template",
+    )
+    if preflight.errors:
+        for message in preflight.errors:
+            log_error("Preflight error: %s", message)
+        sys.exit(1)
+    if preflight.preset_effective and preflight.preset_effective != resolved_preset:
+        log_warn(
+            "Preflight downgraded preset from %s to %s for this GPU.",
+            resolved_preset,
+            preflight.preset_effective,
+        )
+        args.preset = preflight.preset_effective
+        if args.from_spec:
+            config = get_config_from_spec(config_path, preset=args.preset, overrides=cli_overrides)
+        else:
+            config = load_config(config_path, preset=args.preset, overrides=cli_overrides)
+
     if args.technique:
         config["technique"] = args.technique
         npc_for_path = config.get("npc_key", Path(config_path).stem)
@@ -996,7 +1026,7 @@ def main():
             exports_dir.mkdir(parents=True, exist_ok=True)
 
             # Use the unified export.py in adapter mode (fast, no base model loading)
-            export_script = PROJECT_ROOT / "scripts" / "export.py"
+            export_script = PROJECT_ROOT / "scripts" / "export" / "export.py"
             export_cmd = [sys.executable, str(export_script), str(output_dir)]
             if getattr(args, 'full_merge_export', False):
                 export_cmd.append("--full-merge")

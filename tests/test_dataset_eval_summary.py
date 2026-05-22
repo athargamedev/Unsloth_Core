@@ -97,5 +97,33 @@ def test_dataset_eval_summary_accepts_latest_test_run_payload():
     assert failures == []
 
 
+def test_dataset_eval_summary_marks_null_heavy_results_inconclusive():
+    summary, failures = summarize_deepeval_result(
+        {
+            "identifier": "unit-run",
+            "testCases": [
+                {
+                    "name": "case-1",
+                    "success": False,
+                    "metadata": {"category": "identity"},
+                    "metricsData": [
+                        {"name": "A", "score": None, "success": False},
+                        {"name": "B", "score": None, "success": False},
+                    ],
+                }
+            ],
+        },
+        npc_key="history_guide",
+        technique="template",
+        judge_model="qwen2.5:7b",
+        command=["deepeval", "test", "run"],
+    )
+
+    assert summary["metric_count"] == 2
+    assert summary["null_metric_count"] == 2
+    assert summary["status"] == "inconclusive"
+    assert len(failures) == 2
+
+
 def test_dataset_eval_default_samples_five_cases_per_category():
     assert DEFAULT_PRODUCTION_CASES_PER_CATEGORY == 5
