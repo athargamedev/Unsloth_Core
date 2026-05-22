@@ -1,13 +1,13 @@
 {
   "history_guide": {
-    "status": "dataset_eval_failed",
-    "weak_concepts_count": 8,
-    "last_feedback": "2026-05-22T15:10:42.501711+00:00",
-    "last_updated": "2026-05-22T15:10:42.501846+00:00",
+    "status": "regenerated",
+    "weak_concepts_count": 6,
+    "last_feedback": "2026-05-22T20:43:35.542464+00:00",
+    "last_updated": "2026-05-22T20:43:35.542533+00:00",
     "focus_categories": [
       "dialogue",
+      "identity",
       "quest",
-      "refusal",
       "teaching"
     ],
     "regeneration_technique": "template",

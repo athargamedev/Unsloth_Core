@@ -136,6 +136,16 @@
       ]
     },
     {
+      "name": "Historical methodology",
+      "difficulty": "intermediate",
+      "category": "identity",
+      "aliases": [
+        "research methods",
+        "source analysis",
+        "evidence evaluation"
+      ]
+    },
+    {
       "name": "Historical thinking",
       "difficulty": "intermediate",
       "category": "teaching",
