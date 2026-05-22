@@ -87,6 +87,35 @@ Use `quality_failures.json` as the source of truth for what to regenerate or
 rewrite next. Do not lower metric thresholds or delete failing rows to make a
 run pass.
 
+**Quality gate enforcement:**
+Training is **blocked by default** unless the quality gate has passed against
+the exact sanitized dataset. In `train.py`, the
+`dataset_quality_gate_errors()` function validates:
+
+- The dataset is `train_clean.jsonl`, not raw `train.jsonl`
+- `quality_summary.json` exists with `status: "ok"`
+- Zero failing test cases and zero distribution gaps
+- Content hash matches the hash recorded when the gate ran — any modification
+  invalidates the gate
+
+Pass `--allow-ungated-dataset` to `train.py` (`./ucore train`) to bypass
+this check for development iteration. Production pipeline runs should never
+skip the gate.
+
+**Shared contract constants:**
+The file `scripts/dataset/dataset_contracts.py` centralizes the contract data
+used across generation, validation, and eval stages:
+
+| Constant | Value |
+|----------|-------|
+| `SUPPORTED_DATASET_CATEGORIES` | `("identity", "teaching", "dialogue", "quest", "refusal")` |
+| `MIN_DATASET_EXAMPLES_PER_CATEGORY` | `{"identity": 8, "teaching": 32, "dialogue": 16, "quest": 8, "refusal": 8}` |
+| `VALID_DIFFICULTY_LEVELS` | `("beginner", "intermediate", "advanced")` |
+
+It also provides helpers: `expected_examples_per_category()`,
+`calculate_distribution_gaps()`, `summarize_jsonl_dataset()`, and
+`dataset_contract_from_spec()`.
+
 ### Stage 4: Training
 
 **Entry point:** `./ucore train <spec>`
@@ -193,7 +222,118 @@ Closes the loop between evaluation and dataset generation:
 
 ---
 
-## 2. Subject Spec Format
+## 8. Preflight System
+
+The preflight system (`scripts/ops/preflight.py`) runs before expensive pipeline
+stages (training, dataset-eval) to check the local environment and apply safe
+defaults.
+
+### Checks Performed
+
+1. **GPU Memory Inventory**: Queries `nvidia-smi` for free and total VRAM in GiB.
+2. **Auto-Downgrade**: If `--preset fast-3b` is requested but total VRAM is
+   below 10 GB, automatically downgrades to `safe-any` (the
+   `DEFAULT_FALLBACK_PRESET`).
+3. **Ollama Auto-Unload**: Detects running Ollama models and stops them to free
+   VRAM (can be disabled with `--no-auto-unload-ollama`).
+4. **GCC Toolchain Check**: Verifies `gcc` is available in PATH before training
+   (required for Triton compilation).
+
+### PreflightReport
+
+Returned as a `PreflightReport` dataclass with:
+- `status`: `"ok"`, `"degraded"` (warnings), or `"blocked"` (errors)
+- `preset_requested` / `preset_effective`: What was asked for vs. what will run
+- `total_vram_gb` / `free_vram_gb`: GPU memory snapshot
+- `gcc_ok` / `gcc_path`: GCC availability
+- `running_ollama_models` / `stopped_ollama_models`: Ollama state changes
+- `recommendation`: Structured training location advice (local vs. remote Colab)
+
+### CLI Usage
+
+```bash
+# Standalone preflight check
+python scripts/ops/preflight.py --phase train --preset fast-3b --spec subjects/NPC_specs/history_guide.json
+
+# JSON output for programmatic use
+python scripts/ops/preflight.py --phase train --preset fast-3b --json
+
+# Skip Ollama unload or GCC check
+python scripts/ops/preflight.py --phase train --no-auto-unload-ollama --no-gcc-check
+```
+
+---
+
+## 9. Ollama Model Presets
+
+Ollama model presets provide named aliases for generation and judging models,
+resolved from `configs/ollama-model-presets.yaml`. Explicit CLI model names
+always win over presets.
+
+### Preset File
+
+```yaml
+# configs/ollama-model-presets.yaml
+default_generation: generate-qwen25
+default_judge: judge-qwen3-exp
+
+generation:
+  generate-qwen25: qwen2.5:7b
+  generate-llama31: llama3.1:8b
+  generate-qwen35-exp: qwen3.5:latest
+  generate-qwen3-exp: qwen3:latest
+
+judge:
+  judge-qwen25: qwen2.5:7b
+  judge-llama31-exp: llama3.1:8b
+  judge-qwen35-exp: qwen3.5:latest
+  judge-qwen3-exp: qwen3:latest
+```
+
+### Resolution Logic
+
+`scripts/ops/ollama_model_presets.py` resolves the effective model via
+`resolve_ollama_model()` with this priority:
+
+1. **Explicit CLI model** — `--model qwen3:latest` wins unconditionally
+2. **Explicit CLI preset** — `--preset judge-qwen3-exp` maps through the preset
+   file
+3. **Role-specific default preset** — `default_generation` / `default_judge`
+   from YAML
+4. **Safety fallback** — `qwen3:latest` for judge, `qwen2.5:7b` for generation
+
+### Generation Presets
+
+| Preset Name | Model | Use Case |
+|-------------|-------|----------|
+| `generate-qwen25` | `qwen2.5:7b` | Default generation (balanced speed/quality) |
+| `generate-llama31` | `llama3.1:8b` | Alternative generation model |
+| `generate-qwen35-exp` | `qwen3.5:latest` | Experimental — latest Qwen 3.5 |
+| `generate-qwen3-exp` | `qwen3:latest` | Qwen 3 (also used as judge default) |
+
+### Judge Presets
+
+| Preset Name | Model | Use Case |
+|-------------|-------|----------|
+| `judge-qwen25` | `qwen2.5:7b` | Alternative judge |
+| `judge-llama31-exp` | `llama3.1:8b` | Experimental judge |
+| `judge-qwen35-exp` | `qwen3.5:latest` | Experimental — latest Qwen 3.5 |
+| `judge-qwen3-exp` | `qwen3:latest` | **Default judge** (dataset-eval) |
+
+### Default Judge
+
+The default judge for dataset-eval is `judge-qwen3-exp` → `qwen3:latest`
+(8.2B params, Q4_K_M, ~4.9 GB). This is configured at three levels (in
+priority order):
+
+1. CLI flag: `--judge-model qwen3:latest`
+2. Env var: `DEEPEVAL_OLLAMA_MODEL` (injected by `dataset_eval.py`)
+3. Code default: YAML `default_judge` → `judge-qwen3-exp` → `qwen3:latest`
+   in `ollama_model_presets.py`
+
+---
+
+## 10. Subject Spec Format
 
 Located in `subjects/NPC_specs/*.json`. Structure (using history_guide as example):
 

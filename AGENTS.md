@@ -22,7 +22,7 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 | **Dashboard Auth** | `scripts/ops/setup_admin_key.py` | Bootstrap script to generate the initial admin API key (stores bcrypt hash in `api_keys` table, key passed via stdin not env vars) |
 | **Dashboard Enhancement** | `src/components/NotificationCenter.tsx`, `src/components/GlobalSearch.tsx`, `src/components/LoadingSpinner.tsx`, `src/components/EmptyState.tsx` | Toast notification system (bell icon, auto-dismiss, type-colored), Ctrl+K global search across NPCs/datasets/runs/exports/jobs, loading spinner, empty state components |
 | **Datasets** | `subjects/datasets/{npc}/{technique}/` | Generated training/validation data (JSONL). `template/` = default dataset directory. |
-| **DeepEval Dataset Gate** | `tests/evals/`, `scripts/dataset/dataset_eval.py` | Local dataset-quality evals using the `qwen3:latest` Ollama judge. |
+| **DeepEval Dataset Gate** | `tests/evals/`, `scripts/dataset/dataset_eval.py` | Local dataset-quality evals using the `qwen3:latest` Ollama judge (configured via `configs/ollama-model-presets.yaml`). |
 | **Evaluations** | `eval/reports/`, `eval/results/feedback/` | HTML/markdown eval reports, structured per-concept feedback JSON. |
 | **Feedback Gaps** | `eval/results/gaps/` | Knowledge gap analysis JSON reports from feedback loop. |
 | **Frontend** | `frontend_control/` | Monitoring dashboard and React controls. |
@@ -64,6 +64,7 @@ Transforms a subject spec into a playable NPC:
     - Metrics check persona/category fit and training usefulness/specificity.
     - Outputs: `quality_summary.json` and `quality_failures.json` beside the dataset.
     - Treat `quality_failures.json` as the source of truth for what to regenerate or rewrite. Do not lower thresholds or delete rows to force a pass.
+    - Training is **blocked by default** unless a passing `quality_summary.json` exists for the exact sanitized dataset. Pass `--allow-ungated-dataset` to train.py to bypass this check.
 
 4.  **Training**: `scripts/training/train.py`
     - Unsloth SFTTrainer with LoRA. Config hierarchy: Base YAML < Preset < CLI.
@@ -99,6 +100,78 @@ Transforms a subject spec into a playable NPC:
 |----------|-------|-----|
 | `training_density` | Not enough training examples | Regenerate with `--concept-focus` |
 | `knowledge_gap` | Missing reference material | Add reference docs + re-index |
+
+## 🛡️ Quality Gate System
+
+The pre-training dataset quality gate prevents training unless the DeepEval suite has passed against the exact sanitized dataset file.
+
+### How It Works
+
+1. After generation and sanitization, `./ucore dataset-eval` runs DeepEval with the local Ollama judge and writes `quality_summary.json` and `quality_failures.json` beside the dataset.
+2. `train.py` calls `dataset_quality_gate_errors()` at startup:
+   - Verifies the dataset is `train_clean.jsonl` (not raw `train.jsonl`)
+   - Checks `quality_summary.json` exists and has `status: "ok"`
+   - Confirms zero failing test cases and zero distribution gaps
+   - Compares the current dataset content hash against the hash recorded when the gate ran — any modification invalidates the gate
+3. If any check fails, training exits with an error and a clear message.
+
+### Opt-Out
+
+Pass `--allow-ungated-dataset` to `train.py` (or to `./ucore train`) to bypass the gate entirely. This is intended for development iteration, not production pipeline runs.
+
+### Shared Constants
+
+The file `scripts/dataset/dataset_contracts.py` centralizes the contract data shared across generation, validation, and eval:
+
+| Constant | Value |
+|----------|-------|
+| `SUPPORTED_DATASET_CATEGORIES` | `("identity", "teaching", "dialogue", "quest", "refusal")` |
+| `MIN_DATASET_EXAMPLES_PER_CATEGORY` | `{"identity": 8, "teaching": 32, "dialogue": 16, "quest": 8, "refusal": 8}` |
+| `VALID_DIFFICULTY_LEVELS` | `("beginner", "intermediate", "advanced")` |
+
+It also provides helpers: `expected_examples_per_category()`, `calculate_distribution_gaps()`, `summarize_jsonl_dataset()`, and `dataset_contract_from_spec()`.
+
+### Related CLI Flags
+
+| Flag | Effect |
+|------|--------|
+| `--allow-ungated-dataset` | Skip quality gate and train regardless |
+| `--skip-dataset-eval` | Skip running DeepEval before feedback-loop retraining |
+| `--deepeval-soft-fail` | Run DeepEval but continue even on failures (writes artifacts) |
+
+## ✅ Preflight System
+
+The preflight system (`scripts/ops/preflight.py`) runs before expensive pipeline stages (training, dataset-eval) to check the local environment and apply safe defaults.
+
+### Checks Performed
+
+1. **GPU Memory Inventory**: Queries `nvidia-smi` for free and total VRAM in GiB.
+2. **Auto-Downgrade**: If `--preset fast-3b` is requested but total VRAM is below 10 GB, automatically downgrades to `safe-any` (the `DEFAULT_FALLBACK_PRESET`).
+3. **Ollama Auto-Unload**: Detects running Ollama models and stops them to free VRAM (can be disabled with `--no-auto-unload-ollama`).
+4. **GCC Toolchain Check**: Verifies `gcc` is available in PATH before training (Triton compilation requirement).
+
+### Report Structure
+
+The preflight returns a `PreflightReport` dataclass with:
+- `status`: `"ok"`, `"degraded"` (warnings), or `"blocked"` (errors)
+- `preset_requested` / `preset_effective`: What was asked for vs. what will run
+- `total_vram_gb` / `free_vram_gb`: GPU memory snapshot
+- `gcc_ok` / `gcc_path`: GCC availability
+- `running_ollama_models` / `stopped_ollama_models`: Ollama state changes
+- `recommendation`: Structured training location advice (local vs. remote Colab)
+
+### CLI Usage
+
+```bash
+# Standalone preflight check
+python scripts/ops/preflight.py --phase train --preset fast-3b --spec subjects/NPC_specs/history_guide.json
+
+# JSON output for programmatic use
+python scripts/ops/preflight.py --phase train --preset fast-3b --json
+
+# Skip Ollama unload or GCC check
+python scripts/ops/preflight.py --phase train --no-auto-unload-ollama --no-gcc-check
+```
 
 ## 🔍 Workflow Hook System
 
@@ -198,14 +271,15 @@ A local Supabase instance can track:
 ## 🤖 AI Agent Best Practices
 - **Always use `ucore`**: Prefer the unified CLI over direct script calls.
 - **Reference-doc contract**: Use `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md` and `subjects/reference_docs/README.md`. A primer must have one H1, at least 5 H2 sections, at least 20 concrete bullets, at least 250 words, and safety/refusal/boundary/misconception notes.
-- **Dataset gate before training**: Run `./ucore dataset-eval <spec> --technique <technique>` after sanitize and before SFT. Uses local Ollama `qwen3:latest` as the judge (configured in `tests/evals/metrics.py` and `scripts/dataset/dataset_eval.py`).
+- **Dataset gate before training**: Run `./ucore dataset-eval <spec> --technique <technique>` after sanitize and before SFT. Training is **blocked by default** unless a passing `quality_summary.json` exists for the exact sanitized dataset. Pass `--allow-ungated-dataset` to train.py to bypass. Uses local Ollama `qwen3:latest` as the judge (configured in `configs/ollama-model-presets.yaml` and `scripts/ops/ollama_model_presets.py`).
 - **DeepEval artifacts**: `.deepeval/` is local runtime state and ignored. Dataset gate outputs `quality_summary.json` and `quality_failures.json` are regenerable and ignored.
 - **Export mode**: `ucore export <npc_key>` defaults to adapter-only mode. Use `--full-merge` for standalone merged GGUFs.
 - **Evaluation**: Use `./ucore evaluate --base-model <base.gguf>` to evaluate adapter GGUFs — no full-merge needed. Uses `llama-server --lora`, same mechanism as LLMUnity runtime. Base GGUF at `Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf`.
 - **Preset Selection**:
   - `--preset smoke` for debugging/testing.
   - `--preset fast-3b` for standard NPC training (tuned for RTX 3060 6GB).
-  - `--preset safe-any` if CUDA OOM occurs. Use this if Ollama is running in the background, or manually unload Ollama first with `curl http://localhost:11434/api/generate -d '{"model": "llama3.1:latest", "keep_alive": 0}'`.
+  - `--preset safe-any` if CUDA OOM occurs, or let the preflight system auto-downgrade from fast-3b to safe-any when VRAM < 10 GB.
+  - The preflight system auto-unloads Ollama models before training to free VRAM (disable with `--no-auto-unload-ollama`).
   - If Triton fails before real training with `CudaUtils`, `gcc`, or `as` errors, use the PATH-safe compiler wrapper at `.toolchain/gcc-with-path.sh` instead of relying on ambient shell PATH.
   - `--wandb` for W&B experiment tracking.
 - **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. `llama-server` (inference with `--lora` support), `llama-quantize` (fast local quantization), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary.
@@ -322,7 +396,7 @@ Set via `/etc/systemd/system/ollama.service.d/override.conf`:
 The judge is configured at three levels (in priority order):
 1. CLI flag: `--judge-model qwen3:latest` (passed by `dataset_eval.py`)
 2. Env var: `DEEPEVAL_OLLAMA_MODEL` (injected by `dataset_eval.py` before `deepeval test run`)
-3. Code default: `"qwen3:latest"` in `tests/evals/metrics.py`
+3. Code default: `default_judge` preset from `configs/ollama-model-presets.yaml` → `judge-qwen3-exp` → `qwen3:latest` (resolved by `scripts/ops/ollama_model_presets.py`)
 
 ### Restarting Ollama with Tuning
 ```bash
@@ -352,6 +426,65 @@ Ollama matches LM Studio's offloading capability (both use llama.cpp under the h
 - No second service or port needed
 - Deeper DeepEval integration via native `OllamaModel` class
 
+## 🎯 Ollama Model Presets
+
+Ollama model presets provide named aliases for generation and judging models, resolved from `configs/ollama-model-presets.yaml`. Explicit CLI model names always win over presets.
+
+### Preset File
+
+```yaml
+# configs/ollama-model-presets.yaml
+default_generation: generate-qwen25
+default_judge: judge-qwen3-exp
+
+generation:
+  generate-qwen25: qwen2.5:7b
+  generate-llama31: llama3.1:8b
+  generate-qwen35-exp: qwen3.5:latest
+  generate-qwen3-exp: qwen3:latest
+
+judge:
+  judge-qwen25: qwen2.5:7b
+  judge-llama31-exp: llama3.1:8b
+  judge-qwen35-exp: qwen3.5:latest
+  judge-qwen3-exp: qwen3:latest
+```
+
+### Resolution Logic
+
+`scripts/ops/ollama_model_presets.py` resolves the effective model via `resolve_ollama_model()` with this priority:
+
+1. **Explicit CLI model** — `--model qwen3:latest` wins unconditionally
+2. **Explicit CLI preset** — `--preset judge-qwen3-exp` maps through the preset file
+3. **Role-specific default preset** — `default_generation` / `default_judge` from YAML
+4. **Safety fallback** — `qwen3:latest` for judge, `qwen2.5:7b` for generation
+
+### Generation Presets
+
+| Preset Name | Model | Use Case |
+|-------------|-------|----------|
+| `generate-qwen25` | `qwen2.5:7b` | Default generation (balanced speed/quality) |
+| `generate-llama31` | `llama3.1:8b` | Alternative generation model |
+| `generate-qwen35-exp` | `qwen3.5:latest` | Experimental — latest Qwen 3.5 |
+| `generate-qwen3-exp` | `qwen3:latest` | Qwen 3 (used as judge default) |
+
+### Judge Presets
+
+| Preset Name | Model | Use Case |
+|-------------|-------|----------|
+| `judge-qwen25` | `qwen2.5:7b` | Alternative judge |
+| `judge-llama31-exp` | `llama3.1:8b` | Experimental judge |
+| `judge-qwen35-exp` | `qwen3.5:latest` | Experimental — latest Qwen 3.5 |
+| `judge-qwen3-exp` | `qwen3:latest` | **Default judge** (dataset-eval) — resolves to `qwen3:latest` |
+
+### Default Judge
+
+The default judge for dataset-eval is `judge-qwen3-exp` → `qwen3:latest` (8.2B params, Q4_K_M, ~4.9 GB). This is configured at three levels (in priority order):
+
+1. CLI flag: `--judge-model qwen3:latest` (passed by `dataset_eval.py`)
+2. Env var: `DEEPEVAL_OLLAMA_MODEL` (injected by `dataset_eval.py` before `deepeval test run`)
+3. Code default: `default_judge` preset from `configs/ollama-model-presets.yaml` → `judge-qwen3-exp` → `qwen3:latest` (resolved by `scripts/ops/ollama_model_presets.py`)
+
 ## 📊 W&B Integration
 Weights & Biases tracks every training run with:
 - **Config snapshot**: Full frozen training config logged as a run file.
@@ -378,8 +511,6 @@ Weights & Biases tracks every training run with:
 |-----|-----|---------|---------------------|
 | History Guide | `history_guide` | World history | Spec, reference doc, template dataset, exported LoRA GGUFs |
 | Chef Assistant | `chef_assistant` | Culinary arts | Spec, reference doc, template dataset, exported LoRA GGUFs |
-| Astronomy Guide | `astronomy_guide` | Astronomy and space science | Spec, reference doc, template dataset, exported LoRA GGUF |
-| Fitness Coach | `fitness_coach` | Fitness, exercise science, and nutrition | Spec, reference doc, template dataset, exported LoRA GGUF |
 
 Current local exports are adapter GGUFs under `exports/{npc_key}/`. Unity runtime should load the shared llama3.2 3B base model once and swap LoRA adapters plus the NPC system prompt while dialoguing with the local Supabase container.
 
