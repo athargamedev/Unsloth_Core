@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
-import type { RouterDependencies, JobRegistrySnapshot } from "../types";
+import type { RouterDependencies } from "../types";
 import { getJobRegistrySnapshot } from "../services/registry";
+import { normalizeJobMetadata } from "../services/job-metadata";
 import { readJobLogs } from "../lib/read-job-logs";
 
 /**
@@ -25,7 +26,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
   const refreshJobsCacheIfStale = () => {
     const now = Date.now();
     if (jobsCache && now - jobsCache.timestamp < CACHE_TTL_MS) return jobsCache.jobs;
-    jobsCache = { jobs: registry.jobs, timestamp: now };
+    jobsCache = { jobs: registry.jobs.map((job) => normalizeJobMetadata(job)), timestamp: now };
     return jobsCache.jobs;
   };
 
@@ -42,12 +43,9 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
   // ── GET /api/jobs/state ────────────────────────────────────────────────
   app.get("/api/jobs/state", (_req: Request, res: Response) => {
-    const jobs = refreshJobsCacheIfStale();
-    res.json({
-      jobs,
-      workflowCount: registry.workflows.length,
-      autoSyncExternal: registry.autoSyncExternal !== false,
-    } satisfies JobRegistrySnapshot);
+    const snapshot = getJobRegistrySnapshot(registry);
+    jobsCache = { jobs: snapshot.jobs, timestamp: Date.now() };
+    res.json(snapshot);
   });
 
   // ── GET /api/jobs/:id/logs ─────────────────────────────────────────────

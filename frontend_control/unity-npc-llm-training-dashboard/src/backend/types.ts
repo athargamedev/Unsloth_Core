@@ -12,6 +12,11 @@ export interface Stage {
   logs: string[];
 }
 
+export interface JobOllamaUnloadTarget {
+  model: string;
+  url: string;
+}
+
 export interface Job {
   id: string;
   name: string;
@@ -35,6 +40,8 @@ export interface Job {
   error?: string;
   wandbUrl?: string | null;
   runId?: string | null;
+  resolvedPreset?: string | null;
+  ollamaUnloadTarget?: JobOllamaUnloadTarget | null;
 }
 
 export interface JobRegistrySnapshot {
@@ -155,7 +162,7 @@ export interface RouterDependencies {
   unloadGemmaModel: () => void;
   launchJob?: (job: Job) => Job;
   stopJob?: (jobId: string) => boolean;
-  readJobLogs?: (jobId: string, maxLines?: number) => string[];
+  readJobLogs?: (jobId: string, maxLines?: number) => Promise<string[]>;
 }
 
 // ── Pipeline Types ─────────────────────────────────────────────────────────

@@ -61,7 +61,7 @@ export const OperationsMatrix = ({
 }: OperationsMatrixProps) => {
   const selectedJob = selectedJobId ? jobs.find((j) => j.id === selectedJobId) : null;
 
-  const getJobDetails = (job: Job) => {
+  function getJobMetadata(job: Job) {
     const args = job.command?.slice(1).join(' ') || '';
     const details: string[] = [];
     const npcKey =
@@ -71,9 +71,11 @@ export const OperationsMatrix = ({
       args.match(/outputs\/([A-Za-z0-9_\-]+)\//)?.[1] ||
       args.match(/exports\/([A-Za-z0-9_\-]+)\//)?.[1] ||
       '';
-    const preset = args.match(/--preset\s+([^\s]+)/)?.[1];
-    const technique = args.match(/--technique\s+([^\s]+)/)?.[1];
-    const model = args.match(/--model\s+([^\s]+)/)?.[1] || args.match(/--base-model\s+([^\s]+)/)?.[1];
+    const preset = job.resolvedPreset || args.match(/--preset\s+([^\s]+)/)?.[1] || '';
+    const technique = args.match(/--technique\s+([^\s]+)/)?.[1] || '';
+    const model = args.match(/--model\s+([^\s]+)/)?.[1] || args.match(/--base-model\s+([^\s]+)/)?.[1] || '';
+    const unloadModel = job.ollamaUnloadTarget?.model || (model && !model.includes('/') && !model.endsWith('.gguf') ? model : '');
+    const unloadUrl = job.ollamaUnloadTarget?.url || args.match(/--(?:url|base-url|ollama-base-url|host)\s+([^\s]+)/)?.[1] || '';
 
     if (job.commandId) details.push(job.commandId);
     if (npcKey) details.push(npcKey);
@@ -81,13 +83,20 @@ export const OperationsMatrix = ({
     if (technique) details.push(`technique:${technique}`);
     if (model) details.push(`model:${model.split('/').pop()}`);
 
-    return details.join(' · ');
+    return {
+      details: details.join(' · '),
+      preset,
+      unloadModel,
+      unloadUrl,
+    };
   };
 
   const getActiveStageName = (job: Job) =>
     job.stages.find((stage) => stage.status === 'running')?.name ||
     job.stages.find((stage) => stage.status === 'failed' || stage.status === 'stopped')?.name ||
     '';
+
+  const selectedJobMetadata = selectedJob ? getJobMetadata(selectedJob) : null;
 
   const latestWatchRun = watchLogs.latestRun;
   const latestWatchAlert = latestWatchRun?.alerts?.[0] ?? null;
@@ -272,9 +281,24 @@ export const OperationsMatrix = ({
                     <td className="p-3 font-bold text-ink-bright truncate group-hover:text-accent transition-colors">
                       <div className="min-w-0">
                         <div className="truncate">{job.name}</div>
-                        {getJobDetails(job) && (
+                        {getJobMetadata(job).details && (
                           <div className="text-[9px] text-ink/45 truncate mt-0.5 font-mono">
-                            {getJobDetails(job)}
+                            {getJobMetadata(job).details}
+                          </div>
+                        )}
+                        {(getJobMetadata(job).preset || getJobMetadata(job).unloadModel) && (
+                          <div className="mt-1 flex flex-wrap gap-1.5">
+                            {getJobMetadata(job).preset && (
+                              <span className="px-1.5 py-0.5 rounded border border-accent/20 bg-accent/10 text-accent text-[8px] font-bold uppercase tracking-wider">
+                                preset: {getJobMetadata(job).preset}
+                              </span>
+                            )}
+                            {getJobMetadata(job).unloadModel && (
+                              <span className="px-1.5 py-0.5 rounded border border-warning/20 bg-warning/10 text-warning text-[8px] font-bold uppercase tracking-wider">
+                                ollama unload: {getJobMetadata(job).unloadModel}
+                                {getJobMetadata(job).unloadUrl ? ` @ ${getJobMetadata(job).unloadUrl}` : ''}
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -382,9 +406,25 @@ export const OperationsMatrix = ({
                   </div>
                 </div>
               )}
+              {selectedJobMetadata && (selectedJobMetadata.preset || selectedJobMetadata.unloadModel) && (
+                <div className="mb-3 p-3 bg-panel/60 border border-line rounded-sm flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <span className="text-ink/45">Job metadata</span>
+                  {selectedJobMetadata.preset && (
+                    <span className="px-2 py-1 rounded border border-accent/20 bg-accent/10 text-accent">
+                      preset: {selectedJobMetadata.preset}
+                    </span>
+                  )}
+                  {selectedJobMetadata.unloadModel && (
+                    <span className="px-2 py-1 rounded border border-warning/20 bg-warning/10 text-warning break-all">
+                      ollama unload: {selectedJobMetadata.unloadModel}
+                      {selectedJobMetadata.unloadUrl ? ` @ ${selectedJobMetadata.unloadUrl}` : ''}
+                    </span>
+                  )}
+                </div>
+              )}
               <WorkflowVisualizer stages={selectedJob.stages} />
               <div className="flex gap-4 mt-2">
-                {selectedJob.stages.find(s => s.status === 'running' || s.status === 'completed' && s.logs.length > 0) && (
+                {selectedJob.stages.find(s => s.status === 'running' || (s.status === 'completed' && s.logs.length > 0)) && (
                   <div className="flex-1 p-2 bg-black/20 rounded border border-line/30 text-[10px] mono-label">
                     <span className="text-accent underline font-bold mb-1 block">Active Stage Logs:</span>
                     {selectedJob.stages.find(s => s.status === 'running')?.logs.map((l, i) => <div key={i} className="text-ink/60">• {l}</div>) ||

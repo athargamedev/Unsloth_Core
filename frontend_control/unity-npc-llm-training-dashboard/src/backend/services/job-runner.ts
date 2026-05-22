@@ -3,6 +3,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import type { Job, Registry, Stage, JobStatus } from "../types";
+import { normalizeJobMetadata } from "./job-metadata";
 import { computeProgressFromStages, deriveStageStatuses } from "../../../progressTruth";
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -170,6 +171,7 @@ export function launchJob(job: Job, deps: RunnerDeps): Job {
   } = deps;
 
   updateStagesFromTruth(job);
+  normalizeJobMetadata(job);
   registry.logs.length = 0;
   registry.jobs.unshift(job);
   invalidateJobsCache();

@@ -3,6 +3,7 @@ import crypto from "crypto";
 import path from "path";
 import { execSync, type ChildProcessWithoutNullStreams } from "child_process";
 import type { Registry, Job, JobRegistrySnapshot } from "../types";
+import { normalizeJobMetadata } from "./job-metadata";
 import { runningProcesses } from "./job-runner";
 
 // ── Constants (injectable) ─────────────────────────────────────────────────
@@ -187,7 +188,7 @@ export function globalLog(registry: Registry, line: string): void {
  */
 export function getJobRegistrySnapshot(registry: Registry): JobRegistrySnapshot {
   return {
-    jobs: registry.jobs,
+    jobs: registry.jobs.map((job) => normalizeJobMetadata(job)),
     workflowCount: registry.workflows.length,
     autoSyncExternal: registry.autoSyncExternal !== false,
   };
@@ -250,6 +251,7 @@ function ensureExternalJob(
     exitCode: 0,
     terminalReason: "external_import",
   };
+  normalizeJobMetadata(job);
 
   registry.jobs.unshift(job);
   return true;
@@ -485,6 +487,7 @@ export function discoverActiveExternalProcesses(
     const id = `ext_proc_${pid}`;
     const existing = registry.jobs.find((job) => job.id === id);
     if (existing) {
+      normalizeJobMetadata(existing);
       let needsUpdate = false;
       if (existing.status !== "running") {
         existing.status = "running";
@@ -527,6 +530,7 @@ export function discoverActiveExternalProcesses(
       logs: [`[EXTERNAL][PID ${pid}] discovered active process`, args],
       terminalReason: "external_detected",
     };
+    normalizeJobMetadata(job);
     registry.jobs.unshift(job);
     changed = true;
   }

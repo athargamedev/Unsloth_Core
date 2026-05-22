@@ -6,6 +6,11 @@ export interface Stage {
   logs: string[];
 }
 
+export interface JobOllamaUnloadTarget {
+  model: string;
+  url: string;
+}
+
 export interface Job {
   id: string;
   name: string;
@@ -22,6 +27,8 @@ export interface Job {
   logs?: string[];
   npcKey?: string;
   wandbUrl?: string | null;
+  resolvedPreset?: string | null;
+  ollamaUnloadTarget?: JobOllamaUnloadTarget | null;
 }
 
 export interface JobsSnapshot {
