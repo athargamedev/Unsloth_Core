@@ -8,9 +8,9 @@
   "gguf_files": [
     "chef_assistant-lora-f16.gguf"
   ],
-  "exported_at": "2026-05-22T03:54:33.781663+00:00",
+  "exported_at": "2026-05-22T04:16:33.103507+00:00",
   "npc_name": "ChefAssistant",
   "checksums": {
-    "chef_assistant-lora-f16.gguf": "sha256:a79a663bb84f66765ecfe3d49f10e64bbb86080987337f8261c0aa29bf73727c"
+    "chef_assistant-lora-f16.gguf": "sha256:a5bd5a2b51a3a472ca51fbc72e7ced1fcf7e8c23450b8cbc932abf6e1f882a71"
   }
 }
