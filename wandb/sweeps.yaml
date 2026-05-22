@@ -1,0 +1,47 @@
+# W&B sweep for the first simple-dataset tuning pass.
+# Focus: history_guide only, using the stable local 3B pipeline.
+# Run from the repo root after activating unsloth_env.
+
+project: unsloth-core
+entity: andreabenathar-twl-games
+name: history-guide-fast3b-sweep
+method: random
+metric:
+  name: train/final_loss
+  goal: minimize
+parameters:
+  learning_rate:
+    distribution: log_uniform_values
+    min: 0.00005
+    max: 0.0002
+  lora_r:
+    values: [8, 16, 32]
+  lora_alpha:
+    values: [16, 32, 64]
+  num_epochs:
+    values: [2, 3]
+  weight_decay:
+    values: [0.0, 0.01]
+  warmup_steps:
+    values: [5, 10]
+command:
+  - ./ucore
+  - train
+  - subjects/NPC_specs/history_guide.json
+  - --technique
+  - ollama
+  - --preset
+  - fast-3b
+  - --wandb
+  - --lr
+  - ${learning_rate}
+  - --lora-r
+  - ${lora_r}
+  - --lora-alpha
+  - ${lora_alpha}
+  - --epochs
+  - ${num_epochs}
+  - --weight-decay
+  - ${weight_decay}
+  - --warmup
+  - ${warmup_steps}

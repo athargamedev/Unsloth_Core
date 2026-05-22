@@ -187,6 +187,12 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
     )
     if run and getattr(run, "url", None):
         print(f"  [wandb] Run URL: {run.url}")
+    define_metric = getattr(wandb, "define_metric", None)
+    if callable(define_metric):
+        try:
+            define_metric("train/final_loss", summary="min")
+        except Exception:
+            pass
     return run
 
 
@@ -726,10 +732,21 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                 print(f"  [wandb] Logged run: {wandb_url}")
                 if wandb_module is not None and getattr(wandb_module, "run", None) is not None:
                     try:
+                        final_loss = metrics.get("train_loss", 0.0)
+                        num_examples = len(dataset)
                         wandb_module.run.summary["train/wandb_url"] = wandb_url
                         wandb_module.run.summary["train/output_dir"] = output_dir
-                        wandb_module.run.summary["train/final_loss"] = metrics.get("train_loss", 0.0)
-                        wandb_module.run.summary["train/num_examples"] = len(dataset)
+                        wandb_module.run.summary["train/final_loss"] = final_loss
+                        wandb_module.run.summary["train/num_examples"] = num_examples
+                        try:
+                            wandb_module.log(
+                                {
+                                    "train/final_loss": final_loss,
+                                    "train/num_examples": num_examples,
+                                }
+                            )
+                        except Exception:
+                            pass
                     except Exception:
                         pass
         metrics["wandb_url"] = wandb_url
