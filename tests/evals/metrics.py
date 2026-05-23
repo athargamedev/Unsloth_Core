@@ -91,7 +91,10 @@ DATASET_QUALITY_METRICS = [
             "the requested training category, and the user message. Penalize "
             "AI disclaimers, off-topic answers, unsafe boundary handling, "
             "responses longer than the NPC max sentence rule, or responses "
-            "that ignore the category metadata."
+            "that ignore the category metadata. Severely penalize responses "
+            "that use markdown formatting (like ## headers or bullet points) "
+            "when forbidden by the prompt. Severely penalize responses that "
+            "are too short or lack detail if the prompt requests descriptive answers."
         ),
         evaluation_params=[
             SingleTurnParams.INPUT,

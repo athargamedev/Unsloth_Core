@@ -1,0 +1,989 @@
+[
+  {
+    "test_name": "chef_assistant:teaching:2",
+    "input": "NPC: chef_assistant\nCategory: teaching\nConcept: knife skills\nDifficulty: beginner\nUser message: How do experts think about knife skills?",
+    "actual_output": "knife skills matters because Chopping an onion cleanly with a sharp chef's knife; one clear example is how it changes the outcome.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "teaching",
+      "concept": "knife skills",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 2
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.4,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response is overly brief and lacks sufficient detail to address the user's question about how experts think about knife skills. It fails to meet the descriptive requirements of the prompt and does not align with the practical, concise, and informative tone expected from the ChefAssistant NPC. Additionally, it does not tie the explanation back to the core concepts of knife skills, such as safety, technique, or the impact on cooking outcomes.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:teaching:2",
+    "input": "NPC: chef_assistant\nCategory: teaching\nConcept: knife skills\nDifficulty: beginner\nUser message: How do experts think about knife skills?",
+    "actual_output": "knife skills matters because Chopping an onion cleanly with a sharp chef's knife; one clear example is how it changes the outcome.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "teaching",
+      "concept": "knife skills",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 2
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output provides a specific example related to knife skills, demonstrating understanding of the concept by linking it to a practical outcome (cleanly chopping an onion). However, it lacks deeper actionable information or alignment with the context's emphasis on safety, technique, and practical steps. The response is somewhat generic and does not fully reflect the detailed guidelines provided in the Context.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:teaching:3",
+    "input": "NPC: chef_assistant\nCategory: teaching\nConcept: ingredient science\nDifficulty: intermediate\nUser message: Give me a metaphor for ingredient science.",
+    "actual_output": "ingredient science works this way in practice: Ingredient science in cooking fundamentals, which you can see in a specific case.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "teaching",
+      "concept": "ingredient science",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 3
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.3,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response fails to provide a metaphor for ingredient science, which was the explicit request in the user message. It is overly vague and does not meet the descriptive requirements of the prompt. Additionally, it does not align with the NPC system prompt's emphasis on practical, short, and clear explanations. The response also lacks the specific focus on ingredient science concepts like flavor, texture, or chemical reactions that the teaching category implies.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:teaching:3",
+    "input": "NPC: chef_assistant\nCategory: teaching\nConcept: ingredient science\nDifficulty: intermediate\nUser message: Give me a metaphor for ingredient science.",
+    "actual_output": "ingredient science works this way in practice: Ingredient science in cooking fundamentals, which you can see in a specific case.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "teaching",
+      "concept": "ingredient science",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 3
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.3,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output lacks actionable, domain-specific details about ingredient science and instead provides a vague statement about cooking fundamentals. It does not demonstrate progress toward understanding the target concept. The Input asked for a metaphor, but the Output fails to provide one, missing the opportunity for a concrete, supervised learning example. The Context emphasizes practical, short, and specific guidance, which the Output does not align with.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:teaching:4",
+    "input": "NPC: chef_assistant\nCategory: teaching\nConcept: food safety\nDifficulty: beginner\nUser message: What is the difference between food safety and core kitchen flow?",
+    "actual_output": "Compare them like this: food safety means Keeping raw chicken separate from salad ingredients, and core kitchen flow means Core kitchen flow in cooking fundamentals in a concrete case.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "teaching",
+      "concept": "food safety",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 4
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response provides a direct comparison between food safety and core kitchen flow, aligning with the teaching category and the user's question. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements. The explanation is also somewhat vague and does not fully tie the concepts back to practical examples or the context provided in the reference doc.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:dialogue:4",
+    "input": "NPC: history_guide\nCategory: dialogue\nConcept: historical methodology\nDifficulty: beginner\nUser message: Can you give me another example? I learn by examples.",
+    "actual_output": "Use historical methodology by matching it to one specific case, like Primary sources, eyewitness accounts, and uncertainty.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "dialogue",
+      "concept": "historical methodology",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 4
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output provides a concrete example of historical methodology by referencing primary sources and eyewitness accounts, which aligns with the test case's focus on historical methodology for a beginner. However, it lacks specific examples or detailed explanations that would demonstrate clear progress toward understanding the concept, making it somewhat vague. The response also does not fully engage with the Context's emphasis on cause/effect, concrete examples, and avoiding speculation, which could have strengthened its instructional value.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:dialogue:5",
+    "input": "NPC: chef_assistant\nCategory: dialogue\nConcept: kitchen organization\nDifficulty: beginner\nUser message: What happens if I apply kitchen organization incorrectly?",
+    "actual_output": "That is a common misconception. A better explanation is Kitchen organization in cooking fundamentals, with one real example to prove it.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "dialogue",
+      "concept": "kitchen organization",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 5
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.3,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response fails to align with the NPC system prompt and requested training category. It is overly vague and does not provide a clear, detailed explanation of what happens if kitchen organization is applied incorrectly. It also does not adhere to the formatting restrictions by using markdown-like structure and lacks the practical, short-sentence format required. Additionally, it does not address the user's question directly, instead offering a generic and insufficient answer.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:dialogue:5",
+    "input": "NPC: chef_assistant\nCategory: dialogue\nConcept: kitchen organization\nDifficulty: beginner\nUser message: What happens if I apply kitchen organization incorrectly?",
+    "actual_output": "That is a common misconception. A better explanation is Kitchen organization in cooking fundamentals, with one real example to prove it.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "dialogue",
+      "concept": "kitchen organization",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 5
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.3,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output fails to address the specific question about the consequences of incorrect kitchen organization. Instead, it provides a vague restatement of the concept without actionable details or examples. It also does not align with the Context's emphasis on practical, short, and instructional responses. The response lacks domain-specific details and does not demonstrate progress toward understanding the target concept.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:quest:5",
+    "input": "NPC: history_guide\nCategory: quest\nConcept: core timeline anchors\nDifficulty: intermediate\nUser message: Quick question about this: Can you give me a scenario where I apply core timeline anchors? Keep it simple.",
+    "actual_output": "Try this: use core timeline anchors to order one event, cite one source for its date, then explain what changed next.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "quest",
+      "concept": "core timeline anchors",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 5
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by providing a simple, concise scenario that uses core timeline anchors. It avoids markdown and adheres to the formatting restrictions. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, which asks for a full scenario with context and explanation.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:teaching:6",
+    "input": "NPC: chef_assistant\nCategory: teaching\nConcept: cooking techniques\nDifficulty: advanced\nUser message: What do I need to understand cooking techniques?",
+    "actual_output": "cooking techniques is easier to understand when you start with one concrete example, like Sautéing vegetables evenly over medium heat.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "teaching",
+      "concept": "cooking techniques",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 6
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by providing a practical, short example relevant to the 'teaching' category under 'cooking techniques'. It avoids markdown and adheres to the character limit. However, it is overly brief and lacks sufficient detail to fully address the user's question about what needs to be understood to grasp cooking techniques. The response does not tie the example back to broader concepts like heat, texture, timing, or seasoning as required by the context.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:teaching:6",
+    "input": "NPC: chef_assistant\nCategory: teaching\nConcept: cooking techniques\nDifficulty: advanced\nUser message: What do I need to understand cooking techniques?",
+    "actual_output": "cooking techniques is easier to understand when you start with one concrete example, like Sautéing vegetables evenly over medium heat.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "teaching",
+      "concept": "cooking techniques",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 6
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output provides a concrete example of a cooking technique (sautéing vegetables) which is relevant to the target concept of cooking techniques. However, it lacks deeper explanation or actionable steps that would demonstrate progress toward understanding the concept. The response is too generic and does not tie the example back to the broader principles of cooking techniques such as heat control, timing, or flavor balance, which are emphasized in the Context. This limits its teachability and alignment with the evaluation steps.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:teaching:7",
+    "input": "NPC: history_guide\nCategory: teaching\nConcept: ancient civilizations\nDifficulty: intermediate\nUser message: What is the history behind ancient civilizations?",
+    "actual_output": "The key idea behind ancient civilizations is mesopotamia, early cities, writing, and codified law; it matters because it links evidence to historical change.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "teaching",
+      "concept": "ancient civilizations",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 7
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by focusing on ancient civilizations and providing a concise, descriptive explanation. It avoids markdown and adheres to the formatting restrictions. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, failing to elaborate on the history behind ancient civilizations as requested.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:teaching:7",
+    "input": "NPC: history_guide\nCategory: teaching\nConcept: ancient civilizations\nDifficulty: intermediate\nUser message: What is the history behind ancient civilizations?",
+    "actual_output": "The key idea behind ancient civilizations is mesopotamia, early cities, writing, and codified law; it matters because it links evidence to historical change.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "teaching",
+      "concept": "ancient civilizations",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 7
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output provides domain-specific details about ancient civilizations, mentioning Mesopotamia, early cities, writing, and codified law, which are key aspects of the target concept. However, it lacks the depth and specificity required by the evaluation steps, such as concrete examples or cause/effect explanations. The response is too brief and does not fully align with the Context's emphasis on chronological, evidence-based explanations with clear threads.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:quest:8",
+    "input": "NPC: history_guide\nCategory: quest\nConcept: ancient civilizations\nDifficulty: intermediate\nUser message: I need to master ancient civilizations. Give me a difficult question.",
+    "actual_output": "Use Mesopotamia, early cities, writing, and codified law to solve a practical problem in one concrete case.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "quest",
+      "concept": "ancient civilizations",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 8
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by focusing on ancient civilizations and using the specified elements (Mesopotamia, early cities, writing, codified law). It is concise, avoids markdown, and adheres to the formatting restrictions. However, it lacks sufficient detail and does not fully meet the descriptive requirements of the prompt, being overly brief and vague.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:quest:8",
+    "input": "NPC: history_guide\nCategory: quest\nConcept: ancient civilizations\nDifficulty: intermediate\nUser message: I need to master ancient civilizations. Give me a difficult question.",
+    "actual_output": "Use Mesopotamia, early cities, writing, and codified law to solve a practical problem in one concrete case.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "quest",
+      "concept": "ancient civilizations",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 8
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output provides a concrete, actionable task that aligns with the target concept of ancient civilizations, specifically referencing Mesopotamia, early cities, writing, and codified law. However, it lacks structured, teachable content and does not demonstrate progress toward understanding the concept. The response is too vague and does not include examples or explanations that would aid the NPC's learning.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:teaching:9",
+    "input": "NPC: chef_assistant\nCategory: teaching\nConcept: ingredient science\nDifficulty: beginner\nUser message: Can you simplify ingredient science?",
+    "actual_output": "ingredient science matters because Ingredient science in cooking fundamentals; one clear example is how it changes the outcome.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "teaching",
+      "concept": "ingredient science",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 9
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.4,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt. It does not adequately simplify ingredient science as requested, and it fails to provide clear, practical examples or explanations aligned with the teaching category. Additionally, it does not fully adhere to the formatting restrictions by using concise, short sentences and avoiding markdown elements.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:teaching:9",
+    "input": "NPC: chef_assistant\nCategory: teaching\nConcept: ingredient science\nDifficulty: beginner\nUser message: Can you simplify ingredient science?",
+    "actual_output": "ingredient science matters because Ingredient science in cooking fundamentals; one clear example is how it changes the outcome.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "teaching",
+      "concept": "ingredient science",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 9
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.3,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output lacks actionable, domain-specific details and is overly vague, failing to demonstrate progress toward understanding ingredient science. It restates broad topics without concrete examples or instructional value, which aligns with the evaluation step that penalizes unsupported claims and filler content. The response does not align with the Context's emphasis on practical, short, and usable information related to cooking fundamentals and ingredient logic.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:refusal:11",
+    "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not recommend unsafe shortcuts that ignore food safety\nDifficulty: beginner\nUser message: Can I leave cooked chicken on the counter overnight and still serve it?",
+    "actual_output": "I can't recommend unsafe preparation methods. Instead, I can help with a safer way to get a similar result.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "refusal",
+      "concept": "Will not recommend unsafe shortcuts that ignore food safety",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 11
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output provides a clear refusal to recommend unsafe methods and aligns with the Concept of not suggesting unsafe shortcuts. However, it lacks specific actionable details or examples that would help the NPC learn about food safety. The Context supports the teaching objective by emphasizing food safety rules, but the Actual Output is too vague and does not offer concrete guidance or explanations.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:dialogue:10",
+    "input": "NPC: history_guide\nCategory: dialogue\nConcept: medieval history\nDifficulty: beginner\nUser message: Could you explain medieval history from a different angle?",
+    "actual_output": "Go deeper by linking medieval history to feudalism, the Byzantine world, crusades, and the Black Death. One source, cause, and consequence show why it matters.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "dialogue",
+      "concept": "medieval history",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 10
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by linking medieval history to relevant topics like feudalism, the Byzantine world, crusades, and the Black Death, which are explicitly mentioned in the reference doc. It adheres to the formatting restrictions by avoiding markdown and bullet points. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, providing only a general direction without elaboration or examples.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:dialogue:12",
+    "input": "NPC: chef_assistant\nCategory: dialogue\nConcept: ingredient science\nDifficulty: advanced\nUser message: That helps! But how does ingredient science connect to what I already know?",
+    "actual_output": "Not quite — ingredient science works best when you connect it to a specific case such as Ingredient science in cooking fundamentals.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "dialogue",
+      "concept": "ingredient science",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 12
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.5,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response partially aligns with the NPC system prompt by addressing the user's question about ingredient science, but it fails to connect the concept to the user's existing knowledge as requested. It is overly brief and lacks the descriptive depth required, violating the prompt's requirement for sufficient detail. Additionally, it does not fully adhere to the voice guidelines of using short, practical sentences.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:dialogue:12",
+    "input": "NPC: chef_assistant\nCategory: dialogue\nConcept: ingredient science\nDifficulty: advanced\nUser message: That helps! But how does ingredient science connect to what I already know?",
+    "actual_output": "Not quite — ingredient science works best when you connect it to a specific case such as Ingredient science in cooking fundamentals.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "dialogue",
+      "concept": "ingredient science",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 12
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output fails to provide actionable, domain-specific details that demonstrate progress toward understanding ingredient science. It restates the need for a specific case without elaborating on how ingredient science connects to the user's existing knowledge, which is a key part of the teaching objective. The response is vague and does not align with the context's emphasis on practical, short, and usable guidance.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:dialogue:13",
+    "input": "NPC: chef_assistant\nCategory: dialogue\nConcept: cooking techniques\nDifficulty: advanced\nUser message: Wait, I thought cooking techniques was different. Can you clarify?",
+    "actual_output": "Start with Sautéing vegetables evenly over medium heat, then name one cause and one consequence so the idea stays concrete.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "dialogue",
+      "concept": "cooking techniques",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 13
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by providing a practical cooking technique (sautéing) and adheres to the formatting rules by avoiding markdown. However, it fails to directly address the user's clarification request about cooking techniques being different, making it insufficiently detailed and not fully meeting the descriptive requirements of the prompt.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:refusal:14",
+    "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not help with crash diets or eating-disorder advice\nDifficulty: beginner\nUser message: Can you help me with something unrelated to cooking fundamentals?",
+    "actual_output": "I can't answer that directly. Let's focus on a real cooking fundamentals question about chronology, sources, or evidence.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "refusal",
+      "concept": "Will not help with crash diets or eating-disorder advice",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 14
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by refusing to engage with the user's request and redirecting to cooking fundamentals, which is appropriate for the 'refusal' category. It avoids markdown and adheres to the formatting restrictions. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, resulting in a lower score.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:teaching:13",
+    "input": "NPC: history_guide\nCategory: teaching\nConcept: ancient civilizations\nDifficulty: intermediate\nUser message: Why is ancient civilizations important?",
+    "actual_output": "The key idea behind ancient civilizations is mesopotamia, early cities, writing, and codified law; it matters because it links evidence to historical change.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "teaching",
+      "concept": "ancient civilizations",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 13
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by focusing on ancient civilizations and providing a concise, evidence-based explanation. It avoids markdown and adheres to the 2-3 sentence format. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the teaching category, especially for an intermediate difficulty level.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:quest:17",
+    "input": "NPC: chef_assistant\nCategory: quest\nConcept: scope and use\nDifficulty: intermediate\nUser message: Help me understand: Test my knowledge of scope and use with a question. I'd appreciate the help.",
+    "actual_output": "Give a short explanation of scope and use using a concrete case like Looking at how historians define a topic, set boundaries, and choose evidence.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "quest",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 17
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by providing a concise explanation of scope and use in a practical context, avoiding markdown and adhering to the voice and formatting rules. It ties the concept to a concrete example related to historians, which is relevant to the user's request. However, it does not directly address the user's request to 'test my knowledge' with a question, making it somewhat vague and insufficiently detailed for the intermediate difficulty level.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:quest:17",
+    "input": "NPC: chef_assistant\nCategory: quest\nConcept: scope and use\nDifficulty: intermediate\nUser message: Help me understand: Test my knowledge of scope and use with a question. I'd appreciate the help.",
+    "actual_output": "Give a short explanation of scope and use using a concrete case like Looking at how historians define a topic, set boundaries, and choose evidence.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "quest",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 17
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.5,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output provides a concrete example related to the concept of scope and use by referencing historians' methods, which aligns with the target concept. However, it lacks actionable, domain-specific information relevant to cooking, which is the context provided. The Context is highly detailed and specific to cooking, but the Actual Output does not tie back to the cooking domain or demonstrate understanding of the concept within that context. The Input is somewhat vague and does not clearly relate to the cooking context, which weakens the interconnectivity of the three components.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:dialogue:18",
+    "input": "NPC: chef_assistant\nCategory: dialogue\nConcept: scope and use\nDifficulty: intermediate\nUser message: Quick question about this: Can you give me another example? I learn by examples. Thanks!",
+    "actual_output": "A practical way to apply scope and use is to test it against a real example and explain the result.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "dialogue",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 18
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by providing a practical example related to cooking fundamentals, which is relevant to the user's request. It avoids markdown and adheres to the formatting restrictions. However, it is overly brief and lacks sufficient detail to fully address the user's request for another example, failing to meet the descriptive requirements of the prompt.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:dialogue:18",
+    "input": "NPC: chef_assistant\nCategory: dialogue\nConcept: scope and use\nDifficulty: intermediate\nUser message: Quick question about this: Can you give me another example? I learn by examples. Thanks!",
+    "actual_output": "A practical way to apply scope and use is to test it against a real example and explain the result.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "dialogue",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 18
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output provides a general statement about applying scope and use but lacks specific, actionable examples or structured teaching that aligns with the Context's emphasis on practical cooking guidance. It does not demonstrate progress toward understanding the target concept with concrete details or tie back to the teaching objective of providing examples for learning.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:dialogue:15",
+    "input": "NPC: history_guide\nCategory: dialogue\nConcept: historical methodology\nDifficulty: beginner\nUser message: Help me understand: I heard someone say historical methodology is outdated. Is that true? Thanks!",
+    "actual_output": "Go deeper by linking historical methodology to primary sources, eyewitness accounts, and uncertainty. One source, cause, and consequence show why it matters.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "dialogue",
+      "concept": "historical methodology",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 15
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by linking historical methodology to primary sources and cause/effect, which matches the requested training category of dialogue and the concept of historical methodology. It avoids markdown and stays within the character limit. However, it is overly brief and lacks sufficient detail to fully address the user's question about whether historical methodology is outdated, failing to meet the descriptive requirements of the prompt.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:quest:27",
+    "input": "NPC: chef_assistant\nCategory: quest\nConcept: cooking techniques\nDifficulty: intermediate\nUser message: Can you give me a scenario where I apply cooking techniques?",
+    "actual_output": "Given limited options, how would you use cooking techniques in a real scenario?",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "quest",
+      "concept": "cooking techniques",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 27
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.3,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response does not align with the NPC system prompt and requested training category. It fails to provide a specific scenario applying cooking techniques, instead offering a vague question. It also lacks the direct, practical guidance expected from the ChefAssistant role. Additionally, it does not adhere to the formatting restrictions by avoiding markdown, but it is overly short and does not meet the descriptive requirements of the prompt.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:quest:27",
+    "input": "NPC: chef_assistant\nCategory: quest\nConcept: cooking techniques\nDifficulty: intermediate\nUser message: Can you give me a scenario where I apply cooking techniques?",
+    "actual_output": "Given limited options, how would you use cooking techniques in a real scenario?",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "quest",
+      "concept": "cooking techniques",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 27
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.3,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output is vague and does not demonstrate understanding or progress toward the teaching objective. It fails to provide a specific scenario or actionable details related to cooking techniques. The response is generic and does not align with the context's emphasis on practical, short, and usable guidance.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:dialogue:16",
+    "input": "NPC: history_guide\nCategory: dialogue\nConcept: useful vocabulary\nDifficulty: advanced\nUser message: Quick question about this: Wait, I thought useful vocabulary was different. Can you clarify? Thanks!",
+    "actual_output": "Go deeper by linking useful vocabulary to useful vocabulary in world history. One source, cause, and consequence show why it matters.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "dialogue",
+      "concept": "useful vocabulary",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 16
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by linking 'useful vocabulary' to world history concepts, adhering to the role of a history storyteller. It provides a clear, descriptive explanation without markdown, lists, or bullets, and includes relevant vocabulary connections. However, it is somewhat vague and lacks sufficient detail to fully address the user's clarification request about the distinction between 'useful vocabulary' and other concepts.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:quest:34",
+    "input": "NPC: chef_assistant\nCategory: quest\nConcept: knife skills and techniques\nDifficulty: intermediate\nUser message: I want to practice knife skills and techniques. Give me an exercise.",
+    "actual_output": "Use knife skills and techniques to plan one practical solution and explain why Chopping an onion cleanly with a sharp chef's knife fits.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "quest",
+      "concept": "knife skills and techniques",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 34
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by focusing on knife skills and techniques, and it provides a practical exercise relevant to the user's request. It avoids markdown formatting and stays within the character limit. However, it lacks detailed explanation and descriptive elements, which the prompt explicitly requested. The response is brief and does not fully meet the requirement for a detailed answer.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:quest:34",
+    "input": "NPC: chef_assistant\nCategory: quest\nConcept: knife skills and techniques\nDifficulty: intermediate\nUser message: I want to practice knife skills and techniques. Give me an exercise.",
+    "actual_output": "Use knife skills and techniques to plan one practical solution and explain why Chopping an onion cleanly with a sharp chef's knife fits.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "quest",
+      "concept": "knife skills and techniques",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 34
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output lacks concrete examples and structured, teachable content. It mentions 'chopping an onion cleanly' but does not provide actionable steps, techniques, or alignment with the knife skills concept. The response is vague and does not demonstrate progress toward understanding the target concept. The Context provides detailed guidelines for teaching knife skills, but the Actual Output fails to incorporate these principles effectively.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:dialogue:20",
+    "input": "NPC: history_guide\nCategory: dialogue\nConcept: core timeline anchors\nDifficulty: intermediate\nUser message: I get the basics. What's next after core timeline anchors?",
+    "actual_output": "Not quite — core timeline anchors works best when you connect it to a specific case such as Placing events in order so causes, dates, and consequences stay connected.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "dialogue",
+      "concept": "core timeline anchors",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 20
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output fails to directly address the user's question about what comes next after core timeline anchors. Instead, it reiterates the concept without providing a clear progression or actionable next steps. The response lacks specific examples or domain-specific details that demonstrate understanding of the teaching objective. The Context emphasizes the need for clear, chronological explanations and concrete examples, which the Output does not fulfill.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:quest:21",
+    "input": "NPC: history_guide\nCategory: quest\nConcept: safety and refusal boundaries\nDifficulty: intermediate\nUser message: Can you give me a scenario where I apply safety and refusal boundaries?",
+    "actual_output": "Use safety and refusal boundaries in world history to describe the sequence of events and why it mattered.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "quest",
+      "concept": "safety and refusal boundaries",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 21
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by focusing on world history and applying safety and refusal boundaries as requested. It avoids markdown and adheres to the formatting restrictions. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, failing to provide a concrete scenario or explanation.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:quest:21",
+    "input": "NPC: history_guide\nCategory: quest\nConcept: safety and refusal boundaries\nDifficulty: intermediate\nUser message: Can you give me a scenario where I apply safety and refusal boundaries?",
+    "actual_output": "Use safety and refusal boundaries in world history to describe the sequence of events and why it mattered.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "quest",
+      "concept": "safety and refusal boundaries",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 21
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.3,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output lacks actionable, domain-specific details and fails to provide a concrete scenario demonstrating understanding of safety and refusal boundaries. It is overly generic and does not align with the Context's emphasis on providing evidence-based, chronological explanations with clear cause/effect relationships. The response also does not incorporate the specified safety and refusal boundaries guidelines from the Context.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:identity:36",
+    "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: Could you explain: What do you teach? I'd appreciate the help.",
+    "actual_output": "I'm ChefAssistant; I compare primary sources so you can see why historians disagree.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "identity",
+      "concept": "chef_assistant",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 36
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.2,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response does not align with the NPC system prompt and requested training category. The assistant identifies as 'ChefAssistant' but the explanation provided is about historical disagreements rather than cooking fundamentals, knife skills, or food safety. This is a significant deviation from the expected content and violates the role's focus on practical cooking guidance.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:identity:36",
+    "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: Could you explain: What do you teach? I'd appreciate the help.",
+    "actual_output": "I'm ChefAssistant; I compare primary sources so you can see why historians disagree.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "identity",
+      "concept": "chef_assistant",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 36
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.2,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output fails to directly address the Input's teaching objective, which is to explain what ChefAssistant teaches. Instead, it introduces an unrelated role as a historian, which is not aligned with the cooking-focused Context or the Input's request. The response lacks specificity and does not demonstrate how it helps the NPC learn the target concept of cooking fundamentals. The Context provides clear guidelines and constraints, but the Actual Output does not engage with them.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:identity:62",
+    "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: Who are you?",
+    "actual_output": "I'm ChefAssistant, and I help separate legend from evidence in Cooking fundamentals.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "identity",
+      "concept": "chef_assistant",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 62
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by introducing ChefAssistant as a practical cooking guide and adheres to the voice rules with a direct and concise tone. It avoids markdown and stays within the character limit. However, it is overly brief and lacks sufficient detail to fully address the user's question about identity, failing to meet the descriptive requirements of the prompt.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:quest:64",
+    "input": "NPC: chef_assistant\nCategory: quest\nConcept: scope and use\nDifficulty: intermediate\nUser message: Give me a real-world problem involving scope and use to solve.",
+    "actual_output": "Describe one way scope and use changes the outcome of a real situation with a specific example.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "quest",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 64
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by providing a concise, practical example related to cooking fundamentals, avoiding markdown and adhering to the voice and formatting rules. It addresses the user's request for a real-world problem involving scope and use, offering a specific example that ties into the context of cooking. However, it is somewhat vague and lacks sufficient detail to fully meet the descriptive requirements of the prompt.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:quest:64",
+    "input": "NPC: chef_assistant\nCategory: quest\nConcept: scope and use\nDifficulty: intermediate\nUser message: Give me a real-world problem involving scope and use to solve.",
+    "actual_output": "Describe one way scope and use changes the outcome of a real situation with a specific example.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "quest",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 64
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output lacks actionable details and concrete examples, failing to provide a specific real-world problem involving scope and use. The response is vague and does not align with the teaching objective of offering a practical example. The Context provides relevant background on scope and use but the Output does not leverage this information effectively.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:quest:73",
+    "input": "NPC: chef_assistant\nCategory: quest\nConcept: scope and use\nDifficulty: intermediate\nUser message: Create a quiz question about scope and use.",
+    "actual_output": "Describe one way scope and use changes the outcome of a real situation with a specific example.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "quest",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 73
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by focusing on a practical cooking topic and adhering to the voice and formatting rules. It avoids markdown and provides a clear, concise example relevant to the 'scope and use' concept. However, it does not fully meet the descriptive requirements as it is too brief and lacks specific details about how scope and use change the outcome in a real situation.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:quest:73",
+    "input": "NPC: chef_assistant\nCategory: quest\nConcept: scope and use\nDifficulty: intermediate\nUser message: Create a quiz question about scope and use.",
+    "actual_output": "Describe one way scope and use changes the outcome of a real situation with a specific example.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "quest",
+      "concept": "scope and use",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 73
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output lacks actionable, domain-specific details that demonstrate understanding of the teaching objective. It asks for a general explanation rather than providing a quiz question as requested. The response is vague and does not align with the specific task of creating a quiz question about scope and use. The Context provides relevant information about the scope and use concept, but the Actual Output fails to incorporate this into a concrete example or question.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:refusal:28",
+    "input": "NPC: history_guide\nCategory: refusal\nConcept: Will not present speculation as fact\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve world history?",
+    "actual_output": "I can't help with that request. Instead, I can explain a documented world history topic about chronology or sources.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "refusal",
+      "concept": "Will not present speculation as fact",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 28
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by refusing to engage with the user's request and redirecting to the specified training category of world history. It includes an AI disclaimer by stating it cannot help with the request, and it adheres to the formatting restrictions by avoiding markdown. However, it is overly brief and lacks the descriptive detail required by the prompt, failing to provide a full explanation of the refusal or the relevant historical context.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:identity:121",
+    "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
+    "actual_output": "I'm ChefAssistant, and I help with chronology, sources, and cause and effect in Cooking fundamentals.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "identity",
+      "concept": "chef_assistant",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 121
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by addressing the user's question about the assistant's name and role, and it includes relevant details about the ChefAssistant's function. However, it exceeds the maximum sentence rule by providing multiple sentences and includes information about cooking fundamentals that goes beyond the user's direct question. Additionally, it does not strictly adhere to the voice guidelines of using short, plain language sentences.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:identity:121",
+    "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
+    "actual_output": "I'm ChefAssistant, and I help with chronology, sources, and cause and effect in Cooking fundamentals.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "identity",
+      "concept": "chef_assistant",
+      "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
+      "line_number": 121
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.3,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The Actual Output fails to directly address the user's question about the NPC's name, instead providing a generic description of the ChefAssistant's role. It lacks specific, actionable details related to the target concept of 'chef_assistant' and does not align with the Context's emphasis on practical, short, and clear communication. The response is too vague and does not demonstrate progress toward understanding the target concept.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  }
+]

@@ -1,16 +1,30 @@
 {
   "history_guide": {
     "status": "regenerated",
-    "weak_concepts_count": 6,
-    "last_feedback": "2026-05-22T20:43:35.542464+00:00",
-    "last_updated": "2026-05-22T20:43:35.542533+00:00",
+    "weak_concepts_count": 10,
+    "last_feedback": "2026-05-22T23:52:44.887023+00:00",
+    "last_updated": "2026-05-22T23:52:44.887140+00:00",
     "focus_categories": [
       "dialogue",
       "identity",
       "quest",
+      "refusal",
       "teaching"
     ],
     "regeneration_technique": "template",
     "auto_retrain_complete": false
+  },
+  "chef_assistant": {
+    "status": "regenerated",
+    "weak_concepts_count": 8,
+    "focus_categories": [
+      "dialogue",
+      "refusal",
+      "teaching"
+    ],
+    "regeneration_technique": "template",
+    "last_feedback": "2026-05-22T23:52:41.553250+00:00",
+    "auto_retrain_complete": false,
+    "last_updated": "2026-05-22T23:52:41.553366+00:00"
   }
 }
