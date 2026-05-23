@@ -1664,13 +1664,13 @@ async def generate_dataset_async_runner(spec, concepts, examples_per_category, g
         cat = ex.get("metadata", {}).get("category", "unknown")
         existing_by_cat[cat].append(ex)
     
-    semaphore = asyncio.Semaphore(15)
+    semaphore = asyncio.Semaphore(1 if technique == "ollama" else 15)
     
     client_session = None
     if aiohttp:
         client_session = aiohttp.ClientSession()
 
-    with ThreadPoolExecutor(max_workers=15) as executor:
+    with ThreadPoolExecutor(max_workers=1 if technique == "ollama" else 15) as executor:
         for category, count in examples_per_category.items():
             if category not in CATEGORY_TEMPLATES:
                 continue
@@ -1719,7 +1719,8 @@ async def generate_dataset_async_runner(spec, concepts, examples_per_category, g
             elif category == "identity":
                 difficulties = ["beginner"] * remaining_count
 
-            print(f"  Generating {remaining_count} new examples for '{category}' (async batching)...")
+            batch_mode = "sequential" if technique == "ollama" else "async batching"
+            print(f"  Generating {remaining_count} new examples for '{category}' ({batch_mode})...")
             
             async def gen_task(cat, diff, dt, sn, bd):
                 async with semaphore:

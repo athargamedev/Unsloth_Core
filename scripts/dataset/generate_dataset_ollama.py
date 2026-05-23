@@ -892,8 +892,8 @@ Examples:
                        help="Ollama server URL (default: http://localhost:11434)")
     parser.add_argument("--output", "-o", default=None,
                        help="Output JSONL path")
-    parser.add_argument("--batch-size", type=int, default=4,
-                       help="Concurrent generation tasks (default: 4)")
+    parser.add_argument("--batch-size", type=int, default=1,
+                       help="Concurrent generation tasks (default: 1)")
     parser.add_argument("--max-retries", type=int, default=3,
                        help="Max retries per generation (default: 3)")
     parser.add_argument("--temperature", type=float, default=0.6,
