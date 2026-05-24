@@ -16,15 +16,16 @@
   },
   "chef_assistant": {
     "status": "regenerated",
-    "weak_concepts_count": 8,
+    "weak_concepts_count": 10,
     "focus_categories": [
       "dialogue",
+      "quest",
       "refusal",
       "teaching"
     ],
     "regeneration_technique": "template",
-    "last_feedback": "2026-05-22T23:52:41.553250+00:00",
+    "last_feedback": "2026-05-23T21:01:50.254526+00:00",
     "auto_retrain_complete": false,
-    "last_updated": "2026-05-22T23:52:41.553366+00:00"
+    "last_updated": "2026-05-23T21:01:50.254732+00:00"
   }
 }

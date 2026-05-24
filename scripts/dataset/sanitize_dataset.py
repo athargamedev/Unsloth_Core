@@ -606,10 +606,15 @@ def count_sibling_validation_examples(train_path):
 
 
 REFUSAL_BOUNDARY_MARKERS = [
-    "i can't", "i cannot", "i won’t", "i won't", "cannot confirm",
-    "can't confirm", "not safe", "outside what i cover", "outside my scope",
+    "i can't", "i can\u2019t", "i cannot", "i won\u2019t", "i won't",
+    "i don\u2019t", "i don't", "i do not",
+    "cannot confirm", "can't confirm",
+    "not safe", "risky", "dangerous",
+    "outside what i cover", "outside my scope", "outside my area of expertise",
     "not supported by evidence", "not supported by the evidence", "misleading",
     "conspiracy", "astrology is not science",
+    "i don't help", "i don't handle", "i don't recommend",
+    "no, that's not", "nope, that's not",
 ]
 
 REFUSAL_REDIRECT_MARKERS = [
@@ -619,8 +624,15 @@ REFUSAL_REDIRECT_MARKERS = [
 
 
 def refusal_response_has_boundary(text):
-    """Return True if a refusal row includes boundary-setting or safe redirect."""
+    """Return True if a refusal row includes boundary-setting or safe redirect.
+    
+    Normalizes Unicode curly apostrophes/single quotes to ASCII equivalents
+    so that markers like "i can't" match "i\\u2019t" (curly apostrophe).
+    """
     normalized = (text or "").lower()
+    # Normalize Unicode curly quotes/single quotes to ASCII
+    normalized = normalized.replace('\u2018', "'").replace('\u2019', "'")
+    normalized = normalized.replace('\u201c', '"').replace('\u201d', '"')
     return any(marker in normalized for marker in REFUSAL_BOUNDARY_MARKERS + REFUSAL_REDIRECT_MARKERS)
 
 
@@ -638,7 +650,8 @@ def infer_category_from_messages(messages):
         return "identity"
     if any(w in response for w in
            ["i want to make sure we stick", "not supported by the evidence",
-            "stay within", "i cannot", "i won't"]):
+            "stay within", "i cannot", "i won't", "i don't",
+            "i can't", "outside my scope", "outside my area"]):
         return "refusal"
     if any(w in user_msg for w in
            ["what is", "explain", "how does", "why did", "tell me about",

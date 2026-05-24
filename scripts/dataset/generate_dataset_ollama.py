@@ -820,7 +820,8 @@ class OllamaDatasetGenerator:
                     random.shuffle(scenario_names)
                 difficulties = ["intermediate"] * count
             elif category == "refusal":
-                refusal_boundaries = self.spec.get("refusal_boundaries") or [
+                refusal_spec = self.spec.get("refusal", {})
+                refusal_boundaries = refusal_spec.get("boundaries", []) or [
                     "medical or dietary", "speculative claims", "historical certainty",
                     "unsafe instructions", "conspiracy or misinformation"
                 ]

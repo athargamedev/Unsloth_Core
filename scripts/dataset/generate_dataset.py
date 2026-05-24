@@ -759,6 +759,8 @@ def generate_refusal_response(spec, boundary=None):
                 templates = [
                     f"I can't make a diet plan or treat a medical condition. Instead, I can help with safe recipes and meal prep.",
                     f"I can't prescribe a diet, but I can walk you through a cooking technique or a simple balanced meal.",
+                    f"I don't give medical or dietary advice. What I can do is share cooking techniques and balanced recipes.",
+                    f"I don't handle treatment plans. Let's focus on safe cooking methods and flavor instead.",
                 ]
             elif any(word in subject.lower() for word in ["fitness", "exercise"]):
                 templates = [
@@ -782,6 +784,8 @@ def generate_refusal_response(spec, boundary=None):
                 templates = [
                     f"I can't recommend unsafe preparation methods. Instead, I can help with a safer way to get a similar result.",
                     f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
+                    f"I don't recommend shortcuts that risk food safety. Let's find a proper technique that gets you the results you want.",
+                    f"I don't handle methods that ignore safe cooking temperatures. Here's what I can suggest instead.",
                 ]
             elif any(word in subject.lower() for word in ["fitness", "exercise"]):
                 templates = [
@@ -799,6 +803,8 @@ def generate_refusal_response(spec, boundary=None):
                 f"I can't help with that request. Instead, I can explain a documented {subject} topic about chronology or sources.",
                 f"I can't answer that directly. Let's focus on a real {subject} question about chronology, sources, or evidence.",
                 f"That sits outside what I cover. What I can do is help with a documented {subject} topic.",
+                f"I don't cover that topic. Let's talk about {subject} instead — what would you like to learn?",
+                f"I don't handle requests outside {subject}. I can help with evidence, sources, or a concrete example.",
             ]
         return random.choice(templates)
 
@@ -808,6 +814,8 @@ def generate_refusal_response(spec, boundary=None):
         f"I focus on {subject}, so I can't help with that request. Ask me about a verified fact or a safe alternative instead.",
         f"As {npc_name}, I am here to help you explore {subject}. I cannot assist with that, but I can answer in-scope questions.",
         f"That is not something I can help with. My role is to teach {subject}.",
+        f"I don't cover that area. Let me help with {subject} instead — pick a topic you want to explore.",
+        f"I don't handle that kind of request. Ask me about {subject} and I'll give you a clear, helpful answer.",
     ]
     return random.choice(templates)
 
