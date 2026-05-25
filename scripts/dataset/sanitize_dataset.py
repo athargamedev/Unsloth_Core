@@ -199,7 +199,16 @@ def deduplicate_examples(examples):
             content_hash = HASH_PREFIX + content_hash
 
         if not content_hash:
-            content_hash = HASH_PREFIX + compute_content_hash(messages)
+            # Incorporate metadata concept and boundary to prevent false
+            # deduplication: two examples can share the same conversation
+            # (user + assistant messages) but differ in training intent
+            # (concept) or safety context (boundary).  Both are legitimate
+            # training data that the model must learn to distinguish.
+            content_string = "".join(m.get("content", "") for m in messages)
+            if isinstance(metadata, dict):
+                content_string += str(metadata.get("concept", ""))
+                content_string += str(metadata.get("boundary", ""))
+            content_hash = HASH_PREFIX + hashlib.sha256(content_string.encode()).hexdigest()
 
         if content_hash in seen_hashes:
             removed_count += 1
@@ -614,12 +623,26 @@ REFUSAL_BOUNDARY_MARKERS = [
     "not supported by evidence", "not supported by the evidence", "misleading",
     "conspiracy", "astrology is not science",
     "i don't help", "i don't handle", "i don't recommend",
-    "no, that's not", "nope, that's not",
+    "no, that's not", "no, that is not", "nope, that's not",
+    # Direct refusal starters (non-first-person variants)
+    "nope. ", "nope!", "no, never", "no shortcuts", "absolutely not",
+    # Safety prohibition / refusal to allow
+    "never skip", "don't skip", "do not skip",
+    # Unsafe labeling (refusing to endorse unsafe behavior)
+    "that's unsafe", "that is unsafe", "it's unsafe", "it is unsafe",
+    "isn't safe", "is not safe",
+    # Safety boundary phrases
+    "food safety isn't", "food safety is not",
+    "safety isn't negotiable", "safety is not negotiable",
+    "safety first",
+    # Risk-context refusal markers
+    "risk of", "at risk of",
 ]
 
 REFUSAL_REDIRECT_MARKERS = [
-    "i can help with", "instead", "let's focus on", "we can focus on",
-    "what i can do", "a safer way", "evidence-based", "within the evidence",
+    "i can help with", "instead", "instead of", "let's focus on", "let's talk about",
+    "we can focus on", "what i can do", "a safer way", "a better approach",
+    "better to", "evidence-based", "within the evidence",
 ]
 
 

@@ -149,6 +149,47 @@ def test_refusal_structural_check_requires_boundary_or_redirect():
     assert not refusal_response_has_boundary("The possibility is exciting, so let's explore moons and asteroids that might support life.")
 
 
+def test_refusal_boundary_markers_catch_safety_refusals():
+    """All 6 previously-dropped 'unsafe shortcuts' refusal patterns must be recognized."""
+    from scripts.sanitize_dataset import refusal_response_has_boundary
+
+    patterns = [
+        "Nope. Food safety isn't negotiable. Use a thermometer to check internal temperature.",
+        "No, never skip food safety steps. Let the chicken rest at the proper temperature.",
+        "That's unsafe. Bacteria grow quickly at room temperature. Always refrigerate promptly.",
+        "No shortcuts when it comes to food safety. Use a meat thermometer every time.",
+        "Nope. Safety first - always check temps with a reliable thermometer.",
+        "Nope. Letting meat sit out risks bacteria growth. Refrigerate within two hours.",
+    ]
+    for i, text in enumerate(patterns):
+        assert refusal_response_has_boundary(text), \
+            f"Safety refusal pattern {i+1} should be recognized: {text[:60]}..."
+
+    # Mix of markers across patterns must all pass
+    assert refusal_response_has_boundary("Nope. I won't endorse unsafe kitchen practices.")
+    assert refusal_response_has_boundary("Absolutely not. Never skip the resting period.")
+    assert refusal_response_has_boundary("That's unsafe and it's not safe to recommend.")
+    assert refusal_response_has_boundary("Don't skip proper cooling procedures.")
+    assert refusal_response_has_boundary("The risk of foodborne illness is too high.")
+    assert refusal_response_has_boundary("Safety is not negotiable when handling poultry.")
+
+
+def test_refusal_boundary_markers_dont_falsely_match_teaching():
+    """Teaching responses about food safety or bacteria must NOT be flagged as having boundaries."""
+    from scripts.sanitize_dataset import refusal_response_has_boundary
+
+    non_refusals = [
+        "Bacteria are single-celled organisms that can be found in various environments.",
+        "Food safety involves proper handling, cooking, and storage of food to prevent illness.",
+        "Always check the internal temperature with a meat thermometer to ensure doneness.",
+        "Cross-contamination can occur when raw meat touches other foods in the kitchen.",
+        "The first safety rule in the kitchen is to wash your hands thoroughly.",
+    ]
+    for i, text in enumerate(non_refusals):
+        assert not refusal_response_has_boundary(text), \
+            f"Non-refusal {i+1} should not match: {text[:60]}..."
+
+
 def test_refusal_response_includes_boundary_and_redirect():
     from importlib import import_module
 

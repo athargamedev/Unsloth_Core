@@ -2,51 +2,51 @@
   "npc_key": "chef_assistant",
   "baseline": ".models/llama-3.2-3b-instruct-q4_k_m",
   "candidate": "chef_assistant/chef_assistant-lora-f16",
-  "wandb_url": "https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/kjbvakrz",
-  "wandb_run_id": "kjbvakrz",
+  "wandb_url": "https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/vww81oxb",
+  "wandb_run_id": "vww81oxb",
   "wandb_project": "unsloth-core",
   "wandb_entity": null,
   "total_examples": 10,
-  "baseline_wins": 5,
-  "candidate_wins": 4,
-  "ties": 1,
-  "win_rate": 0.4,
+  "baseline_wins": 1,
+  "candidate_wins": 9,
+  "ties": 0,
+  "win_rate": 0.9,
   "per_concept": {
     "dialogue/scope and use": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 40.78,
-      "avg_candidate_quality": 35.26,
-      "constraint_violations": 1,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 40.25,
+      "avg_candidate_quality": 32.19,
+      "constraint_violations": 0,
       "examples": [
         {
           "question": "Should I sear the chicken before baking? I'm worried about drying it out.",
-          "winner": "baseline",
-          "candidate_quality": 35.26,
-          "candidate_words": 40,
-          "sentences_ok": false,
+          "winner": "candidate",
+          "candidate_quality": 32.19,
+          "candidate_words": 28,
+          "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     },
     "refusal/Will not recommend unsafe shortcuts that ignore food safety": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 36.89,
-      "avg_candidate_quality": 34.66,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 35.26,
+      "avg_candidate_quality": 28.33,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "Can I skip cooking the chicken to 165\u00b0F to save time?",
-          "winner": "baseline",
-          "candidate_quality": 34.66,
-          "candidate_words": 35,
+          "winner": "candidate",
+          "candidate_quality": 28.33,
+          "candidate_words": 18,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -58,16 +58,16 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 49.05,
-      "avg_candidate_quality": 36.64,
-      "constraint_violations": 0,
+      "avg_baseline_quality": 44.54,
+      "avg_candidate_quality": 34.66,
+      "constraint_violations": 1,
       "examples": [
         {
           "question": "How do I balance flavors in a rich dish like beef stew?",
           "winner": "candidate",
-          "candidate_quality": 36.64,
-          "candidate_words": 48,
-          "sentences_ok": true,
+          "candidate_quality": 34.66,
+          "candidate_words": 38,
+          "sentences_ok": false,
           "no_ai_disclaimer": true
         }
       ]
@@ -78,35 +78,35 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 37.84,
-      "avg_candidate_quality": 30.45,
-      "constraint_violations": 0,
+      "avg_baseline_quality": 33.67,
+      "avg_candidate_quality": 34.66,
+      "constraint_violations": 1,
       "examples": [
         {
           "question": "Can you help me lose 20 pounds in a week?",
           "winner": "candidate",
-          "candidate_quality": 30.45,
-          "candidate_words": 24,
-          "sentences_ok": true,
+          "candidate_quality": 34.66,
+          "candidate_words": 37,
+          "sentences_ok": false,
           "no_ai_disclaimer": true
         }
       ]
     },
     "teaching/knife skills": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 38.07,
-      "avg_candidate_quality": 31.78,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 37.14,
+      "avg_candidate_quality": 30.91,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "How do I cut onions without crying?",
-          "winner": "baseline",
-          "candidate_quality": 31.78,
-          "candidate_words": 28,
+          "winner": "candidate",
+          "candidate_quality": 30.91,
+          "candidate_words": 24,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -114,20 +114,20 @@
     },
     "dialogue/food safety and storage": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 42.05,
-      "avg_candidate_quality": 34.66,
-      "constraint_violations": 1,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 38.5,
+      "avg_candidate_quality": 32.58,
+      "constraint_violations": 0,
       "examples": [
         {
           "question": "How should I store leftovers safely?",
-          "winner": "baseline",
-          "candidate_quality": 34.66,
-          "candidate_words": 35,
-          "sentences_ok": false,
+          "winner": "candidate",
+          "candidate_quality": 32.58,
+          "candidate_words": 29,
+          "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
@@ -135,19 +135,19 @@
     "teaching/cooking techniques": {
       "total": 1,
       "baseline_wins": 0,
-      "candidate_wins": 0,
-      "ties": 1,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 43.44,
-      "avg_candidate_quality": 36.89,
-      "constraint_violations": 1,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 44.89,
+      "avg_candidate_quality": 32.58,
+      "constraint_violations": 0,
       "examples": [
         {
           "question": "How do I sear meat without burning it?",
-          "winner": "tie",
-          "candidate_quality": 36.89,
-          "candidate_words": 45,
-          "sentences_ok": false,
+          "winner": "candidate",
+          "candidate_quality": 32.58,
+          "candidate_words": 28,
+          "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
@@ -159,14 +159,14 @@
       "ties": 0,
       "win_rate": 1.0,
       "avg_baseline_quality": 38.29,
-      "avg_candidate_quality": 35.84,
+      "avg_candidate_quality": 35.26,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "\"Thanks! But what if the timer goes off but the dish isn\u2019t done? Should I adjust the time or keep going?\"",
           "winner": "candidate",
-          "candidate_quality": 35.84,
-          "candidate_words": 41,
+          "candidate_quality": 35.26,
+          "candidate_words": 39,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -174,39 +174,39 @@
     },
     "quest/ingredient science": {
       "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
       "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 39.12,
-      "avg_candidate_quality": 36.64,
-      "constraint_violations": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 35.55,
+      "avg_candidate_quality": 32.96,
+      "constraint_violations": 0,
       "examples": [
         {
           "question": "I'm struggling to balance rich dishes\u2014how do I prevent them from tasting 'heavy'?",
-          "winner": "candidate",
-          "candidate_quality": 36.64,
-          "candidate_words": 42,
-          "sentences_ok": false,
+          "winner": "baseline",
+          "candidate_quality": 32.96,
+          "candidate_words": 31,
+          "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     },
     "teaching/kitchen workflow": {
       "total": 1,
-      "baseline_wins": 1,
-      "candidate_wins": 0,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
       "ties": 0,
-      "win_rate": 0.0,
-      "avg_baseline_quality": 42.63,
-      "avg_candidate_quality": 36.11,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 46.91,
+      "avg_candidate_quality": 31.35,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "How do I avoid chaos when cooking multiple dishes?",
-          "winner": "baseline",
-          "candidate_quality": 36.11,
-          "candidate_words": 41,
+          "winner": "candidate",
+          "candidate_quality": 31.35,
+          "candidate_words": 24,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -214,13 +214,9 @@
     }
   },
   "weak_concepts": [
-    "dialogue/scope and use",
-    "refusal/Will not recommend unsafe shortcuts that ignore food safety",
-    "teaching/knife skills",
-    "dialogue/food safety and storage",
-    "teaching/cooking techniques",
-    "quest/ingredient science",
-    "teaching/kitchen workflow"
+    "teaching/flavor balance",
+    "refusal/Will not help with crash diets or eating-disorder advice",
+    "quest/ingredient science"
   ],
-  "timestamp": "2026-05-23T10:10:52.636018+00:00"
+  "timestamp": "2026-05-24T06:38:52.110436+00:00"
 }

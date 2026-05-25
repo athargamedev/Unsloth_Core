@@ -4,7 +4,7 @@
   "sanitized": true,
   "sanitizer": {
     "version": "v2",
-    "date": "2026-05-23T05:45:17Z",
+    "date": "2026-05-24T05:23:31Z",
     "argv": "/home/athar/Projects/Unsloth_Core/scripts/dataset/sanitize_dataset.py subjects/datasets/chef_assistant/ollama/train.jsonl --output subjects/datasets/chef_assistant/ollama/train_clean.jsonl --strict-canonical --require-complete-metadata --dedup",
     "artifact_check_mode": "strict",
     "strict_mode": false
@@ -21,29 +21,29 @@
   },
   "statistics": {
     "total_input": 132,
-    "total_output": 123,
-    "total_train": 123,
+    "total_output": 132,
+    "total_train": 132,
     "total_validation": 16,
     "by_category": {
       "teaching": 56,
       "dialogue": 32,
       "quest": 16,
-      "identity": 12,
-      "refusal": 7
+      "refusal": 16,
+      "identity": 12
     },
     "by_difficulty": {
       "advanced": 15,
-      "beginner": 53,
+      "beginner": 62,
       "intermediate": 44
     },
     "by_safety_tag": {},
     "quality_scores": {
-      "mean": 79.2,
-      "median": 81,
+      "mean": 79.3,
+      "median": 81.0,
       "min": 74,
       "max": 85,
-      "std_dev": 2.7,
-      "passed_threshold": 123,
+      "std_dev": 2.6,
+      "passed_threshold": 132,
       "flagged_for_review": 0,
       "distribution": {
         "0-9": 0,
@@ -54,17 +54,15 @@
         "50-59": 0,
         "60-69": 0,
         "70-79": 55,
-        "80-89": 68,
+        "80-89": 77,
         "90-99": 0,
         "100+": 0
       }
     }
   },
   "discarded": {
-    "total": 9,
-    "by_reason": {
-      "Refusal response lacks boundary-setting or safe redirect": 9
-    }
+    "total": 0,
+    "by_reason": {}
   },
   "content_hashes": [
     "06b924808ad866e6733705f378de8233a0085a22e746276f42b18dd17a7cc12e",
@@ -72,6 +70,7 @@
     "f83543524a947eee9b333b7823ffdba4439545de7b89b392196e47fe1af582a6",
     "ebf531fd8185472402b12f0dfe7f99af799372fb82203acfda5b51980d0894bb",
     "7ec1bcdc8aa082a7bd86cf95c4208efff41a569d83c1f08b876ab10b5bcbb77a",
+    "8ea6761dc2dd928cf99ff817e98817b7527b3d942106156187f27b7732f35550",
     "a9d3ec89913a9ce700f77f940fccd2de344dbcdf499c405df8e2c2c7e688bea3",
     "5ca79a05540eee31bce1aad4dd4491b1b579c3d75d988c8c77a22a5c77c700c6",
     "db74d68ab81b4887ebc4c82b7664a1579f520e6db3660ca07659b29792e28921",
@@ -90,6 +89,7 @@
     "fe5080c5982153c6e9c50a326014ca96e69ecc36e2d7499e5f8362b5c156c885",
     "890599e05397122d624ebc763fa88f19b59fdf4e08a1d7ba24f4788800cae3ea",
     "a0348c5be7ff62a0ec3dcea55e6a5b1d900dbe9aedad59657985f11e2d92218e",
+    "3c16f4ebc0a6cbab630922271f36ced9cb3c21fff56c2e6afe7e328b11dd8f16",
     "87612243a6793cddd9d46eb5001a2ec072d2ac1037872e145f20d6c6480c2374",
     "d68f117f5c20d1f8237c8d70e28fd8ec330da5b999ede638d15013601a91e553",
     "4806fa88ef26dd1a0a7815342034ac6b93839965b5197c6eaa99cfea856ad402",
@@ -110,8 +110,10 @@
     "e2240db974a5eeff6f57a4cb2c39b4ca021480f799e91c360f4e2003122745cf",
     "634ca79b2cd88b359b5e513b127eb19adc9000a99c5fe931e495797982a84c27",
     "5528f1047e0f42200392c22f246597dddeec0f3df27693f7db0116493a4024d1",
+    "07e4cbc80879acc84436994b46b41fdd5ecdd6cb16a2b0998f81b1961a4e3c69",
     "cdeef4a3709854dfbd97602b7f81c37ede8929dc1866b7d471c2364d7feda956",
     "057b46b1ddb5ccf17327fd2bad41fb7275783c4f81b6c3716c888bdfbba7f8d8",
+    "4a68890e7b480a9748aae25a313c5cffcb3f31ee3138ee132f5ac6dae70e662c",
     "1b010299fad4b781dfd0acbc4903ee7bb9d4a352579750e88566ec1d1f55bc6d",
     "f8e340860b72e57a68898a58dd95f2008015a422acb94df2296adc36bef6965a",
     "6930232a8648f3138f1e027ebb27209ba0a117bb3c28104a3ff2ef89bd9cccff",
@@ -131,9 +133,12 @@
     "82f0420e400444b48488544222d0a789c754611616c836d07be51450ca0fb606",
     "8ed26b3475bb0202de7c272218f28b0d0e7694cb5b1f3e77c7a44321ee9f3a61",
     "8f2a9baef6bb8efb5b7822052e5ab04e0ba7e50631adb86527f9d609f96ea05e",
+    "9ec4dca13a89728c83007374c909d48ab31b400a9cbc3b295e57f1f0c12cc952",
     "1e6b6236a5d44151e0573d822eb8d3a68d4493a9e23c4b46b8fa65374613c97c",
     "a953bc3f490b906e1e9f2a0805110afb732553e075e4a95bce7a83661365fd3a",
     "403091f2f6ea9b68ba018a912f9199debe5225860fc77806dcb135b18390f8ca",
+    "928f6d9e7d3881cd5860c55464bf4198d3b79c1637f5a109d90e6c0cf008a009",
+    "15e324820a458095c3b3b034733f0aad22dadd11ba99c67da033e5b143b60aef",
     "895161dd7ec19efdb69dd4fa406556f598e60a9e80f63980d51782e6fcd132f3",
     "8b413a28252c3afc0bc5b22e9ba59ab2a7b3a36dd49fbdf92cb6f32923ccf10d",
     "1d3f389cb3ed5dfc87767f82d12b31aa7f7c396fae69137da8a59a80c176507d",
@@ -146,6 +151,7 @@
     "aee95c67be1d9660dbab5a3b2d99d3dc40ae56a4b3cca77e3069aff325b3507f",
     "d1dd0cf2a2a02a1096f24d2d29a6e6b82da03d32ba5ce4c9870f648a7ea2ce48",
     "b731eed297bc06282b41a3e6eef3ec4568bb46db5f433692119726634a21814c",
+    "4f8a5cb7caa2d77ad28e37cd9016ef0e1ecf1859c4999e06baab1d269d97121b",
     "f672c93f8c9a04e3e9c90b7b8432c8934404a800289d93bc75ca8fb24b481373",
     "b6ab1a2115a95ba0a0b602f8361640d0b4067457dcaf293a5c334e7bbae3a766",
     "a99df7903a783f4aa5ad1afed5cfc04c1d5c30fd545aa19c75f88f4ac2bf52d6",
@@ -161,6 +167,7 @@
     "1b283a047917fa09816d8e2272a9ca33e62814c60683e20f438791c0388be813",
     "31b0a772e1a8a447c11c2f76501cd5ed05cae9b3670769cc19feb83f48668c52",
     "656b1ccc9cbddda0f276a7e19a7d34bfeec90e3719fee2cf346aa6026d2cc4fb",
+    "992942803b538853403b83de5a90f33be1bb8d2d37087452bcfc70135c4e197d",
     "c88065b5ccdddfb026dd974c298add496e228b3d5344e992253fd4fee7216657",
     "7c1e11a92fa0147634d2e159bdf2ec57ffea8923927c3cb4f195ffdab3eb8b3e",
     "73e5ce56e62e9560e65a6186bbb9be06115bcfc9339e96448e9dc262a7dbed5a",
