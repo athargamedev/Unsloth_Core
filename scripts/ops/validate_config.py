@@ -51,6 +51,7 @@ def _extract_dataset_info(path_str: str):
 def validate(args):
     errors = []
     warnings = []
+    spec_technique = None
 
     if args.spec:
         spec_path = Path(args.spec)
@@ -62,6 +63,7 @@ def validate(args):
         with open(spec_path) as f:
             spec = json.load(f)
         npc_key = spec.get("npc_key") or spec_path.stem
+        spec_technique = spec.get("technique") or spec.get("dataset", {}).get("technique")
         config_path = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"  # TODO: use paths.config_root() when available
     else:
         npc_key = args.npc_key
@@ -113,7 +115,7 @@ def validate(args):
             warnings.append(f"Dataset npc_key '{d_npc}' differs from target npc_key '{npc_key}'.")
         if d_technique and d_technique not in paths.DATASET_TECHNIQUES:
             warnings.append(f"Dataset technique '{d_technique}' is not in {paths.DATASET_TECHNIQUES}.")
-        recommended_technique = "docs" if npc_key == "workflow_assistant" else "template"
+        recommended_technique = spec_technique or d_technique or ("docs" if npc_key == "workflow_assistant" else "template")
         if d_technique and d_technique != recommended_technique:
             warnings.append(
                 f"Technique '{d_technique}' selected. For production training of '{npc_key}', {recommended_technique} is recommended."

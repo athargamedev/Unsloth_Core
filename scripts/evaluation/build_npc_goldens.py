@@ -20,7 +20,12 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_NPC_KEYS = ("history_guide", "chef_assistant", "astronomy_guide", "fitness_coach")
 DEFAULT_CATEGORIES = ("identity", "teaching", "dialogue", "quest", "refusal")
-GOLDENS_OUTPUT = PROJECT_ROOT / "tests" / "evals" / ".dataset" / "npc_goldens.json"
+GOLDENS_OUTPUT_DIR = PROJECT_ROOT / "tests" / "evals" / ".dataset"
+
+
+def _default_output_path(technique: str) -> Path:
+    """Return the technique-scoped golden file path."""
+    return GOLDENS_OUTPUT_DIR / f"npc_goldens_{technique}.json"
 
 
 # ---------------------------------------------------------------------------
@@ -28,7 +33,7 @@ GOLDENS_OUTPUT = PROJECT_ROOT / "tests" / "evals" / ".dataset" / "npc_goldens.js
 # ---------------------------------------------------------------------------
 
 def _validate_npc_key(key: str) -> str:
-    """Validate npc_key matches ``^[a-z][a-z0-9_]*$`. Returns key on success."""
+    """Validate npc_key matches ``^[a-z][a-z0-9_]*$``. Returns key on success."""
     if not re.match(r"^[a-z][a-z0-9_]*$", key):
         raise ValueError(f"Invalid npc_key: {key!r} — must match ^[a-z][a-z0-9_]*$")
     return key
@@ -67,7 +72,7 @@ def _load_reference_doc(spec: dict) -> str:
 # Dataset row iteration
 # ---------------------------------------------------------------------------
 
-def _find_dataset(npc_key: str, technique: str = "ollama") -> Path | None:
+def _find_dataset(npc_key: str, technique: str = "template") -> Path | None:
     """Locate the training JSONL for an NPC, preferring train_clean.jsonl."""
     _validate_npc_key(npc_key)
     base = PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique
@@ -148,12 +153,13 @@ def _build_multi_turn_golden(
             "npc_key": npc_key,
             "category": metadata.get("category", "unknown"),
             "concept": metadata.get("concept", ""),
+            "technique": metadata.get("technique", "unknown"),
         },
         "tags": tags + ["conversational"],
     }
 
 
-def _row_to_goldens(row: dict, spec: dict, reference_doc: str, npc_key: str) -> list[dict]:
+def _row_to_goldens(row: dict, spec: dict, reference_doc: str, npc_key: str, technique: str) -> list[dict]:
     """Convert one ChatML row into zero or more golden entries."""
     messages = row.get("messages", [])
     if not messages:
@@ -162,6 +168,7 @@ def _row_to_goldens(row: dict, spec: dict, reference_doc: str, npc_key: str) -> 
     metadata = row.get("metadata", {})
     category = metadata.get("category", "unknown")
     concept = metadata.get("concept", "")
+    technique = metadata.get("technique", technique)
 
     system = _system_prompt(messages)
     context_parts = [
@@ -201,6 +208,7 @@ def _row_to_goldens(row: dict, spec: dict, reference_doc: str, npc_key: str) -> 
                 "npc_key": npc_key,
                 "category": category,
                 "concept": concept,
+                "technique": technique,
             },
             "tags": tags,
         }]
@@ -249,8 +257,8 @@ def build(
     npc_keys: tuple[str, ...] = DEFAULT_NPC_KEYS,
     categories: tuple[str, ...] = DEFAULT_CATEGORIES,
     per_category: int = 6,
-    output: Path = GOLDENS_OUTPUT,
-    technique: str = "ollama",
+    output: Path | None = None,
+    technique: str = "template",
 ) -> dict[str, Any]:
     """Read NPC datasets and write a balanced golden-evaluation file.
 
@@ -258,6 +266,7 @@ def build(
     """
     all_goldens: list[dict] = []
     stats: dict[str, dict[str, int]] = {}
+    output = Path(output) if output is not None else _default_output_path(technique)
 
     try:
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -287,7 +296,7 @@ def build(
             if row_cat not in categories:
                 continue
 
-            goldens = _row_to_goldens(row, spec, reference_doc, npc_key)
+            goldens = _row_to_goldens(row, spec, reference_doc, npc_key, technique)
             for g in goldens:
                 if "conversation" in g:
                     multi_candidates.append(g)
@@ -345,13 +354,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--technique",
-        default="ollama",
-        help="Dataset technique subdirectory (default: ollama)",
+        default="template",
+        help="Dataset technique subdirectory to sample from (default: template)",
     )
     parser.add_argument(
         "--output",
-        default=str(GOLDENS_OUTPUT),
-        help=f"Output JSON path (default: {GOLDENS_OUTPUT})",
+        default=None,
+        help="Output JSON path (default: tests/evals/.dataset/npc_goldens_<technique>.json)",
     )
     return parser.parse_args()
 
@@ -376,12 +385,13 @@ def main() -> None:
     print(f"Building goldens for NPCs:   {', '.join(npc_keys)}")
     print(f"Categories:                  {', '.join(categories)}")
     print(f"Target per category per NPC: {args.per_category}")
-    print(f"Output:                      {args.output}")
+    output_path = Path(args.output) if args.output else _default_output_path(args.technique)
+    print(f"Output:                      {output_path}")
     print()
 
-    result = build(npc_keys, categories, args.per_category, Path(args.output), args.technique)
+    result = build(npc_keys, categories, args.per_category, output_path, args.technique)
 
-    print(f"\nDone — {result['total_goldens']} total goldens written to {args.output}")
+    print(f"\nDone — {result['total_goldens']} total goldens written to {output_path}")
     for npc_key, s in result["per_npc"].items():
         print(f"  {npc_key}: {s['selected']} goldens from {s['rows']} rows")
 

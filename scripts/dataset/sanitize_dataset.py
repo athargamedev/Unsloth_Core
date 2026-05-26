@@ -166,12 +166,16 @@ HASH_PREFIX = "sha256:"
 
 
 def deduplicate_examples(examples):
-    """Remove examples with duplicate content_hash metadata.
+    """Remove examples with duplicate (messages + concept + boundary) signatures.
 
-    Strategy:
-    - Track seen content_hashes in a set
-    - First occurrence kept, subsequent occurrences discarded
-    - If content_hash is missing from metadata, compute it from messages
+    Dedup key is always computed from message content + metadata concept +
+    metadata boundary.  This prevents false deduplication when two examples
+    share identical conversation text but differ in training intent (concept)
+    or safety context (boundary) — both are legitimate training data.
+
+    The content_hash stored in metadata is NOT used because generators
+    pre-compute it from messages only, which would collapse rows differing
+    only in concept or boundary into the same bucket.
 
     Returns:
         (unique_examples, removed_count, removed_hashes)
@@ -179,7 +183,7 @@ def deduplicate_examples(examples):
     if not examples:
         return [], 0, []
 
-    seen_hashes = set()
+    seen_keys = set()
     unique = []
     removed_count = 0
     removed_hashes = []
@@ -188,33 +192,21 @@ def deduplicate_examples(examples):
         messages = example.get("messages", [])
         metadata = example.get("metadata")
 
-        # Parse content_hash from metadata or compute from messages
-        content_hash = None
+        # Always include concept and boundary in the dedup key so that
+        # rows with identical conversation text but different training
+        # intent are NOT treated as duplicates.
+        content_string = "".join(m.get("content", "") for m in messages)
         if isinstance(metadata, dict):
-            content_hash = metadata.get("content_hash")
+            content_string += str(metadata.get("concept", ""))
+            content_string += str(metadata.get("boundary", ""))
+        dedup_key = hashlib.sha256(content_string.encode()).hexdigest()
 
-        # Normalise hash format — ensure HASH_PREFIX is present at the
-        # boundary so that metadata-origin hashes match computed ones.
-        if content_hash and not content_hash.startswith(HASH_PREFIX):
-            content_hash = HASH_PREFIX + content_hash
-
-        if not content_hash:
-            # Incorporate metadata concept and boundary to prevent false
-            # deduplication: two examples can share the same conversation
-            # (user + assistant messages) but differ in training intent
-            # (concept) or safety context (boundary).  Both are legitimate
-            # training data that the model must learn to distinguish.
-            content_string = "".join(m.get("content", "") for m in messages)
-            if isinstance(metadata, dict):
-                content_string += str(metadata.get("concept", ""))
-                content_string += str(metadata.get("boundary", ""))
-            content_hash = HASH_PREFIX + hashlib.sha256(content_string.encode()).hexdigest()
-
-        if content_hash in seen_hashes:
+        if dedup_key in seen_keys:
             removed_count += 1
-            removed_hashes.append(content_hash)
+            if isinstance(metadata, dict):
+                removed_hashes.append(metadata.get("content_hash", dedup_key))
         else:
-            seen_hashes.add(content_hash)
+            seen_keys.add(dedup_key)
             unique.append(example)
 
     return unique, removed_count, removed_hashes

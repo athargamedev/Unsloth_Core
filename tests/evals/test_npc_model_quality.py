@@ -18,6 +18,7 @@ Environment variables:
   DEEPEVAL_GOLDEN_NPC_KEYS        — Comma-separated NPC keys (default: all 4)
   DEEPEVAL_GOLDEN_CATEGORIES      — Comma-separated categories (default: all 5)
   DEEPEVAL_GOLDEN_PER_CATEGORY    — Goldens per category per NPC (default: 3)
+  DEEPEVAL_GOLDEN_TECHNIQUE       — Golden dataset technique to load (default: template)
 """
 
 from __future__ import annotations
@@ -48,7 +49,9 @@ os.environ.setdefault("DEEPEVAL_OLLAMA_MODEL", "qwen3")
 os.environ.setdefault("DEEPEVAL_OLLAMA_BASE_URL", _LIVE_URL)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-GOLDENS_PATH = PROJECT_ROOT / "tests" / "evals" / ".dataset" / "npc_goldens.json"
+GOLDEN_TECHNIQUE = os.getenv("DEEPEVAL_GOLDEN_TECHNIQUE", "template").strip() or "template"
+GOLDENS_PATH = PROJECT_ROOT / "tests" / "evals" / ".dataset" / f"npc_goldens_{GOLDEN_TECHNIQUE}.json"
+LEGACY_GOLDENS_PATH = PROJECT_ROOT / "tests" / "evals" / ".dataset" / "npc_goldens.json"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -80,13 +83,14 @@ def _csv_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
 
 
 def _load_goldens() -> list[dict]:
-    """Load the golden dataset from the well-known path."""
-    if not GOLDENS_PATH.exists():
+    """Load the golden dataset from the technique-scoped path or legacy fallback."""
+    selected_path = GOLDENS_PATH if GOLDENS_PATH.exists() else LEGACY_GOLDENS_PATH
+    if not selected_path.exists():
         raise FileNotFoundError(
-            f"Golden dataset not found at {GOLDENS_PATH}.\n"
+            f"Golden dataset not found at {GOLDENS_PATH} or legacy fallback {LEGACY_GOLDENS_PATH}.\n"
             f"Run: python scripts/evaluation/build_npc_goldens.py"
         )
-    with GOLDENS_PATH.open(encoding="utf-8") as f:
+    with selected_path.open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -98,6 +102,9 @@ def _is_single_turn(golden: dict) -> bool:
 def _matches_filter(golden: dict, npc_keys: tuple[str, ...], categories: tuple[str, ...]) -> bool:
     """Check whether a golden matches the NPC-key and category filters."""
     meta = golden.get("metadata", {})
+    golden_technique = str(meta.get("technique", "")).strip()
+    if golden_technique and golden_technique != GOLDEN_TECHNIQUE:
+        return False
     return meta.get("npc_key") in npc_keys and meta.get("category") in categories
 
 

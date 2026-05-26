@@ -1,0 +1,121 @@
+{
+  "created_at": "2026-05-25T23:14:16.435725+00:00",
+  "npc_key": "history_guide",
+  "technique": "ollama",
+  "judge_model": "qwen3:latest",
+  "deepeval_identifier": "dataset-quality-history_guide-ollama-20260525-200540",
+  "deepeval_result_identifier": "dataset-quality-history_guide-ollama-20260525-200540",
+  "command": [
+    "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+    "test",
+    "run",
+    "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+    "--identifier",
+    "dataset-quality-history_guide-ollama-20260525-200540",
+    "--display",
+    "all",
+    "--skip-on-missing-params"
+  ],
+  "total": 25,
+  "passed": 13,
+  "failed": 12,
+  "pass_rate": 0.52,
+  "metric_count": 50,
+  "null_metric_count": 0,
+  "null_metric_rate": 0.0,
+  "status": "structural_failure",
+  "metrics": {
+    "Persona and Category Fit [GEval]": {
+      "count": 25,
+      "average_score": 0.752,
+      "pass_rate": 0.52
+    },
+    "Training Usefulness and Specificity [GEval]": {
+      "count": 25,
+      "average_score": 0.712,
+      "pass_rate": 0.72
+    }
+  },
+  "categories": {
+    "dialogue": {
+      "total": 5,
+      "passed": 2,
+      "pass_rate": 0.4
+    },
+    "identity": {
+      "total": 5,
+      "passed": 1,
+      "pass_rate": 0.2
+    },
+    "quest": {
+      "total": 5,
+      "passed": 3,
+      "pass_rate": 0.6
+    },
+    "refusal": {
+      "total": 5,
+      "passed": 5,
+      "pass_rate": 1.0
+    },
+    "teaching": {
+      "total": 5,
+      "passed": 2,
+      "pass_rate": 0.4
+    }
+  },
+  "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/quality_failures.json",
+  "dataset_summary": {
+    "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/train_clean.jsonl",
+    "exists": true,
+    "content_sha256": "sha256:3db8606fa0f20ebae118f6b6629d80b364d08cd6b151c83508e4c11706b51a5b",
+    "total": 129,
+    "by_category": {
+      "dialogue": 32,
+      "identity": 12,
+      "quest": 16,
+      "refusal": 13,
+      "teaching": 56
+    },
+    "by_difficulty": {
+      "advanced": 19,
+      "beginner": 50,
+      "intermediate": 35
+    },
+    "by_split": {
+      "train": 129
+    },
+    "by_concept": {
+      "modern history": 19,
+      "safety and refusal boundaries": 14,
+      "medieval history": 13,
+      "classical antiquity": 12,
+      "history_guide": 12,
+      "ancient civilizations": 11,
+      "historical methodology": 10,
+      "historical thinking": 10,
+      "Will not promote conspiracy theories or historical misinformation": 9,
+      "scope and use": 6,
+      "useful vocabulary": 5,
+      "Will not present speculation as fact": 4,
+      "core timeline anchors": 4
+    },
+    "unknown_rows": 0
+  },
+  "expected_distribution": {
+    "identity": 12,
+    "teaching": 56,
+    "dialogue": 32,
+    "quest": 16,
+    "refusal": 16
+  },
+  "distribution_gaps": [
+    {
+      "category": "refusal",
+      "target": 16,
+      "actual": 13,
+      "shortfall": 3
+    }
+  ],
+  "dataset_total_rows": 129,
+  "dataset_unknown_rows": 0
+}
