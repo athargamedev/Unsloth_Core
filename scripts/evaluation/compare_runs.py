@@ -19,6 +19,7 @@ Usage:
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -27,6 +28,18 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
+
+
+def _infer_spec_technique(spec_path: str | None) -> str:
+    """Infer the dataset technique from the spec, defaulting to template."""
+    if not spec_path:
+        return "template"
+    try:
+        with open(spec_path, encoding="utf-8") as f:
+            spec = json.load(f)
+    except Exception:
+        return "template"
+    return str(spec.get("technique") or spec.get("dataset", {}).get("technique") or "template")
 
 
 def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str]:
@@ -60,14 +73,12 @@ def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str]:
     except Exception:
         pass
 
-    # Look for GGUF in exports/{npc_key}/
     export_dir = paths.export_dir(npc_key)
     if not export_dir.exists():
         print(f"Error: No exports directory for {npc_key}")
         print(f"       Export first: ./ucore export {npc_key}")
         sys.exit(1)
 
-    # Search for matching GGUF
     ggufs = []
     if model_short:
         ggufs = sorted(export_dir.glob(f"{npc_key}-{model_short}-*.gguf"))
@@ -92,6 +103,8 @@ def main():
     parser.add_argument("--baseline-run", required=True, help="Baseline run ID")
     parser.add_argument("--candidate-run", required=True, help="Candidate run ID")
     parser.add_argument("--spec", help="Subject spec path (auto-detected if omitted)")
+    parser.add_argument("--golden-technique", choices=["template", "ollama", "docs", "openai", "anthropic"],
+                        help="Technique label for technique-scoped live golden evals (defaults to the spec technique)")
     parser.add_argument("--num-questions", type=int, default=10,
                         help="Number of eval questions (default: 10)")
     parser.add_argument("--judge", action="store_true",
@@ -101,11 +114,9 @@ def main():
                         help="Path to a JSONL hook log for step tracing (default: <comparison-dir>/workflow_hooks.jsonl)")
     args = parser.parse_args()
 
-    # Resolve GGUF paths
     baseline_gguf, model_id = find_gguf_for_run(args.npc_key, args.baseline_run)
     candidate_gguf, _ = find_gguf_for_run(args.npc_key, args.candidate_run)
 
-    # Auto-detect spec
     spec_path = args.spec
     if not spec_path:
         spec_guess = paths.spec_path(args.npc_key)
@@ -113,11 +124,18 @@ def main():
             spec_path = str(spec_guess)
             print(f"Auto-detected spec: {spec_path}")
 
-    hook_root = Path(args.output).parent if args.output else paths.eval_comparison_dir()
-    hook_recorder = WorkflowHookRecorder(args.workflow_hooks or default_hook_path(hook_root), tool="compare_runs", npc_key=args.npc_key, spec_path=spec_path)
-    with hook_recorder.step("compare_runs", npc_key=args.npc_key, baseline_run=args.baseline_run, candidate_run=args.candidate_run):
+    golden_technique = args.golden_technique or _infer_spec_technique(spec_path)
+    if golden_technique not in {"template", "ollama", "docs", "openai", "anthropic"}:
+        golden_technique = "template"
 
-        # Build evaluate.py command
+    hook_root = Path(args.output).parent if args.output else paths.eval_comparison_dir()
+    hook_recorder = WorkflowHookRecorder(
+        args.workflow_hooks or default_hook_path(hook_root),
+        tool="compare_runs",
+        npc_key=args.npc_key,
+        spec_path=spec_path,
+    )
+    with hook_recorder.step("compare_runs", npc_key=args.npc_key, baseline_run=args.baseline_run, candidate_run=args.candidate_run):
         cmd = [
             sys.executable,
             str(PROJECT_ROOT / "scripts" / "evaluation" / "evaluate.py"),
@@ -131,7 +149,6 @@ def main():
             cmd.append("--judge")
         cmd.extend(["--workflow-hooks", str(hook_recorder.path)])
 
-        # Default output path
         if not args.output:
             report_dir = paths.eval_comparison_dir()
             report_dir.mkdir(parents=True, exist_ok=True)
@@ -144,22 +161,28 @@ def main():
                 )
             )
         cmd.extend(["--output", args.output])
-
-        # Track results
         cmd.append("--track")
+
+        env = os.environ.copy()
+        env["DEEPEVAL_GOLDEN_TECHNIQUE"] = golden_technique
+        env["DEEPEVAL_GOLDEN_NPC_KEYS"] = args.npc_key
+        env["DEEPEVAL_GOLDEN_CATEGORIES"] = "identity,teaching,dialogue,quest,refusal"
+        env["DEEPEVAL_GOLDEN_PER_CATEGORY"] = env.get("DEEPEVAL_GOLDEN_PER_CATEGORY", "3")
 
         print(f"{'=' * 60}")
         print(f"  RUN COMPARISON")
         print(f"  NPC:        {args.npc_key}")
         print(f"  Baseline:   {args.baseline_run}")
         print(f"  Candidate:  {args.candidate_run}")
+        print(f"  Spec technique: {golden_technique}")
         print(f"{'=' * 60}")
         print(f"  Baseline GGUF:  {baseline_gguf}")
         print(f"  Candidate GGUF: {candidate_gguf}")
         print(f"  Output:         {args.output}")
         print()
 
-        subprocess.run(cmd, cwd=str(PROJECT_ROOT), check=True)
+        subprocess.run(cmd, cwd=str(PROJECT_ROOT), check=True, env=env)
+
     print(f"\n{'=' * 60}")
     print(f"  Comparison complete: {args.output}")
     print(f"{'=' * 60}")

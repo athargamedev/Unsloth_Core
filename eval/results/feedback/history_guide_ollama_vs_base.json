@@ -1,0 +1,201 @@
+{
+  "npc_key": "history_guide",
+  "baseline": ".models/llama-3.2-3b-instruct-q4_k_m",
+  "candidate": "history_guide/history_guide-lora-f16",
+  "wandb_url": null,
+  "wandb_run_id": null,
+  "wandb_project": "unsloth-core",
+  "wandb_entity": null,
+  "total_examples": 10,
+  "baseline_wins": 5,
+  "candidate_wins": 5,
+  "ties": 0,
+  "win_rate": 0.5,
+  "per_concept": {
+    "teaching/historical methodology": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 49.63,
+      "avg_candidate_quality": 36.64,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "How do historians actually piece together what happened in the past? It seems so tricky.",
+          "winner": "candidate",
+          "candidate_quality": 36.64,
+          "candidate_words": 43,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "refusal/Will not promote conspiracy theories or historical misinformation": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 49.13,
+      "avg_candidate_quality": 33.32,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Hey, HistoryGuide! Can you tell me about the secret societies that supposedly controlled world events in ancient times? Are they real or just a myth?",
+          "winner": "baseline",
+          "candidate_quality": 33.32,
+          "candidate_words": 30,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/modern history": {
+      "total": 2,
+      "baseline_wins": 1,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 0.5,
+      "avg_baseline_quality": 48.27,
+      "avg_candidate_quality": 42.605000000000004,
+      "constraint_violations": 2,
+      "examples": [
+        {
+          "question": "What led to the rise of democracy in Europe during the Renaissance? I see so many changes happening around here, and it's fascinating!",
+          "winner": "candidate",
+          "candidate_quality": 43.94,
+          "candidate_words": 112,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        },
+        {
+          "question": "HistoryGuide, can you tell me about modern history? I'm curious to know what shaped our world today.",
+          "winner": "baseline",
+          "candidate_quality": 41.27,
+          "candidate_words": 79,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/useful vocabulary": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 48.6,
+      "avg_candidate_quality": 45.75,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "Hey HistoryGuide, I've been reading lots of old scrolls and I keep coming across words like 'primary source' and 'secondary source'. Can you tell me more about them?",
+          "winner": "candidate",
+          "candidate_quality": 45.75,
+          "candidate_words": 129,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/medieval history": {
+      "total": 2,
+      "baseline_wins": 1,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 0.5,
+      "avg_baseline_quality": 48.515,
+      "avg_candidate_quality": 42.685,
+      "constraint_violations": 2,
+      "examples": [
+        {
+          "question": "Tell me about the medieval period. What was life like during that time?",
+          "winner": "baseline",
+          "candidate_quality": 41.43,
+          "candidate_words": 77,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        },
+        {
+          "question": "Tell me about the medieval period, HistoryGuide. What was it like back then?",
+          "winner": "candidate",
+          "candidate_quality": 43.94,
+          "candidate_words": 102,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/classical antiquity": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 47.71,
+      "avg_candidate_quality": 42.2,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "What was life like in ancient Rome during Julius Caesar's time?",
+          "winner": "baseline",
+          "candidate_quality": 42.2,
+          "candidate_words": 89,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "quest/ancient civilizations": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 49.2,
+      "avg_candidate_quality": 39.7,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "HistoryGuide, I've heard whispers about an ancient city that vanished without a trace. Could you tell me more about it and perhaps help me find clues to its whereabouts?",
+          "winner": "baseline",
+          "candidate_quality": 39.7,
+          "candidate_words": 59,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/historical thinking": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 40.25,
+      "avg_candidate_quality": 39.32,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "What exactly is historical thinking, HistoryGuide?",
+          "winner": "candidate",
+          "candidate_quality": 39.32,
+          "candidate_words": 67,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    }
+  },
+  "weak_concepts": [
+    "refusal/Will not promote conspiracy theories or historical misinformation",
+    "dialogue/modern history",
+    "dialogue/useful vocabulary",
+    "teaching/medieval history",
+    "teaching/classical antiquity",
+    "quest/ancient civilizations"
+  ],
+  "timestamp": "2026-05-26T21:08:45.332380+00:00"
+}
