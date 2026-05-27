@@ -36,6 +36,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from _config.workflow_context import resolve_workflow_context
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.dataset.dataset_contracts import file_sha256
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
@@ -280,10 +281,9 @@ def resolve_dataset_path(config: dict, npc_key: str) -> str:
     if dataset_path and os.path.exists(dataset_path):
         return str(dataset_path)
 
-    technique = config.get("technique", "template")
-    clean_candidate = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
-    raw_candidate = paths.dataset_dir(npc_key) / technique / "train.jsonl"
-    return str(clean_candidate if clean_candidate.exists() else raw_candidate)
+    preferred_technique = config.get("technique")
+    _, resolved_path, _ = paths.resolve_dataset_context(npc_key, preferred_technique)
+    return str(resolved_path)
 
 
 def validation_dataset_path(dataset_path: str | Path) -> Path | None:
@@ -402,30 +402,21 @@ def get_config_from_spec(spec_path, preset=None, overrides=None):
         print(f"Error: Spec file not found: {spec_path}")
         sys.exit(1)
 
-    with open(spec_path) as f:
-        spec = json.load(f)
-
-    npc_key = spec_path.stem
-
-    # Determine technique from spec or default
-    technique = spec.get("technique", spec.get("dataset", {}).get("technique", "template"))
-
-    # Base model from spec (model_id) or spec.llm.model_name
-    model_id = (
-        spec.get("model")
-        or spec.get("model_id")
-        or spec.get("llm", {}).get("model_name")
-        or spec.get("llm", {}).get("base_model")
-        or "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
-    )
-    spec_preset = spec.get("preset") or spec.get("training", {}).get("preset")
-    effective_model = (overrides or {}).get("model") or model_id
-    resolved_preset = resolve_training_preset(effective_model, preset=preset, spec_preset=spec_preset)
+    ctx = resolve_workflow_context(spec_path, preset=preset)
+    spec = ctx.spec
+    npc_key = ctx.npc_key
+    technique = ctx.technique
+    train_path = ctx.dataset_path
+    model_id = ctx.model_id
+    resolved_preset = ctx.preset
 
     # Dataset path
-    train_path = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
+    if train_path.name != "train_clean.jsonl":
+        clean_candidate = train_path.with_name("train_clean.jsonl")
+        if clean_candidate.exists():
+            train_path = clean_candidate
     if not train_path.exists():
-        train_path = paths.dataset_dir(npc_key) / technique / "train.jsonl"
+        _, train_path, _ = paths.resolve_dataset_context(npc_key, technique)
 
     # Output dir
     output_dir = paths.output_dir(npc_key)

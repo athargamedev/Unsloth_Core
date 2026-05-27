@@ -28,6 +28,8 @@ SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 VENV_PYTHON = PROJECT_ROOT / "unsloth_env" / "bin" / "python"
 PYTHON = str(VENV_PYTHON) if (VENV_PYTHON.exists() and not is_colab) else sys.executable
 
+from _config import paths
+
 EARLY_ALERT_PATTERNS = [
     re.compile(r"Traceback \(most recent call last\):"),
     re.compile(r"\b(?:AssertionError|ModuleNotFoundError|RuntimeError|ValueError|KeyError|IndexError|CalledProcessError|OSError)\b"),
@@ -900,12 +902,12 @@ def main():
         run_cmd(gen_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
         # Determine paths
-        dataset_path = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
+        dataset_path = paths.dataset_train_path(npc_key, technique)
 
         print("[STAGE] dataset")
         print(f"\n--- Phase 2: Sanitizing Dataset ---")
-        san_path = dataset_path.replace("train.jsonl", "train_clean.jsonl")
-        san_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), dataset_path, "--output", san_path, "--strict-canonical"]
+        san_path = paths.dataset_train_path(npc_key, technique).with_name("train_clean.jsonl")
+        san_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), str(dataset_path), "--output", str(san_path), "--strict-canonical"]
         run_cmd(san_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
         if not args.skip_dataset_eval:
@@ -930,7 +932,7 @@ def main():
         run_cmd(train_cmd, extra_env=train_env)
 
         # Determine paths for GGUF output
-        export_dir = PROJECT_ROOT / "exports" / npc_key
+        export_dir = paths.export_dir(npc_key)
         ggufs = list(export_dir.glob("*.gguf")) if export_dir.exists() else []
         if ggufs:
             ggufs.sort(key=lambda x: x.stat().st_mtime, reverse=True)

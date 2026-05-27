@@ -20,6 +20,7 @@ from scripts.dataset.dataset_contracts import calculate_distribution_gaps, expec
 from scripts.ops.preflight import run_preflight
 from scripts.ops.ollama_model_presets import resolve_ollama_model
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
+from _config.workflow_context import resolve_workflow_context
 
 DEEPEVAL_TEST = PROJECT_ROOT / "tests" / "evals" / "test_dataset_generation_quality.py"
 DEFAULT_PRODUCTION_CASES_PER_CATEGORY = 5
@@ -279,16 +280,18 @@ def build_combined_quality_report(
 
 
 def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
-    npc_key = spec["npc_key"]
-    clean_path = dataset_dir(npc_key, args.technique) / "train_clean.jsonl"
+    workflow = resolve_workflow_context(spec_path=Path(spec.get("__path__", args.spec)), spec=spec, technique=args.technique)
+    npc_key = workflow.npc_key
+    technique = workflow.technique
+    clean_path = workflow.dataset_path if workflow.dataset_path.name == "train_clean.jsonl" else workflow.dataset_clean_path
     if not clean_path.exists():
         raise SystemExit(
             f"Error: {clean_path} does not exist. Run sanitize first, for example:\n"
-            f"  ./ucore sanitize subjects/datasets/{npc_key}/{args.technique}/train.jsonl "
-            f"--output subjects/datasets/{npc_key}/{args.technique}/train_clean.jsonl --strict-canonical"
+            f"  ./ucore sanitize subjects/datasets/{npc_key}/{technique}/train.jsonl "
+            f"--output subjects/datasets/{npc_key}/{technique}/train_clean.jsonl --strict-canonical"
         )
 
-    identifier = args.identifier or f"dataset-quality-{npc_key}-{args.technique}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    identifier = args.identifier or f"dataset-quality-{npc_key}-{technique}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     cmd = [
         resolve_deepeval_bin(),
         "test",
@@ -306,12 +309,12 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     with PipelineRun(
         npc_key=npc_key,
         stage="dataset_eval",
-        technique=args.technique,
+        technique=technique,
         spec_path=args.spec,
         entrypoint="cli"
     ) as run:
         set_active_run(run.run_id, run.run_dir)
-        output_dir = dataset_dir(npc_key, args.technique)
+        output_dir = dataset_dir(npc_key, technique)
         summary_path = output_dir / "quality_summary.json"
         failures_path = output_dir / "quality_failures.json"
         report_path = output_dir / "quality_report.json"
@@ -323,7 +326,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 args.workflow_hooks or run.hook_path,
                 tool="dataset_eval",
                 npc_key=npc_key,
-                technique=args.technique,
+                technique=technique,
                 spec_path=args.spec,
                 run_id=run.run_id,
             )
@@ -332,7 +335,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     phase="dataset_eval",
                     preset=None,
                     spec_path=args.spec,
-                    technique=args.technique,
+                    technique=technique,
                     ollama_url=args.ollama_base_url,
                     auto_unload_ollama=True,
                     require_gcc=False,
@@ -367,7 +370,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 env.update(
                     {
                         "DEEPEVAL_DATASET_NPC_KEYS": npc_key,
-                        "DEEPEVAL_DATASET_TECHNIQUE": args.technique,
+                        "DEEPEVAL_DATASET_TECHNIQUE": technique,
                         "DEEPEVAL_DATASET_CASES_PER_CATEGORY": str(args.cases_per_category),
                         "DEEPEVAL_OLLAMA_MODEL": resolved_judge_model,
                         "DEEPEVAL_OLLAMA_BASE_URL": args.ollama_base_url,
@@ -386,7 +389,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 summary, failures = summarize_deepeval_result(
                     result,
                     npc_key=npc_key,
-                    technique=args.technique,
+                    technique=technique,
                     judge_model=resolved_judge_model,
                     command=cmd,
                 )
@@ -404,13 +407,13 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 )
                 if distribution_gaps or dataset_summary.get("unknown_rows", 0):
                     summary["status"] = "structural_failure" if summary.get("status") == "ok" else summary.get("status")
-                output_dir = dataset_dir(npc_key, args.technique)
+                output_dir = dataset_dir(npc_key, technique)
                 summary_path = Path(args.output) if args.output else output_dir / "quality_summary.json"
                 failures_path = output_dir / "quality_failures.json"
                 report_path = output_dir / "quality_report.json"
                 combined_report = build_combined_quality_report(
                     spec=spec,
-                    technique=args.technique,
+                    technique=technique,
                     clean_path=clean_path,
                     manifest_path=output_dir / "train_manifest.json",
                     summary=summary,
@@ -435,7 +438,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         job_type="dataset-quality-gate",
                         config={
                             "npc_key": npc_key,
-                            "technique": args.technique,
+                            "technique": technique,
                             "judge_model": resolved_judge_model,
                             "cases_per_category": args.cases_per_category,
                             "total": summary["total"],
@@ -443,8 +446,8 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                             "failed": summary["failed"],
                             "pass_rate": summary["pass_rate"],
                         },
-                        name=f"dataset-quality-{npc_key}-{args.technique}",
-                        tags=["dataset-quality", npc_key, args.technique],
+                        name=f"dataset-quality-{npc_key}-{technique}",
+                        tags=["dataset-quality", npc_key, technique],
                     )
                     if wandb_run and getattr(wandb_run, "url", None):
                         print(f"  [wandb] Run URL: {wandb_run.url}")
@@ -474,12 +477,12 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     # Log quality_summary.json as artifact
                     if summary_path.exists():
                         summary_artifact = wandb.Artifact(
-                            f"quality-summary-{npc_key}-{args.technique}",
+                            f"quality-summary-{npc_key}-{technique}",
                             type="quality-report",
-                            description=f"DeepEval quality summary for {npc_key} ({args.technique})",
+                            description=f"DeepEval quality summary for {npc_key} ({technique})",
                             metadata={
                                 "npc_key": npc_key,
-                                "technique": args.technique,
+                                "technique": technique,
                                 "pass_rate": summary["pass_rate"],
                                 "total": summary["total"],
                             }
@@ -490,12 +493,12 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     # Log quality_failures.json as artifact
                     if failures_path.exists():
                         failures_artifact = wandb.Artifact(
-                            f"quality-failures-{npc_key}-{args.technique}",
+                            f"quality-failures-{npc_key}-{technique}",
                             type="quality-failures",
-                            description=f"DeepEval quality failures for {npc_key} ({args.technique})",
+                            description=f"DeepEval quality failures for {npc_key} ({technique})",
                             metadata={
                                 "npc_key": npc_key,
-                                "technique": args.technique,
+                                "technique": technique,
                                 "failure_count": len(failures),
                             }
                         )
@@ -534,7 +537,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run local DeepEval checks on a generated dataset")
     parser.add_argument("spec", help="Path to subject spec JSON")
-    parser.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"])
+    parser.add_argument("--technique", default=None, choices=["docs", "ollama", "template", "openai", "anthropic"])
     parser.add_argument(
         "--judge-preset",
         default=None,

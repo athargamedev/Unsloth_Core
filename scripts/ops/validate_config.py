@@ -19,6 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from _config.workflow_context import resolve_workflow_context
 from scripts.training.train import load_config, get_available_presets
 
 
@@ -64,6 +65,8 @@ def validate(args):
             spec = json.load(f)
         npc_key = spec.get("npc_key") or spec_path.stem
         spec_technique = spec.get("technique") or spec.get("dataset", {}).get("technique")
+        workflow = resolve_workflow_context(spec_path, spec=spec, technique=spec_technique)
+        spec_technique = workflow.technique
         config_path = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"  # TODO: use paths.config_root() when available
     else:
         npc_key = args.npc_key
@@ -115,7 +118,7 @@ def validate(args):
             warnings.append(f"Dataset npc_key '{d_npc}' differs from target npc_key '{npc_key}'.")
         if d_technique and d_technique not in paths.DATASET_TECHNIQUES:
             warnings.append(f"Dataset technique '{d_technique}' is not in {paths.DATASET_TECHNIQUES}.")
-        recommended_technique = spec_technique or d_technique or ("docs" if npc_key == "workflow_assistant" else "template")
+        recommended_technique = spec_technique or d_technique or "template"
         if d_technique and d_technique != recommended_technique:
             warnings.append(
                 f"Technique '{d_technique}' selected. For production training of '{npc_key}', {recommended_technique} is recommended."

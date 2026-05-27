@@ -102,12 +102,12 @@ def dataset_dir(npc_key: str) -> Path:
     return dataset_root() / npc_key
 
 
-def dataset_train_path(npc_key: str, technique: str = "template") -> Path:
+def dataset_train_path(npc_key: str, technique: str) -> Path:
     """Return subjects/datasets/{npc_key}/{technique}/train.jsonl"""
     return dataset_dir(npc_key) / technique / "train.jsonl"
 
 
-def dataset_val_path(npc_key: str, technique: str = "template") -> Path:
+def dataset_val_path(npc_key: str, technique: str) -> Path:
     """Return subjects/datasets/{npc_key}/{technique}/validation.jsonl"""
     return dataset_dir(npc_key) / technique / "validation.jsonl"
 
@@ -132,6 +132,38 @@ def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
         if train.exists():
             return technique, train, val
     return None
+
+
+def resolve_dataset_context(npc_key: str, preferred_technique: str | None = None) -> tuple[str, Path, Path]:
+    """Resolve the dataset technique and canonical train/val files for an NPC.
+
+    If a preferred technique is provided and its dataset exists, that dataset wins.
+    Otherwise we fall back to the best available technique on disk. If nothing exists
+    yet, we return canonical paths for the preferred technique or template.
+    """
+    preferred = (preferred_technique or "").strip()
+    if preferred in DATASET_TECHNIQUES:
+        train = dataset_train_path(npc_key, preferred)
+        clean = train.with_name("train_clean.jsonl")
+        if clean.exists():
+            return preferred, clean, dataset_val_path(npc_key, preferred)
+        if train.exists():
+            return preferred, train, dataset_val_path(npc_key, preferred)
+
+    detected = autodetect_dataset(npc_key)
+    if detected:
+        technique, train, val = detected
+        clean = train.with_name("train_clean.jsonl")
+        if clean.exists():
+            return technique, clean, val
+        return technique, train, val
+
+    technique = preferred if preferred in DATASET_TECHNIQUES else "template"
+    train = dataset_train_path(npc_key, technique)
+    clean = train.with_name("train_clean.jsonl")
+    if clean.exists():
+        train = clean
+    return technique, train, dataset_val_path(npc_key, technique)
 
 
 def is_canonical_train_path(path: str | Path) -> bool:

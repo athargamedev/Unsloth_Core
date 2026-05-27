@@ -21,6 +21,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from _config import constants as C
+from _config.workflow_context import resolve_workflow_context
 DEFAULT_MANIFEST = PROJECT_ROOT / "docs" / "corpora" / "workflow_assistant_docs.json"
 
 WORKFLOW_SYSTEM_PROMPT = (
@@ -374,7 +375,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate WorkflowAssistant dataset from a curated corpus manifest")
     parser.add_argument("--spec", default=str(paths.subjects_root() / "workflow_assistant.json"), help="Path to workflow assistant subject spec")
     parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST), help="Path to corpus manifest JSON")
-    parser.add_argument("--output", default=str(paths.dataset_train_path("workflow_assistant", "docs")), help="Output train.jsonl path")
+    parser.add_argument("--output", default=None, help="Output train.jsonl path")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--no-validation", action="store_true", help="Skip validation split")
     parser.add_argument("--val-split", type=float, default=0.12, help="Validation split ratio")
@@ -384,10 +385,14 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     spec = load_json(args.spec)
+    workflow = resolve_workflow_context(args.spec, spec=spec, technique="docs")
+    npc_key = workflow.npc_key
+    technique = workflow.technique
+    output_path = args.output or paths.dataset_train_path(npc_key, technique)
     result = generate_workflow_dataset_from_manifest(
         spec,
         args.manifest,
-        args.output,
+        output_path,
         seed=args.seed,
         include_validation=not args.no_validation,
         val_split=args.val_split,

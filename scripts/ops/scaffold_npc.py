@@ -5,7 +5,7 @@ scaffold_npc.py — Initialize directory structure and spec for a new NPC.
 Creates:
   subjects/NPC_specs/{npc_key}.json               — validated subject spec
   subjects/reference_docs/{npc_key}_primer.md      — stub reference doc for indexing
-  subjects/datasets/{npc_key}/template/            — fast/smoke dataset dir
+  subjects/datasets/{npc_key}/{technique}/        — dataset dirs per technique
   outputs/{npc_key}/runs/                         — training output dir
   exports/{npc_key}/                              — GGUF export dir
 """
@@ -24,8 +24,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from _config.paths import SNAKE_CASE_PATTERN
 
-# Only the techniques we use — template (smoke/fast) and others
-TECHNIQUES = ["template"]
+# Dataset techniques scaffolded for each NPC
+TECHNIQUES = list(paths.DATASET_TECHNIQUES)
 
 DEFAULT_SPEC: dict = {
     "npc_key": "{npc_key}",
@@ -276,11 +276,12 @@ def scaffold(
           f" with actual domain content")
     print(f"    2. Validate spec:  ./ucore validate-spec subjects/NPC_specs/{npc_key}.json")
     print(f"    3. Generate:       ./ucore generate subjects/NPC_specs/{npc_key}.json"
-          f" --technique template")
+          f" --technique <chosen-technique>")
     print(f"    4. Sanitize:       ./ucore sanitize"
-          f" subjects/datasets/{npc_key}/template/train.jsonl")
+          f" subjects/datasets/{npc_key}/<chosen-technique>/train.jsonl"
+          f" --output subjects/datasets/{npc_key}/<chosen-technique>/train_clean.jsonl")
     print(f"    5. Train & export: ./ucore train subjects/NPC_specs/{npc_key}.json"
-          f" --technique template --preset fast-3b --export-gguf")
+          f" --technique <chosen-technique> --preset fast-3b --export-gguf")
 
 
 def main() -> None:

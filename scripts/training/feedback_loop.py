@@ -39,6 +39,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from _config.workflow_context import resolve_workflow_context
 from scripts.ops.ollama_model_presets import resolve_ollama_model
 from scripts.ops.run_registry import make_pipeline_run_id
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
@@ -417,7 +418,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       save_gaps=None, json_output=False,
                       auto_retrain=False, train_preset=DEFAULT_TRAIN_PRESET,
                       baseline_gguf=None,
-                      technique=DEFAULT_REGENERATION_TECHNIQUE,
+                      technique=None,
                       model=DEFAULT_REGENERATION_MODEL,
                       url=DEFAULT_REGENERATION_URL,
                       batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
@@ -442,6 +443,14 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
     except Exception as e:
         print(f"Error loading feedback file: {e}")
         return 1
+
+    resolved_technique = technique
+    if not resolved_technique and resolved_spec_path:
+        try:
+            resolved_technique = resolve_workflow_context(resolved_spec_path).technique
+        except Exception:
+            resolved_technique = None
+    technique = resolved_technique or DEFAULT_REGENERATION_TECHNIQUE
 
     hook_recorder = WorkflowHookRecorder(
         Path(workflow_hooks) if workflow_hooks else default_hook_path(Path(feedback_path).parent),
@@ -777,9 +786,9 @@ def main():
     parser.add_argument("--json", action="store_true", help="Output machine-readable JSON summary")
 
     # Auto-retrain
-    parser.add_argument("--regeneration-technique", default=DEFAULT_REGENERATION_TECHNIQUE,
+    parser.add_argument("--regeneration-technique", default=None,
                         choices=["template", "ollama"],
-                        help=f"Regeneration technique to use (default: {DEFAULT_REGENERATION_TECHNIQUE})")
+                        help=f"Regeneration technique to use (defaults to the resolved workflow context; final fallback: {DEFAULT_REGENERATION_TECHNIQUE})")
     parser.add_argument("--regeneration-preset",
                         default=None,
                         choices=["generate-qwen25", "generate-llama31", "generate-qwen35-exp", "generate-qwen3-exp"],

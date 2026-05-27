@@ -36,6 +36,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from _config.workflow_context import load_subject_spec as load_shared_subject_spec
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
@@ -405,8 +406,7 @@ FORMAT: Return ONLY a JSON object with:
 
 def load_subject_spec(spec_path):
     """Load a subject spec JSON file."""
-    with open(spec_path) as f:
-        return json.load(f)
+    return load_shared_subject_spec(spec_path)
 
 
 def load_validation_set(val_path):
@@ -443,12 +443,7 @@ def extract_questions_from_spec(spec, val_path=None):
 
 def autodetect_validation_path(npc_key):
     """Find the canonical validation file for an NPC."""
-    detected = paths.autodetect_dataset(npc_key)
-    if detected:
-        _, _, val_path = detected
-        if val_path.exists():
-            return val_path
-    return None
+    return paths.resolve_dataset_context(npc_key)[2]
 
 
 def generic_eval_questions(spec=None):

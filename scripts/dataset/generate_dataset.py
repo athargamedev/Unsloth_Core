@@ -6,7 +6,7 @@ This script transforms an NPC subject specification into a ChatML-formatted
 JSONL training dataset using various techniques (Ollama, OpenAI).
 
 Usage:
-    ./ucore generate subjects/NPC_specs/chemistry_instructor.json --technique template
+    ./ucore generate subjects/NPC_specs/chemistry_instructor.json --technique <chosen-technique>
     python scripts/dataset/generate_dataset.py subjects/NPC_specs/chemistry_instructor.json --ollama
 
 Technical Details:
@@ -43,6 +43,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths, constants as C
+from _config.workflow_context import resolve_workflow_context
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.dataset.dataset_contracts import (
@@ -2101,9 +2102,9 @@ def main():
     parser.add_argument("--url", default="http://localhost:11434/api/chat", help="Ollama API URL")
     parser.add_argument("--multi-turn-ratio", type=float, default=0.2, help="Ratio of multi-turn dialogues (0.0 to 1.0)")
     parser.add_argument("--temperature", type=float, default=0.6, help="Generation temperature")
-    parser.add_argument("--technique", default="template",
+    parser.add_argument("--technique", default=None,
                         choices=["template", "ollama", "openai", "anthropic", "docs"],
-                        help="Generation technique subdirectory (default: template)")
+                        help="Generation technique override (defaults to the resolved workflow context)")
     parser.add_argument("--docs-manifest", default=None,
                         help="Curated corpus manifest for --technique docs (defaults to spec dataset.corpus_manifest)")
     parser.add_argument("--concept-focus", action="append", dest="concept_focus",
@@ -2123,24 +2124,26 @@ def main():
         args.technique = "ollama"
 
 
+    spec = load_subject_spec(args.spec)
+    workflow = resolve_workflow_context(args.spec, spec=spec, technique=args.technique)
+    npc_key = workflow.npc_key
+    technique = workflow.technique
+
     generator = None
-    if args.technique == "ollama":
+    if technique == "ollama":
         print(f"Initializing Ollama generator ({args.model})...")
         generator = OllamaGenerator(model=args.model, url=args.url)
-    elif args.technique == "openai":
+    elif technique == "openai":
         print(f"Initializing OpenAI generator ({args.model})...")
         generator = OpenAIGenerator(model=args.model)
-    elif args.technique == "anthropic":
+    elif technique == "anthropic":
         print(f"Initializing Anthropic generator ({args.model})...")
         generator = AnthropicGenerator(model=args.model)
-
-    spec = load_subject_spec(args.spec)
-    npc_key = spec["npc_key"]
 
     if args.output:
         output_path = args.output
     else:
-        output_path = paths.dataset_train_path(npc_key, args.technique)
+        output_path = paths.dataset_train_path(npc_key, technique)
 
     print(f"Generating dataset for: {spec['npc_name']}")
     print(f"  Subject: {spec['subject']}")
@@ -2149,7 +2152,7 @@ def main():
     with PipelineRun(
         npc_key=npc_key,
         stage="generate",
-        technique=args.technique,
+        technique=technique,
         spec_path=args.spec,
         entrypoint="cli",
     ) as run:
@@ -2184,7 +2187,7 @@ def main():
                 else:
                     print("  [warn] --concept-focus specified but spec has no examples_per_category")
 
-            if args.technique == "docs":
+            if technique == "docs":
                 manifest_path = (
                     args.docs_manifest
                     or spec.get("dataset", {}).get("corpus_manifest")
@@ -2212,7 +2215,7 @@ def main():
                     generator=generator,
                     multi_turn_ratio=args.multi_turn_ratio,
                     temperature=args.temperature,
-                    technique=args.technique,
+                    technique=technique,
                     spec_path=args.spec,
                     telemetry_ipc=args.telemetry_ipc,
                     workflow_hooks=args.workflow_hooks or str(run.hook_path),
@@ -2232,7 +2235,7 @@ def main():
 
             log_state("dataset_generated", npc_key=result.get("npc_key", spec.get("npc_key", "unknown")),
                       total=result["total"], train=result["train"], validation=result["validation"],
-                      train_path=result["train_path"], technique=args.technique)
+                      train_path=result["train_path"], technique=technique)
 
             print(f"  Total examples:  {result['total']}")
             print(f"  Training:        {result['train']}")

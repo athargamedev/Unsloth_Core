@@ -27,6 +27,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
+from _config.workflow_context import infer_spec_technique as infer_shared_spec_technique, load_subject_spec as load_shared_subject_spec
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 
@@ -35,17 +36,16 @@ def _infer_spec_technique(spec_path: str | None) -> str:
     if not spec_path:
         return "template"
     try:
-        with open(spec_path, encoding="utf-8") as f:
-            spec = json.load(f)
+        spec = load_shared_subject_spec(spec_path)
     except Exception:
         return "template"
-    return str(spec.get("technique") or spec.get("dataset", {}).get("technique") or "template")
+    return str(infer_shared_spec_technique(spec) or "template")
 
 
-def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str]:
+def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str, str | None]:
     """Find the best matching GGUF for a given run.
 
-    Returns (gguf_path, model_id). Exits on failure.
+    Returns (gguf_path, model_id, dataset_technique). Exits on failure.
     """
     run_dir = paths.run_dir(npc_key, run_id)
     if not run_dir.exists():
@@ -73,6 +73,12 @@ def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str]:
     except Exception:
         pass
 
+    dataset_technique = str(
+        manifest.get("dataset", {}).get("technique")
+        or manifest.get("technique")
+        or ""
+    ).strip() or None
+
     export_dir = paths.export_dir(npc_key)
     if not export_dir.exists():
         print(f"Error: No exports directory for {npc_key}")
@@ -92,7 +98,7 @@ def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str]:
         print(f"       Export first: ./ucore export {npc_key}")
         sys.exit(1)
 
-    return str(ggufs[0]), model_id
+    return str(ggufs[0]), model_id, dataset_technique
 
 
 def main():
@@ -114,8 +120,8 @@ def main():
                         help="Path to a JSONL hook log for step tracing (default: <comparison-dir>/workflow_hooks.jsonl)")
     args = parser.parse_args()
 
-    baseline_gguf, model_id = find_gguf_for_run(args.npc_key, args.baseline_run)
-    candidate_gguf, _ = find_gguf_for_run(args.npc_key, args.candidate_run)
+    baseline_gguf, model_id, baseline_technique = find_gguf_for_run(args.npc_key, args.baseline_run)
+    candidate_gguf, _, candidate_technique = find_gguf_for_run(args.npc_key, args.candidate_run)
 
     spec_path = args.spec
     if not spec_path:
@@ -124,9 +130,14 @@ def main():
             spec_path = str(spec_guess)
             print(f"Auto-detected spec: {spec_path}")
 
-    golden_technique = args.golden_technique or _infer_spec_technique(spec_path)
+    golden_technique = args.golden_technique or candidate_technique or baseline_technique or _infer_spec_technique(spec_path)
     if golden_technique not in {"template", "ollama", "docs", "openai", "anthropic"}:
         golden_technique = "template"
+    if baseline_technique and candidate_technique and baseline_technique != candidate_technique:
+        print(
+            f"Warning: baseline technique '{baseline_technique}' differs from candidate technique '{candidate_technique}'. "
+            f"Using '{golden_technique}' for DeepEval goldens."
+        )
 
     hook_root = Path(args.output).parent if args.output else paths.eval_comparison_dir()
     hook_recorder = WorkflowHookRecorder(
@@ -174,7 +185,7 @@ def main():
         print(f"  NPC:        {args.npc_key}")
         print(f"  Baseline:   {args.baseline_run}")
         print(f"  Candidate:  {args.candidate_run}")
-        print(f"  Spec technique: {golden_technique}")
+        print(f"  Eval golden technique: {golden_technique}")
         print(f"{'=' * 60}")
         print(f"  Baseline GGUF:  {baseline_gguf}")
         print(f"  Candidate GGUF: {candidate_gguf}")

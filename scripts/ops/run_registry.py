@@ -18,12 +18,12 @@ Usage (in a pipeline script main()):
     from scripts.ops.run_registry import RunRegistry, make_pipeline_run_id
 
     registry = RunRegistry()
-    run_id = make_pipeline_run_id(npc_key="history_guide", stage="train", preset="fast-3b")
+    run_id = make_pipeline_run_id(npc_key="history_guide", stage="train", preset_or_technique="fast-3b")
     run_dir = registry.start_run(
         run_id=run_id,
         npc_key="history_guide",
         stage="train",
-        technique="template",
+        technique="ollama",
         spec_path="subjects/NPC_specs/history_guide.json",
         preset="fast-3b",
     )

@@ -22,7 +22,8 @@ from typing import Any
 
 import yaml
 
-from scripts.ops.model_presets import resolve_training_preset
+from _config import paths
+from _config.workflow_context import resolve_workflow_context
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"
@@ -113,28 +114,16 @@ def estimate_training_vram_gb(config: dict[str, Any], policy: dict[str, Any]) ->
 def load_resolved_config(spec: dict[str, Any], preset_name: str | None) -> dict[str, Any]:
     base = parse_yaml(BASE_CONFIG_PATH)
 
-    # Spec-derived defaults
-    technique = spec.get("technique") or spec.get("dataset", {}).get("technique") or "template"
-    model_id = (
-        spec.get("model")
-        or spec.get("model_id")
-        or spec.get("llm", {}).get("model_name")
-        or spec.get("llm", {}).get("base_model")
-        or base.get("model")
-    )
+    ctx = resolve_workflow_context(spec=spec, preset=preset_name)
+    resolved = deep_merge(base, {"model": ctx.model_id, "dataset": {"technique": ctx.technique}})
 
-    resolved = deep_merge(base, {"model": model_id, "dataset": {"technique": technique}})
-
-    spec_preset = spec.get("preset") or spec.get("training", {}).get("preset")
-    resolved_preset = resolve_training_preset(model_id, preset=preset_name, spec_preset=spec_preset)
-
-    if resolved_preset:
-        preset_path = PRESETS_DIR / f"{resolved_preset}.yaml"
+    if ctx.preset:
+        preset_path = PRESETS_DIR / f"{ctx.preset}.yaml"
         if not preset_path.exists():
-            raise ValueError(f"Unknown preset: {resolved_preset}")
+            raise ValueError(f"Unknown preset: {ctx.preset}")
         resolved = deep_merge(resolved, parse_yaml(preset_path))
 
-    resolved["preset"] = resolved_preset
+    resolved["preset"] = ctx.preset
     return resolved
 
 

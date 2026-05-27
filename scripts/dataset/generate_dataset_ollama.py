@@ -50,6 +50,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 from _config import paths, constants as C
 from _config.log_setup import log_info, log_warn, log_error, log_state
+from _config.workflow_context import resolve_workflow_context
 from scripts.dataset.dataset_contracts import (
     calculate_distribution_gaps,
     dataset_contract_from_spec,
@@ -965,20 +966,22 @@ Examples:
     # ── Load spec ──────────────────────────────────────────────────────────
     logger.info(f"Loading spec: {args.spec}")
     spec = load_subject_spec(args.spec)
-    npc_key = spec["npc_key"]
+    workflow = resolve_workflow_context(args.spec, spec=spec, technique="ollama")
+    npc_key = workflow.npc_key
+    technique = workflow.technique
     
     logger.info(f"Generating dataset for NPC: {spec['npc_name']}")
     logger.info(f"Subject: {spec['subject']}")
     logger.info(f"Model: {resolved_model}")
     
-    output_path = args.output or paths.dataset_train_path(npc_key, "ollama")
+    output_path = args.output or paths.dataset_train_path(npc_key, technique)
     hook_recorder = WorkflowHookRecorder(
         args.workflow_hooks or default_hook_path(Path(output_path).parent),
         tool="generate_dataset_ollama",
         npc_key=npc_key,
-        technique="ollama",
+        technique=technique,
         spec_path=args.spec,
-        run_id=fallback_generation_run_id(npc_key, "ollama"),
+        run_id=fallback_generation_run_id(npc_key, technique),
     )
     with hook_recorder.step("prepare", output_path=str(output_path), model=args.model):
         

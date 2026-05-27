@@ -16,8 +16,9 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+from _config import paths
 DEFAULT_NPC_KEYS = ("history_guide", "chef_assistant", "astronomy_guide", "fitness_coach")
 DEFAULT_CATEGORIES = ("identity", "teaching", "dialogue", "quest", "refusal")
 GOLDENS_OUTPUT_DIR = PROJECT_ROOT / "tests" / "evals" / ".dataset"
@@ -72,10 +73,13 @@ def _load_reference_doc(spec: dict) -> str:
 # Dataset row iteration
 # ---------------------------------------------------------------------------
 
-def _find_dataset(npc_key: str, technique: str = "template") -> Path | None:
-    """Locate the training JSONL for an NPC, preferring train_clean.jsonl."""
-    _validate_npc_key(npc_key)
+def _find_dataset(npc_key: str, technique: str | None = None) -> Path | None:
+    """Find the best matching dataset JSONL for an NPC and technique."""
+    if technique is None:
+        detected = paths.autodetect_dataset(npc_key)
+        return detected[1] if detected else None
     base = PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique
+    train = base / "train.jsonl"
     clean = base / "train_clean.jsonl"
     if clean.exists():
         return clean
@@ -258,7 +262,7 @@ def build(
     categories: tuple[str, ...] = DEFAULT_CATEGORIES,
     per_category: int = 6,
     output: Path | None = None,
-    technique: str = "template",
+    technique: str | None = None,
 ) -> dict[str, Any]:
     """Read NPC datasets and write a balanced golden-evaluation file.
 
@@ -266,7 +270,26 @@ def build(
     """
     all_goldens: list[dict] = []
     stats: dict[str, dict[str, int]] = {}
-    output = Path(output) if output is not None else _default_output_path(technique)
+    resolved_technique = technique
+    if resolved_technique is None:
+        detected = paths.autodetect_dataset(npc_keys[0]) if npc_keys else None
+        if not detected:
+            print("Error: No dataset found to infer technique.", file=sys.stderr)
+            sys.exit(1)
+        resolved_technique = detected[0]
+        for npc_key in npc_keys[1:]:
+            other = paths.autodetect_dataset(npc_key)
+            if not other:
+                print(f"Error: No dataset found for NPC '{npc_key}'.", file=sys.stderr)
+                sys.exit(1)
+            if other[0] != resolved_technique:
+                print(
+                    f"Error: Mixed dataset techniques detected ({resolved_technique} vs {other[0]}). "
+                    "Please build each technique set separately.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+    output = Path(output) if output is not None else _default_output_path(resolved_technique)
 
     try:
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -278,7 +301,7 @@ def build(
         sys.exit(1)
 
     for npc_key in npc_keys:
-        dataset_path = _find_dataset(npc_key, technique=technique)
+        dataset_path = _find_dataset(npc_key, technique=resolved_technique)
         if dataset_path is None:
             print(f"[warn] No dataset found for NPC '{npc_key}' — skipping", file=sys.stderr)
             stats[npc_key] = {"rows": 0, "single_candidates": 0, "multi_candidates": 0, "selected": 0}
@@ -296,7 +319,7 @@ def build(
             if row_cat not in categories:
                 continue
 
-            goldens = _row_to_goldens(row, spec, reference_doc, npc_key, technique)
+            goldens = _row_to_goldens(row, spec, reference_doc, npc_key, resolved_technique)
             for g in goldens:
                 if "conversation" in g:
                     multi_candidates.append(g)
@@ -324,7 +347,7 @@ def build(
         json.dump(all_goldens, f, indent=2, ensure_ascii=False)
         f.write("\n")
 
-    return {"total_goldens": len(all_goldens), "per_npc": stats}
+    return {"total_goldens": len(all_goldens), "per_npc": stats, "technique": resolved_technique, "output_path": str(output)}
 
 
 # ---------------------------------------------------------------------------
@@ -354,8 +377,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--technique",
-        default="template",
-        help="Dataset technique subdirectory to sample from (default: template)",
+        default=None,
+        help="Dataset technique subdirectory to sample from (defaults to the first detected dataset technique; all selected NPCs must match)",
     )
     parser.add_argument(
         "--output",
@@ -385,12 +408,11 @@ def main() -> None:
     print(f"Building goldens for NPCs:   {', '.join(npc_keys)}")
     print(f"Categories:                  {', '.join(categories)}")
     print(f"Target per category per NPC: {args.per_category}")
-    output_path = Path(args.output) if args.output else _default_output_path(args.technique)
-    print(f"Output:                      {output_path}")
     print()
 
-    result = build(npc_keys, categories, args.per_category, output_path, args.technique)
+    result = build(npc_keys, categories, args.per_category, args.output, args.technique)
 
+    output_path = Path(result["output_path"])
     print(f"\nDone — {result['total_goldens']} total goldens written to {output_path}")
     for npc_key, s in result["per_npc"].items():
         print(f"  {npc_key}: {s['selected']} goldens from {s['rows']} rows")
