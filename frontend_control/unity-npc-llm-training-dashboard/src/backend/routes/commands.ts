@@ -345,7 +345,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
         "options.deepevalCasesPerCategory": {
           type: "number",
           required: false,
-          default: 5,
+          default: 1,
           description: "DeepEval cases per category",
         },
         "options.workflowHooks": {
@@ -633,7 +633,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
         "options.deepevalCasesPerCategory": {
           type: "number",
           required: false,
-          default: 5,
+          default: 1,
           description: "DeepEval cases per category",
         },
         "options.deepevalSoftFail": {
@@ -849,10 +849,17 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
           default: 0.0,
           description: "Judge temperature",
         },
+        "options.mode": {
+          type: "string",
+          required: false,
+          default: "fast",
+          enum: ["fast", "release"],
+          description: "Dataset quality gate mode",
+        },
         "options.casesPerCategory": {
           type: "number",
           required: false,
-          default: 5,
+          default: 1,
           description: "Rows sampled per category",
         },
         "options.categories": {

@@ -16,6 +16,7 @@ from scripts.dataset.dataset_contracts import (
 
 def test_expected_examples_per_category_defaults_to_contract_minimums():
     assert expected_examples_per_category(None) == MIN_DATASET_EXAMPLES_PER_CATEGORY
+    assert sum(MIN_DATASET_EXAMPLES_PER_CATEGORY.values()) == 72
 
 
 def test_expected_examples_per_category_uses_spec_targets():
@@ -47,17 +48,17 @@ def test_calculate_distribution_gaps_reports_shortfalls():
 
 def test_generation_requests_leave_room_for_stratified_validation_split():
     requests = generation_request_counts_for_training_targets(
-        {"identity": 12, "teaching": 56},
+        {"identity": 8, "teaching": 32},
         val_split=0.12,
         include_validation=True,
     )
 
-    assert requests == {"identity": 13, "teaching": 63}
+    assert requests == {"identity": 9, "teaching": 36}
     assert generation_request_counts_for_training_targets(
-        {"identity": 12},
+        {"identity": 8},
         val_split=0.12,
         include_validation=False,
-    ) == {"identity": 12}
+    ) == {"identity": 8}
 
 
 def test_summarize_jsonl_dataset_counts_rows(tmp_path: Path):

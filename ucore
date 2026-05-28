@@ -160,6 +160,8 @@ def main():
     gen_p.add_argument("--model", help="LLM model name for ollama/openai/anthropic")
     gen_p.add_argument("--concept-focus", action="append", dest="concept_focus",
                         help="Focus on specific categories (repeatable, boosts example count)")
+    gen_p.add_argument("--fresh", action="store_true",
+                        help="Ignore checkpoint recovery and regenerate the dataset from scratch")
 
     # Generate with Ollama (optimized)
     gen_ollama_p = subparsers.add_parser("generate-ollama", help="Generate dataset using optimized Ollama generator (defaults to local llama3.1-3060-chat)")
@@ -233,7 +235,10 @@ def main():
                       help="Named Ollama judge preset (default: auto — resolves from configs/ollama-model-presets.yaml)")
     de_p.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
     de_p.add_argument("--judge-temperature", type=float, default=0.0, help="Judge temperature")
-    de_p.add_argument("--cases-per-category", type=int, default=5, help="Rows sampled per category")
+    de_p.add_argument("--mode", default="fast", choices=["fast", "release"],
+                      help="Quality gate mode (fast: iteration-friendly, release: strict)")
+    de_p.add_argument("--cases-per-category", type=int, default=None,
+                      help="Rows sampled per category (default: 1 for fast, 5 for release)")
     de_p.add_argument("--categories", help="Comma-separated category filter")
     de_p.add_argument("--identifier", help="DeepEval run identifier")
     de_p.add_argument("--display", default="all", choices=["all", "failing", "passing"], help="DeepEval display mode")
@@ -433,8 +438,8 @@ def main():
                        help="Exact Ollama judge model (wins over --deepeval-judge-preset)")
     fb_p.add_argument("--deepeval-ollama-url", default="http://localhost:11434",
                        help="Ollama base URL for DeepEval")
-    fb_p.add_argument("--deepeval-cases-per-category", type=int, default=5,
-                       help="Cases per category for DeepEval")
+    fb_p.add_argument("--deepeval-cases-per-category", type=int, default=1,
+                       help="Cases per category for fast DeepEval")
     fb_p.add_argument("--deepeval-soft-fail", action="store_true",
                        help="Do not abort dataset evaluation on metric failure; continue training")
     fb_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
@@ -463,6 +468,10 @@ def main():
     pipe_p.add_argument("--skip-eval", action="store_true", help="Skip evaluation phase")
     pipe_p.add_argument("--skip-spec-validate", action="store_true", help="Skip spec generation-ready validation")
     pipe_p.add_argument("--skip-dataset-eval", action="store_true", help="Skip DeepEval dataset quality gate")
+    pipe_p.add_argument("--dataset-eval-mode", default="fast", choices=["fast", "release"],
+                        help="Dataset quality gate mode used by the pipeline (default: fast)")
+    pipe_p.add_argument("--dataset-eval-cases-per-category", type=int, default=None,
+                        help="Rows sampled per category for pipeline dataset-eval (default depends on mode)")
     pipe_p.add_argument("--num-eval-questions", type=int, default=5,
                         help="Number of evaluation questions (default: 5)")
 
@@ -556,6 +565,8 @@ def main():
         if args.concept_focus:
             for cf in args.concept_focus:
                 cmd.extend(["--concept-focus", cf])
+        if args.fresh:
+            cmd.append("--fresh")
         run_cmd(cmd)
 
     elif args.command == "generate-ollama":
@@ -579,6 +590,8 @@ def main():
         if args.concept_focus:
             for cf in args.concept_focus:
                 cmd.extend(["--concept-focus", cf])
+        if args.fresh:
+            cmd.append("--fresh")
         if args.no_validation:
             cmd.append("--no-validation")
         if args.val_split and args.val_split != 0.12:
@@ -627,7 +640,9 @@ def main():
         if args.judge_preset: cmd.extend(["--judge-preset", args.judge_preset])
         cmd.extend(["--ollama-base-url", args.ollama_base_url])
         cmd.extend(["--judge-temperature", str(args.judge_temperature)])
-        cmd.extend(["--cases-per-category", str(args.cases_per_category)])
+        cmd.extend(["--mode", args.mode])
+        if args.cases_per_category is not None:
+            cmd.extend(["--cases-per-category", str(args.cases_per_category)])
         if args.categories: cmd.extend(["--categories", args.categories])
         if args.identifier: cmd.extend(["--identifier", args.identifier])
         if args.display: cmd.extend(["--display", args.display])
@@ -913,7 +928,17 @@ def main():
         if not args.skip_dataset_eval:
             print("[STAGE] quality-gate")
             print(f"\n--- Phase 3: DeepEval Dataset Quality Gate ---")
-            eval_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "dataset_eval.py"), args.spec, "--technique", technique]
+            eval_cmd = [
+                PYTHON,
+                str(SCRIPTS_DIR / "dataset" / "dataset_eval.py"),
+                args.spec,
+                "--technique",
+                technique,
+                "--mode",
+                args.dataset_eval_mode,
+            ]
+            if args.dataset_eval_cases_per_category is not None:
+                eval_cmd.extend(["--cases-per-category", str(args.dataset_eval_cases_per_category)])
             run_cmd(eval_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
         print("[STAGE] training")

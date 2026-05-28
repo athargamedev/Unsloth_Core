@@ -307,7 +307,7 @@ def run_training(npc_key, preset, technique="template", dry_run=False, allow_ung
 
 def run_dataset_eval(npc_key, technique="template", judge_model="qwen3:latest",
                      ollama_base_url="http://localhost:11434",
-                     cases_per_category=5, dry_run=False, soft_fail=False):
+                     cases_per_category=1, dry_run=False, soft_fail=False):
     """Run the dataset quality gate on the sanitized dataset."""
     spec_path = paths.spec_path(npc_key)
     if not spec_path.exists():
@@ -816,8 +816,8 @@ def main():
                         help="Exact Ollama judge model to use for dataset evaluation (wins over --deepeval-judge-preset)")
     parser.add_argument("--deepeval-ollama-url", default="http://localhost:11434",
                         help="Ollama base URL for dataset evaluation (default: http://localhost:11434)")
-    parser.add_argument("--deepeval-cases-per-category", type=int, default=5,
-                        help="Cases per category for DeepEval dataset gating (default: 5)")
+    parser.add_argument("--deepeval-cases-per-category", type=int, default=1,
+                        help="Cases per category for fast DeepEval dataset gating (default: 1)")
     parser.add_argument("--deepeval-soft-fail", action="store_true",
                         help="Do not abort dataset evaluation on metric failure; continue training")
     parser.add_argument("--workflow-hooks", default=None,

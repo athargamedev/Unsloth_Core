@@ -28,14 +28,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 DEFAULT_NPC_KEYS = ("history_guide", "chef_assistant", "astronomy_guide", "fitness_coach")
 DEFAULT_CATEGORIES = ("identity", "teaching", "dialogue", "quest", "refusal")
-DEFAULT_TECHNIQUE = "ollama"
+DEFAULT_TECHNIQUE = "template"
 
 _CATEGORY_MINIMUMS_DEFAULT: dict[str, int] = {
-    "identity": 12,
-    "teaching": 56,
-    "dialogue": 32,
-    "quest": 16,
-    "refusal": 16,
+    "identity": 8,
+    "teaching": 32,
+    "dialogue": 16,
+    "quest": 8,
+    "refusal": 8,
 }
 
 NPC_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -58,7 +58,7 @@ def _csv_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
 def _parse_category_minimums() -> dict[str, int]:
     """Parse ``DEEPEVAL_DATASET_CATEGORY_MINIMUMS`` or return defaults.
 
-    Expected format: ``"identity=12,teaching=56,dialogue=32,quest=16,refusal=16"``
+    Expected format: ``"identity=8,teaching=32,dialogue=16,quest=8,refusal=8"``
     """
     raw = os.getenv("DEEPEVAL_DATASET_CATEGORY_MINIMUMS")
     if not raw:
@@ -178,6 +178,7 @@ def _load_rows() -> list[dict]:
         pytest.skip(
             "No dataset rows loaded — check DEEPEVAL_DATASET_NPC_KEYS and "
             "DEEPEVAL_DATASET_TECHNIQUE",
+            allow_module_level=True,
         )
 
     return rows

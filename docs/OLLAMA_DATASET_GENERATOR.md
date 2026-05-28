@@ -206,15 +206,15 @@ subjects/datasets/{npc_key}/ollama/
     "version": "ollama-v2"
   },
   "statistics": {
-    "total": 132,
-    "train": 116,
-    "validation": 16,
+    "total": 72,
+    "train": 63,
+    "validation": 9,
     "by_category": {
-      "identity": 12,
-      "teaching": 56,
-      "dialogue": 32,
-      "quest": 16,
-      "refusal": 16
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
     },
     "by_difficulty": {
       "beginner": 45,

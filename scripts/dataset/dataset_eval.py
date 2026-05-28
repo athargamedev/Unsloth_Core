@@ -23,7 +23,10 @@ from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from _config.workflow_context import resolve_workflow_context
 
 DEEPEVAL_TEST = PROJECT_ROOT / "tests" / "evals" / "test_dataset_generation_quality.py"
+DEFAULT_FAST_CASES_PER_CATEGORY = 1
 DEFAULT_PRODUCTION_CASES_PER_CATEGORY = 5
+DEFAULT_DATASET_EVAL_MODE = "fast"
+DATASET_EVAL_MODES = ("fast", "release")
 
 
 def load_json(path: Path) -> Any:
@@ -279,6 +282,50 @@ def build_combined_quality_report(
     return combined
 
 
+def effective_cases_per_category(args: argparse.Namespace) -> int:
+    if args.cases_per_category is not None:
+        return args.cases_per_category
+    if args.mode == "release":
+        return DEFAULT_PRODUCTION_CASES_PER_CATEGORY
+    return DEFAULT_FAST_CASES_PER_CATEGORY
+
+
+def sanitizer_quality_issues(manifest: dict) -> tuple[dict, list[str]]:
+    statistics = manifest.get("statistics") if isinstance(manifest, dict) else {}
+    discarded = manifest.get("discarded") if isinstance(manifest, dict) else {}
+    quality_scores = statistics.get("quality_scores") if isinstance(statistics, dict) else {}
+    total_output = int(statistics.get("total_output", 0) or 0) if isinstance(statistics, dict) else 0
+    flagged = int(quality_scores.get("flagged_for_review", 0) or 0) if isinstance(quality_scores, dict) else 0
+    passed_threshold = int(quality_scores.get("passed_threshold", total_output) or 0) if isinstance(quality_scores, dict) else total_output
+    discarded_total = int(discarded.get("total", 0) or 0) if isinstance(discarded, dict) else 0
+
+    issues: list[str] = []
+    if flagged > 0:
+        issues.append(f"sanitizer flagged {flagged} row(s) for review")
+    if total_output > 0 and passed_threshold < total_output:
+        issues.append(f"sanitizer quality threshold passed {passed_threshold}/{total_output} output row(s)")
+
+    return {
+        "total_output": total_output,
+        "discarded_total": discarded_total,
+        "flagged_for_review": flagged,
+        "passed_threshold": passed_threshold,
+        "quality_scores": quality_scores if isinstance(quality_scores, dict) else {},
+    }, issues
+
+
+def dataset_eval_exit_code(summary: dict, deepeval_returncode: int, mode: str, *, soft_fail: bool = False) -> int:
+    if soft_fail:
+        return 0
+    if summary.get("distribution_gaps") or summary.get("dataset_unknown_rows", 0) or summary.get("sanitizer_quality_issues"):
+        return deepeval_returncode or 2
+    if summary.get("status") == "inconclusive":
+        return 2
+    if mode == "fast":
+        return 0
+    return deepeval_returncode
+
+
 def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     workflow = resolve_workflow_context(spec_path=Path(spec.get("__path__", args.spec)), spec=spec, technique=args.technique)
     npc_key = workflow.npc_key
@@ -291,7 +338,8 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
             f"--output subjects/datasets/{npc_key}/{technique}/train_clean.jsonl --strict-canonical"
         )
 
-    identifier = args.identifier or f"dataset-quality-{npc_key}-{technique}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    cases_per_category = effective_cases_per_category(args)
+    identifier = args.identifier or f"dataset-quality-{npc_key}-{technique}-{args.mode}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     cmd = [
         resolve_deepeval_bin(),
         "test",
@@ -330,7 +378,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 spec_path=args.spec,
                 run_id=run.run_id,
             )
-            with hook_recorder.step("deepeval_run", identifier=identifier, judge_model=resolved_judge_model, cases_per_category=args.cases_per_category):
+            with hook_recorder.step("deepeval_run", identifier=identifier, judge_model=resolved_judge_model, cases_per_category=cases_per_category, mode=args.mode):
                 preflight = run_preflight(
                     phase="dataset_eval",
                     preset=None,
@@ -371,7 +419,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     {
                         "DEEPEVAL_DATASET_NPC_KEYS": npc_key,
                         "DEEPEVAL_DATASET_TECHNIQUE": technique,
-                        "DEEPEVAL_DATASET_CASES_PER_CATEGORY": str(args.cases_per_category),
+                        "DEEPEVAL_DATASET_CASES_PER_CATEGORY": str(cases_per_category),
                         "DEEPEVAL_OLLAMA_MODEL": resolved_judge_model,
                         "DEEPEVAL_OLLAMA_BASE_URL": args.ollama_base_url,
                         "DEEPEVAL_OLLAMA_TEMPERATURE": str(args.judge_temperature),
@@ -393,19 +441,31 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     judge_model=resolved_judge_model,
                     command=cmd,
                 )
+                if summary.get("deepeval_result_identifier") and summary.get("deepeval_result_identifier") != identifier:
+                    summary["status"] = "inconclusive"
+                    summary["result_identifier_mismatch"] = {
+                        "expected": identifier,
+                        "actual": summary.get("deepeval_result_identifier"),
+                    }
                 dataset_summary = summarize_jsonl_dataset(clean_path)
                 expected_distribution = expected_examples_per_category(spec)
                 distribution_gaps = calculate_distribution_gaps(expected_distribution, dataset_summary.get("by_category", {}))
+                manifest = load_optional_json(output_dir / "train_manifest.json") or {}
+                sanitizer_summary, sanitizer_issues = sanitizer_quality_issues(manifest)
                 summary.update(
                     {
+                        "quality_gate_mode": args.mode,
+                        "cases_per_category": cases_per_category,
                         "dataset_summary": dataset_summary,
                         "expected_distribution": expected_distribution,
                         "distribution_gaps": distribution_gaps,
                         "dataset_total_rows": dataset_summary.get("total", 0),
                         "dataset_unknown_rows": dataset_summary.get("unknown_rows", 0),
+                        "sanitizer": sanitizer_summary,
+                        "sanitizer_quality_issues": sanitizer_issues,
                     }
                 )
-                if distribution_gaps or dataset_summary.get("unknown_rows", 0):
+                if distribution_gaps or dataset_summary.get("unknown_rows", 0) or sanitizer_issues:
                     summary["status"] = "structural_failure" if summary.get("status") == "ok" else summary.get("status")
                 output_dir = dataset_dir(npc_key, technique)
                 summary_path = Path(args.output) if args.output else output_dir / "quality_summary.json"
@@ -440,7 +500,8 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                             "npc_key": npc_key,
                             "technique": technique,
                             "judge_model": resolved_judge_model,
-                            "cases_per_category": args.cases_per_category,
+                            "cases_per_category": cases_per_category,
+                            "quality_gate_mode": args.mode,
                             "total": summary["total"],
                             "passed": summary["passed"],
                             "failed": summary["failed"],
@@ -510,10 +571,15 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     print("  [wandb] W&B logging failed (non-fatal)")
 
             print()
-            print(f"DeepEval dataset quality: {summary['passed']}/{summary['total']} passed ({summary['pass_rate']:.0%})")
+            print(f"DeepEval dataset quality ({args.mode}): {summary['passed']}/{summary['total']} passed ({summary['pass_rate']:.0%})")
             if summary.get("status") == "inconclusive":
                 print(
                     f"DeepEval status: INCONCLUSIVE ({summary['null_metric_count']}/{summary['metric_count']} metric scores were null)",
+                    flush=True,
+                )
+            if args.mode == "fast" and summary.get("failed", 0):
+                print(
+                    "Fast gate note: sampled DeepEval failures are diagnostic only; structural and sanitizer failures still block.",
                     flush=True,
                 )
             print(f"Summary:  {summary_path}")
@@ -525,13 +591,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
             run.set_metrics(passed=summary['passed'], total=summary['total'], pass_rate=summary['pass_rate'])
             clear_active_run()
 
-    if args.soft_fail:
-        return 0
-    if summary.get("distribution_gaps") or summary.get("dataset_unknown_rows", 0):
-        return completed.returncode or 2
-    if summary.get("status") == "inconclusive" and completed.returncode == 0:
-        return 2
-    return completed.returncode
+    return dataset_eval_exit_code(summary, completed.returncode, args.mode, soft_fail=args.soft_fail)
 
 
 def parse_args() -> argparse.Namespace:
@@ -551,7 +611,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
     parser.add_argument("--judge-temperature", type=float, default=0.0)
-    parser.add_argument("--cases-per-category", type=int, default=DEFAULT_PRODUCTION_CASES_PER_CATEGORY)
+    parser.add_argument("--mode", default=DEFAULT_DATASET_EVAL_MODE, choices=DATASET_EVAL_MODES,
+                        help="Gate mode: fast is iteration-friendly; release is strict and fails on sampled metric failures")
+    parser.add_argument("--cases-per-category", type=int, default=None,
+                        help="Rows sampled per category (default: 1 for fast, 5 for release)")
     parser.add_argument("--categories", help="Comma-separated category filter")
     parser.add_argument("--identifier", help="DeepEval run identifier")
     parser.add_argument("--display", default="all", choices=["all", "failing", "passing"])

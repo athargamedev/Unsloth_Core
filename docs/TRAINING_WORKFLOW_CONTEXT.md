@@ -69,12 +69,14 @@ model validation step.
 ```bash
 ./ucore dataset-eval subjects/NPC_specs/history_guide.json \
   --technique template \
+  --mode fast \
   --judge-model qwen3:latest \
   --cases-per-category 1
 ```
 
 **Local defaults:**
 - Judge: `qwen3:latest` via Ollama, temperature 0.
+- Mode: `fast` by default, sampling 1 row per category. Use `--mode release` for the strict 5-row-per-category final check.
 - Confident AI: disabled by default.
 - Dataset input: `subjects/datasets/{npc_key}/{technique}/train_clean.jsonl`.
 - Test suite: `tests/evals/test_dataset_generation_quality.py`.
@@ -94,7 +96,8 @@ the exact sanitized dataset. In `train.py`, the
 
 - The dataset is `train_clean.jsonl`, not raw `train.jsonl`
 - `quality_summary.json` exists with `status: "ok"`
-- Zero failing test cases and zero distribution gaps
+- Zero distribution gaps, zero unknown rows, clean sanitizer quality signals, and matching content hash
+- Zero failing sampled DeepEval cases only when the summary was produced with `--mode release`; `fast` mode keeps sampled failures diagnostic so iteration can reach training sooner
 - Content hash matches the hash recorded when the gate ran — any modification
   invalidates the gate
 

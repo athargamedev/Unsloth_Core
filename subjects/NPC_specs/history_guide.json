@@ -158,11 +158,11 @@
   ],
   "dataset": {
     "examples_per_category": {
-      "identity": 12,
-      "teaching": 56,
-      "dialogue": 32,
-      "quest": 16,
-      "refusal": 16
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
     }
   }
 }

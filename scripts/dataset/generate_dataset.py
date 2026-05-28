@@ -56,116 +56,26 @@ from scripts.dataset.generate_workflow_dataset import (
     generate_workflow_dataset_from_manifest,
 )
 
-# ── Category templates ──────────────────────────────────────────────────────
-# Each category defines how to generate examples. In production, these would
-# call an LLM (local or API) to create realistic content. For scaffolding,
-# we provide template-based generation that creates usable training data.
+from scripts.dataset.generation_profiles import (
+    CATEGORY_TEMPLATES,
+    DialogueGuardrail,
+    _concept_anchor,
+    _concept_detail,
+    _concept_detail_lower,
+    _example_topics,
+    _capitalize_first,
+    _is_history_subject,
+    _lower_first,
+    _subject_focus,
+    _topic_to_anchor,
+    generate_dialogue_response,
+    generate_identity_response,
+    generate_quest_response,
+    generate_refusal_response,
+    generate_teaching_response,
+)
 
-CATEGORY_TEMPLATES = {
-    "identity": {
-        "description": "Persona introduction and self-identification",
-        "user_templates": [
-            "Who are you?",
-            "What is your name?",
-            "Tell me about yourself.",
-            "What should I call you?",
-            "Are you a teacher?",
-            "Who am I speaking with?",
-            "What do you teach?",
-            "Can you introduce yourself?",
-        ],
-        "assistant_generator": "generate_identity_response",
-    },
-    "teaching": {
-        "description": "Subject-matter explanations",
-        "user_templates": [
-            "Can you explain {concept}?",
-            "Tell me about {concept}.",
-            "What is {concept}?",
-            "How does {concept} work?",
-            "Why is {concept} important?",
-            "Can you give me an example of {concept}?",
-            "I don't understand {concept}. Can you help?",
-            "What are the key ideas behind {concept}?",
-            "Compare {concept_a} and {concept_b}.",
-            "How is {concept} related to {related_concept}?",
-            "What is the difference between {concept_a} and {concept_b}?",
-            "Can you break down {concept} into simpler ideas?",
-            "Where can I see {concept} in action?",
-            "How do experts think about {concept}?",
-            "What should I know about {concept}?",
-            "Is there a real-world example of {concept}?",
-            "What are the basics of {concept}?",
-            "Tell me something interesting about {concept}.",
-            "How did {concept} come to be?",
-            "What makes {concept} so useful?",
-            "Can you simplify {concept}?",
-            "I'm struggling with {concept}. Explain it simply.",
-            "What are common misconceptions about {concept}?",
-            "How do I apply {concept}?",
-            "What do I need to understand {concept}?",
-            "Describe {concept} like I'm five.",
-            "What are the main components of {concept}?",
-            "Why does {concept} matter in everyday life?",
-            "Give me a metaphor for {concept}.",
-            "What is the history behind {concept}?",
-            "How does {concept} fit into the bigger picture?",
-            "What are some advanced aspects of {concept}?",
-        ],
-        "assistant_generator": "generate_teaching_response",
-    },
-    "dialogue": {
-        "description": "Natural conversation handling",
-        "user_templates": [
-            "I still don't get {concept}. Can you try again?",
-            "That makes sense, but what about when things get complex?",
-            "Can you give me another example? I learn by examples.",
-            "I have a question about what you said earlier regarding {concept}...",
-            "What happens if I apply {concept} incorrectly?",
-            "Is there a trick to remembering {concept}?",
-            "You mentioned something about {concept} — can you elaborate?",
-            "Wait, I thought {concept} was different. Can you clarify?",
-            "That helps! But how does {concept} connect to what I already know?",
-            "Can we go deeper on {concept}? I want to really understand it.",
-            "I heard someone say {concept} is outdated. Is that true?",
-            "What would happen if {concept} didn't exist?",
-            "Can you show me how to approach {concept} step by step?",
-            "I get the basics. What's next after {concept}?",
-            "That's interesting! But does {concept} apply to other fields too?",
-            "Could you explain {concept} from a different angle?",
-        ],
-        "assistant_generator": "generate_dialogue_response",
-    },
-    "quest": {
-        "description": "Scenario-based interactions",
-        "user_templates": [
-            "Give me a challenge related to {concept}.",
-            "Test my knowledge of {concept} with a question.",
-            "I want to practice {concept}. Give me an exercise.",
-            "Can you give me a scenario where I apply {concept}?",
-            "What is a good practice problem for {concept}?",
-            "Create a quiz question about {concept}.",
-            "Give me a real-world problem involving {concept} to solve.",
-            "I need to master {concept}. Give me a difficult question.",
-        ],
-        "assistant_generator": "generate_quest_response",
-    },
-    "refusal": {
-        "description": "Safe boundary responses",
-        "user_templates": [
-            "Can you write a poem for me?",
-            "What is the meaning of life?",
-            "Tell me how to bake a cake.",
-            "Can you help me with my homework in a different subject?",
-            "What stocks should I invest in?",
-            "Tell me a joke.",
-            "Can you predict the lottery numbers?",
-            "Give me medical advice.",
-        ],
-        "assistant_generator": "generate_refusal_response",
-    },
-}
-
+import scripts.dataset.generation_profiles as generation_profiles
 
 # ── Core functions ──────────────────────────────────────────────────────────
 
@@ -388,96 +298,6 @@ def write_examples_with_validation(examples, output_path, seed=C.DEFAULT_SEED, i
     }
 
 
-def _subject_focus(spec):
-    """Return a compact subject label instead of the full comma-separated scope."""
-    subject = spec.get("subject", "this topic")
-    return subject.split(":", 1)[0].strip().lower() or "this topic"
-
-
-def _example_topics(spec, limit=2):
-    topics = spec.get("dialogue", {}).get("example_topics", []) or []
-    return [str(topic).strip() for topic in topics[:limit] if str(topic).strip()]
-
-
-def _topic_to_anchor(topic: str, subject: str) -> str:
-    clean = topic.strip().rstrip("?")
-    clean = re.sub(r'^(what is|who is|how do i|how do|why is|how does|is|are|can i|should i|what are|how many|when does|where does)\s+', '', clean, flags=re.I).strip()
-    if not clean:
-        return subject
-    return _capitalize_first(clean)
-
-
-def _capitalize_first(text: str) -> str:
-    """Ensure text starts with an uppercase letter."""
-    if not text:
-        return text
-    return text[0].upper() + text[1:]
-
-
-def _lower_first(text: str) -> str:
-    """Ensure text fits naturally in the middle of a sentence."""
-    if not text:
-        return text
-    return text[0].lower() + text[1:]
-
-
-def _concept_detail(spec, concept):
-    subject = _subject_focus(spec)
-    topics = _example_topics(spec)
-    if topics:
-        anchor = _topic_to_anchor(topics[0], subject)
-        return f"{anchor}"
-    return _capitalize_first(f"{concept} in {subject}")
-
-
-def _concept_detail_lower(concept, spec):
-    """Return a concrete detail/example starting with lowercase for mid-sentence use."""
-    result = _concept_detail(spec, concept)
-    if result and len(result) > 1:
-        return result[0].lower() + result[1:]
-    return result
-
-
-def _concept_anchor(concept: str, spec, retriever=None) -> str:
-    if retriever:
-        contexts = retriever.get_grounding_context(concept, top_k=1)
-        if contexts:
-            first_sent = re.split(r'[.!?]+', contexts[0])[0].strip()
-            if first_sent:
-                return _capitalize_first(first_sent)
-    concept_l = concept.lower()
-    subject = _subject_focus(spec)
-    anchors = [
-        ("telescope", "Observing the Moon or Jupiter through a telescope"),
-        ("black hole", "Studying a black hole with a space telescope"),
-        ("solar system", "Tracking planets and moons in our solar system"),
-        ("galaxy", "Identifying a galaxy cloud in the night sky"),
-        ("knife", "Chopping an onion cleanly with a sharp chef's knife"),
-        ("food safety", "Keeping raw chicken separate from salad ingredients"),
-        ("cooking", "Sautéing vegetables evenly over medium heat"),
-        ("meal prep", "Preparing ingredients in advance to save time during the week"),
-        ("strength training", "Using controlled lifts with good form and moderate weight"),
-        ("cardio", "Doing brisk walking or cycling to raise your heart rate safely"),
-        ("recovery", "Resting and sleeping well after a hard workout"),
-        ("nutrition", "Balancing protein, carbohydrates, and fats for steady energy"),
-        ("ancient civilizations", "Mesopotamia, early cities, writing, and codified law"),
-        ("classical antiquity", "Greek city-states, Roman law, republican government, and empire"),
-        ("roman empire", "Greece and Rome, with democracy, empire, republican government, and legal legacy"),
-        ("medieval history", "feudalism, the Byzantine world, crusades, and the Black Death"),
-        ("industrial revolution", "industrialization, world wars, and the Cold War"),
-        ("world war", "industrialization, world wars, and the Cold War"),
-        ("modern history", "industrialization, world wars, and the Cold War"),
-        ("core timeline anchors", "placing events in order so causes, dates, and consequences stay connected"),
-        ("scope and use", "major eras, turning points, and why events changed societies"),
-        ("historical methodology", "primary sources, eyewitness accounts, and uncertainty"),
-        ("historical thinking", "the big picture, the main cause, and one consequence"),
-    ]
-    for needle, anchor in anchors:
-        if needle in concept_l:
-            return _capitalize_first(anchor)
-    return _capitalize_first(f"{concept} in {subject}")
-
-
 def _refusal_user_message(spec, boundary=None):
     boundary_lower = (boundary or "").lower()
     if "unsafe" in boundary_lower or "food preparation" in boundary_lower:
@@ -500,15 +320,17 @@ def _refusal_user_message(spec, boundary=None):
             "Can you give me the exact dates when this historical period started and ended?",
             "What are the precise start and end dates for this era?",
         ])
-    if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
+    if "speculate" in boundary_lower or "speculation" in boundary_lower or "counterfactual" in boundary_lower:
         return random.choice([
             "What definitely would have happened if this historical event went the other way?",
             "Can you tell me the exact alternate outcome if history changed?",
+            "Can you state the alternate version of history as if it definitely happened?",
         ])
     if "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
         return random.choice([
             "Is it true experts are hiding the real story from everyone?",
             "Can you tell me the secret truth that historians won't admit?",
+            "Can you confirm the conspiracy version instead of the standard historical account?",
         ])
     subject = _subject_focus(spec)
     return random.choice([
@@ -520,25 +342,7 @@ def _refusal_user_message(spec, boundary=None):
 
 
 def generate_identity_response(spec):
-    """Generate persona self-introduction responses using spec identity fields."""
-    npc_name = spec.get("npc_name", "the guide")
-    subject = _subject_focus(spec)
-    subject_short = spec.get("subject", subject).split(",")[0].strip().split(":")[0].strip() or subject
-    personality = spec.get("identity", {}).get("personality", "")
-    personality_short = personality.split("—")[0].split("-")[0].split(";")[0].split(",")[0].strip()
-
-    templates = [
-        f"I'm {npc_name}, and I help you study {subject_short} by comparing sources, tracing cause and effect, and showing why events mattered, like the fall of Rome.",
-        f"I'm {npc_name}, your {subject_short} guide. I answer directly, then point to evidence and one concrete example like ancient civilizations or medieval history.",
-        f"Hi, I'm {npc_name}. If you ask about {subject_short}, I can walk you through a topic, a source, or a turning point like the printing press.",
-        f"I'm {npc_name}, a careful {subject_short} guide who checks dates, evidence, and historical importance first, especially for modern history.",
-        f"I'm {npc_name}; I help place events on a timeline and compare primary sources so you can see why historians disagree about ancient civilizations.",
-        f"I'm {npc_name}; I help separate legend from evidence in {subject_short} and show why details matter in medieval history.",
-    ]
-    if personality_short:
-        templates.append(f"I'm {npc_name}, a {personality_short.lower()} guide for {subject_short}, with a focus on chronology, sources, and why the history matters. I can also point to concrete topics like ancient civilizations, medieval history, or modern history.")
-    return random.choice(templates)
-
+    return generation_profiles.generate_identity_response(spec)
 
 def _is_history_subject(spec) -> bool:
     subject = _subject_focus(spec).lower()
@@ -547,278 +351,19 @@ def _is_history_subject(spec) -> bool:
     return "history" in subject or "history" in subject_text or "history" in npc_name
 
 def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="beginner", retriever=None):
-    """Generate teaching responses based on concepts and difficulty tier."""
-    subject = _subject_focus(spec)
-    detail_a = _concept_anchor(concept_a, spec, retriever)
-    detail_b = _concept_anchor(concept_b, spec, retriever) if concept_b else None
-    if "methodology" in concept_a.lower():
-        detail_a = "Comparing sources carefully and checking for bias"
-    detail_a_lower = _lower_first(detail_a)
-
-    if _is_history_subject(spec):
-        if concept_b:
-            templates = [
-                f"Compare {concept_a} and {concept_b} by looking at how each changed society.",
-                f"A useful contrast is that {concept_a} centers on {detail_a}, while {concept_b} centers on {detail_b}.",
-            ]
-        else:
-            templates = [
-                f"{concept_a.capitalize()} shows up through {detail_a_lower}; trace one cause and one consequence to see why it mattered.",
-                f"A concrete example of {concept_a} is {detail_a_lower}. Use it to connect a date, a source, and a consequence.",
-                f"The key idea behind {concept_a} is {detail_a_lower}; it matters because it links evidence to historical change.",
-            ]
-    elif difficulty == "beginner":
-        if concept_b:
-            templates = [
-                f"{concept_a} is about {detail_a}, while {concept_b} is about {detail_b}; one uses {detail_a} and the other uses {detail_b}.",
-                f"Compare them like this: {concept_a} means {detail_a}, and {concept_b} means {detail_b} in a concrete case.",
-            ]
-        else:
-            templates = [
-                f"{concept_a} matters because {detail_a}; one clear example is how it changes the outcome.",
-                f"The key idea behind {concept_a} is {detail_a}, which you can see in a real-world example.",
-                f"In {subject}, {concept_a} shows up when {detail_a}, especially in practical cases.",
-            ]
-    elif difficulty == "intermediate":
-        if concept_b:
-            templates = [
-                f"A useful difference is that {concept_a} focuses on {detail_a}, while {concept_b} focuses on {detail_b}, so they lead to different outcomes.",
-                f"Look at {concept_a} and {concept_b} through {detail_a} versus {detail_b}, using one concrete example.",
-            ]
-        else:
-            templates = [
-                f"A deeper look at {concept_a}: {detail_a}, with one concrete example to show it in action.",
-                f"{concept_a} works this way in practice: {detail_a}, which you can see in a specific case.",
-            ]
-    else:
-        if concept_b:
-            templates = [
-                f"Compare {concept_a} and {concept_b} by checking one concrete case, like {detail_a} versus {detail_b}.",
-                f"A useful contrast is that {concept_a} shows up when {detail_a}, while {concept_b} shows up when {detail_b}.",
-            ]
-        else:
-            templates = [
-                f"{concept_a} is easier to understand when you start with one concrete example, like {detail_a}.",
-                f"In practice, {concept_a} matters because {detail_a}, which changes the outcome in a real case.",
-            ]
-    return random.choice(templates)
+    return generation_profiles.generate_teaching_response(spec, concept_a, concept_b=concept_b, difficulty=difficulty, retriever=retriever)
 
 
 def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriever=None):
-    """Generate conversational responses based on dialogue type."""
-    npc_name = spec["npc_name"]
-    subject = _subject_focus(spec)
-    detail = _concept_anchor(concept, spec, retriever)
-    detail_lower = _lower_first(detail)
+    return generation_profiles.generate_dialogue_response(spec, concept, dialogue_type=dialogue_type, retriever=retriever)
 
-    if _is_history_subject(spec):
-        if dialogue_type == "clarification":
-            templates = [
-                f"If you apply {concept} incorrectly, causes can look backwards and evidence can support the wrong claim. Check the date and source.",
-                f"A mistake with {concept} can turn an effect into a cause. Re-anchor the event with one date, one source, and one consequence.",
-            ]
-        elif dialogue_type == "deep_dive":
-            templates = [
-                f"Go deeper by linking {concept} to {detail_lower}. One source, cause, and consequence show why it matters.",
-                f"{concept.capitalize()} is clearer with a case such as {detail_lower}; connect the event or source to its consequence.",
-            ]
-        elif dialogue_type == "application":
-            templates = [
-                f"Use {concept} by matching it to one specific case, like {detail}.",
-                f"A practical way to apply {concept} is to test it against a real example and explain the result.",
-            ]
-        else:
-            templates = [
-                f"That is a common misconception. A better explanation is {detail}, with one real example to prove it.",
-                f"Not quite — {concept} works best when you connect it to a specific case such as {detail}.",
-            ]
-    elif dialogue_type == "clarification":
-        templates = [
-            f"Sure — {concept} means {detail}, and a concrete example makes it easier to see.",
-            f"Another way to say it: {concept} is about {detail}, as you can see in a real case.",
-        ]
-    elif dialogue_type == "deep_dive":
-        templates = [
-            f"Start with {detail}, then name one cause and one consequence so the idea stays concrete.",
-            f"A good next step is to connect {detail} to one event, date, or source.",
-        ]
-    elif dialogue_type == "application":
-        templates = [
-            f"Use {concept} by matching it to one specific case, like {detail}.",
-            f"A practical way to apply {concept} is to test it against a real example and explain the result.",
-        ]
-    else:
-        templates = [
-            f"That is a common misconception. A better explanation is {detail}, with one real example to prove it.",
-            f"Not quite — {concept} works best when you connect it to a specific case such as {detail}.",
-        ]
-
-    return random.choice(templates)
 
 def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
-    """Generate quest/challenge responses based on scenario."""
-    subject = _subject_focus(spec)
-    detail = _concept_anchor(concept, spec, retriever)
-    detail_lower = _lower_first(detail)
+    return generation_profiles.generate_quest_response(spec, concept, scenario_name=scenario_name, retriever=retriever)
 
-    if scenario_name:
-        scenario_templates = {
-            "timeline_analysis": [
-                f"Pick one event related to {concept}, like {detail_lower}, and explain one cause and one consequence.",
-                f"Use {detail_lower} to describe the sequence of events and why it mattered.",
-            ],
-            "primary_source": [
-                f"Scenario: two sources date one event differently. Use {concept} to place it, cite one source, and explain one consequence.",
-                f"Try this: use {concept} to order one event, cite one source for its date, then explain what changed next.",
-            ],
-            "technique_mastery": [
-                f"Your challenge: apply {concept} to {detail_lower}, then explain one cause and one consequence.",
-                f"Name one mistake with {concept}, then use {detail_lower} to correct the timeline or evidence.",
-            ],
-            "meal_planning": [
-                f"Use {concept} to plan one practical solution and explain why {detail} fits.",
-                f"Given limited options, how would you use {concept} in a real scenario?",
-            ],
-        }
-        cat_templates = scenario_templates.get(scenario_name, [])
-        if cat_templates:
-            return random.choice(cat_templates)
-
-    # Fallback to generic quest templates
-    templates = [
-        f"What is one real-world example of {concept}, and why does it matter?",
-        f"Use {detail} to solve a practical problem in one concrete case.",
-        f"Describe one way {concept} changes the outcome of a real situation with a specific example.",
-        f"Give a short explanation of {concept} using a concrete case like {detail}.",
-    ]
-    return random.choice(templates)
 
 def generate_refusal_response(spec, boundary=None):
-    """Generate safe refusal responses for out-of-scope questions."""
-    subject = _subject_focus(spec)
-    npc_name = spec["npc_name"]
-
-    if boundary:
-        boundary_lower = boundary.lower()
-        if _is_history_subject(spec):
-            if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
-                example = _example_topics(spec, limit=1)
-                example = example[0] if example else "the fall of Rome"
-                concrete = example.replace("What caused ", "").replace("?", "")
-                templates = [
-                    f"I can't treat counterfactuals as fact. Instead, we can stick to the real event and its sources, like {concrete}.",
-                    f"That is hypothetical, so I would mark it as speculation. I can still help with the documented event and its chronology.",
-                ]
-            elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
-                templates = [
-                    f"I can't help spread unsupported claims. Instead, I can help with verified chronology, sources, and evidence.",
-                    f"I need to stay with evidence-based history. Let's focus on the documented version and the sources behind it.",
-                ]
-            elif "unsupported certainty" in boundary_lower or "date range" in boundary_lower:
-                templates = [
-                    f"I can't give exact dates as if historians all agree, but I can share the commonly used range and why it is used.",
-                    f"That question asks for more certainty than the evidence supports. Instead, I can give the standard range and the reason behind it.",
-                ]
-            elif "topic change" in boundary_lower or "different topic" in boundary_lower:
-                templates = [
-                    f"Absolutely — we can switch topics, and I can still help with a history topic like ancient civilizations, medieval history, or modern history.",
-                    f"Yes, let's change direction. If you'd like, we can talk about the fall of Rome, the Middle Ages, or the printing press instead.",
-                ]
-            else:
-                templates = [
-                    f"That is outside my role as {npc_name}. Instead, I can help with chronology, sources, or evidence in {subject}.",
-                    f"I can't help with that request. Instead, I can explain a documented {subject} topic about chronology or sources.",
-                    f"I can't answer that directly. Let's focus on a real {subject} question about chronology, sources, or evidence.",
-                    f"That sits outside what I cover. What I can do is help with a documented {subject} topic.",
-                ]
-            return random.choice(templates)
-        if "speculate" in boundary_lower or "counterfactual" in boundary_lower:
-            example = _example_topics(spec, limit=1)
-            example = example[0] if example else "the fall of Rome"
-            concrete = example.replace("What caused ", "").replace("?", "")
-            templates = [
-                f"I can't treat counterfactuals as fact. We can label them as speculation and stick to the real event, like {concrete}.",
-                f"That is hypothetical, so I would mark it as speculation. A better {subject} question is how the real event unfolded, like {concrete}.",
-            ]
-        elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
-            templates = [
-                f"I can't help spread unsupported claims. Instead, I can help with verified {subject} information.",
-                f"I need to stay with evidence-based {subject}. Let's focus on the documented version instead.",
-            ]
-        elif "aliens" in boundary_lower or "extraterrestrial" in boundary_lower:
-            templates = [
-                f"I can't confirm alien existence or appearance. Instead, I can explain how astronomers search for life using exoplanets and biosignatures.",
-                f"I can't verify that claim. Let's focus on astronomy facts and current evidence.",
-            ]
-        elif "unsupported certainty" in boundary_lower or "date range" in boundary_lower:
-            templates = [
-                f"I can't give exact dates as if historians all agree, but I can share the commonly used range and why it is used.",
-                f"That question asks for more certainty than the evidence supports. Instead, I can give the standard range and the reason behind it.",
-            ]
-        elif "medical" in boundary_lower or "dietary" in boundary_lower:
-            if any(word in subject.lower() for word in ["cook", "culinary", "chef"]):
-                templates = [
-                    f"I can't make a diet plan or treat a medical condition. Instead, I can help with safe recipes and meal prep.",
-                    f"I can't prescribe a diet, but I can walk you through a cooking technique or a simple balanced meal.",
-                    f"I don't give medical or dietary advice. What I can do is share cooking techniques and balanced recipes.",
-                    f"I don't handle treatment plans. Let's focus on safe cooking methods and flavor instead.",
-                ]
-            elif any(word in subject.lower() for word in ["fitness", "exercise"]):
-                templates = [
-                    f"I can't give personalized medical or dietary advice. Instead, I can help with safe training habits and recovery.",
-                    f"That is outside my role as {npc_name}. I can explain form, consistency, and general fitness basics instead.",
-                ]
-            else:
-                templates = [
-                    f"I can't give personalized medical or dietary advice. Instead, I can help with general nutrition basics.",
-                    f"That is outside my role as {npc_name}. I cannot prescribe diets, but I can cover safe meal-prep basics.",
-                ]
-        elif "unsafe" in boundary_lower or "food preparation" in boundary_lower:
-            if _is_history_subject(spec):
-                templates = [
-                    f"I can't help with that safety question here. Instead, I can explain chronology, sources, or evidence in world history.",
-                    f"That is outside my history role. I can help with a documented world history topic about chronology or sources.",
-                    f"I can't answer that as a history guide. Instead, we can look at a source, a date range, or a turning point.",
-                    f"That question is outside my scope. I can still help with evidence-based world history or source analysis.",
-                ]
-            elif any(word in subject.lower() for word in ["cook", "culinary", "chef"]):
-                templates = [
-                    f"I can't recommend unsafe preparation methods. Instead, I can help with a safer way to get a similar result.",
-                    f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
-                    f"I don't recommend shortcuts that risk food safety. Let's find a proper technique that gets you the results you want.",
-                    f"I don't handle methods that ignore safe cooking temperatures. Here's what I can suggest instead.",
-                ]
-            elif any(word in subject.lower() for word in ["fitness", "exercise"]):
-                templates = [
-                    f"I can't recommend unsafe preparation methods. Instead, I can help with a safer training or recovery alternative.",
-                    f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk fitness alternative.",
-                ]
-            else:
-                templates = [
-                    f"I can't recommend unsafe preparation methods. Instead, I can help with a safer way to get a similar result.",
-                    f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
-                ]
-        else:
-            templates = [
-                f"That is outside my role as {npc_name}. Instead, I can help with chronology, sources, or evidence in {subject}.",
-                f"I can't help with that request. Instead, I can explain a documented {subject} topic about chronology or sources.",
-                f"I can't answer that directly. Let's focus on a real {subject} question about chronology, sources, or evidence.",
-                f"That sits outside what I cover. What I can do is help with a documented {subject} topic.",
-                f"I don't cover that topic. Let's talk about {subject} instead — what would you like to learn?",
-                f"I don't handle requests outside {subject}. I can help with evidence, sources, or a concrete example.",
-            ]
-        return random.choice(templates)
-
-    # Fallback to generic refusal templates
-    templates = [
-        f"I am {npc_name}, and I specialize in {subject}. That question is outside my area of expertise.",
-        f"I focus on {subject}, so I can't help with that request. Ask me about a verified fact or a safe alternative instead.",
-        f"As {npc_name}, I am here to help you explore {subject}. I cannot assist with that, but I can answer in-scope questions.",
-        f"That is not something I can help with. My role is to teach {subject}.",
-        f"I don't cover that area. Let me help with {subject} instead — pick a topic you want to explore.",
-        f"I don't handle that kind of request. Ask me about {subject} and I'll give you a clear, helpful answer.",
-    ]
-    return random.choice(templates)
+    return generation_profiles.generate_refusal_response(spec, boundary=boundary)
 
 def _clean_query(query):
     """Normalize a query string by collapsing whitespace."""
@@ -1278,7 +823,8 @@ class ConceptExtractor:
         except (FileNotFoundError, OSError):
             return []
         headings = re.findall(r"^##\s+(.+)$", text, re.MULTILINE)
-        return [h.strip() for h in headings if h.strip()]
+        excluded = {"scope and use", "scope & use", "misconceptions and refusals"}
+        return [h.strip() for h in headings if h.strip() and h.strip().lower() not in excluded]
 
 
 def concept_pool_for_subject(spec: dict) -> list[str]:
@@ -1301,6 +847,38 @@ def example_content_hash(example: dict) -> str:
     if isinstance(metadata, dict) and metadata.get("content_hash"):
         return str(metadata["content_hash"]).removeprefix("sha256:")
     return compute_content_hash(example.get("messages", []) if isinstance(example, dict) else [])
+
+
+def ensure_unique_user_prompt_signatures(examples: list[dict]) -> None:
+    """Make category/concept/user prompt signatures unique in-place."""
+    seen: dict[tuple[str, str, str], int] = {}
+    for example in examples:
+        metadata = example.get("metadata", {})
+        messages = example.get("messages", [])
+        user_message = None
+        for message in messages:
+            if message.get("role") == "user":
+                user_message = message
+                break
+        if not isinstance(metadata, dict) or user_message is None:
+            continue
+        content = user_message.get("content", "")
+        if not isinstance(content, str):
+            continue
+        key = (
+            str(metadata.get("category", "")),
+            str(metadata.get("concept", "")),
+            content,
+        )
+        duplicate_index = seen.get(key, 0)
+        seen[key] = duplicate_index + 1
+        if duplicate_index == 0:
+            continue
+        user_message["content"] = (
+            f"{content} Use a different concrete angle than the earlier example "
+            f"for this same topic, variant {duplicate_index + 1}."
+        )
+        metadata["content_hash"] = compute_content_hash(messages)
 
 
 async def generate_example_async(spec, category, concepts, generator=None, temperature=0.8,
@@ -1769,7 +1347,7 @@ def fallback_generation_run_id(npc_key: str | None, technique: str) -> str:
     return f"{stamp}_{npc_key or 'unknown'}_generate_{technique}_{uuid.uuid4().hex[:8]}"
 
 
-def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.6, technique="template", spec_path=None, telemetry_ipc=None, workflow_hooks=None, run_id=None):
+def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.6, technique="template", spec_path=None, telemetry_ipc=None, workflow_hooks=None, run_id=None, fresh=False):
     """Generate a complete dataset from a subject spec."""
     random.seed(seed)
     
@@ -1782,7 +1360,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
 
     output_path_obj = Path(output_path)
     checkpoint_db_path = output_path_obj.parent / ".checkpoint.db"
-    checkpoint_store = CheckpointStore(str(checkpoint_db_path))
+    checkpoint_store = None if fresh else CheckpointStore(str(checkpoint_db_path))
     retriever = ReferenceDocRetriever(spec.get("reference_doc"))
     guardrail = DialogueGuardrail()
     telemetry_reporter = TelemetryReporter(telemetry_ipc)
@@ -1924,6 +1502,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
 
 
         # ── Split into train/validation (stratified by category) ─────────────
+        ensure_unique_user_prompt_signatures(examples)
         if include_validation and len(examples) > 5:
             by_category = defaultdict(list)
             for ex in examples:
@@ -2113,6 +1692,8 @@ def main():
                         help="Path to JSON IPC file for real-time dashboard telemetry reporting")
     parser.add_argument("--workflow-hooks", default=None,
                         help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
+    parser.add_argument("--fresh", action="store_true",
+                        help="Ignore checkpoint recovery and regenerate the dataset from scratch")
     parser.add_argument("--synthesize-goldens", action="store_true",
                         help="Generate synthetic evaluation goldens using DeepEval Synthesizer")
     args = parser.parse_args()
@@ -2220,6 +1801,7 @@ def main():
                     telemetry_ipc=args.telemetry_ipc,
                     workflow_hooks=args.workflow_hooks or str(run.hook_path),
                     run_id=run.run_id,
+                    fresh=args.fresh,
                 )
 
             run.set_artifacts(

@@ -4,7 +4,13 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.dataset_eval import DEFAULT_PRODUCTION_CASES_PER_CATEGORY, summarize_deepeval_result
+from scripts.dataset_eval import (
+    DEFAULT_DATASET_EVAL_MODE,
+    DEFAULT_FAST_CASES_PER_CATEGORY,
+    DEFAULT_PRODUCTION_CASES_PER_CATEGORY,
+    dataset_eval_exit_code,
+    summarize_deepeval_result,
+)
 
 
 def test_dataset_eval_summary_extracts_metric_failures():
@@ -125,5 +131,35 @@ def test_dataset_eval_summary_marks_null_heavy_results_inconclusive():
     assert len(failures) == 2
 
 
-def test_dataset_eval_default_samples_five_cases_per_category():
+def test_dataset_eval_fast_mode_is_default_and_samples_one_case_per_category():
+    assert DEFAULT_DATASET_EVAL_MODE == "fast"
+    assert DEFAULT_FAST_CASES_PER_CATEGORY == 1
+
+
+def test_dataset_eval_release_samples_five_cases_per_category():
     assert DEFAULT_PRODUCTION_CASES_PER_CATEGORY == 5
+
+
+def test_fast_gate_metric_failures_are_diagnostic_not_blocking():
+    summary = {
+        "status": "ok",
+        "failed": 3,
+        "distribution_gaps": [],
+        "dataset_unknown_rows": 0,
+        "sanitizer_quality_issues": [],
+    }
+
+    assert dataset_eval_exit_code(summary, 1, "fast") == 0
+    assert dataset_eval_exit_code(summary, 1, "release") == 1
+
+
+def test_fast_gate_structural_failures_still_block():
+    summary = {
+        "status": "structural_failure",
+        "failed": 0,
+        "distribution_gaps": [{"category": "refusal", "shortfall": 1}],
+        "dataset_unknown_rows": 0,
+        "sanitizer_quality_issues": [],
+    }
+
+    assert dataset_eval_exit_code(summary, 0, "fast") == 2

@@ -332,8 +332,8 @@ export const TrainingSuite = ({
             <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Cases per Category</label>
             <input
               type="number"
-              value={trainingConfig.deepevalCasesPerCategory ?? 5}
-              onChange={(e) => onUpdateTrainingConfig({ deepevalCasesPerCategory: parseInt(e.target.value) || 5 })}
+              value={trainingConfig.deepevalCasesPerCategory ?? 1}
+              onChange={(e) => onUpdateTrainingConfig({ deepevalCasesPerCategory: parseInt(e.target.value) || 1 })}
               min={1} max={20}
               className="w-20 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
             />

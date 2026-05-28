@@ -24,7 +24,7 @@ const DEFAULT_TRAINING_CONFIG: TrainingConfig = {
   datasetEvalJudgePreset: '',
   deepevalSoftFail: false,
   deepevalOllamaUrl: 'http://localhost:11434',
-  deepevalCasesPerCategory: 5,
+  deepevalCasesPerCategory: 1,
 };
 
 export interface UIState {

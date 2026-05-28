@@ -79,7 +79,7 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
     judgePreset: '',
     ollamaBaseUrl: 'http://localhost:11434',
     judgeTemperature: 0.0,
-    casesPerCategory: 5,
+    casesPerCategory: 1,
     categories: '',
     identifier: '',
     display: 'all',
@@ -752,7 +752,7 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
                         min={1}
                         max={50}
                         value={evalConfig.casesPerCategory}
-                        onChange={(e) => setEvalConfig({...evalConfig, casesPerCategory: parseInt(e.target.value) || 5})}
+                        onChange={(e) => setEvalConfig({...evalConfig, casesPerCategory: parseInt(e.target.value) || 1})}
                         className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
                       />
                     </div>

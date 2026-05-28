@@ -27,15 +27,17 @@ def _write_clean_dataset(path: Path) -> dict:
     return summarize_jsonl_dataset(path)
 
 
-def _write_quality_summary(path: Path, dataset_summary: dict) -> None:
+def _write_quality_summary(path: Path, dataset_summary: dict, *, gate_mode: str = "release", failed: int = 0) -> None:
     path.write_text(
         json.dumps(
             {
                 "status": "ok",
                 "total": 5,
-                "failed": 0,
+                "failed": failed,
+                "quality_gate_mode": gate_mode,
                 "distribution_gaps": [],
                 "dataset_unknown_rows": 0,
+                "sanitizer_quality_issues": [],
                 "dataset_summary": dataset_summary,
             }
         ),
@@ -60,6 +62,38 @@ def test_dataset_quality_gate_rejects_stale_summary_hash(tmp_path: Path):
     errors = dataset_quality_gate_errors(clean_path)
 
     assert any("does not match" in error for error in errors)
+
+
+def test_dataset_quality_gate_accepts_fast_gate_with_metric_failures(tmp_path: Path):
+    clean_path = tmp_path / "train_clean.jsonl"
+    dataset_summary = _write_clean_dataset(clean_path)
+    _write_quality_summary(tmp_path / "quality_summary.json", dataset_summary, gate_mode="fast", failed=2)
+
+    assert dataset_quality_gate_errors(clean_path) == []
+
+
+def test_dataset_quality_gate_rejects_release_gate_metric_failures(tmp_path: Path):
+    clean_path = tmp_path / "train_clean.jsonl"
+    dataset_summary = _write_clean_dataset(clean_path)
+    _write_quality_summary(tmp_path / "quality_summary.json", dataset_summary, gate_mode="release", failed=1)
+
+    errors = dataset_quality_gate_errors(clean_path)
+
+    assert any("failing DeepEval cases" in error for error in errors)
+
+
+def test_dataset_quality_gate_rejects_fast_gate_sanitizer_issues(tmp_path: Path):
+    clean_path = tmp_path / "train_clean.jsonl"
+    dataset_summary = _write_clean_dataset(clean_path)
+    _write_quality_summary(tmp_path / "quality_summary.json", dataset_summary, gate_mode="fast", failed=0)
+    summary_path = tmp_path / "quality_summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["sanitizer_quality_issues"] = ["sanitizer flagged 1 row(s) for review"]
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    errors = dataset_quality_gate_errors(clean_path)
+
+    assert any("sanitizer quality issues" in error for error in errors)
 
 
 def test_validation_dataset_path_prefers_clean_validation_split(tmp_path: Path):

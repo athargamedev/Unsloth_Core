@@ -40,7 +40,7 @@ The pipeline transforms an NPC subject spec into a deployable GGUF LoRA adapter 
 
 # 4. DeepEval quality gate (uses qwen3:latest judge)
 ./ucore dataset-eval subjects/NPC_specs/history_guide.json \
-  --technique template --judge-model qwen3:latest
+  --technique template --mode fast --judge-model qwen3:latest
 
 # 5. Train LoRA adapter
 ./ucore train subjects/NPC_specs/history_guide.json \

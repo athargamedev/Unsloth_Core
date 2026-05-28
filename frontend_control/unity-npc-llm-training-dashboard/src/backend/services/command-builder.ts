@@ -213,8 +213,11 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         const judgeTemperature = optionValue(payload, "judgeTemperature");
         if (judgeTemperature && judgeTemperature !== "0") args.push("--judge-temperature", judgeTemperature);
 
+        const mode = optionValue(payload, "mode") || optionValue(payload, "datasetEvalMode");
+        if (mode && mode !== "fast") args.push("--mode", sanitizeToken(mode, "mode"));
+
         const casesPerCategory = optionValue(payload, "casesPerCategory");
-        if (casesPerCategory && casesPerCategory !== "5") args.push("--cases-per-category", casesPerCategory);
+        if (casesPerCategory && casesPerCategory !== "1") args.push("--cases-per-category", casesPerCategory);
 
         const categories = optionValue(payload, "categories");
         if (categories) args.push("--categories", sanitizeToken(categories, "categories"));
@@ -352,6 +355,10 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (boolOptionValue(payload, "fullMergeExport")) cmd.push("--full-merge-export");
         if (boolOptionValue(payload, "skipSpecValidate")) cmd.push("--skip-spec-validate");
         if (boolOptionValue(payload, "skipDatasetEval")) cmd.push("--skip-dataset-eval");
+        const datasetEvalMode = String(optionValue(payload, "datasetEvalMode") || "").trim();
+        if (datasetEvalMode && datasetEvalMode !== "fast") cmd.push("--dataset-eval-mode", sanitizeToken(datasetEvalMode, "datasetEvalMode"));
+        const datasetEvalCasesPerCategory = String(optionValue(payload, "datasetEvalCasesPerCategory") || "").trim();
+        if (datasetEvalCasesPerCategory) cmd.push("--dataset-eval-cases-per-category", datasetEvalCasesPerCategory);
         if (boolOptionValue(payload, "skipEval")) cmd.push("--skip-eval");
         if (boolOptionValue(payload, "skipSmoke")) cmd.push("--skip-smoke");
         const numEvalQuestions = String(optionValue(payload, "numEvalQuestions") || "5").trim();

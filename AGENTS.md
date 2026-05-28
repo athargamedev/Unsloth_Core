@@ -8,7 +8,7 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 3.  **Validate Generation Inputs**: `./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready`
 4.  **Generate Dataset**: `./ucore generate subjects/NPC_specs/history_guide.json --technique template`
 5.  **Sanitize Dataset**: `./ucore sanitize subjects/datasets/history_guide/template/train.jsonl --output subjects/datasets/history_guide/template/train_clean.jsonl --strict-canonical --require-complete-metadata`
-6.  **Dataset Quality Gate**: `./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique template --judge-model qwen3:latest`
+6.  **Dataset Quality Gate**: `./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique template --mode fast --judge-model qwen3:latest`
 7.  **Smoke Test Pipeline**: `./ucore pipeline subjects/NPC_specs/history_guide.json --preset smoke`
 8.  **Production Train**: `./ucore train subjects/NPC_specs/history_guide.json --technique template --preset fast-3b --export-gguf`
 9.  **Evaluate Model**: `./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html`
@@ -103,15 +103,16 @@ Transforms a subject spec into a playable NPC:
 
 ## 🛡️ Quality Gate System
 
-The pre-training dataset quality gate prevents training unless the DeepEval suite has passed against the exact sanitized dataset file.
+The pre-training dataset quality gate prevents training unless a fresh gate has passed against the exact sanitized dataset file. Use `--mode fast` for normal iteration and `--mode release` for strict final checks.
 
 ### How It Works
 
-1. After generation and sanitization, `./ucore dataset-eval` runs DeepEval with the local Ollama judge and writes `quality_summary.json` and `quality_failures.json` beside the dataset.
+1. After generation and sanitization, `./ucore dataset-eval --mode fast` runs a lightweight local DeepEval sample and writes `quality_summary.json` and `quality_failures.json` beside the dataset. Use `--mode release` for the stricter full gate.
 2. `train.py` calls `dataset_quality_gate_errors()` at startup:
    - Verifies the dataset is `train_clean.jsonl` (not raw `train.jsonl`)
    - Checks `quality_summary.json` exists and has `status: "ok"`
-   - Confirms zero failing test cases and zero distribution gaps
+   - Confirms zero distribution gaps, zero unknown rows, clean sanitizer quality signals, and a matching dataset hash
+   - In `release` mode, also requires zero failing sampled DeepEval cases. In `fast` mode, sampled DeepEval failures are diagnostics and do not block training.
    - Compares the current dataset content hash against the hash recorded when the gate ran — any modification invalidates the gate
 3. If any check fails, training exits with an error and a clear message.
 
@@ -247,12 +248,12 @@ Only `template` technique directory is created. Reference docs are centralized a
 - **Dataset Categories**: Each NPC trains on these 5 categories:
   | Category | Examples | Purpose |
   |----------|----------|---------|
-  | identity | 12 | Who the NPC is (personality, background, mannerisms) |
-  | teaching | 56 | Subject-matter explanations |
-  | dialogue | 32 | Natural conversation handling |
-  | quest | 16 | Scenario-based interactions |
-  | refusal | 16 | Safe boundary responses |
-  **Total: 132 examples** per NPC.
+  | identity | 8 | Who the NPC is (personality, background, mannerisms) |
+  | teaching | 32 | Subject-matter explanations |
+  | dialogue | 16 | Natural conversation handling |
+  | quest | 8 | Scenario-based interactions |
+  | refusal | 8 | Safe boundary responses |
+  **Total: 72 examples** per NPC.
 - **Active SFT techniques**: `template`, `docs`, `ollama`, `openai`, `anthropic`.
 - **RL data state**: RL preference-pair and reward-rollout schemas exist in `subjects/schemas/`, with the contract in `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md`. Treat RL dataset generation as planned/contracted unless a concrete generator exists in `ucore`.
 - **Generation readiness**: `./ucore validate-spec <spec> --generation-ready` must pass before creating new datasets. This enforces reference-doc location/shape, all five categories, and minimum SFT counts.
@@ -271,7 +272,7 @@ A local Supabase instance can track:
 ## 🤖 AI Agent Best Practices
 - **Always use `ucore`**: Prefer the unified CLI over direct script calls.
 - **Reference-doc contract**: Use `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md` and `subjects/reference_docs/README.md`. A primer must have one H1, at least 5 H2 sections, at least 20 concrete bullets, at least 250 words, and safety/refusal/boundary/misconception notes.
-- **Dataset gate before training**: Run `./ucore dataset-eval <spec> --technique <technique>` after sanitize and before SFT. Training is **blocked by default** unless a passing `quality_summary.json` exists for the exact sanitized dataset. Pass `--allow-ungated-dataset` to train.py to bypass. Uses local Ollama `qwen3:latest` as the judge (configured in `configs/ollama-model-presets.yaml` and `scripts/ops/ollama_model_presets.py`).
+- **Dataset gate before training**: Run `./ucore dataset-eval <spec> --technique <technique> --mode fast` after sanitize and before SFT. Training is **blocked by default** unless a passing `quality_summary.json` exists for the exact sanitized dataset. Use `--mode release` for final strict checks. Pass `--allow-ungated-dataset` to train.py to bypass. Uses local Ollama `qwen3:latest` as the judge (configured in `configs/ollama-model-presets.yaml` and `scripts/ops/ollama_model_presets.py`).
 - **DeepEval artifacts**: `.deepeval/` is local runtime state and ignored. Dataset gate outputs `quality_summary.json` and `quality_failures.json` are regenerable and ignored.
 - **Export mode**: `ucore export <npc_key>` defaults to adapter-only mode. Use `--full-merge` for standalone merged GGUFs.
 - **Evaluation**: Use `./ucore evaluate --base-model <base.gguf>` to evaluate adapter GGUFs — no full-merge needed. Uses `llama-server --lora`, same mechanism as LLMUnity runtime. Base GGUF at `Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf`.

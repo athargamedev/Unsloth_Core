@@ -155,7 +155,7 @@ export default function App() {
     datasetEvalJudgePreset: '',
     deepevalSoftFail: false,
     deepevalOllamaUrl: 'http://localhost:11434',
-    deepevalCasesPerCategory: 5,
+    deepevalCasesPerCategory: 1,
   });
 
   const {

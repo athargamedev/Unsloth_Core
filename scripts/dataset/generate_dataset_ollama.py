@@ -59,19 +59,21 @@ from scripts.dataset.dataset_contracts import (
 from scripts.ops.ollama_lifecycle import register_ollama_unload
 from scripts.ops.ollama_model_presets import resolve_ollama_model
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
-from generate_dataset import (
+from scripts.dataset.generation_profiles import (
     CATEGORY_TEMPLATES,
-    ConceptExtractor,
-    ReferenceDocRetriever,
     DialogueGuardrail,
-    fallback_generation_run_id,
-    generate_identity_response,
-    generate_teaching_response,
+    _is_history_subject,
     generate_dialogue_response,
+    generate_identity_response,
     generate_quest_response,
     generate_refusal_response,
+    generate_teaching_response,
+)
+from generate_dataset import (
+    ConceptExtractor,
+    ReferenceDocRetriever,
+    fallback_generation_run_id,
     _refusal_user_message,
-    _is_history_subject,
     compute_content_hash,
     load_subject_spec,
 )

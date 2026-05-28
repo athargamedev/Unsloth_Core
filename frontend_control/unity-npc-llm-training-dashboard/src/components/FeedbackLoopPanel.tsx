@@ -86,7 +86,7 @@ export const FeedbackLoopPanel = () => {
     deepevalJudgePreset: '',
     deepevalJudgeModel: '',
     deepevalOllamaUrl: '',
-    deepevalCasesPerCategory: 5,
+    deepevalCasesPerCategory: 1,
     deepevalSoftFail: false,
     skipDatasetEval: false,
     saveGaps: false,
@@ -202,7 +202,7 @@ export const FeedbackLoopPanel = () => {
       if (fbConfig.deepevalOllamaUrl) {
         (payload.options as Record<string, unknown>).deepevalOllamaUrl = fbConfig.deepevalOllamaUrl;
       }
-      if (fbConfig.deepevalCasesPerCategory !== 5) {
+      if (fbConfig.deepevalCasesPerCategory !== 1) {
         (payload.options as Record<string, unknown>).deepevalCasesPerCategory = String(fbConfig.deepevalCasesPerCategory);
       }
       if (fbConfig.deepevalSoftFail) {
@@ -641,7 +641,7 @@ export const FeedbackLoopPanel = () => {
                           <input
                             type="number"
                             value={fbConfig.deepevalCasesPerCategory}
-                            onChange={e => updateConfig('deepevalCasesPerCategory', parseInt(e.target.value) || 5)}
+                            onChange={e => updateConfig('deepevalCasesPerCategory', parseInt(e.target.value) || 1)}
                             min={1} max={20}
                             className="w-20 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
                           />

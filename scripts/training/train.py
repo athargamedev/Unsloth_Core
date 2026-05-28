@@ -320,14 +320,20 @@ def dataset_quality_gate_errors(dataset_path: str | Path) -> list[str]:
     except (OSError, json.JSONDecodeError) as exc:
         return [f"quality summary is unreadable: {summary_path} ({exc})"]
 
+    gate_mode = summary.get("quality_gate_mode") or "release"
+    if gate_mode not in {"fast", "release"}:
+        errors.append(f"quality summary has unknown quality_gate_mode {gate_mode!r}")
     if summary.get("status") != "ok":
         errors.append(f"quality summary status is {summary.get('status')!r}, expected 'ok'")
     if int(summary.get("total", 0) or 0) <= 0:
         errors.append("quality summary has no evaluated test cases")
-    if int(summary.get("failed", 0) or 0) > 0:
+    if gate_mode != "fast" and int(summary.get("failed", 0) or 0) > 0:
         errors.append(f"quality summary still has {summary.get('failed')} failing DeepEval cases")
     if summary.get("distribution_gaps"):
         errors.append("quality summary reports category distribution gaps")
+    sanitizer_issues = summary.get("sanitizer_quality_issues") or []
+    if sanitizer_issues:
+        errors.append("quality summary reports sanitizer quality issues: " + "; ".join(str(issue) for issue in sanitizer_issues))
     unknown_rows = summary.get("dataset_unknown_rows")
     if unknown_rows is None:
         unknown_rows = (summary.get("dataset_summary") or {}).get("unknown_rows", 0)

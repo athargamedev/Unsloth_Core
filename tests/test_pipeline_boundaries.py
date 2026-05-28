@@ -91,6 +91,25 @@ def test_concept_extractor_uses_explicit_concepts_and_metadata():
 
 
 
+
+def test_concept_extractor_ignores_meta_reference_headings():
+    from scripts.generate_dataset import ConceptExtractor
+
+    spec = {
+        "npc_key": "chef_assistant",
+        "npc_name": "ChefAssistant",
+        "subject": "Cooking fundamentals: knife skills, heat, flavor, food safety, and kitchen workflow",
+        "reference_doc": "subjects/reference_docs/chef_assistant_primer.md",
+        "teaching": {"expertise": ["knife skills", "flavor balance"]},
+    }
+
+    concepts = [c.name for c in ConceptExtractor(spec).extract()]
+
+    assert "scope and use" not in concepts
+    assert "misconceptions and refusals" not in concepts
+
+
+
 def test_smoke_custom_prompts_and_tracking_timestamp(monkeypatch, tmp_path, capsys):
     from scripts import smoke_test
 
