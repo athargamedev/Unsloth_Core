@@ -378,6 +378,7 @@ curl -H "Authorization: Bearer <key>" http://localhost:3100/api/auth/keys
 The dashboard uses a layered state architecture:
 
 - **React Query** (`@tanstack/react-query`): Server state — 11 query hooks, 6 mutations, staleTime=5s, retry=2
+- **Zod Validation**: Runtime schema validation integrated directly into React Query `queryFn` hooks to guarantee type safety and prevent silent frontend crashes from malformed API responses.
 - **Zustand**: UI-only state — active tab, filters, toasts, selection, sidebar state
 - **WebSocket bridge** (`useWebSocketQuery.ts`): WS events invalidate React Query caches
 - **Notifications**: `NotificationCenter` component with auto-dismiss (8s), type colors, badge count read state
