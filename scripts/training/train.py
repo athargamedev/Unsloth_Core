@@ -776,12 +776,60 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
     )
 
     # Apply train_on_responses_only to mask user tokens in loss when available.
+    # Uses unsloth's train_on_responses_only (standalone function, not a trainer method).
     if training.get("train_on_responses_only", False) and hasattr(tokenizer, "apply_chat_template"):
-        if hasattr(trainer, "train_on_responses_only"):
-            print("  [INFO] Applying train_on_responses_only")
-            trainer.train_on_responses_only()
-        else:
-            print("  [WARN] train_on_responses_only requested, but current trainer API does not expose it; continuing without response-only masking")
+        try:
+            from unsloth import train_on_responses_only as _unsloth_response_only
+        except ImportError:
+            _unsloth_response_only = None
+            print("  [WARN] unsloth.train_on_responses_only not available; continuing without response-only masking")
+
+        if _unsloth_response_only is not None:
+            # Detect instruction/response markers from the model's chat template.
+            response_part = None
+            instruction_part = None
+            chat_template = tokenizer.chat_template or ""
+
+            if "<|im_start|>" in chat_template:
+                # ChatML format: Qwen, Phi, Mistral, etc.
+                instruction_part = "<|im_start|>user"
+                response_part = "<|im_start|>assistant"
+            elif "<|start_header_id|>" in chat_template:
+                # Llama 3 / Llama 3.1 / Llama 3.2 format
+                instruction_part = "<|start_header_id|>user<|end_header_id|>"
+                response_part = "<|start_header_id|>assistant<|end_header_id|>"
+            else:
+                # Try rendering one example to detect tokens
+                try:
+                    example = tokenizer.apply_chat_template(
+                        [
+                            {"role": "user", "content": "x"},
+                            {"role": "assistant", "content": "y"},
+                        ],
+                        tokenize=False,
+                    )
+                    if "<|im_start|>assistant" in example:
+                        instruction_part = "<|im_start|>user"
+                        response_part = "<|im_start|>assistant"
+                    elif "<|start_header_id|>assistant<|end_header_id|>" in example:
+                        instruction_part = "<|start_header_id|>user<|end_header_id|>"
+                        response_part = "<|start_header_id|>assistant<|end_header_id|>"
+                except Exception:
+                    pass
+
+            if response_part is not None and instruction_part is not None:
+                print(f"  [INFO] Applying train_on_responses_only (response marker: {response_part!r})")
+                try:
+                    _unsloth_response_only(
+                        trainer,
+                        instruction_part=instruction_part,
+                        response_part=response_part,
+                        tokenizer=tokenizer,
+                    )
+                except Exception as e:
+                    print(f"  [WARN] train_on_responses_only failed: {e}; continuing without response-only masking")
+            else:
+                print("  [WARN] train_on_responses_only requested, but could not detect chat template format; continuing without response-only masking")
 
     print(f"  Starting training ({training.get('num_epochs', 3)} epochs, {training.get('batch_size', 1)} batch)...")
     try:
