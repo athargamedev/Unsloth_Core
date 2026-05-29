@@ -14,7 +14,6 @@
   - [Docker Services](#docker-services)
   - [Edge Functions](#edge-functions)
   - [Realtime](#realtime)
-- [2. Future Ideas](#2-future-ideas)
   - [Short-Term](#short-term)
   - [Medium-Term](#medium-term)
   - [Long-Term](#long-term)

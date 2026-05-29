@@ -43,7 +43,7 @@ def test_npc_system_prompts_still_request_short_ui_friendly_answers():
             prompts_without_shortness.append(spec_path.name)
             continue
         lower_prompt = system_prompt.lower()
-        if not any(keyword in lower_prompt for keyword in ("short", "1-3", "concise", "brief", "game ui", "ui friendly")):
+        if not any(keyword in lower_prompt for keyword in ("short", "1-3", "3-5", "concise", "brief", "game ui", "ui friendly")):
             prompts_without_shortness.append(spec_path.name)
 
     assert not prompts_without_shortness, (

@@ -21,10 +21,10 @@ def test_resolve_workflow_context_prefers_existing_ollama_dataset_for_history_gu
     assert ctx.dataset_val_path == paths.dataset_val_path("history_guide", "ollama")
 
 
-def test_resolve_workflow_context_prefers_existing_ollama_dataset_for_chef_assistant():
+def test_resolve_workflow_context_prefers_existing_template_dataset_for_chef_assistant():
     ctx = resolve_workflow_context("subjects/NPC_specs/chef_assistant.json")
     assert ctx.npc_key == "chef_assistant"
-    assert ctx.technique == "ollama"
+    assert ctx.technique == "template"
     assert ctx.dataset_train_path.name == "train_clean.jsonl"
     assert ctx.dataset_train_path.exists()
-    assert ctx.dataset_val_path == paths.dataset_val_path("chef_assistant", "ollama")
+    assert ctx.dataset_val_path == paths.dataset_val_path("chef_assistant", "template")

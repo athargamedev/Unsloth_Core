@@ -138,6 +138,7 @@ Base config → Preset override → CLI override
 | `smoke` | LLaMA 3.2 1B | 8 | 1 | 2 | Debugging/testing pipeline |
 | `fast-3b` | LLaMA 3.2 3B | 16 | 5 | 4 | Standard NPC training |
 | `safe-any` | Auto-detect | 8 | 3 | 2 | CUDA OOM fallback |
+| `wandb` | (inherits) | --- | --- | --- | W&B experiment tracking (use as overlay) |
 
 **Output:** `outputs/{npc_key}/` (LoRA adapter weights)
 

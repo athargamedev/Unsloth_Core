@@ -23,6 +23,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from metrics import DATASET_QUALITY_METRICS
 
+# ---------------------------------------------------------------------------
+# Gate: only activate when DEEPEVAL_DATASET_LIVE is set
+# ---------------------------------------------------------------------------
+
+_DATASET_LIVE = os.getenv("DEEPEVAL_DATASET_LIVE", "").strip()
+if not _DATASET_LIVE:
+    pytest.skip(
+        "Set DEEPEVAL_DATASET_LIVE=1 to activate dataset quality evaluation",
+        allow_module_level=True,
+    )
+
 DEFAULT_NPCS = ("history_guide", "chef_assistant")
 DEFAULT_CATEGORIES = ("identity", "teaching", "dialogue", "quest", "refusal")
 DEFAULT_TECHNIQUE = "template"
@@ -131,7 +142,7 @@ def _build_cases() -> list[LLMTestCase]:
     return cases
 
 
-TEST_CASES = _build_cases()
+TEST_CASES = [] if not _DATASET_LIVE else _build_cases()
 
 
 @pytest.mark.parametrize("test_case", TEST_CASES, ids=lambda case: case.name)

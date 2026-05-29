@@ -1,0 +1,383 @@
+{
+  "schema_version": "1.0",
+  "created": "2026-05-29",
+  "description": "Master comparison table for NPC LoRA training experiments",
+  "runs": [
+    {
+      "run_id": "20260525_safe-any_llama3.2-3b_002",
+      "npc_key": "history_guide",
+      "timestamp": "2026-05-25",
+      "model": {
+        "name": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+        "params": "3B",
+        "architecture": "llama3.2",
+        "base_gguf_available": false
+      },
+      "preset": {
+        "name": "safe-any",
+        "lora_r": 8,
+        "lora_alpha": 16,
+        "max_seq_length": 1024,
+        "grad_accum": 8,
+        "batch_size": 1
+      },
+      "dataset": {
+        "technique": "ollama",
+        "num_examples": 129,
+        "categories_passed": true,
+        "quality_gate_pass_rate": null
+      },
+      "train_on_responses_only": false,
+      "results": {
+        "training_loss": 2.690,
+        "eval_loss": null,
+        "win_rate": 0.33,
+        "num_eval_questions": 9,
+        "avg_quality": null,
+        "smoke_test_pass": true
+      },
+      "export": {
+        "mode": "adapter",
+        "size_mb": 24,
+        "path": "exports/history_guide/history_guide-lora-f16.gguf",
+        "has_gguf": true
+      },
+      "resources": {
+        "vram_gb": 5.67,
+        "training_time_sec": null,
+        "samples_per_sec": null
+      },
+      "promoted": false,
+      "notes": "Best loss ever achieved (2.690). Ollama technique generated 129 examples. train_on_responses_only was NOT active due to code bug. Archived, not in use."
+    },
+    {
+      "run_id": "20260526_safe-any_llama3.2-3b_001",
+      "npc_key": "chef_assistant",
+      "timestamp": "2026-05-26",
+      "model": {
+        "name": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+        "params": "3B",
+        "architecture": "llama3.2",
+        "base_gguf_available": false
+      },
+      "preset": {
+        "name": "safe-any",
+        "lora_r": 8,
+        "lora_alpha": 16,
+        "max_seq_length": 1024,
+        "grad_accum": 8,
+        "batch_size": 1
+      },
+      "dataset": {
+        "technique": "template",
+        "num_examples": 72,
+        "categories_passed": true,
+        "quality_gate_pass_rate": null
+      },
+      "train_on_responses_only": false,
+      "results": {
+        "training_loss": 3.710,
+        "eval_loss": null,
+        "win_rate": null,
+        "num_eval_questions": null,
+        "avg_quality": null,
+        "smoke_test_pass": true
+      },
+      "export": {
+        "mode": "adapter",
+        "size_mb": 24,
+        "path": "exports/chef_assistant/chef_assistant-lora-f16.gguf",
+        "has_gguf": true
+      },
+      "resources": {
+        "vram_gb": 5.67,
+        "training_time_sec": null,
+        "samples_per_sec": null
+      },
+      "promoted": false,
+      "notes": "Pre-fix chef_assistant run. Template technique, 72 rows. Baseline for chef_assistant experiments."
+    },
+    {
+      "run_id": "20260528_safe-any_llama3.2-3b_001",
+      "npc_key": "history_guide",
+      "timestamp": "2026-05-28",
+      "model": {
+        "name": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+        "params": "3B",
+        "architecture": "llama3.2",
+        "base_gguf_available": false
+      },
+      "preset": {
+        "name": "safe-any",
+        "lora_r": 8,
+        "lora_alpha": 16,
+        "max_seq_length": 1024,
+        "grad_accum": 8,
+        "batch_size": 1
+      },
+      "dataset": {
+        "technique": "template",
+        "num_examples": 72,
+        "categories_passed": true,
+        "quality_gate_pass_rate": null
+      },
+      "train_on_responses_only": false,
+      "results": {
+        "training_loss": 3.773,
+        "eval_loss": null,
+        "win_rate": null,
+        "num_eval_questions": null,
+        "avg_quality": null,
+        "smoke_test_pass": true
+      },
+      "export": {
+        "mode": "adapter",
+        "size_mb": 24,
+        "path": "exports/history_guide/history_guide-lora-f16.gguf",
+        "has_gguf": true
+      },
+      "resources": {
+        "vram_gb": 5.67,
+        "training_time_sec": null,
+        "samples_per_sec": null
+      },
+      "promoted": false,
+      "notes": "P0 smoke run for history_guide. Template technique, 72 rows. Safe-any preset on llama3.2 3B."
+    },
+    {
+      "run_id": "20260528_safe-any_llama3.2-3b_002",
+      "npc_key": "chef_assistant",
+      "timestamp": "2026-05-28",
+      "model": {
+        "name": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit",
+        "params": "3B",
+        "architecture": "llama3.2",
+        "base_gguf_available": false
+      },
+      "preset": {
+        "name": "safe-any",
+        "lora_r": 8,
+        "lora_alpha": 16,
+        "max_seq_length": 1024,
+        "grad_accum": 8,
+        "batch_size": 1
+      },
+      "dataset": {
+        "technique": "template",
+        "num_examples": 72,
+        "categories_passed": true,
+        "quality_gate_pass_rate": null
+      },
+      "train_on_responses_only": false,
+      "results": {
+        "training_loss": 3.714,
+        "eval_loss": null,
+        "win_rate": null,
+        "num_eval_questions": null,
+        "avg_quality": null,
+        "smoke_test_pass": true
+      },
+      "export": {
+        "mode": "adapter",
+        "size_mb": 24,
+        "path": "exports/chef_assistant/chef_assistant-lora-f16.gguf",
+        "has_gguf": true
+      },
+      "resources": {
+        "vram_gb": 5.67,
+        "training_time_sec": null,
+        "samples_per_sec": null
+      },
+      "promoted": false,
+      "notes": "P0 smoke run for chef_assistant. Template technique, 72 rows. Safe-any preset on llama3.2 3B."
+    },
+    {
+      "run_id": "20260529_fast-1.7b_qwen3-1.7b-unsloth_001",
+      "npc_key": "history_guide",
+      "timestamp": "2026-05-29",
+      "model": {
+        "name": "unsloth/Qwen3-1.7B-bnb-4bit",
+        "params": "1.7B",
+        "architecture": "qwen3",
+        "base_gguf_available": false
+      },
+      "preset": {
+        "name": "fast-1.7b",
+        "lora_r": 16,
+        "lora_alpha": 32,
+        "max_seq_length": 2048,
+        "grad_accum": 4,
+        "batch_size": 2
+      },
+      "dataset": {
+        "technique": "template",
+        "num_examples": 72,
+        "categories_passed": true,
+        "quality_gate_pass_rate": null
+      },
+      "train_on_responses_only": false,
+      "results": {
+        "training_loss": 4.394,
+        "eval_loss": null,
+        "win_rate": null,
+        "num_eval_questions": null,
+        "avg_quality": null,
+        "smoke_test_pass": true
+      },
+      "export": {
+        "mode": "adapter",
+        "size_mb": 7,
+        "path": "exports/history_guide/history_guide-lora-f16.gguf",
+        "has_gguf": true
+      },
+      "resources": {
+        "vram_gb": 4.20,
+        "training_time_sec": null,
+        "samples_per_sec": null
+      },
+      "promoted": false,
+      "notes": "Pre-fix Qwen3 1.7B run. High loss (4.394) due to code bug. First Qwen experiment with history_guide."
+    },
+    {
+      "run_id": "20260529_fast-1.7b_qwen3-1.7b-unsloth_002",
+      "npc_key": "history_guide",
+      "timestamp": "2026-05-29",
+      "model": {
+        "name": "unsloth/Qwen3-1.7B-bnb-4bit",
+        "params": "1.7B",
+        "architecture": "qwen3",
+        "base_gguf_available": false
+      },
+      "preset": {
+        "name": "fast-1.7b",
+        "lora_r": 16,
+        "lora_alpha": 32,
+        "max_seq_length": 2048,
+        "grad_accum": 4,
+        "batch_size": 2
+      },
+      "dataset": {
+        "technique": "template",
+        "num_examples": 72,
+        "categories_passed": true,
+        "quality_gate_pass_rate": null
+      },
+      "train_on_responses_only": false,
+      "results": {
+        "training_loss": 4.176,
+        "eval_loss": null,
+        "win_rate": 0.78,
+        "num_eval_questions": 9,
+        "avg_quality": null,
+        "smoke_test_pass": true
+      },
+      "export": {
+        "mode": "adapter",
+        "size_mb": 7,
+        "path": "exports/history_guide/history_guide-lora-f16.gguf",
+        "has_gguf": true
+      },
+      "resources": {
+        "vram_gb": 4.20,
+        "training_time_sec": 37.3,
+        "samples_per_sec": 1.29
+      },
+      "promoted": false,
+      "notes": "Post-fix first retrain of history_guide on Qwen3 1.7B. Loss improved from 4.394 to 4.176. win_rate 0.78 (9 eval questions). Fast training: 37.3s."
+    },
+    {
+      "run_id": "20260529_fast-1.7b_qwen3-1.7b-unsloth_003",
+      "npc_key": "chef_assistant",
+      "timestamp": "2026-05-29",
+      "model": {
+        "name": "unsloth/Qwen3-1.7B-bnb-4bit",
+        "params": "1.7B",
+        "architecture": "qwen3",
+        "base_gguf_available": false
+      },
+      "preset": {
+        "name": "fast-1.7b",
+        "lora_r": 16,
+        "lora_alpha": 32,
+        "max_seq_length": 2048,
+        "grad_accum": 4,
+        "batch_size": 2
+      },
+      "dataset": {
+        "technique": "template",
+        "num_examples": 72,
+        "categories_passed": true,
+        "quality_gate_pass_rate": null
+      },
+      "train_on_responses_only": false,
+      "results": {
+        "training_loss": 2.479,
+        "eval_loss": 1.156,
+        "win_rate": null,
+        "num_eval_questions": null,
+        "avg_quality": null,
+        "smoke_test_pass": true
+      },
+      "export": {
+        "mode": "adapter",
+        "size_mb": 7,
+        "path": "exports/chef_assistant/chef_assistant-lora-f16.gguf",
+        "has_gguf": true
+      },
+      "resources": {
+        "vram_gb": 4.20,
+        "training_time_sec": 49.8,
+        "samples_per_sec": 2.17
+      },
+      "promoted": false,
+      "notes": "Post-fix chef_assistant on Qwen3 1.7B. Best chef_assistant loss (2.479) with eval_loss 1.156. Fast training: 49.8s, 2.17 samples/sec."
+    },
+    {
+      "run_id": "20260529_fast-1.7b_qwen3-1.7b-unsloth_004",
+      "npc_key": "history_guide",
+      "timestamp": "2026-05-29",
+      "model": {
+        "name": "unsloth/Qwen3-1.7B-bnb-4bit",
+        "params": "1.7B",
+        "architecture": "qwen3",
+        "base_gguf_available": false
+      },
+      "preset": {
+        "name": "fast-1.7b",
+        "lora_r": 16,
+        "lora_alpha": 32,
+        "max_seq_length": 2048,
+        "grad_accum": 4,
+        "batch_size": 2
+      },
+      "dataset": {
+        "technique": "ollama",
+        "num_examples": 104,
+        "categories_passed": true,
+        "quality_gate_pass_rate": null
+      },
+      "train_on_responses_only": false,
+      "results": {
+        "training_loss": 3.474,
+        "eval_loss": 1.808,
+        "win_rate": null,
+        "num_eval_questions": null,
+        "avg_quality": null,
+        "smoke_test_pass": true
+      },
+      "export": {
+        "mode": "adapter",
+        "size_mb": 7,
+        "path": "exports/history_guide/history_guide-lora-f16.gguf",
+        "has_gguf": true
+      },
+      "resources": {
+        "vram_gb": 4.20,
+        "training_time_sec": 52.9,
+        "samples_per_sec": null
+      },
+      "promoted": false,
+      "notes": "Post-fix history_guide on Qwen3 1.7B with Ollama technique (104 examples). Best Qwen run for history_guide (loss 3.474, eval 1.808). Eval not yet run for win_rate."
+    }
+  ]
+}

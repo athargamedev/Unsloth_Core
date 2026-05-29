@@ -109,7 +109,7 @@ def identify_weak_concepts(feedback_data, win_rate_threshold, quality_threshold,
         if win_rate < win_rate_threshold:
             reasons.append(f"win_rate={win_rate:.0%}")
         avg_quality = data.get("avg_candidate_quality", 0)
-        if avg_quality > quality_threshold:
+        if avg_quality < quality_threshold:
             reasons.append(f"avg_quality={avg_quality:.1f}")
         violations = data.get("constraint_violations", 0)
         if violations > violation_threshold:
