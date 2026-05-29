@@ -41,6 +41,7 @@ This document is the primary source of truth for AI agents (like Antigravity, Cl
 | **Supabase** | `supabase/` | DB migrations and local Docker setup. |
 | **Training Configs**| `configs/` | YAML base configs and presets. |
 | **Unified CLI** | `ucore` | Main entry point for all operations. |
+| **Workflow Context** | `_config/workflow_context.py` | Centralized resolution of techniques, models, and dataset paths across generation, training, and evaluation. `WorkflowContext` dataclass with properties for clean/raw dataset paths, spec text, and model/preset fallback logic. |
 | **Workflow Chaining** | `src/backend/routes/workflow.ts` (chainToNextStep), `src/backend/services/job-queue.ts` | Multi-step workflow chaining (generate → sanitize → train → export) with auto-progression, DB-persistent job queue with PID liveness checks, FOR UPDATE SKIP LOCKED polling, exponential backoff retry |
 | **Workflow Hooks** | `scripts/ops/workflow_hooks.py` | Lifecycle recording for all pipeline stages via step() context managers. `WorkflowHookReader` for parsing hook JSONL. |
 | **Zustand Store** | `src/stores/app-store.ts` | UI state management (tabs, filters, toasts, selection, recent searches with localStorage persistence) |
@@ -302,6 +303,7 @@ A local Supabase instance can track:
 - **Frontend trust rule**: The dashboard must reflect canonical backend state and process artifacts so non-coder developers can operate the workflow intuitively.
 - **Local Ollama rule**: Benchmark and tune local Ollama on this machine before claiming the need for remote capacity; measure tokens/sec, latency, VRAM use, loaded models, and failure rate.
 - **Hook system**: All pipeline scripts record lifecycle events in `workflow_hooks.jsonl` via `step()` context managers. Use `WorkflowHookReader.pipeline_summary(path)` to read. Hook files contain start/complete/error events per step with timing, `spec_path`, `run_id`, and step-specific metadata.
+- **Context-Mode Tool Usage**: Use `ctx_batch_execute` for multi-command pipeline diagnostics (e.g., inspecting quality gate summaries, hook files, and artifacts in one call). Use `ctx_execute_file` to analyze large JSONL datasets or training logs without loading raw bytes into context. Use `ctx_search(sort: "timeline")` after session resume/compaction to recover prior decisions. Never use context-mode tools for persistent file writes — use native Write/Edit tools.
 - **Auth**: After a fresh Supabase migration, run `python scripts/ops/setup_admin_key.py` to create the initial admin API key. Use the key with `curl -H "Authorization: Bearer <key>"` for all `/api` calls.
 - **Modular backend**: Prefer `npm run dev:modular` over `npm run dev` for new work — the modular backend (`server-modular.ts`) includes auth, rate limiting, audit logging, and a job queue. The legacy `server.ts` remains for backward compatibility.
 - **Job queue**: All pipeline operations use `JobQueue` from `src/backend/services/job-queue.ts` for process lifecycle management. Jobs survive server restarts. Monitor at `/api/jobs`.

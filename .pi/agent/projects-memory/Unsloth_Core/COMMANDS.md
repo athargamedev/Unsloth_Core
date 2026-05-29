@@ -54,7 +54,19 @@ supabase start
 ## Context / Memory
 
 ```text
-Use memory_search for durable project/user/failure context.
-Use ctx_search(sort: "timeline") after resume/compact.
-Use ctx_execute/ctx_execute_file for large-output analysis.
+# After resume/compact — recover prior session context
+ctx_search(sort: "timeline")
+
+# Pipeline diagnostics — quality gate + hooks + logs in one call
+ctx_batch_execute([
+  {label: "Quality Gate", command: "cat subjects/datasets/{npc}/template/quality_summary.json"},
+  {label: "Hook Files", command: "cat outputs/{npc}/runs/*/workflow_hooks.jsonl"},
+], queries: [...])
+
+# Large file analysis (datasets, training logs, eval reports)
+ctx_execute_file("subjects/datasets/{npc}/template/train_clean.jsonl", javascript)
+ctx_execute_file("outputs/{npc}/runs/*/training_log.txt", javascript)
+
+# Workflow Context inspection
+python -c "from _config.workflow_context import build_context; ctx = build_context('subjects/NPC_specs/{npc}.json', technique='template'); print(ctx)"
 ```

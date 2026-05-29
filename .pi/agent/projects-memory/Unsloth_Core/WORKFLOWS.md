@@ -34,3 +34,29 @@
 3. Consolidate near-duplicates.
 4. Store procedures as skills, not long memory entries.
 5. Never store raw logs, secrets, generated datasets, or temporary TODOs.
+
+## Context-Mode Usage
+
+### Before Complex Pipeline Operations
+Use ctx_batch_execute to gather diagnostics in one round trip:
+- Quality gate: check `quality_summary.json` for pass/fail status
+- Hook files: check `workflow_hooks.jsonl` for error traces
+- Latest run: check `outputs/{npc}/runs/` for training completion
+
+### Dataset Analysis
+Use ctx_execute_file to inspect:
+- Category distribution across training rows
+- Token length histograms
+- ChatML format compliance
+- Sanitizer quality signals
+
+### Workflow Context
+Use `_config.workflow_context.build_context()` to resolve the active technique,
+dataset paths, and model ID before starting any pipeline stage:
+```python
+from _config.workflow_context import build_context
+ctx = build_context("subjects/NPC_specs/{npc}.json")
+print(f"Training: {ctx.dataset_train_path}")
+print(f"Model: {ctx.model_id}")
+print(f"Preset: {ctx.preset}")
+```
