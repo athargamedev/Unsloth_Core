@@ -288,7 +288,13 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
     enabled: evalStepCompleted && !!npcKey && !!selectedTechnique,
   });
   const qualityFailures = rawQualityFailures ?? [];
-  const qualityError = qualityFetchError ? (qualityFetchError instanceof Error ? qualityFetchError.message : 'Failed to load quality results') : null;
+  const qualityError = qualityFetchError
+    ? qualityFetchError instanceof z.ZodError
+      ? 'Data format mismatch from server. Try re-running the eval step.'
+      : qualityFetchError instanceof Error
+        ? qualityFetchError.message
+        : 'Failed to load quality results'
+    : null;
 
   // Reset showFailures when NPC or technique changes
   useEffect(() => {

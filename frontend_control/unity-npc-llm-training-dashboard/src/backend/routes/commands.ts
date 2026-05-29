@@ -4,6 +4,7 @@ import type { Express, Request, Response } from "express";
 import type { RouterDependencies, StartCommandPayload, Job } from "../types";
 import { launchJob, stopJob, updateStagesFromTruth, makeId, isoNow } from "../services/job-runner";
 import { validateRequiredFields } from "../lib/validation";
+import { validate, startCommandSchema, stopJobSchema } from "../middleware/validation";
 
 /**
  * Registers /api/commands/* endpoints.
@@ -1817,7 +1818,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
   });
 
   // ── POST /api/commands/start ────────────────────────────────────────────
-  app.post("/api/commands/start", (req: Request, res: Response) => {
+  app.post("/api/commands/start", validate(startCommandSchema), (req: Request, res: Response) => {
     try {
       const payload = req.body as StartCommandPayload;
       const commandDef = commandMap.get(payload.commandId || "");
@@ -1891,7 +1892,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
   });
 
   // ── POST /api/commands/stop ─────────────────────────────────────────────
-  app.post("/api/commands/stop", (req: Request, res: Response) => {
+  app.post("/api/commands/stop", validate(stopJobSchema), (req: Request, res: Response) => {
     const { id } = req.body as { id?: string };
     if (!id) {
       res.status(400).json({ error: "id is required" });

@@ -143,7 +143,7 @@ export const FeedbackLoopPanel = () => {
   }, [feedbackFiles, selectedFile]);
 
   // 2. React Query Usage for Feedback Details
-  const { data: feedbackData, isLoading: detailLoading, error: detailError } = useQuery<ValidatedFeedbackResult | null, Error>({
+  const { data: feedbackData, isLoading: detailLoading, error: detailError } = useQuery<ValidatedFeedbackResult | null, unknown>({
     queryKey: ['feedback-result-detail', selectedFile?.path],
     queryFn: async () => {
       if (!selectedFile) return null;
@@ -300,7 +300,7 @@ export const FeedbackLoopPanel = () => {
 
       {(apiError || detailError) && (
         <div className="mx-4 mt-2 p-2 bg-danger/10 border border-danger/30 rounded text-[11px] text-danger">
-          {apiError || detailError?.message}
+          {apiError || (detailError instanceof Error ? detailError.message : String(detailError))}
         </div>
       )}
 

@@ -1,27 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { z } from 'zod';
 import { fetchOptionalJson } from '../api';
 import type { Subject, ExportArtifact } from '../api';
-
-// 1. Zod Schema Definition
-const EvalReportFileSchema = z.object({
-  name: z.string(),
-  path: z.string(),
-});
-
-const EvalReportGroupSchema = z.object({
-  npcKey: z.string(),
-  files: z.array(EvalReportFileSchema),
-});
-
-const EvalReportsDataSchema = z.object({
-  reports: z.array(EvalReportGroupSchema),
-  comparisons: z.array(EvalReportFileSchema),
-});
-
-type ValidatedEvalReportsData = z.infer<typeof EvalReportsDataSchema>;
-type EvalReportFile = z.infer<typeof EvalReportFileSchema>;
+import { EvalReportsDataSchema } from '../schemas/eval-reports';
+import type { ValidatedEvalReportsData, EvalReportFile } from '../schemas/eval-reports';
 
 interface EvalConfig {
   npcKey: string;

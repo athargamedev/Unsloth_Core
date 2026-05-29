@@ -1,29 +1,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { z } from 'zod';
 import { fetchJson } from '../api';
 import { Card } from './Card';
 import { Badge } from './Badge';
-
-// 1. Zod Schema Definition (The Blueprint)
-// This strictly validates what the backend sends us so the frontend never crashes on bad data.
-const EvalReportFileSchema = z.object({
-  name: z.string(),
-  path: z.string(),
-});
-
-const EvalReportGroupSchema = z.object({
-  npcKey: z.string(),
-  files: z.array(EvalReportFileSchema),
-});
-
-const EvalReportsDataSchema = z.object({
-  reports: z.array(EvalReportGroupSchema),
-  comparisons: z.array(EvalReportFileSchema),
-});
-
-// Infer TypeScript type directly from the schema (No need to write interfaces manually!)
-type ValidatedEvalReportsData = z.infer<typeof EvalReportsDataSchema>;
+import { EvalReportsDataSchema } from '../schemas/eval-reports';
+import type { ValidatedEvalReportsData } from '../schemas/eval-reports';
 
 export const EvalReportsPanel = () => {
   const [selectedNpc, setSelectedNpc] = useState<string | null>(null);
