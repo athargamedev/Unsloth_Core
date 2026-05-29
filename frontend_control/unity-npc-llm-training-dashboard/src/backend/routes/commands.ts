@@ -1893,12 +1893,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
   // ── POST /api/commands/stop ─────────────────────────────────────────────
   app.post("/api/commands/stop", validate(stopJobSchema), (req: Request, res: Response) => {
-    const { id } = req.body as { id?: string };
-    if (!id) {
-      res.status(400).json({ error: "id is required" });
-      return;
-    }
-
+    const { id } = req.body as { id: string };
     const proc = runningProcesses.get(id);
     const job = registry.jobs.find((item) => item.id === id);
     if (!job) {

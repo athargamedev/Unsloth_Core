@@ -23,12 +23,29 @@ export function validate<T>(schema: z.ZodType<T>) {
 
 // ── Common schemas ────────────────────────────────────────────────────────
 
-const knownCommands = [
-  'validate-spec', 'dataset-generate', 'generate-ollama', 'dataset-sanitize',
-  'dataset-eval', 'training', 'export', 'evaluate', 'feedback',
-  'quick-eval', 'batch-export', 'validate-config',
-] as const;
+const knownCommands: readonly string[] = [
+  'audit', 'batch-export', 'compare-runs', 'dataset-eval', 'dataset-generate',
+  'dataset-sanitize', 'deploy', 'docs-manifest-generate', 'evaluate', 'export',
+  'export-adapter', 'export-resume', 'feedback', 'generate-ollama', 'init',
+  'pipeline', 'plan-batch', 'plan-execution', 'quick-eval', 'smoke',
+  'supabase-check', 'tb-reader', 'track', 'train', 'validate-config',
+  'validate-spec',
+];
 
+// Runtime guard: if knownCommands is accidentally emptied, Zod receives an
+// empty tuple and throws at runtime instead of at compile time.
+if (knownCommands.length === 0) {
+  throw new Error('knownCommands cannot be empty');
+}
+
+/**
+ * Validates command start payloads.
+ *
+ * Command-specific field requirements (e.g. requiredFields per command) are
+ * enforced downstream by validateRequiredFields() in commands.ts rather than
+ * duplicated here in Zod, keeping command-level validation close to each
+ * command definition.
+ */
 export const startCommandSchema = z.object({
   commandId: z.enum(knownCommands as unknown as [string, ...string[]], {
     error: `commandId must be one of: ${knownCommands.join(', ')}`,
@@ -44,6 +61,7 @@ export const stopJobSchema = z.object({
   id: z.string().min(1, "id is required").regex(/^[a-zA-Z0-9_-]+$/, "Invalid job id format"),
 });
 
+// TODO: Wire to POST /api/workflows/create route
 export const createWorkflowSchema = z.object({
   spec: z.string().min(1, "spec is required"),
   preset: z.string().optional(),
