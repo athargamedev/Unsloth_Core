@@ -1,23 +1,43 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 import { fetchJson } from '../api';
-import type { EvalReportsData } from '../api';
 import { Card } from './Card';
 import { Badge } from './Badge';
 
+// 1. Zod Schema Definition (The Blueprint)
+// This strictly validates what the backend sends us so the frontend never crashes on bad data.
+const EvalReportFileSchema = z.object({
+  name: z.string(),
+  path: z.string(),
+});
+
+const EvalReportGroupSchema = z.object({
+  npcKey: z.string(),
+  files: z.array(EvalReportFileSchema),
+});
+
+const EvalReportsDataSchema = z.object({
+  reports: z.array(EvalReportGroupSchema),
+  comparisons: z.array(EvalReportFileSchema),
+});
+
+// Infer TypeScript type directly from the schema (No need to write interfaces manually!)
+type ValidatedEvalReportsData = z.infer<typeof EvalReportsDataSchema>;
+
 export const EvalReportsPanel = () => {
-  const [data, setData] = useState<EvalReportsData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedNpc, setSelectedNpc] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    fetchJson<EvalReportsData>('/api/eval-reports')
-      .then(setData)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load eval reports'))
-      .finally(() => setLoading(false));
-  }, []);
+  // 2. React Query Usage
+  // Automatically handles loading state, error catching, background refetching, and caching!
+  const { data, isLoading: loading, error } = useQuery<ValidatedEvalReportsData, Error>({
+    queryKey: ['eval-reports'],
+    queryFn: async () => {
+      const rawData = await fetchJson<unknown>('/api/eval-reports');
+      // 3. Parse and Validate! Throws an error automatically if the data is malformed.
+      return EvalReportsDataSchema.parse(rawData);
+    },
+  });
 
   const selectedGroup = data?.reports.find((r) => r.npcKey === selectedNpc) ?? null;
 
@@ -25,7 +45,7 @@ export const EvalReportsPanel = () => {
     <Card title="Evaluation Reports" subtitle={data ? `${data.reports.length} NPCs` : '—'}>
       {error && (
         <div className="p-3 bg-warning/10 border border-warning/30 rounded text-[11px] text-warning mb-4">
-          {error}
+          {error.message}
           <div className="mt-2 text-ink/60">
             No evaluation reports yet.{' '}
             <span className="text-accent">Run an evaluation to generate reports.</span>

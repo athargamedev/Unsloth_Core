@@ -97,13 +97,14 @@ parameters:
     resource_impact: none
     cli_flag: "--technique"
 
-  model:
+  generation_model:
     type: str
     default: ""
     stage: generation
     description: "LLM model name for generation"
     tooltip: "Model name for LLM generation. Depends on technique (ollama name, OpenAI model ID, etc)."
     resource_impact: none
+    resource_notes: "1.5B (1.0GB) fits easily with 4 parallel slots. 7-8B (4.1-5.0GB) fits but reduce parallel to 2-3. All ≤8B fully offloaded. For generation speed, prefer qwen2.5:1.5b (faster, less VRAM)."
     cli_flag: "--model"
     aliases: ["-m"]
 
@@ -189,7 +190,10 @@ parameters:
     description: "Context window size"
     tooltip: "Context window size for generation. Higher = more context but more VRAM."
     resource_impact: vram_linear
-    resource_notes: "Each doubling of num_ctx roughly doubles KV cache VRAM. For 3060 6GB, keep at 4096."
+    resource_notes: |
+      KV cache VRAM scales linearly with num_ctx.
+      At Q8_0 (our config): 2048 ctx = ~130MB, 4096 = ~260MB, 8192 = ~520MB.
+      RTX 3060 6GB limits: ≤8B models → 4096 safe. If OLLAMA_NUM_PARALLEL > 2, drop to 2048.
     cli_flag: "--num-ctx"
 
   check_health:
@@ -360,6 +364,7 @@ parameters:
     description: "Ollama judge model name"
     tooltip: "Ollama model used as evaluator judge."
     resource_impact: none
+    resource_notes: "qwen3:latest (8.2B Q4_K_M) uses ~5.0GB VRAM. On 6GB RTX 3060: fits but leaves ~1GB for KV cache. Set OLLAMA_NUM_PARALLEL=3 not 4. Unload before training."
     cli_flag: "--judge-model"
 
   judge_temperature:
@@ -902,7 +907,13 @@ parameters:
     description: "GPU layers for llama-server"
     tooltip: "GPU layers for llama-server. 99 = all GPU, 0 = CPU-only."
     resource_impact: vram_linear
-    resource_notes: "Each layer offloaded to GPU uses ~100MB VRAM for 3B models. 99 layers = ~full model on GPU."
+    resource_notes: |
+      Per-model GPU layer guide (RTX 3060 6GB):
+      - ≤3B Q4_K_M (~2GB): 99 layers = full GPU. Max parallel 4.
+      - 7-8B Q4_K_M (~4.9GB): 99 layers = full GPU (~5.0GB). Max parallel 3.
+      - 14B Q4_K_M (~8GB): ~20-24 GPU layers. Partial offload, CPU handles rest.
+      - 33B Q4_K_M (~20GB): ~8-12 GPU layers. Mostly CPU, expect 3-5 tok/s.
+      Ollama auto-partitions when VRAM tight. No manual tuning needed for ≤8B models.
     cli_flag: "--gpu-layers"
 
   port:
@@ -1169,7 +1180,13 @@ env_vars:
     description: "Concurrent Ollama request slots"
     tooltip: "Higher = faster parallel eval. Set via systemd. 4 for 6GB VRAM, 8 for 12GB+."
     resource_impact: vram_linear
-    resource_notes: "Each parallel slot reserves ~200MB KV cache. 4 slots = ~800MB on top of model."
+    resource_notes: |
+      Each slot = ~200MB KV cache (Q8_0, 4096 ctx).
+      Model VRAM + slots*200MB must fit in 5.0-5.3GB available (after OS overhead).
+      Practical limits on 6GB:
+      - ≤3B model: 4-6 slots
+      - 7-8B model: 3-4 slots
+      - 14B+ model: 1-2 slots (mostly CPU anyway)
 
   OLLAMA_FLASH_ATTENTION:
     type: bool

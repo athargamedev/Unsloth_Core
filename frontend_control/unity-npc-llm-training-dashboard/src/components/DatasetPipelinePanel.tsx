@@ -18,8 +18,58 @@ import {
   ListChecks,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 import type { AvailableCommand, Subject } from '../api';
-import { useQualitySummaryQuery, useQualityFailuresQuery } from '../hooks/useReactQuery';
+import { fetchOptionalJson } from '../api';
+
+// 1. Zod Schema Definitions
+const QualityMetricSchema = z.object({
+  count: z.number(),
+  average_score: z.number(),
+  pass_rate: z.number(),
+});
+
+const QualityCategorySchema = z.object({
+  total: z.number(),
+  passed: z.number(),
+  pass_rate: z.number(),
+});
+
+const QualitySummarySchema = z.object({
+  created_at: z.string(),
+  npc_key: z.string(),
+  technique: z.string(),
+  judge_model: z.string(),
+  total: z.number(),
+  passed: z.number(),
+  failed: z.number(),
+  pass_rate: z.number(),
+  metrics: z.record(z.string(), QualityMetricSchema),
+  categories: z.record(z.string(), QualityCategorySchema),
+  failures_path: z.string().optional(),
+});
+
+const QualityFailureMetricSchema = z.object({
+  name: z.string(),
+  score: z.number(),
+  threshold: z.number(),
+  success: z.boolean(),
+  reason: z.string(),
+  evaluation_model: z.string(),
+  error: z.string().optional(),
+});
+
+const QualityFailureSchema = z.object({
+  test_name: z.string(),
+  input: z.string(),
+  actual_output: z.string(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  metric: QualityFailureMetricSchema,
+});
+
+type ValidatedQualitySummary = z.infer<typeof QualitySummarySchema>;
+type ValidatedQualityFailure = z.infer<typeof QualityFailureSchema>;
 
 interface DatasetPipelinePanelProps {
   availableCommands: AvailableCommand[];
@@ -211,13 +261,32 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
   // Determine if the eval step has completed to trigger quality data fetching
   const evalStepCompleted = pipelineSteps.some((s) => s.id === 'dataset-eval' && s.status === 'completed');
 
-  // Fetch quality results via React Query
+  // 2. Fetch quality results via React Query with Zod parsing
   const {
     data: qualitySummary,
     isLoading: loadingQuality,
     error: qualityFetchError,
-  } = useQualitySummaryQuery(npcKey, selectedTechnique, evalStepCompleted);
-  const { data: rawQualityFailures } = useQualityFailuresQuery(npcKey, selectedTechnique, evalStepCompleted);
+  } = useQuery<ValidatedQualitySummary | null, Error>({
+    queryKey: ['quality', 'summary', npcKey, selectedTechnique],
+    queryFn: async () => {
+      const rawData = await fetchOptionalJson<unknown>(`/api/datasets/quality-summary/${npcKey}/${selectedTechnique}`);
+      if (!rawData) return null;
+      return QualitySummarySchema.parse(rawData);
+    },
+    staleTime: 30_000,
+    enabled: evalStepCompleted && !!npcKey && !!selectedTechnique,
+  });
+
+  const { data: rawQualityFailures } = useQuery<ValidatedQualityFailure[] | null, Error>({
+    queryKey: ['quality', 'failures', npcKey, selectedTechnique],
+    queryFn: async () => {
+      const rawData = await fetchOptionalJson<unknown>(`/api/datasets/quality-failures/${npcKey}/${selectedTechnique}`);
+      if (!rawData) return null;
+      return z.array(QualityFailureSchema).parse(rawData);
+    },
+    staleTime: 30_000,
+    enabled: evalStepCompleted && !!npcKey && !!selectedTechnique,
+  });
   const qualityFailures = rawQualityFailures ?? [];
   const qualityError = qualityFetchError ? (qualityFetchError instanceof Error ? qualityFetchError.message : 'Failed to load quality results') : null;
 

@@ -1,7 +1,49 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 import { fetchOptionalJson } from '../api';
-import type { FeedbackResult, FeedbackGapResult, ConceptFeedback, FeedbackFileInfo } from '../api';
+import type { FeedbackFileInfo } from '../api';
 import { useFeedbackResultsQuery } from '../hooks/useReactQuery';
+
+// 1. Zod Schema Definition
+const FeedbackGapResultSchema = z.object({
+  concept: z.string(),
+  category: z.string(),
+  gap_type: z.enum(['training_density', 'knowledge_gap']),
+  onyx_result_count: z.number(),
+  onyx_sources: z.array(z.string()).optional(),
+});
+
+const ConceptFeedbackSchema = z.object({
+  total: z.number(),
+  baseline_wins: z.number(),
+  candidate_wins: z.number(),
+  ties: z.number(),
+  win_rate: z.number(),
+  avg_baseline_quality: z.number(),
+  avg_candidate_quality: z.number(),
+  constraint_violations: z.number(),
+  examples: z.array(z.record(z.string(), z.unknown())).optional(),
+});
+
+const FeedbackResultSchema = z.object({
+  npc_key: z.string(),
+  baseline: z.string(),
+  candidate: z.string(),
+  total_examples: z.number(),
+  baseline_wins: z.number(),
+  candidate_wins: z.number(),
+  ties: z.number(),
+  win_rate: z.number(),
+  per_concept: z.record(z.string(), ConceptFeedbackSchema),
+  weak_concepts: z.array(z.string()),
+  timestamp: z.string(),
+  gaps: z.array(FeedbackGapResultSchema).optional(),
+});
+
+type ValidatedFeedbackResult = z.infer<typeof FeedbackResultSchema>;
+type FeedbackGapResult = z.infer<typeof FeedbackGapResultSchema>;
+type ConceptFeedback = z.infer<typeof ConceptFeedbackSchema>;
 
 interface FeedbackConfig {
   // Execution modes
@@ -62,8 +104,6 @@ const TRAIN_PRESETS = [
 
 export const FeedbackLoopPanel = () => {
   const [selectedFile, setSelectedFile] = useState<FeedbackFileInfo | null>(null);
-  const [feedbackData, setFeedbackData] = useState<FeedbackResult | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
@@ -102,21 +142,17 @@ export const FeedbackLoopPanel = () => {
     }
   }, [feedbackFiles, selectedFile]);
 
-  // Load selected feedback content
-  useEffect(() => {
-    if (!selectedFile) {
-      setFeedbackData(null);
-      return;
-    }
-    setDetailLoading(true);
-    setApiError(null);
-    fetchOptionalJson<FeedbackResult>(`/api/feedback-result/file?path=${encodeURIComponent(selectedFile.path)}`)
-      .then(data => {
-        setFeedbackData(data);
-      })
-      .catch(err => setApiError(err instanceof Error ? err.message : 'Failed to load feedback'))
-      .finally(() => setDetailLoading(false));
-  }, [selectedFile]);
+  // 2. React Query Usage for Feedback Details
+  const { data: feedbackData, isLoading: detailLoading, error: detailError } = useQuery<ValidatedFeedbackResult | null, Error>({
+    queryKey: ['feedback-result-detail', selectedFile?.path],
+    queryFn: async () => {
+      if (!selectedFile) return null;
+      const rawData = await fetchOptionalJson<unknown>(`/api/feedback-result/file?path=${encodeURIComponent(selectedFile.path)}`);
+      if (!rawData) return null;
+      return FeedbackResultSchema.parse(rawData);
+    },
+    enabled: !!selectedFile,
+  });
 
   const updateConfig = <K extends keyof FeedbackConfig>(key: K, value: FeedbackConfig[K]) => {
     setFbConfig(prev => ({ ...prev, [key]: value }));
@@ -262,8 +298,10 @@ export const FeedbackLoopPanel = () => {
         </button>
       </div>
 
-      {apiError && (
-        <div className="mx-4 mt-2 p-2 bg-danger/10 border border-danger/30 rounded text-[11px] text-danger">{apiError}</div>
+      {(apiError || detailError) && (
+        <div className="mx-4 mt-2 p-2 bg-danger/10 border border-danger/30 rounded text-[11px] text-danger">
+          {apiError || detailError?.message}
+        </div>
       )}
 
       <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0 min-w-0">

@@ -1,6 +1,27 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Subject, ExportArtifact, EvalReportFile } from '../api';
-import { useEvalReportsQuery } from '../hooks/useReactQuery';
+import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
+import { fetchOptionalJson } from '../api';
+import type { Subject, ExportArtifact } from '../api';
+
+// 1. Zod Schema Definition
+const EvalReportFileSchema = z.object({
+  name: z.string(),
+  path: z.string(),
+});
+
+const EvalReportGroupSchema = z.object({
+  npcKey: z.string(),
+  files: z.array(EvalReportFileSchema),
+});
+
+const EvalReportsDataSchema = z.object({
+  reports: z.array(EvalReportGroupSchema),
+  comparisons: z.array(EvalReportFileSchema),
+});
+
+type ValidatedEvalReportsData = z.infer<typeof EvalReportsDataSchema>;
+type EvalReportFile = z.infer<typeof EvalReportFileSchema>;
 
 interface EvalConfig {
   npcKey: string;
@@ -75,10 +96,21 @@ export const EvalWorkflowPanel = ({
   const [running, setRunning] = useState(false);
   const [selectedReportHtml, setSelectedReportHtml] = useState<string | null>(null);
   const [activeReportFile, setActiveReportFile] = useState<EvalReportFile | null>(null);
-  const [pendingReportNpcKey, setPendingReportNpcKey] = useState<string | null>(null);
+  const pendingReportNpcKey = useRef<string | null>(null);
+  const [pendingNpcState, setPendingNpcState] = useState<string | null>(null); // To trigger effect
   const [lastEvalTime, setLastEvalTime] = useState<number>(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { data: reports, refetch: refreshReports } = useEvalReportsQuery();
+  
+  // 2. React Query Usage for polling Eval Reports with Zod
+  const { data: reports, refetch: refreshReports, error: reportsError } = useQuery<ValidatedEvalReportsData | null, Error>({
+    queryKey: ['eval-reports-polling'],
+    queryFn: async () => {
+      const rawData = await fetchOptionalJson<unknown>('/api/eval-reports');
+      if (!rawData) return null;
+      return EvalReportsDataSchema.parse(rawData);
+    },
+    refetchInterval: 5000, // Automates the manual setInterval polling!
+  });
   const pendingReportAttempts = useRef(0);
 
   // Load subjects, presets, reports
@@ -96,17 +128,11 @@ export const EvalWorkflowPanel = ({
     });
   }, [subjects]);
 
-  useEffect(() => {
-    refreshReports();
-    const interval = setInterval(() => {
-      void refreshReports();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [refreshReports]);
+  // Polling logic is now handled by React Query's refetchInterval!
 
   useEffect(() => {
-    if (!pendingReportNpcKey || !reports) return;
-    const group = reports.reports.find(r => r.npcKey === pendingReportNpcKey);
+    if (!pendingNpcState || !reports) return;
+    const group = reports.reports.find(r => r.npcKey === pendingNpcState);
     const latestHtml = group?.files.find(file => file.name.endsWith('.html')) || null;
     if (!latestHtml) {
       if (pendingReportAttempts.current < 15) {
@@ -120,8 +146,9 @@ export const EvalWorkflowPanel = ({
     }
     pendingReportAttempts.current = 0;
     void loadReportHtml(latestHtml);
-    setPendingReportNpcKey(null);
-  }, [pendingReportNpcKey, reports, refreshReports]);
+    setPendingNpcState(null);
+    pendingReportNpcKey.current = null;
+  }, [pendingNpcState, reports, refreshReports]);
 
   // Pick candidate from exports when npcKey changes
   useEffect(() => {
@@ -276,7 +303,8 @@ export const EvalWorkflowPanel = ({
       }
       setLastEvalTime(Date.now());
       pendingReportAttempts.current = 0;
-      setPendingReportNpcKey(config.npcKey);
+      pendingReportNpcKey.current = config.npcKey;
+      setPendingNpcState(config.npcKey);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Evaluation failed');
     } finally {
@@ -323,8 +351,10 @@ export const EvalWorkflowPanel = ({
           </div>
         </div>
 
-        {apiError && (
-          <div className="p-2 bg-danger/10 border border-danger/30 rounded text-[11px] text-danger">{apiError}</div>
+        {(apiError || reportsError) && (
+          <div className="p-2 bg-danger/10 border border-danger/30 rounded text-[11px] text-danger">
+            {apiError || reportsError?.message}
+          </div>
         )}
 
         {/* Mode Toggle */}
