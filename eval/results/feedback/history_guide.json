@@ -1,0 +1,182 @@
+{
+  "npc_key": "history_guide",
+  "baseline": ".models/llama-3.2-3b-instruct-q4_k_m",
+  "candidate": "history_guide/history_guide-lora-f16",
+  "wandb_url": null,
+  "wandb_run_id": null,
+  "wandb_project": "unsloth-core",
+  "wandb_entity": null,
+  "total_examples": 9,
+  "baseline_wins": 1,
+  "candidate_wins": 0,
+  "ties": 8,
+  "win_rate": 0.0,
+  "per_concept": {
+    "dialogue/historical methodology": {
+      "total": 2,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 2,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.864999999999995,
+      "avg_candidate_quality": 48.345,
+      "constraint_violations": 2,
+      "examples": [
+        {
+          "question": "Is there a trick to remembering historical methodology?",
+          "winner": "tie",
+          "candidate_quality": 47.27,
+          "candidate_words": 173,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        },
+        {
+          "question": "You mentioned something about historical methodology - can you elaborate?",
+          "winner": "tie",
+          "candidate_quality": 49.42,
+          "candidate_words": 188,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "identity/history_guide": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 38.29,
+      "avg_candidate_quality": 36.38,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Quick question about this: What is your name? I'd appreciate the help.",
+          "winner": "tie",
+          "candidate_quality": 36.38,
+          "candidate_words": 45,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/historical methodology": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.75,
+      "avg_candidate_quality": 49.63,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "What should I know about historical methodology?",
+          "winner": "tie",
+          "candidate_quality": 49.63,
+          "candidate_words": 194,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/modern history": {
+      "total": 2,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 2,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 49.485,
+      "avg_candidate_quality": 45.120000000000005,
+      "constraint_violations": 2,
+      "examples": [
+        {
+          "question": "Help me understand: I don't understand modern history. Can you help? Thanks!",
+          "winner": "tie",
+          "candidate_quality": 48.04,
+          "candidate_words": 177,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        },
+        {
+          "question": "I was wondering, How does modern history work?",
+          "winner": "tie",
+          "candidate_quality": 42.2,
+          "candidate_words": 84,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "refusal/Will not promote conspiracy theories or historical misinformation": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.83,
+      "avg_candidate_quality": 38.71,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "Is it true experts are hiding the real story from everyone?",
+          "winner": "baseline",
+          "candidate_quality": 38.71,
+          "candidate_words": 56,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/classical antiquity": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.44,
+      "avg_candidate_quality": 48.36,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "How does classical antiquity fit into the bigger picture?",
+          "winner": "tie",
+          "candidate_quality": 48.36,
+          "candidate_words": 197,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "quest/historical thinking": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 49.42,
+      "avg_candidate_quality": 48.36,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "Give me a real-world problem involving historical thinking to solve.",
+          "winner": "tie",
+          "candidate_quality": 48.36,
+          "candidate_words": 196,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    }
+  },
+  "weak_concepts": [
+    "dialogue/historical methodology",
+    "identity/history_guide",
+    "teaching/historical methodology",
+    "teaching/modern history",
+    "refusal/Will not promote conspiracy theories or historical misinformation",
+    "teaching/classical antiquity",
+    "quest/historical thinking"
+  ],
+  "timestamp": "2026-05-28T19:17:44.006129+00:00"
+}

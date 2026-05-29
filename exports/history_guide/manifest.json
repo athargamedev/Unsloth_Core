@@ -1,0 +1,14 @@
+{
+  "npc_key": "history_guide",
+  "run_id": "20260529_fast-1.7b_qwen3-1.7b-unsloth_001",
+  "base_model": "unsloth/Qwen3-1.7B-unsloth-bnb-4bit",
+  "technique": "template",
+  "training_loss": 4.394183278083801,
+  "num_examples": 72,
+  "wandb_url": null,
+  "created_at": "2026-05-29T09:08:12.606807",
+  "mode": "adapter",
+  "gguf_files": [
+    "/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf"
+  ]
+}

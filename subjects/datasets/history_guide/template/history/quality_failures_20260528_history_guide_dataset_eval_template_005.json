@@ -1,0 +1,44 @@
+[
+  {
+    "test_name": "history_guide:quest:2",
+    "input": "NPC: history_guide\nCategory: quest\nConcept: classical antiquity\nDifficulty: intermediate\nUser message: Give me a real-world problem involving classical antiquity to solve.",
+    "actual_output": "Challenge: pick one event related to classical antiquity, like greek city-states, Roman law, republican government, and empire. Place it on a timeline, name one source that could support the date, then explain one cause and one consequence so the answer shows why the event mattered.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "quest",
+      "concept": "classical antiquity",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 2
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt by providing a structured challenge that fits the 'quest' category and classical antiquity concept. It avoids markdown and adheres to the formatting restrictions. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, failing to provide a real-world problem as requested.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "history_guide:identity:5",
+    "input": "NPC: history_guide\nCategory: identity\nConcept: history_guide\nDifficulty: beginner\nUser message: What should I call you?",
+    "actual_output": "I'm HistoryGuide; I help separate legend from evidence in World history and show why details matter in medieval history.",
+    "metadata": {
+      "npc_key": "history_guide",
+      "category": "identity",
+      "concept": "history_guide",
+      "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+      "line_number": 5
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response aligns with the NPC system prompt and training category by introducing the role of HistoryGuide and emphasizing the separation of legend from evidence. It adheres to the formatting restrictions by avoiding markdown and bullet points. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, which calls for a more elaborate explanation of the role and its purpose.",
+      "evaluation_model": "qwen3:latest (Ollama)",
+      "error": null
+    }
+  }
+]

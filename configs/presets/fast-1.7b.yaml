@@ -1,0 +1,11 @@
+# Fast preset for 1.5B-1.7B models on 6GB VRAM
+# Qwen3-1.7B uses ~3.5GB at bnb-4bit, leaving headroom for LoRA rank 16
+# max_seq_length 1024 to avoid CUDA OOM on 5.67 GiB effective VRAM
+training:
+  batch_size: 1
+  gradient_accumulation_steps: 4
+  max_seq_length: 1024
+  warmup_steps: 10
+lora:
+  r: 16
+  alpha: 32

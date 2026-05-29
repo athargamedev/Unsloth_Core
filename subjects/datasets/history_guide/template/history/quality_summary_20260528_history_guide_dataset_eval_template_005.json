@@ -1,0 +1,144 @@
+{
+  "created_at": "2026-05-28T20:17:28.325846+00:00",
+  "npc_key": "history_guide",
+  "technique": "template",
+  "judge_model": "qwen3:latest",
+  "deepeval_identifier": "dataset-quality-history_guide-template-fast-20260528-171356",
+  "deepeval_result_identifier": "dataset-quality-history_guide-template-fast-20260528-171356",
+  "command": [
+    "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+    "test",
+    "run",
+    "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+    "--identifier",
+    "dataset-quality-history_guide-template-fast-20260528-171356",
+    "--display",
+    "all",
+    "--skip-on-missing-params"
+  ],
+  "total": 9,
+  "passed": 7,
+  "failed": 2,
+  "pass_rate": 0.7778,
+  "metric_count": 18,
+  "null_metric_count": 0,
+  "null_metric_rate": 0.0,
+  "status": "ok",
+  "metrics": {
+    "Persona and Category Fit [GEval]": {
+      "count": 9,
+      "average_score": 0.8111,
+      "pass_rate": 0.7778
+    },
+    "Training Usefulness and Specificity [GEval]": {
+      "count": 9,
+      "average_score": 0.9222,
+      "pass_rate": 1.0
+    }
+  },
+  "categories": {
+    "dialogue": {
+      "total": 2,
+      "passed": 2,
+      "pass_rate": 1.0
+    },
+    "identity": {
+      "total": 2,
+      "passed": 1,
+      "pass_rate": 0.5
+    },
+    "quest": {
+      "total": 2,
+      "passed": 1,
+      "pass_rate": 0.5
+    },
+    "refusal": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 1.0
+    },
+    "teaching": {
+      "total": 2,
+      "passed": 2,
+      "pass_rate": 1.0
+    }
+  },
+  "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/quality_failures.json",
+  "quality_gate_mode": "fast",
+  "cases_per_category": 1,
+  "dataset_summary": {
+    "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/train_clean.jsonl",
+    "exists": true,
+    "content_sha256": "sha256:53833bc26b34a1d0baf05821f644f7a9c4226fe9a15a8bc713b8bdab6b1231b8",
+    "total": 72,
+    "by_category": {
+      "dialogue": 16,
+      "identity": 8,
+      "quest": 8,
+      "refusal": 8,
+      "teaching": 32
+    },
+    "by_difficulty": {
+      "advanced": 15,
+      "beginner": 35,
+      "intermediate": 22
+    },
+    "by_split": {
+      "train": 72
+    },
+    "by_concept": {
+      "historical thinking": 13,
+      "historical methodology": 10,
+      "ancient civilizations": 8,
+      "classical antiquity": 8,
+      "history_guide": 8,
+      "Will not present speculation as fact": 6,
+      "medieval history": 6,
+      "modern history": 5,
+      "useful vocabulary": 4,
+      "Will not promote conspiracy theories or historical misinformation": 2,
+      "core timeline anchors": 1,
+      "safety and refusal boundaries": 1
+    },
+    "unknown_rows": 0
+  },
+  "expected_distribution": {
+    "identity": 8,
+    "teaching": 32,
+    "dialogue": 16,
+    "quest": 8,
+    "refusal": 8
+  },
+  "distribution_gaps": [],
+  "dataset_total_rows": 72,
+  "dataset_unknown_rows": 0,
+  "sanitizer": {
+    "total_output": 72,
+    "discarded_total": 0,
+    "flagged_for_review": 0,
+    "passed_threshold": 72,
+    "quality_scores": {
+      "mean": 85.4,
+      "median": 85.0,
+      "min": 78,
+      "max": 91,
+      "std_dev": 3.4,
+      "passed_threshold": 72,
+      "flagged_for_review": 0,
+      "distribution": {
+        "0-9": 0,
+        "10-19": 0,
+        "20-29": 0,
+        "30-39": 0,
+        "40-49": 0,
+        "50-59": 0,
+        "60-69": 0,
+        "70-79": 1,
+        "80-89": 59,
+        "90-99": 12,
+        "100+": 0
+      }
+    }
+  },
+  "sanitizer_quality_issues": []
+}

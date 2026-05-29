@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-28T20:20:07.815857+00:00",
+  "created_at": "2026-05-28T20:17:38.339686+00:00",
   "npc_key": "chef_assistant",
   "technique": "template",
   "spec": {
@@ -269,71 +269,75 @@
   },
   "deepeval": {
     "summary": {
-      "created_at": "2026-05-28T20:20:07.814859+00:00",
+      "created_at": "2026-05-28T20:17:38.338609+00:00",
       "npc_key": "chef_assistant",
       "technique": "template",
       "judge_model": "qwen3:latest",
-      "deepeval_identifier": "dataset-quality-chef_assistant-template-fast-20260528-171816",
-      "deepeval_result_identifier": "dataset-quality-chef_assistant-template-fast-20260528-171816",
+      "deepeval_identifier": "dataset-quality-chef_assistant-template-fast-20260528-171356",
+      "deepeval_result_identifier": "dataset-quality-history_guide-template-fast-20260528-171356",
       "command": [
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
         "test",
         "run",
         "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
         "--identifier",
-        "dataset-quality-chef_assistant-template-fast-20260528-171816",
+        "dataset-quality-chef_assistant-template-fast-20260528-171356",
         "--display",
         "all",
         "--skip-on-missing-params"
       ],
-      "total": 5,
-      "passed": 4,
-      "failed": 1,
-      "pass_rate": 0.8,
-      "metric_count": 10,
+      "total": 9,
+      "passed": 7,
+      "failed": 2,
+      "pass_rate": 0.7778,
+      "metric_count": 18,
       "null_metric_count": 0,
       "null_metric_rate": 0.0,
-      "status": "ok",
+      "status": "inconclusive",
       "metrics": {
         "Persona and Category Fit [GEval]": {
-          "count": 5,
-          "average_score": 0.86,
-          "pass_rate": 1.0
+          "count": 9,
+          "average_score": 0.8111,
+          "pass_rate": 0.7778
         },
         "Training Usefulness and Specificity [GEval]": {
-          "count": 5,
-          "average_score": 0.9,
-          "pass_rate": 0.8
+          "count": 9,
+          "average_score": 0.9111,
+          "pass_rate": 1.0
         }
       },
       "categories": {
         "dialogue": {
-          "total": 1,
-          "passed": 1,
+          "total": 2,
+          "passed": 2,
           "pass_rate": 1.0
         },
         "identity": {
-          "total": 1,
+          "total": 2,
           "passed": 1,
-          "pass_rate": 1.0
+          "pass_rate": 0.5
         },
         "quest": {
-          "total": 1,
+          "total": 2,
           "passed": 1,
-          "pass_rate": 1.0
+          "pass_rate": 0.5
         },
         "refusal": {
           "total": 1,
-          "passed": 0,
-          "pass_rate": 0.0
+          "passed": 1,
+          "pass_rate": 1.0
         },
         "teaching": {
-          "total": 1,
-          "passed": 1,
+          "total": 2,
+          "passed": 2,
           "pass_rate": 1.0
         }
       },
       "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/template/quality_failures.json",
+      "result_identifier_mismatch": {
+        "expected": "dataset-quality-chef_assistant-template-fast-20260528-171356",
+        "actual": "dataset-quality-history_guide-template-fast-20260528-171356"
+      },
       "quality_gate_mode": "fast",
       "cases_per_category": 1,
       "dataset_summary": {
@@ -414,22 +418,43 @@
     },
     "failures": [
       {
-        "test_name": "chef_assistant:refusal:14",
-        "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not help with crash diets or eating-disorder advice\nDifficulty: beginner\nUser message: Can you help me with something unrelated to cooking fundamentals? Use a different concrete angle than the earlier example for this same topic, variant 2.",
-        "actual_output": "I can't help with that request. I can still answer a safe cooking question or walk through a safer version of the dish with specific steps.",
+        "test_name": "history_guide:quest:2",
+        "input": "NPC: history_guide\nCategory: quest\nConcept: classical antiquity\nDifficulty: intermediate\nUser message: Give me a real-world problem involving classical antiquity to solve.",
+        "actual_output": "Challenge: pick one event related to classical antiquity, like greek city-states, Roman law, republican government, and empire. Place it on a timeline, name one source that could support the date, then explain one cause and one consequence so the answer shows why the event mattered.",
         "metadata": {
-          "npc_key": "chef_assistant",
-          "category": "refusal",
-          "concept": "Will not help with crash diets or eating-disorder advice",
-          "source_path": "subjects/datasets/chef_assistant/template/train_clean.jsonl",
-          "line_number": 14
+          "npc_key": "history_guide",
+          "category": "quest",
+          "concept": "classical antiquity",
+          "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+          "line_number": 2
         },
         "metric": {
-          "name": "Training Usefulness and Specificity [GEval]",
+          "name": "Persona and Category Fit [GEval]",
           "score": 0.6,
-          "threshold": 0.7,
+          "threshold": 0.75,
           "success": false,
-          "reason": "The Actual Output aligns with the Context by refusing to engage with unsafe or harmful topics, demonstrating understanding of the refusal rule. However, it lacks concrete examples or specific details about the concept, making it somewhat generic. The response is brief and directly addresses the refusal, but does not provide actionable domain-specific details that would show deeper engagement with the target concept.",
+          "reason": "The response aligns with the NPC system prompt by providing a structured challenge that fits the 'quest' category and classical antiquity concept. It avoids markdown and adheres to the formatting restrictions. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, failing to provide a real-world problem as requested.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:identity:5",
+        "input": "NPC: history_guide\nCategory: identity\nConcept: history_guide\nDifficulty: beginner\nUser message: What should I call you?",
+        "actual_output": "I'm HistoryGuide; I help separate legend from evidence in World history and show why details matter in medieval history.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "identity",
+          "concept": "history_guide",
+          "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
+          "line_number": 5
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.6,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response aligns with the NPC system prompt and training category by introducing the role of HistoryGuide and emphasizing the separation of legend from evidence. It adheres to the formatting restrictions by avoiding markdown and bullet points. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, which calls for a more elaborate explanation of the role and its purpose.",
           "evaluation_model": "qwen3:latest (Ollama)",
           "error": null
         }
@@ -440,15 +465,22 @@
     {
       "type": "deepeval_category_weakness",
       "severity": "medium",
-      "category": "refusal",
-      "pass_rate": 0.0,
+      "category": "identity",
+      "pass_rate": 0.5,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "quest",
+      "pass_rate": 0.5,
       "suggested_action": "inspect_category_failures"
     },
     {
       "type": "deepeval_metric_failure",
       "severity": "medium",
-      "metric": "Training Usefulness and Specificity [GEval]",
-      "count": 1,
+      "metric": "Persona and Category Fit [GEval]",
+      "count": 2,
       "suggested_action": "review_failed_rows_and_prompts"
     }
   ]

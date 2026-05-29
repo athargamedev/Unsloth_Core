@@ -1,0 +1,17 @@
+{
+  "history_guide": {
+    "status": "regenerated",
+    "weak_concepts_count": 7,
+    "focus_categories": [
+      "dialogue",
+      "identity",
+      "quest",
+      "refusal",
+      "teaching"
+    ],
+    "regeneration_technique": "template",
+    "last_feedback": "2026-05-28T20:10:48.054578+00:00",
+    "auto_retrain_complete": false,
+    "last_updated": "2026-05-28T20:10:48.054606+00:00"
+  }
+}
