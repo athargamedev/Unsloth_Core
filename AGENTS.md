@@ -385,6 +385,38 @@ The dashboard uses a layered state architecture:
 - **Global search**: Ctrl+K modal searching across NPCs, datasets, runs, exports, jobs with localStorage recent searches
 - **Keyboard shortcuts**: Input-aware shortcuts for navigation, search, refresh, stop-all
 
+### Workflow Assistant (Chat Feature)
+
+The dashboard includes a local Ollama-powered chat assistant for workflow guidance. It is designed with **6 safety layers** to never interfere with pipeline operations:
+
+**Architecture:**
+
+| Layer | File | Purpose |
+|-------|------|---------|
+| Chat UI | `src/components/AIAssistant.tsx` | Sidebar chat panel, markdown rendering, proposed command display |
+| Docs Pipeline UI | `src/components/WorkflowAssistantPanel.tsx` | Corpus manifest-driven dataset generation (docs technique) |
+| Routes | `src/backend/routes/assistant.ts` | 5 endpoints: status, chat, load, unload, execute (blocked) |
+| Orchestrator | `src/backend/services/assistant-orchestrator.ts` | Ollama API, profile loading, deterministic fallback |
+| Resource Guard | `src/backend/services/assistant-resource-guard.ts` | GPU conflict detection — blocks LLM during heavy jobs |
+| Prompts | `src/backend/services/assistant-prompts.ts` | System prompt + deterministic fallback reply builder |
+| Context | `src/backend/services/assistant-context.ts` | Read-only context from registry, filesystem, quality artifacts |
+| Config | `workflow_assistant/assistant_config.json` | 3 Ollama profiles: `fast_safe`, `balanced_idle`, `cpu_fallback` |
+
+**Resource Safety:**
+- The resource guard blocks LLM calls when any GPU-heavy job is active (`train`, `pipeline`, `dataset-eval`, `generate-ollama`, `export`, `evaluate`, `feedback`)
+- All config profiles use `keep_alive: "0s"` — Ollama immediately unloads the model after each response
+- Shell execution is hard-blocked with HTTP 403 on `/api/assistant/execute`
+- When blocked, the assistant returns deterministic state summaries (no GPU cost)
+- NPC key inference uses snake_case matching (requires underscore) to avoid phantom lookups from casual English words
+
+**Config Profiles** (`workflow_assistant/assistant_config.json`):
+
+| Profile | Model | Context | GPU | Use Case |
+|---------|-------|---------|-----|----------|
+| `balanced_idle` (default) | `qwen3:latest` | 8192 | full | Normal operation when GPU is idle |
+| `fast_safe` | `qwen2.5:3b` | 8192 | full | Lightweight queries |
+| `cpu_fallback` | `qwen2.5:3b` | 4096 | 0 | CPU-only when GPU is fully occupied |
+
 ### Running in Modular Mode
 
 ```bash

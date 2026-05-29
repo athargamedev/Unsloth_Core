@@ -82,7 +82,10 @@ How can I help with your workflow today?`,
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || 'Unload failed.');
       setMessages((prev) => [...prev, { role: 'assistant', content: `_Requested assistant model unload (${payload.model || 'configured profile'}) to free GPU memory._` }]);
-    } catch { }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unload failed';
+      setMessages((prev) => [...prev, { role: 'assistant', content: `**Error:** ${msg}` }]);
+    }
   };
 
   const handleLoadModel = async () => {
@@ -92,7 +95,10 @@ How can I help with your workflow today?`,
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || 'Load failed.');
       setMessages((prev) => [...prev, { role: 'assistant', content: `_Assistant model ready: ${payload.model || 'configured profile'}._` }]);
-    } catch { }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Load failed';
+      setMessages((prev) => [...prev, { role: 'assistant', content: `**Error:** ${msg}` }]);
+    }
   };
 
   const handleExecuteCommand = async (command: string) => {

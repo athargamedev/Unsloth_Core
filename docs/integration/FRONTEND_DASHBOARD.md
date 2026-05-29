@@ -166,6 +166,51 @@ The main navigation provides these tabs:
 7. **Colab Notebooks** — Integration with Google Colab-based training
 8. **Leaderboard** — NPC evaluation scores across the 4 active NPCs
 
+## Workflow Assistant
+
+The dashboard includes a local Ollama-powered workflow assistant that provides contextual guidance without interfering with pipeline operations.
+
+### Safety Architecture
+
+The assistant is designed with **6 safety layers** to guarantee it never harms generation, training, or evaluation:
+
+1. **Resource Guard** (`assistant-resource-guard.ts`): Blocks LLM calls when any GPU-heavy job is active (train, pipeline, dataset-eval, generate-ollama, export, evaluate, feedback). Falls back to deterministic state summaries.
+2. **Immediate Unload** (`keep_alive: "0s"`): All config profiles tell Ollama to immediately unload the assistant model after each response, freeing VRAM for pipeline work.
+3. **Shell Execution Blocked**: The `/api/assistant/execute` endpoint returns HTTP 403. Commands are "proposed" only — the user must launch them through the dashboard command modal.
+4. **Read-Only Context**: The context collector reads filesystem and registry state but never writes. No pipeline artifacts are modified.
+5. **System Prompt Boundaries**: Priority #1 in the system prompt explicitly prohibits concurrent GPU work.
+6. **NPC Key Inference**: Uses snake_case pattern matching (requires underscore) to avoid phantom NPC key lookups from casual English words.
+
+### Config Profiles
+
+Three profiles in `workflow_assistant/assistant_config.json`:
+
+| Profile | Model | Context | GPU Layers | Use Case |
+|---------|-------|---------|------------|----------|
+| `balanced_idle` (default) | `qwen3:latest` | 8192 | full | Normal operation when GPU is idle |
+| `fast_safe` | `qwen2.5:3b` | 8192 | full | Lightweight queries |
+| `cpu_fallback` | `qwen2.5:3b` | 4096 | 0 | CPU-only when GPU is fully occupied |
+
+### Assistant API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/assistant/status` | GET | Model profile, resource state, mode (ready/paused) |
+| `/api/assistant/chat` | POST | Chat with context-aware LLM (or deterministic fallback) |
+| `/api/assistant` | POST | Backward-compatible alias for chat |
+| `/api/assistant/load` | POST | Pre-warm the assistant model (blocked during GPU-heavy jobs) |
+| `/api/assistant/unload` | POST | Unload the assistant model to free VRAM |
+| `/api/assistant/execute` | POST | **Always returns 403** — shell execution disabled |
+
+### Data Validation
+
+All dashboard panels use Zod runtime schema validation integrated into React Query `queryFn` hooks. API responses are parsed through Zod schemas before reaching components, preventing silent crashes from malformed backend data. Panels using this pattern:
+
+- `EvalReportsPanel.tsx` — Gold standard reference implementation
+- `FeedbackLoopPanel.tsx` — Feedback result and gap schemas
+- `EvalWorkflowPanel.tsx` — Eval report schemas with `refetchInterval` polling
+- `DatasetPipelinePanel.tsx` — Quality summary and failure schemas
+
 ## Job Queue Integration
 
 The dashboard manages jobs through the PostgreSQL-backed `JobQueue` class:

@@ -51,7 +51,7 @@ export async function runAssistantChat(
   registry: Registry,
   request: AssistantContextRequest & { history?: unknown[]; profile?: string },
 ): Promise<AssistantChatResult> {
-  const resources = getAssistantResourceState(registry);
+  const resources = await getAssistantResourceState(registry);
   const context = collectAssistantContext(repoRoot, registry, request);
   const profile = loadAssistantProfile(repoRoot, request.profile);
 

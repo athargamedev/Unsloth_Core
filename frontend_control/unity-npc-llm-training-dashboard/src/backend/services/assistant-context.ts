@@ -135,10 +135,12 @@ export function collectAssistantContext(
 }
 
 function inferNpcKey(message?: string): string | undefined {
-  const match = message?.match(/\b([a-z][a-z0-9_]+)\b/);
+  // Only match snake_case patterns (must contain underscore) to avoid
+  // matching casual English words like "how", "the", "run", etc.
+  const match = message?.match(/\b([a-z][a-z0-9]*_[a-z0-9_]+)\b/);
   if (!match) return undefined;
   const value = match[1];
-  if (["dataset", "train", "export", "evaluate", "quality", "latest", "workflow"].includes(value)) return undefined;
+  if (["dataset_eval", "train_clean", "export_adapter", "batch_export", "keep_alive"].includes(value)) return undefined;
   return value;
 }
 

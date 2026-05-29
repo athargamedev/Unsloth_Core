@@ -1,5 +1,8 @@
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import type { Job, Registry } from "../types";
+
+const execFileAsync = promisify(execFile);
 
 const GPU_HEAVY_TYPES = new Set(["Training", "Evaluation", "Export", "Pipeline"]);
 const GPU_HEAVY_COMMANDS = new Set([
@@ -30,33 +33,32 @@ export function isGpuHeavyJob(job: Job): boolean {
   return /\b(train|dataset-eval|generate-ollama|pipeline|evaluate|batch-export)\b/.test(commandText);
 }
 
-export function getAssistantResourceState(registry: Registry): AssistantResourceState {
+export async function getAssistantResourceState(registry: Registry): Promise<AssistantResourceState> {
   const heavyJobs = registry.jobs
     .filter(isGpuHeavyJob)
     .map(({ id, name, type, commandId, status, npcKey }) => ({ id, name, type, commandId, status, npcKey }));
 
-  let ollamaModels: string[] = [];
-  try {
-    const output = execFileSync("ollama", ["ps"], { encoding: "utf8", timeout: 1500 });
-    ollamaModels = output
-      .split("\n")
-      .slice(1)
-      .map((line) => line.trim().split(/\s+/)[0])
-      .filter(Boolean);
-  } catch {
-    ollamaModels = [];
-  }
-
-  let gpuSnapshot: string | null = null;
-  try {
-    gpuSnapshot = execFileSync(
+  // Run ollama ps and nvidia-smi concurrently (non-blocking)
+  const [ollamaResult, gpuResult] = await Promise.allSettled([
+    execFileAsync("ollama", ["ps"], { encoding: "utf8", timeout: 1500 }),
+    execFileAsync(
       "nvidia-smi",
       ["--query-gpu=name,memory.used,memory.total,utilization.gpu", "--format=csv,noheader,nounits"],
       { encoding: "utf8", timeout: 1500 },
-    ).trim() || null;
-  } catch {
-    gpuSnapshot = null;
-  }
+    ),
+  ]);
+
+  const ollamaModels = ollamaResult.status === "fulfilled"
+    ? ollamaResult.value.stdout
+        .split("\n")
+        .slice(1)
+        .map((line) => line.trim().split(/\s+/)[0])
+        .filter(Boolean)
+    : [];
+
+  const gpuSnapshot = gpuResult.status === "fulfilled"
+    ? gpuResult.value.stdout.trim() || null
+    : null;
 
   const blockedReason = heavyJobs.length
     ? `GPU-heavy job active: ${heavyJobs.map((j) => `${j.name} (${j.id})`).join(", ")}`

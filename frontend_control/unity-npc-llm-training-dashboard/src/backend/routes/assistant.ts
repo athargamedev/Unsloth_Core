@@ -7,9 +7,9 @@ import { getAssistantResourceState } from "../services/assistant-resource-guard"
 export function registerRoutes(app: Express, deps: RouterDependencies): void {
   const { registry, repoRoot, globalLog } = deps;
 
-  app.get("/api/assistant/status", (req: Request, res: Response) => {
+  app.get("/api/assistant/status", async (req: Request, res: Response) => {
     const profile = loadAssistantProfile(repoRoot, String(req.query.profile || "") || undefined);
-    const resourceState = getAssistantResourceState(registry);
+    const resourceState = await getAssistantResourceState(registry);
     res.json({
       ok: true,
       model: profile.model,
@@ -46,7 +46,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
   app.post("/api/assistant/load", async (req: Request, res: Response) => {
     try {
-      const resourceState = getAssistantResourceState(registry);
+      const resourceState = await getAssistantResourceState(registry);
       if (!resourceState.canUseLlm) {
         res.status(409).json({ error: resourceState.blockedReason || "assistant model load is paused" });
         return;
