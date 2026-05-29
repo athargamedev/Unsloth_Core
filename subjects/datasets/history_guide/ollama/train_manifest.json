@@ -3,9 +3,9 @@
   "technique": "ollama",
   "model": "qwen2.5:7b",
   "generation": {
-    "date": "2026-05-29T12:57:49Z",
+    "date": "2026-05-29T13:29:55Z",
     "seed": 42,
-    "temperature": 0.6,
+    "temperature": 0.7,
     "multi_turn_ratio": 0.25,
     "version": "ollama-v2"
   },
@@ -53,70 +53,51 @@
       "refusal": 8
     },
     "generation_request_examples_per_category": {
-      "identity": 9,
-      "teaching": 36,
-      "dialogue": 18,
-      "quest": 9,
-      "refusal": 9
+      "identity": 18,
+      "teaching": 72,
+      "dialogue": 36,
+      "quest": 18,
+      "refusal": 18
     },
     "observed_examples_per_category": {
-      "identity": 9,
-      "teaching": 24,
-      "dialogue": 10,
-      "quest": 5,
-      "refusal": 9
+      "identity": 18,
+      "teaching": 48,
+      "dialogue": 24,
+      "quest": 10,
+      "refusal": 18
     },
-    "distribution_gaps": [
-      {
-        "category": "teaching",
-        "target": 32,
-        "actual": 24,
-        "shortfall": 8
-      },
-      {
-        "category": "dialogue",
-        "target": 16,
-        "actual": 10,
-        "shortfall": 6
-      },
-      {
-        "category": "quest",
-        "target": 8,
-        "actual": 5,
-        "shortfall": 3
-      }
-    ]
+    "distribution_gaps": []
   },
   "statistics": {
-    "total": 57,
-    "train": 51,
-    "validation": 6,
+    "total": 118,
+    "train": 106,
+    "validation": 12,
     "by_category": {
-      "identity": 9,
-      "teaching": 24,
-      "dialogue": 10,
-      "quest": 5,
-      "refusal": 9
+      "identity": 18,
+      "teaching": 48,
+      "dialogue": 24,
+      "quest": 10,
+      "refusal": 18
     },
     "by_difficulty": {
-      "beginner": 34,
-      "advanced": 6,
-      "intermediate": 17
+      "beginner": 63,
+      "intermediate": 37,
+      "advanced": 18
     },
     "by_concept": {
-      "historical methodology": 9,
-      "historical thinking": 9,
-      "modern history": 9,
-      "medieval history": 9,
-      "classical antiquity": 9,
-      "ancient civilizations": 6,
-      "core timeline anchors": 2,
-      "safety and refusal boundaries": 2,
-      "useful vocabulary": 2
+      "medieval history": 18,
+      "modern history": 18,
+      "historical thinking": 18,
+      "historical methodology": 18,
+      "classical antiquity": 18,
+      "ancient civilizations": 14,
+      "core timeline anchors": 5,
+      "safety and refusal boundaries": 5,
+      "useful vocabulary": 4
     },
     "generator_stats": {
-      "requests": 81,
-      "successes": 81,
+      "requests": 162,
+      "successes": 162,
       "errors": 0,
       "success_rate": 1.0
     }
