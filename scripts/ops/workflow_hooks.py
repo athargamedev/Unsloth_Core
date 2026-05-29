@@ -25,14 +25,19 @@ _ARTIFACT_TYPE_MAP: dict[str, str] = {
     "generate_examples": "dataset_raw",
     "write_artifacts": "dataset_clean",
     "sanitize_dataset": "dataset_clean",
+    "sanitize": "dataset_clean",
     "training_pipeline": "adapter",
     "export_gguf": "gguf_adapter",
     "export_pipeline": "gguf_adapter",
+    "export_adapter": "gguf_adapter",
+    "export_full_merge": "gguf_full",
     "evaluate_model": "eval_report",
     "feedback_loop": "feedback_json",
     "deepeval_run": "quality_report",
     "evaluate_pipeline": "eval_report",
     "compare_models": "eval_report",
+    "compare_runs": "eval_report",
+    "write_report": "eval_report",
 }
 
 
@@ -86,6 +91,7 @@ class WorkflowHookRecorder:
         self._db_quality_gate_created: bool = False        # dataset_quality_gates
         self._db_eval_session_created: bool = False        # eval_sessions
         self._db_ephemeral_run_id: str | None = None       # evaluate_pipeline fallback run_id
+        self._db_terminal_status: str | None = None        # cached terminal status for log-flush updates
 
     def emit(self, step: str, status: str, **fields: Any) -> None:
         if not self.path:

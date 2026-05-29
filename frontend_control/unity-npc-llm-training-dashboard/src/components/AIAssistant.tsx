@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, BookOpen, Send, User, Bot, Command, Power, PowerOff, Play } from 'lucide-react';
+import { Sparkles, BookOpen, Send, User, Bot, Command, Power, PowerOff, ShieldCheck } from 'lucide-react';
 import { fetchOptionalJson, type AssistantMessage } from '../api';
 import ReactMarkdown from 'react-markdown';
 
@@ -20,6 +20,7 @@ How can I help with your workflow today?`,
   ]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [docs, setDocs] = useState<string[]>([]);
+  const [assistantStatus, setAssistantStatus] = useState<{ mode?: string; model?: string; resourceState?: { blockedReason?: string | null } } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,6 +29,9 @@ How can I help with your workflow today?`,
     });
     fetchOptionalJson<string[]>('/api/docs').then((data) => {
       if (data && data.length > 0) setDocs(data);
+    });
+    fetchOptionalJson<{ mode?: string; model?: string; resourceState?: { blockedReason?: string | null } }>('/api/assistant/status').then((data) => {
+      if (data) setAssistantStatus(data);
     });
   }, []);
 
@@ -74,31 +78,26 @@ How can I help with your workflow today?`,
 
   const handleUnloadModel = async () => {
     try {
-      await fetch('/api/assistant/unload', { method: 'POST' });
-      setMessages((prev) => [...prev, { role: 'assistant', content: '_Requested Ollama assistant model unload (llama3.1) to free GPU memory._' }]);
+      const response = await fetch('/api/assistant/unload', { method: 'POST' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Unload failed.');
+      setMessages((prev) => [...prev, { role: 'assistant', content: `_Requested assistant model unload (${payload.model || 'configured profile'}) to free GPU memory._` }]);
     } catch { }
   };
 
   const handleLoadModel = async () => {
     try {
-      setMessages((prev) => [...prev, { role: 'assistant', content: '_Requesting Ollama assistant model load (llama3.1)..._' }]);
-      await fetch('/api/assistant/load', { method: 'POST' });
+      setMessages((prev) => [...prev, { role: 'assistant', content: '_Requesting assistant model load. This is blocked if training/eval/export is active..._' }]);
+      const response = await fetch('/api/assistant/load', { method: 'POST' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Load failed.');
+      setMessages((prev) => [...prev, { role: 'assistant', content: `_Assistant model ready: ${payload.model || 'configured profile'}._` }]);
     } catch { }
   };
 
   const handleExecuteCommand = async (command: string) => {
     try {
-      setMessages((prev) => [...prev, { role: 'assistant', content: `_Executing: \`${command}\`..._` }]);
-      const response = await fetch('/api/assistant/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command }),
-      });
-      if (!response.ok) {
-        const payload = await response.json();
-        throw new Error(payload.error || 'Execution failed.');
-      }
-      setMessages((prev) => [...prev, { role: 'assistant', content: `_Job started. Check the Operations Matrix for progress._` }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: `**Proposed command only:**\n\n\`${command}\`\n\nFor safety, assistant shell execution is disabled. Launch commands through the dashboard command modal or Operations Matrix so resource guards and confirmations apply.` }]);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Execution failed.';
       setMessages((prev) => [...prev, { role: 'assistant', content: `**Error:** ${message}` }]);
@@ -111,13 +110,18 @@ How can I help with your workflow today?`,
       <div className="p-4 border-b border-line bg-panel/50 backdrop-blur-md flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-          <h2 className="text-[11px] font-bold text-ink-bright uppercase tracking-widest">Workflow Assistant Tool</h2>
+          <div>
+            <h2 className="text-[11px] font-bold text-ink-bright uppercase tracking-widest">Workflow Assistant</h2>
+            <div className="text-[8px] text-ink/40 font-mono">
+              {assistantStatus?.model || 'local profile'} · {assistantStatus?.mode === 'paused' ? 'paused' : 'ready'}
+            </div>
+          </div>
         </div>
         <div className="flex gap-2">
-          <button aria-label="Load assistant model" onClick={handleLoadModel} title="Load the Ollama assistant model (llama3.1), not an NPC GGUF model" className="p-1 hover:bg-white/10 rounded text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
+          <button aria-label="Load assistant model" onClick={handleLoadModel} title="Load the configured Ollama assistant model only when GPU-heavy jobs are idle" className="p-1 hover:bg-white/10 rounded text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60">
             <Power className="w-3 h-3" />
           </button>
-          <button aria-label="Unload assistant model" onClick={handleUnloadModel} title="Unload the Ollama assistant model (llama3.1) only" className="p-1 hover:bg-white/10 rounded text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/60">
+          <button aria-label="Unload assistant model" onClick={handleUnloadModel} title="Unload the assistant model to free GPU memory" className="p-1 hover:bg-white/10 rounded text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/60">
             <PowerOff className="w-3 h-3" />
           </button>
         </div>
@@ -162,14 +166,14 @@ How can I help with your workflow today?`,
                             <div className="flex items-center justify-between px-2 py-1 bg-accent/10 border-b border-accent/20">
                               <span className="text-[8px] font-bold text-accent flex items-center gap-1">
                                 <Command className="w-2 h-2" />
-                                ACTIONABLE COMMAND
+                                PROPOSED COMMAND
                               </span>
                               <button
                                 onClick={() => handleExecuteCommand(content)}
                                 className="text-[8px] font-bold bg-accent hover:bg-accent-bright text-white px-2 py-0.5 rounded transition-colors flex items-center gap-1"
                               >
-                                <Play className="w-2 h-2" />
-                                RUN
+                                <ShieldCheck className="w-2 h-2" />
+                                SAFETY NOTE
                               </button>
                             </div>
                             <code className="block p-2 text-accent-bright font-mono whitespace-pre-wrap">

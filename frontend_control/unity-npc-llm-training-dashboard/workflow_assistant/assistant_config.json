@@ -1,0 +1,27 @@
+{
+  "defaultProfile": "balanced_idle",
+  "profiles": {
+    "fast_safe": {
+      "provider": "ollama",
+      "model": "qwen2.5:3b",
+      "num_ctx": 8192,
+      "num_parallel": 1,
+      "keep_alive": "0s"
+    },
+    "balanced_idle": {
+      "provider": "ollama",
+      "model": "qwen3:latest",
+      "num_ctx": 8192,
+      "num_parallel": 1,
+      "keep_alive": "0s"
+    },
+    "cpu_fallback": {
+      "provider": "ollama",
+      "model": "qwen2.5:3b",
+      "num_ctx": 4096,
+      "num_gpu": 0,
+      "num_parallel": 1,
+      "keep_alive": "0s"
+    }
+  }
+}

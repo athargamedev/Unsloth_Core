@@ -1405,6 +1405,11 @@ def main():
                 "judge_model": args.judge_model,
                 "baseline_model_path": args.baseline,
                 "candidate_model_path": args.candidate,
+                "base_model": args.base_model,
+                "lora_weight": args.lora_weight,
+                "gpu_layers": args.gpu_layers,
+                "max_tokens": args.max_tokens,
+                "report_html": args.report_html,
                 "categories": list(set(
                     q.get("metadata", {}).get("category", "general")
                     for q in questions

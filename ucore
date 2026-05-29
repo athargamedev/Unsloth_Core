@@ -268,9 +268,18 @@ def main():
     train_p.add_argument("--lr", type=float, help="Learning rate")
     train_p.add_argument("--batch-size", type=int, help="Batch size")
     train_p.add_argument("--epochs", type=int, help="Number of epochs")
+    train_p.add_argument("--grad-accum", type=int, help="Gradient accumulation steps")
+    train_p.add_argument("--max-seq-len", type=int, help="Max sequence length")
     train_p.add_argument("--lora-r", type=int, help="LoRA rank")
     train_p.add_argument("--lora-alpha", type=int, help="LoRA alpha")
+    train_p.add_argument("--lora-dropout", type=float, help="LoRA dropout")
+    train_p.add_argument("--neftune", type=float, help="NEFTune noise alpha")
+    train_p.add_argument("--weight-decay", type=float, help="Weight decay")
+    train_p.add_argument("--warmup", type=int, help="Warmup steps")
     train_p.add_argument("--lr-scheduler", help="Learning rate scheduler type")
+    train_p.add_argument("--packing", choices=["true", "false", "True", "False"], help="Enable packing")
+    train_p.add_argument("--train-on-responses", choices=["true", "false", "True", "False"], help="Train on responses only")
+    train_p.add_argument("--quantization", choices=["q4_k_m", "q5_k_m", "q8_0", "f16"], help="GGUF quantization type")
     train_p.add_argument("--allow-ungated-dataset", action="store_true",
                          help="Train without a fresh passing dataset-eval artifact")
 
@@ -382,6 +391,10 @@ def main():
     qe_p.add_argument("--output", help="Output report path (default: eval/results/{npc_key}_eval_report.json)")
     qe_p.add_argument("--feedback-json",
                       help="Save structured per-concept eval results for the feedback loop")
+    qe_p.add_argument("--workflow-hooks", help="Path to workflow hooks JSONL")
+    qe_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
+    qe_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    qe_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
 
     # Track
     track_p = subparsers.add_parser("track", help="Track or show evaluation results")
@@ -664,9 +677,18 @@ def main():
         if getattr(args, "lr", None): cmd.extend(["--lr", str(args.lr)])
         if getattr(args, "batch_size", None): cmd.extend(["--batch-size", str(args.batch_size)])
         if getattr(args, "epochs", None): cmd.extend(["--epochs", str(args.epochs)])
+        if getattr(args, "grad_accum", None): cmd.extend(["--grad-accum", str(args.grad_accum)])
+        if getattr(args, "max_seq_len", None): cmd.extend(["--max-seq-len", str(args.max_seq_len)])
         if getattr(args, "lora_r", None): cmd.extend(["--lora-r", str(args.lora_r)])
         if getattr(args, "lora_alpha", None): cmd.extend(["--lora-alpha", str(args.lora_alpha)])
+        if getattr(args, "lora_dropout", None) is not None: cmd.extend(["--lora-dropout", str(args.lora_dropout)])
+        if getattr(args, "neftune", None) is not None: cmd.extend(["--neftune", str(args.neftune)])
+        if getattr(args, "weight_decay", None) is not None: cmd.extend(["--weight-decay", str(args.weight_decay)])
+        if getattr(args, "warmup", None) is not None: cmd.extend(["--warmup", str(args.warmup)])
         if getattr(args, "lr_scheduler", None): cmd.extend(["--lr-scheduler", args.lr_scheduler])
+        if getattr(args, "packing", None): cmd.extend(["--packing", args.packing.lower()])
+        if getattr(args, "train_on_responses", None): cmd.extend(["--train-on-responses", args.train_on_responses.lower()])
+        if getattr(args, "quantization", None): cmd.extend(["--quantization", args.quantization])
         if getattr(args, "allow_ungated_dataset", False): cmd.append("--allow-ungated-dataset")
         if args.export_gguf: cmd.append("--export-gguf")
         if getattr(args, 'full_merge_export', False): cmd.append("--full-merge-export")
@@ -822,6 +844,9 @@ def main():
         if args.output: cmd.extend(["--output", args.output])
         if args.feedback_json: cmd.extend(["--feedback-json", args.feedback_json])
         if args.workflow_hooks: cmd.extend(["--workflow-hooks", args.workflow_hooks])
+        if args.wandb: cmd.append("--wandb")
+        if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
+        if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
         run_cmd(cmd)
 
     elif args.command == "track":

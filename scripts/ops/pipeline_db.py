@@ -545,7 +545,10 @@ class PipelineDB:
 
             # Add any extra kwargs as allowlisted dynamic fields
             for key, val in self._filter_extra(extra).items():
-                fields.append(f"{key} = %s")
+                if key == "logs":
+                    fields.append(f"{key} = COALESCE({key}, ARRAY[]::TEXT[]) || %s::TEXT[]")
+                else:
+                    fields.append(f"{key} = %s")
                 values.append(val)
 
             values.append(job_id)

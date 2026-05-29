@@ -159,6 +159,49 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
 
     import wandb
 
+    training_cfg = config.get("training", {}) if isinstance(config.get("training", {}), dict) else {}
+    lora_cfg = config.get("lora", {}) if isinstance(config.get("lora", {}), dict) else {}
+    dataset_path = config.get("dataset_path")
+    dataset_sha256 = None
+    quality_summary = None
+    if dataset_path and os.path.isfile(dataset_path):
+        try:
+            dataset_sha256 = file_sha256(dataset_path)
+        except Exception:
+            dataset_sha256 = None
+        summary_path = Path(dataset_path).parent / "quality_summary.json"
+        if summary_path.exists():
+            try:
+                with summary_path.open(encoding="utf-8") as handle:
+                    raw_summary = json.load(handle)
+                quality_summary = {
+                    "path": str(summary_path),
+                    "status": raw_summary.get("status"),
+                    "mode": raw_summary.get("quality_gate_mode"),
+                    "pass_rate": raw_summary.get("pass_rate"),
+                    "total": raw_summary.get("total"),
+                    "failed": raw_summary.get("failed"),
+                    "dataset_hash": (raw_summary.get("dataset_summary") or {}).get("content_sha256"),
+                    "distribution_gaps": raw_summary.get("distribution_gaps"),
+                }
+            except Exception:
+                quality_summary = {"path": str(summary_path), "status": "unreadable"}
+
+    try:
+        config_hash = hashlib.sha256(
+            json.dumps(config, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()
+    except Exception:
+        config_hash = None
+
+    batch_size = training_cfg.get("batch_size")
+    grad_accum = training_cfg.get("gradient_accumulation_steps")
+    effective_batch_size = None
+    try:
+        effective_batch_size = int(batch_size or 0) * int(grad_accum or 0)
+    except Exception:
+        pass
+
     wandb_cfg = {
         "npc_key": npc_key,
         "technique": technique,
@@ -166,15 +209,28 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
         "run_id": run_id,
         "output_dir": output_dir,
         "model": config.get("model"),
-        "dataset_path": config.get("dataset_path"),
-        "lora_r": config.get("lora", {}).get("r", config.get("training", {}).get("lora_r")),
-        "lora_alpha": config.get("lora", {}).get("alpha", config.get("training", {}).get("lora_alpha")),
-        "learning_rate": config.get("training", {}).get("learning_rate"),
-        "batch_size": config.get("training", {}).get("batch_size"),
-        "gradient_accumulation_steps": config.get("training", {}).get("gradient_accumulation_steps"),
-        "max_seq_length": config.get("training", {}).get("max_seq_length"),
-        "packing": config.get("training", {}).get("packing"),
-        "train_on_responses_only": config.get("training", {}).get("train_on_responses_only"),
+        "dataset_path": dataset_path,
+        "dataset_sha256": dataset_sha256,
+        "dataset_quality": quality_summary,
+        "config_hash": config_hash,
+        "training": training_cfg,
+        "lora": lora_cfg,
+        "effective_batch_size": effective_batch_size,
+        "lora_r": lora_cfg.get("r", training_cfg.get("lora_r")),
+        "lora_alpha": lora_cfg.get("alpha", training_cfg.get("lora_alpha")),
+        "lora_dropout": lora_cfg.get("dropout", training_cfg.get("lora_dropout")),
+        "lora_target_modules": lora_cfg.get("target_modules"),
+        "learning_rate": training_cfg.get("learning_rate"),
+        "batch_size": batch_size,
+        "gradient_accumulation_steps": grad_accum,
+        "num_epochs": training_cfg.get("num_epochs"),
+        "max_seq_length": training_cfg.get("max_seq_length"),
+        "lr_scheduler_type": training_cfg.get("lr_scheduler_type"),
+        "weight_decay": training_cfg.get("weight_decay"),
+        "warmup_steps": training_cfg.get("warmup_steps"),
+        "packing": training_cfg.get("packing"),
+        "train_on_responses_only": training_cfg.get("train_on_responses_only"),
+        "full_config": config,
     }
     base_tags = [tag for tag in (config.get("wandb", {}).get("tags") or []) if tag]
     tags = list(dict.fromkeys(["train", npc_key, technique, preset_name, *base_tags]))
@@ -886,6 +942,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                             "npc_key": config.get("npc_key", "unknown"),
                             "technique": config.get("technique", "unknown"),
                             "num_examples": len(dataset),
+                            "dataset_sha256": file_sha256(dataset_path),
                         }
                     )
                     dataset_artifact.add_file(dataset_path)
@@ -917,6 +974,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                         metadata={
                             "npc_key": config.get("npc_key", "unknown"),
                             "preset": preset_name,
+                            "run_id": config.get("run_id"),
                         }
                     )
                     cfg_artifact.add_file(snapshot_path)
@@ -936,8 +994,10 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                             "npc_key": config.get("npc_key", "unknown"),
                             "technique": config.get("technique", "unknown"),
                             "preset": preset_name,
+                            "run_id": config.get("run_id"),
                             "final_loss": final_loss_val,
                             "num_examples": len(dataset),
+                            "dataset_path": config.get("dataset_path"),
                         }
                     )
                     lora_artifact.add_dir(output_dir)
@@ -1280,6 +1340,25 @@ def main():
             if config.get("wandb", {}).get("enabled", False) and gguf_files:
                 try:
                     import wandb as _wandb
+                    export_run = _wandb.init(
+                        project=config.get("wandb", {}).get("project", "unsloth-core"),
+                        entity=config.get("wandb", {}).get("entity"),
+                        group=os.environ.get("WANDB_RUN_GROUP") or os.environ.get("WANDB_GROUP") or npc_key,
+                        job_type="export",
+                        name=f"export-{npc_key}-{run_id}",
+                        tags=["export", npc_key, technique, preset_name],
+                        config={
+                            "npc_key": npc_key,
+                            "technique": technique,
+                            "preset": preset_name,
+                            "run_id": run_id,
+                            "training_wandb_url": wandb_url,
+                            "training_loss": training_loss,
+                            "num_examples": num_examples,
+                            "mode": "full_merge" if getattr(args, 'full_merge_export', False) else "adapter",
+                            "gguf_files": [str(gf) for gf in gguf_files],
+                        },
+                    )
                     gguf_artifact = _wandb.Artifact(
                         f"gguf-{npc_key}",
                         type="gguf-export",
@@ -1292,14 +1371,17 @@ def main():
                             "num_examples": num_examples,
                             "mode": "full_merge" if getattr(args, 'full_merge_export', False) else "adapter",
                             "run_id": run_id,
+                            "training_wandb_url": wandb_url,
+                            "wandb_url": getattr(export_run, "url", None),
                         }
                     )
                     for gf in gguf_files:
                         gguf_artifact.add_file(str(gf))
                     _wandb.log_artifact(gguf_artifact)
+                    _wandb.finish()
                     log_info("  [wandb] Logged GGUF artifact")
-                except Exception:
-                    log_warn("  [wandb] GGUF artifact logging failed")
+                except Exception as exc:
+                    log_warn("  [wandb] GGUF artifact logging failed: %s", exc)
         else:
             log_info("[4/4] Skipping GGUF export (use --export-gguf to enable)")
 

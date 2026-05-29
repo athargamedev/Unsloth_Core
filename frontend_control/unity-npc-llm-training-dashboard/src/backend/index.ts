@@ -18,6 +18,7 @@ import { registerRoutes as registerOllamaRoutes } from "./routes/ollama";
 import { registerRoutes as registerSupabaseRoutes } from "./routes/supabase";
 import { registerRoutes as registerCommandsRoutes } from "./routes/commands";
 import { registerRoutes as registerWorkflowRoutes } from "./routes/workflow";
+import { registerRoutes as registerAssistantRoutes } from "./routes/assistant";
 
 /**
  * Creates the Express application with all middleware and route modules mounted.
@@ -54,6 +55,7 @@ export function createApp(deps: RouterDependencies): Express {
   registerSupabaseRoutes(app, deps);
   registerCommandsRoutes(app, deps);
   registerWorkflowRoutes(app, deps);
+  registerAssistantRoutes(app, deps);
 
   return app;
 }
