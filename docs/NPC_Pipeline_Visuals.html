@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unsloth_Core Workflow Graphics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #c084fc;
+            --accent-pink: #f472b6;
+            --gradient-1: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+            --gradient-2: linear-gradient(135deg, #ec4899, #8b5cf6);
+            --gradient-3: linear-gradient(135deg, #14b8a6, #3b82f6);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(14, 165, 233, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            margin-top: 0;
+        }
+
+        .header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 60px auto;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 80px;
+        }
+
+        .graphic-slide {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 50px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .graphic-slide:hover {
+            transform: translateY(-5px);
+        }
+
+        .slide-bg-glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--gradient-1);
+            filter: blur(100px);
+            opacity: 0.15;
+            top: -100px;
+            right: -100px;
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .slide-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide-title {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .slide-desc {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .step-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            position: relative;
+        }
+
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .step-card[data-color="pink"] .step-number { background: var(--gradient-2); }
+        .step-card[data-color="teal"] .step-number { background: var(--gradient-3); }
+
+        .step-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-card[data-color="pink"] .step-title { color: var(--accent-pink); }
+        .step-card[data-color="teal"] .step-title { color: #14b8a6; }
+
+        .step-text {
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .code-pill {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #e2e8f0;
+        }
+
+        .architecture-diagram {
+            margin-top: 40px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .arch-node {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-purple);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .arch-arrow {
+            color: var(--accent-purple);
+            font-size: 1.5rem;
+        }
+
+        /* Slide specific adjustments */
+        .slide-2 .slide-bg-glow { background: var(--gradient-2); }
+        .slide-3 .slide-bg-glow { background: var(--gradient-3); }
+        .slide-4 .slide-bg-glow { background: var(--gradient-1); right: auto; left: -100px; }
+        .slide-5 .slide-bg-glow { background: var(--gradient-2); }
+        .slide-6 .slide-bg-glow { background: var(--gradient-3); right: auto; left: -100px; }
+        .slide-7 .slide-bg-glow { background: var(--gradient-1); }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Unsloth_Core Workflow</h1>
+        <p>A visual guide to the end-to-end pipeline for generating, sanitizing, gating, and training LLMUnity NPC dialogue adapters using Llama 3.2 3B.</p>
+    </div>
+
+    <div class="container">
+
+        <!-- Graphic 1 -->
+        <div class="graphic-slide slide-1">
+            <div class="slide-bg-glow"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">1. The 7-Stage AI Pipeline</h2>
+                <p class="slide-desc">Unsloth_Core transforms reference documents into playable Unity NPCs through a strict 7-stage process.</p>
+                
+                <div class="steps-grid">
+                    <div class="step-card" data-color="teal">
+                        <div class="step-number">1</div>
+                        <h3 class="step-title">Initialization & Spec</h3>
+                        <p class="step-text">Run <span class="code-pill">ucore init &lt;npc_key&gt;</span> to scaffold the NPC. Define the 4-section system prompt in <span class="code-pill">NPC_specs/</span> and provide domain knowledge in <span class="code-pill">reference_docs/</span>.</p>
+                    </div>
+                    <div class="step-card" data-color="teal">
+                        <div class="step-number">2</div>
+                        <h3 class="step-title">Generate & Sanitize</h3>
+                        <p class="step-text">Generate dataset grounded in the primer using <span class="code-pill">ucore generate</span>. Then <span class="code-pill">ucore sanitize</span> formats the raw JSONL into strict ChatML format.</p>
+                    </div>
+                    <div class="step-card" data-color="teal">
+                        <div class="step-number">3</div>
+                        <h3 class="step-title">DeepEval Quality Gate</h3>
+                        <p class="step-text">Before training, <span class="code-pill">ucore dataset-eval</span> tests the dataset locally using the <span class="code-pill">qwen3</span> Ollama judge. Training is blocked if metrics fail.</p>
+                    </div>
+                    <div class="step-card" data-color="pink">
+                        <div class="step-number">4</div>
+                        <h3 class="step-title">SFT LoRA Training</h3>
+                        <p class="step-text"><span class="code-pill">ucore train</span> runs Unsloth SFTTrainer over the dataset. The preflight system automatically checks VRAM and adjusts the training preset.</p>
+                    </div>
+                    <div class="step-card" data-color="pink">
+                        <div class="step-number">5</div>
+                        <h3 class="step-title">GGUF Export</h3>
+                        <p class="step-text"><span class="code-pill">ucore export</span> converts the trained LoRA adapter to a lightweight GGUF format via llama.cpp (<span class="code-pill">{npc}-lora-f16.gguf</span>).</p>
+                    </div>
+                    <div class="step-card" data-color="pink">
+                        <div class="step-number">6</div>
+                        <h3 class="step-title">Evaluate & Loop</h3>
+                        <p class="step-text"><span class="code-pill">ucore evaluate</span> and <span class="code-pill">ucore feedback</span> analyze the model, finding knowledge gaps to dynamically trigger dataset regeneration.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphic 2 -->
+        <div class="graphic-slide slide-2">
+            <div class="slide-bg-glow"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">2. Designing the NPC Knowledge Base</h2>
+                <p class="slide-desc">Grounding the AI starts with strongly typed constraints. This prevents LLM hallucinations and ensures the generation step has canonical reference material.</p>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-node">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-pink); margin-bottom: 10px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <h4>NPC Spec JSON</h4>
+                        <p class="step-text" style="font-size: 0.8rem; margin-top: 5px;">IDENTITY | VOICE | KNOWLEDGE | RULES</p>
+                    </div>
+                    <div class="arch-arrow">➔</div>
+                    <div class="arch-node">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-pink); margin-bottom: 10px;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                        <h4>Primer Markdown</h4>
+                        <p class="step-text" style="font-size: 0.8rem; margin-top: 5px;">Canonical Source of Truth (>250 words, >20 bullets)</p>
+                    </div>
+                    <div class="arch-arrow">➔</div>
+                    <div class="arch-node">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-pink); margin-bottom: 10px;"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                        <h4>Validate-Spec</h4>
+                        <p class="step-text" style="font-size: 0.8rem; margin-top: 5px;">Ensures Readiness</p>
+                    </div>
+                </div>
+
+                <div class="steps-grid" style="margin-top: 40px;">
+                    <div class="step-card" data-color="pink">
+                        <div class="step-number">1</div>
+                        <h3 class="step-title">The Spec File</h3>
+                        <p class="step-text">Located at <span class="code-pill">subjects/NPC_specs/{npc_key}.json</span>. This file restricts the model's behavior by explicitly defining its boundaries and interaction rules.</p>
+                    </div>
+                    <div class="step-card" data-color="pink">
+                        <div class="step-number">2</div>
+                        <h3 class="step-title">The Primer Document</h3>
+                        <p class="step-text">Located at <span class="code-pill">subjects/reference_docs/{npc_key}_primer.md</span>. Contains H2 sections mapping to domain knowledge, preventing "I don't know" answers.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphic 3 -->
+        <div class="graphic-slide slide-3">
+            <div class="slide-bg-glow"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">3. Reference-Grounded Generation</h2>
+                <p class="slide-desc">Generating synthetic conversations that accurately represent the defined persona across 5 mandatory interaction categories.</p>
+                
+                <div class="steps-grid">
+                    <div class="step-card" data-color="teal">
+                        <div class="step-number">1</div>
+                        <h3 class="step-title">Technique Selection</h3>
+                        <p class="step-text">Run generation with <span class="code-pill">--technique docs</span> for grounded facts or <span class="code-pill">template</span> for deterministic baseline output.</p>
+                    </div>
+                    <div class="step-card" data-color="teal">
+                        <div class="step-number">2</div>
+                        <h3 class="step-title">Category Distribution</h3>
+                        <p class="step-text">Generates exactly 72 examples: <b>identity</b> (8), <b>teaching</b> (32), <b>dialogue</b> (16), <b>quest</b> (8), and <b>refusal</b> (8).</p>
+                    </div>
+                    <div class="step-card" data-color="teal">
+                        <div class="step-number">3</div>
+                        <h3 class="step-title">JSONL Output</h3>
+                        <p class="step-text">Saves raw conversation arrays to <span class="code-pill">datasets/{npc}/{technique}/train.jsonl</span>, ready for sanitization.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphic 4 -->
+        <div class="graphic-slide slide-4">
+            <div class="slide-bg-glow"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">4. Sanitization & Quality Gate</h2>
+                <p class="slide-desc">We do not train on bad data. The Quality Gate uses local LLM-as-a-Judge to grade the dataset against strict metrics.</p>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-node">
+                        <h4>Raw JSONL</h4>
+                        <p class="step-text" style="font-size: 0.8rem;">train.jsonl</p>
+                    </div>
+                    <div class="arch-arrow">➔</div>
+                    <div class="arch-node">
+                        <h4>Sanitizer</h4>
+                        <p class="step-text" style="font-size: 0.8rem;">ChatML Formatting</p>
+                    </div>
+                    <div class="arch-arrow">➔</div>
+                    <div class="arch-node" style="border-color: var(--accent-cyan);">
+                        <h4>DeepEval Gate</h4>
+                        <p class="step-text" style="font-size: 0.8rem;">Local qwen3 Judge</p>
+                    </div>
+                    <div class="arch-arrow">➔</div>
+                    <div class="arch-node">
+                        <h4>Quality Status</h4>
+                        <p class="step-text" style="font-size: 0.8rem;">quality_summary.json</p>
+                    </div>
+                </div>
+
+                <div class="steps-grid" style="margin-top: 40px;">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3 class="step-title">Sanitization</h3>
+                        <p class="step-text">Validates ChatML format, cleans whitespace, and removes empty messages to yield <span class="code-pill">train_clean.jsonl</span>.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3 class="step-title">DeepEval Metrics</h3>
+                        <p class="step-text">Checks for persona alignment, training usefulness, and specificity. Uses <span class="code-pill">configs/ollama-model-presets.yaml</span>.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h3 class="step-title">Block or Proceed</h3>
+                        <p class="step-text">If metrics fail, <span class="code-pill">quality_failures.json</span> is generated and training is blocked. Fix the primer/prompts, not the thresholds.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphic 5 -->
+        <div class="graphic-slide slide-5">
+            <div class="slide-bg-glow"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">5. SFT LoRA Training & GGUF Export</h2>
+                <p class="slide-desc">Fine-tuning the base Llama 3.2 3B model dynamically utilizing Low-Rank Adaptation for small, efficient weight updates.</p>
+
+                <div class="steps-grid">
+                    <div class="step-card" data-color="pink">
+                        <div class="step-number">1</div>
+                        <h3 class="step-title">Hardware Preflight</h3>
+                        <p class="step-text"><span class="code-pill">preflight.py</span> checks <span class="code-pill">nvidia-smi</span>. If VRAM &lt; 10GB, it auto-downgrades from <span class="code-pill">fast-3b</span> to <span class="code-pill">safe-any</span> preset and unloads Ollama.</p>
+                    </div>
+                    <div class="step-card" data-color="pink">
+                        <div class="step-number">2</div>
+                        <h3 class="step-title">Unsloth Training</h3>
+                        <p class="step-text">Runs SFTTrainer using the <span class="code-pill">train_clean.jsonl</span> dataset. Loss curves and checkpoints are saved to <span class="code-pill">outputs/{npc}/</span>.</p>
+                    </div>
+                    <div class="step-card" data-color="pink">
+                        <div class="step-number">3</div>
+                        <h3 class="step-title">Adapter Export</h3>
+                        <p class="step-text"><span class="code-pill">convert_lora_to_gguf.py</span> exports an f16 adapter (just a few MBs) to <span class="code-pill">exports/{npc}/{npc}-lora-f16.gguf</span>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphic 6 -->
+        <div class="graphic-slide slide-6">
+            <div class="slide-bg-glow"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">6. Evaluation & Feedback Loop</h2>
+                <p class="slide-desc">Autonomous pipeline iteration. The system analyzes its own performance and identifies exactly what to fix.</p>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-node">
+                        <h4>Evaluate Model</h4>
+                        <p class="step-text" style="font-size: 0.8rem;">llama-server --lora</p>
+                    </div>
+                    <div class="arch-arrow">➔</div>
+                    <div class="arch-node">
+                        <h4>Gap Analysis</h4>
+                        <p class="step-text" style="font-size: 0.8rem;">eval/results/gaps/</p>
+                    </div>
+                    <div class="arch-arrow">➔</div>
+                    <div class="arch-node" style="border-color: var(--accent-cyan);">
+                        <h4>Decision Logic</h4>
+                        <p class="step-text" style="font-size: 0.8rem;">Density vs Knowledge</p>
+                    </div>
+                    <div class="arch-arrow">➔</div>
+                    <div class="arch-node">
+                        <h4>Auto-Retrain</h4>
+                        <p class="step-text" style="font-size: 0.8rem;">Regenerate & Loop</p>
+                    </div>
+                </div>
+
+                <div class="steps-grid" style="margin-top: 40px;">
+                    <div class="step-card" data-color="teal">
+                        <div class="step-number">1</div>
+                        <h3 class="step-title">Training Density Gap</h3>
+                        <p class="step-text">Model knows the facts but didn't learn the persona. <b>Fix:</b> Regenerate with <span class="code-pill">--concept-focus</span> for more examples.</p>
+                    </div>
+                    <div class="step-card" data-color="teal">
+                        <div class="step-number">2</div>
+                        <h3 class="step-title">Knowledge Gap</h3>
+                        <p class="step-text">Model hallucinates or fails to answer entirely. <b>Fix:</b> Missing reference material. Add to primer and re-index.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphic 7 -->
+        <div class="graphic-slide slide-7">
+            <div class="slide-bg-glow"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">7. Running in LLMUnity</h2>
+                <p class="slide-desc">How Unity developers integrate the completed adapter into gameplay.</p>
+
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3 class="step-title">Base Model Runtime</h3>
+                        <p class="step-text">Unity loads the heavy <span class="code-pill">llama-3.2-3b-instruct-q4_k_m.gguf</span> into memory once.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3 class="step-title">Hot-Swappable Adapters</h3>
+                        <p class="step-text">The <span class="code-pill">{npc}-lora-f16.gguf</span> is loaded dynamically based on proximity/interaction. Extremely low VRAM overhead.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h3 class="step-title">Local Supabase</h3>
+                        <p class="step-text">Handles <span class="code-pill">npc_profiles</span>, session state, and semantic memory (RAG) directly alongside the game logic.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

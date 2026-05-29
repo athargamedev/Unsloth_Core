@@ -117,6 +117,36 @@ def dataset_reference_dir(npc_key: str, technique: str = "template") -> Path:
     return dataset_dir(npc_key) / technique / "reference_doc"
 
 
+def dataset_manifest_path(npc_key: str, technique: str) -> Path:
+    """Return subjects/datasets/{npc_key}/{technique}/manifests/dataset_manifest.json."""
+    return dataset_dir(npc_key) / technique / "manifests" / "dataset_manifest.json"
+
+
+def generation_config_path(npc_key: str, technique: str) -> Path:
+    """Return subjects/datasets/{npc_key}/{technique}/generation_config.json."""
+    return dataset_dir(npc_key) / technique / "generation_config.json"
+
+
+def dataset_log_dir(npc_key: str, technique: str) -> Path:
+    """Return subjects/datasets/{npc_key}/{technique}/logs/."""
+    return dataset_dir(npc_key) / technique / "logs"
+
+
+def dataset_raw_dir(npc_key: str, technique: str) -> Path:
+    """Return subjects/datasets/{npc_key}/{technique}/raw/."""
+    return dataset_dir(npc_key) / technique / "raw"
+
+
+def dataset_clean_dir(npc_key: str, technique: str) -> Path:
+    """Return subjects/datasets/{npc_key}/{technique}/clean/."""
+    return dataset_dir(npc_key) / technique / "clean"
+
+
+def dataset_eval_dir(npc_key: str, technique: str) -> Path:
+    """Return subjects/datasets/{npc_key}/{technique}/eval/."""
+    return dataset_dir(npc_key) / technique / "eval"
+
+
 def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
     """Auto-detect the best available dataset technique for an NPC.
 
@@ -215,6 +245,80 @@ def spec_path(npc_key: str) -> Path:
     return spec_dir() / f"{npc_key}.json"
 
 
+# ── Per-NPC workflow config ───────────────────────────────────────────────────
+
+def npc_config_root() -> Path:
+    """Return configs/npcs/."""
+    return PROJECT_ROOT / "configs" / "npcs"
+
+
+def npc_config_dir(npc_key: str) -> Path:
+    """Return configs/npcs/{npc_key}/."""
+    return npc_config_root() / npc_key
+
+
+def npc_workflow_config_path(npc_key: str) -> Path:
+    """Return configs/npcs/{npc_key}/workflow.yaml."""
+    return npc_config_dir(npc_key) / "workflow.yaml"
+
+
+def training_config_path(npc_key: str) -> Path:
+    """Return configs/npcs/{npc_key}/training.yaml."""
+    return npc_config_dir(npc_key) / "training.yaml"
+
+
+def evaluation_config_path(npc_key: str) -> Path:
+    """Return configs/npcs/{npc_key}/evaluation.yaml."""
+    return npc_config_dir(npc_key) / "evaluation.yaml"
+
+
+def npc_generation_config_path(npc_key: str) -> Path:
+    """Return configs/npcs/{npc_key}/generation.yaml."""
+    return npc_config_dir(npc_key) / "generation.yaml"
+
+
+def sweep_dir(npc_key: str) -> Path:
+    """Return configs/npcs/{npc_key}/sweeps/."""
+    return npc_config_dir(npc_key) / "sweeps"
+
+
+# ── Logs and per-NPC pipeline registry ────────────────────────────────────────
+
+def log_root() -> Path:
+    """Return logs/."""
+    return PROJECT_ROOT / "logs"
+
+
+def npc_log_root(npc_key: str) -> Path:
+    """Return logs/{npc_key}/."""
+    return log_root() / npc_key
+
+
+def npc_log_dir(npc_key: str, stage: str) -> Path:
+    """Return logs/{npc_key}/{stage}/."""
+    return npc_log_root(npc_key) / stage
+
+
+def pipeline_npcs_root() -> Path:
+    """Return .pipeline/npcs/."""
+    return pipeline_root() / "npcs"
+
+
+def npc_pipeline_root(npc_key: str) -> Path:
+    """Return .pipeline/npcs/{npc_key}/."""
+    return pipeline_npcs_root() / npc_key
+
+
+def npc_pipeline_index_path(npc_key: str) -> Path:
+    """Return .pipeline/npcs/{npc_key}/index.json."""
+    return npc_pipeline_root(npc_key) / "index.json"
+
+
+def npc_pipeline_runs_path(npc_key: str) -> Path:
+    """Return .pipeline/npcs/{npc_key}/runs.jsonl."""
+    return npc_pipeline_root(npc_key) / "runs.jsonl"
+
+
 # ── Outputs (LoRA adapters + checkpoints, NO GGUF) ──────────────────────────
 
 def output_root() -> Path:
@@ -235,6 +339,26 @@ def export_root() -> Path:
 def export_dir(npc_key: str) -> Path:
     """Return exports/{npc_key}/"""
     return export_root() / npc_key
+
+
+def export_adapter_dir(npc_key: str) -> Path:
+    """Return exports/{npc_key}/adapters/."""
+    return export_dir(npc_key) / "adapters"
+
+
+def export_unity_dir(npc_key: str) -> Path:
+    """Return exports/{npc_key}/unity/."""
+    return export_dir(npc_key) / "unity"
+
+
+def export_unity_alias_path(npc_key: str, outtype: str = "f16") -> Path:
+    """Return exports/{npc_key}/unity/{npc_key}-lora-{outtype}.gguf."""
+    return export_unity_dir(npc_key) / f"{npc_key}-lora-{outtype}.gguf"
+
+
+def npc_workflow_manifest_path(npc_key: str) -> Path:
+    """Return outputs/{npc_key}/workflow_manifest.json."""
+    return output_dir(npc_key) / "workflow_manifest.json"
 
 
 def export_gguf_path(npc_key: str, model_id: str, quant: str = "q4_k_m") -> Path:
@@ -322,8 +446,11 @@ def ensure_all() -> None:
         eval_root() / "results",
         eval_root() / "results" / "feedback",
         eval_root() / "results" / "gaps",
+        npc_config_root(),
+        log_root(),
         pipeline_root(),
         pipeline_runs_root(),
+        pipeline_npcs_root(),
     ]
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True)
