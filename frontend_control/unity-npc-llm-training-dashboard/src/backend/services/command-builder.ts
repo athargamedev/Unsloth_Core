@@ -203,6 +203,9 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         const technique = String(optionValue(payload, "technique") || "template").trim();
         if (technique) args.push("--technique", sanitizeToken(technique, "technique"));
 
+        const judgeProvider = optionValue(payload, "judgeProvider").trim();
+        if (judgeProvider && judgeProvider !== "ollama") args.push("--judge-provider", sanitizeToken(judgeProvider, "judgeProvider"));
+
         const judgeModel = optionValue(payload, "judgeModel");
         if (judgeModel) args.push("--judge-model", sanitizeToken(judgeModel, "judgeModel"));
 
@@ -235,6 +238,16 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
 
         const output = optionValue(payload, "output");
         if (output) args.push("--output", sanitizeToken(output, "output"));
+
+        if (boolOptionValue(payload, "wandb")) args.push("--wandb");
+        const wandbProject = optionValue(payload, "wandbProject").trim();
+        if (wandbProject) args.push("--wandb-project", sanitizeToken(wandbProject, "wandbProject"));
+        const wandbEntity = optionValue(payload, "wandbEntity").trim();
+        if (wandbEntity) args.push("--wandb-entity", sanitizeToken(wandbEntity, "wandbEntity"));
+        const wandbInferenceProject = optionValue(payload, "wandbInferenceProject").trim();
+        if (wandbInferenceProject) args.push("--wandb-inference-project", sanitizeToken(wandbInferenceProject, "wandbInferenceProject"));
+        const wandbInferenceEntity = optionValue(payload, "wandbInferenceEntity").trim();
+        if (wandbInferenceEntity) args.push("--wandb-inference-entity", sanitizeToken(wandbInferenceEntity, "wandbInferenceEntity"));
 
         appendWorkflowHooks(args, payload);
         return args;
@@ -349,6 +362,23 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (datasetEvalMode && datasetEvalMode !== "fast") cmd.push("--dataset-eval-mode", sanitizeToken(datasetEvalMode, "datasetEvalMode"));
         const datasetEvalCasesPerCategory = String(optionValue(payload, "datasetEvalCasesPerCategory") || "").trim();
         if (datasetEvalCasesPerCategory) cmd.push("--dataset-eval-cases-per-category", datasetEvalCasesPerCategory);
+        const datasetEvalJudgeProvider = optionValue(payload, "datasetEvalJudgeProvider").trim();
+        if (datasetEvalJudgeProvider && datasetEvalJudgeProvider !== "ollama") cmd.push("--dataset-eval-judge-provider", sanitizeToken(datasetEvalJudgeProvider, "datasetEvalJudgeProvider"));
+        const datasetEvalJudgePreset = optionValue(payload, "datasetEvalJudgePreset").trim();
+        if (datasetEvalJudgePreset) cmd.push("--dataset-eval-judge-preset", sanitizeToken(datasetEvalJudgePreset, "datasetEvalJudgePreset"));
+        const datasetEvalJudgeModel = optionValue(payload, "datasetEvalJudgeModel").trim();
+        if (datasetEvalJudgeModel) cmd.push("--dataset-eval-judge-model", sanitizeToken(datasetEvalJudgeModel, "datasetEvalJudgeModel"));
+        const datasetEvalOllamaUrl = optionValue(payload, "datasetEvalOllamaUrl").trim();
+        if (datasetEvalOllamaUrl && datasetEvalOllamaUrl !== "http://localhost:11434") cmd.push("--dataset-eval-ollama-url", sanitizeToken(datasetEvalOllamaUrl, "datasetEvalOllamaUrl"));
+        if (boolOptionValue(payload, "evalJudge")) cmd.push("--eval-judge");
+        const evalJudgeProvider = optionValue(payload, "evalJudgeProvider").trim();
+        if (evalJudgeProvider && evalJudgeProvider !== "ollama") cmd.push("--eval-judge-provider", sanitizeToken(evalJudgeProvider, "evalJudgeProvider"));
+        const evalJudgeModel = optionValue(payload, "evalJudgeModel").trim();
+        if (evalJudgeModel && evalJudgeModel !== "llama3.1:latest") cmd.push("--eval-judge-model", sanitizeToken(evalJudgeModel, "evalJudgeModel"));
+        const wandbInferenceProject = optionValue(payload, "wandbInferenceProject").trim();
+        if (wandbInferenceProject) cmd.push("--wandb-inference-project", sanitizeToken(wandbInferenceProject, "wandbInferenceProject"));
+        const wandbInferenceEntity = optionValue(payload, "wandbInferenceEntity").trim();
+        if (wandbInferenceEntity) cmd.push("--wandb-inference-entity", sanitizeToken(wandbInferenceEntity, "wandbInferenceEntity"));
         if (boolOptionValue(payload, "skipEval")) cmd.push("--skip-eval");
         if (boolOptionValue(payload, "skipSmoke")) cmd.push("--skip-smoke");
         const numEvalQuestions = String(optionValue(payload, "numEvalQuestions") || "5").trim();
@@ -451,8 +481,14 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
 
         if (boolOptionValue(payload, "judge")) {
           command.push("--judge");
+          const judgeProvider = optionValue(payload, "judgeProvider").trim();
+          if (judgeProvider && judgeProvider !== "ollama") command.push("--judge-provider", sanitizeToken(judgeProvider, "judgeProvider"));
           const judgeModel = optionValue(payload, "judgeModel").trim();
           if (judgeModel) command.push("--judge-model", sanitizeToken(judgeModel, "judgeModel"));
+          const wandbInferenceProject = optionValue(payload, "wandbInferenceProject").trim();
+          if (wandbInferenceProject) command.push("--wandb-inference-project", sanitizeToken(wandbInferenceProject, "wandbInferenceProject"));
+          const wandbInferenceEntity = optionValue(payload, "wandbInferenceEntity").trim();
+          if (wandbInferenceEntity) command.push("--wandb-inference-entity", sanitizeToken(wandbInferenceEntity, "wandbInferenceEntity"));
         }
 
         // llama-server connection options
@@ -637,6 +673,8 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (boolOptionValue(payload, "json")) args.push("--json");
 
         // DeepEval judge
+        const deepevalJudgeProvider = String(payload.options?.deepevalJudgeProvider || payload["deepeval-judge-provider"] || "").trim();
+        if (deepevalJudgeProvider && deepevalJudgeProvider !== "ollama") args.push("--deepeval-judge-provider", sanitizeToken(deepevalJudgeProvider, "deepeval-judge-provider"));
         const deepevalJudgeModel = String(payload.options?.deepevalJudgeModel || payload["deepeval-judge-model"] || "").trim();
         if (deepevalJudgeModel) args.push("--deepeval-judge-model", sanitizeToken(deepevalJudgeModel, "deepeval-judge-model"));
         const deepevalJudgePreset = String(payload.options?.deepevalJudgePreset || payload["deepeval-judge-preset"] || "").trim();
@@ -646,6 +684,16 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         const deepevalCasesPerCategory = String(payload.options?.deepevalCasesPerCategory || payload["deepeval-cases-per-category"] || "").trim();
         if (deepevalCasesPerCategory) args.push("--deepeval-cases-per-category", deepevalCasesPerCategory);
         if (boolOptionValue(payload, "deepeval-soft-fail") || boolOptionValue(payload, "deepevalSoftFail")) args.push("--deepeval-soft-fail");
+        const wandb = String(payload.options?.wandb || payload.wandb || "").trim().toLowerCase();
+        if (wandb === "true" || wandb === "1") args.push("--wandb");
+        const wandbProject = String(payload.options?.wandbProject || payload["wandb-project"] || "").trim();
+        if (wandbProject) args.push("--wandb-project", sanitizeToken(wandbProject, "wandb-project"));
+        const wandbEntity = String(payload.options?.wandbEntity || payload["wandb-entity"] || "").trim();
+        if (wandbEntity) args.push("--wandb-entity", sanitizeToken(wandbEntity, "wandb-entity"));
+        const wandbInferenceProject = String(payload.options?.wandbInferenceProject || payload["wandb-inference-project"] || "").trim();
+        if (wandbInferenceProject) args.push("--wandb-inference-project", sanitizeToken(wandbInferenceProject, "wandb-inference-project"));
+        const wandbInferenceEntity = String(payload.options?.wandbInferenceEntity || payload["wandb-inference-entity"] || "").trim();
+        if (wandbInferenceEntity) args.push("--wandb-inference-entity", sanitizeToken(wandbInferenceEntity, "wandb-inference-entity"));
 
         // Regeneration options
         const regenerationTechnique = String(payload.options?.regenerationTechnique || payload["regeneration-technique"] || "").trim();

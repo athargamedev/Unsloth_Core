@@ -436,7 +436,8 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       deepeval_soft_fail=False,
                       extra_examples=DEFAULT_EXTRA_EXAMPLES,
                       workflow_hooks=None,
-                      wandb=False, wandb_project="unsloth-core", wandb_entity=None):
+                      wandb=False, wandb_project="unsloth-core", wandb_entity=None,
+                      wandb_inference_project=None, wandb_inference_entity=None):
     """Full feedback loop: analyze → regenerate → optionally retrain."""
     # Capture human-readable output for --json mode
     tee = Tee() if json_output else None
@@ -674,8 +675,8 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                             cases_per_category=deepeval_cases_per_category,
                             dry_run=dry_run,
                             soft_fail=deepeval_soft_fail,
-                            wandb_inference_project=wandb_project,
-                            wandb_inference_entity=wandb_entity,
+                            wandb_inference_project=wandb_inference_project or wandb_project,
+                            wandb_inference_entity=wandb_inference_entity or wandb_entity,
                         ):
                             print("  [error] Dataset evaluation failed; aborting auto-retrain.")
                             result["status"] = "dataset_eval_failed"
@@ -832,8 +833,12 @@ def main():
                         help="Cases per category for fast DeepEval dataset gating (default: 1)")
     parser.add_argument("--deepeval-soft-fail", action="store_true",
                         help="Do not abort dataset evaluation on metric failure; continue training")
+    parser.add_argument("--wandb-inference-project", default=None,
+                        help="W&B project used for hosted DeepEval judge inference")
+    parser.add_argument("--wandb-inference-entity", default=None,
+                        help="W&B entity/team used for hosted DeepEval judge inference")
     parser.add_argument("--workflow-hooks", default=None,
-                        help="Path to a JSONL hook log for step tracing (default: <feedback-dir>/workflow_hooks.jsonl)")
+                        help="Path to workflow hooks JSONL")
     parser.add_argument("--wandb", action="store_true", help="Enable W&B logging")
     parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
     parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
@@ -891,6 +896,8 @@ def main():
         wandb=args.wandb,
         wandb_project=args.wandb_project,
         wandb_entity=args.wandb_entity,
+        wandb_inference_project=args.wandb_inference_project or args.wandb_project,
+        wandb_inference_entity=args.wandb_inference_entity or args.wandb_entity,
     ))
 
 

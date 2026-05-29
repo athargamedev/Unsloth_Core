@@ -88,6 +88,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
     const outtypeOptions = ["f32", "f16", "bf16", "q8_0"];
     const formatOptions = ["yaml", "json"];
     const schedulerOptions = ["cosine", "linear", "constant"];
+    const judgeProviderOptions = ["ollama", "wandb"];
 
     const baseDefaultsByCommand: Record<
       string,
@@ -373,13 +374,20 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
           type: "boolean",
           required: false,
           default: false,
-          description: "Use local Ollama judge",
+          description: "Use an LLM judge",
+        },
+        "options.judgeProvider": {
+          type: "string",
+          required: false,
+          default: "ollama",
+          enum: judgeProviderOptions,
+          description: "Judge backend: local Ollama or W&B Serverless Inference",
         },
         "options.judgeModel": {
           type: "string",
           required: false,
           default: "qwen3:latest",
-          description: "Judge model (Ollama)",
+          description: "Judge model: Ollama tag or W&B model ID",
         },
         "options.track": {
           type: "boolean",
@@ -404,6 +412,18 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
           required: false,
           default: "",
           description: "W&B entity (auto-detect if empty)",
+        },
+        "options.wandbInferenceProject": {
+          type: "string",
+          required: false,
+          default: "unsloth-core",
+          description: "W&B project used for hosted judge inference",
+        },
+        "options.wandbInferenceEntity": {
+          type: "string",
+          required: false,
+          default: "",
+          description: "W&B entity/team used for hosted judge inference",
         },
         "options.interactive": {
           type: "boolean",
@@ -562,11 +582,18 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
           enum: generationPresetOptions,
           description: "Named Ollama regeneration preset",
         },
+        "options.deepevalJudgeProvider": {
+          type: "string",
+          required: false,
+          default: "ollama",
+          enum: judgeProviderOptions,
+          description: "DeepEval judge backend: local Ollama or W&B Serverless Inference",
+        },
         "options.deepevalJudgeModel": {
           type: "string",
           required: false,
           default: "",
-          description: "DeepEval judge model",
+          description: "DeepEval judge model: Ollama tag or W&B model ID",
         },
         "options.deepevalJudgePreset": {
           type: "string",
@@ -592,6 +619,36 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
           required: false,
           default: false,
           description: "Continue on dataset eval failures",
+        },
+        "options.wandb": {
+          type: "boolean",
+          required: false,
+          default: false,
+          description: "Enable W&B logging for feedback/autoretrain metadata",
+        },
+        "options.wandbProject": {
+          type: "string",
+          required: false,
+          default: "unsloth-core",
+          description: "W&B project for logging",
+        },
+        "options.wandbEntity": {
+          type: "string",
+          required: false,
+          default: "",
+          description: "W&B entity/team for logging",
+        },
+        "options.wandbInferenceProject": {
+          type: "string",
+          required: false,
+          default: "unsloth-core",
+          description: "W&B project used for hosted DeepEval judge inference",
+        },
+        "options.wandbInferenceEntity": {
+          type: "string",
+          required: false,
+          default: "",
+          description: "W&B entity/team used for hosted DeepEval judge inference",
         },
         "options.regenerationModel": {
           type: "string",
@@ -769,11 +826,18 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
           enum: ["template", "docs", "ollama", "openai", "anthropic"],
           description: "Dataset technique to evaluate",
         },
+        "options.judgeProvider": {
+          type: "string",
+          required: false,
+          default: "ollama",
+          enum: judgeProviderOptions,
+          description: "Judge backend: local Ollama or W&B Serverless Inference",
+        },
         "options.judgeModel": {
           type: "string",
           required: false,
           default: "",
-          description: "Local Ollama judge model (auto-resolves from config if empty)",
+          description: "Judge model: Ollama tag or W&B model ID (auto-resolves if empty)",
         },
         "options.judgePreset": {
           type: "string",
@@ -843,6 +907,36 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
           required: false,
           default: "",
           description: "Quality summary JSON path",
+        },
+        "options.wandb": {
+          type: "boolean",
+          required: false,
+          default: false,
+          description: "Enable W&B logging for dataset-eval metadata",
+        },
+        "options.wandbProject": {
+          type: "string",
+          required: false,
+          default: "unsloth-core",
+          description: "W&B project for logging",
+        },
+        "options.wandbEntity": {
+          type: "string",
+          required: false,
+          default: "",
+          description: "W&B entity/team for logging",
+        },
+        "options.wandbInferenceProject": {
+          type: "string",
+          required: false,
+          default: "unsloth-core",
+          description: "W&B project used for hosted judge inference",
+        },
+        "options.wandbInferenceEntity": {
+          type: "string",
+          required: false,
+          default: "",
+          description: "W&B entity/team used for hosted judge inference",
         },
         "options.workflowHooks": {
           type: "string",
@@ -931,6 +1025,69 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
            required: false,
            default: "",
            description: "Workflow hooks path",
+         },
+         "options.datasetEvalCasesPerCategory": {
+           type: "number",
+           required: false,
+           default: 1,
+           description: "Rows sampled per category for dataset-eval",
+         },
+         "options.datasetEvalJudgeProvider": {
+           type: "string",
+           required: false,
+           default: "ollama",
+           enum: judgeProviderOptions,
+           description: "Dataset-eval judge backend",
+         },
+         "options.datasetEvalJudgePreset": {
+           type: "string",
+           required: false,
+           default: "",
+           enum: ["", ...judgePresetOptions],
+           description: "Named Ollama judge preset for pipeline dataset-eval",
+         },
+         "options.datasetEvalJudgeModel": {
+           type: "string",
+           required: false,
+           default: "",
+           description: "Dataset-eval judge model: Ollama tag or W&B model ID",
+         },
+         "options.datasetEvalOllamaUrl": {
+           type: "string",
+           required: false,
+           default: "http://localhost:11434",
+           description: "Ollama URL for pipeline dataset-eval",
+         },
+         "options.evalJudge": {
+           type: "boolean",
+           required: false,
+           default: false,
+           description: "Use judge during pipeline model evaluation",
+         },
+         "options.evalJudgeProvider": {
+           type: "string",
+           required: false,
+           default: "ollama",
+           enum: judgeProviderOptions,
+           description: "Model-eval judge backend",
+         },
+         "options.evalJudgeModel": {
+           type: "string",
+           required: false,
+           default: "llama3.1:latest",
+           description: "Model-eval judge model: Ollama tag or W&B model ID",
+         },
+         "options.wandbInferenceProject": {
+           type: "string",
+           required: false,
+           default: "unsloth-core",
+           description: "W&B project used for hosted judge inference in pipeline gates/evals",
+         },
+         "options.wandbInferenceEntity": {
+           type: "string",
+           required: false,
+           default: "",
+           description: "W&B entity/team used for hosted judge inference in pipeline gates/evals",
          },
        },
 

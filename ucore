@@ -468,6 +468,10 @@ def main():
     fb_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
     fb_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
     fb_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
+    fb_p.add_argument("--wandb-inference-project", default=None,
+                      help="W&B project used for hosted DeepEval judge inference")
+    fb_p.add_argument("--wandb-inference-entity", default=None,
+                      help="W&B entity/team used for hosted DeepEval judge inference")
 
     # Supabase integration check
     sb_p = subparsers.add_parser("supabase-check", help="Verify NPC profile + dialogue memory path in Supabase")
@@ -495,6 +499,24 @@ def main():
                         help="Dataset quality gate mode used by the pipeline (default: fast)")
     pipe_p.add_argument("--dataset-eval-cases-per-category", type=int, default=None,
                         help="Rows sampled per category for pipeline dataset-eval (default depends on mode)")
+    pipe_p.add_argument("--dataset-eval-judge-provider", default="ollama", choices=["ollama", "wandb"],
+                        help="Judge backend for pipeline dataset-eval")
+    pipe_p.add_argument("--dataset-eval-judge-preset", default=None,
+                        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
+                        help="Named Ollama judge preset for pipeline dataset-eval")
+    pipe_p.add_argument("--dataset-eval-judge-model", default=None,
+                        help="Exact judge model for pipeline dataset-eval (Ollama tag or W&B Inference model ID)")
+    pipe_p.add_argument("--dataset-eval-ollama-url", default="http://localhost:11434",
+                        help="Ollama URL for pipeline dataset-eval")
+    pipe_p.add_argument("--eval-judge", action="store_true", help="Use judge during pipeline model evaluation")
+    pipe_p.add_argument("--eval-judge-provider", default="ollama", choices=["ollama", "wandb"],
+                        help="Judge backend for pipeline model evaluation")
+    pipe_p.add_argument("--eval-judge-model", default="llama3.1:latest",
+                        help="Judge model for pipeline model evaluation")
+    pipe_p.add_argument("--wandb-inference-project", default=None,
+                        help="W&B project used for hosted judge inference in pipeline gates/evals")
+    pipe_p.add_argument("--wandb-inference-entity", default=None,
+                        help="W&B entity/team used for hosted judge inference in pipeline gates/evals")
     pipe_p.add_argument("--num-eval-questions", type=int, default=5,
                         help="Number of evaluation questions (default: 5)")
 
@@ -926,6 +948,8 @@ def main():
         if args.wandb: cmd.append("--wandb")
         if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
         if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
+        if args.wandb_inference_project: cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
+        if args.wandb_inference_entity: cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
         run_cmd(cmd)
 
     elif args.command == "pipeline":
@@ -988,6 +1012,18 @@ def main():
             ]
             if args.dataset_eval_cases_per_category is not None:
                 eval_cmd.extend(["--cases-per-category", str(args.dataset_eval_cases_per_category)])
+            if args.dataset_eval_judge_provider != "ollama":
+                eval_cmd.extend(["--judge-provider", args.dataset_eval_judge_provider])
+            if args.dataset_eval_judge_preset:
+                eval_cmd.extend(["--judge-preset", args.dataset_eval_judge_preset])
+            if args.dataset_eval_judge_model:
+                eval_cmd.extend(["--judge-model", args.dataset_eval_judge_model])
+            if args.dataset_eval_ollama_url:
+                eval_cmd.extend(["--ollama-base-url", args.dataset_eval_ollama_url])
+            if args.wandb_inference_project:
+                eval_cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
+            if args.wandb_inference_entity:
+                eval_cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
             os.environ["WORKFLOW_NEXT_ACTION"] = "training_pipeline"
             os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(san_path)
             os.environ["WORKFLOW_AWAIT_CONFIRMATION"] = "deepeval_run"
@@ -1047,7 +1083,18 @@ def main():
                             "--baseline", str(baseline_path),
                             "--candidate", str(candidate_path),
                             "--spec", args.spec,
+                            "--num-questions", str(args.num_eval_questions),
                             "--track"]
+                if args.eval_judge:
+                    eval_cmd.append("--judge")
+                    if args.eval_judge_provider != "ollama":
+                        eval_cmd.extend(["--judge-provider", args.eval_judge_provider])
+                    if args.eval_judge_model:
+                        eval_cmd.extend(["--judge-model", args.eval_judge_model])
+                    if args.wandb_inference_project:
+                        eval_cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
+                    if args.wandb_inference_entity:
+                        eval_cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
                 if args.wandb:
                     eval_cmd.append("--wandb")
                 os.environ["WORKFLOW_NEXT_ACTION"] = "NONE"
