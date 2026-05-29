@@ -1,0 +1,1203 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Unsloth_Core — Parameter Registry
+# ───────────────────────────────────────────────────────────────────────────
+# Central registry of ALL pipeline parameters organized by stage.
+# Each parameter defines type, bounds, defaults, UI metadata, and resource
+# impact for the future frontend parameter editor and resource calculator.
+#
+# Conventions:
+#   - type: float|int|bool|str|choice
+#   - min/max: numeric bounds (float or int)
+#   - choices: list of valid values (for choice type)
+#   - stage: primary stage the parameter belongs to
+#   - resource_impact: how the param scales resource usage
+# ═══════════════════════════════════════════════════════════════════════════
+
+parameters:
+
+  # ── Generation ─────────────────────────────────────────────────────────
+
+  temperature:
+    type: float
+    default: 0.7
+    min: 0.0
+    max: 2.0
+    stage: generation
+    description: "LLM generation temperature"
+    tooltip: "Higher = more creative/random. Lower = deterministic. 0.6-0.8 for generation."
+    resource_impact: none
+    cli_flag: "--temperature"
+    aliases: ["-t"]
+
+  max_tokens:
+    type: int
+    default: 512
+    min: 64
+    max: 8192
+    stage: generation
+    description: "Max tokens per generated response"
+    tooltip: "Max tokens per generated response. NPC teaching needs more (512-1024), simple identity needs less."
+    resource_impact: none
+    cli_flag: "--max-tokens"
+    presets:
+      smoke: 256
+      fast-3b: 512
+
+  top_p:
+    type: float
+    default: 0.9
+    min: 0.0
+    max: 1.0
+    stage: generation
+    description: "Nucleus sampling threshold"
+    tooltip: "Nucleus sampling. Keep at 0.9 unless very deterministic output needed."
+    resource_impact: none
+    cli_flag: "--top-p"
+
+  top_k:
+    type: int
+    default: 40
+    min: 0
+    max: 100
+    stage: generation
+    description: "Top-K sampling"
+    tooltip: "Top-K sampling. 0 = disabled. Lower = more focused."
+    resource_impact: none
+    cli_flag: "--top-k"
+
+  presence_penalty:
+    type: float
+    default: 0.0
+    min: -2.0
+    max: 2.0
+    stage: generation
+    description: "Presence penalty"
+    tooltip: "Penalize repeated tokens. Higher = more diverse topics."
+    resource_impact: none
+    cli_flag: "--presence-penalty"
+
+  frequency_penalty:
+    type: float
+    default: 0.0
+    min: -2.0
+    max: 2.0
+    stage: generation
+    description: "Frequency penalty"
+    tooltip: "Penalize frequent tokens. Higher = less repetition."
+    resource_impact: none
+    cli_flag: "--frequency-penalty"
+
+  technique:
+    type: choice
+    default: template
+    choices: [template, docs, ollama, openai, anthropic]
+    stage: generation
+    description: "Dataset generation technique"
+    tooltip: "Generation technique. template=fast deterministic, ollama=local LLM, openai/anthropic=API."
+    resource_impact: none
+    cli_flag: "--technique"
+
+  model:
+    type: str
+    default: ""
+    stage: generation
+    description: "LLM model name for generation"
+    tooltip: "Model name for LLM generation. Depends on technique (ollama name, OpenAI model ID, etc)."
+    resource_impact: none
+    cli_flag: "--model"
+    aliases: ["-m"]
+
+  batch_size:
+    type: int
+    default: 4
+    min: 1
+    max: 16
+    stage: generation
+    description: "Concurrent generation tasks"
+    tooltip: "Concurrent generation tasks. Higher = faster but more CPU/RAM."
+    resource_impact: cpu
+    cli_flag: "--batch-size"
+
+  multi_turn_ratio:
+    type: float
+    default: 0.25
+    min: 0.0
+    max: 1.0
+    stage: generation
+    description: "Fraction of multi-turn dialogue examples"
+    tooltip: "Fraction of examples generated as multi-turn dialogues (0.25 = 25%)."
+    resource_impact: none
+    cli_flag: "--multi-turn-ratio"
+
+  val_split:
+    type: float
+    default: 0.12
+    min: 0.0
+    max: 0.5
+    stage: generation
+    description: "Validation split fraction"
+    tooltip: "Fraction of data reserved for validation."
+    resource_impact: none
+    cli_flag: "--val-split"
+
+  seed:
+    type: int
+    default: 42
+    stage: generation
+    description: "Random seed for reproducibility"
+    tooltip: "Random seed for reproducible generation."
+    resource_impact: none
+    cli_flag: "--seed"
+
+  max_retries:
+    type: int
+    default: 3
+    min: 0
+    max: 10
+    stage: generation
+    description: "Max retries per failed generation"
+    tooltip: "Max retries per failed generation."
+    resource_impact: none
+    cli_flag: "--max-retries"
+
+  concept_focus:
+    type: multi_choice
+    default: []
+    choices: [identity, teaching, dialogue, quest, refusal]
+    stage: generation
+    description: "Focus categories for regeneration"
+    tooltip: "Focus regeneration on specific categories. Empty = all categories."
+    resource_impact: none
+    cli_flag: "--concept-focus"
+    multiple: true
+
+  fresh:
+    type: bool
+    default: false
+    stage: generation
+    description: "Regenerate from scratch"
+    tooltip: "Ignore checkpoint recovery, regenerate from scratch."
+    resource_impact: none
+    cli_flag: "--fresh"
+
+  num_ctx:
+    type: int
+    default: 4096
+    min: 512
+    max: 32768
+    stage: generation
+    description: "Context window size"
+    tooltip: "Context window size for generation. Higher = more context but more VRAM."
+    resource_impact: vram_linear
+    resource_notes: "Each doubling of num_ctx roughly doubles KV cache VRAM. For 3060 6GB, keep at 4096."
+    cli_flag: "--num-ctx"
+
+  check_health:
+    type: bool
+    default: false
+    stage: generation
+    description: "Verify Ollama is running before generation"
+    tooltip: "Verify Ollama is running before generation."
+    resource_impact: none
+    cli_flag: "--check-health"
+
+  pull_model:
+    type: bool
+    default: false
+    stage: generation
+    description: "Auto-pull model from registry"
+    tooltip: "Auto-pull model from Ollama registry if not found locally."
+    resource_impact: disk
+    cli_flag: "--pull-model"
+
+  dry_run:
+    type: bool
+    default: false
+    stage: generation
+    description: "Show plan without executing"
+    tooltip: "Show generation plan without executing."
+    resource_impact: none
+    cli_flag: "--dry-run"
+
+  # ── Sanitize ───────────────────────────────────────────────────────────
+
+  min_length:
+    type: int
+    default: 10
+    min: 0
+    max: 500
+    stage: sanitize
+    description: "Minimum assistant response characters"
+    tooltip: "Minimum characters for assistant response. Shorter responses discarded."
+    resource_impact: none
+    cli_flag: "--min-length"
+
+  max_sentences:
+    type: int
+    default: 5
+    min: 1
+    max: 50
+    stage: sanitize
+    description: "Maximum assistant response sentences"
+    tooltip: "Maximum sentences for assistant response. Longer responses truncated/discarded."
+    resource_impact: none
+    cli_flag: "--max-sentences"
+
+  strict_canonical:
+    type: bool
+    default: false
+    stage: sanitize
+    description: "Require canonical dataset output path"
+    tooltip: "Require canonical dataset output path."
+    resource_impact: none
+    cli_flag: "--strict-canonical"
+
+  strict_mode:
+    type: bool
+    default: false
+    stage: sanitize
+    description: "Raise on structural validation errors"
+    tooltip: "Raise on structural validation errors instead of silently discarding."
+    resource_impact: none
+    cli_flag: "--strict-mode"
+
+  require_complete_metadata:
+    type: bool
+    default: false
+    stage: sanitize
+    description: "Fail on missing metadata fields"
+    tooltip: "Fail if any metadata field is missing."
+    resource_impact: none
+    cli_flag: "--require-complete-metadata"
+
+  dedup:
+    type: bool
+    default: true
+    stage: sanitize
+    description: "Enable content_hash deduplication"
+    tooltip: "Enable content_hash deduplication."
+    resource_impact: none
+    cli_flag: "--dedup"
+
+  quality_threshold_pass:
+    type: int
+    default: 70
+    min: 0
+    max: 100
+    stage: sanitize
+    description: "Minimum quality score to pass"
+    tooltip: "Minimum total quality score to pass. Below = flagged."
+    resource_impact: none
+    cli_flag: "--quality-threshold-pass"
+
+  quality_threshold_flag:
+    type: int
+    default: 50
+    min: 0
+    max: 100
+    stage: sanitize
+    description: "Quality score threshold for flagging"
+    tooltip: "Score below this = examples flagged for review."
+    resource_impact: none
+    cli_flag: "--quality-threshold-flag"
+
+  discard_below_score:
+    type: int
+    default: 0
+    min: 0
+    max: 100
+    stage: sanitize
+    description: "Discard examples below score"
+    tooltip: "Discard examples below this score. 0 = keep all."
+    resource_impact: none
+    cli_flag: "--discard-below-score"
+
+  artifact_check:
+    type: choice
+    default: strict
+    choices: [strict, warn, off]
+    stage: sanitize
+    description: "AI artifact pattern handling"
+    tooltip: "How to handle AI artifact pattern matches."
+    resource_impact: none
+    cli_flag: "--artifact-check"
+
+  fix_metadata:
+    type: bool
+    default: true
+    stage: sanitize
+    description: "Auto-repair missing metadata"
+    tooltip: "Auto-repair missing metadata fields."
+    resource_impact: none
+    cli_flag: "--fix-metadata"
+
+  write_manifest:
+    type: bool
+    default: true
+    stage: sanitize
+    description: "Write enriched manifest alongside dataset"
+    tooltip: "Write enriched manifest alongside clean dataset."
+    resource_impact: none
+    cli_flag: "--write-manifest"
+
+  dedup_threshold:
+    type: float
+    default: 0.85
+    min: 0.0
+    max: 1.0
+    stage: sanitize
+    description: "Cosine similarity threshold for dedup"
+    tooltip: "Cosine similarity threshold for dedup. Higher = more aggressive."
+    resource_impact: none
+    cli_flag: "--dedup-threshold"
+
+  # ── DeepEval ───────────────────────────────────────────────────────────
+
+  judge_model:
+    type: str
+    default: "qwen3:latest"
+    stage: deepeval
+    description: "Ollama judge model name"
+    tooltip: "Ollama model used as evaluator judge."
+    resource_impact: none
+    cli_flag: "--judge-model"
+
+  judge_temperature:
+    type: float
+    default: 0.0
+    min: 0.0
+    max: 2.0
+    stage: deepeval
+    description: "Judge model temperature"
+    tooltip: "Judge temperature. Keep at 0.0 for deterministic scoring."
+    resource_impact: none
+    cli_flag: "--judge-temperature"
+
+  mode:
+    type: choice
+    default: fast
+    choices: [fast, release]
+    stage: deepeval
+    description: "Evaluation mode (fast or release)"
+    tooltip: "fast=lighter check (3 cases/category), release=strict (8 cases/category)."
+    resource_impact: cpu
+    resource_notes: "release mode samples more cases per category, increasing eval time linearly."
+    cli_flag: "--mode"
+
+  cases_per_category:
+    type: int
+    default: 3
+    min: 1
+    max: 20
+    stage: deepeval
+    description: "Rows sampled per category for eval"
+    tooltip: "Rows sampled per category for eval. Higher = more reliable but slower."
+    resource_impact: cpu
+    cli_flag: "--cases-per-category"
+
+  ollama_base_url:
+    type: str
+    default: "http://localhost:11434"
+    stage: deepeval
+    description: "Ollama server URL"
+    tooltip: "Ollama server URL for judge model."
+    resource_impact: none
+    cli_flag: "--ollama-base-url"
+
+  soft_fail:
+    type: bool
+    default: false
+    stage: deepeval
+    description: "Write artifacts but return 0 on metric failure"
+    tooltip: "Write artifacts but return 0 even when metrics fail."
+    resource_impact: none
+    cli_flag: "--soft-fail"
+
+  ignore_errors:
+    type: bool
+    default: false
+    stage: deepeval
+    description: "Continue when individual metric calls error"
+    tooltip: "Continue when individual metric calls error."
+    resource_impact: none
+    cli_flag: "--ignore-errors"
+
+  output_path:
+    type: str
+    default: ""
+    stage: deepeval
+    description: "Custom output path for quality summary"
+    tooltip: "Custom output path for quality summary JSON."
+    resource_impact: none
+    cli_flag: "--output-path"
+
+  wandb:
+    type: bool
+    default: false
+    stage: deepeval
+    description: "Enable W&B logging for dataset eval"
+    tooltip: "Enable W&B logging for dataset eval."
+    resource_impact: none
+    cli_flag: "--wandb"
+
+  categories:
+    type: str
+    default: ""
+    stage: deepeval
+    description: "Comma-separated category filter"
+    tooltip: "Comma-separated category filter. Empty = all categories."
+    resource_impact: none
+    cli_flag: "--categories"
+
+  # ── Training ───────────────────────────────────────────────────────────
+
+  preset:
+    type: choice
+    default: ""
+    choices: [smoke, fast-0.5b, fast-1.7b, fast-3b, safe-any, remote-3b-quality, wandb]
+    stage: training
+    description: "Training preset"
+    tooltip: "Training preset. smoke=debug, fast-3b=standard, safe-any=OOM fallback."
+    resource_impact: none
+    cli_flag: "--preset"
+    aliases: ["-p"]
+
+  max_seq_length:
+    type: int
+    default: 2048
+    min: 128
+    max: 8192
+    stage: training
+    description: "Maximum token sequence length"
+    tooltip: "Max token sequence length. Longer = more context but more VRAM. 512 for smoke, 2048 for production."
+    resource_impact: vram_linear
+    resource_notes: "Doubling max_seq_length roughly doubles VRAM. Formula: vram_gb ≈ max_seq_length * 0.0015 for 3B models."
+    cli_flag: "--max-seq-length"
+    presets:
+      smoke: 512
+      fast-3b: 2048
+
+  learning_rate:
+    type: float
+    default: 0.0002
+    min: 1e-06
+    max: 0.001
+    stage: training
+    description: "AdamW learning rate"
+    tooltip: "AdamW learning rate. 2e-4 for LoRA, lower for full fine-tune."
+    resource_impact: none
+    cli_flag: "--learning-rate"
+    aliases: ["-lr"]
+    presets:
+      smoke: 0.0004
+      fast-3b: 0.0002
+
+  lora_r:
+    type: int
+    default: 16
+    min: 2
+    max: 64
+    stage: training
+    description: "LoRA rank"
+    tooltip: "LoRA rank. Higher = more expressive but more VRAM. 8-16 for small NPCs, 32-64 for complex."
+    resource_impact: vram_linear
+    resource_notes: "VRAM scales linearly with lora_r. Each doubling adds ~200MB for 3B models."
+    cli_flag: "--lora-r"
+    presets:
+      smoke: 8
+      fast-3b: 16
+
+  lora_alpha:
+    type: int
+    default: 32
+    min: 2
+    max: 128
+    stage: training
+    description: "LoRA alpha scaling"
+    tooltip: "LoRA alpha scaling. Usually 2x lora_r. Higher = stronger LoRA influence."
+    resource_impact: none
+    cli_flag: "--lora-alpha"
+
+  lora_dropout:
+    type: float
+    default: 0.0
+    min: 0.0
+    max: 0.5
+    stage: training
+    description: "LoRA dropout rate"
+    tooltip: "LoRA dropout. 0.0 for no dropout, 0.1 for regularization."
+    resource_impact: none
+    cli_flag: "--lora-dropout"
+
+  lora_target_modules:
+    type: str
+    default: "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj"
+    stage: training
+    description: "Comma-separated LoRA target modules"
+    tooltip: "Comma-separated target modules for LoRA."
+    resource_impact: none
+    cli_flag: "--lora-target-modules"
+
+  num_train_epochs:
+    type: int
+    default: 3
+    min: 1
+    max: 20
+    stage: training
+    description: "Number of training epochs"
+    tooltip: "Training epochs. 1-3 for small datasets, more for large."
+    resource_impact: cpu
+    cli_flag: "--num-train-epochs"
+    presets:
+      smoke: 1
+      fast-3b: 3
+
+  per_device_train_batch_size:
+    type: int
+    default: 1
+    min: 1
+    max: 32
+    stage: training
+    description: "Batch size per device"
+    tooltip: "Batch size per device. Higher = faster but more VRAM."
+    resource_impact: vram_linear
+    resource_notes: "VRAM scales linearly with batch size. For 3060 6GB, keep at 1-2."
+    cli_flag: "--per-device-train-batch-size"
+    presets:
+      smoke: 1
+      fast-3b: 1
+
+  gradient_accumulation_steps:
+    type: int
+    default: 8
+    min: 1
+    max: 32
+    stage: training
+    description: "Gradient accumulation steps"
+    tooltip: "Gradient accumulation steps. Effective batch size = batch_size × accumulation."
+    resource_impact: cpu
+    cli_flag: "--gradient-accumulation-steps"
+    presets:
+      smoke: 4
+      fast-3b: 8
+
+  warmup_steps:
+    type: int
+    default: 10
+    min: 0
+    max: 500
+    stage: training
+    description: "LR warmup steps"
+    tooltip: "LR warmup steps. Helps stabilize early training."
+    resource_impact: none
+    cli_flag: "--warmup-steps"
+
+  weight_decay:
+    type: float
+    default: 0.01
+    min: 0.0
+    max: 0.5
+    stage: training
+    description: "AdamW weight decay"
+    tooltip: "AdamW weight decay for regularization."
+    resource_impact: none
+    cli_flag: "--weight-decay"
+
+  packing:
+    type: bool
+    default: true
+    stage: training
+    description: "Pack multiple short sequences"
+    tooltip: "Pack multiple short sequences into one for efficiency."
+    resource_impact: cpu
+    cli_flag: "--packing"
+
+  train_on_responses_only:
+    type: bool
+    default: true
+    stage: training
+    description: "Train only on assistant responses"
+    tooltip: "Only train on assistant responses, not user prompts."
+    resource_impact: none
+    cli_flag: "--train-on-responses-only"
+
+  load_in_4bit:
+    type: bool
+    default: true
+    stage: training
+    description: "4-bit base model quantization"
+    tooltip: "4-bit quantization for base model. Halves VRAM vs 8-bit."
+    resource_impact: vram_linear
+    resource_notes: "4-bit halves VRAM vs 8-bit. For 3060 6GB this is essential."
+    cli_flag: "--load-in-4bit"
+
+  gradient_checkpointing:
+    type: bool
+    default: true
+    stage: training
+    description: "Gradient checkpointing"
+    tooltip: "Trade compute for memory. Frees VRAM at cost of slower training."
+    resource_impact: vram_linear
+    resource_notes: "Frees ~30% VRAM at ~20% training speed cost. Enable for 6GB GPUs."
+    cli_flag: "--gradient-checkpointing"
+
+  fp16:
+    type: bool
+    default: true
+    stage: training
+    description: "FP16 mixed precision"
+    tooltip: "FP16 mixed precision training. On for RTX 3060."
+    resource_impact: none
+    cli_flag: "--fp16"
+
+  bf16:
+    type: bool
+    default: false
+    stage: training
+    description: "BF16 mixed precision"
+    tooltip: "BF16 mixed precision. Only on Ampere+ GPUs (RTX 3060 = Ampere)."
+    resource_impact: none
+    cli_flag: "--bf16"
+
+  optim:
+    type: choice
+    default: "adamw_8bit"
+    choices: [adamw_torch, adamw_8bit, paged_adamw_8bit]
+    stage: training
+    description: "Optimizer type"
+    tooltip: "Optimizer. adamw_8bit saves VRAM, paged_adamw_8bit offloads to CPU when OOM."
+    resource_impact: vram_linear
+    resource_notes: "adamw_8bit saves ~2GB VRAM vs adamw_torch. paged_adamw_8bit offloads optimizer state to CPU."
+    cli_flag: "--optim"
+
+  save_steps:
+    type: int
+    default: 50
+    min: 0
+    max: 1000
+    stage: training
+    description: "Save checkpoint interval (steps)"
+    tooltip: "Save checkpoint every N steps."
+    resource_impact: disk
+    cli_flag: "--save-steps"
+
+  eval_steps:
+    type: int
+    default: 50
+    min: 0
+    max: 1000
+    stage: training
+    description: "Evaluation interval (steps)"
+    tooltip: "Evaluate every N steps."
+    resource_impact: cpu
+    cli_flag: "--eval-steps"
+
+  save_total_limit:
+    type: int
+    default: 3
+    min: 1
+    max: 20
+    stage: training
+    description: "Max checkpoint count to keep"
+    tooltip: "Keep only last N checkpoints. Older ones deleted."
+    resource_impact: disk
+    cli_flag: "--save-total-limit"
+
+  logging_steps:
+    type: int
+    default: 1
+    min: 1
+    max: 100
+    stage: training
+    description: "Logging interval (steps)"
+    tooltip: "Log metrics every N steps."
+    resource_impact: none
+    cli_flag: "--logging-steps"
+
+  report_to:
+    type: choice
+    default: "none"
+    choices: [none, wandb, tensorboard, all]
+    stage: training
+    description: "Metrics reporting destination"
+    tooltip: "Where to report training metrics."
+    resource_impact: none
+    cli_flag: "--report-to"
+
+  technique:
+    type: choice
+    default: ""
+    choices: [template, docs, ollama, openai, anthropic]
+    stage: training
+    description: "Dataset technique for data path resolution"
+    tooltip: "Dataset technique to use for training data path resolution."
+    resource_impact: none
+    cli_flag: "--technique"
+
+  model:
+    type: str
+    default: "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+    stage: training
+    description: "Base model HuggingFace ID"
+    tooltip: "Base model HuggingFace ID or local path."
+    resource_impact: none
+    cli_flag: "--model"
+    aliases: ["-m"]
+
+  export_gguf:
+    type: bool
+    default: false
+    stage: training
+    description: "Export LoRA adapter GGUF after training"
+    tooltip: "Export LoRA adapter GGUF after training."
+    resource_impact: disk
+    cli_flag: "--export-gguf"
+
+  full_merge_export:
+    type: bool
+    default: false
+    stage: training
+    description: "Merge LoRA into base model (standalone GGUF)"
+    tooltip: "Merge LoRA into base model. Standalone GGUF per NPC (~2GB)."
+    resource_impact: vram_linear
+    resource_notes: "Full merge doubles VRAM need. Only on 16GB+ GPUs."
+    cli_flag: "--full-merge-export"
+
+  lr_scheduler:
+    type: choice
+    default: "linear"
+    choices: [linear, cosine, cosine_with_restarts, polynomial, constant, constant_with_warmup]
+    stage: training
+    description: "Learning rate scheduler"
+    tooltip: "Learning rate scheduler type."
+    resource_impact: none
+    cli_flag: "--lr-scheduler"
+
+  allow_ungated_dataset:
+    type: bool
+    default: false
+    stage: training
+    description: "Skip dataset quality gate"
+    tooltip: "Skip dataset quality gate. For development only."
+    resource_impact: none
+    cli_flag: "--allow-ungated-dataset"
+
+  # ── Export ─────────────────────────────────────────────────────────────
+
+  quantization:
+    type: choice
+    default: "q4_k_m"
+    choices: [f16, f32, bf16, q8_0, q4_k_m]
+    stage: export
+    description: "GGUF quantization type"
+    tooltip: "GGUF quantization. q4_k_m for Unity, f16 for quality."
+    resource_impact: disk
+    resource_notes: "q4_k_m = ~4GB for 3B, f16 = ~6GB."
+    cli_flag: "--quantization"
+
+  export_mode:
+    type: choice
+    default: "adapter"
+    choices: [adapter, full-merge]
+    stage: export
+    description: "Export mode (adapter or full-merge)"
+    tooltip: "adapter = lightweight LoRA GGUF (MBs), full-merge = standalone model (GBs)."
+    resource_impact: vram_linear
+    resource_notes: "full-merge requires base model loaded + merged. Needs 2x VRAM of adapter mode."
+    cli_flag: "--export-mode"
+
+  outtype:
+    type: choice
+    default: "f16"
+    choices: [f32, f16, bf16, q8_0, auto]
+    stage: export
+    description: "Output type for adapter export"
+    tooltip: "Output type for adapter export."
+    resource_impact: disk
+    cli_flag: "--outtype"
+
+  skip_f16:
+    type: bool
+    default: false
+    stage: export
+    description: "Skip f16 variant in full-merge"
+    tooltip: "Skip f16 variant in full-merge mode."
+    resource_impact: disk
+    cli_flag: "--skip-f16"
+
+  maximum_memory:
+    type: float
+    default: 0
+    min: 0
+    max: 64
+    stage: export
+    description: "Max memory in GB for GGUF export"
+    tooltip: "Max memory in GB for save_pretrained_gguf."
+    resource_impact: vram_linear
+    resource_notes: "0 = let framework decide. Set to 4-5 for 3060 6GB to prevent OOM."
+    cli_flag: "--maximum-memory"
+
+  resume:
+    type: bool
+    default: false
+    stage: export
+    description: "Skip existing exports (resume mode)"
+    tooltip: "Skip exports that already exist (resume mode)."
+    resource_impact: none
+    cli_flag: "--resume"
+
+  timeout_seconds:
+    type: int
+    default: 5400
+    min: 60
+    max: 36000
+    stage: export
+    description: "Per-variant export timeout"
+    tooltip: "Per-variant timeout in seconds."
+    resource_impact: none
+    cli_flag: "--timeout-seconds"
+
+  # ── Evaluation ─────────────────────────────────────────────────────────
+
+  temperature:
+    type: float
+    default: 0.7
+    min: 0.0
+    max: 2.0
+    stage: evaluation
+    description: "Eval generation temperature"
+    tooltip: "Eval generation temperature. Lower = more consistent answers."
+    resource_impact: none
+    cli_flag: "--temperature"
+    aliases: ["-t"]
+
+  max_tokens:
+    type: int
+    default: 256
+    min: 16
+    max: 4096
+    stage: evaluation
+    description: "Max tokens per eval answer"
+    tooltip: "Max tokens per eval answer. 256 for concise, 512+ for verbose."
+    resource_impact: none
+    cli_flag: "--max-tokens"
+
+  num_questions:
+    type: int
+    default: 10
+    min: 1
+    max: 100
+    stage: evaluation
+    description: "Number of evaluation questions"
+    tooltip: "Number of evaluation questions."
+    resource_impact: cpu
+    cli_flag: "--num-questions"
+
+  gpu_layers:
+    type: int
+    default: 99
+    min: 0
+    max: 99
+    stage: evaluation
+    description: "GPU layers for llama-server"
+    tooltip: "GPU layers for llama-server. 99 = all GPU, 0 = CPU-only."
+    resource_impact: vram_linear
+    resource_notes: "Each layer offloaded to GPU uses ~100MB VRAM for 3B models. 99 layers = ~full model on GPU."
+    cli_flag: "--gpu-layers"
+
+  port:
+    type: int
+    default: 8888
+    min: 1024
+    max: 65535
+    stage: evaluation
+    description: "llama-server port"
+    tooltip: "llama-server port."
+    resource_impact: none
+    cli_flag: "--port"
+
+  lora_weight:
+    type: float
+    default: 1.0
+    min: 0.5
+    max: 2.0
+    stage: evaluation
+    description: "LoRA adapter weight"
+    tooltip: "LoRA adapter weight. 1.0 = standard."
+    resource_impact: none
+    cli_flag: "--lora-weight"
+
+  judge:
+    type: bool
+    default: false
+    stage: evaluation
+    description: "Use local Ollama judge"
+    tooltip: "Use local Ollama judge for evaluation."
+    resource_impact: vram_linear
+    resource_notes: "Running judge alongside llama-server may exceed 6GB VRAM. Unload Ollama first."
+    cli_flag: "--judge"
+
+  report_html:
+    type: bool
+    default: false
+    stage: evaluation
+    description: "Generate HTML report"
+    tooltip: "Generate HTML report with Chart.js."
+    resource_impact: none
+    cli_flag: "--report-html"
+
+  feedback_json:
+    type: bool
+    default: false
+    stage: evaluation
+    description: "Save structured per-concept eval results"
+    tooltip: "Save structured per-concept eval results for feedback loop."
+    resource_impact: none
+    cli_flag: "--feedback-json"
+
+  track:
+    type: bool
+    default: false
+    stage: evaluation
+    description: "Track results in eval/results/"
+    tooltip: "Track results in eval/results/."
+    resource_impact: disk
+    cli_flag: "--track"
+
+  wandb:
+    type: bool
+    default: false
+    stage: evaluation
+    description: "Enable W&B evaluation tracking"
+    tooltip: "Enable W&B evaluation tracking."
+    resource_impact: none
+    cli_flag: "--wandb"
+
+  interactive:
+    type: bool
+    default: false
+    stage: evaluation
+    description: "Interactive chat mode after eval"
+    tooltip: "Interactive chat mode after eval."
+    resource_impact: none
+    cli_flag: "--interactive"
+
+  # ── Feedback Loop ──────────────────────────────────────────────────────
+
+  win_rate_threshold:
+    type: float
+    default: 0.5
+    min: 0.0
+    max: 1.0
+    stage: feedback
+    description: "Minimum win rate threshold"
+    tooltip: "Minimum win rate. Below this = concept flagged for improvement."
+    resource_impact: none
+    cli_flag: "--win-rate-threshold"
+
+  quality_threshold:
+    type: float
+    default: 25.0
+    min: 0.0
+    max: 100.0
+    stage: feedback
+    description: "Max quality score threshold"
+    tooltip: "Max quality score (lower = better). Above = needs improvement."
+    resource_impact: none
+    cli_flag: "--quality-threshold"
+
+  violation_threshold:
+    type: int
+    default: 1
+    min: 0
+    max: 100
+    stage: feedback
+    description: "Max constraint violations allowed"
+    tooltip: "Max constraint violations allowed per concept."
+    resource_impact: none
+    cli_flag: "--violation-threshold"
+
+  dry_run:
+    type: bool
+    default: false
+    stage: feedback
+    description: "Analyze without executing regeneration"
+    tooltip: "Analyze without executing regeneration."
+    resource_impact: none
+    cli_flag: "--dry-run"
+
+  auto:
+    type: bool
+    default: false
+    stage: feedback
+    description: "Auto-accept all suggestions"
+    tooltip: "Auto-accept all suggestions without prompting."
+    resource_impact: none
+    cli_flag: "--auto"
+
+  skip_gap_detection:
+    type: bool
+    default: false
+    stage: feedback
+    description: "Skip knowledge gap analysis"
+    tooltip: "Skip knowledge coverage gap analysis."
+    resource_impact: none
+    cli_flag: "--skip-gap-detection"
+
+  auto_retrain:
+    type: bool
+    default: false
+    stage: feedback
+    description: "Auto-retrain after regeneration"
+    tooltip: "After regeneration, auto-retrain and re-evaluate."
+    resource_impact: vram_linear
+    resource_notes: "Auto-retrain needs GPU free (unload Ollama first). For 3060 6GB, do not combine with Ollama."
+    cli_flag: "--auto-retrain"
+
+  train_preset:
+    type: choice
+    default: "fast-3b"
+    choices: [smoke, fast-0.5b, fast-1.7b, fast-3b, safe-any]
+    stage: feedback
+    description: "Training preset for auto-retrain"
+    tooltip: "Training preset for auto-retrain."
+    resource_impact: none
+    cli_flag: "--train-preset"
+
+  regeneration_technique:
+    type: choice
+    default: "template"
+    choices: [template, ollama]
+    stage: feedback
+    description: "Technique for regenerating weak concepts"
+    tooltip: "Technique for regenerating weak concept examples."
+    resource_impact: none
+    cli_flag: "--regeneration-technique"
+
+  regeneration_model:
+    type: str
+    default: "qwen2.5:7b"
+    stage: feedback
+    description: "Ollama model for regeneration"
+    tooltip: "Ollama model for regeneration."
+    resource_impact: none
+    cli_flag: "--regeneration-model"
+
+  regeneration_batch_size:
+    type: int
+    default: 4
+    min: 1
+    max: 16
+    stage: feedback
+    description: "Batch size for regeneration"
+    tooltip: "Batch size for regeneration."
+    resource_impact: cpu
+    cli_flag: "--regeneration-batch-size"
+
+  deepeval_soft_fail:
+    type: bool
+    default: false
+    stage: feedback
+    description: "Don't abort dataset eval on metric failure"
+    tooltip: "Don't abort dataset eval on metric failure during feedback loop."
+    resource_impact: none
+    cli_flag: "--deepeval-soft-fail"
+
+  # ── Preflight ──────────────────────────────────────────────────────────
+
+  phase:
+    type: choice
+    default: ""
+    choices: [train, dataset-eval, evaluate, export]
+    stage: preflight
+    description: "Pipeline phase to preflight"
+    tooltip: "Pipeline phase to check preflight for."
+    resource_impact: none
+    cli_flag: "--phase"
+
+  no_auto_unload_ollama:
+    type: bool
+    default: false
+    stage: preflight
+    description: "Skip auto-unloading Ollama"
+    tooltip: "Skip auto-unloading Ollama models to free VRAM."
+    resource_impact: none
+    cli_flag: "--no-auto-unload-ollama"
+
+  no_gcc_check:
+    type: bool
+    default: false
+    stage: preflight
+    description: "Skip GCC toolchain check"
+    tooltip: "Skip GCC toolchain check."
+    resource_impact: none
+    cli_flag: "--no-gcc-check"
+
+  # ── Global ─────────────────────────────────────────────────────────────
+
+  workflow_hooks_path:
+    type: str
+    default: ""
+    stage: global
+    description: "Path to workflow hooks JSONL"
+    tooltip: "Path to JSONL hook log for step tracing."
+    resource_impact: none
+    cli_flag: "--workflow-hooks"
+
+  watch:
+    type: bool
+    default: false
+    stage: global
+    description: "Stream output with early error alerts"
+    tooltip: "Stream command output with early error alerts."
+    resource_impact: none
+    cli_flag: "--watch"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Environment Variables
+# ───────────────────────────────────────────────────────────────────────────
+# Env vars that affect pipeline behavior. Tracked here for the resource
+# calculator and frontend editor visibility.
+# ═══════════════════════════════════════════════════════════════════════════
+
+env_vars:
+  OLLAMA_NUM_PARALLEL:
+    type: int
+    default: 4
+    min: 1
+    max: 8
+    description: "Concurrent Ollama request slots"
+    tooltip: "Higher = faster parallel eval. Set via systemd. 4 for 6GB VRAM, 8 for 12GB+."
+    resource_impact: vram_linear
+    resource_notes: "Each parallel slot reserves ~200MB KV cache. 4 slots = ~800MB on top of model."
+
+  OLLAMA_FLASH_ATTENTION:
+    type: bool
+    default: true
+    description: "Flash attention for Ollama"
+    tooltip: "Free speed boost. Always enable."
+    resource_impact: none
+
+  OLLAMA_KV_CACHE_TYPE:
+    type: choice
+    default: "q8_0"
+    choices: [f16, q8_0, q4_0]
+    description: "KV cache quantization"
+    tooltip: "q8_0 halves cache memory with near-zero quality loss."
+    resource_impact: vram_linear
+
+  CUDA_VISIBLE_DEVICES:
+    type: str
+    default: ""
+    description: "GPU device selection"
+    tooltip: "Select which GPU to use. Empty = all. Set to '0' for single GPU."
+    resource_impact: vram_linear
+
+  OLLAMA_MAX_LOADED_MODELS:
+    type: int
+    default: 1
+    min: 1
+    max: 10
+    description: "Max models kept in GPU memory"
+    tooltip: "Keep at 1 for 6GB VRAM. Only load one model at a time."
+    resource_impact: vram_linear

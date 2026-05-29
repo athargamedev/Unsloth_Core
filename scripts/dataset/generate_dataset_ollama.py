@@ -1096,7 +1096,7 @@ Examples:
                 spec_path_resolved = Path(args.spec)
                 if spec_path_resolved.exists():
                     spec_hash = "sha256:" + hashlib.sha256(spec_path_resolved.read_bytes()).hexdigest()
-            except Exception:
+            except Exception as e:
                 pass
 
             manifest = {

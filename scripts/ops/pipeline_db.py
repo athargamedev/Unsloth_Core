@@ -245,7 +245,7 @@ class PipelineDB:
                 cur.execute("SELECT 1")
                 cur.close()
                 return True
-            except Exception:
+            except Exception as e:
                 self._conn = None
 
         try:
@@ -284,7 +284,7 @@ class PipelineDB:
             timeout = socket.getdefaulttimeout()
             urlopen(req, timeout=5)
             return True
-        except Exception:
+        except Exception as e:
             return False
 
     def _ensure_direct_connected(self) -> None:
@@ -1740,7 +1740,7 @@ class PipelineDB:
                                 metadata={"file": "train.jsonl"},
                             )
                             counts["datasets"] += 1
-                        except Exception:
+                        except Exception as e:
                             pass
 
                     clean_path = technique_dir / "train_clean.jsonl"
@@ -1756,7 +1756,7 @@ class PipelineDB:
                                 metadata={"file": "train_clean.jsonl"},
                             )
                             counts["datasets"] += 1
-                        except Exception:
+                        except Exception as e:
                             pass
 
         # Scan exports
@@ -1780,7 +1780,7 @@ class PipelineDB:
                             },
                         )
                         counts["exports"] += 1
-                    except Exception:
+                    except Exception as e:
                         pass
 
         # Scan outputs for run directories
@@ -1812,7 +1812,7 @@ class PipelineDB:
                                     status=meta.get("status", "unknown"),
                                 )
                                 counts["runs"] += 1
-                            except Exception:
+                            except Exception as e:
                                 pass
 
         logger.info(

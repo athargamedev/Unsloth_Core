@@ -98,7 +98,7 @@ def unload_registered_ollama_models() -> None:
     for (url, model_name), _label in items:
         try:
             stop_ollama_model(model_name, url)
-        except Exception:
+        except Exception as e:
             continue
 
 

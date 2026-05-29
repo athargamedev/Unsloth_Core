@@ -307,7 +307,8 @@ def run_training(npc_key, preset, technique="template", dry_run=False, allow_ung
 
 def run_dataset_eval(npc_key, technique="template", judge_model="qwen3:latest",
                      ollama_base_url="http://localhost:11434",
-                     cases_per_category=1, dry_run=False, soft_fail=False):
+                     cases_per_category=1, dry_run=False, soft_fail=False,
+                     judge_provider="ollama", wandb_inference_project=None, wandb_inference_entity=None):
     """Run the dataset quality gate on the sanitized dataset."""
     spec_path = paths.spec_path(npc_key)
     if not spec_path.exists():
@@ -319,12 +320,17 @@ def run_dataset_eval(npc_key, technique="template", judge_model="qwen3:latest",
         str(PROJECT_ROOT / "scripts" / "dataset" / "dataset_eval.py"),
         str(spec_path),
         "--technique", technique,
+        "--judge-provider", judge_provider,
         "--judge-model", judge_model,
         "--ollama-base-url", ollama_base_url,
         "--cases-per-category", str(cases_per_category),
     ]
     if soft_fail:
         cmd.append("--soft-fail")
+    if wandb_inference_project:
+        cmd.extend(["--wandb-inference-project", wandb_inference_project])
+    if wandb_inference_entity:
+        cmd.extend(["--wandb-inference-entity", wandb_inference_entity])
 
     if dry_run:
         print(f"  [dry-run] Would run dataset evaluation: {' '.join(cmd)}")
@@ -423,6 +429,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       url=DEFAULT_REGENERATION_URL,
                       batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
                       skip_dataset_eval=False,
+                      deepeval_judge_provider="ollama",
                       deepeval_judge_model="qwen3:latest",
                       deepeval_ollama_url="http://localhost:11434",
                       deepeval_cases_per_category=5,
@@ -448,7 +455,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
     if not resolved_technique and resolved_spec_path:
         try:
             resolved_technique = resolve_workflow_context(resolved_spec_path).technique
-        except Exception:
+        except Exception as e:
             resolved_technique = None
     technique = resolved_technique or DEFAULT_REGENERATION_TECHNIQUE
 
@@ -576,11 +583,11 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                                 )
                                 gap_artifact.add_file(save_gaps)
                                 _wandb.log_artifact(gap_artifact)
-                            except Exception:
+                            except Exception as e:
                                 pass
 
                         _wandb.finish()
-                    except Exception:
+                    except Exception as e:
                         print("  [wandb] Feedback loop W&B logging failed (non-fatal)")
 
                 # ── 4. Plan regeneration ───────────────────────────────────────────
@@ -661,11 +668,14 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                         if not run_dataset_eval(
                             npc_key,
                             technique=technique,
+                            judge_provider=deepeval_judge_provider,
                             judge_model=deepeval_judge_model,
                             ollama_base_url=deepeval_ollama_url,
                             cases_per_category=deepeval_cases_per_category,
                             dry_run=dry_run,
                             soft_fail=deepeval_soft_fail,
+                            wandb_inference_project=wandb_project,
+                            wandb_inference_entity=wandb_entity,
                         ):
                             print("  [error] Dataset evaluation failed; aborting auto-retrain.")
                             result["status"] = "dataset_eval_failed"
@@ -706,7 +716,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                                 result["auto_retrain"]["win_rate"] = post_eval.get("win_rate")
                                 result["auto_retrain"]["candidate_wins"] = post_eval.get("candidate_wins")
                                 result["auto_retrain"]["total_examples"] = post_eval.get("total_examples")
-                            except Exception:
+                            except Exception as e:
                                 pass
                     elif trained_gguf:
                         print(f"  (skipping eval: no --baseline provided)")
@@ -808,6 +818,8 @@ def main():
                        help=f"Target extra examples per weak concept (default: {DEFAULT_EXTRA_EXAMPLES})")
     parser.add_argument("--skip-dataset-eval", action="store_true",
                         help="Skip dataset quality evaluation before training during auto-retrain")
+    parser.add_argument("--deepeval-judge-provider", default="ollama", choices=["ollama", "wandb"],
+                        help="Judge backend for dataset evaluation during auto-retrain")
     parser.add_argument("--deepeval-judge-preset",
                         default=None,
                         choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
@@ -842,11 +854,14 @@ def main():
         model=args.regeneration_model,
         role="generation",
     )
-    deepeval_judge_model = resolve_ollama_model(
-        preset=args.deepeval_judge_preset,
-        model=args.deepeval_judge_model,
-        role="judge",
-    )
+    if args.deepeval_judge_provider == "wandb":
+        deepeval_judge_model = args.deepeval_judge_model or "meta-llama/Llama-3.1-8B-Instruct"
+    else:
+        deepeval_judge_model = resolve_ollama_model(
+            preset=args.deepeval_judge_preset,
+            model=args.deepeval_judge_model,
+            role="judge",
+        )
 
     sys.exit(run_feedback_loop(
         args.feedback_json,
@@ -866,6 +881,7 @@ def main():
         url=args.regeneration_url,
         batch_size=args.regeneration_batch_size,
         skip_dataset_eval=args.skip_dataset_eval,
+        deepeval_judge_provider=args.deepeval_judge_provider,
         deepeval_judge_model=deepeval_judge_model,
         deepeval_ollama_url=args.deepeval_ollama_url,
         deepeval_cases_per_category=args.deepeval_cases_per_category,

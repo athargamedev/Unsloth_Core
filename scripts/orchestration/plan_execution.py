@@ -69,7 +69,7 @@ def detect_local_vram_gb() -> float | None:
             return None
         # Multi-GPU: use largest card for single-run planning.
         return round(max(values) / 1024.0, 1)
-    except Exception:
+    except Exception as e:
         return None
 
 
@@ -135,7 +135,7 @@ def sum_examples(spec: dict[str, Any]) -> int:
     for v in cats.values():
         try:
             total += int(v)
-        except Exception:
+        except Exception as e:
             pass
     return total
 

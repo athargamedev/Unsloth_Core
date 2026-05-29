@@ -187,6 +187,7 @@ Every pipeline script records its lifecycle in a `workflow_hooks.jsonl` file co-
   - `group_by_trace()` — group events by trace ID for per-run analysis
   - `trace_summary(trace_id)` — summary of a single trace with elapsed time, status, and step count
   - `pipeline_summary(path)` — entry point returning `{"total_events": int, "traces": list[dict]}`
+  - `pipeline_chain(hook_path)` — Returns pipeline chain state: `workflow_id`, completed stages, `next_expected` step, `artifacts_ready`, `awaiting_confirmation`. Agents use this to know what to do next.
 
 ### `step()` Context Manager Convention
 
@@ -226,6 +227,15 @@ summary = WorkflowHookReader.pipeline_summary("outputs/history_guide/runs/run_20
 ### CLI Flag
 
 Pipeline scripts accept `--workflow-hooks <path>` to specify a custom output path for the hook JSONL. When omitted, the default path is derived from the stage output directory.
+
+### Chain Linking Fields
+
+| Field | Source | Purpose |
+|-------|--------|---------|
+| `workflow_id` | `WORKFLOW_ID` env var (set by `ucore pipeline`) | Links all stages of one pipeline run |
+| `next_action` | `WORKFLOW_NEXT_ACTION` env var | Tells agents what step comes next |
+| `next_artifact` | `WORKFLOW_NEXT_ARTIFACT` env var | Path to the artifact the next step should consume |
+| `await_confirmation` | `WORKFLOW_AWAIT_CONFIRMATION` env var | Set to `true` when pipeline expects operator confirmation before proceeding |
 
 ## 🏗️ NPC Scaffold Structure
 When creating a new NPC with `./ucore init <npc_key> --subject <subject>`:

@@ -37,7 +37,7 @@ def _infer_spec_technique(spec_path: str | None) -> str:
         return "template"
     try:
         spec = load_shared_subject_spec(spec_path)
-    except Exception:
+    except Exception as e:
         return "template"
     return str(infer_shared_spec_technique(spec) or "template")
 
@@ -70,7 +70,7 @@ def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str, str | None]:
     model_short = None
     try:
         model_short = paths.model_short_name(model_id)
-    except Exception:
+    except Exception as e:
         pass
 
     dataset_technique = str(

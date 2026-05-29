@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPC Advanced Math & Balancing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #c084fc;
+            --accent-pink: #f472b6;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --gradient-1: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+            --gradient-2: linear-gradient(135deg, #ec4899, #8b5cf6);
+            --gradient-3: linear-gradient(135deg, #14b8a6, #3b82f6);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(14, 165, 233, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            margin-top: 0;
+        }
+
+        .header {
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto 60px auto;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 80px;
+        }
+
+        .graphic-slide {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 50px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide-title {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: white;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+        }
+
+        .slide-desc {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            max-width: 900px;
+            line-height: 1.6;
+        }
+
+        /* Math Display */
+        .math-container {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .equation {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .eq-term {
+            background: rgba(255,255,255,0.05);
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .eq-highlight { color: var(--accent-cyan); }
+        .eq-highlight-pink { color: var(--accent-pink); }
+        
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 10px;
+        }
+        
+        .fraction span:first-child {
+            border-bottom: 3px solid white;
+            padding: 0 10px;
+        }
+        .fraction span:last-child {
+            padding: 0 10px;
+        }
+
+        /* Compare Grid */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .compare-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .compare-card.bad { border-top: 4px solid var(--error); }
+        .compare-card.good { border-top: 4px solid var(--success); }
+        .compare-card.warning { border-top: 4px solid var(--warning); }
+
+        .compare-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bad .compare-title { color: var(--error); }
+        .good .compare-title { color: var(--success); }
+        .warning .compare-title { color: var(--warning); }
+
+        .behavior-box {
+            background: rgba(0,0,0,0.4);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-style: italic;
+            border-left: 3px solid;
+            flex-grow: 1;
+        }
+
+        .bad .behavior-box { border-color: var(--error); }
+        .good .behavior-box { border-color: var(--success); }
+        .warning .behavior-box { border-color: var(--warning); }
+
+        .variable-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            background: rgba(255,255,255,0.1);
+            color: #e2e8f0;
+            font-size: 0.9em;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>NPC Tuning: Math & Balancing</h1>
+        <p>A visual guide to the equations driving LoRA and how balancing interdependent parameters prevents catastrophic failure in your Unity NPCs.</p>
+    </div>
+
+    <div class="container">
+
+        <!-- Slide 1: The LoRA Scaling Equation -->
+        <div class="graphic-slide">
+            <h2 class="slide-title">1. The LoRA Scaling Equation</h2>
+            <p class="slide-desc">When you train an adapter, Unsloth updates the base model's weights using this core equation. The ratio between Alpha and Rank acts as a multiplier.</p>
+            
+            <div class="math-container">
+                <div class="equation">
+                    <span>&Delta;W</span> <span>=</span> 
+                    <span class="eq-term">A &times; B</span> 
+                    <span>&times;</span>
+                    <span class="eq-term eq-highlight">
+                        <div class="fraction">
+                            <span>&alpha; (Alpha)</span>
+                            <span>r (Rank)</span>
+                        </div>
+                    </span>
+                </div>
+                <p style="margin-top: 20px; color: var(--text-muted);">New Weights = (Learned Matrices) &times; (Scaling Multiplier)</p>
+            </div>
+
+            <div class="compare-grid">
+                <div class="compare-card bad">
+                    <h3 class="compare-title">✖ Bad: Multiplier Too High (α = 64, r = 8)</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">Ratio is 8x. The LoRA weights overpower the base model's pre-trained English comprehension.</p>
+                    <div class="behavior-box">
+                        <b>NPC Behavior:</b> Total Gibberish & Hallucination<br><br>
+                        "The Chronos Spire is... history history history *crash*" (The model forgets how to construct sentences because the adapter screamed too loudly over the base knowledge).
+                    </div>
+                </div>
+                
+                <div class="compare-card good">
+                    <h3 class="compare-title">✔ Good: Balanced Multiplier (α = 32, r = 16)</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">Ratio is 2x. Standard practice. The LoRA confidently asserts the persona without destroying base grammar.</p>
+                    <div class="behavior-box">
+                        <b>NPC Behavior:</b> Perfect Persona Adherence<br><br>
+                        "Ah, traveler! Let me tell you about the fall of Rome. It wasn't a single day, but a gradual decay of infrastructure..." (Stays in character, uses perfect English).
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: The Linear Scaling Rule -->
+        <div class="graphic-slide">
+            <h2 class="slide-title">2. Learning Rate vs. Effective Batch Size</h2>
+            <p class="slide-desc">If you increase your batch size, you MUST adjust your learning rate. These two parameters are permanently linked.</p>
+            
+            <div class="math-container">
+                <div class="equation" style="font-size: 1.8rem;">
+                    <span class="eq-term eq-highlight-pink">Effective Batch Size</span> <span>=</span> 
+                    <span>Batch Size</span> <span>&times;</span> <span>Gradient Accumulation</span>
+                </div>
+                <div class="equation" style="font-size: 1.5rem; margin-top: 20px; color: var(--text-muted);">
+                    If Effective Batch Size increases &rarr; <span class="eq-highlight">Learning Rate must increase proportionally</span>
+                </div>
+            </div>
+
+            <div class="compare-grid">
+                <div class="compare-card bad">
+                    <h3 class="compare-title">✖ Bad: High LR + Small Batch</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">LR = <span class="variable-pill">2e-4</span> | Eff. Batch = <span class="variable-pill">1</span></p>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">The model takes massive mathematical leaps based on a single tiny example. The loss graph will look like a volatile heartbeat.</p>
+                    <div class="behavior-box">
+                        <b>NPC Behavior:</b> Catastrophic Forgetting<br><br>
+                        The NPC becomes hyper-obsessed with the last example it saw in training and forgets the rest of its primer.
+                    </div>
+                </div>
+                
+                <div class="compare-card good">
+                    <h3 class="compare-title">✔ Good: Balanced (fast-3b preset)</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">LR = <span class="variable-pill">2e-4</span> | Eff. Batch = <span class="variable-pill">8</span> (Batch 1 &times; Acc 8)</p>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">The model averages out 8 examples before taking a step. The loss graph drops smoothly.</p>
+                    <div class="behavior-box">
+                        <b>NPC Behavior:</b> Stable Generalization<br><br>
+                        The NPC absorbs the overarching rules (e.g., "max 5 sentences") without fixating on specific words.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Epochs & Dataset Density -->
+        <div class="graphic-slide">
+            <h2 class="slide-title">3. Total Steps & The Overfitting Danger</h2>
+            <p class="slide-desc">How long should you train? Training for too many epochs on a small 72-row NPC dataset is the #1 cause of robotic dialogue.</p>
+            
+            <div class="math-container">
+                <div class="equation" style="font-size: 2rem;">
+                    <span class="eq-term">Total Steps</span> <span>=</span> 
+                    <span class="eq-highlight">
+                        <div class="fraction">
+                            <span>Epochs &times; Dataset Rows</span>
+                            <span>Effective Batch Size</span>
+                        </div>
+                    </span>
+                </div>
+                <p style="margin-top: 20px; color: var(--text-muted);">For 72 rows (3 epochs / eff_batch 8) = <b>27 Total Steps</b></p>
+            </div>
+
+            <div class="compare-grid">
+                <div class="compare-card bad">
+                    <h3 class="compare-title">✖ Bad: Too Many Epochs (Epochs = 15)</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">The model sees the same 72 conversations 15 times. It stops learning the <i>concept</i> and starts memorizing the <i>exact text</i>.</p>
+                    <div class="behavior-box">
+                        <b>NPC Behavior:</b> Robotic Parrot (Overfitting)<br><br>
+                        <b>Player:</b> "What's the weather?"<br>
+                        <b>NPC:</b> "The fall of Rome was caused by economic decay." (It outputs training data regardless of context).
+                    </div>
+                </div>
+                
+                <div class="compare-card warning">
+                    <h3 class="compare-title">⚠ Bad: Too Few Epochs (Epochs = 1)</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">The model barely glances at your data. The LoRA adapter is mathematically too weak to override the base Llama model.</p>
+                    <div class="behavior-box">
+                        <b>NPC Behavior:</b> Ignoring the Persona<br><br>
+                        <b>Player:</b> "Tell me about Rome."<br>
+                        <b>NPC:</b> "Here is a bulleted list of facts from Wikipedia..." (Ignores your strict rule against markdown and lists).
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 20px; margin-top: 30px;">
+                <h4 style="color: var(--success); margin-bottom: 5px;">✔ Best Practice: 3 to 4 Epochs</h4>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">
+                    For Unity NPCs with 50-100 dataset rows, 3-4 epochs is the mathematical sweet spot. If DeepEval says you have a "Training Density Gap" after 3 epochs, <b>do not increase epochs</b>. Instead, generate more dataset rows!
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

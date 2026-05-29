@@ -39,6 +39,7 @@ from _config import paths
 from _config.workflow_context import load_subject_spec as load_shared_subject_spec
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
+from scripts.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient, extract_json_object
 
 # ── Constraint checking ─────────────────────────────────────────────────────
 
@@ -344,19 +345,32 @@ class LlamaServer:
             print("[server] Stopped")
 
 
-# ── Ollama Judge ────────────────────────────────────────────────────────────
+# ── LLM Judges ───────────────────────────────────────────────────────────────
 
-class OllamaJudge:
-    def __init__(self, model="qwen3:latest", url="http://localhost:11434/api/chat"):
+class WandbInferenceJudge:
+    def __init__(self, model=DEFAULT_WANDB_INFERENCE_MODEL, entity=None, project=None):
         self.model = model
-        self.url = url
+        self.client = WandbInferenceClient(model=model, entity=entity, project=project, temperature=0.2)
 
     def judge(self, question, baseline, candidate, spec=None):
-        """Use an LLM to judge which response is better."""
         npc_name = spec.get("npc_name", "the NPC") if spec else "the NPC"
         system_prompt = spec.get("system_prompt", "") if spec else ""
-        
-        prompt = f"""
+        prompt = build_judge_prompt(question, baseline, candidate, npc_name, system_prompt)
+        try:
+            raw_content = self.client.chat(
+                [{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+            ).strip()
+            parsed = extract_json_object(raw_content)
+            if parsed:
+                return parsed
+        except Exception as e:
+            print(f"  [warn] W&B judge failed: {e}")
+        return None
+
+
+def build_judge_prompt(question, baseline, candidate, npc_name, system_prompt):
+    return f"""
 You are an expert evaluator of AI NPC dialogue. Your task is to compare two responses from an NPC named '{npc_name}'.
 
 NPC CONTEXT:
@@ -375,7 +389,7 @@ Player Question: "{question}"
 RESPONSE A (Baseline): "{baseline}"
 RESPONSE B (Candidate): "{candidate}"
 
-Which response is better? 
+Which response is better?
 FORMAT: Return ONLY a JSON object with:
 {{
   "winner": "A" or "B" or "tie",
@@ -383,6 +397,18 @@ FORMAT: Return ONLY a JSON object with:
   "scores": {{ "A": 1-10, "B": 1-10 }}
 }}
 """
+
+class OllamaJudge:
+    def __init__(self, model="qwen3:latest", url="http://localhost:11434/api/chat"):
+        self.model = model
+        self.url = url
+
+    def judge(self, question, baseline, candidate, spec=None):
+        """Use an LLM to judge which response is better."""
+        npc_name = spec.get("npc_name", "the NPC") if spec else "the NPC"
+        system_prompt = spec.get("system_prompt", "") if spec else ""
+        
+        prompt = build_judge_prompt(question, baseline, candidate, npc_name, system_prompt)
         payload = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
@@ -1063,8 +1089,11 @@ def main():
                         help="Maximum generated tokens per eval answer (default: 256)")
     
     # Judge
-    parser.add_argument("--judge", action="store_true", help="Use local Ollama judge")
+    parser.add_argument("--judge", action="store_true", help="Use an LLM judge")
+    parser.add_argument("--judge-provider", default="ollama", choices=["ollama", "wandb"], help="Judge backend")
     parser.add_argument("--judge-model", default="qwen3:latest", help="Judge model")
+    parser.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference")
+    parser.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference")
 
     # W&B
     parser.add_argument("--wandb", action="store_true", help="Enable W&B evaluation tracking")
@@ -1216,8 +1245,19 @@ def main():
         with hook_recorder.step("compare_models", questions=len(questions)):
             judge = None
             if args.judge:
-                print(f"Initializing Ollama judge ({args.judge_model})...")
-                judge = OllamaJudge(model=args.judge_model)
+                if args.judge_provider == "wandb":
+                    judge_model = args.judge_model
+                    if judge_model in {"qwen3:latest", "llama3.1:latest"}:
+                        judge_model = DEFAULT_WANDB_INFERENCE_MODEL
+                    print(f"Initializing W&B Inference judge ({judge_model})...")
+                    judge = WandbInferenceJudge(
+                        model=judge_model,
+                        entity=args.wandb_inference_entity or args.wandb_entity,
+                        project=args.wandb_inference_project or args.wandb_project,
+                    )
+                else:
+                    print(f"Initializing Ollama judge ({args.judge_model})...")
+                    judge = OllamaJudge(model=args.judge_model)
             comparison = compare_models(baseline_results, candidate_results, spec, judge=judge)
 
         if not "*" in args.baseline:
@@ -1402,6 +1442,7 @@ def main():
                 "candidate": candidate_name,
                 "num_questions": total,
                 "judge": args.judge,
+                "judge_provider": args.judge_provider,
                 "judge_model": args.judge_model,
                 "baseline_model_path": args.baseline,
                 "candidate_model_path": args.candidate,

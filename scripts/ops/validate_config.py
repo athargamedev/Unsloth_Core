@@ -29,7 +29,7 @@ def _is_canonical_dataset_path(path_str: str) -> bool:
         p = (PROJECT_ROOT / p).resolve()
     try:
         rel = p.relative_to(paths.dataset_root().resolve())
-    except Exception:
+    except Exception as e:
         return False
     parts = rel.parts
     return len(parts) >= 3 and parts[2] in {"train.jsonl", "train_clean.jsonl"}
@@ -44,7 +44,7 @@ def _extract_dataset_info(path_str: str):
         parts = rel.parts
         if len(parts) >= 3:
             return parts[0], parts[1], parts[2]
-    except Exception:
+    except Exception as e:
         pass
     return None, None, None
 
@@ -139,7 +139,7 @@ def validate(args):
             out_dir = PROJECT_ROOT / out_dir
         try:
             out_dir.resolve().relative_to(paths.output_root().resolve())
-        except Exception:
+        except Exception as e:
             warnings.append(f"Output dir '{out_dir}' is outside project outputs/.")
 
     resolved = {

@@ -91,7 +91,7 @@ def build_notebook(
                 capture_output=True, text=True, check=False, timeout=5,
             )
             repo_url = (result.stdout or "").strip() or "https://github.com/athargamedev/Unsloth_Core.git"
-        except Exception:
+        except Exception as e:
             repo_url = "https://github.com/athargamedev/Unsloth_Core.git"
 
     markdown = f"""
@@ -323,7 +323,7 @@ if is_remote_colab and not os.environ.get("WANDB_API_KEY"):
         if wandb_key:
             os.environ["WANDB_API_KEY"] = wandb_key
             print("Loaded WANDB_API_KEY from Colab secrets.")
-    except Exception:
+    except Exception as e:
         pass
 
 if not os.environ.get("WANDB_API_KEY") and not os.path.exists(os.path.expanduser("~/.netrc")):

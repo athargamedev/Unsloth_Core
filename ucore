@@ -13,6 +13,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -229,7 +230,9 @@ def main():
     de_p.add_argument("spec", help="Path to subject spec JSON")
     de_p.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"],
                       help="Dataset technique to evaluate")
-    de_p.add_argument("--judge-model", default=None, help="Local Ollama judge model (default: auto — resolves from configs/ollama-model-presets.yaml)")
+    de_p.add_argument("--judge-provider", default="ollama", choices=["ollama", "wandb"],
+                      help="Judge backend: local Ollama or W&B Serverless Inference")
+    de_p.add_argument("--judge-model", default=None, help="Judge model (Ollama tag or W&B Inference model ID)")
     de_p.add_argument("--judge-preset", default=None,
                       choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
                       help="Named Ollama judge preset (default: auto — resolves from configs/ollama-model-presets.yaml)")
@@ -248,6 +251,8 @@ def main():
     de_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
     de_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
     de_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
+    de_p.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference")
+    de_p.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference")
 
     # Train
     train_p = subparsers.add_parser("train", help="Train a model")
@@ -363,7 +368,8 @@ def main():
     eval_p.add_argument("--num-questions", type=int, default=10, help="Number of eval questions")
     eval_p.add_argument("--output", "-o", help="Output report path")
     eval_p.add_argument("--report-html", action="store_true", help="Generate HTML report with charts")
-    eval_p.add_argument("--judge", action="store_true", help="Use local Ollama judge")
+    eval_p.add_argument("--judge", action="store_true", help="Use LLM judge")
+    eval_p.add_argument("--judge-provider", default="ollama", choices=["ollama", "wandb"], help="Judge backend")
     eval_p.add_argument("--judge-model", default="llama3.1:latest", help="Judge model")
     eval_p.add_argument("--track", action="store_true", help="Track results in eval/results/")
     eval_p.add_argument("--wandb", action="store_true", help="Enable W&B evaluation tracking")
@@ -381,6 +387,8 @@ def main():
                         help="Show training metrics from TensorBoard logs (optional: runs dir)")
     eval_p.add_argument("--wandb-entity", default=None,
                         help="W&B entity (default: auto-detect)")
+    eval_p.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference")
+    eval_p.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference")
     eval_p.add_argument("--npc-key", help="NPC key for per-model TensorBoard runs lookup")
     # Quick-eval
     qe_p = subparsers.add_parser("quick-eval", help="Quick local evaluation (llama-cpp-python)")
@@ -444,6 +452,8 @@ def main():
                        help="Ollama base URL for regeneration")
     fb_p.add_argument("--regeneration-batch-size", type=int, default=4,
                        help="Ollama batch size for regeneration")
+    fb_p.add_argument("--deepeval-judge-provider", default="ollama", choices=["ollama", "wandb"],
+                       help="Judge backend for DeepEval")
     fb_p.add_argument("--deepeval-judge-preset", default=None,
                        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
                        help="Named Ollama judge preset (default: judge-qwen25)")
@@ -648,6 +658,8 @@ def main():
     elif args.command == "dataset-eval":
         cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "dataset_eval.py"), args.spec]
         cmd.extend(["--technique", args.technique])
+        if args.judge_provider != "ollama":
+            cmd.extend(["--judge-provider", args.judge_provider])
         if args.judge_model is not None:
             cmd.extend(["--judge-model", args.judge_model])
         if args.judge_preset: cmd.extend(["--judge-preset", args.judge_preset])
@@ -666,6 +678,8 @@ def main():
         if args.wandb: cmd.append("--wandb")
         if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
         if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
+        if args.wandb_inference_project: cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
+        if args.wandb_inference_entity: cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
         run_cmd(cmd)
 
     elif args.command == "train":
@@ -815,6 +829,7 @@ def main():
         if args.output: cmd.extend(["--output", args.output])
         if args.report_html: cmd.append("--report-html")
         if args.judge: cmd.append("--judge")
+        if args.judge_provider != "ollama": cmd.extend(["--judge-provider", args.judge_provider])
         if args.judge_model: cmd.extend(["--judge-model", args.judge_model])
         if args.track: cmd.append("--track")
         if args.wandb: cmd.append("--wandb")
@@ -831,6 +846,8 @@ def main():
             cmd.append("--training-metrics")
             if args.training_metrics: cmd.append(args.training_metrics)
         if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
+        if args.wandb_inference_project: cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
+        if args.wandb_inference_entity: cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
         if args.npc_key: cmd.extend(["--npc-key", args.npc_key])
         if args.workflow_hooks: cmd.extend(["--workflow-hooks", args.workflow_hooks])
         run_cmd(cmd)
@@ -900,6 +917,7 @@ def main():
         if args.regeneration_model: cmd.extend(["--regeneration-model", args.regeneration_model])
         if args.regeneration_url: cmd.extend(["--regeneration-url", args.regeneration_url])
         if args.regeneration_batch_size is not None: cmd.extend(["--regeneration-batch-size", str(args.regeneration_batch_size)])
+        if args.deepeval_judge_provider != "ollama": cmd.extend(["--deepeval-judge-provider", args.deepeval_judge_provider])
         if args.deepeval_judge_preset: cmd.extend(["--deepeval-judge-preset", args.deepeval_judge_preset])
         if args.deepeval_judge_model: cmd.extend(["--deepeval-judge-model", args.deepeval_judge_model])
         if args.deepeval_ollama_url: cmd.extend(["--deepeval-ollama-url", args.deepeval_ollama_url])
@@ -914,6 +932,7 @@ def main():
         # ── Shared W&B pipeline identity ───────────────────────────────
         pipeline_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         npc_key = Path(args.spec).stem
+        workflow_id = uuid.uuid4().hex
         technique = "ollama" if args.ollama else args.technique
         wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
         pipeline_hooks = args.workflow_hooks or str(PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique / "workflow_hooks.jsonl")
@@ -922,6 +941,7 @@ def main():
             os.environ["WANDB_GROUP"] = wandb_group
             os.environ["WANDB_RUN_GROUP"] = wandb_group
         os.environ["WORKFLOW_HOOKS_PATH"] = pipeline_hooks
+        os.environ["WORKFLOW_ID"] = workflow_id
 
         print("[STAGE] spec")
         if not args.skip_spec_validate:
@@ -939,6 +959,8 @@ def main():
             gen_cmd.extend(["--docs-manifest", args.docs_manifest])
         if args.model:
             gen_cmd.extend(["--model", args.model])
+        os.environ["WORKFLOW_NEXT_ACTION"] = "sanitize_dataset"
+        os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(paths.dataset_train_path(npc_key, technique))
         run_cmd(gen_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
         # Determine paths
@@ -948,6 +970,8 @@ def main():
         print(f"\n--- Phase 2: Sanitizing Dataset ---")
         san_path = paths.dataset_train_path(npc_key, technique).with_name("train_clean.jsonl")
         san_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), str(dataset_path), "--output", str(san_path), "--strict-canonical"]
+        os.environ["WORKFLOW_NEXT_ACTION"] = "deepeval_run" if not args.skip_dataset_eval else "training_pipeline"
+        os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(san_path)
         run_cmd(san_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
         if not args.skip_dataset_eval:
@@ -964,7 +988,15 @@ def main():
             ]
             if args.dataset_eval_cases_per_category is not None:
                 eval_cmd.extend(["--cases-per-category", str(args.dataset_eval_cases_per_category)])
+            os.environ["WORKFLOW_NEXT_ACTION"] = "training_pipeline"
+            os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(san_path)
+            os.environ["WORKFLOW_AWAIT_CONFIRMATION"] = "deepeval_run"
             run_cmd(eval_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
+        os.environ.pop("WORKFLOW_AWAIT_CONFIRMATION", None)
+
+        # Determine paths for GGUF output early so export_dir is available
+        # for chain-linking env vars.
+        export_dir = paths.export_dir(npc_key)
 
         print("[STAGE] training")
         print(f"\n--- Phase 4: Training Model ---")
@@ -978,11 +1010,10 @@ def main():
             train_cmd.append("--export-gguf")
         if args.wandb:
             train_cmd.append("--wandb")
+        os.environ["WORKFLOW_NEXT_ACTION"] = "export_adapter"
+        os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(export_dir)
         train_env = {"WANDB_JOB_TYPE": "train", "WORKFLOW_HOOKS_PATH": pipeline_hooks}
         run_cmd(train_cmd, extra_env=train_env)
-
-        # Determine paths for GGUF output
-        export_dir = paths.export_dir(npc_key)
         ggufs = list(export_dir.glob("*.gguf")) if export_dir.exists() else []
         if ggufs:
             ggufs.sort(key=lambda x: x.stat().st_mtime, reverse=True)
@@ -994,6 +1025,8 @@ def main():
                 smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
                 if args.track:
                     smoke_cmd.append("--track")
+                os.environ["WORKFLOW_NEXT_ACTION"] = "evaluate_pipeline"
+                os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(ggufs[0])
                 run_cmd(smoke_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
             else:
                 print("Warning: No GGUF found for smoke testing")
@@ -1017,13 +1050,18 @@ def main():
                             "--track"]
                 if args.wandb:
                     eval_cmd.append("--wandb")
-                eval_env = {"WANDB_JOB_TYPE": "eval"}
+                os.environ["WORKFLOW_NEXT_ACTION"] = "NONE"
+                os.environ.pop("WORKFLOW_NEXT_ARTIFACT", None)
                 run_cmd(eval_cmd, extra_env={"WANDB_JOB_TYPE": "eval", "WORKFLOW_HOOKS_PATH": pipeline_hooks})
             elif len(ggufs) == 1:
                 print(f"  Only one GGUF export found ({ggufs[0].name}) — no baseline to compare against.")
                 print(f"  Run pipeline again after a future training to get a side-by-side evaluation.")
             else:
                 print("  Warning: No GGUF found — skipping evaluation")
+
+        # Clean up workflow env vars to avoid polluting subsequent commands
+        for var in ["WORKFLOW_ID", "WORKFLOW_NEXT_ACTION", "WORKFLOW_NEXT_ARTIFACT", "WORKFLOW_AWAIT_CONFIRMATION"]:
+            os.environ.pop(var, None)
 
         print("[STAGE] complete")
         print(f"\n--- Pipeline Complete! ---")

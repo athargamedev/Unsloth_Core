@@ -15,10 +15,11 @@ from deepeval.metrics import (
     RoleAdherenceMetric,
     ToxicityMetric,
 )
-from deepeval.models import OllamaModel
+from deepeval.models import DeepEvalBaseLLM, OllamaModel
 from deepeval.models.llms.ollama_model import retry_ollama
 
 from scripts.ops.ollama_lifecycle import register_ollama_unload
+from scripts.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient
 from deepeval.test_case import SingleTurnParams
 from pydantic import BaseModel
 
@@ -80,8 +81,62 @@ def _ollama_judge() -> DatasetJudgeOllamaModel:
     )
 
 
-JUDGE_MODEL = _ollama_judge()
-register_ollama_unload(os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen3:latest"), os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"))
+class DatasetJudgeWandbInferenceModel(DeepEvalBaseLLM):
+    """DeepEval judge backed by W&B Serverless Inference."""
+
+    def __init__(self, model: str | None = None, temperature: float = 0.0):
+        self.temperature = temperature
+        super().__init__(model=model or DEFAULT_WANDB_INFERENCE_MODEL)
+
+    def load_model(self, *args, **kwargs):
+        return WandbInferenceClient(
+            model=self.name,
+            entity=os.getenv("DEEPEVAL_WANDB_ENTITY") or os.getenv("WANDB_ENTITY"),
+            project=os.getenv("DEEPEVAL_WANDB_PROJECT") or os.getenv("WANDB_PROJECT"),
+            temperature=self.temperature,
+        )
+
+    def get_model_name(self, *args, **kwargs) -> str:
+        return f"wandb-inference:{self.name}"
+
+    def _messages(self, prompt: str, schema: Optional[type[BaseModel]] = None) -> list[dict[str, str]]:
+        if schema is None:
+            return [{"role": "user", "content": prompt}]
+        return [
+            {
+                "role": "system",
+                "content": "Return only a JSON object matching the requested schema. Do not include markdown.",
+            },
+            {"role": "user", "content": f"{prompt}\n\nJSON schema:\n{schema.model_json_schema()}"},
+        ]
+
+    def generate(self, prompt: str, schema: Optional[type[BaseModel]] = None):
+        content = self.model.chat(
+            self._messages(prompt, schema),
+            response_format={"type": "json_object"} if schema else None,
+        )
+        return (schema.model_validate_json(content) if schema else content, 0)
+
+    async def a_generate(self, prompt: str, schema: Optional[type[BaseModel]] = None):
+        content = await self.model.achat(
+            self._messages(prompt, schema),
+            response_format={"type": "json_object"} if schema else None,
+        )
+        return (schema.model_validate_json(content) if schema else content, 0)
+
+
+def _wandb_judge() -> DatasetJudgeWandbInferenceModel:
+    return DatasetJudgeWandbInferenceModel(
+        model=os.getenv("DEEPEVAL_WANDB_MODEL", DEFAULT_WANDB_INFERENCE_MODEL),
+        temperature=float(os.getenv("DEEPEVAL_WANDB_TEMPERATURE", "0")),
+    )
+
+
+if os.getenv("DEEPEVAL_JUDGE_PROVIDER", "ollama").strip().lower() == "wandb":
+    JUDGE_MODEL = _wandb_judge()
+else:
+    JUDGE_MODEL = _ollama_judge()
+    register_ollama_unload(os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen3:latest"), os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"))
 
 DATASET_QUALITY_METRICS = [
     GEval(

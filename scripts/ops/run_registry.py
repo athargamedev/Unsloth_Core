@@ -154,7 +154,7 @@ class RunRegistry:
                 **extra,
             }
             _safe_write_json(run_dir / "meta.json", meta)
-        except Exception:
+        except Exception as e:
             pass  # Best-effort — still return the run_dir
 
         self._append(
@@ -322,7 +322,7 @@ class RunRegistry:
             with _registry_lock:
                 with self.index_path.open("a", encoding="utf-8") as f:
                     f.write(line)
-        except Exception:
+        except Exception as e:
             pass  # Best-effort — never raise
 
     def _read_all(self) -> list[dict]:
@@ -339,7 +339,7 @@ class RunRegistry:
                             records.append(json.loads(line))
                         except json.JSONDecodeError:
                             continue
-        except Exception:
+        except Exception as e:
             pass
         return records
 
@@ -441,10 +441,10 @@ def _safe_write_json(path: Path, data: Any) -> None:
     try:
         tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False, default=str))
         tmp.rename(path)
-    except Exception:
+    except Exception as e:
         try:
             tmp.unlink(missing_ok=True)
-        except Exception:
+        except Exception as e:
             pass
 
 
@@ -469,5 +469,5 @@ def archive_quality_artifact(src: Path, run_id: str) -> Path | None:
         import shutil
         shutil.copy2(src, dst)
         return dst
-    except Exception:
+    except Exception as e:
         return None

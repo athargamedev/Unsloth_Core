@@ -36,7 +36,7 @@ def active_npc_keys():
             with open(path, "r", encoding="utf-8") as f:
                 spec = json.load(f)
             keys.append(spec.get("npc_key") or path.stem)
-        except Exception:
+        except Exception as e:
             keys.append(path.stem)
     return set(keys)
 

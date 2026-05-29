@@ -82,6 +82,15 @@ class WorkflowHookRecorder:
             "spec_path": spec_path,
             "run_id": run_id,
         }
+        # ── Chain linking ─────────────────────────────────────────────────
+        self.base_event["workflow_id"] = os.getenv("WORKFLOW_ID")
+        self.next_action: str | None = os.getenv("WORKFLOW_NEXT_ACTION")
+        self.next_artifact: str | None = os.getenv("WORKFLOW_NEXT_ARTIFACT")
+        _await_conf = os.getenv("WORKFLOW_AWAIT_CONFIRMATION", "")
+        self.await_confirmation_stages: set[str] = {
+            s.strip() for s in _await_conf.split(";") if s
+        }
+
         # ── PipelineDB state ──────────────────────────────────────────
         self.db = db or create_pipeline_db()              # Auto-connect if caller didn't provide one
         self._db_run_created: bool = False                # NEW
@@ -103,12 +112,23 @@ class WorkflowHookRecorder:
             **{k: v for k, v in self.base_event.items() if v is not None},
             **fields,
         }
+        # ── Chain linking fields ────────────────────────────────────────────
+        # Include next_action on any terminal status (complete/error)
+        if status in ("complete", "error") and self.next_action and self.next_action != "NONE":
+            event["next_action"] = self.next_action
+        # Include next_artifact only on successful completion
+        if status == "complete" and self.next_artifact:
+            event["next_artifact"] = self.next_artifact
+        # Signal confirmation gate when this step awaits operator go-ahead
+        if status == "complete" and step in self.await_confirmation_stages:
+            event["await_confirmation"] = True
+
         try:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             with self.path.open("a", encoding="utf-8") as f:
                 json.dump(event, f, ensure_ascii=False)
                 f.write("\n")
-        except Exception:
+        except Exception as e:
             # Hooks must never break the workflow; ignore all write errors.
             return
 
@@ -117,13 +137,26 @@ class WorkflowHookRecorder:
             try:
                 if self.db.ensure_connected():
                     self._db_emit(step, status, fields)
-            except Exception:
+            except Exception as e:
                 # DB writes are best-effort — never break the pipeline
                 logger.debug("DB emit failed for step=%s status=%s", step, status)
 
     @contextmanager
-    def step(self, step: str, **fields: Any) -> Iterator[StepContext]:
+    def step(self, step: str, *, next_action: str | None = None, **fields: Any) -> Iterator[StepContext]:
+        """Context manager for pipeline step lifecycle.
+
+        Args:
+            step: Name of the pipeline step.
+            next_action: Override for the next-action value (defaults to
+                WORKFLOW_NEXT_ACTION env var set at recorder creation time).
+            **fields: Additional fields included in all events for this step.
+        """
         ctx = StepContext()
+        # Allow per-step override of next_action
+        _prev_next_action = self.next_action
+        if next_action is not None:
+            self.next_action = next_action
+
         self.emit(step, "start", **fields)
         _start_time = time.monotonic()
         try:
@@ -141,6 +174,9 @@ class WorkflowHookRecorder:
             flush_logs = getattr(self, "_db_flush_logs", None)
             if callable(flush_logs):
                 flush_logs(ctx.messages)
+        finally:
+            if next_action is not None:
+                self.next_action = _prev_next_action
 
     # ── PipelineDB integration ─────────────────────────────────────────
 
@@ -174,13 +210,13 @@ class WorkflowHookRecorder:
         self._db_emit_job(npc_key, run_id, technique_val, step, status, fields)
 
         # ── ARTIFACT lifecycle ────────────────────────────────────────
-        if status == "complete" and "output_path" in fields:
+        if status == "complete" and ("output_path" in fields or "output_dir" in fields):
             artifact_type = _ARTIFACT_TYPE_MAP.get(step)
             if artifact_type:
                 self.db.create_artifact(
                     npc_key=npc_key,
                     artifact_type=artifact_type,
-                    file_path=fields["output_path"],
+                    file_path=fields.get("output_path") or fields.get("output_dir", ""),
                     technique=technique_val,
                     run_id=run_id,
                 )
@@ -315,7 +351,7 @@ class WorkflowHookRecorder:
             if win_rate is not None and self._db_job_uuid:
                 try:
                     self.db.update_job_status(self._db_job_uuid, loss=float(win_rate))
-                except Exception:
+                except Exception as e:
                     pass
 
             self._db_eval_session_created = True
@@ -334,7 +370,7 @@ class WorkflowHookRecorder:
             preset = fields.get("preset") or fields.get("technique") or "default"
             self.db.create_run(
                 npc_key=npc_key,
-                run_id=run_id or step,
+                run_id=run_id or f"{step}_{uuid.uuid4().hex}",
                 run_dir=fields.get("output_dir", ""),
                 preset=preset,
                 model_id=fields.get("model"),
@@ -359,7 +395,7 @@ class WorkflowHookRecorder:
 
             self.db.update_run_metrics(
                 npc_key=npc_key,
-                run_id=run_id or step,
+                run_id=run_id or f"{step}_{uuid.uuid4().hex}",
                 metrics=metrics,
                 status=resolved_status,
             )
@@ -403,10 +439,14 @@ class WorkflowHookRecorder:
             self._db_job_created = True
 
         elif status in ("complete", "error") and self._db_job_created and self._db_job_uuid:
+            if status == "complete":
+                self._db_terminal_status = "completed"
+            elif status == "error":
+                self._db_terminal_status = "failed"
             error_msg = fields.get("error") if status == "error" else None
             job_loss = fields.get("loss")
             kwargs = dict(
-                status="completed" if status == "complete" else "failed",
+                status=self._db_terminal_status,
                 error=error_msg,
             )
             if job_loss is not None:
@@ -427,7 +467,7 @@ class WorkflowHookRecorder:
                 status=self._resolve_log_status(),
                 logs=messages,
             )
-        except Exception:
+        except Exception as e:
             # Best-effort — never break the pipeline
             pass
 
@@ -437,7 +477,7 @@ class WorkflowHookRecorder:
         If the job was already completed or failed, keep that status so
         the log update doesn't overwrite the terminal state.
         """
-        return "running"
+        return self._db_terminal_status or "running"
 
 
 def default_hook_path(
@@ -500,7 +540,8 @@ class WorkflowHookReader:
                         continue
         return events
 
-    def group_by_trace(self, events: list[dict]) -> dict[str, list[dict]]:
+    @staticmethod
+    def group_by_trace(events: list[dict]) -> dict[str, list[dict]]:
         """Group events into traces by (tool, npc_key) sorted chronologically.
 
         A 'trace' is a sequence of events from the same tool + npc_key combination,
@@ -605,5 +646,113 @@ class WorkflowHookReader:
         events = cls.read(hook_path)
         return {
             "total_events": len(events),
-            "traces": [cls.trace_summary(trace) for trace in cls().group_by_trace(events).values()],
+            "traces": [cls.trace_summary(trace) for trace in cls.group_by_trace(events).values()],
+        }
+
+    @classmethod
+    def pipeline_chain(cls, hook_path: str | Path) -> dict:
+        """Analyze a pipeline hook file and return chain status.
+
+        Filters events that carry a workflow_id (pipeline events), groups
+        by step name, and resolves the latest status per step.
+
+        Returns:
+            workflow_id: shared workflow ID across all pipeline events (or None).
+            stages: list of {step, status, duration_s, next_action, artifact_path}
+            next_expected: name of the next step that should run, derived from
+                the last completed step's next_action that hasn't been
+                completed yet. None if all steps are done or no chain set.
+            artifacts_ready: list of artifact paths from completed steps
+                (next_artifact, output_path, or output_dir).
+            awaiting_confirmation: True if any completed step has
+                await_confirmation=true.
+        """
+        events = cls.read(hook_path)
+        pipeline_events = [e for e in events if e.get("workflow_id")]
+
+        empty = {
+            "workflow_id": None,
+            "stages": [],
+            "next_expected": None,
+            "artifacts_ready": [],
+            "awaiting_confirmation": False,
+        }
+        if not pipeline_events:
+            return empty
+
+        workflow_id = pipeline_events[0].get("workflow_id")
+
+        # Keep the latest event per step name (last write wins)
+        step_map: dict[str, dict] = {}
+        for event in pipeline_events:
+            step_name: str = event.get("step", "?")
+            step_map[step_name] = event
+
+        # Build stage summaries from the resolved event per step
+        stages: list[dict] = []
+        for step_name, event in step_map.items():
+            artifact_path = (
+                event.get("next_artifact")
+                or event.get("output_path")
+                or event.get("output_dir")
+            )
+            stages.append({
+                "step": step_name,
+                "status": event.get("status", "?"),
+                "duration_s": event.get("duration_s"),
+                "next_action": event.get("next_action"),
+                "artifact_path": artifact_path,
+            })
+
+        # Sort stages chronologically by their first event timestamp
+        step_order: dict[str, str] = {}
+        for event in pipeline_events:
+            sn = event.get("step", "?")
+            ts = event.get("ts", "")
+            if sn not in step_order or ts < step_order[sn]:
+                step_order[sn] = ts
+        stages.sort(key=lambda s: step_order.get(s["step"], ""))
+
+        # Derive next_expected: find the last completed step whose
+        # next_action hasn't been fulfilled yet.
+        next_expected: str | None = None
+        completed_with_next = [
+            s for s in stages
+            if s["status"] == "complete" and s.get("next_action") and s["next_action"] != "NONE"
+        ]
+        for step_info in reversed(completed_with_next):
+            expected = step_info["next_action"]
+            already_done = any(
+                s["step"] == expected and s["status"] == "complete"
+                for s in stages
+            )
+            if not already_done:
+                next_expected = expected
+                break
+        # If all next_actions are fulfilled, chain is complete
+        if next_expected is None and completed_with_next:
+            last_next = completed_with_next[-1]["next_action"]
+            if any(s["step"] == last_next and s["status"] == "complete" for s in stages):
+                next_expected = None  # entire pipeline is done
+            else:
+                next_expected = last_next
+
+        # Collect artifact paths from completed steps
+        artifacts_ready: list[str] = [
+            s["artifact_path"] for s in stages
+            if s["status"] == "complete" and s.get("artifact_path")
+        ]
+
+        # Check for confirmation gate signal
+        awaiting_confirmation = any(
+            e.get("await_confirmation") for e in pipeline_events
+            if e.get("status") == "complete"
+        )
+
+        return {
+            "workflow_id": workflow_id,
+            "stages": stages,
+            "next_expected": next_expected,
+            "artifacts_ready": artifacts_ready,
+            "awaiting_confirmation": awaiting_confirmation,
         }

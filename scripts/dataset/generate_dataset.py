@@ -108,7 +108,7 @@ class CheckpointStore:
         for row in rows:
             try:
                 examples.append(json.loads(row[0]))
-            except Exception:
+            except Exception as e:
                 pass
         return examples
 
@@ -119,7 +119,7 @@ class CheckpointStore:
         if row:
             try:
                 return json.loads(row[0])
-            except Exception:
+            except Exception as e:
                 pass
         return None
 
@@ -249,7 +249,7 @@ class TelemetryReporter:
         try:
             self.ipc_path.parent.mkdir(parents=True, exist_ok=True)
             self.ipc_path.write_text(json.dumps(data, indent=2))
-        except Exception:
+        except Exception as e:
             pass
 
 
@@ -976,7 +976,7 @@ Return ONLY a JSON object with this exact structure:
                             continue
                     raw_res = res
                     break
-                except Exception:
+                except Exception as e:
                     pass
             if raw_res:
                 break

@@ -1155,7 +1155,7 @@ def main():
                 detected = paths.spec_path(npc_key)
                 if detected and detected.exists():
                     spec_path = detected
-            except Exception:
+            except Exception as e:
                 pass
 
     if spec_path and spec_path.exists():

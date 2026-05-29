@@ -85,7 +85,7 @@ def metric_payload(metric: dict) -> dict:
     }
 
 
-def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, judge_model: str, command: list[str]) -> tuple[dict, list[dict]]:
+def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, judge_model: str, judge_provider: str = "ollama", command: list[str]) -> tuple[dict, list[dict]]:
     test_cases = (result.get("testCases") or result.get("test_cases") or []) + (
         result.get("conversationalTestCases") or result.get("conversational_test_cases") or []
     )
@@ -155,6 +155,7 @@ def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, jud
         "created_at": datetime.now(timezone.utc).isoformat(),
         "npc_key": npc_key,
         "technique": technique,
+        "judge_provider": judge_provider,
         "judge_model": judge_model,
         "deepeval_identifier": requested_identifier or result_identifier,
         "deepeval_result_identifier": result_identifier,
@@ -179,7 +180,7 @@ def load_optional_json(path: Path) -> dict | None:
         return None
     try:
         return load_json(path)
-    except Exception:
+    except Exception as e:
         return None
 
 
@@ -369,7 +370,11 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
         summary = {"passed": 0, "total": 0, "pass_rate": 0.0}
         completed = subprocess.CompletedProcess(args=[], returncode=0)
         try:
-            resolved_judge_model = resolve_ollama_model(preset=args.judge_preset, model=args.judge_model, role="judge")
+            judge_provider = args.judge_provider
+            if judge_provider == "wandb":
+                resolved_judge_model = args.judge_model or "meta-llama/Llama-3.1-8B-Instruct"
+            else:
+                resolved_judge_model = resolve_ollama_model(preset=args.judge_preset, model=args.judge_model, role="judge")
             hook_recorder = WorkflowHookRecorder(
                 args.workflow_hooks or run.hook_path,
                 tool="dataset_eval",
@@ -378,29 +383,31 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 spec_path=args.spec,
                 run_id=run.run_id,
             )
-            with hook_recorder.step("deepeval_run", identifier=identifier, judge_model=resolved_judge_model, cases_per_category=cases_per_category, mode=args.mode):
-                preflight = run_preflight(
-                    phase="dataset_eval",
-                    preset=None,
-                    spec_path=args.spec,
-                    technique=technique,
-                    ollama_url=args.ollama_base_url,
-                    auto_unload_ollama=True,
-                    require_gcc=False,
-                )
-                if preflight.stopped_ollama_models:
-                    print(
-                        f"Stopped Ollama model(s) before DeepEval: {', '.join(preflight.stopped_ollama_models)}",
-                        flush=True,
+            with hook_recorder.step("deepeval_run", identifier=identifier, judge_provider=judge_provider, judge_model=resolved_judge_model, cases_per_category=cases_per_category, mode=args.mode):
+                preflight = None
+                if judge_provider == "ollama":
+                    preflight = run_preflight(
+                        phase="dataset_eval",
+                        preset=None,
+                        spec_path=args.spec,
+                        technique=technique,
+                        ollama_url=args.ollama_base_url,
+                        auto_unload_ollama=True,
+                        require_gcc=False,
                     )
-                if preflight.warnings:
-                    for warning in preflight.warnings:
-                        print(f"[preflight] {warning}", flush=True)
+                    if preflight.stopped_ollama_models:
+                        print(
+                            f"Stopped Ollama model(s) before DeepEval: {', '.join(preflight.stopped_ollama_models)}",
+                            flush=True,
+                        )
+                    if preflight.warnings:
+                        for warning in preflight.warnings:
+                            print(f"[preflight] {warning}", flush=True)
 
                 if args.ignore_errors:
                     cmd.append("--ignore-errors")
 
-                if not os.getenv("OLLAMA_NUM_PARALLEL"):
+                if judge_provider == "ollama" and not os.getenv("OLLAMA_NUM_PARALLEL"):
                     print(
                         "[recommended] OLLAMA_NUM_PARALLEL is not set. For 5x-10x faster async evaluation, "
                         "set BEFORE starting Ollama:  export OLLAMA_NUM_PARALLEL=4",
@@ -420,9 +427,14 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         "DEEPEVAL_DATASET_NPC_KEYS": npc_key,
                         "DEEPEVAL_DATASET_TECHNIQUE": technique,
                         "DEEPEVAL_DATASET_CASES_PER_CATEGORY": str(cases_per_category),
+                        "DEEPEVAL_JUDGE_PROVIDER": judge_provider,
                         "DEEPEVAL_OLLAMA_MODEL": resolved_judge_model,
                         "DEEPEVAL_OLLAMA_BASE_URL": args.ollama_base_url,
                         "DEEPEVAL_OLLAMA_TEMPERATURE": str(args.judge_temperature),
+                        "DEEPEVAL_WANDB_MODEL": resolved_judge_model,
+                        "DEEPEVAL_WANDB_TEMPERATURE": str(args.judge_temperature),
+                        "DEEPEVAL_WANDB_ENTITY": args.wandb_inference_entity or args.wandb_entity or os.getenv("WANDB_ENTITY", ""),
+                        "DEEPEVAL_WANDB_PROJECT": args.wandb_inference_project or args.wandb_project or os.getenv("WANDB_PROJECT", ""),
                         "DEEPEVAL_TELEMETRY_OPT_OUT": "1",
                         "DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE": os.getenv("DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE", "600"),
                     }
@@ -439,6 +451,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     npc_key=npc_key,
                     technique=technique,
                     judge_model=resolved_judge_model,
+                    judge_provider=judge_provider,
                     command=cmd,
                 )
                 if summary.get("deepeval_result_identifier") and summary.get("deepeval_result_identifier") != identifier:
@@ -499,6 +512,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         config={
                             "npc_key": npc_key,
                             "technique": technique,
+                            "judge_provider": judge_provider,
                             "judge_model": resolved_judge_model,
                             "cases_per_category": cases_per_category,
                             "quality_gate_mode": args.mode,
@@ -567,7 +581,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         wandb.log_artifact(failures_artifact)
 
                     wandb.finish()
-                except Exception:
+                except Exception as e:
                     print("  [wandb] W&B logging failed (non-fatal)")
 
             print()
@@ -599,6 +613,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("spec", help="Path to subject spec JSON")
     parser.add_argument("--technique", default=None, choices=["docs", "ollama", "template", "openai", "anthropic"])
     parser.add_argument(
+        "--judge-provider",
+        default="ollama",
+        choices=["ollama", "wandb"],
+        help="Judge backend for DeepEval metrics (ollama local, wandb hosted Serverless Inference)",
+    )
+    parser.add_argument(
         "--judge-preset",
         default=None,
         choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
@@ -626,6 +646,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--wandb", action="store_true", help="Enable W&B logging")
     parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
     parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
+    parser.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference (default: --wandb-project)")
+    parser.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference (default: --wandb-entity)")
     return parser.parse_args()
 
 

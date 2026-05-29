@@ -167,7 +167,7 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
     if dataset_path and os.path.isfile(dataset_path):
         try:
             dataset_sha256 = file_sha256(dataset_path)
-        except Exception:
+        except Exception as e:
             dataset_sha256 = None
         summary_path = Path(dataset_path).parent / "quality_summary.json"
         if summary_path.exists():
@@ -184,14 +184,14 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
                     "dataset_hash": (raw_summary.get("dataset_summary") or {}).get("content_sha256"),
                     "distribution_gaps": raw_summary.get("distribution_gaps"),
                 }
-            except Exception:
+            except Exception as e:
                 quality_summary = {"path": str(summary_path), "status": "unreadable"}
 
     try:
         config_hash = hashlib.sha256(
             json.dumps(config, sort_keys=True, default=str).encode("utf-8")
         ).hexdigest()
-    except Exception:
+    except Exception as e:
         config_hash = None
 
     batch_size = training_cfg.get("batch_size")
@@ -199,7 +199,7 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
     effective_batch_size = None
     try:
         effective_batch_size = int(batch_size or 0) * int(grad_accum or 0)
-    except Exception:
+    except Exception as e:
         pass
 
     wandb_cfg = {
@@ -251,7 +251,7 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
     if callable(define_metric):
         try:
             define_metric("train/final_loss", summary="min")
-        except Exception:
+        except Exception as e:
             pass
     return run
 
@@ -625,7 +625,7 @@ def count_training_examples(path):
             ["wc", "-l", path], capture_output=True, text=True, timeout=10
         )
         return int(result.stdout.strip().split()[0])
-    except Exception:
+    except Exception as e:
         return 0
 
 
@@ -870,7 +870,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                     elif "<|start_header_id|>assistant<|end_header_id|>" in example:
                         instruction_part = "<|start_header_id|>user<|end_header_id|>"
                         response_part = "<|start_header_id|>assistant<|end_header_id|>"
-                except Exception:
+                except Exception as e:
                     pass
 
             if response_part is not None and instruction_part is not None:
@@ -920,9 +920,9 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                                     "train/num_examples": num_examples,
                                 }
                             )
-                        except Exception:
+                        except Exception as e:
                             pass
-                    except Exception:
+                    except Exception as e:
                         pass
         metrics["wandb_url"] = wandb_url
         with open(os.path.join(output_dir, "training_metrics.json"), "w") as f:
@@ -960,7 +960,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                     )
                     dataset_artifact.add_dir(dataset_path)
                     wandb_module.log_artifact(dataset_artifact)
-            except Exception:
+            except Exception as e:
                 pass
 
             try:
@@ -979,7 +979,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                     )
                     cfg_artifact.add_file(snapshot_path)
                     wandb_module.log_artifact(cfg_artifact)
-            except Exception:
+            except Exception as e:
                 pass
 
             try:
@@ -1002,7 +1002,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                     )
                     lora_artifact.add_dir(output_dir)
                     wandb_module.log_artifact(lora_artifact)
-            except Exception:
+            except Exception as e:
                 pass
 
         return trainer, metrics
@@ -1010,7 +1010,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
         if wandb_module is not None:
             try:
                 wandb_module.finish()
-            except Exception:
+            except Exception as e:
                 pass
 
 

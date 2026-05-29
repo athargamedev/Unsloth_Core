@@ -48,13 +48,13 @@ def read_tensorboard(run_dir: str) -> dict:
         try:
             ea = EventAccumulator(event_dir)
             ea.Reload()
-        except Exception:
+        except Exception as e:
             continue
 
         for tag in ea.Tags().get("scalars", []):
             try:
                 events = ea.Scalars(tag)
-            except Exception:
+            except Exception as e:
                 continue
 
             points = [{"step": e.step, "value": round(e.value, 6)} for e in events]

@@ -241,7 +241,7 @@ def main():
                     "quick_eval/total": total_q,
                 })
                 _wandb.finish()
-            except Exception:
+            except Exception as e:
                 print("  [wandb] Quick eval W&B logging failed (non-fatal)")
 
         # Print summary

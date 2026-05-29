@@ -396,7 +396,7 @@ def write_manifest(npc_key: str, model_id: str, quantizations: list[str],
             with open(spec_path) as f:
                 spec = json.load(f)
                 manifest["npc_name"] = spec.get("npc_name", npc_key)
-        except Exception:
+        except Exception as e:
             manifest["npc_name"] = npc_key
     else:
         manifest["npc_name"] = npc_key
@@ -438,7 +438,7 @@ def write_manifest(npc_key: str, model_id: str, quantizations: list[str],
                     if train_loss is not None:
                         manifest["training_loss"] = round(train_loss, 4)
                         manifest["eval_perplexity"] = round(math.exp(train_loss) if train_loss > 0 else 999, 2)
-    except Exception:
+    except Exception as e:
         pass
 
     # Compute checksums for each GGUF file
