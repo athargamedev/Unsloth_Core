@@ -98,7 +98,7 @@ python scripts/dataset/generate_dataset_ollama.py subjects/NPC_specs/history_gui
 ./ucore generate-ollama subjects/NPC_specs/history_guide.json --temperature 0.6
 
 # Results in: subjects/datasets/history_guide/ollama/train.jsonl
-# With: 12 identity + 56 teaching + 32 dialogue + 16 quest + 16 refusal = 132 total
+# With: 8 identity + 32 teaching + 16 dialogue + 8 quest + 8 refusal = 72 total
 ```
 
 ### Example 2: Generation with Health Check & Auto-Pull
@@ -173,12 +173,12 @@ CUDA_VISIBLE_DEVICES=-1 ollama serve
 ./ucore generate-ollama subjects/NPC_specs/history_guide.json --dry-run
 
 # Output shows:
-# [DRY-RUN] Would generate 132 examples:
-#   identity: 12
-#   teaching: 56
-#   dialogue: 32
-#   quest: 16
-#   refusal: 16
+# [DRY-RUN] Would generate 72 examples:
+#   identity: 8
+#   teaching: 32
+#   dialogue: 16
+#   quest: 8
+#   refusal: 8
 ```
 
 ## Output Structure
@@ -222,8 +222,8 @@ subjects/datasets/{npc_key}/ollama/
       "advanced": 39
     },
     "generator_stats": {
-      "requests": 132,
-      "successes": 132,
+      "requests": 72,
+      "successes": 72,
       "errors": 0,
       "success_rate": 1.0
     }
@@ -242,7 +242,7 @@ subjects/datasets/{npc_key}/ollama/
   --batch-size 2 \
   --temperature 0.6
 ```
-- **Expected**: ~2-3 minutes for 132 examples
+- **Expected**: ~2-3 minutes for 72 examples
 - **Recommended**: Use smaller batch size to avoid OOM
 
 #### RTX 4090 (24GB VRAM)
@@ -252,7 +252,7 @@ subjects/datasets/{npc_key}/ollama/
   --batch-size 8 \
   --temperature 0.7
 ```
-- **Expected**: ~30-60 seconds for 132 examples
+- **Expected**: ~30-60 seconds for 72 examples
 - **Recommended**: Increase batch-size for parallelization
 
 #### CPU Only
@@ -262,7 +262,7 @@ subjects/datasets/{npc_key}/ollama/
   --batch-size 1 \
   --temperature 0.5
 ```
-- **Expected**: ~10-20 minutes for 132 examples
+- **Expected**: ~10-20 minutes for 72 examples
 - **Recommended**: Use smaller 4B model, batch-size=1
 
 ### Model Selection Guide

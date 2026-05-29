@@ -7,6 +7,7 @@ This directory contains the structured documentation for the Unsloth_Core projec
 ```
 docs/
 ├── MAP.md                                   ← (this file)
+├── COMMANDS_DICTIONARY.md                   ← Exhaustive flag/command dictionary (auto-verified)
 ├── TRAINING_WORKFLOW_CONTEXT.md             ← End-to-end pipeline reference (primary AI-agent context)
 ├── architecture/
 │   ├── PIPELINE_FLOW.md                     ← 7-stage pipeline: Spec → GGUF
@@ -20,8 +21,6 @@ docs/
 ├── reference/
 │   ├── CLI_REFERENCE.md                     ← Full `./ucore` command reference
 │   └── SUBJECT_SPEC.md                      ← Schema definition for subjects/NPC_specs/*.json
-└── plans/
-    └── 2026-05-16-self-improving-pipeline.md ← Pipeline roadmap
 ```
 
 ## Document Quick Reference
@@ -29,6 +28,7 @@ docs/
 | Document | What it covers |
 |:---------|:---------------|
 | [`TRAINING_WORKFLOW_CONTEXT.md`](TRAINING_WORKFLOW_CONTEXT.md) | Primary AI-agent context: full pipeline, presets, flags, data flow, evaluation patterns, common pitfalls |
+| [`COMMANDS_DICTIONARY.md`](COMMANDS_DICTIONARY.md) | Exhaustive, auto-verified `./ucore` command and flag reference |
 | [`architecture/PIPELINE_FLOW.md`](architecture/PIPELINE_FLOW.md) | 7-stage pipeline flow: Generation → Sanitization → Dataset Quality Gate → Training → Export & Smoke Test → Model Evaluation → Feedback Loop |
 | [`architecture/SUPABASE_SCHEMA.md`](architecture/SUPABASE_SCHEMA.md) | All database tables: runtime (npc_profiles, dialogue_sessions, npc_memories) and pipeline (jobs, runs, artifacts, quality gates, eval, configs, api_keys, audit_log) |
 | [`architecture/MODULAR_BACKEND.md`](architecture/MODULAR_BACKEND.md) | 27-file modular Express backend: route map, middleware pipeline, design decisions |
@@ -38,7 +38,6 @@ docs/
 | [`integration/FRONTEND_DASHBOARD.md`](integration/FRONTEND_DASHBOARD.md) | React dashboard: modular backend, auth-protected APIs, job queue integration, Zustand + React Query state management |
 | [`reference/CLI_REFERENCE.md`](reference/CLI_REFERENCE.md) | Full `./ucore` command reference with examples |
 | [`reference/SUBJECT_SPEC.md`](reference/SUBJECT_SPEC.md) | JSON schema for `subjects/NPC_specs/*.json` — identity, teaching, dialogue, quest, refusal |
-| [`plans/2026-05-16-self-improving-pipeline.md`](plans/2026-05-16-self-improving-pipeline.md) | Roadmap for feedback loop and knowledge gap detection |
 
 ## Getting Started
 

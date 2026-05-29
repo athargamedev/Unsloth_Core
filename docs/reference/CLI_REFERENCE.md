@@ -1,5 +1,7 @@
 # CLI Reference: `./ucore`
 
+> **DEPRECATED**: This reference is superseded by [`docs/COMMANDS_DICTIONARY.md`](../COMMANDS_DICTIONARY.md) which is the authoritative CLI reference (1305 lines, auto-verified against actual CLI).
+
 The `ucore` tool is the unified entry point for the Unsloth_Core pipeline. It wraps the underlying Python scripts into a clean, command-driven interface.
 
 ## 🚀 The Pipeline Command
@@ -42,9 +44,6 @@ Validates and cleans a `.jsonl` dataset.
 - `input`: Path to JSONL.
 - `--strict-canonical`: Ensures the output path follows project conventions.
 
-### `migrate-datasets`
-Moves legacy flat datasets into the new canonical structure.
-
 ---
 
 ## 🎓 Training & Export
@@ -53,7 +52,7 @@ Moves legacy flat datasets into the new canonical structure.
 Starts a LoRA fine-tuning session.
 - `config_or_spec`: Path to spec or YAML config.
 - `--from-spec`: Optional for `.json` subject files; `ucore train` auto-detects them.
-- `--preset`: Choose from `configs/presets/` (`fast-3b`, `safe-any`, `smoke`, `wandb`).
+- `--preset`: Choose from `configs/presets/` (`fast-3b`, `safe-any`, `smoke`).
 - `--wandb`: Enable Weights & Biases experiment tracking (logs config, metrics, dataset/LoRA/GGUF artifacts).
 - `--no-wandb`: Disable W&B even if enabled in config.
 - `--export-gguf`: Automatically export to GGUF after training completes.
@@ -104,11 +103,6 @@ Compares two training runs using their specific `run_id`.
 ---
 
 ## 🛠️ Utility & Infrastructure
-
-### `dashboard` (DEPRECATED)
-> **Deprecated**: Use `npm run dev` in `frontend_control/unity-npc-llm-training-dashboard/` instead (port 3100).
-
-Starts the legacy monitoring dashboard (default port 8000). Will be removed in a future release.
 
 ### `supabase-check`
 Verifies that an NPC's profile and memory structures are correctly set up in the local Supabase instance.

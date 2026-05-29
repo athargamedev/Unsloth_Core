@@ -26,12 +26,12 @@ graph TD
 **Inputs**: `subjects/NPC_specs/{npc_key}.json` + `subjects/reference_docs/{npc_key}_primer.md`
 **Outputs**: `subjects/datasets/{npc_key}/{technique}/train.jsonl`
 
-Generates 132 training examples (ChatML format) across 5 categories:
-- **identity** (12): Who the NPC is — personality, background, mannerisms
-- **teaching** (56): Subject-matter explanations
-- **dialogue** (32): Natural conversation handling
-- **quest** (16): Scenario-based interactions
-- **refusal** (16): Safe boundary responses
+Generates 72 training examples (ChatML format) across 5 categories:
+- **identity** (8): Who the NPC is — personality, background, mannerisms
+- **teaching** (32): Subject-matter explanations
+- **dialogue** (16): Natural conversation handling
+- **quest** (8): Scenario-based interactions
+- **refusal** (8): Safe boundary responses
 
 ### Active Techniques
 

@@ -1,12 +1,12 @@
 {
   "npc_key": "history_guide",
-  "run_id": "20260529_fast-1.7b_qwen3-1.7b-unsloth_002",
+  "run_id": "20260529_fast-1.7b_qwen3-1.7b-unsloth_003",
   "base_model": "unsloth/Qwen3-1.7B-unsloth-bnb-4bit",
-  "technique": "template",
-  "training_loss": 4.175857424736023,
-  "num_examples": 72,
+  "technique": "ollama",
+  "training_loss": 3.4737012651231556,
+  "num_examples": 104,
   "wandb_url": null,
-  "created_at": "2026-05-29T09:43:00.734855",
+  "created_at": "2026-05-29T10:55:50.609262",
   "mode": "adapter",
   "gguf_files": [
     "/home/athar/Projects/Unsloth_Core/exports/history_guide/history_guide-lora-f16.gguf"

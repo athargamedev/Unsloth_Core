@@ -1,0 +1,644 @@
+{
+  "created_at": "2026-05-29T13:37:08.553485+00:00",
+  "npc_key": "history_guide",
+  "technique": "ollama",
+  "spec": {
+    "path": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/history_guide.json",
+    "reference_doc": "subjects/reference_docs/history_guide_primer.md",
+    "system_prompt": "## IDENTITY\nName: HistoryGuide | Role: world history storyteller\nSetting: The Chronos Spire archives\nPlayer Relation: Speaking to an inquisitive traveler\n\n## VOICE\nDetailed, vivid, chronological | Connect events to consequences | Speak exactly 3-5 descriptive sentences (~500 characters) | NO markdown formatting, lists, or bullets\n\n## KNOWLEDGE\nAncient civilizations, classical antiquity, medieval history, modern history, historical methods\n\n## RULES\nNEVER present speculation as fact | NEVER promote misinformation or conspiracy theories\nPrefer primary sources, clear context, and cause/effect explanations"
+  },
+  "manifest": {
+    "npc_key": "history_guide",
+    "technique": "ollama",
+    "sanitized": true,
+    "sanitizer": {
+      "version": "v2",
+      "date": "2026-05-29T13:34:39Z",
+      "argv": "scripts/dataset/sanitize_dataset.py subjects/datasets/history_guide/ollama/train.jsonl --output subjects/datasets/history_guide/ollama/train_clean.jsonl --strict-canonical --require-complete-metadata --max-sentences 5 --verbose-artifacts --quality-report",
+      "artifact_check_mode": "strict",
+      "strict_mode": false
+    },
+    "spec": {
+      "file": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/history_guide.json",
+      "hash": "sha256:5553504225d44bb1be487783cc7d4c480793e8710ef9d2691b1d3d2e57e437e2"
+    },
+    "input": {
+      "file": "subjects/datasets/history_guide/ollama/train.jsonl",
+      "hash": "sha256:aff682fe5e089e1b81316c4f8d281edcc349101be76f831bdaffe0ba602531b3",
+      "total_examples": 106
+    },
+    "statistics": {
+      "total_input": 106,
+      "total_output": 104,
+      "total_train": 104,
+      "total_validation": 12,
+      "by_category": {
+        "teaching": 41,
+        "identity": 16,
+        "refusal": 16,
+        "quest": 9,
+        "dialogue": 22
+      },
+      "by_difficulty": {
+        "intermediate": 32,
+        "beginner": 59,
+        "advanced": 13
+      },
+      "by_safety_tag": {
+        "boundary_enforcement": 16
+      },
+      "quality_scores": {
+        "mean": 82.6,
+        "median": 81.0,
+        "min": 76,
+        "max": 91,
+        "std_dev": 4.0,
+        "passed_threshold": 104,
+        "flagged_for_review": 0,
+        "distribution": {
+          "0-9": 0,
+          "10-19": 0,
+          "20-29": 0,
+          "30-39": 0,
+          "40-49": 0,
+          "50-59": 0,
+          "60-69": 0,
+          "70-79": 20,
+          "80-89": 74,
+          "90-99": 10,
+          "100+": 0
+        }
+      }
+    },
+    "discarded": {
+      "total": 2,
+      "by_reason": {
+        "Duplicate content_hash": 2
+      }
+    },
+    "content_hashes": [
+      "0aa41f5b91e506f6994df2dfb56eb0d812e57f0c3ce09be519a52fb33cd34eb1",
+      "be0e7743685e8b19be46286f210368980d9ab0babdb12d1480fc92b6fb350dab",
+      "b7c7145556ebaa6ccbb6cd34549034ea69aa55b76ab2c46bf6272f18282acb14",
+      "2ece749d78a052c376376771172d02feb9dca385711f918923f86ff2fd32e0b1",
+      "fff2b09c110f212f40c0cdc978f28678feaa29df863ff18020a29cdf86e9a245",
+      "e8bb8ac4fd4ba2bd0acbd9c4b6a3557c6cd819bff575deaddc67480adf281237",
+      "87eae907beae181b988329570745a77168e41ccc410919bf9fe484aa365d9b5f",
+      "c76407187a382f232e3a519d3555f224875b90c9f14e40f0ae308bb2b65bfdf6",
+      "34ce4119fe70407027845a6cb50088dff51f9f0a7a219466bedc6c0dc06e29ae",
+      "5e862fb0c3447e856cfa0095c559907d871dd81ab0021e2c7c0cc67b938b4387",
+      "732d2898b77f5cc446c90b889b65ff041e1295b3a8bcdf073af20ffff981aa3e",
+      "7d0d23099b42773c33ab3e2b6791df0482827bca63eb0bd94f7a1a878c2b8a2c",
+      "37eeab9bb38feea9e2907e5d67c0960dee1e406fb5d185cbfb236e6f5f1a5246",
+      "07d1e289d29b20eed64c93f7cf6dd4f010613791b5b1a0101131c0b732a44a61",
+      "c280d72ac8c9708a5283961865e811529b028a24e61703c767417ff18d7047b8",
+      "a1da1e266320bd4bb04d94c82a61d707ce71cc741e0af915d55d947314813e24",
+      "d06002cf006c1a77ca89d0dcd212bfc0bc78b5c8fc9f02d9eba9d325d35362a7",
+      "1bf5b41b20846656c89a397a846fcb098caa9bcaadc8d039d7f94aec5425a328",
+      "e54d4c8a58b65aded2a0807d7f666f99b75d29342e73d7eea501a0b8a7610045",
+      "b7c7145556ebaa6ccbb6cd34549034ea69aa55b76ab2c46bf6272f18282acb14",
+      "cba141baaedc62025e3726fe1166700c93bbe589f03c4b640e87910329c14b58",
+      "0982cdd539f23cd4734691d0c1632e6bb5cda7a21849b20db4a23c1670192762",
+      "c36ed51b1b08344e585b97ccaf6f2c875bbfd8b66f043f435e3e07e35d3f5348",
+      "a981a8c6b2c58755552d8a73e991f340c452e304ff31101dbab4f71b02f7ebee",
+      "f8bf73c8787a95e055ded8a3b5af9bfcb89344529820d878f98a6979b16be368",
+      "3f686059815553a053ea0e05a48e27eaec1c3387803671c3d0b90b01e66072f2",
+      "d0b359164a9a3ebca3df266766e00cfa597ec820909df159325d1644a3cea320",
+      "8dce6d1926cf7eecdb1a88fd8b9b53d9a04b20c30dc771f92c13a47c3aefa369",
+      "0152e36ac376db4a16d1ddfe4cb944acf4277a7c5e38160a9776aa954aa49ee6",
+      "feceb6c9f9d14db9271d7eec97b5ec81d021a0e6927d82768abb7c43303a6e8a",
+      "6a18b7755de92a39bfd831855ba6358bfa716ea71fc6ab68f226ad072fadcd36",
+      "e571645206239537d2841160572d649135bbcd7600801def7a26cd2a1e8a8088",
+      "5c89323cc355d4f481bc9838f71266438ed4cab11a64f8eac196f6c7f869b153",
+      "8a21be3569407433ba79fbba8565686690259af56a4eb65099dc9d24a4d4bd42",
+      "5c8334cb0530a0524c53c53851c850967f2854b51c76a884079dfacdd80e4934",
+      "6620f1bf7cb4226456737a138f9d6782f2277399270f408b8b3155fcff8a6ef2",
+      "c7a9a2aed908740a14236f2bc86212294926cc798278c649f538ab34d512386a",
+      "b2ec35bed6c317edc5dc3f15f019bc6cdff9be6339467e6231ffb2b0af7a4397",
+      "e5e9646baea1fd042def318eee8a45c4d8b06b45398a98dad7a94dd7fc23589e",
+      "510563b170c3784d7a2f8f0f667b4011ce285e809fbd686324ea6ec44eb48345",
+      "d7edfdf64d4a87bfdafd4bbc99fa95366d19c4df24c179ac7d323d0ba3ef21c0",
+      "4434653880eb8e6003927e5c7508928f69e82f81951064616b92fffbd94222d3",
+      "46c000bcda0ce23f938b38864d7f3dd7fc4a2d50dee8d9db6ebbbb267135a9ab",
+      "2f66ee44ccd1fd2ada2cf53cbff96b0723577c54779240e46308f808a1e9fc77",
+      "282099bfed39c301cb1b5bc608ea324911f7e9896ed78856c42d1ed4277a4af9",
+      "0b0f0c429b2c812b7de043c3edd9e2e1e47d2ce87e7d6b84435482ce4330ada2",
+      "6fd9d38ac7d44b48dd4871087c89a28e16e33f828475ea00f84faba3bc8aed5d",
+      "5fbb2ab936b8c8a07a823959d89914730ee2cb1580fef911cf650ca0112d43eb",
+      "b021a92623fde91016d6c1a899e45e3414856eb9e9977f12bd09b6d3430a21e9",
+      "cadc37b702380f60df5706beb8bd6e0a4813da79b978361daa749fa492c58b32",
+      "fff2b09c110f212f40c0cdc978f28678feaa29df863ff18020a29cdf86e9a245",
+      "2198297a3a842c86f65cc1a7e1d5b43af8e7f8c4d298fcc4d31969d82801fd74",
+      "de30d109b5d84532b0361937d4dba3566679bb8ec65f01696a43742c2b57d9e5",
+      "a0b6e36bef234dad1bcba640955535bd114edbd66effe1738087911ac2602231",
+      "b1c711708278eb5b7781ac29c544a64706232592808c3f15df1880c12e6f1395",
+      "f877e435acf85fb0962239ff14cb86bb174ce03b8a4b962e764faebb16bf3030",
+      "09f3e032f032e3a36c24101fa84bbade98eb5c4fce9e9271d2afe5327fcd73b1",
+      "f5a8e4a36d407d69c2869aba59c4aabff953db8dc463610d80bf406b3a96c949",
+      "23ad960263ba6a0be5abf10fc10acde52e355990a202601103aa3a09ff34bda9",
+      "e3ebd939bd8c8e3238ea1d73cb8a4db25827e2247e79ce75eea5529ec8ecaffd",
+      "534b712ebefcac593f30528a5c45fd1959136d46fa1c00c3e501e578d79e1c45",
+      "2198297a3a842c86f65cc1a7e1d5b43af8e7f8c4d298fcc4d31969d82801fd74",
+      "2198297a3a842c86f65cc1a7e1d5b43af8e7f8c4d298fcc4d31969d82801fd74",
+      "fbc79c2c20cddffea9e6b1da7fc96a5578679e0e67b7895ec5127eb8f8e32e94",
+      "0a7d6522420240ffd7129d573a8419a3440fb419b4a9f851e098e75ebf1b441e",
+      "e7f95569441713685eee09d525b8bbacf9098f07ce92229ec9e209270eae74c1",
+      "6f14b174f31f8e23fee6fb6b04959866c0b81ea240daf15c552dac3d9d448848",
+      "ef2b2ba349668924d47bc4ef9e4d4f02cc22666e9c503f9f5e44f7ab74d71bf3",
+      "1bd4d77d58b8ebc4685bafcc486da25256cbd07364dec29cf099b6a8ab2ae115",
+      "843199e532e9a0ff8ac4d95fc8caee81b7bc1527c516b60efe5fa9ca46c2c151",
+      "17730b7827fbdb1dee83cbc9bda85024cb57ea46a1c26a200887bfc189538d28",
+      "4a5dac789572f03e04abbdbda58609c69f454b12124fde5dc2226fc65036d0ea",
+      "ace163c093371ee24b8c5c2d5218b093c920d62d0cd96b3c89a85f3bc0d8c71f",
+      "1032299ca07f173cd41c85732ee0a4ae92675aaf40cd548549932e7ed19392ee",
+      "c1c6cdfc1e7b4f2b70c67046f69650e73f28f2453ac6449a7b900202e2bc7b5a",
+      "ed01ab8fa9e21b1b65866d78dea81ca7a243fafbb5af3e0fdcea9b9385f2a539",
+      "c280d72ac8c9708a5283961865e811529b028a24e61703c767417ff18d7047b8",
+      "ca91860329a0440c62a444610b0bd543275a34d0e83d8905770a9f016ac89b33",
+      "0f64fe2347dd925057869ff0bf5bcfe197ae384cb8fe4b9dd6268d78e7bad653",
+      "9b46ad3e05d0f44b1a0cbb9d421c08b631ec486e6737ef7ac4bab378be1d824d",
+      "f77026b892da39d54349de8cdd9450890722b8c68bb16dfdcf2542502b99bfa1",
+      "00d07e287e356c9e751c6c241f466ded03c74ce7320fcdb5251906fdfc152520",
+      "e54d4c8a58b65aded2a0807d7f666f99b75d29342e73d7eea501a0b8a7610045",
+      "ec5e590ab65ad41b4b6eefe955415490fe885cd5434920b219a6ff86c5d84ac5",
+      "85535115100bf26cf6485514f661ba6ec200fe474b45c21114974e9bbe3eb8f0",
+      "e9dd49ce008bde32ad784b0a88ddbde94f10fb93f1b17adedc73877783fa5bd3",
+      "90bc7540085f6e8a67e3203d276ff8e870d88895552aa3694fe9727e7d4ef0bb",
+      "d64710a0abf5501eef081def0f16ec83b8e4207020705a4560ab69db023a5e0f",
+      "e8fe516c83b59cacfa83bb9b3891d4c2f0a6aa31b100bfc770e5f7e2c0a203fa",
+      "46caedad69a1f0abda0d2e727dbe29ac835e25e6db436621680786f6aed61694",
+      "086f95b0e2fc7adfc7deecb1ea8e0d3eeda541c498084de4c8c87c09f09b09e7",
+      "4d9ef722ca719c756ba057496033903b677551de63cf37c4adff867b42e48990",
+      "184d2a2dba08cebe8e76a0de35f7f215b447dcd71e1a9c0f1242ff8b89a78d7c",
+      "38b403977fd2fb36b06cd2de5857505be6aff4de949a9e12c65c5c5c2528c7f6",
+      "e0a711a6ae95078a953a7baf9834aa0b9ed641bb3b3f70578e618f20aba3c60d",
+      "a971d18010500e7f120492b6f4b3aa7767eeef11682821a9ef28e8758cb2ea33",
+      "4635fd84b97e5e3670a1725dd37d29ee261db3c8823cb93db83e124701dc1e27",
+      "069103b018de84ef96cda6b5a123d54e0719c776b10131d2df8a959483ee2963",
+      "4eab266d1367086ecc49335d62c58786560cce83d7b7a4c15879bee0f1daaa61",
+      "45e49e742a456d8d890f5cabd9f8f427f50498403165e692d56e2136e94a6137",
+      "79ae818802008789be81fd8bef91704a7a3479289dcf6d79d91620e681ab0f98",
+      "fff2b09c110f212f40c0cdc978f28678feaa29df863ff18020a29cdf86e9a245",
+      "8fdfbfc1039f9e9eb3d64575d96baeea7e8ee7243618c17ca83dc475a0fc0e92",
+      "d7936f3af4f8e2c316384e2a55fb8a10625b9fe4cb4b2cd47ab8de45380de740"
+    ],
+    "content_hash_prefix": "sha256:",
+    "generation": {
+      "date": "2026-05-29T13:29:55Z",
+      "seed": 42,
+      "temperature": 0.7,
+      "multi_turn_ratio": 0.25,
+      "version": "ollama-v2"
+    }
+  },
+  "sanitizer": {
+    "manifest": {
+      "version": "v2",
+      "date": "2026-05-29T13:34:39Z",
+      "argv": "scripts/dataset/sanitize_dataset.py subjects/datasets/history_guide/ollama/train.jsonl --output subjects/datasets/history_guide/ollama/train_clean.jsonl --strict-canonical --require-complete-metadata --max-sentences 5 --verbose-artifacts --quality-report",
+      "artifact_check_mode": "strict",
+      "strict_mode": false
+    },
+    "input": {
+      "file": "subjects/datasets/history_guide/ollama/train.jsonl",
+      "hash": "sha256:aff682fe5e089e1b81316c4f8d281edcc349101be76f831bdaffe0ba602531b3",
+      "total_examples": 106
+    },
+    "statistics": {
+      "total_input": 106,
+      "total_output": 104,
+      "total_train": 104,
+      "total_validation": 12,
+      "by_category": {
+        "teaching": 41,
+        "identity": 16,
+        "refusal": 16,
+        "quest": 9,
+        "dialogue": 22
+      },
+      "by_difficulty": {
+        "intermediate": 32,
+        "beginner": 59,
+        "advanced": 13
+      },
+      "by_safety_tag": {
+        "boundary_enforcement": 16
+      },
+      "quality_scores": {
+        "mean": 82.6,
+        "median": 81.0,
+        "min": 76,
+        "max": 91,
+        "std_dev": 4.0,
+        "passed_threshold": 104,
+        "flagged_for_review": 0,
+        "distribution": {
+          "0-9": 0,
+          "10-19": 0,
+          "20-29": 0,
+          "30-39": 0,
+          "40-49": 0,
+          "50-59": 0,
+          "60-69": 0,
+          "70-79": 20,
+          "80-89": 74,
+          "90-99": 10,
+          "100+": 0
+        }
+      }
+    },
+    "discarded": {
+      "total": 2,
+      "by_reason": {
+        "Duplicate content_hash": 2
+      }
+    }
+  },
+  "dataset": {
+    "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/train_clean.jsonl",
+    "summary": {
+      "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/train_clean.jsonl",
+      "exists": true,
+      "content_sha256": "sha256:60c2bf87899dfc12daca4da7958576a15a36d8d737974e90e862d6fef16fe81c",
+      "total": 104,
+      "by_category": {
+        "dialogue": 22,
+        "identity": 16,
+        "quest": 9,
+        "refusal": 16,
+        "teaching": 41
+      },
+      "by_difficulty": {
+        "advanced": 13,
+        "beginner": 59,
+        "intermediate": 32
+      },
+      "by_split": {
+        "train": 104
+      },
+      "by_concept": {
+        "historical thinking": 17,
+        "medieval history": 17,
+        "modern history": 16,
+        "classical antiquity": 14,
+        "historical methodology": 14,
+        "ancient civilizations": 12,
+        "core timeline anchors": 5,
+        "safety and refusal boundaries": 5,
+        "useful vocabulary": 4
+      },
+      "unknown_rows": 0
+    },
+    "expected_distribution": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "distribution_gaps": []
+  },
+  "deepeval": {
+    "summary": {
+      "created_at": "2026-05-29T13:37:08.552068+00:00",
+      "npc_key": "history_guide",
+      "technique": "ollama",
+      "judge_model": "qwen3:latest",
+      "deepeval_identifier": "dataset-quality-history_guide-ollama-fast-20260529-103444",
+      "deepeval_result_identifier": "dataset-quality-history_guide-ollama-fast-20260529-103444",
+      "command": [
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+        "test",
+        "run",
+        "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+        "--identifier",
+        "dataset-quality-history_guide-ollama-fast-20260529-103444",
+        "--display",
+        "all",
+        "--skip-on-missing-params"
+      ],
+      "total": 5,
+      "passed": 0,
+      "failed": 5,
+      "pass_rate": 0.0,
+      "metric_count": 10,
+      "null_metric_count": 0,
+      "null_metric_rate": 0.0,
+      "status": "ok",
+      "metrics": {
+        "Persona and Category Fit [GEval]": {
+          "count": 5,
+          "average_score": 0.58,
+          "pass_rate": 0.0
+        },
+        "Training Usefulness and Specificity [GEval]": {
+          "count": 5,
+          "average_score": 0.68,
+          "pass_rate": 0.6
+        }
+      },
+      "categories": {
+        "dialogue": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "identity": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "quest": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "refusal": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "teaching": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        }
+      },
+      "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/quality_failures.json",
+      "quality_gate_mode": "fast",
+      "cases_per_category": 1,
+      "dataset_summary": {
+        "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/train_clean.jsonl",
+        "exists": true,
+        "content_sha256": "sha256:60c2bf87899dfc12daca4da7958576a15a36d8d737974e90e862d6fef16fe81c",
+        "total": 104,
+        "by_category": {
+          "dialogue": 22,
+          "identity": 16,
+          "quest": 9,
+          "refusal": 16,
+          "teaching": 41
+        },
+        "by_difficulty": {
+          "advanced": 13,
+          "beginner": 59,
+          "intermediate": 32
+        },
+        "by_split": {
+          "train": 104
+        },
+        "by_concept": {
+          "historical thinking": 17,
+          "medieval history": 17,
+          "modern history": 16,
+          "classical antiquity": 14,
+          "historical methodology": 14,
+          "ancient civilizations": 12,
+          "core timeline anchors": 5,
+          "safety and refusal boundaries": 5,
+          "useful vocabulary": 4
+        },
+        "unknown_rows": 0
+      },
+      "expected_distribution": {
+        "identity": 8,
+        "teaching": 32,
+        "dialogue": 16,
+        "quest": 8,
+        "refusal": 8
+      },
+      "distribution_gaps": [],
+      "dataset_total_rows": 104,
+      "dataset_unknown_rows": 0,
+      "sanitizer": {
+        "total_output": 104,
+        "discarded_total": 2,
+        "flagged_for_review": 0,
+        "passed_threshold": 104,
+        "quality_scores": {
+          "mean": 82.6,
+          "median": 81.0,
+          "min": 76,
+          "max": 91,
+          "std_dev": 4.0,
+          "passed_threshold": 104,
+          "flagged_for_review": 0,
+          "distribution": {
+            "0-9": 0,
+            "10-19": 0,
+            "20-29": 0,
+            "30-39": 0,
+            "40-49": 0,
+            "50-59": 0,
+            "60-69": 0,
+            "70-79": 20,
+            "80-89": 74,
+            "90-99": 10,
+            "100+": 0
+          }
+        }
+      },
+      "sanitizer_quality_issues": []
+    },
+    "failures": [
+      {
+        "test_name": "history_guide:teaching:1",
+        "input": "NPC: history_guide\nCategory: teaching\nConcept: historical thinking\nDifficulty: intermediate\nUser message: I've been reading about different historical periods, but I'm not sure how to think critically about them. Can you help me with that?",
+        "actual_output": "A concrete example is the big picture, the main cause, and one consequence. Use it to compare evidence, name the historical setting, and explain one consequence so the answer feels like a guided archive note rather than a loose fact.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "teaching",
+          "concept": "historical thinking",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 1
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.7,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response aligns with the NPC system prompt by providing a concise, descriptive example that matches the teaching category and historical thinking concept. It avoids markdown and adheres to the 3-5 sentence rule. However, it is overly brief and lacks sufficient detail to fully address the user's request for critical thinking strategies, which weakens its descriptive quality.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:identity:2",
+        "input": "NPC: history_guide\nCategory: identity\nConcept: useful vocabulary\nDifficulty: beginner\nUser message: Greetings, wise one. Can you tell me about the ancient Egyptians and their pyramids?",
+        "actual_output": "I'm HistoryGuide, a patient guide for World history, with a focus on clear steps and concrete examples.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "identity",
+          "concept": "useful vocabulary",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 2
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.6,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response aligns with the NPC system prompt and training category by adopting the role of a history guide and focusing on clear, descriptive explanations. It includes AI disclaimers by stating it is an NPC and adheres to the formatting restrictions by avoiding markdown. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, particularly for a beginner-level vocabulary-focused question about ancient Egyptians and pyramids.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:identity:2",
+        "input": "NPC: history_guide\nCategory: identity\nConcept: useful vocabulary\nDifficulty: beginner\nUser message: Greetings, wise one. Can you tell me about the ancient Egyptians and their pyramids?",
+        "actual_output": "I'm HistoryGuide, a patient guide for World history, with a focus on clear steps and concrete examples.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "identity",
+          "concept": "useful vocabulary",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 2
+        },
+        "metric": {
+          "name": "Training Usefulness and Specificity [GEval]",
+          "score": 0.3,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The Actual Output is a generic introduction that does not address the user's specific question about ancient Egyptians and their pyramids. It lacks actionable, domain-specific details about the target concept of 'useful vocabulary' and fails to demonstrate progress toward understanding the concept. The response is overly vague and does not align with the Context's emphasis on providing clear, evidence-based explanations with concrete examples and vocabulary.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:refusal:3",
+        "input": "NPC: history_guide\nCategory: refusal\nConcept: ancient civilizations\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve world history?",
+        "actual_output": "I can't answer that directly. Let's focus on a real world history question about chronology, sources, or evidence.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "refusal",
+          "concept": "ancient civilizations",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 3
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.7,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response aligns with the NPC system prompt by refusing to answer off-topic questions and redirecting to world history. It includes an AI disclaimer by stating it cannot answer directly and adheres to the formatting rule by avoiding markdown. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, which penalizes vague answers.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:refusal:3",
+        "input": "NPC: history_guide\nCategory: refusal\nConcept: ancient civilizations\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve world history?",
+        "actual_output": "I can't answer that directly. Let's focus on a real world history question about chronology, sources, or evidence.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "refusal",
+          "concept": "ancient civilizations",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 3
+        },
+        "metric": {
+          "name": "Training Usefulness and Specificity [GEval]",
+          "score": 0.6,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The Actual Output aligns well with the Input by refusing to engage with a non-relevant question and redirecting the user to world history topics. It demonstrates an understanding of the refusal category and the target concept of ancient civilizations. However, it lacks specific, actionable details about the concept itself, which could have included concrete examples or vocabulary from the Context. The response is brief and does not fully demonstrate progress toward understanding the target concept as required by the evaluation steps.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:quest:9",
+        "input": "NPC: history_guide\nCategory: quest\nConcept: modern history\nDifficulty: intermediate\nUser message: Can you tell me about the key events of modern history and their impacts on today's world?",
+        "actual_output": "Quest: sort three clues about modern history: a source, a date, and a consequence. Use # History Primer — Compact Reference for HistoryGuide NPC as the example, then explain which clue should come first and why.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "quest",
+          "concept": "modern history",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 9
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.3,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response does not align with the NPC system prompt or the requested training category. The output focuses on a quest task rather than providing an informative overview of modern history, which was the user's request. It also fails to adhere to the voice rules (e.g., speaking in 3-5 descriptive sentences) and does not provide sufficient detail or meet the descriptive requirements of the prompt.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:dialogue:10",
+        "input": "NPC: history_guide\nCategory: dialogue\nConcept: historical thinking\nDifficulty: beginner\nUser message: Isn't history just about memorizing dates and events?",
+        "actual_output": "Not quite — use The big picture, the main cause, and one consequence as the concrete example. If you apply historical thinking loosely, you can blur cause and effect; keep the source, the timeline, and the consequence separate.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "dialogue",
+          "concept": "historical thinking",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 10
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.6,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response aligns with the NPC system prompt by providing a concise, descriptive explanation that reflects the historical thinking concept. It avoids markdown and adheres to the 3-5 sentence rule. However, it lacks sufficient detail and fails to fully address the user's question about whether history is just about memorizing dates and events. The answer is too brief and does not provide a clear, evidence-based explanation as required by the prompt.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      }
+    ]
+  },
+  "feedback_signals": [
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "dialogue",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "identity",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "quest",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "refusal",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "teaching",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "high",
+      "metric": "Persona and Category Fit [GEval]",
+      "count": 5,
+      "suggested_action": "review_failed_rows_and_prompts"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Training Usefulness and Specificity [GEval]",
+      "count": 2,
+      "suggested_action": "review_failed_rows_and_prompts"
+    }
+  ]
+}

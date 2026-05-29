@@ -138,7 +138,6 @@ Base config → Preset override → CLI override
 | `smoke` | LLaMA 3.2 1B | 8 | 1 | 2 | Debugging/testing pipeline |
 | `fast-3b` | LLaMA 3.2 3B | 16 | 5 | 4 | Standard NPC training |
 | `safe-any` | Auto-detect | 8 | 3 | 2 | CUDA OOM fallback |
-| `wandb` | (inherits) | — | — | — | W&B experiment tracking (use as overlay) |
 
 **Output:** `outputs/{npc_key}/` (LoRA adapter weights)
 
@@ -492,7 +491,7 @@ subjects/NPC_specs/{npc_key}.json ──── subjects/reference_docs/{npc_key}
 Training configs are intentionally simple now:
 
 1. **Spec-derived base**: `scripts/training/train.py` builds the effective config from `subjects/NPC_specs/{npc}.json`, the detected canonical dataset path, and the default Llama 3.2 3B model.
-2. **Preset** (`configs/presets/{name}.yaml`) overrides hyperparameters. Current active presets are `fast-3b`, `safe-any`, `smoke`, and `wandb`.
+2. **Preset** (`configs/presets/{name}.yaml`) overrides hyperparameters. Current active presets are `fast-3b`, `safe-any`, `smoke`.
 3. **CLI flags** (`--lr`, `--epochs`, `--wandb`, etc.) override everything above.
 
 Use one training preset plus `--wandb` as a flag:
