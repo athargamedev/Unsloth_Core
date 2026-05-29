@@ -268,6 +268,11 @@ def eval_feedback_path(npc_key: str) -> Path:
     """Return eval/results/feedback/{npc_key}.json"""
     return eval_root() / "results" / "feedback" / f"{npc_key}.json"
 
+def eval_gaps_dir(npc_key: str) -> Path:
+    """Return eval/results/gaps/{npc_key}/"""
+    return eval_root() / "results" / "gaps" / npc_key
+
+
 
 def eval_timestamp() -> str:
     """Return a UTC timestamp suitable for eval report filenames."""
@@ -315,6 +320,10 @@ def ensure_all() -> None:
         eval_root() / "reports",
         eval_root() / "comparisons",
         eval_root() / "results",
+        eval_root() / "results" / "feedback",
+        eval_root() / "results" / "gaps",
+        pipeline_root(),
+        pipeline_runs_root(),
     ]
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True)

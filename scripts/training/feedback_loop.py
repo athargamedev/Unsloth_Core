@@ -162,7 +162,7 @@ def print_analysis(feedback_data, weak_concepts):
         flag = ""
         if win_rate < DEFAULT_WIN_RATE_THRESHOLD:
             flag = "  ← WEAK"
-        elif quality > DEFAULT_QUALITY_THRESHOLD:
+        elif quality < DEFAULT_QUALITY_THRESHOLD:
             flag = "  ← WEAK"
         elif violations > DEFAULT_VIOLATION_THRESHOLD:
             flag = "  ← WEAK"

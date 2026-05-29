@@ -232,13 +232,25 @@ When creating a new NPC with `./ucore init <npc_key> --subject <subject>`:
 ```
 subjects/NPC_specs/{npc_key}.json                          — spec with 4-section system prompt
 subjects/reference_docs/{npc_key}_primer.md       — stub primer for indexing
-subjects/datasets/{npc_key}/template/             — smoke/fast datasets only
-subjects/datasets/{npc_key}/{technique}/quality_*.json — DeepEval dataset gate reports
+subjects/datasets/{npc_key}/{technique}/          — dataset dirs per technique (5)
 outputs/{npc_key}/runs/                           — training checkpoints
 exports/{npc_key}/                                — GGUF exports
+eval/reports/{npc_key}/                           — evaluation reports & feedback NPs
 ```
 
-Only `template` technique directory is created. Reference docs are centralized at `subjects/reference_docs/` (not per-NPC).
+Root-level directories created by `ensure_all()` at project init:
+
+```
+eval/results/feedback/                            — per-NPC feedback JSONs
+eval/results/gaps/                                — per-NPC gap analysis JSONs
+eval/comparisons/                                 — side-by-side comparison reports
+eval/training-metrics/                            — training metrics YAMLs
+.pipeline/runs/                                   — pipeline run registry
+```
+
+All 5 technique directories are created during scaffold. DeepEval dataset gate outputs
+(`quality_summary.json`, `quality_failures.json`) live beside the dataset.
+
 
 ## 📜 Conventions
 - **NPC Keys**: Always `snake_case` (e.g., `history_guide`).

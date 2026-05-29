@@ -2,12 +2,17 @@
 """
 scaffold_npc.py — Initialize directory structure and spec for a new NPC.
 
-Creates:
   subjects/NPC_specs/{npc_key}.json               — validated subject spec
   subjects/reference_docs/{npc_key}_primer.md      — stub reference doc for indexing
-  subjects/datasets/{npc_key}/{technique}/        — dataset dirs per technique
+  subjects/datasets/{npc_key}/{technique}/        — dataset dirs per technique (5)
+  eval/reports/{npc_key}/                          — evaluation reports & feedback
+  eval/results/feedback/                           — per-NPC feedback JSON parent
+  eval/results/gaps/                               — gap analysis JSON parent
+  eval/comparisons/                                — comparison report dir
+  eval/training-metrics/                           — training metrics YAMLs
   outputs/{npc_key}/runs/                         — training output dir
   exports/{npc_key}/                              — GGUF export dir
+  .pipeline/runs/                                 — pipeline run registry
 """
 
 from __future__ import annotations
@@ -150,6 +155,8 @@ def scaffold(
 
     npc_name = name or npc_key.replace("_", " ").title().replace(" ", "")
     subject_text = subject or npc_key.replace("_", " ")
+    paths.ensure_all()
+    # Ensure shared root directories (eval, .pipeline, etc.) exist
 
     created_dirs: list[str] = []
     skipped_dirs: list[str] = []
@@ -244,6 +251,15 @@ def scaffold(
     else:
         skipped_dirs.append(f"exports/{npc_key}/ (already exists)")
 
+    # ── 6. Eval reports dir (per-NPC) ──────────────────────────────
+    eval_report_dir = paths.eval_report_dir(npc_key)
+    if force or not eval_report_dir.exists():
+        eval_report_dir.mkdir(parents=True, exist_ok=True)
+        created_dirs.append(f"eval/reports/{npc_key}/")
+    else:
+        skipped_dirs.append(f"eval/reports/{npc_key}/ (already exists)")
+
+
     # ── Summary ─────────────────────────────────────────────────────────────
     print(f"\nNPC '{npc_key}' scaffolded successfully.\n")
 
@@ -274,14 +290,21 @@ def scaffold(
         print("  Next steps:")
     print(f"    1. Edit subjects/reference_docs/{npc_key}_primer.md"
           f" with actual domain content")
-    print(f"    2. Validate spec:  ./ucore validate-spec subjects/NPC_specs/{npc_key}.json")
+    print(f"    2. Validate spec:  ./ucore validate-spec subjects/NPC_specs/{npc_key}.json"
+          f" --generation-ready")
     print(f"    3. Generate:       ./ucore generate subjects/NPC_specs/{npc_key}.json"
           f" --technique <chosen-technique>")
     print(f"    4. Sanitize:       ./ucore sanitize"
           f" subjects/datasets/{npc_key}/<chosen-technique>/train.jsonl"
-          f" --output subjects/datasets/{npc_key}/<chosen-technique>/train_clean.jsonl")
-    print(f"    5. Train & export: ./ucore train subjects/NPC_specs/{npc_key}.json"
+          f" --output subjects/datasets/{npc_key}/<chosen-technique>/train_clean.jsonl"
+          f" --strict-canonical --require-complete-metadata")
+    print(f"    5. Dataset Eval:   ./ucore dataset-eval subjects/NPC_specs/{npc_key}.json"
+          f" --technique <chosen-technique> --mode fast")
+    print(f"    6. Train & export: ./ucore train subjects/NPC_specs/{npc_key}.json"
           f" --technique <chosen-technique> --preset fast-3b --export-gguf")
+    print(f"    7. Evaluate:       ./ucore evaluate"
+          f" --baseline exports/{npc_key}/{npc_key}-lora-f16.gguf"
+          f" --spec subjects/NPC_specs/{npc_key}.json --report-html")
 
 
 def main() -> None:

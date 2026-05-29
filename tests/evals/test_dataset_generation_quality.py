@@ -142,7 +142,7 @@ def _build_cases() -> list[LLMTestCase]:
     return cases
 
 
-TEST_CASES = [] if not _DATASET_LIVE else _build_cases()
+TEST_CASES = _build_cases()
 
 
 @pytest.mark.parametrize("test_case", TEST_CASES, ids=lambda case: case.name)

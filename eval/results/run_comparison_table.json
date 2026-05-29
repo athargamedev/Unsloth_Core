@@ -29,7 +29,7 @@
       },
       "train_on_responses_only": false,
       "results": {
-        "training_loss": 2.690,
+        "training_loss": 2.69,
         "eval_loss": null,
         "win_rate": 0.33,
         "num_eval_questions": 9,
@@ -76,7 +76,7 @@
       },
       "train_on_responses_only": false,
       "results": {
-        "training_loss": 3.710,
+        "training_loss": 3.71,
         "eval_loss": null,
         "win_rate": null,
         "num_eval_questions": null,
@@ -196,7 +196,7 @@
       "npc_key": "history_guide",
       "timestamp": "2026-05-29",
       "model": {
-        "name": "unsloth/Qwen3-1.7B-bnb-4bit",
+        "name": "unsloth/Qwen3-1.7B-unsloth-bnb-4bit",
         "params": "1.7B",
         "architecture": "qwen3",
         "base_gguf_available": false
@@ -226,12 +226,12 @@
       },
       "export": {
         "mode": "adapter",
-        "size_mb": 7,
+        "size_mb": 34,
         "path": "exports/history_guide/history_guide-lora-f16.gguf",
         "has_gguf": true
       },
       "resources": {
-        "vram_gb": 4.20,
+        "vram_gb": 4.2,
         "training_time_sec": null,
         "samples_per_sec": null
       },
@@ -243,7 +243,7 @@
       "npc_key": "history_guide",
       "timestamp": "2026-05-29",
       "model": {
-        "name": "unsloth/Qwen3-1.7B-bnb-4bit",
+        "name": "unsloth/Qwen3-1.7B-unsloth-bnb-4bit",
         "params": "1.7B",
         "architecture": "qwen3",
         "base_gguf_available": false
@@ -273,12 +273,12 @@
       },
       "export": {
         "mode": "adapter",
-        "size_mb": 7,
+        "size_mb": 34,
         "path": "exports/history_guide/history_guide-lora-f16.gguf",
         "has_gguf": true
       },
       "resources": {
-        "vram_gb": 4.20,
+        "vram_gb": 4.2,
         "training_time_sec": 37.3,
         "samples_per_sec": 1.29
       },
@@ -290,7 +290,7 @@
       "npc_key": "chef_assistant",
       "timestamp": "2026-05-29",
       "model": {
-        "name": "unsloth/Qwen3-1.7B-bnb-4bit",
+        "name": "unsloth/Qwen3-1.7B-unsloth-bnb-4bit",
         "params": "1.7B",
         "architecture": "qwen3",
         "base_gguf_available": false
@@ -320,12 +320,12 @@
       },
       "export": {
         "mode": "adapter",
-        "size_mb": 7,
+        "size_mb": 34,
         "path": "exports/chef_assistant/chef_assistant-lora-f16.gguf",
         "has_gguf": true
       },
       "resources": {
-        "vram_gb": 4.20,
+        "vram_gb": 4.2,
         "training_time_sec": 49.8,
         "samples_per_sec": 2.17
       },
@@ -337,7 +337,7 @@
       "npc_key": "history_guide",
       "timestamp": "2026-05-29",
       "model": {
-        "name": "unsloth/Qwen3-1.7B-bnb-4bit",
+        "name": "unsloth/Qwen3-1.7B-unsloth-bnb-4bit",
         "params": "1.7B",
         "architecture": "qwen3",
         "base_gguf_available": false
@@ -367,12 +367,12 @@
       },
       "export": {
         "mode": "adapter",
-        "size_mb": 7,
+        "size_mb": 34,
         "path": "exports/history_guide/history_guide-lora-f16.gguf",
         "has_gguf": true
       },
       "resources": {
-        "vram_gb": 4.20,
+        "vram_gb": 4.2,
         "training_time_sec": 52.9,
         "samples_per_sec": null
       },
