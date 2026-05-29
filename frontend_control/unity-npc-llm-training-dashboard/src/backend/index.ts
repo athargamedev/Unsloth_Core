@@ -19,6 +19,7 @@ import { registerRoutes as registerSupabaseRoutes } from "./routes/supabase";
 import { registerRoutes as registerCommandsRoutes } from "./routes/commands";
 import { registerRoutes as registerWorkflowRoutes } from "./routes/workflow";
 import { registerRoutes as registerAssistantRoutes } from "./routes/assistant";
+import { registerRoutes as registerParametersRoutes } from "./routes/parameters";
 
 /**
  * Creates the Express application with all middleware and route modules mounted.
@@ -56,6 +57,7 @@ export function createApp(deps: RouterDependencies): Express {
   registerCommandsRoutes(app, deps);
   registerWorkflowRoutes(app, deps);
   registerAssistantRoutes(app, deps);
+  registerParametersRoutes(app, deps);
 
   return app;
 }

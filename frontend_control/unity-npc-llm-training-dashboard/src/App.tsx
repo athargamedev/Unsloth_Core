@@ -20,6 +20,7 @@ import {
   ExternalLink,
   XCircle,
   Wrench,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
@@ -60,9 +61,10 @@ const EvalReportsPanel = lazy(() => import('./components/EvalReportsPanel').then
 const LeaderboardPanel = lazy(() => import('./components/LeaderboardPanel').then((m) => ({ default: m.LeaderboardPanel })));
 const UnityDeployPanel = lazy(() => import('./components/UnityDeployPanel').then((m) => ({ default: m.UnityDeployPanel })));
 const RemoteConfigPanel = lazy(() => import('./components/RemoteConfigPanel').then((m) => ({ default: m.RemoteConfigPanel })));
+const ParameterRegistryPanel = lazy(() => import('./components/ParameterRegistryPanel').then((m) => ({ default: m.ParameterRegistryPanel })));
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands' | 'colab' | 'ollama' | 'workflow_assistant' | 'dataset_pipeline'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'pipeline' | 'dataset_params' | 'training' | 'eval' | 'feedback' | 'analytics' | 'jobs' | 'compare' | 'datasets' | 'logs' | 'commands' | 'colab' | 'ollama' | 'workflow_assistant' | 'dataset_pipeline' | 'parameters'>('overview');
   const [logs, setLogs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const fetchInFlightRef = useRef(false);
@@ -338,6 +340,18 @@ export default function App() {
           status: selectedDataset ? selectedDataset.id : 'No dataset selected',
           chips: [{ label: 'train.jsonl → train_clean.jsonl', tone: 'muted' as const }],
         };
+      case 'parameters':
+        return {
+          icon: SlidersHorizontal,
+          title: 'Parameter Registry',
+          description: 'Browse, search, and override all 102 pipeline parameters across 9 stages.',
+          tip: 'Overrides are stored in-memory for the session. Reset per-stage or globally.',
+          status: 'Registry',
+          chips: [
+            { label: '102 params', tone: 'accent' as const },
+            { label: '9 stages', tone: 'muted' as const },
+          ],
+        };
       case 'jobs':
         return {
           icon: Settings,
@@ -476,7 +490,7 @@ export default function App() {
         setDatasetViewTechnique(targetTechnique);
         setAvailableTechniques(targetDataset?.versions.map((version) => ({ name: version.tag, train_count: version.entries, val_count: 0 })) || []);
       }
-      const VALID_TABS = ['overview', 'pipeline', 'training', 'datasets', 'dataset_params', 'compare', 'analytics', 'eval', 'feedback', 'ollama', 'commands'] as const;
+      const VALID_TABS = ['overview', 'pipeline', 'training', 'datasets', 'dataset_params', 'compare', 'analytics', 'eval', 'feedback', 'ollama', 'commands', 'parameters'] as const;
       type ValidTab = typeof VALID_TABS[number];
       if ((VALID_TABS as readonly string[]).includes(detail.tab)) {
         setActiveTab(detail.tab as ValidTab);
@@ -953,6 +967,7 @@ export default function App() {
     ollama: 'Ollama Tuning',
     workflow_assistant: 'Docs Dataset Gen',
     dataset_pipeline: 'Dataset Pipeline (Gen + Eval)',
+    parameters: 'Parameter Registry',
   };
   const activeWorkflowStep = workflowStepByTab[activeTab] || 'Quick Start';
   const isRemoteMode = status?.executionMode === 'remote';
@@ -1041,6 +1056,7 @@ export default function App() {
               { id: 'ollama', label: 'Ollama', shortLabel: 'Ollama', icon: Wrench, tip: 'Manage Ollama performance tuning, GPU offloading, and service lifecycle.' },
               { id: 'workflow_assistant', label: 'WorkflowDocs', shortLabel: 'Docs', icon: Sparkles, tip: 'Canonical workflow reference.' },
               { id: 'dataset_pipeline', label: 'Dataset Pipeline', shortLabel: 'Pipe', icon: Layers, tip: 'Inspect the dataset lifecycle.' },
+              { id: 'parameters', label: 'Parameters', shortLabel: 'Params', icon: SlidersHorizontal, tip: 'Browse, search, and override pipeline parameters.' },
               { id: 'jobs', label: 'Ops', shortLabel: 'Ops', icon: Settings, tip: 'Control jobs and compare runs.' },
               { id: 'analytics', label: 'TensorBoard', shortLabel: 'TB', icon: BarChart3, tip: 'Select and compare training curves.' },
               { id: 'compare', label: 'Compare', shortLabel: 'Cmp', icon: Layers, tip: 'Multi-run side-by-side review.' },
@@ -1594,6 +1610,12 @@ export default function App() {
                   jobs={jobs}
                 />
               </motion.div>
+            )}
+
+            {activeTab === 'parameters' && (
+              <Suspense fallback={renderTabSkeleton('list')}>
+                <ParameterRegistryPanel />
+              </Suspense>
             )}
           </AnimatePresence>
 
