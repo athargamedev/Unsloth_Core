@@ -73,7 +73,9 @@ const parsedValData = (payload: StartCommandPayload, repoRoot: string): string =
 const appendWorkflowHooks = (args: string[], payload: StartCommandPayload): void => {
   const workflowHooks = optionValue(payload, "workflowHooks");
   if (workflowHooks) {
-    args.push("--workflow-hooks", sanitizeToken(workflowHooks, "workflow-hooks"));
+    // `--workflow-hooks` is a global ucore option, so argparse only accepts it
+    // before the subcommand: `./ucore --workflow-hooks path train ...`.
+    args.splice(1, 0, "--workflow-hooks", sanitizeToken(workflowHooks, "workflow-hooks"));
   }
 };
 
@@ -313,21 +315,9 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (boolOptionValue(payload, "exportGguf")) args.push("--export-gguf");
         if (boolOptionValue(payload, "fullMergeExport")) args.push("--full-merge-export");
 
-        // Model preset
-        const modelPreset = String(opts.modelPreset || "").trim();
-        if (modelPreset) args.push("--model-preset", sanitizeToken(modelPreset, "modelPreset"));
-
-        // Dataset eval controls
-        if (boolOptionValue(payload, "datasetEvalSkip") || boolOptionValue(payload, "skipDatasetEval")) args.push("--dataset-eval-skip");
-        const datasetEvalJudgeModel = String(opts.datasetEvalJudgeModel || "").trim();
-        if (datasetEvalJudgeModel) args.push("--dataset-eval-judge-model", sanitizeToken(datasetEvalJudgeModel, "datasetEvalJudgeModel"));
-        const datasetEvalJudgePreset = String(opts.datasetEvalJudgePreset || "").trim();
-        if (datasetEvalJudgePreset) args.push("--dataset-eval-judge-preset", sanitizeToken(datasetEvalJudgePreset, "datasetEvalJudgePreset"));
-        if (boolOptionValue(payload, "deepevalSoftFail")) args.push("--deepeval-soft-fail");
-        const deepevalOllamaUrl = String(opts.deepevalOllamaUrl || "").trim();
-        if (deepevalOllamaUrl) args.push("--deepeval-ollama-url", sanitizeToken(deepevalOllamaUrl, "deepevalOllamaUrl"));
-        const deepevalCasesPerCategory = String(opts.deepevalCasesPerCategory || "").trim();
-        if (deepevalCasesPerCategory) args.push("--deepeval-cases-per-category", deepevalCasesPerCategory);
+        // Dataset quality is gated by a prior `ucore dataset-eval` artifact.
+        // Training only supports bypassing that gate explicitly.
+        if (boolOptionValue(payload, "datasetEvalSkip") || boolOptionValue(payload, "skipDatasetEval")) args.push("--allow-ungated-dataset");
 
         appendWorkflowHooks(args, payload);
         return args;
@@ -376,15 +366,17 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       icon: "external-link",
       color: "success",
       type: "Export",
-      requiredFields: ["npcKey", "options.modelId"],
+      requiredFields: ["npcKey"],
       build: ({ npcKey, options }) => {
         const args = [
           "./ucore",
           "export",
           sanitizeToken(requireString(npcKey, "npcKey"), "npcKey"),
-          "--model",
-          sanitizeToken(requireString(String(options?.modelId || ""), "modelId"), "modelId"),
         ];
+        const modelId = String(options?.modelId || "").trim();
+        if (modelId) args.push("--model", sanitizeToken(modelId, "modelId"));
+        if (String(options?.quantization || "").trim()) args.push("--quantization", sanitizeToken(String(options?.quantization), "quantization"));
+        if (boolOptionValue({ npcKey, options } as unknown as StartCommandPayload, "fullMerge")) args.push("--full-merge");
         const payload = { npcKey, options } as unknown as StartCommandPayload;
         appendWorkflowHooks(args, payload);
         return args;
@@ -448,7 +440,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         // W&B: BooleanOptionalAction --wandb / --no-wandb
         const wandbOpt = opts.wandb;
         if (wandbOpt === true || wandbOpt === "true" || wandbOpt === "1") command.push("--wandb");
-        if (wandbOpt === false || wandbOpt === "false" || wandbOpt === "0") command.push("--no-wandb");
+        // evaluate.py currently has --wandb but no --no-wandb; omit false values.
 
         const wandbProject = String(opts.wandbProject || "").trim();
         if (wandbProject) command.push("--wandb-project", sanitizeToken(wandbProject, "wandbProject"));
@@ -607,26 +599,21 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       icon: "refresh-cw",
       color: "accent",
       type: "Feedback",
-      requiredFields: [], // feedback_json OR spec + candidate depending on mode
+      requiredFields: ["options.feedbackJson"],
       build: (payload) => {
         const opts = payload.options || {};
 
-        // Primary: feedback_json path; alternatively --spec + --candidate
         const feedbackJson = String(payload.feedback_json || opts.feedbackJson || "").trim();
-        const spec = String(payload.spec || opts.spec || "").trim();
-        const candidate = String(opts.candidate || "").trim();
-
-        let args: string[];
-        if (feedbackJson) {
-          args = ["./ucore", "feedback", resolvePathWithinRoots(
-            sanitizeToken(feedbackJson, "feedback_json"),
-            "feedback_json",
-            [repoRoot],
-            repoRoot,
-          )];
-        } else {
-          args = ["./ucore", "feedback"];
+        if (!feedbackJson) {
+          throw new Error("options.feedbackJson is required for feedback.");
         }
+
+        const args: string[] = ["./ucore", "feedback", resolvePathWithinRoots(
+          sanitizeToken(feedbackJson, "feedback_json"),
+          "feedback_json",
+          [repoRoot],
+          repoRoot,
+        )];
 
         // Thresholds
         const winRateThreshold = String(opts.winRateThreshold || "").trim();
@@ -641,14 +628,6 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         if (boolOptionValue(payload, "skip-gap-detection") || boolOptionValue(payload, "skipGapDetection")) args.push("--skip-gap-detection");
         if (boolOptionValue(payload, "auto-retrain") || boolOptionValue(payload, "autoRetrain")) args.push("--auto-retrain");
 
-        // Alternative mode: --spec + --candidate (when no feedback_json)
-        if (spec && !feedbackJson) {
-          args.push("--spec", resolvePathWithinRoots(spec, "spec", [path.join(repoRoot, "subjects")], repoRoot));
-        }
-        if (candidate) {
-          args.push("--candidate", resolvePathWithinRoots(candidate, "candidate", [path.join(repoRoot, "exports"), repoRoot], repoRoot));
-        }
-
         const trainPreset = String(payload.options?.trainPreset || payload.options?.["train-preset"] || payload["train-preset"] || "").trim();
         if (trainPreset) args.push("--train-preset", sanitizeToken(trainPreset, "train-preset"));
         const baseline = String(payload.options?.baseline || payload.baseline || "").trim();
@@ -656,7 +635,6 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         const saveGaps = String(payload.options?.saveGaps || payload["save-gaps"] || "").trim();
         if (saveGaps) args.push("--save-gaps", resolvePathWithinRoots(saveGaps, "save-gaps", [repoRoot], repoRoot));
         if (boolOptionValue(payload, "json")) args.push("--json");
-        if (boolOptionValue(payload, "skip-dataset-eval") || boolOptionValue(payload, "skipDatasetEval")) args.push("--skip-dataset-eval");
 
         // DeepEval judge
         const deepevalJudgeModel = String(payload.options?.deepevalJudgeModel || payload["deepeval-judge-model"] || "").trim();

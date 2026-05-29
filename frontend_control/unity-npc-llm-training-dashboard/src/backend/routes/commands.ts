@@ -305,48 +305,11 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
           enum: schedulerOptions,
           description: "LR scheduler type",
         },
-        "options.modelPreset": {
-          type: "string",
-          required: false,
-          default: "",
-          description: "Named model preset",
-        },
         "options.datasetEvalSkip": {
           type: "boolean",
           required: false,
           default: false,
-          description: "Skip dataset evaluation gate",
-        },
-        "options.datasetEvalJudgeModel": {
-          type: "string",
-          required: false,
-          default: "",
-          description: "Dataset eval judge model (Ollama)",
-        },
-        "options.datasetEvalJudgePreset": {
-          type: "string",
-          required: false,
-          default: "",
-          enum: judgePresetOptions,
-          description: "Dataset eval judge preset",
-        },
-        "options.deepevalSoftFail": {
-          type: "boolean",
-          required: false,
-          default: false,
-          description: "Continue on dataset eval metric failures",
-        },
-        "options.deepevalOllamaUrl": {
-          type: "string",
-          required: false,
-          default: "http://localhost:11434",
-          description: "Ollama URL for DeepEval",
-        },
-        "options.deepevalCasesPerCategory": {
-          type: "number",
-          required: false,
-          default: 1,
-          description: "DeepEval cases per category",
+          description: "Allow training without a fresh passing dataset quality gate (--allow-ungated-dataset)",
         },
         "options.workflowHooks": {
           type: "string",
@@ -514,21 +477,9 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
       feedback: {
         "options.feedbackJson": {
           type: "string",
-          required: false,
+          required: true,
           default: "",
           description: "Path to feedback JSON from evaluate --feedback-json",
-        },
-        spec: {
-          type: "string",
-          required: false,
-          default: "subjects/NPC_specs/{npcKey}.json",
-          description: "Subject spec (alternative mode without feedback_json)",
-        },
-        "options.candidate": {
-          type: "string",
-          required: false,
-          default: "",
-          description: "Candidate GGUF (alternative mode)",
         },
         "options.winRateThreshold": {
           type: "number",
@@ -641,12 +592,6 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
           required: false,
           default: false,
           description: "Continue on dataset eval failures",
-        },
-        "options.skipDatasetEval": {
-          type: "boolean",
-          required: false,
-          default: false,
-          description: "Skip dataset evaluation gate",
         },
         "options.regenerationModel": {
           type: "string",

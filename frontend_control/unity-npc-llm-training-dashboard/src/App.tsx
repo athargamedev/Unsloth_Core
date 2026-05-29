@@ -720,6 +720,7 @@ export default function App() {
         spec: trainingConfig.spec,
         preset: trainingConfig.preset,
         options: {
+          modelId: trainingConfig.modelId,
           wandb: trainingConfig.wandb ? 'true' : 'false',
           learningRate: trainingConfig.learningRate,
           scheduler: trainingConfig.scheduler,
@@ -727,8 +728,10 @@ export default function App() {
           epochs: trainingConfig.epochs,
           rank: trainingConfig.rank,
           alpha: trainingConfig.alpha,
-          baseModel: trainingConfig.baseModel,
           technique: trainingConfig.technique,
+          exportGguf: String(trainingConfig.exportGguf),
+          fullMergeExport: String(trainingConfig.fullMergeExport),
+          datasetEvalSkip: String(trainingConfig.datasetEvalSkip),
         },
       });
       setActiveTab('overview');
@@ -834,7 +837,6 @@ export default function App() {
         preset: trainingConfig.preset,
         options: {
           modelId: trainingConfig.modelId,
-          modelPreset: trainingConfig.modelPreset,
           wandb: trainingConfig.wandb ? 'true' : 'false',
           learningRate: trainingConfig.learningRate,
           scheduler: trainingConfig.scheduler,
@@ -845,6 +847,7 @@ export default function App() {
           technique: trainingConfig.technique,
           exportGguf: String(trainingConfig.exportGguf),
           fullMergeExport: String(trainingConfig.fullMergeExport),
+          datasetEvalSkip: String(trainingConfig.datasetEvalSkip),
         },
       });
     } catch (error) {
@@ -866,6 +869,7 @@ export default function App() {
           modelId: trainingConfig.modelId,
           quantization: exportQuantization,
           npc: npcKey,
+          fullMerge: String(exportFullMerge),
         },
       });
     } catch (error) {

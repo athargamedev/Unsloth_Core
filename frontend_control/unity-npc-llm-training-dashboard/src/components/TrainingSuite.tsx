@@ -29,24 +29,6 @@ function estimateVram(modelName: string, rank: number, packing = true, maxSeq = 
   return Math.round(gb * 10) / 10;
 }
 
-const MODEL_PRESETS = [
-  { value: '', label: 'None (manual model ID)' },
-  { value: 'llama-3.2-3b', label: 'Llama 3.2 3B' },
-  { value: 'qwen-2.5-1.7b', label: 'Qwen 2.5 1.7B' },
-  { value: 'qwen-3-1.7b', label: 'Qwen3 1.7B' },
-  { value: 'qwen-3-8b', label: 'Qwen3 8B' },
-  { value: 'gemma-3-1b', label: 'Gemma 3 1B' },
-  { value: 'gemma-3-12b', label: 'Gemma 3 12B' },
-  { value: 'llama-3.1-8b', label: 'Llama 3.1 8B' },
-];
-
-const JUDGE_PRESETS = [
-  { value: '', label: 'Default' },
-  { value: 'strict', label: 'Strict' },
-  { value: 'lenient', label: 'Lenient' },
-  { value: 'balanced', label: 'Balanced' },
-];
-
 export const TrainingSuite = ({
   subjects,
   presets = [],
@@ -132,9 +114,8 @@ export const TrainingSuite = ({
                 onChange={(e) => onUpdateTrainingConfig({ technique: e.target.value })}
                 className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
               >
-                <option value="docs">docs</option>
                 <option value="template">template</option>
-                <option value="onyx">onyx</option>
+                <option value="docs">docs</option>
                 <option value="ollama">ollama</option>
                 <option value="openai">openai</option>
                 <option value="anthropic">anthropic</option>
@@ -147,22 +128,10 @@ export const TrainingSuite = ({
               <input
                 value={trainingConfig.modelId}
                 onChange={(e) => onUpdateTrainingConfig({ modelId: e.target.value })}
-                placeholder="e.g., unsloth/Qwen3-1.7B-bnb-4bit"
+                placeholder="e.g., unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
                 className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
               />
-            </div>
-            <div>
-              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Model Preset</label>
-              <select
-                value={trainingConfig.modelPreset}
-                onChange={(e) => onUpdateTrainingConfig({ modelPreset: e.target.value })}
-                className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-              >
-                {MODEL_PRESETS.map((mp) => (
-                  <option key={mp.value} value={mp.value}>{mp.label}</option>
-                ))}
-              </select>
-              <p className="text-[8px] mt-1 text-ink/30">Mutually exclusive with Model ID — preset overrides ID if set</p>
+              <p className="text-[8px] mt-1 text-ink/30">Passed to <code>ucore train --model</code>. Named Ollama presets belong in dataset-eval or generation panels.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -271,73 +240,21 @@ export const TrainingSuite = ({
       <div className="border border-line/30 rounded-sm p-4 bg-surface/20">
         <h4 className="text-[11px] font-bold text-ink/60 uppercase tracking-wider mb-3 flex items-center gap-2">
           <Shield className="w-3 h-3" />
-          Dataset Quality Gate (DeepEval)
+          Dataset Quality Gate
         </h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
-          <div>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={trainingConfig.datasetEvalSkip ?? false}
-                onChange={(e) => onUpdateTrainingConfig({ datasetEvalSkip: e.target.checked })}
-                className="w-3 h-3 accent-accent rounded"
-              />
-              <span className="text-[10px] uppercase tracking-tighter">Skip Quality Gate</span>
-            </label>
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Judge Model</label>
+        <div className="space-y-2 text-[11px]">
+          <p className="text-ink/50">
+            Training expects a fresh passing <code>ucore dataset-eval</code> artifact for the selected sanitized dataset. Configure judge model, preset, and sampling in the dataset pipeline before launching training.
+          </p>
+          <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
-              type="text"
-              value={trainingConfig.datasetEvalJudgeModel || ''}
-              onChange={(e) => onUpdateTrainingConfig({ datasetEvalJudgeModel: e.target.value })}
-              placeholder="qwen3:latest"
-              className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+              type="checkbox"
+              checked={trainingConfig.datasetEvalSkip ?? false}
+              onChange={(e) => onUpdateTrainingConfig({ datasetEvalSkip: e.target.checked })}
+              className="w-3 h-3 accent-warning rounded"
             />
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Judge Preset</label>
-            <select
-              value={trainingConfig.datasetEvalJudgePreset || ''}
-              onChange={(e) => onUpdateTrainingConfig({ datasetEvalJudgePreset: e.target.value })}
-              className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
-            >
-              {JUDGE_PRESETS.map((jp) => (
-                <option key={jp.value} value={jp.value}>{jp.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={trainingConfig.deepevalSoftFail ?? false}
-                onChange={(e) => onUpdateTrainingConfig({ deepevalSoftFail: e.target.checked })}
-                className="w-3 h-3 accent-accent rounded"
-              />
-              <span className="text-[10px] uppercase tracking-tighter">Soft Fail</span>
-            </label>
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Ollama URL</label>
-            <input
-              type="text"
-              value={trainingConfig.deepevalOllamaUrl || ''}
-              onChange={(e) => onUpdateTrainingConfig({ deepevalOllamaUrl: e.target.value })}
-              placeholder="http://localhost:11434"
-              className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Cases per Category</label>
-            <input
-              type="number"
-              value={trainingConfig.deepevalCasesPerCategory ?? 1}
-              onChange={(e) => onUpdateTrainingConfig({ deepevalCasesPerCategory: parseInt(e.target.value) || 1 })}
-              min={1} max={20}
-              className="w-20 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
-            />
-          </div>
+            <span className="text-[10px] uppercase tracking-tighter text-warning">Allow ungated training (--allow-ungated-dataset)</span>
+          </label>
         </div>
       </div>
 

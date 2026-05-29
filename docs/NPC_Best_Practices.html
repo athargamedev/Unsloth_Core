@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPC LoRA Best Practices & Parameters</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #c084fc;
+            --accent-pink: #f472b6;
+            --success: #10b981;
+            --error: #ef4444;
+            --gradient-1: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+            --gradient-2: linear-gradient(135deg, #ec4899, #8b5cf6);
+            --gradient-3: linear-gradient(135deg, #14b8a6, #3b82f6);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(14, 165, 233, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            margin-top: 0;
+        }
+
+        .header {
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto 60px auto;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 80px;
+        }
+
+        .graphic-slide {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 50px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide-bg-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: var(--gradient-1);
+            filter: blur(120px);
+            opacity: 0.15;
+            top: -150px;
+            right: -150px;
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .slide-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide-title {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: white;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+        }
+
+        .slide-desc {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 900px;
+            line-height: 1.6;
+        }
+
+        /* Compare Grid */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .compare-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+        }
+
+        .compare-card.bad {
+            border-top: 4px solid var(--error);
+        }
+        .compare-card.good {
+            border-top: 4px solid var(--success);
+        }
+
+        .compare-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bad .compare-title { color: var(--error); }
+        .good .compare-title { color: var(--success); }
+
+        /* Parameter Grid */
+        .param-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .param-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 25px;
+        }
+
+        .param-value {
+            font-family: monospace;
+            font-size: 2rem;
+            color: var(--accent-cyan);
+            margin: 10px 0;
+            display: block;
+        }
+
+        .param-name {
+            font-size: 1.2rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        .code-block {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+            white-space: pre-wrap;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-top: 15px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(255,255,255,0.1);
+            margin-right: 5px;
+            margin-bottom: 10px;
+        }
+
+        .tag.tag-core { color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+        .tag.tag-train { color: var(--accent-pink); border: 1px solid var(--accent-pink); }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>LoRA Tuning for Unity NPCs</h1>
+        <p>A deep dive into the practical influence of training parameters, dataset constraints, and best practices for creating specialized GGUF LoRA adapters for LLMUnity games.</p>
+    </div>
+
+    <div class="container">
+
+        <!-- Slide 1: LoRA Core Parameters -->
+        <div class="graphic-slide">
+            <div class="slide-bg-glow" style="background: var(--gradient-1);"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">1. Demystifying LoRA Parameters</h2>
+                <p class="slide-desc">How `Rank (r)`, `Alpha`, and `Dropout` directly control the "brain plasticity" of your NPC during fine-tuning in Unsloth.</p>
+                
+                <div class="param-grid">
+                    <div class="param-card">
+                        <span class="tag tag-core">Complexity</span>
+                        <div class="param-name">Rank (r)</div>
+                        <span class="param-value">8 to 32</span>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+                            <b>What it is:</b> The size of the trainable matrices. Higher rank = more parameters learned.<br><br>
+                            <b>Practical Influence:</b> Use <code>r: 8</code> for simple tone/accent changes (e.g., making a pirate speak like a pirate). Use <code>r: 16</code> to <code>r: 32</code> if the NPC needs to learn deep lore and entirely new concepts.
+                        </p>
+                    </div>
+                    <div class="param-card">
+                        <span class="tag tag-core">Intensity</span>
+                        <div class="param-name">Alpha (α)</div>
+                        <span class="param-value">2x Rank</span>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+                            <b>What it is:</b> The scaling factor. Determines how "loud" the new training is compared to the base model's pre-trained knowledge.<br><br>
+                            <b>Practical Influence:</b> Standard practice is <code>alpha = 2 * r</code>. If your NPC sounds too robotic or hallucinates wildly, lower Alpha to reduce the LoRA's overpowering effect.
+                        </p>
+                    </div>
+                    <div class="param-card">
+                        <span class="tag tag-core">Generalization</span>
+                        <div class="param-name">Dropout</div>
+                        <span class="param-value">0.0 to 0.1</span>
+                        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5;">
+                            <b>What it is:</b> Randomly ignores a percentage of neurons during training to prevent memorization.<br><br>
+                            <b>Practical Influence:</b> Use <code>0.0</code> for Unsloth optimized runs on large datasets. If you have a tiny dataset (&lt;50 examples) and the NPC repeats itself exactly, increase to <code>0.05</code> or <code>0.1</code> to prevent overfitting.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Dataset Formatting -->
+        <div class="graphic-slide">
+            <div class="slide-bg-glow" style="background: var(--gradient-2);"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">2. Dataset Generation: Specs & Constraints</h2>
+                <p class="slide-desc">The quality of the LoRA adapter is entirely dependent on the strictness of the ChatML dataset. Here is how to format NPC Specs effectively.</p>
+                
+                <div class="compare-grid">
+                    <div class="compare-card bad">
+                        <h3 class="compare-title">✖ Bad Example: Loose Constraints</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;">Allows the model to hallucinate or generate overly long, markdown-heavy responses that break Unity UI.</p>
+                        <div class="code-block">
+{
+  "identity": {
+    "personality": "Helpful guide"
+  },
+  "dialogue": {
+    "conversation_style": "Friendly",
+    "allow_formatting": true
+  },
+  "system_prompt": "You are a guide. Help the player."
+}
+                        </div>
+                        <ul style="color: var(--error); font-size: 0.9rem; margin-top: 15px; padding-left: 20px;">
+                            <li>UI Overflow: Generates massive paragraphs.</li>
+                            <li>Markdown Leakage: Outputs **bold** or lists that Unity TextMeshPro might struggle with.</li>
+                            <li>Hallucination: No specific boundaries defined.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="compare-card good">
+                        <h3 class="compare-title">✔ Good Example: Strict Boundaries</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;">Forces the model into a specific character limit, disables markdown, and defines clear failure states.</p>
+                        <div class="code-block">
+{
+  "identity": {
+    "personality": "Patient, clear, and curious",
+    "mannerisms": "Uses timelines and cause/effect"
+  },
+  "dialogue": {
+    "max_sentences": 5,
+    "max_characters": 500,
+    "allow_formatting": false
+  },
+  "system_prompt": "## VOICE\nSpeak exactly 3-5 descriptive sentences (~500 characters) | NO markdown formatting, lists, or bullets."
+}
+                        </div>
+                        <ul style="color: var(--success); font-size: 0.9rem; margin-top: 15px; padding-left: 20px;">
+                            <li>Consistent Length: Fits perfectly in Unity dialogue boxes.</li>
+                            <li>Plain Text: Safe for runtime rendering.</li>
+                            <li>Predictable: DeepEval quality gates will catch deviations.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: SFT Training Parameters -->
+        <div class="graphic-slide">
+            <div class="slide-bg-glow" style="background: var(--gradient-3);"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">3. Unsloth SFT Training Parameters</h2>
+                <p class="slide-desc">How batch sizes, epochs, and learning rates affect VRAM usage and model quality in <code>lora-sft-base.yaml</code>.</p>
+                
+                <div class="compare-grid">
+                    <div class="compare-card bad">
+                        <h3 class="compare-title">✖ Bad Example: OOM Crash Risk</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;">Setting parameters too high for a 6GB RTX 3060 will cause immediate CUDA Out Of Memory errors.</p>
+                        <div class="code-block">
+training:
+  batch_size: 8
+  gradient_accumulation_steps: 1
+  max_seq_length: 4096
+  num_epochs: 10
+  learning_rate: 0.002
+                        </div>
+                        <ul style="color: var(--error); font-size: 0.9rem; margin-top: 15px; padding-left: 20px;">
+                            <li>Batch Size 8: Massive VRAM spike.</li>
+                            <li>Max Seq 4096: Context window is too large for local hardware.</li>
+                            <li>LR 0.002: Too fast, causes catastrophic forgetting (loss spikes).</li>
+                            <li>Epochs 10: Severe overfitting on small datasets.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="compare-card good">
+                        <h3 class="compare-title">✔ Good Example: The "fast-3b" Preset</h3>
+                        <p style="color: var(--text-muted); font-size: 0.95rem;">Optimized for consumer hardware. Simulates a larger batch size without the VRAM cost.</p>
+                        <div class="code-block">
+training:
+  batch_size: 1
+  gradient_accumulation_steps: 8
+  max_seq_length: 2048
+  num_epochs: 3
+  learning_rate: 0.0002
+                        </div>
+                        <ul style="color: var(--success); font-size: 0.9rem; margin-top: 15px; padding-left: 20px;">
+                            <li>Gradient Acc: Achieves effective batch size of 8 while only using VRAM for 1.</li>
+                            <li>Max Seq 2048: Plenty of room for dialogue history.</li>
+                            <li>Epochs 3: Gold standard for LoRA instruction tuning.</li>
+                            <li>LR 2e-4: Stable convergence for LoRA.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Hybrid Architecture -->
+        <div class="graphic-slide">
+            <div class="slide-bg-glow" style="background: var(--gradient-1); left: -150px; right: auto;"></div>
+            <div class="slide-content">
+                <h2 class="slide-title">4. Best Practice: LoRA + RAG in Unity</h2>
+                <p class="slide-desc">Never fine-tune an NPC to memorize dynamic game state. Use a hybrid architecture.</p>
+                
+                <div class="param-grid">
+                    <div class="param-card">
+                        <h3 style="color: white; margin-bottom: 10px;">What LoRA is FOR (The Persona)</h3>
+                        <ul style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; padding-left: 20px;">
+                            <li>Speech patterns, accents, and vocabulary (e.g., speaking in Shakespearean English).</li>
+                            <li>Deep, static historical lore (e.g., the founding of the Chronos Spire).</li>
+                            <li>Formatting enforcement (e.g., never using markdown, staying under 5 sentences).</li>
+                            <li>Emotional disposition towards the player.</li>
+                        </ul>
+                    </div>
+                    <div class="param-card">
+                        <h3 style="color: white; margin-bottom: 10px;">What RAG is FOR (The Game State)</h3>
+                        <ul style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; padding-left: 20px;">
+                            <li>The player's current health, inventory, or equipped items.</li>
+                            <li>Dynamic quest progression (e.g., "The goblins attacked the village yesterday").</li>
+                            <li>Time of day, weather, or location in the Unity scene.</li>
+                            <li>Local Supabase <code>npc_memories</code> injection.</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 20px; margin-top: 30px;">
+                    <h4 style="color: var(--success); margin-bottom: 10px;">The Ultimate Workflow</h4>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">
+                        1. Unity sends the Player's Prompt.<br>
+                        2. C# script queries local Supabase (RAG) for active quests and nearby items.<br>
+                        3. C# script appends this context to the system prompt.<br>
+                        4. <code>llama-server</code> processes the prompt using the base <b>Llama 3.2 3B</b> model + the <b>NPC's LoRA Adapter</b>.<br>
+                        5. The NPC responds with perfect persona (LoRA) and perfect situational awareness (RAG).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
