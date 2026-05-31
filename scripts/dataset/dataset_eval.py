@@ -525,19 +525,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 archive_quality_artifact(failures_path, run.run_id)
                 archive_quality_artifact(report_path, run.run_id)
 
-                # Optional: push the quality report JSON as a Confident AI dataset artifact
-                if getattr(args, "push_to_confident", False):
-                    try:
-                        from scripts.ops.confident_push import push_goldens_if_confident, is_confident_enabled
-                        if is_confident_enabled():
-                            confident_alias = f"quality-report-{npc_key}-{technique}"
-                            push_goldens_if_confident(
-                                report_path,
-                                alias=confident_alias,
-                                verbose=True,
-                            )
-                    except Exception as _push_exc:
-                        print(f"  [confident] Quality report push failed (non-fatal): {_push_exc}")
+                # (Test runs are uploaded automatically to Confident AI via the deepeval CLI)
 
                 # ── Confident AI Dashboard Link ────────────────────────────────
                 if confident_available():
