@@ -1,47 +1,47 @@
 {
-  "created_at": "2026-05-31T02:39:04.430823+00:00",
+  "created_at": "2026-05-31T15:31:42.653422+00:00",
   "npc_key": "history_guide",
   "technique": "template",
   "judge_provider": "ollama",
   "judge_model": "qwen3:latest",
-  "deepeval_identifier": "dataset-quality-history_guide-template-fast-20260530-233902",
-  "deepeval_result_identifier": "dataset-quality-history_guide-ollama-fast-20260529-103444",
+  "deepeval_identifier": "dataset-quality-history_guide-template-fast-20260531-122943",
+  "deepeval_result_identifier": "dataset-quality-history_guide-template-fast-20260531-122943",
   "command": [
     "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
     "test",
     "run",
     "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
     "--identifier",
-    "dataset-quality-history_guide-template-fast-20260530-233902",
+    "dataset-quality-history_guide-template-fast-20260531-122943",
     "--display",
     "all",
     "--skip-on-missing-params"
   ],
   "total": 5,
-  "passed": 0,
-  "failed": 5,
-  "pass_rate": 0.0,
+  "passed": 3,
+  "failed": 2,
+  "pass_rate": 0.6,
   "metric_count": 10,
   "null_metric_count": 0,
   "null_metric_rate": 0.0,
-  "status": "inconclusive",
+  "status": "ok",
   "metrics": {
     "Persona and Category Fit [GEval]": {
       "count": 5,
-      "average_score": 0.58,
-      "pass_rate": 0.0
+      "average_score": 0.76,
+      "pass_rate": 0.6
     },
     "Training Usefulness and Specificity [GEval]": {
       "count": 5,
-      "average_score": 0.68,
-      "pass_rate": 0.6
+      "average_score": 0.94,
+      "pass_rate": 1.0
     }
   },
   "categories": {
     "dialogue": {
       "total": 1,
-      "passed": 0,
-      "pass_rate": 0.0
+      "passed": 1,
+      "pass_rate": 1.0
     },
     "identity": {
       "total": 1,
@@ -55,20 +55,16 @@
     },
     "refusal": {
       "total": 1,
-      "passed": 0,
-      "pass_rate": 0.0
+      "passed": 1,
+      "pass_rate": 1.0
     },
     "teaching": {
       "total": 1,
-      "passed": 0,
-      "pass_rate": 0.0
+      "passed": 1,
+      "pass_rate": 1.0
     }
   },
   "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/quality_failures.json",
-  "result_identifier_mismatch": {
-    "expected": "dataset-quality-history_guide-template-fast-20260530-233902",
-    "actual": "dataset-quality-history_guide-ollama-fast-20260529-103444"
-  },
   "quality_gate_mode": "fast",
   "cases_per_category": 1,
   "dataset_summary": {

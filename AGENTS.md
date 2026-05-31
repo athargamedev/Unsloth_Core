@@ -341,6 +341,77 @@ The pipeline tracks all operations in 8 PostgreSQL tables:
 - TS backend: Uses `pg.Pool` via `src/backend/lib/db.ts`
 - Local Supabase: `http://127.0.0.1:16437` (port may vary — check `supabase status`)
 
+### Pipeline Run Manifest
+
+A lightweight JSON manifest at `.pipeline/run_manifest.json` tracks every pipeline stage across a single run. Replaces ad-hoc artifact tracking with a unified, queryable record. Unlike the full DB-backed tables, the manifest requires no database connection and is always optional — failures to write never block the pipeline.
+
+**Implementation:** `scripts/ops/pipeline_manifest.py`
+
+#### Key Features
+
+- **Atomic writes**: Writes to `.json.tmp` then `os.replace()` — readers never see partial files
+- **Shared `run_id`**: All stages share the same run ID from `WORKFLOW_ID` env var (or auto-generated as `run_YYYYMMDD_HHMMSS`)
+- **Canonical stage order**: `spec → preflight → generate → sanitize → dataset_eval → train → export → evaluate → feedback`
+- **`next_expected_stage()`**: Returns the next unrecorded stage after the last completed one — useful for workflow automation
+- **Self-healing**: Missing directories and files are created on first write; missing manifest returns `None` (never crashes)
+
+#### Env Vars
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `NPC_KEY` | ✅ (no-op if unset) | NPC key for the manifest |
+| `TECHNIQUE` | ❌ (defaults to `"unknown"`) | Dataset generation technique |
+| `PRESET` | ❌ | Training preset name |
+| `WORKFLOW_ID` / `RUN_ID` | ❌ (auto-generated) | Shared run identifier across stages |
+| `UCORE_MANIFEST_PATH` | ❌ | Custom manifest path override |
+
+#### One-Shot Integration: `record_pipeline_stage()`
+
+The simplest way to record from any pipeline script:
+
+```python
+from scripts.ops.pipeline_manifest import record_pipeline_stage
+
+record_pipeline_stage("generate", "completed",
+    artifacts={"dataset": "subjects/datasets/history_guide/template/train.jsonl"},
+    metadata={"num_examples": 72},
+)
+```
+
+All integrations are wrapped in `try/except Exception: pass` — manifest recording is always optional and never blocks the pipeline.
+
+#### Per-Stage Metadata Recorded
+
+| Script | Stage | Artifacts | Metadata |
+|--------|-------|-----------|----------|
+| `preflight.py` | `preflight` | — | `total_vram_gb`, `free_vram_gb`, `preset_requested`, `preset_effective`, `gcc_ok`, `recommendation`, `confident_available`, `stopped_ollama_models` |
+| `generate_dataset.py` | `generate` | `train_path`, `validation_path` | — |
+| `sanitize_dataset.py` | `sanitize` | `output_path` | — |
+| `dataset_eval.py` | `dataset_eval` | `summary_path`, `failures_path`, `report_path` | `pass_rate`, `total_cases`, `passed`, `failed`, `deepeval_identifier`, `confident_url` |
+| `train.py` | `train` | `run_dir`, `output_dir` | `training_loss` |
+| `export.py` | `export` | `output_dir`, `gguf_files` | `mode` (adapter/full-merge) |
+| `evaluate.py` | `evaluate` | `candidate_path`, `baseline_path` | `deepeval_identifier`, `confident_url` |
+
+#### Advanced Usage: `PipelineManifest` Class
+
+For pipelines that need to inspect state across stages:
+
+```python
+from scripts.ops.pipeline_manifest import PipelineManifest
+
+m = PipelineManifest("run_20260531_110000", "history_guide", "template", "fast-3b")
+m.record_stage("generate", "completed",
+    artifacts={"dataset": "subjects/datasets/history_guide/template/train.jsonl"})
+m.save()
+
+# Later — load and inspect
+m2 = PipelineManifest.load()
+if m2 and m2.next_expected_stage() == "train":
+    print("Ready to train!")
+```
+
+**Available queries:** `stage_summary(stage)`, `last_completed_stage()`, `next_expected_stage()`, `pipeline_order()`.
+
 ### Job Queue (PostgreSQL-backed, no Redis required)
 
 The job queue at `src/backend/services/job-queue.ts` provides:

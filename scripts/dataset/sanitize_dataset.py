@@ -1146,6 +1146,7 @@ def main():
 
     spec_data = None
     spec_path = None
+    tech_val = "template"  # Initialize early for downstream use
     if args.spec:
         spec_path = Path(args.spec)
     else:
@@ -1432,6 +1433,18 @@ def main():
                     if below_pass:
                         print(f"  Below pass threshold (< {args.quality_threshold_pass}): "
                               f"{len(below_pass)}/{len(quality_scores)}")
+
+                # ── Record pipeline manifest stage ─────────────────────────────────
+                try:
+                    from scripts.ops.pipeline_manifest import record_pipeline_stage
+                    os.environ.setdefault("NPC_KEY", npc_key_val)
+                    os.environ.setdefault("TECHNIQUE", tech_val if tech_val else "template")
+                    manifest_artifacts = {}
+                    if output_path and os.path.exists(output_path):
+                        manifest_artifacts["output"] = str(output_path)
+                    record_pipeline_stage("sanitize", artifacts=manifest_artifacts)
+                except Exception:
+                    pass  # manifest is optional, never block pipeline
 
         finally:
             run.set_artifacts(clean_path=str(output_path), manifest_path=str(manifest_path) if 'manifest_path' in locals() and manifest_path else None)

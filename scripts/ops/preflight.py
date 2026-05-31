@@ -274,8 +274,6 @@ def run_preflight(
         preset=preset,
         total_vram_gb=total_vram_gb,
     )
-    if preset == "fast-3b" and total_vram_gb is not None and total_vram_gb < 10.0:
-        effective_preset = DEFAULT_FALLBACK_PRESET
     report.preset_effective = effective_preset
     report.recommendation = recommendation
 
@@ -288,6 +286,24 @@ def run_preflight(
         report.warnings.append("Could not read GPU memory via nvidia-smi")
     elif free_vram_gb is not None and free_vram_gb < 2.0:
         report.warnings.append(f"Only {free_vram_gb:.2f} GiB free VRAM remains")
+
+    # ── Record pipeline manifest stage ─────────────────────────────────
+    try:
+        from scripts.ops.pipeline_manifest import record_pipeline_stage
+
+        manifest_metadata = {
+            "total_vram_gb": report.total_vram_gb,
+            "free_vram_gb": report.free_vram_gb,
+            "preset_requested": report.preset_requested,
+            "preset_effective": report.preset_effective,
+            "gcc_ok": report.gcc_ok,
+            "recommendation": report.recommendation,
+            "confident_available": report.confident_available,
+            "stopped_ollama_models": list(report.stopped_ollama_models or []),
+        }
+        record_pipeline_stage("preflight", status="completed", metadata=manifest_metadata)
+    except Exception:
+        pass  # manifest is optional, never block pipeline
 
     return report
 

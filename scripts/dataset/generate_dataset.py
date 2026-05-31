@@ -1705,7 +1705,9 @@ def _push_dataset_to_confident(jsonl_path: str, alias: str) -> None:
 
     from deepeval.synthesizer import Golden
 
-    ensure_confident_api_key()
+    if not ensure_confident_api_key():
+        print("[Confident AI] CONFIDENT_API_KEY not set. Skipping push.")
+        return False
 
     goldens: list[Golden] = []
     with open(jsonl_path) as f:
@@ -1905,6 +1907,20 @@ def main():
                 print(f"  Manifest:        {result['manifest_path']}")
             print()
             print("Dataset generation complete!")
+
+            # ── Record pipeline manifest stage ─────────────────────────────────
+            try:
+                from scripts.ops.pipeline_manifest import record_pipeline_stage
+                os.environ.setdefault("NPC_KEY", npc_key)
+                os.environ.setdefault("TECHNIQUE", technique)
+                manifest_artifacts = {}
+                if result and result.get("train_path"):
+                    manifest_artifacts["train"] = str(result["train_path"])
+                if result and result.get("val_path"):
+                    manifest_artifacts["validation"] = str(result["val_path"])
+                record_pipeline_stage("generate", artifacts=manifest_artifacts)
+            except Exception:
+                pass  # manifest is optional, never block pipeline
 
             # ── Push to Confident AI (opt-in) ─────────────────────────────────
             if args.push_to_confident and result.get("train_path"):

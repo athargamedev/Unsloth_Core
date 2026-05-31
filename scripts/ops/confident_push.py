@@ -29,7 +29,9 @@ def is_confident_enabled() -> bool:
     try:
         from deepeval.confident.api import is_confident
         return is_confident()
-    except Exception:
+    except ImportError:
+        return False
+    except (ConnectionError, TimeoutError, OSError):
         return False
 
 

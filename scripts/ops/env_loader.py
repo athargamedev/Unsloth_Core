@@ -3,6 +3,12 @@
 
 Automatically sources ``.env.local`` from the project root on module import,
 so callers can rely on ``ensure_confident_api_key()`` without manual setup.
+
+# Limitations: This custom parser does NOT support:
+# - Escaped characters (\\", \\n)
+# - Multi-line quoted values
+# - ${VARIABLE} substitution
+# For complex .env files, consider using python-dotenv.
 """
 
 from __future__ import annotations
@@ -37,6 +43,12 @@ def _parse_env_line(line: str) -> tuple[str, str] | None:
 
     Handles ``KEY=VALUE``, ``KEY='value'``, and ``KEY="value"`` formats.
     Returns ``None`` for blank lines, comment lines, or malformed lines.
+
+    Limitations: This custom parser does NOT support:
+    - Escaped characters (\\", \\n)
+    - Multi-line quoted values
+    - ${VARIABLE} substitution
+    For complex .env files, consider using python-dotenv.
     """
     stripped = line.strip()
     if not stripped or stripped.startswith("#"):

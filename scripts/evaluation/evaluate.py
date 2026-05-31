@@ -42,6 +42,18 @@ from scripts.ops.env_loader import ensure_confident_api_key, confident_available
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from scripts.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient, extract_json_object
 
+def _resolve_deepeval_bin() -> str:
+    """Resolve deepeval binary from active venv first, fall back to PATH."""
+    import shutil
+
+    venv = os.environ.get("VIRTUAL_ENV") or os.environ.get("CONDA_PREFIX")
+    if venv:
+        candidate = os.path.join(venv, "bin", "deepeval")
+        if os.path.isfile(candidate):
+            return candidate
+    return shutil.which("deepeval") or "deepeval"
+
+
 # ── Constraint checking ─────────────────────────────────────────────────────
 
 def check_sentence_count(text, max_sentences=3):
@@ -1575,6 +1587,20 @@ def main():
         if args.deepeval:
             _run_deepeval_eval(args, str(candidate_path), str(baseline_path))
 
+        # ── Record pipeline manifest stage ─────────────────────────────────
+        try:
+            from scripts.ops.pipeline_manifest import record_pipeline_stage
+            os.environ.setdefault("NPC_KEY", npc_key)
+            os.environ.setdefault("TECHNIQUE", getattr(args, "technique", None) or "template")
+            manifest_artifacts = {}
+            if candidate_path:
+                manifest_artifacts["candidate"] = str(candidate_path)
+            if baseline_path:
+                manifest_artifacts["baseline"] = str(baseline_path)
+            record_pipeline_stage("evaluate", artifacts=manifest_artifacts)
+        except Exception:
+            pass
+
 
 def _run_deepeval_eval(args, candidate_path, baseline_path=None):
     """Run DeepEval model quality evaluation using the test suite.
@@ -1628,7 +1654,8 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None):
 
     # ── Run deepeval test run ───────────────────────────────────────────
     test_script = str(PROJECT_ROOT / "tests/evals/test_npc_model_quality.py")
-    cmd = ["deepeval", "test", "run", test_script, "--identifier", identifier]
+    deepeval_bin = _resolve_deepeval_bin()
+    cmd = [deepeval_bin, "test", "run", test_script, "--identifier", identifier]
     result = subprocess.run(cmd)
 
     if result.returncode != 0:
@@ -1642,7 +1669,7 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None):
     if confident_available():
         try:
             subprocess.run(
-                ["deepeval", "view"],
+                [deepeval_bin, "view"],
                 timeout=3,
                 capture_output=True,
             )
@@ -1650,6 +1677,35 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None):
             pass  # deepeval view opens a browser; timeout is expected
         except Exception as exc:
             print(f"  [deepeval] Could not open Confident AI dashboard: {exc}")
+
+    # ── Record pipeline manifest stage ─────────────────────────────────
+    try:
+        from scripts.ops.pipeline_manifest import record_pipeline_stage
+        os.environ.setdefault("NPC_KEY", npc_key)
+        os.environ.setdefault("TECHNIQUE", getattr(args, "technique", None) or "template")
+        manifest_artifacts = {
+            "candidate": str(candidate_path),
+        }
+        if baseline_path:
+            manifest_artifacts["baseline"] = str(baseline_path)
+        manifest_metadata = {
+            "deepeval_identifier": identifier,
+            "judge_model": args.deepeval_judge_model,
+        }
+        # Read confident URL from .deepeval/.latest_test_run.json
+        try:
+            from pathlib import Path
+            latest_run = Path(".deepeval") / ".latest_test_run.json"
+            if latest_run.exists():
+                import json as _json
+                lr = _json.loads(latest_run.read_text())
+                if "testRunLink" in lr:
+                    manifest_metadata["confident_url"] = lr["testRunLink"]
+        except Exception:
+            pass
+        record_pipeline_stage("evaluate", artifacts=manifest_artifacts, metadata=manifest_metadata)
+    except Exception:
+        pass  # manifest is optional, never block pipeline
 
     print(f"\n  [deepeval] Results available at: https://app.confident-ai.com")
 

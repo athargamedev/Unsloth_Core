@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-31T13:53:59.261657+00:00",
+  "created_at": "2026-05-31T15:31:42.654305+00:00",
   "npc_key": "history_guide",
   "technique": "template",
   "spec": {
@@ -219,20 +219,20 @@
   },
   "deepeval": {
     "summary": {
-      "created_at": "2026-05-31T13:53:59.260708+00:00",
+      "created_at": "2026-05-31T15:31:42.653422+00:00",
       "npc_key": "history_guide",
       "technique": "template",
       "judge_provider": "ollama",
       "judge_model": "qwen3:latest",
-      "deepeval_identifier": "dataset-quality-history_guide-template-fast-20260531-105150",
-      "deepeval_result_identifier": "dataset-quality-history_guide-template-fast-20260531-105150",
+      "deepeval_identifier": "dataset-quality-history_guide-template-fast-20260531-122943",
+      "deepeval_result_identifier": "dataset-quality-history_guide-template-fast-20260531-122943",
       "command": [
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
         "test",
         "run",
         "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
         "--identifier",
-        "dataset-quality-history_guide-template-fast-20260531-105150",
+        "dataset-quality-history_guide-template-fast-20260531-122943",
         "--display",
         "all",
         "--skip-on-missing-params"
@@ -248,7 +248,7 @@
       "metrics": {
         "Persona and Category Fit [GEval]": {
           "count": 5,
-          "average_score": 0.72,
+          "average_score": 0.76,
           "pass_rate": 0.6
         },
         "Training Usefulness and Specificity [GEval]": {
@@ -380,7 +380,7 @@
           "score": 0.6,
           "threshold": 0.75,
           "success": false,
-          "reason": "The response aligns with the NPC system prompt and training category by introducing the role of HistoryGuide and emphasizing the separation of legend from evidence. It adheres to the formatting restrictions by avoiding markdown and bullet points. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, which calls for a more elaborate explanation of the role and its purpose.",
+          "reason": "The response aligns with the NPC system prompt and training category by introducing the role of HistoryGuide and emphasizing the separation of legend from evidence. It adheres to the formatting restrictions by avoiding markdown and bullet points. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, particularly given the complexity of the identity and history_guide concept.",
           "evaluation_model": "qwen3:latest (Ollama)",
           "error": null
         }

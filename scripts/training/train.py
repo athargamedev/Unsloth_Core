@@ -1241,6 +1241,7 @@ def main():
     # Write config snapshot
     log_config_snapshot(config, run_dir)
     log_state("training_start", npc_key=npc_key, run_id=run_id, model=model_name, preset=preset_name)
+    training_loss = None  # initialize early so it always exists in manifest scope
     with hook_recorder.step("training_pipeline", run_id=run_id, output_dir=run_dir, export_gguf=bool(args.export_gguf), preset=preset_name):
 
         # ── Load model ─────────────────────────────────────────────────────
@@ -1395,6 +1396,23 @@ def main():
         exports_dir = paths.export_dir(npc_key)
         print(f"  Exports: {exports_dir}")
     print(f"{'='*60}\n")
+
+    # ── Record pipeline manifest stage ─────────────────────────────────
+    try:
+        from scripts.ops.pipeline_manifest import record_pipeline_stage
+        os.environ.setdefault("NPC_KEY", npc_key)
+        os.environ.setdefault("TECHNIQUE", technique)
+        manifest_artifacts = {}
+        if run_dir and os.path.exists(run_dir):
+            manifest_artifacts["run_dir"] = str(run_dir)
+        if config and config.get("output_dir"):
+            manifest_artifacts["output_dir"] = config["output_dir"]
+        manifest_metadata = {}
+        if training_loss is not None:
+            manifest_metadata["training_loss"] = training_loss
+        record_pipeline_stage("train", artifacts=manifest_artifacts, metadata=manifest_metadata)
+    except Exception:
+        pass  # manifest is optional, never block pipeline
 
 
 if __name__ == "__main__":

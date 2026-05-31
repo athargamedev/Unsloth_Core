@@ -86,6 +86,18 @@ def _download_converter(target_dir: Path | None = None) -> Path | None:
         return None
 
 
+def _get_npc_key(output_dir: str, fallback: str = "unknown") -> str:
+    """Extract NPC key from output directory name."""
+    base = os.path.basename(output_dir)
+    # Try to detect convention: {npc_key}_exports or exports/{npc_key}
+    if base.endswith("_exports"):
+        return base[:-len("_exports")]
+    parent = os.path.basename(os.path.dirname(output_dir))
+    if parent and parent != "exports":
+        return parent
+    return fallback
+
+
 def _validate_tokenizer(tokenizer, model_id: str, npc_key: str) -> None:
     """Validate tokenizer configuration before export.
 
@@ -556,6 +568,21 @@ def main():
             print(f"\nExport complete! Adapter GGUF ready for Unity.")
             print(f"  Load in LLMUnity: base_model.gguf + lora_adapter.gguf")
             print(f"  Size: {output_path.stat().st_size / 1e6:.1f} MB")
+
+            # ── Record pipeline manifest stage ─────────────────────────────────
+            gguf_files: list = []
+            try:
+                from scripts.ops.pipeline_manifest import record_pipeline_stage
+                npc_key_for_manifest = _get_npc_key(str(output_dir))
+                os.environ.setdefault("TECHNIQUE", "export")
+                if npc_key_for_manifest:
+                    os.environ.setdefault("NPC_KEY", npc_key_for_manifest)
+                manifest_artifacts = {"output_dir": str(output_dir)}
+                if gguf_files:
+                    manifest_artifacts["gguf_files"] = gguf_files
+                record_pipeline_stage("export", artifacts=manifest_artifacts)
+            except Exception:
+                pass  # manifest is optional, never block pipeline
             return
 
         # ── Full-merge mode — optimized: single f16 export + local quantize ─────
@@ -665,6 +692,20 @@ def main():
             print(f"  GGUF (f16):       {f16_path}")
             if args.quantization and args.quantization != "f16" and quant_path.exists():
                 print(f"  GGUF ({args.quantization}): {quant_path}")
+
+            # ── Record pipeline manifest stage ─────────────────────────────────
+            try:
+                from scripts.ops.pipeline_manifest import record_pipeline_stage
+                npc_key_for_manifest = _get_npc_key(str(output_dir))
+                os.environ.setdefault("TECHNIQUE", "export")
+                if npc_key_for_manifest:
+                    os.environ.setdefault("NPC_KEY", npc_key_for_manifest)
+                manifest_artifacts = {"output_dir": str(output_dir)}
+                if gguf_files:
+                    manifest_artifacts["gguf_files"] = gguf_files
+                record_pipeline_stage("export", artifacts=manifest_artifacts)
+            except Exception:
+                pass  # manifest is optional, never block pipeline
 
         except Exception as exc:
             _write_status(npc_key, state="failed", substep="failed",

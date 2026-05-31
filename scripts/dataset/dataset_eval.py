@@ -530,15 +530,6 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
 
                 # ── Confident AI Dashboard Link ────────────────────────────────
                 if confident_available():
-                    try:
-                        subprocess.run(
-                            [resolve_deepeval_bin(), "view"],
-                            cwd=str(PROJECT_ROOT),
-                            capture_output=True,
-                            timeout=3,
-                        )
-                    except Exception:
-                        pass  # best-effort; dashboard URL is the main deliverable
                     print("\U0001F4CA Confident AI dashboard: https://app.confident-ai.com/")
                     print(f"   Look for run identifier: {identifier}")
 
@@ -641,6 +632,39 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
             print(f"Summary:  {summary_path}")
             print(f"Failures: {failures_path}")
             print(f"Report:   {report_path}")
+
+            # ── Record pipeline manifest stage ─────────────────────────────────
+            try:
+                from scripts.ops.pipeline_manifest import record_pipeline_stage
+                # Set env vars for manifest if not already set
+                os.environ.setdefault("NPC_KEY", npc_key)
+                os.environ.setdefault("TECHNIQUE", technique)
+                # Gather artifacts
+                manifest_artifacts = {
+                    "quality_summary": str(summary_path),
+                    "quality_failures": str(failures_path),
+                    "quality_report": str(report_path),
+                }
+                manifest_metadata = {
+                    "deepeval_identifier": identifier,
+                    "status": summary.get("status", "unknown"),
+                    "pass_rate": summary.get("pass_rate"),
+                    "total": summary.get("total"),
+                    "passed": summary.get("passed"),
+                }
+                # Add confident URL if available from .latest_test_run.json
+                try:
+                    latest_run = PROJECT_ROOT / ".deepeval" / ".latest_test_run.json"
+                    if latest_run.exists():
+                        import json as _json
+                        lr = _json.loads(latest_run.read_text())
+                        if "testRunLink" in lr:
+                            manifest_metadata["confident_url"] = lr["testRunLink"]
+                except Exception:
+                    pass
+                record_pipeline_stage("dataset_eval", artifacts=manifest_artifacts, metadata=manifest_metadata)
+            except Exception:
+                pass  # manifest is optional, never block pipeline
 
         finally:
             run.set_artifacts(summary_path=str(summary_path), failures_path=str(failures_path), report_path=str(report_path))
