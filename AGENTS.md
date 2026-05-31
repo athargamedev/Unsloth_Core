@@ -564,6 +564,50 @@ Weights & Biases tracks every training run with:
 **Modular Server (dev):** `npm run dev:modular` starts the new modular backend at port 3100 with Vite dev middleware, rate limiting, auth, and job queue.
 **Legacy Server:** `npm run dev` still starts the existing monolithic `server.ts` for backward compatibility.
 
+## ☁️ Confident AI Integration
+
+Confident AI is the hosted platform layer for DeepEval (free tier available at [app.confident-ai.com](https://app.confident-ai.com)). It provides dashboards, experiment tracking, dataset management, and human-in-the-loop annotations. Results auto-upload when `CONFIDENT_API_KEY` is set in the environment.
+
+### Setup
+
+```bash
+# Create a free account at https://app.confident-ai.com
+# Get your project API key from the dashboard
+# Then:
+deepeval login    # Interactive login
+# OR set via env:
+export CONFIDENT_API_KEY="confident_us_..."
+```
+
+The `.env.local` file should contain `CONFIDENT_API_KEY=...` and the `scripts/ops/env_loader.py` utility sources it automatically across all pipeline scripts.
+
+### Features Available
+
+| Feature | How to Use | Status |
+|---------|-----------|--------|
+| Hosted eval dashboards | Result auto-upload when `CONFIDENT_API_KEY` is set | ✅ Automatic |
+| Dataset management | `./ucore generate spec.json --push-to-confident` | ✅ Opt-in |
+| Model eval on Confident | `./ucore evaluate --deepeval` | ✅ Opt-in |
+| Preflight check | `./ucore audit check` warns if not configured | ✅ Automatic |
+| Experiment comparison | Use Confident AI web UI after pushing results | 🔜 Manual |
+| Human annotations | Annotate on app.confident-ai.com after eval runs | 🔜 Manual |
+| Online evals (prod) | Requires tracing instrumentation | 📋 Future |
+
+### Pipeline Behavior
+
+- **`dataset_eval.py`**: If `CONFIDENT_API_KEY` is set, results auto-upload to Confident AI dashboard after each `deepeval test run`. The `--confident` flag enforces that the API key is configured (exits with error if missing).
+- **`generate_dataset.py`**: `--push-to-confident` pushes generated datasets to Confident AI with alias `npc-dataset-{npc_key}-{technique}`.
+- **`evaluate.py`**: `--deepeval` flag runs DeepEval model quality evaluation as an additional step after conventional evaluation.
+- **`preflight.py`**: Checks for Confident availability as part of `./ucore audit check` and warns if not configured.
+
+### Viewing Results
+
+```bash
+deepeval view    # Opens latest run in browser
+```
+
+Or log in at [https://app.confident-ai.com](https://app.confident-ai.com) to see all runs, dashboards, and experiments.
+
 ## 🖥️ Active NPCs
 | NPC | Key | Subject | Current local state |
 |-----|-----|---------|---------------------|

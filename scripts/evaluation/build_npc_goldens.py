@@ -385,6 +385,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Output JSON path (default: tests/evals/.dataset/npc_goldens_<technique>.json)",
     )
+    parser.add_argument(
+        "--push-to-confident",
+        action="store_true",
+        help="Push the resulting golden dataset(s) to Confident AI using per-NPC aliases (requires CONFIDENT_API_KEY).",
+    )
     return parser.parse_args()
 
 
@@ -416,6 +421,29 @@ def main() -> None:
     print(f"\nDone — {result['total_goldens']} total goldens written to {output_path}")
     for npc_key, s in result["per_npc"].items():
         print(f"  {npc_key}: {s['selected']} goldens from {s['rows']} rows")
+
+    if getattr(args, "push_to_confident", False):
+        print("\nPushing to Confident AI...")
+        try:
+            from scripts.ops.confident_push import push_goldens_if_confident, is_confident_enabled
+            if not is_confident_enabled():
+                print("  [error] CONFIDENT_API_KEY not set. Skipping push.")
+            else:
+                # We generated a unified file containing all NPCs.
+                # Usually you'd split this, but for now we push the unified file.
+                technique = args.technique or "template"
+                # If they passed 1 NPC, use that in the alias, otherwise 'multi'
+                alias_suffix = npc_keys[0] if len(npc_keys) == 1 else "multi"
+                confident_alias = f"npc-goldens-{alias_suffix}-{technique}"
+                push_goldens_if_confident(
+                    output_path,
+                    alias=confident_alias,
+                    verbose=True,
+                )
+        except ImportError:
+            print("  [error] Confident push module not found.")
+        except Exception as exc:
+            print(f"  [error] Push failed: {exc}")
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.dataset.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
+from scripts.ops.env_loader import confident_available, ensure_confident_api_key
 from scripts.ops.preflight import run_preflight
 from scripts.ops.ollama_model_presets import resolve_ollama_model
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
@@ -422,6 +423,10 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     if existing_pythonpath
                     else str(PROJECT_ROOT)
                 )
+                # Propagate Confident AI key explicitly so the deepeval subprocess
+                # can upload results even when its cwd differs from PROJECT_ROOT
+                # (DeepEval 4.x auto-loads .env.local from cwd, but belt-and-suspenders).
+                confident_key = os.getenv("CONFIDENT_API_KEY", "")
                 env.update(
                     {
                         "DEEPEVAL_DATASET_NPC_KEYS": npc_key,
@@ -437,10 +442,30 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         "DEEPEVAL_WANDB_PROJECT": args.wandb_inference_project or args.wandb_project or os.getenv("WANDB_PROJECT", ""),
                         "DEEPEVAL_TELEMETRY_OPT_OUT": "1",
                         "DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE": os.getenv("DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE", "600"),
+                        # Suppress browser pop-up in headless / CI runs.
+                        "CONFIDENT_OPEN_BROWSER": "false",
+                        **({
+                            "CONFIDENT_API_KEY": confident_key,
+                        } if confident_key else {}),
                     }
                 )
                 if args.categories:
                     env["DEEPEVAL_DATASET_CATEGORIES"] = args.categories
+
+                # ── Confident AI Setup ────────────────────────────────────────
+                confident_key_found = ensure_confident_api_key()
+                if confident_key_found:
+                    print("Confident AI: results will auto-upload to hosted dashboard", flush=True)
+                else:
+                    print(
+                        "Confident AI: not configured (set CONFIDENT_API_KEY or run 'deepeval login')",
+                        flush=True,
+                    )
+                if args.confident and not confident_key_found:
+                    raise SystemExit(
+                        "Error: --confident was passed but CONFIDENT_API_KEY is not set.\n"
+                        "Set the environment variable or run 'deepeval login' first."
+                    )
 
                 print(f"Running: {' '.join(cmd)}", flush=True)
                 completed = subprocess.run(cmd, cwd=str(PROJECT_ROOT), env=env)
@@ -499,6 +524,34 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 archive_quality_artifact(summary_path, run.run_id)
                 archive_quality_artifact(failures_path, run.run_id)
                 archive_quality_artifact(report_path, run.run_id)
+
+                # Optional: push the quality report JSON as a Confident AI dataset artifact
+                if getattr(args, "push_to_confident", False):
+                    try:
+                        from scripts.ops.confident_push import push_goldens_if_confident, is_confident_enabled
+                        if is_confident_enabled():
+                            confident_alias = f"quality-report-{npc_key}-{technique}"
+                            push_goldens_if_confident(
+                                report_path,
+                                alias=confident_alias,
+                                verbose=True,
+                            )
+                    except Exception as _push_exc:
+                        print(f"  [confident] Quality report push failed (non-fatal): {_push_exc}")
+
+                # ── Confident AI Dashboard Link ────────────────────────────────
+                if confident_available():
+                    try:
+                        subprocess.run(
+                            [resolve_deepeval_bin(), "view"],
+                            cwd=str(PROJECT_ROOT),
+                            capture_output=True,
+                            timeout=3,
+                        )
+                    except Exception:
+                        pass  # best-effort; dashboard URL is the main deliverable
+                    print("\U0001F4CA Confident AI dashboard: https://app.confident-ai.com/")
+                    print(f"   Look for run identifier: {identifier}")
 
             # ── W&B Dataset Quality Gate Tracking ──────────────────────────────
             if args.wandb:
@@ -643,11 +696,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", help="Quality summary JSON path")
     parser.add_argument("--workflow-hooks", default=None,
                         help="Path to a JSONL hook log for step tracing (default: <dataset-dir>/workflow_hooks.jsonl)")
+    parser.add_argument("--push-to-confident", action="store_true",
+                        help="Push the combined quality report to Confident AI as a named dataset artifact (requires CONFIDENT_API_KEY)")
     parser.add_argument("--wandb", action="store_true", help="Enable W&B logging")
     parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
     parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
     parser.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference (default: --wandb-project)")
     parser.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference (default: --wandb-entity)")
+    parser.add_argument("--confident", action="store_true", default=False,
+                        help="Require Confident AI API key (exits with error if not configured)")
     return parser.parse_args()
 
 

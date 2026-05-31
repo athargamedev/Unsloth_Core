@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-31T02:41:54.328420+00:00",
+  "created_at": "2026-05-31T02:39:04.432049+00:00",
   "npc_key": "history_guide",
   "technique": "template",
   "spec": {
@@ -219,12 +219,12 @@
   },
   "deepeval": {
     "summary": {
-      "created_at": "2026-05-31T02:41:54.327346+00:00",
+      "created_at": "2026-05-31T02:39:04.430823+00:00",
       "npc_key": "history_guide",
       "technique": "template",
       "judge_provider": "ollama",
       "judge_model": "qwen3:latest",
-      "deepeval_identifier": "dataset-quality-history_guide-template-fast-20260530-233918",
+      "deepeval_identifier": "dataset-quality-history_guide-template-fast-20260530-233902",
       "deepeval_result_identifier": "dataset-quality-history_guide-ollama-fast-20260529-103444",
       "command": [
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
@@ -232,7 +232,7 @@
         "run",
         "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
         "--identifier",
-        "dataset-quality-history_guide-template-fast-20260530-233918",
+        "dataset-quality-history_guide-template-fast-20260530-233902",
         "--display",
         "all",
         "--skip-on-missing-params"
@@ -286,7 +286,7 @@
       },
       "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/quality_failures.json",
       "result_identifier_mismatch": {
-        "expected": "dataset-quality-history_guide-template-fast-20260530-233918",
+        "expected": "dataset-quality-history_guide-template-fast-20260530-233902",
         "actual": "dataset-quality-history_guide-ollama-fast-20260529-103444"
       },
       "quality_gate_mode": "fast",

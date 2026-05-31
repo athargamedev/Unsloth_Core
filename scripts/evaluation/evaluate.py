@@ -38,6 +38,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from _config.workflow_context import load_subject_spec as load_shared_subject_spec
 from _config.log_setup import log_info, log_warn, log_error, log_state
+from scripts.ops.env_loader import ensure_confident_api_key, confident_available
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from scripts.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient, extract_json_object
 
@@ -1105,6 +1106,14 @@ def main():
     parser.add_argument("--workflow-hooks", default=None,
                         help="Path to a JSONL hook log for step tracing (default: <report-dir>/workflow_hooks.jsonl)")
 
+    # DeepEval
+    parser.add_argument("--deepeval", action="store_true", default=False,
+                        help="Also run DeepEval model quality evaluation and push results to Confident AI")
+    parser.add_argument("--deepeval-judge-model", default="qwen3:latest",
+                        help="DeepEval judge model for model evaluation")
+    parser.add_argument("--deepeval-identifier", default=None,
+                        help="Identifier for the DeepEval test run")
+
     # LoRA mode (evaluate adapter GGUFs without full-merge)
     parser.add_argument("--base-model", help="Base GGUF model path (required when --candidate is a LoRA adapter)")
     parser.add_argument("--lora-weight", type=float, default=1.0,
@@ -1561,6 +1570,88 @@ def main():
                 except Exception as e:
                     print(f"  [wandb] Report artifact failed: {e}")
             wandb.finish()
+
+        # ── DeepEval Evaluation ──────────────────────────────────────────────
+        if args.deepeval:
+            _run_deepeval_eval(args, str(candidate_path), str(baseline_path))
+
+
+def _run_deepeval_eval(args, candidate_path, baseline_path=None):
+    """Run DeepEval model quality evaluation using the test suite.
+
+    Sets up environment variables consumed by
+    ``tests/evals/test_npc_model_quality.py`` and invokes the DeepEval CLI.
+    Results are pushed to Confident AI when ``CONFIDENT_API_KEY`` is set.
+    """
+    # ── Early exit: parse NPC key from spec ──────────────────────────────
+    npc_key = "unknown"
+    if args.spec:
+        try:
+            spec = load_subject_spec(args.spec)
+            npc_key = spec.get("npc_key", "unknown")
+        except Exception as exc:
+            print(f"  [deepeval] Could not load spec for NPC key: {exc}")
+
+    # ── Fail fast: must have Confident API key ───────────────────────────
+    try:
+        ensure_confident_api_key()
+    except EnvironmentError as exc:
+        print(f"  [deepeval] {exc}")
+        print("  [deepeval] Skipping DeepEval evaluation.")
+        return
+
+    # ── Parse inputs at the boundary ─────────────────────────────────────
+    ollama_url = os.environ.get(
+        "DEEPEVAL_OLLAMA_BASE_URL",
+        "http://localhost:11434",
+    )
+
+    os.environ["DEEPEVAL_LIVE_MODEL_URL"] = ollama_url
+    os.environ["DEEPEVAL_OLLAMA_MODEL"] = args.deepeval_judge_model
+    os.environ["DEEPEVAL_GOLDEN_TECHNIQUE"] = (
+        getattr(args, "technique", None) or "template"
+    )
+    os.environ["DEEPEVAL_GOLDEN_NPC_KEYS"] = npc_key
+
+    identifier = (
+        args.deepeval_identifier
+        or f"npc-model-eval-{npc_key}-{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    )
+
+    print(f"\n[deepeval] Running DeepEval model quality evaluation...")
+    print(f"  Identifier:  {identifier}")
+    print(f"  Judge model: {args.deepeval_judge_model}")
+    print(f"  NPC key:     {npc_key}")
+    if baseline_path:
+        print(f"  Baseline:    {baseline_path}")
+    print(f"  Candidate:   {candidate_path}")
+
+    # ── Run deepeval test run ───────────────────────────────────────────
+    test_script = str(PROJECT_ROOT / "tests/evals/test_npc_model_quality.py")
+    cmd = ["deepeval", "test", "run", test_script, "--identifier", identifier]
+    result = subprocess.run(cmd)
+
+    if result.returncode != 0:
+        print(
+            f"\n  [deepeval] Test run finished with exit code {result.returncode}."
+        )
+    else:
+        print(f"\n  [deepeval] Test run completed successfully.")
+
+    # ── Open Confident AI dashboard (best-effort) ───────────────────────
+    if confident_available():
+        try:
+            subprocess.run(
+                ["deepeval", "view"],
+                timeout=3,
+                capture_output=True,
+            )
+        except subprocess.TimeoutExpired:
+            pass  # deepeval view opens a browser; timeout is expected
+        except Exception as exc:
+            print(f"  [deepeval] Could not open Confident AI dashboard: {exc}")
+
+    print(f"\n  [deepeval] Results available at: https://app.confident-ai.com")
 
 
 if __name__ == "__main__":

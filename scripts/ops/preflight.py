@@ -26,6 +26,7 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from scripts.ops.env_loader import confident_available
 from scripts.ops.ollama_lifecycle import list_running_ollama_models, stop_running_models
 from scripts.ops.model_presets import DEFAULT_FALLBACK_PRESET
 
@@ -43,6 +44,8 @@ class PreflightReport:
     running_ollama_models: list[str] = field(default_factory=list)
     stopped_ollama_models: list[str] = field(default_factory=list)
     recommendation: dict[str, Any] = field(default_factory=dict)
+    confident_available: bool = False
+    confident_warning: str | None = None
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
@@ -68,6 +71,8 @@ class PreflightReport:
             "running_ollama_models": self.running_ollama_models,
             "stopped_ollama_models": self.stopped_ollama_models,
             "recommendation": self.recommendation,
+            "confident_available": self.confident_available,
+            "confident_warning": self.confident_warning,
             "warnings": self.warnings,
             "errors": self.errors,
         }
@@ -150,6 +155,19 @@ def check_gcc() -> tuple[bool, str | None, str | None]:
         return False, gcc_path, stderr
 
     return True, gcc_path, None
+
+
+def _check_confident() -> tuple[bool, str | None]:
+    """Check whether Confident AI credentials are configured for DeepEval."""
+    available = confident_available()
+    if not available:
+        return (
+            False,
+            "CONFIDENT_API_KEY not set. DeepEval results will NOT be uploaded to "
+            "Confident AI dashboard. Set CONFIDENT_API_KEY in .env.local or run "
+            "'deepeval login'.",
+        )
+    return True, None
 
 
 def _maybe_recommend_preset(
@@ -245,6 +263,12 @@ def run_preflight(
     else:
         report.gcc_ok = True
 
+    confident_ok, confident_msg = _check_confident()
+    report.confident_available = confident_ok
+    report.confident_warning = confident_msg
+    if not confident_ok and confident_msg:
+        report.warnings.append(confident_msg)
+
     effective_preset, recommendation = _maybe_recommend_preset(
         spec_path=Path(spec_path) if spec_path else None,
         preset=preset,
@@ -276,6 +300,7 @@ def _format_text_report(report: PreflightReport) -> str:
         f"Technique:        {report.technique or '-'}",
         f"VRAM free/total:  {report.free_vram_gb if report.free_vram_gb is not None else '?'} / {report.total_vram_gb if report.total_vram_gb is not None else '?'} GiB",
         f"gcc:              {report.gcc_path or '-'} ({'ok' if report.gcc_ok else 'missing'})",
+        f"Confident AI:     {'ok' if report.confident_available else 'missing'}",
         f"Running Ollama:   {', '.join(report.running_ollama_models) if report.running_ollama_models else '-'}",
         f"Stopped Ollama:   {', '.join(report.stopped_ollama_models) if report.stopped_ollama_models else '-'}",
     ]

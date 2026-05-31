@@ -55,6 +55,12 @@ from scripts.dataset.generate_workflow_dataset import (
     default_manifest_path,
     generate_workflow_dataset_from_manifest,
 )
+from scripts.ops.env_loader import ensure_confident_api_key, confident_available
+
+try:
+    from deepeval.dataset import EvaluationDataset
+except ImportError:
+    EvaluationDataset = None  # graceful fallback — callers must check before use
 
 from scripts.dataset.generation_profiles import (
     CATEGORY_TEMPLATES,
@@ -1624,8 +1630,16 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
     }
 
 
-def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, output_path: str):
-    """Generates complex evaluation test cases directly from an NPC reference document."""
+def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, output_path: str,
+                                           push_to_confident: bool = False):
+    """Generates complex evaluation test cases directly from an NPC reference document.
+
+    Args:
+        ref_doc_path: Path to the reference document primer.
+        npc_key: NPC identifier used for naming.
+        output_path: Path to write the synthetic goldens JSON.
+        push_to_confident: If True, push the generated goldens to Confident AI.
+    """
     try:
         from deepeval.dataset import EvaluationDataset
         from deepeval.models import OllamaModel
@@ -1659,12 +1673,68 @@ def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, outp
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         dataset.save_as_json(output_path)
         print(f"Saved {len(synthesizer.test_cases)} synthetic goldens to {output_path}")
+
+        if push_to_confident:
+            ensure_confident_api_key()
+            alias = f"npc-goldens-{npc_key}"
+            dataset.push(alias=alias)
+            print(f"  Pushed goldens to Confident AI as: {alias}")
     except Exception as e:
         print(f"[error] DeepEval golden synthesis failed: {e}")
 
 
 from scripts.ops.run_registry import PipelineRun
 from scripts.ops.ollama_lifecycle import register_ollama_unload
+
+
+def _push_dataset_to_confident(jsonl_path: str, alias: str) -> None:
+    """Build an EvaluationDataset from a ChatML JSONL file and push to Confident AI.
+
+    Args:
+        jsonl_path: Path to the ChatML JSONL dataset.
+        alias: Confident AI alias under which to push the dataset.
+
+    Raises:
+        ImportError: If deepeval is not available.
+        EnvironmentError: If CONFIDENT_API_KEY is not set.
+    """
+    if EvaluationDataset is None:
+        raise ImportError(
+            "deepeval is not installed. Install it with: pip install deepeval"
+        )
+
+    from deepeval.synthesizer import Golden
+
+    ensure_confident_api_key()
+
+    goldens: list[Golden] = []
+    with open(jsonl_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            example = json.loads(line)
+            messages = example.get("messages", [])
+            input_text = ""
+            output_text = ""
+            for msg in messages:
+                role = msg.get("role", "")
+                content = msg.get("content", "")
+                if role == "user" and not input_text:
+                    input_text = content
+                elif role == "assistant" and not output_text:
+                    output_text = content
+            if input_text:
+                goldens.append(Golden(input=input_text, actual_output=output_text))
+
+    if not goldens:
+        print(f"  [warn] No valid examples found in {jsonl_path} — skipping Confident AI push")
+        return
+
+    dataset = EvaluationDataset()
+    dataset.add_goldens(goldens)
+    dataset.push(alias=alias)
+    print(f"  Pushed dataset to Confident AI as: {alias}")
 
 def main():
     parser = argparse.ArgumentParser(description="Generate ChatML dataset from a subject spec")
@@ -1696,6 +1766,8 @@ def main():
                         help="Ignore checkpoint recovery and regenerate the dataset from scratch")
     parser.add_argument("--synthesize-goldens", action="store_true",
                         help="Generate synthetic evaluation goldens using DeepEval Synthesizer")
+    parser.add_argument("--push-to-confident", action="store_true",
+                        help="Push generated dataset to Confident AI (requires CONFIDENT_API_KEY)")
     args = parser.parse_args()
 
     # Import re for JSON extraction
@@ -1745,7 +1817,10 @@ def main():
                 ref_doc = spec.get("reference_doc")
                 if ref_doc and (PROJECT_ROOT / ref_doc).exists():
                     golden_path = Path(output_path).parent / "synthetic_goldens.json"
-                    generate_synthetic_goldens_from_primer(str(PROJECT_ROOT / ref_doc), npc_key, str(golden_path))
+                    generate_synthetic_goldens_from_primer(
+                        str(PROJECT_ROOT / ref_doc), npc_key, str(golden_path),
+                        push_to_confident=args.push_to_confident,
+                    )
                 else:
                     print(f"  [warn] No reference_doc found for {npc_key} or file missing. Skipping golden synthesis.")
 
@@ -1830,6 +1905,11 @@ def main():
                 print(f"  Manifest:        {result['manifest_path']}")
             print()
             print("Dataset generation complete!")
+
+            # ── Push to Confident AI (opt-in) ─────────────────────────────────
+            if args.push_to_confident and result.get("train_path"):
+                alias = f"npc-dataset-{npc_key}-{technique}"
+                _push_dataset_to_confident(result["train_path"], alias)
 
         finally:
             clear_active_run()
