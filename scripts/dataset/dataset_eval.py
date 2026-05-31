@@ -17,6 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.dataset.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
+from scripts.ops.confident_api import ConfidentAPIClient
 from scripts.ops.env_loader import confident_available, ensure_confident_api_key
 from scripts.ops.preflight import run_preflight
 from scripts.ops.ollama_model_presets import resolve_ollama_model
@@ -174,6 +175,66 @@ def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, jud
         "failures_path": str(dataset_dir(npc_key, technique) / "quality_failures.json"),
     }
     return summary, failures
+
+
+def _build_metric_collection() -> dict:
+    """Build a metric collection matching the local evaluation metrics."""
+    return {
+        "name": "npc-dataset-quality",
+        "include": ["answer_relevancy", "faithfulness", "hallucination"],
+    }
+
+
+def _convert_test_cases_for_remote(jsonl_path: Path) -> list[dict]:
+    """Read a ChatML JSONL dataset and convert rows to Confident API test cases."""
+    test_cases: list[dict] = []
+    if not jsonl_path.exists():
+        return test_cases
+    with jsonl_path.open(encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            messages = row.get("messages") if isinstance(row, dict) else None
+            if not isinstance(messages, list) or len(messages) < 2:
+                continue
+            # Extract system prompt (first message with role "system")
+            system_prompt = ""
+            for msg in messages:
+                if msg.get("role") == "system":
+                    system_prompt = msg.get("content", "")
+                    break
+            # Extract first user and assistant messages
+            user_message = ""
+            assistant_message = ""
+            for msg in messages:
+                role = msg.get("role", "")
+                if role == "user" and not user_message:
+                    user_message = msg.get("content", "")
+                elif role == "assistant" and not assistant_message:
+                    assistant_message = msg.get("content", "")
+            if not user_message:
+                continue
+            metadata = row.get("metadata") or {}
+            category = metadata.get("category", "")
+            difficulty = metadata.get("difficulty", "")
+            additional_metadata: dict[str, str] = {}
+            if category:
+                additional_metadata["category"] = category
+            if difficulty:
+                additional_metadata["difficulty"] = difficulty
+            test_cases.append({
+                "input": user_message,
+                "actualOutput": "",
+                "expectedOutput": assistant_message,
+                "context": [system_prompt] if system_prompt else [],
+                "additionalMetadata": additional_metadata if additional_metadata else {},
+            })
+    return test_cases
 
 
 def load_optional_json(path: Path) -> dict | None:
@@ -386,7 +447,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
             )
             with hook_recorder.step("deepeval_run", identifier=identifier, judge_provider=judge_provider, judge_model=resolved_judge_model, cases_per_category=cases_per_category, mode=args.mode):
                 preflight = None
-                if judge_provider == "ollama":
+                if judge_provider == "ollama" and not getattr(args, 'remote_eval', False):
                     preflight = run_preflight(
                         phase="dataset_eval",
                         preset=None,
@@ -468,33 +529,53 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         "Set the environment variable or run 'deepeval login' first."
                     )
 
-                print(f"Running: {' '.join(cmd)}", flush=True)
-                completed = subprocess.run(cmd, cwd=str(PROJECT_ROOT), env=env)
+                # ── Remote Eval Path (Confident AI) ──────────────────────────
+                if args.remote_eval:
+                    if not args.confident:
+                        print("Error: --remote-eval requires --confident (Confident API key).", flush=True)
+                        sys.exit(1)
 
-                result = latest_deepeval_result()
-                summary, failures = summarize_deepeval_result(
-                    result,
-                    npc_key=npc_key,
-                    technique=technique,
-                    judge_model=resolved_judge_model,
-                    judge_provider=judge_provider,
-                    command=cmd,
-                )
-                if summary.get("deepeval_result_identifier") and summary.get("deepeval_result_identifier") != identifier:
-                    summary["status"] = "inconclusive"
-                    summary["result_identifier_mismatch"] = {
-                        "expected": identifier,
-                        "actual": summary.get("deepeval_result_identifier"),
-                    }
-                dataset_summary = summarize_jsonl_dataset(clean_path)
-                expected_distribution = expected_examples_per_category(spec)
-                distribution_gaps = calculate_distribution_gaps(expected_distribution, dataset_summary.get("by_category", {}))
-                manifest = load_optional_json(output_dir / "train_manifest.json") or {}
-                sanitizer_summary, sanitizer_issues = sanitizer_quality_issues(manifest)
-                summary.update(
-                    {
+                    print("\n[Remote Eval] Evaluating on Confident AI infrastructure...", flush=True)
+                    client = ConfidentAPIClient()
+                    metric_collection = _build_metric_collection()
+                    test_cases = _convert_test_cases_for_remote(clean_path)
+
+                    result = client.evaluate(test_cases, metric_collection, identifier=identifier)
+                    test_run_id = result.get("data", {}).get("testRunId", "")
+                    print(f"Remote evaluation submitted. Test Run ID: {test_run_id}", flush=True)
+                    print(f"View results: https://app.confident-ai.com/test-runs/{test_run_id}", flush=True)
+
+                    # Build summary matching local shape for downstream code
+                    summary = {
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "npc_key": npc_key,
+                        "technique": technique,
+                        "judge_provider": "confident",
+                        "judge_model": "hosted",
+                        "deepeval_identifier": identifier,
                         "quality_gate_mode": args.mode,
                         "cases_per_category": cases_per_category,
+                        "total": len(test_cases),
+                        "passed": 0,
+                        "failed": 0,
+                        "pass_rate": 0.0,
+                        "status": "ok",
+                        "remote_eval": True,
+                        "test_run_id": test_run_id,
+                        "confident_url": f"https://app.confident-ai.com/test-runs/{test_run_id}",
+                        "metric_count": 0,
+                        "null_metric_count": 0,
+                        "null_metric_rate": 0.0,
+                        "metrics": {},
+                        "categories": {},
+                    }
+                    # Enrich with dataset info (same as local path)
+                    dataset_summary = summarize_jsonl_dataset(clean_path)
+                    expected_distribution = expected_examples_per_category(spec)
+                    distribution_gaps = calculate_distribution_gaps(expected_distribution, dataset_summary.get("by_category", {}))
+                    manifest = load_optional_json(output_dir / "train_manifest.json") or {}
+                    sanitizer_summary, sanitizer_issues = sanitizer_quality_issues(manifest)
+                    summary.update({
                         "dataset_summary": dataset_summary,
                         "expected_distribution": expected_distribution,
                         "distribution_gaps": distribution_gaps,
@@ -502,31 +583,91 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         "dataset_unknown_rows": dataset_summary.get("unknown_rows", 0),
                         "sanitizer": sanitizer_summary,
                         "sanitizer_quality_issues": sanitizer_issues,
-                    }
-                )
-                if distribution_gaps or dataset_summary.get("unknown_rows", 0) or sanitizer_issues:
-                    summary["status"] = "structural_failure" if summary.get("status") == "ok" else summary.get("status")
-                output_dir = dataset_dir(npc_key, technique)
-                summary_path = Path(args.output) if args.output else output_dir / "quality_summary.json"
-                failures_path = output_dir / "quality_failures.json"
-                report_path = output_dir / "quality_report.json"
-                combined_report = build_combined_quality_report(
-                    spec=spec,
-                    technique=technique,
-                    clean_path=clean_path,
-                    manifest_path=output_dir / "train_manifest.json",
-                    summary=summary,
-                    failures=failures,
-                )
-                write_json(summary_path, summary)
-                write_json(failures_path, failures)
-                write_json(report_path, combined_report)
+                    })
+                    if distribution_gaps or dataset_summary.get("unknown_rows", 0) or sanitizer_issues:
+                        summary["status"] = "structural_failure" if summary.get("status") == "ok" else summary.get("status")
 
-                archive_quality_artifact(summary_path, run.run_id)
-                archive_quality_artifact(failures_path, run.run_id)
-                archive_quality_artifact(report_path, run.run_id)
+                    failures: list[dict] = []
+                    combined_report = build_combined_quality_report(
+                        spec=spec,
+                        technique=technique,
+                        clean_path=clean_path,
+                        manifest_path=output_dir / "train_manifest.json",
+                        summary=summary,
+                        failures=failures,
+                    )
+                    output_dir = dataset_dir(npc_key, technique)
+                    summary_path = Path(args.output) if args.output else output_dir / "quality_summary.json"
+                    failures_path = output_dir / "quality_failures.json"
+                    report_path = output_dir / "quality_report.json"
+                    write_json(summary_path, summary)
+                    write_json(failures_path, failures)
+                    write_json(report_path, combined_report)
 
-                # (Test runs are uploaded automatically to Confident AI via the deepeval CLI)
+                    archive_quality_artifact(summary_path, run.run_id)
+                    archive_quality_artifact(failures_path, run.run_id)
+                    archive_quality_artifact(report_path, run.run_id)
+                else:
+                    # ── Local Eval Path ──────────────────────────────────────────
+                    print(f"Running: {' '.join(cmd)}", flush=True)
+                    completed = subprocess.run(cmd, cwd=str(PROJECT_ROOT), env=env)
+
+                    result = latest_deepeval_result()
+                    summary, failures = summarize_deepeval_result(
+                        result,
+                        npc_key=npc_key,
+                        technique=technique,
+                        judge_model=resolved_judge_model,
+                        judge_provider=judge_provider,
+                        command=cmd,
+                    )
+                    if summary.get("deepeval_result_identifier") and summary.get("deepeval_result_identifier") != identifier:
+                        summary["status"] = "inconclusive"
+                        summary["result_identifier_mismatch"] = {
+                            "expected": identifier,
+                            "actual": summary.get("deepeval_result_identifier"),
+                        }
+                    dataset_summary = summarize_jsonl_dataset(clean_path)
+                    expected_distribution = expected_examples_per_category(spec)
+                    distribution_gaps = calculate_distribution_gaps(expected_distribution, dataset_summary.get("by_category", {}))
+                    manifest = load_optional_json(output_dir / "train_manifest.json") or {}
+                    sanitizer_summary, sanitizer_issues = sanitizer_quality_issues(manifest)
+                    summary.update(
+                        {
+                            "quality_gate_mode": args.mode,
+                            "cases_per_category": cases_per_category,
+                            "dataset_summary": dataset_summary,
+                            "expected_distribution": expected_distribution,
+                            "distribution_gaps": distribution_gaps,
+                            "dataset_total_rows": dataset_summary.get("total", 0),
+                            "dataset_unknown_rows": dataset_summary.get("unknown_rows", 0),
+                            "sanitizer": sanitizer_summary,
+                            "sanitizer_quality_issues": sanitizer_issues,
+                        }
+                    )
+                    if distribution_gaps or dataset_summary.get("unknown_rows", 0) or sanitizer_issues:
+                        summary["status"] = "structural_failure" if summary.get("status") == "ok" else summary.get("status")
+                    output_dir = dataset_dir(npc_key, technique)
+                    summary_path = Path(args.output) if args.output else output_dir / "quality_summary.json"
+                    failures_path = output_dir / "quality_failures.json"
+                    report_path = output_dir / "quality_report.json"
+                    combined_report = build_combined_quality_report(
+                        spec=spec,
+                        technique=technique,
+                        clean_path=clean_path,
+                        manifest_path=output_dir / "train_manifest.json",
+                        summary=summary,
+                        failures=failures,
+                    )
+                    write_json(summary_path, summary)
+                    write_json(failures_path, failures)
+                    write_json(report_path, combined_report)
+
+                    archive_quality_artifact(summary_path, run.run_id)
+                    archive_quality_artifact(failures_path, run.run_id)
+                    archive_quality_artifact(report_path, run.run_id)
+
+                    # (Test runs are uploaded automatically to Confident AI via the deepeval CLI)
 
                 # ── Confident AI Dashboard Link ────────────────────────────────
                 if confident_available():
@@ -718,6 +859,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference (default: --wandb-entity)")
     parser.add_argument("--confident", action="store_true", default=False,
                         help="Require Confident AI API key (exits with error if not configured)")
+    parser.add_argument("--remote-eval", action="store_true", default=False,
+                        help="Evaluate on Confident AI infrastructure instead of locally. Requires --confident.")
     return parser.parse_args()
 
 

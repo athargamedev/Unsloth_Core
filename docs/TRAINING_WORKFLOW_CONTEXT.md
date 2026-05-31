@@ -2,17 +2,35 @@
 
 ## Overview
 
-The Unsloth Core training pipeline transforms an NPC subject specification into a playable GGUF-quantized LoRA model ready for Unity deployment. The pipeline follows six stages:
+The Unsloth Core training pipeline transforms an NPC subject specification into a playable GGUF-quantized LoRA model ready for Unity deployment. The pipeline follows nine canonical stages tracked in the pipeline run manifest:
 
 ```
-Subject Spec (JSON) → [Generate] → [Sanitize] → [Train] → [Export] → [Evaluate] → GGUF
-                                                                           ↓
-                                                              [Feedback Loop] —→ retrain
+Subject Spec → [Preflight] → [Generate] → [Sanitize] → [Dataset Eval] → [Train] → [Export] → [Evaluate] → [Feedback]
 ```
+
+> **Pipeline Manifest:** Each stage auto-records to `.pipeline/run_manifest.json` via `record_pipeline_stage()`.
+>
+> **Environment:** All pipeline scripts auto-load `.env.local` via `scripts/ops/env_loader.py` — no manual `export` needed.
 
 ---
 
 ## 1. Pipeline Stages
+
+### Stage 0: Preflight
+
+**Script:** `scripts/ops/preflight.py`
+
+Runs before expensive pipeline stages to check the local environment and apply safe defaults:
+- **GPU Memory Inventory**: Queries `nvidia-smi` for free and total VRAM in GiB
+- **Auto-Downgrade**: If `fast-3b` is requested but VRAM < 10GB, downgrades to `safe-any`
+- **Ollama Auto-Unload**: Detects and stops running Ollama models to free VRAM
+- **GCC Toolchain**: Verifies `gcc` is available for Triton compilation
+- **Confident AI**: Checks if `CONFIDENT_API_KEY` is configured
+- Records preflight metadata (VRAM, GCC status, etc.) to the pipeline manifest
+
+**CLI:** `./ucore audit check` or standalone `python scripts/ops/preflight.py --phase train --preset fast-3b`
+
+---
 
 ### Stage 1: Generate Dataset
 
@@ -42,7 +60,10 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 ./ucore generate subjects/NPC_specs/history_guide.json
 ./ucore generate subjects/NPC_specs/history_guide.json --technique template
 ./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1
+./ucore generate subjects/NPC_specs/history_guide.json --technique template --push-to-confident  # Push dataset to Confident AI
 ```
+
+*Records `generate` stage to pipeline manifest with train/validation paths.*
 
 ### Stage 2: Sanitize Dataset
 
@@ -57,7 +78,9 @@ Validates dataset integrity:
 
 **Output:** `{input_path}_clean.jsonl` (in same directory as input)
 
-### Stage 3: Dataset Quality Eval
+*Records `sanitize` stage to pipeline manifest with output path.*
+
+### Stage 2b: Dataset Quality Eval
 
 **Entry point:** `./ucore dataset-eval <spec>`
 **Script:** `scripts/dataset/dataset_eval.py`
@@ -77,7 +100,7 @@ model validation step.
 **Local defaults:**
 - Judge: `qwen3:latest` via Ollama, temperature 0.
 - Mode: `fast` by default, sampling 1 row per category. Use `--mode release` for the strict 5-row-per-category final check.
-- Confident AI: disabled by default.
+- Confident AI: auto-uploads results when `CONFIDENT_API_KEY` is configured. Use `--confident` to enforce API key presence (exits if missing).
 - Dataset input: `subjects/datasets/{npc_key}/{technique}/train_clean.jsonl`.
 - Test suite: `tests/evals/test_dataset_generation_quality.py`.
 
@@ -119,7 +142,9 @@ It also provides helpers: `expected_examples_per_category()`,
 `calculate_distribution_gaps()`, `summarize_jsonl_dataset()`, and
 `dataset_contract_from_spec()`.
 
-### Stage 4: Training
+*Records `dataset_eval` stage to pipeline manifest with pass_rate, confident_url.*
+
+### Stage 3: Training
 
 **Entry point:** `./ucore train <spec>`
 **Script:** `scripts/training/train.py`
@@ -152,7 +177,9 @@ Base config → Preset override → CLI override
 - `--export-gguf` exports adapter GGUF automatically after training (no separate export step needed)
 - Output: `exports/{npc_key}/{npc_key}-lora-f16.gguf`
 
-### Stage 5: Export
+*Records `train` stage to pipeline manifest with run_dir, output_dir, training_loss.*
+
+### Stage 4: Export
 
 **Entry point:** `./ucore export <npc_key>`
 **Scripts:** `scripts/export/export.py`
@@ -168,7 +195,9 @@ Base config → Preset override → CLI override
 - Output: `exports/{npc_key}/{npc_key}-{model}-{quant}.gguf`
 - Note: May timeout on HF safetensor download
 
-### Stage 6: Model Evaluation
+*Records `export` stage to pipeline manifest with output_dir, gguf_files, mode.*
+
+### Stage 5: Model Evaluation
 
 **Entry point:** `./ucore evaluate <args>`
 **Scripts:** `scripts/evaluation/evaluate.py`
@@ -203,7 +232,9 @@ Compares two models (baseline vs candidate) or measures standalone:
 - Markdown per-question breakdown
 - Structured feedback JSON with per-concept win rates, quality scores, constraint violations
 
-### Stage 7: Feedback Loop
+*Records `evaluate` stage to pipeline manifest with candidate/baseline paths. Use `--deepeval` to also run DeepEval model quality evaluation and push results to Confident AI.*
+
+### Stage 6: Feedback Loop
 
 **Entry point:** `./ucore feedback <feedback.json>`
 **Scripts:** `scripts/training/feedback_loop.py`, `scripts/evaluation/evaluate.py --feedback-json`
@@ -222,6 +253,15 @@ Closes the loop between evaluation and dataset generation:
    - `--deepeval-cases-per-category` to adjust evaluation depth
    - `--deepeval-soft-fail` to write DeepEval artifacts but continue training even if the gate fails
 5. CI mode: `--auto-retrain` chains the whole cycle in one command
+
+---
+
+## Environment Auto-Configuration
+
+The `scripts/ops/env_loader.py` module auto-sources `.env.local` on import across all pipeline scripts. This means:
+- `CONFIDENT_API_KEY` is automatically loaded from `.env.local` — no manual `export` needed
+- All pipeline scripts get consistent environment without individual setup
+- Idempotent: only loads once per process
 
 ---
 

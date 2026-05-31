@@ -58,6 +58,7 @@ Generate dataset from a subject spec.
 | `--model MODEL` | `str` | — | LLM model name for ollama/openai/anthropic |
 | `--concept-focus CAT` | `str[]` | — | Focus on specific categories (repeatable, boosts example count) |
 | `--fresh` | `bool` | `False` | Ignore checkpoint recovery, regenerate from scratch |
+| `--push-to-confident` | `bool` | `False` | Push generated dataset to Confident AI with alias `npc-dataset-{npc_key}-{technique}` |
 
 ---
 
@@ -136,6 +137,7 @@ Run DeepEval quality checks on a generated dataset (quality gate).
 | `--wandb` | `bool` | `False` | Enable W&B logging |
 | `--wandb-project NAME` | `str` | `unsloth-core` | W&B project |
 | `--wandb-entity ENTITY` | `str` | *auto-detect* | W&B entity |
+| `--confident` | `bool` | `False` | Enforce that CONFIDENT_API_KEY is configured (exits with error if missing) |
 
 ---
 
@@ -294,6 +296,9 @@ Compare two GGUF models side-by-side with optional LLM judge.
 | `--host ADDR` | `str` | `127.0.0.1` | llama-server host |
 | `--training-metrics [PATH]` | `str` | — | Show training metrics from TensorBoard logs (optional: runs dir) |
 | `--npc-key KEY` | `str` | — | NPC key for per-model TensorBoard runs lookup |
+| `--deepeval` | `bool` | `False` | Run DeepEval model quality evaluation after conventional eval |
+| `--deepeval-judge-model` | `str` | `qwen3:latest` | Ollama model to use as judge |
+| `--deepeval-identifier` | `str` | — | Custom identifier for the DeepEval test run |
 
 ---
 
@@ -520,6 +525,7 @@ Defined in `scripts/dataset/dataset_contracts.py`.
 | `calculate_distribution_gaps(expected, observed)` | Returns underfilled categories with shortfall counts |
 | `dataset_contract_from_spec(spec)` | Builds machine-readable contract block: categories, minimums, difficulties |
 | `file_sha256(path)` | Returns `sha256:{hex}` content hash |
+| `record_pipeline_stage()` | One-shot helper to record a pipeline stage to `.pipeline/run_manifest.json` |
 
 ---
 
@@ -815,6 +821,7 @@ Parameters for `scripts/dataset/dataset_eval.py` (invoked via `ucore dataset-eva
 | `--soft-fail` | `bool` | `False` | Write artifacts but return 0 even on failures |
 | `--output PATH` | `str` | — | Quality summary JSON path |
 | `--technique TECH` | `str` | `template` | Dataset technique to evaluate |
+| `--confident` | `bool` | `False` | Enforce that CONFIDENT_API_KEY is configured (exits with error if missing) |
 
 ### Quality Gate Checks (in `train.py`)
 
@@ -868,6 +875,9 @@ Parameters for `scripts/evaluation/evaluate.py`.
 | `--track` | `bool` | `False` | Track in `eval/results/` |
 | `--interactive`, `-i` | `bool` | `False` | Interactive chat mode |
 | `--training-metrics [PATH]` | `str` | — | Show TensorBoard metrics |
+| `--deepeval` | `bool` | `False` | Run DeepEval model quality evaluation after conventional eval |
+| `--deepeval-judge-model` | `str` | `qwen3:latest` | Ollama model to use as judge |
+| `--deepeval-identifier` | `str` | — | Custom identifier for the DeepEval test run |
 
 ### Inference Engine Flags
 
@@ -1303,3 +1313,13 @@ Poem request, meaning of life, baking cake, other-subject homework, stock advice
 > **Generated**: 2026-05-29
 > **Source files consulted**: 18 files across `configs/`, `scripts/`, and root `ucore`
 > **Total line count**: ~2,100 lines in source inputs
+
+---
+
+## Appendix C: Pipeline Utility Modules
+
+| Module | Description | Type | Usage |
+|--------|-------------|------|-------|
+| `scripts/ops/env_loader.py` | Auto-sources `.env.local` across all pipeline scripts | Module | Imported |
+| `scripts/ops/confident_push.py` | Push/pull datasets and goldens to/from Confident AI | Module | CLI / Library |
+| `scripts/ops/pipeline_manifest.py` | Centralized pipeline run manifest tracking | Module | Library / CLI |

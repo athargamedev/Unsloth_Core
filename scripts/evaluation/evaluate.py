@@ -38,6 +38,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from _config import paths
 from _config.workflow_context import load_subject_spec as load_shared_subject_spec
 from _config.log_setup import log_info, log_warn, log_error, log_state
+from scripts.ops.confident_api import ConfidentAPIClient
 from scripts.ops.env_loader import ensure_confident_api_key, confident_available
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from scripts.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient, extract_json_object
@@ -1125,6 +1126,8 @@ def main():
                         help="DeepEval judge model for model evaluation")
     parser.add_argument("--deepeval-identifier", default=None,
                         help="Identifier for the DeepEval test run")
+    parser.add_argument("--remote-eval", action="store_true", default=False,
+                        help="Evaluate on Confident AI infrastructure instead of locally. Requires --deepeval.")
 
     # LoRA mode (evaluate adapter GGUFs without full-merge)
     parser.add_argument("--base-model", help="Base GGUF model path (required when --candidate is a LoRA adapter)")
@@ -1585,7 +1588,7 @@ def main():
 
         # ── DeepEval Evaluation ──────────────────────────────────────────────
         if args.deepeval:
-            _run_deepeval_eval(args, str(candidate_path), str(baseline_path))
+            _run_deepeval_eval(args, str(candidate_path), str(baseline_path), spec_data=spec)
 
         # ── Record pipeline manifest stage ─────────────────────────────────
         try:
@@ -1602,7 +1605,32 @@ def main():
             pass
 
 
-def _run_deepeval_eval(args, candidate_path, baseline_path=None):
+def _extract_npc_key(spec_path: str) -> str:
+    """Extract the NPC key from a spec file path for identifier generation."""
+    try:
+        spec = load_subject_spec(spec_path)
+        return spec.get("npc_key", "unknown")
+    except Exception:
+        return "unknown"
+
+
+def _build_eval_test_cases(spec_data: dict) -> list[dict]:
+    """Build test cases from the NPC spec for remote evaluation."""
+    test_cases = []
+    questions = spec_data.get("evaluation", []) or spec_data.get("eval_questions", [])
+    for q in questions:
+        test_cases.append({
+            "input": q.get("question", q) if isinstance(q, str) else q.get("question", ""),
+            "actualOutput": "",
+            "expectedOutput": q.get("expected_output", q.get("answer", "")),
+            "context": [spec_data.get("system_prompt", "")],
+            "name": q.get("name", q.get("question", ""))[:50],
+            "additionalMetadata": {"category": q.get("category", "general")},
+        })
+    return test_cases
+
+
+def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None):
     """Run DeepEval model quality evaluation using the test suite.
 
     Sets up environment variables consumed by
@@ -1643,6 +1671,51 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None):
         args.deepeval_identifier
         or f"npc-model-eval-{npc_key}-{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     )
+
+    # ── Remote eval path (Confident AI infrastructure) ──────────────────
+    if getattr(args, 'remote_eval', False):
+        print(f"\n[Remote Eval] Evaluating model on Confident AI infrastructure...")
+        client = ConfidentAPIClient()
+
+        spec_for_tc = spec_data or {}
+        test_cases = _build_eval_test_cases(spec_for_tc)
+        metric_collection = {
+            "name": "npc-model-quality",
+            "include": ["answer_relevancy", "faithfulness"],
+        }
+
+        print(f"  Test cases: {len(test_cases)}")
+        print(f"  Metrics: answer_relevancy, faithfulness")
+
+        result = client.evaluate(test_cases, metric_collection, identifier=identifier)
+        test_run_id = result.get("data", {}).get("testRunId")
+
+        if test_run_id:
+            dashboard_url = f"https://app.confident-ai.com/test-runs/{test_run_id}"
+            print(f"\n[Remote Eval] Submitted successfully!")
+            print(f"  Test Run ID: {test_run_id}")
+            print(f"  Dashboard: {dashboard_url}")
+        else:
+            print(f"\n[Remote Eval] Submitted but no testRunId in response.")
+            dashboard_url = "https://app.confident-ai.com"
+
+        # Record in pipeline manifest
+        try:
+            from scripts.ops.pipeline_manifest import record_pipeline_stage
+            os.environ.setdefault("NPC_KEY", npc_key)
+            os.environ.setdefault("TECHNIQUE", getattr(args, "technique", None) or "template")
+            record_pipeline_stage("evaluate", "completed",
+                artifacts={"candidate_path": str(candidate_path),
+                           "baseline_path": str(baseline_path) if baseline_path else ""},
+                metadata={"deepeval_identifier": identifier,
+                          "confident_url": dashboard_url,
+                          "remote_eval": True,
+                          "test_run_id": test_run_id or "",
+                          "judge_model": getattr(args, 'deepeval_judge_model', 'qwen3:latest')},
+            )
+        except Exception:
+            pass
+        return
 
     print(f"\n[deepeval] Running DeepEval model quality evaluation...")
     print(f"  Identifier:  {identifier}")
