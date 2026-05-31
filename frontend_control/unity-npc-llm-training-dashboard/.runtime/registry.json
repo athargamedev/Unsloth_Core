@@ -2,15 +2,15 @@
   "executionMode": "local",
   "jobs": [
     {
-      "id": "job_1779408746035_oeb6y",
+      "id": "job_1780087578803_8r8vz",
       "name": "Generate Dataset",
       "type": "Dataset",
       "commandId": "dataset-generate",
       "status": "stopped",
       "progress": 10,
       "loss": null,
-      "createdAt": "2026-05-22T00:12:26.035Z",
-      "startedAt": "2026-05-22T00:12:26.035Z",
+      "createdAt": "2026-05-29T20:46:18.803Z",
+      "startedAt": "2026-05-29T20:46:18.803Z",
       "command": [
         "./ucore",
         "generate",
@@ -48,15 +48,11 @@
       "ollamaUnloadTarget": null,
       "stopRequested": true,
       "exitCode": -1,
-      "finishedAt": "2026-05-22T00:12:26.042Z",
+      "finishedAt": "2026-05-29T20:46:18.816Z",
       "terminalReason": "user_requested_stop"
     }
   ],
-  "logs": [
-    "[2026-05-22T00:12:26.042Z] [SYSTEM] job job_1779408746035_oeb6y stopped (exit null)",
-    "[2026-05-22T00:12:26.041Z] [SYSTEM] stop requested job_1779408746035_oeb6y",
-    "[2026-05-22T00:12:26.035Z] [SYSTEM] starting job_1779408746035_oeb6y: ./ucore generate subjects/nonexistent_integration_spec_2.json"
-  ],
+  "logs": [],
   "nodeId": "5ecbf770-7a12-4eb4-a559-6491504274a9",
   "workflows": [],
   "autoSyncExternal": false

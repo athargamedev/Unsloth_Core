@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Registry } from "../types";
 import { collectAssistantContext, type AssistantContextRequest } from "./assistant-context";
-import { getAssistantResourceState } from "./assistant-resource-guard";
+import { getAssistantResourceState, type AssistantResourceState } from "./assistant-resource-guard";
 import { WORKFLOW_ASSISTANT_SYSTEM_PROMPT, buildAssistantUserPrompt, deterministicAssistantReply } from "./assistant-prompts";
 
 export interface AssistantConfigProfile {
@@ -20,7 +20,7 @@ export interface AssistantChatResult {
   blockedReason: string | null;
   model: string;
   context: ReturnType<typeof collectAssistantContext>;
-  resourceState: ReturnType<typeof getAssistantResourceState>;
+  resourceState: AssistantResourceState;
 }
 
 const DEFAULT_PROFILE: AssistantConfigProfile = {
@@ -67,7 +67,7 @@ export async function runAssistantChat(
   }
 
   try {
-    const content = await callOllama(profile, request.message || "", context, resources);
+    const content = await callOllama(profile, request.message || "", context, resources, request.history);
     return {
       content,
       usedLlm: true,
@@ -93,8 +93,16 @@ async function callOllama(
   profile: AssistantConfigProfile,
   message: string,
   context: ReturnType<typeof collectAssistantContext>,
-  resources: ReturnType<typeof getAssistantResourceState>,
+  resources: AssistantResourceState,
+  history: unknown[] = [],
 ): Promise<string> {
+  const previousMessages = history
+    .map((msg: any) => ({
+      role: msg.role === "user" ? "user" : "assistant",
+      content: typeof msg.content === "string" ? msg.content : "",
+    }))
+    .filter((m) => m.content);
+
   const response = await fetch(`${process.env.OLLAMA_BASE_URL || "http://localhost:11434"}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -102,6 +110,7 @@ async function callOllama(
       model: profile.model,
       messages: [
         { role: "system", content: WORKFLOW_ASSISTANT_SYSTEM_PROMPT },
+        ...previousMessages,
         { role: "user", content: buildAssistantUserPrompt(message, context, resources) },
       ],
       stream: false,
