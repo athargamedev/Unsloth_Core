@@ -1,0 +1,550 @@
+{
+  "created_at": "2026-05-31T13:34:19.579766+00:00",
+  "npc_key": "history_guide",
+  "technique": "template",
+  "spec": {
+    "path": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/history_guide.json",
+    "reference_doc": "subjects/reference_docs/history_guide_primer.md",
+    "system_prompt": "## IDENTITY\nName: HistoryGuide | Role: world history storyteller\nSetting: The Chronos Spire archives\nPlayer Relation: Speaking to an inquisitive traveler\n\n## VOICE\nDetailed, vivid, chronological | Connect events to consequences | Speak exactly 3-5 descriptive sentences (~500 characters) | NO markdown formatting, lists, or bullets\n\n## KNOWLEDGE\nAncient civilizations, classical antiquity, medieval history, modern history, historical methods\n\n## RULES\nNEVER present speculation as fact | NEVER promote misinformation or conspiracy theories\nPrefer primary sources, clear context, and cause/effect explanations"
+  },
+  "manifest": {
+    "npc_key": "history_guide",
+    "technique": "ollama",
+    "model": "qwen2.5:7b",
+    "generation": {
+      "date": "2026-05-29T12:57:49Z",
+      "seed": 42,
+      "temperature": 0.6,
+      "multi_turn_ratio": 0.25,
+      "version": "ollama-v2"
+    },
+    "spec": {
+      "file": "/home/athar/Projects/Unsloth_Core/subjects/NPC_specs/history_guide.json",
+      "hash": "sha256:5553504225d44bb1be487783cc7d4c480793e8710ef9d2691b1d3d2e57e437e2"
+    },
+    "contract": {
+      "supported_categories": [
+        "identity",
+        "teaching",
+        "dialogue",
+        "quest",
+        "refusal"
+      ],
+      "minimum_examples_per_category": {
+        "identity": 8,
+        "teaching": 32,
+        "dialogue": 16,
+        "quest": 8,
+        "refusal": 8
+      },
+      "expected_examples_per_category": {
+        "identity": 8,
+        "teaching": 32,
+        "dialogue": 16,
+        "quest": 8,
+        "refusal": 8
+      },
+      "valid_difficulty_levels": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "spec_npc_key": "history_guide",
+      "reference_doc": "subjects/reference_docs/history_guide_primer.md",
+      "technique": null
+    },
+    "distribution": {
+      "expected_examples_per_category": {
+        "identity": 8,
+        "teaching": 32,
+        "dialogue": 16,
+        "quest": 8,
+        "refusal": 8
+      },
+      "generation_request_examples_per_category": {
+        "identity": 9,
+        "teaching": 36,
+        "dialogue": 18,
+        "quest": 9,
+        "refusal": 9
+      },
+      "observed_examples_per_category": {
+        "identity": 9,
+        "teaching": 24,
+        "dialogue": 10,
+        "quest": 5,
+        "refusal": 9
+      },
+      "distribution_gaps": [
+        {
+          "category": "teaching",
+          "target": 32,
+          "actual": 24,
+          "shortfall": 8
+        },
+        {
+          "category": "dialogue",
+          "target": 16,
+          "actual": 10,
+          "shortfall": 6
+        },
+        {
+          "category": "quest",
+          "target": 8,
+          "actual": 5,
+          "shortfall": 3
+        }
+      ]
+    },
+    "statistics": {
+      "total": 57,
+      "train": 51,
+      "validation": 6,
+      "by_category": {
+        "identity": 9,
+        "teaching": 24,
+        "dialogue": 10,
+        "quest": 5,
+        "refusal": 9
+      },
+      "by_difficulty": {
+        "beginner": 34,
+        "advanced": 6,
+        "intermediate": 17
+      },
+      "by_concept": {
+        "historical methodology": 9,
+        "historical thinking": 9,
+        "modern history": 9,
+        "medieval history": 9,
+        "classical antiquity": 9,
+        "ancient civilizations": 6,
+        "core timeline anchors": 2,
+        "safety and refusal boundaries": 2,
+        "useful vocabulary": 2
+      },
+      "generator_stats": {
+        "requests": 81,
+        "successes": 81,
+        "errors": 0,
+        "success_rate": 1.0
+      }
+    }
+  },
+  "sanitizer": {
+    "manifest": {},
+    "input": {},
+    "statistics": {
+      "total": 57,
+      "train": 51,
+      "validation": 6,
+      "by_category": {
+        "identity": 9,
+        "teaching": 24,
+        "dialogue": 10,
+        "quest": 5,
+        "refusal": 9
+      },
+      "by_difficulty": {
+        "beginner": 34,
+        "advanced": 6,
+        "intermediate": 17
+      },
+      "by_concept": {
+        "historical methodology": 9,
+        "historical thinking": 9,
+        "modern history": 9,
+        "medieval history": 9,
+        "classical antiquity": 9,
+        "ancient civilizations": 6,
+        "core timeline anchors": 2,
+        "safety and refusal boundaries": 2,
+        "useful vocabulary": 2
+      },
+      "generator_stats": {
+        "requests": 81,
+        "successes": 81,
+        "errors": 0,
+        "success_rate": 1.0
+      }
+    },
+    "discarded": {}
+  },
+  "dataset": {
+    "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/train_clean.jsonl",
+    "summary": {
+      "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/train_clean.jsonl",
+      "exists": true,
+      "content_sha256": "sha256:53833bc26b34a1d0baf05821f644f7a9c4226fe9a15a8bc713b8bdab6b1231b8",
+      "total": 72,
+      "by_category": {
+        "dialogue": 16,
+        "identity": 8,
+        "quest": 8,
+        "refusal": 8,
+        "teaching": 32
+      },
+      "by_difficulty": {
+        "advanced": 15,
+        "beginner": 35,
+        "intermediate": 22
+      },
+      "by_split": {
+        "train": 72
+      },
+      "by_concept": {
+        "historical thinking": 13,
+        "historical methodology": 10,
+        "ancient civilizations": 8,
+        "classical antiquity": 8,
+        "history_guide": 8,
+        "Will not present speculation as fact": 6,
+        "medieval history": 6,
+        "modern history": 5,
+        "useful vocabulary": 4,
+        "Will not promote conspiracy theories or historical misinformation": 2,
+        "core timeline anchors": 1,
+        "safety and refusal boundaries": 1
+      },
+      "unknown_rows": 0
+    },
+    "expected_distribution": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "distribution_gaps": []
+  },
+  "deepeval": {
+    "summary": {
+      "created_at": "2026-05-31T13:34:19.578918+00:00",
+      "npc_key": "history_guide",
+      "technique": "template",
+      "judge_provider": "ollama",
+      "judge_model": "qwen3:latest",
+      "deepeval_identifier": "dataset-quality-history_guide-template-fast-20260531-103417",
+      "deepeval_result_identifier": "dataset-quality-history_guide-ollama-fast-20260529-103444",
+      "command": [
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+        "test",
+        "run",
+        "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+        "--identifier",
+        "dataset-quality-history_guide-template-fast-20260531-103417",
+        "--display",
+        "all",
+        "--skip-on-missing-params"
+      ],
+      "total": 5,
+      "passed": 0,
+      "failed": 5,
+      "pass_rate": 0.0,
+      "metric_count": 10,
+      "null_metric_count": 0,
+      "null_metric_rate": 0.0,
+      "status": "inconclusive",
+      "metrics": {
+        "Persona and Category Fit [GEval]": {
+          "count": 5,
+          "average_score": 0.58,
+          "pass_rate": 0.0
+        },
+        "Training Usefulness and Specificity [GEval]": {
+          "count": 5,
+          "average_score": 0.68,
+          "pass_rate": 0.6
+        }
+      },
+      "categories": {
+        "dialogue": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "identity": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "quest": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "refusal": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "teaching": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        }
+      },
+      "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/quality_failures.json",
+      "result_identifier_mismatch": {
+        "expected": "dataset-quality-history_guide-template-fast-20260531-103417",
+        "actual": "dataset-quality-history_guide-ollama-fast-20260529-103444"
+      },
+      "quality_gate_mode": "fast",
+      "cases_per_category": 1,
+      "dataset_summary": {
+        "path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/train_clean.jsonl",
+        "exists": true,
+        "content_sha256": "sha256:53833bc26b34a1d0baf05821f644f7a9c4226fe9a15a8bc713b8bdab6b1231b8",
+        "total": 72,
+        "by_category": {
+          "dialogue": 16,
+          "identity": 8,
+          "quest": 8,
+          "refusal": 8,
+          "teaching": 32
+        },
+        "by_difficulty": {
+          "advanced": 15,
+          "beginner": 35,
+          "intermediate": 22
+        },
+        "by_split": {
+          "train": 72
+        },
+        "by_concept": {
+          "historical thinking": 13,
+          "historical methodology": 10,
+          "ancient civilizations": 8,
+          "classical antiquity": 8,
+          "history_guide": 8,
+          "Will not present speculation as fact": 6,
+          "medieval history": 6,
+          "modern history": 5,
+          "useful vocabulary": 4,
+          "Will not promote conspiracy theories or historical misinformation": 2,
+          "core timeline anchors": 1,
+          "safety and refusal boundaries": 1
+        },
+        "unknown_rows": 0
+      },
+      "expected_distribution": {
+        "identity": 8,
+        "teaching": 32,
+        "dialogue": 16,
+        "quest": 8,
+        "refusal": 8
+      },
+      "distribution_gaps": [],
+      "dataset_total_rows": 72,
+      "dataset_unknown_rows": 0,
+      "sanitizer": {
+        "total_output": 0,
+        "discarded_total": 0,
+        "flagged_for_review": 0,
+        "passed_threshold": 0,
+        "quality_scores": {}
+      },
+      "sanitizer_quality_issues": []
+    },
+    "failures": [
+      {
+        "test_name": "history_guide:teaching:1",
+        "input": "NPC: history_guide\nCategory: teaching\nConcept: historical thinking\nDifficulty: intermediate\nUser message: I've been reading about different historical periods, but I'm not sure how to think critically about them. Can you help me with that?",
+        "actual_output": "A concrete example is the big picture, the main cause, and one consequence. Use it to compare evidence, name the historical setting, and explain one consequence so the answer feels like a guided archive note rather than a loose fact.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "teaching",
+          "concept": "historical thinking",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 1
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.7,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response aligns with the NPC system prompt by providing a concise, descriptive example that matches the teaching category and historical thinking concept. It avoids markdown and adheres to the 3-5 sentence rule. However, it is overly brief and lacks sufficient detail to fully address the user's request for critical thinking strategies, which weakens its descriptive quality.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:identity:2",
+        "input": "NPC: history_guide\nCategory: identity\nConcept: useful vocabulary\nDifficulty: beginner\nUser message: Greetings, wise one. Can you tell me about the ancient Egyptians and their pyramids?",
+        "actual_output": "I'm HistoryGuide, a patient guide for World history, with a focus on clear steps and concrete examples.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "identity",
+          "concept": "useful vocabulary",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 2
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.6,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response aligns with the NPC system prompt and training category by adopting the role of a history guide and focusing on clear, descriptive explanations. It includes AI disclaimers by stating it is an NPC and adheres to the formatting restrictions by avoiding markdown. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, particularly for a beginner-level vocabulary-focused question about ancient Egyptians and pyramids.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:identity:2",
+        "input": "NPC: history_guide\nCategory: identity\nConcept: useful vocabulary\nDifficulty: beginner\nUser message: Greetings, wise one. Can you tell me about the ancient Egyptians and their pyramids?",
+        "actual_output": "I'm HistoryGuide, a patient guide for World history, with a focus on clear steps and concrete examples.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "identity",
+          "concept": "useful vocabulary",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 2
+        },
+        "metric": {
+          "name": "Training Usefulness and Specificity [GEval]",
+          "score": 0.3,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The Actual Output is a generic introduction that does not address the user's specific question about ancient Egyptians and their pyramids. It lacks actionable, domain-specific details about the target concept of 'useful vocabulary' and fails to demonstrate progress toward understanding the concept. The response is overly vague and does not align with the Context's emphasis on providing clear, evidence-based explanations with concrete examples and vocabulary.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:refusal:3",
+        "input": "NPC: history_guide\nCategory: refusal\nConcept: ancient civilizations\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve world history?",
+        "actual_output": "I can't answer that directly. Let's focus on a real world history question about chronology, sources, or evidence.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "refusal",
+          "concept": "ancient civilizations",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 3
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.7,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response aligns with the NPC system prompt by refusing to answer off-topic questions and redirecting to world history. It includes an AI disclaimer by stating it cannot answer directly and adheres to the formatting rule by avoiding markdown. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, which penalizes vague answers.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:refusal:3",
+        "input": "NPC: history_guide\nCategory: refusal\nConcept: ancient civilizations\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve world history?",
+        "actual_output": "I can't answer that directly. Let's focus on a real world history question about chronology, sources, or evidence.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "refusal",
+          "concept": "ancient civilizations",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 3
+        },
+        "metric": {
+          "name": "Training Usefulness and Specificity [GEval]",
+          "score": 0.6,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The Actual Output aligns well with the Input by refusing to engage with a non-relevant question and redirecting the user to world history topics. It demonstrates an understanding of the refusal category and the target concept of ancient civilizations. However, it lacks specific, actionable details about the concept itself, which could have included concrete examples or vocabulary from the Context. The response is brief and does not fully demonstrate progress toward understanding the target concept as required by the evaluation steps.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:quest:9",
+        "input": "NPC: history_guide\nCategory: quest\nConcept: modern history\nDifficulty: intermediate\nUser message: Can you tell me about the key events of modern history and their impacts on today's world?",
+        "actual_output": "Quest: sort three clues about modern history: a source, a date, and a consequence. Use # History Primer — Compact Reference for HistoryGuide NPC as the example, then explain which clue should come first and why.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "quest",
+          "concept": "modern history",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 9
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.3,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response does not align with the NPC system prompt or the requested training category. The output focuses on a quest task rather than providing an informative overview of modern history, which was the user's request. It also fails to adhere to the voice rules (e.g., speaking in 3-5 descriptive sentences) and does not provide sufficient detail or meet the descriptive requirements of the prompt.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "history_guide:dialogue:10",
+        "input": "NPC: history_guide\nCategory: dialogue\nConcept: historical thinking\nDifficulty: beginner\nUser message: Isn't history just about memorizing dates and events?",
+        "actual_output": "Not quite — use The big picture, the main cause, and one consequence as the concrete example. If you apply historical thinking loosely, you can blur cause and effect; keep the source, the timeline, and the consequence separate.",
+        "metadata": {
+          "npc_key": "history_guide",
+          "category": "dialogue",
+          "concept": "historical thinking",
+          "source_path": "subjects/datasets/history_guide/ollama/train_clean.jsonl",
+          "line_number": 10
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.6,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response aligns with the NPC system prompt by providing a concise, descriptive explanation that reflects the historical thinking concept. It avoids markdown and adheres to the 3-5 sentence rule. However, it lacks sufficient detail and fails to fully address the user's question about whether history is just about memorizing dates and events. The answer is too brief and does not provide a clear, evidence-based explanation as required by the prompt.",
+          "evaluation_model": "qwen3:latest (Ollama)",
+          "error": null
+        }
+      }
+    ]
+  },
+  "feedback_signals": [
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "dialogue",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "identity",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "quest",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "refusal",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "teaching",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "high",
+      "metric": "Persona and Category Fit [GEval]",
+      "count": 5,
+      "suggested_action": "review_failed_rows_and_prompts"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Training Usefulness and Specificity [GEval]",
+      "count": 2,
+      "suggested_action": "review_failed_rows_and_prompts"
+    }
+  ]
+}

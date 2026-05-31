@@ -68,7 +68,7 @@ def push_goldens_if_confident(
         dataset.add_goldens_from_json_file(file_path=str(golden_path))
         if verbose:
             print(f"[confident_push] Pushing {len(dataset.goldens)} goldens → alias='{alias}' ...")
-        dataset.push(alias=alias, overwrite=overwrite)
+        dataset.push(alias=alias)
         if verbose:
             print(f"[confident_push] ✓ Pushed to Confident AI as '{alias}'.")
         return True

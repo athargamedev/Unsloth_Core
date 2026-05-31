@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-31T13:53:59.261657+00:00",
+  "created_at": "2026-05-31T13:46:42.793239+00:00",
   "npc_key": "history_guide",
   "technique": "template",
   "spec": {
@@ -219,71 +219,34 @@
   },
   "deepeval": {
     "summary": {
-      "created_at": "2026-05-31T13:53:59.260708+00:00",
+      "created_at": "2026-05-31T13:46:42.791896+00:00",
       "npc_key": "history_guide",
       "technique": "template",
       "judge_provider": "ollama",
       "judge_model": "qwen3:latest",
-      "deepeval_identifier": "dataset-quality-history_guide-template-fast-20260531-105150",
-      "deepeval_result_identifier": "dataset-quality-history_guide-template-fast-20260531-105150",
+      "deepeval_identifier": "dataset-quality-history_guide-template-fast-20260531-104415",
+      "deepeval_result_identifier": null,
       "command": [
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
         "test",
         "run",
         "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
         "--identifier",
-        "dataset-quality-history_guide-template-fast-20260531-105150",
+        "dataset-quality-history_guide-template-fast-20260531-104415",
         "--display",
         "all",
         "--skip-on-missing-params"
       ],
-      "total": 5,
-      "passed": 3,
-      "failed": 2,
-      "pass_rate": 0.6,
-      "metric_count": 10,
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "pass_rate": 0.0,
+      "metric_count": 0,
       "null_metric_count": 0,
       "null_metric_rate": 0.0,
       "status": "ok",
-      "metrics": {
-        "Persona and Category Fit [GEval]": {
-          "count": 5,
-          "average_score": 0.72,
-          "pass_rate": 0.6
-        },
-        "Training Usefulness and Specificity [GEval]": {
-          "count": 5,
-          "average_score": 0.94,
-          "pass_rate": 1.0
-        }
-      },
-      "categories": {
-        "dialogue": {
-          "total": 1,
-          "passed": 1,
-          "pass_rate": 1.0
-        },
-        "identity": {
-          "total": 1,
-          "passed": 0,
-          "pass_rate": 0.0
-        },
-        "quest": {
-          "total": 1,
-          "passed": 0,
-          "pass_rate": 0.0
-        },
-        "refusal": {
-          "total": 1,
-          "passed": 1,
-          "pass_rate": 1.0
-        },
-        "teaching": {
-          "total": 1,
-          "passed": 1,
-          "pass_rate": 1.0
-        }
-      },
+      "metrics": {},
+      "categories": {},
       "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/quality_failures.json",
       "quality_gate_mode": "fast",
       "cases_per_category": 1,
@@ -342,72 +305,7 @@
       },
       "sanitizer_quality_issues": []
     },
-    "failures": [
-      {
-        "test_name": "history_guide:quest:2",
-        "input": "NPC: history_guide\nCategory: quest\nConcept: classical antiquity\nDifficulty: intermediate\nUser message: Give me a real-world problem involving classical antiquity to solve.",
-        "actual_output": "Challenge: pick one event related to classical antiquity, like greek city-states, Roman law, republican government, and empire. Place it on a timeline, name one source that could support the date, then explain one cause and one consequence so the answer shows why the event mattered.",
-        "metadata": {
-          "npc_key": "history_guide",
-          "category": "quest",
-          "concept": "classical antiquity",
-          "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
-          "line_number": 2
-        },
-        "metric": {
-          "name": "Persona and Category Fit [GEval]",
-          "score": 0.6,
-          "threshold": 0.75,
-          "success": false,
-          "reason": "The response aligns with the NPC system prompt by providing a structured challenge that fits the 'quest' category and classical antiquity concept. It avoids markdown and adheres to the formatting restrictions. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, failing to provide a real-world problem as requested.",
-          "evaluation_model": "qwen3:latest (Ollama)",
-          "error": null
-        }
-      },
-      {
-        "test_name": "history_guide:identity:5",
-        "input": "NPC: history_guide\nCategory: identity\nConcept: history_guide\nDifficulty: beginner\nUser message: What should I call you?",
-        "actual_output": "I'm HistoryGuide; I help separate legend from evidence in World history and show why details matter in medieval history.",
-        "metadata": {
-          "npc_key": "history_guide",
-          "category": "identity",
-          "concept": "history_guide",
-          "source_path": "subjects/datasets/history_guide/template/train_clean.jsonl",
-          "line_number": 5
-        },
-        "metric": {
-          "name": "Persona and Category Fit [GEval]",
-          "score": 0.6,
-          "threshold": 0.75,
-          "success": false,
-          "reason": "The response aligns with the NPC system prompt and training category by introducing the role of HistoryGuide and emphasizing the separation of legend from evidence. It adheres to the formatting restrictions by avoiding markdown and bullet points. However, it is overly brief and lacks sufficient detail to meet the descriptive requirements of the prompt, which calls for a more elaborate explanation of the role and its purpose.",
-          "evaluation_model": "qwen3:latest (Ollama)",
-          "error": null
-        }
-      }
-    ]
+    "failures": []
   },
-  "feedback_signals": [
-    {
-      "type": "deepeval_category_weakness",
-      "severity": "medium",
-      "category": "identity",
-      "pass_rate": 0.0,
-      "suggested_action": "inspect_category_failures"
-    },
-    {
-      "type": "deepeval_category_weakness",
-      "severity": "medium",
-      "category": "quest",
-      "pass_rate": 0.0,
-      "suggested_action": "inspect_category_failures"
-    },
-    {
-      "type": "deepeval_metric_failure",
-      "severity": "medium",
-      "metric": "Persona and Category Fit [GEval]",
-      "count": 2,
-      "suggested_action": "review_failed_rows_and_prompts"
-    }
-  ]
+  "feedback_signals": []
 }

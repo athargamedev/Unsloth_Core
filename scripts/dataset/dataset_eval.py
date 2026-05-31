@@ -65,11 +65,11 @@ def dataset_dir(npc_key: str, technique: str) -> Path:
 
 
 def latest_deepeval_result() -> dict:
-    latest = PROJECT_ROOT / ".deepeval" / ".latest_test_run.json"
+    latest = PROJECT_ROOT / ".deepeval" / ".latest_run_full.json"
     if not latest.exists():
-        latest = PROJECT_ROOT / ".deepeval" / ".latest_run_full.json"
+        latest = PROJECT_ROOT / ".deepeval" / ".latest_test_run.json"
     if not latest.exists():
-        raise SystemExit("Error: DeepEval did not write .deepeval/.latest_test_run.json")
+        raise SystemExit("Error: DeepEval did not write .deepeval/.latest_run_full.json")
     result = load_json(latest)
     return result.get("testRunData", result) if isinstance(result, dict) else result
 
@@ -429,6 +429,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 confident_key = os.getenv("CONFIDENT_API_KEY", "")
                 env.update(
                     {
+                        "DEEPEVAL_DATASET_LIVE": "1",
                         "DEEPEVAL_DATASET_NPC_KEYS": npc_key,
                         "DEEPEVAL_DATASET_TECHNIQUE": technique,
                         "DEEPEVAL_DATASET_CASES_PER_CATEGORY": str(cases_per_category),
