@@ -20,12 +20,30 @@ from __future__ import annotations
 
 import os
 from functools import wraps
+from contextlib import contextmanager
 from typing import Any, Callable, TypeVar
 
 try:
-    from deepeval.tracing import trace_type, get_trace_stack
+    from deepeval.tracing import trace as deepeval_trace
+    
+    @contextmanager
+    def trace_type(span_type: str, metrics: list[str] | None = None, name: str | None = None):
+        """Context manager to trace a block of code with a specific span type in DeepEval."""
+        with deepeval_trace(name=name, metric_collection=span_type):
+            yield
+            
 except ImportError:
-    raise ImportError("deepeval>=0.21.0 required for tracing support")
+    @contextmanager
+    def trace_type(span_type: str, metrics: list[str] | None = None, name: str | None = None):
+        """Safe fallback context manager when deepeval tracing is not available."""
+        yield
+
+try:
+    from deepeval.tracing import get_trace_stack
+except ImportError:
+    def get_trace_stack() -> list[Any] | None:
+        """Safe fallback when get_trace_stack is not available."""
+        return None
 
 __all__ = [
     "trace_agent_node",

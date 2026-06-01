@@ -9,7 +9,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "tests" / "evals"))
 
 import pytest
 from deepeval import assert_test
-from deepeval.test_case import LLMTestCase
+from deepeval.test_case import LLMTestCase, ConversationalTestCase, Turn
 from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric
 
 from scripts.runtime.history_guide_agent import run_history_guide
@@ -58,20 +58,16 @@ def test_history_guide_rag_multi_turn():
     primer_path = Path(__file__).resolve().parents[2] / "subjects" / "reference_docs" / "history_guide_primer.md"
     reference_context = [primer_path.read_text(encoding="utf-8")]
     
-    # Run multi-turn conversation
-    responses = []
+    # Run multi-turn conversation and build turns
+    turns = []
     for query in queries:
         response = run_history_guide(query)
-        responses.append(response)
+        turns.append(Turn(role="user", content=query))
+        turns.append(Turn(role="assistant", content=response, retrieval_context=reference_context))
     
-    # Build multi-turn test case using ConversationalTestCase
-    # For now, we'll test the final response in context
-    final_output = "\n".join(responses)
-    
-    test_case = LLMTestCase(
-        input="\n".join(queries),  # All queries combined
-        actual_output=final_output,
-        retrieval_context=reference_context,
+    # Build proper ConversationalTestCase
+    test_case = ConversationalTestCase(
+        turns=turns,
         name="LangGraph RAG Multi-Turn Test"
     )
     
