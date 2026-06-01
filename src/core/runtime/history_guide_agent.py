@@ -97,7 +97,7 @@ def search_lore(query: str) -> str:
         return _search_lore_vector(query)
 
 
-tools = [search_lore]
+tools = [search_lore.func]
 
 # --- Graph Nodes ---
 

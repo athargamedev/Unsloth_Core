@@ -74,7 +74,7 @@ class DatasetJudgeOllamaModel(OllamaModel):
 
 def _ollama_judge() -> DatasetJudgeOllamaModel:
     return DatasetJudgeOllamaModel(
-        model=os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen3:latest"),
+        model=os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen2.5:7b"),
         base_url=os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"),
         temperature=float(os.getenv("DEEPEVAL_OLLAMA_TEMPERATURE", "0")),
         think=_ollama_think_enabled(),
@@ -136,7 +136,10 @@ if os.getenv("DEEPEVAL_JUDGE_PROVIDER", "ollama").strip().lower() == "wandb":
     JUDGE_MODEL = _wandb_judge()
 else:
     JUDGE_MODEL = _ollama_judge()
-    register_ollama_unload(os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen3:latest"), os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"))
+    register_ollama_unload(
+        os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen2.5:7b"),
+        os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"),
+    )
 
 DATASET_QUALITY_METRICS = [
     GEval(

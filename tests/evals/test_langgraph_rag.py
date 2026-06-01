@@ -12,6 +12,16 @@ from deepeval import assert_test
 from deepeval.test_case import LLMTestCase, ConversationalTestCase, Turn
 from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric
 
+_DEEPEVAL_LIVE_URL = os.getenv("DEEPEVAL_LIVE_MODEL_URL", "").strip()
+if not _DEEPEVAL_LIVE_URL:
+    pytest.skip(
+        "Set DEEPEVAL_LIVE_MODEL_URL to activate LangGraph RAG evaluation tests",
+        allow_module_level=True,
+    )
+
+# Ensure the Ollama judge uses the configured live URL when evaluating.
+os.environ.setdefault("DEEPEVAL_OLLAMA_BASE_URL", _DEEPEVAL_LIVE_URL)
+
 from scripts.runtime.history_guide_agent import run_history_guide
 from metrics import JUDGE_MODEL, CONVERSATIONAL_METRICS, RAG_QUALITY_METRICS
 
@@ -68,7 +78,8 @@ def test_history_guide_rag_multi_turn():
     # Build proper ConversationalTestCase
     test_case = ConversationalTestCase(
         turns=turns,
-        name="LangGraph RAG Multi-Turn Test"
+        name="LangGraph RAG Multi-Turn Test",
+        chatbot_role="assistant",
     )
     
     # Run conversational metrics
