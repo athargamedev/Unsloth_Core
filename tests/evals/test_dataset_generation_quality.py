@@ -21,7 +21,7 @@ from deepeval.test_case import LLMTestCase
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from metrics import DATASET_QUALITY_METRICS
+from metrics import DATASET_QUALITY_METRICS, CONVERSATIONAL_METRICS
 
 # ---------------------------------------------------------------------------
 # Gate: only activate when DEEPEVAL_DATASET_LIVE is set
@@ -147,4 +147,7 @@ TEST_CASES = _build_cases()
 
 @pytest.mark.parametrize("test_case", TEST_CASES, ids=lambda case: case.name)
 def test_generated_dataset_row_quality(test_case: LLMTestCase):
-    assert_test(test_case=test_case, metrics=DATASET_QUALITY_METRICS)
+    # Use conversational metrics for dialogue category; dataset metrics for others
+    category = test_case.metadata.get("category")
+    metrics = CONVERSATIONAL_METRICS if category == "dialogue" else DATASET_QUALITY_METRICS
+    assert_test(test_case=test_case, metrics=metrics)
