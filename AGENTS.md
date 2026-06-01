@@ -9,7 +9,7 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 ## Active project state
 
 - Active NPCs: `history_guide`, `chef_assistant` only.
-- Production dataset rule: use NotebookLM CLI / approved grounded workflow. Template generation is smoke/dev only.
+- Production dataset rule: use the current approved grounded workflow. NotebookLM is no longer used. Template generation is smoke/dev only.
 - Local tested Ollama judge/default: `qwen2.5:7b` unless a fresh benchmark says otherwise.
 - Local GPU: RTX 3060-class 6GB VRAM. Unload Ollama before train/eval when it holds VRAM.
 - Dashboard app lives in `src/dashboard/unity-npc-llm-training-dashboard/`.
@@ -67,7 +67,7 @@ npm run dev
 ./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
 
 # 3. generation
-# Production: NotebookLM CLI / approved grounded workflow.
+# Production: current approved grounded workflow; do not use NotebookLM.
 # Smoke only:
 ./ucore generate data/npcs/specs/<npc>.json --technique template
 

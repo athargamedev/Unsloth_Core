@@ -48,7 +48,7 @@ Deprecated as active context unless explicitly reactivated: `astronomy_guide`, `
 
 - Template generation is smoke/dev only.
 - Never train production LoRA on template data.
-- Production datasets must use NotebookLM CLI / approved grounded workflow.
+- Production datasets must use the current approved grounded workflow. NotebookLM is no longer used.
 - Quality gates must pass against the exact sanitized dataset before production training.
 
 ## Pipeline Shape
@@ -58,7 +58,7 @@ Deprecated as active context unless explicitly reactivated: `astronomy_guide`, `
 ./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
 
 # 2. Generate
-# Production: NotebookLM CLI / approved grounded workflow.
+# Production: current approved grounded workflow; do not use NotebookLM.
 # Smoke/dev only:
 ./ucore generate data/npcs/specs/<npc>.json --technique template
 

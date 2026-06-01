@@ -4,13 +4,13 @@
   "sanitized": true,
   "sanitizer": {
     "version": "v2",
-    "date": "2026-06-01T10:04:33Z",
+    "date": "2026-06-01T11:59:44Z",
     "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py /home/athar/Projects/Unsloth_Core/data/datasets/history_guide/template/train.jsonl --output /home/athar/Projects/Unsloth_Core/data/datasets/history_guide/template/train_clean.jsonl --strict-canonical",
     "artifact_check_mode": "strict",
     "strict_mode": false
   },
   "spec": {
-    "file": "subjects/NPC_specs/history_guide.json",
+    "file": "data/npcs/specs/history_guide.json",
     "hash": "sha256:5553504225d44bb1be487783cc7d4c480793e8710ef9d2691b1d3d2e57e437e2",
     "ref_doc": "subjects/reference_docs/history_guide_primer.md"
   },
@@ -143,7 +143,7 @@
   ],
   "content_hash_prefix": "sha256:",
   "generation": {
-    "date": "2026-06-01T10:04:32Z",
+    "date": "2026-06-01T11:59:43Z",
     "seed": 42,
     "generator_version": "improved-workflow-v1",
     "sanitizer_version": "v1"

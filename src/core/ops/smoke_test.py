@@ -107,7 +107,7 @@ def _run_via_server(server_bin, model_path, prompt, system_prompt=None, max_toke
 
     proc = subprocess.Popen(
         [server_bin, "-m", str(base_model_path), "--lora", str(model_path),
-         "--port", str(port), "-ngl", "99", "--no-web"],
+         "--port", str(port), "-ngl", "99"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )
 
