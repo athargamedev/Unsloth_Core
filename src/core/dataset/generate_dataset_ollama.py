@@ -171,14 +171,21 @@ GENERIC_FILLER_REPLACEMENTS = [
 ]
 
 
-def build_category_generation_prompt(category: str, concept_str: str, npc_name: str, player_role: str = "player") -> str:
+def build_category_generation_prompt(
+    category: str,
+    concept_str: str,
+    npc_name: str,
+    player_role: str = "player",
+    subject: str = "history",
+    concepts_str: str = "chronology or sources"
+) -> str:
     """Backward-compatible category prompt helper used by tests and callers."""
     return {
-        "identity": f"Write a very short first-person self-introduction for {npc_name}. Say who you are, directly answer what you do, name one historical method or focus such as chronology or sources, avoid generic storyteller language, and keep it to 1-2 sentences.",
+        "identity": f"Write a very short first-person self-introduction for {npc_name}. Say who you are, directly answer what you do, name one focus related to {subject}, such as {concepts_str}, avoid generic storyteller language, and keep it to 1-2 sentences.",
         "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Answer the first sentence directly, include one concrete fact or example from the reference doc, and avoid inventing new details. Aim for 12-20 words. Keep it to 1-2 short sentences.",
         "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer directly, add one specific detail or example grounded in the spec, and aim for 12-20 words. Keep it under 200 characters.",
         "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character. Include one concrete action step or example and aim for 12-20 words. Keep it to 1-2 short sentences.",
-        "refusal": f"Write an out-of-scope question for {npc_name}, state the boundary clearly, and redirect to a safe in-scope alternative. Do not add an unrelated history fact or drift to another topic. Include 'Instead, I can help with...' plus one concrete in-scope topic like chronology or sources. Keep it to 1-2 sentences.",
+        "refusal": f"Write an out-of-scope question for {npc_name}, state the boundary clearly, and redirect to a safe in-scope alternative. Do not add an unrelated fact or drift to another topic. Include 'Instead, I can help with...' plus one concrete in-scope topic related to {subject}, such as {concepts_str}. Keep it to 1-2 sentences.",
     }.get(category, f"Generate a concise educational dialogue about '{concept_str}' with one concrete detail.")
 
 
@@ -597,12 +604,16 @@ class OllamaDatasetGenerator:
             if contexts:
                 grounding = "\nContext:\n" + "\n".join(contexts[:2])
         
+        subject = self.spec.get("subject", "the subject")
+        concepts = [c.get("name", "") for c in self.spec.get("concepts", [])]
+        concepts_str = ", ".join(concepts[:3]) if concepts else f"topics related to {subject}"
+
         category_prompt = {
-            "identity": f"Write a short self-introduction for {npc_name} in first person. Include one concrete history topic you can help with, such as ancient civilizations, medieval history, or modern history.",
+            "identity": f"Write a short self-introduction for {npc_name} in first person. Include one concrete topic you can help with related to {subject}, such as {concepts_str}.",
             "teaching": f"Write a question from a {player_role} about '{concept_str}' and a short, helpful answer.",
             "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer the user's question directly in the first sentence and avoid generic lead-ins like 'going deeper' or 'start with'.",
             "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character.",
-            "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that directly acknowledges the topic change and offers another in-scope history topic. Include both an explicit boundary phrase and a redirect phrase such as 'Instead, I can help with...'.",
+            "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that directly acknowledges the topic change and offers another in-scope topic related to {subject}. Include both an explicit boundary phrase and a redirect phrase such as 'Instead, I can help with...'.",
         }.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
         if difficulty:
             category_prompt += f" Use a {difficulty} tone and prioritize clarity."

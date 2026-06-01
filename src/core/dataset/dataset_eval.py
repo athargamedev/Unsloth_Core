@@ -179,18 +179,36 @@ def summarize_deepeval_result(result: dict, *, npc_key: str, technique: str, jud
 
 
 def _build_metric_collection() -> dict:
-    """Build a metric collection matching the local evaluation metrics."""
+    """Build a single-turn metric collection matching local dataset metrics."""
     return {
         "name": "npc-dataset-quality",
         "include": ["answer_relevancy", "faithfulness", "hallucination"],
     }
 
 
-def _convert_test_cases_for_remote(jsonl_path: Path) -> list[dict]:
-    """Read a ChatML JSONL dataset and convert rows to Confident API test cases."""
-    test_cases: list[dict] = []
+def _build_conversational_metric_collection() -> dict:
+    """Build a multi-turn collection for NPC memory/role continuity checks."""
+    return {
+        "name": "npc-conversation-quality",
+        "include": ["role_adherence", "knowledge_retention", "conversation_completeness"],
+    }
+
+
+def _row_metadata(metadata: dict) -> dict[str, str]:
+    additional_metadata: dict[str, str] = {}
+    for key in ("npc_key", "category", "concept", "difficulty", "source"):
+        value = metadata.get(key)
+        if value:
+            additional_metadata[key] = str(value)
+    return additional_metadata
+
+
+def _convert_test_cases_for_remote(jsonl_path: Path) -> tuple[list[dict], list[dict]]:
+    """Read ChatML JSONL and split rows into single-turn and multi-turn Confident cases."""
+    single_turn_cases: list[dict] = []
+    conversational_cases: list[dict] = []
     if not jsonl_path.exists():
-        return test_cases
+        return single_turn_cases, conversational_cases
     with jsonl_path.open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -203,39 +221,42 @@ def _convert_test_cases_for_remote(jsonl_path: Path) -> list[dict]:
             messages = row.get("messages") if isinstance(row, dict) else None
             if not isinstance(messages, list) or len(messages) < 2:
                 continue
-            # Extract system prompt (first message with role "system")
             system_prompt = ""
-            for msg in messages:
-                if msg.get("role") == "system":
-                    system_prompt = msg.get("content", "")
-                    break
-            # Extract first user and assistant messages
-            user_message = ""
-            assistant_message = ""
+            dialogue_turns: list[dict[str, str]] = []
             for msg in messages:
                 role = msg.get("role", "")
-                if role == "user" and not user_message:
-                    user_message = msg.get("content", "")
-                elif role == "assistant" and not assistant_message:
-                    assistant_message = msg.get("content", "")
-            if not user_message:
+                content = msg.get("content", "")
+                if role == "system" and not system_prompt:
+                    system_prompt = content
+                elif role in {"user", "assistant"} and content:
+                    dialogue_turns.append({"role": role, "content": content})
+            if not dialogue_turns:
                 continue
             metadata = row.get("metadata") or {}
-            category = metadata.get("category", "")
-            difficulty = metadata.get("difficulty", "")
-            additional_metadata: dict[str, str] = {}
-            if category:
-                additional_metadata["category"] = category
-            if difficulty:
-                additional_metadata["difficulty"] = difficulty
-            test_cases.append({
+            additional_metadata = _row_metadata(metadata)
+            if len(dialogue_turns) > 2:
+                additional_metadata["knowledge_retention_target"] = "user-provided facts across turns"
+                conversational_cases.append(
+                    {
+                        "name": f"{metadata.get('npc_key', 'npc')}:{metadata.get('category', 'dialogue')}:{metadata.get('concept', 'unknown')}",
+                        "turns": dialogue_turns,
+                        "chatbotRole": "assistant",
+                        "additionalMetadata": additional_metadata,
+                    }
+                )
+                continue
+            user_message = next((turn["content"] for turn in dialogue_turns if turn["role"] == "user"), "")
+            assistant_message = next((turn["content"] for turn in dialogue_turns if turn["role"] == "assistant"), "")
+            if not user_message:
+                continue
+            single_turn_cases.append({
                 "input": user_message,
                 "actualOutput": "",
                 "expectedOutput": assistant_message,
                 "context": [system_prompt] if system_prompt else [],
                 "additionalMetadata": additional_metadata if additional_metadata else {},
             })
-    return test_cases
+    return single_turn_cases, conversational_cases
 
 
 def load_optional_json(path: Path) -> dict | None:
@@ -539,12 +560,26 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     print("\n[Remote Eval] Evaluating on Confident AI infrastructure...", flush=True)
                     client = ConfidentAPIClient()
                     metric_collection = _build_metric_collection()
-                    test_cases = _convert_test_cases_for_remote(clean_path)
+                    conversational_metric_collection = _build_conversational_metric_collection()
+                    test_cases, conversational_cases = _convert_test_cases_for_remote(clean_path)
 
-                    result = client.evaluate(test_cases, metric_collection, identifier=identifier)
-                    test_run_id = result.get("data", {}).get("testRunId", "")
-                    print(f"Remote evaluation submitted. Test Run ID: {test_run_id}", flush=True)
-                    print(f"View results: https://app.confident-ai.com/test-runs/{test_run_id}", flush=True)
+                    result = client.evaluate(test_cases, metric_collection, identifier=identifier) if test_cases else {}
+                    test_run_id = result.get("data", {}).get("testRunId", "") if isinstance(result, dict) else ""
+                    conversational_test_run_id = ""
+                    if conversational_cases:
+                        conversational_result = client.evaluate_conversational(
+                            conversational_cases,
+                            conversational_metric_collection,
+                            identifier=f"{identifier}-conversation",
+                        )
+                        if isinstance(conversational_result, dict):
+                            conversational_test_run_id = conversational_result.get("data", {}).get("testRunId", "")
+                    primary_run_id = test_run_id or conversational_test_run_id
+                    print(f"Remote evaluation submitted. Test Run ID: {primary_run_id}", flush=True)
+                    if primary_run_id:
+                        print(f"View results: https://app.confident-ai.com/test-runs/{primary_run_id}", flush=True)
+                    if conversational_test_run_id:
+                        print(f"Knowledge retention run: https://app.confident-ai.com/test-runs/{conversational_test_run_id}", flush=True)
 
                     # Build summary matching local shape for downstream code
                     summary = {
@@ -556,14 +591,17 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         "deepeval_identifier": identifier,
                         "quality_gate_mode": args.mode,
                         "cases_per_category": cases_per_category,
-                        "total": len(test_cases),
+                        "total": len(test_cases) + len(conversational_cases),
                         "passed": 0,
                         "failed": 0,
                         "pass_rate": 0.0,
                         "status": "ok",
                         "remote_eval": True,
-                        "test_run_id": test_run_id,
-                        "confident_url": f"https://app.confident-ai.com/test-runs/{test_run_id}",
+                        "test_run_id": primary_run_id,
+                        "single_turn_test_run_id": test_run_id,
+                        "conversational_test_run_id": conversational_test_run_id,
+                        "confident_url": f"https://app.confident-ai.com/test-runs/{primary_run_id}" if primary_run_id else "",
+                        "confident_knowledge_retention_url": f"https://app.confident-ai.com/test-runs/{conversational_test_run_id}" if conversational_test_run_id else "",
                         "metric_count": 0,
                         "null_metric_count": 0,
                         "null_metric_rate": 0.0,

@@ -24,7 +24,7 @@
       "name": "unsloth-core-dataset-repair"
     }
   },
-  "created_at": "2026-06-01T13:45:39.663540+00:00",
+  "created_at": "2026-06-01T13:45:39.653654+00:00",
   "kind": "dataset_quality_insights",
   "npc_key": "demo_npc",
   "project": "Unsloth_Core",
@@ -34,9 +34,9 @@
     "cases_per_category": 1,
     "categories": {},
     "confident_knowledge_retention_url": "",
-    "confident_url": "https://app.confident-ai.com/test-runs/remote-run-001",
+    "confident_url": "https://app.confident-ai.com/test-runs/remote-run-002",
     "conversational_test_run_id": "",
-    "created_at": "2026-06-01T13:45:39.663347+00:00",
+    "created_at": "2026-06-01T13:45:39.653423+00:00",
     "dataset_summary": {
       "by_category": {
         "teaching": 1
@@ -46,7 +46,7 @@
     },
     "dataset_total_rows": 1,
     "dataset_unknown_rows": 0,
-    "deepeval_identifier": "custom-eval-id",
+    "deepeval_identifier": "dataset-quality-demo_npc-template-fast-20260601-104539",
     "distribution_gaps": [],
     "expected_distribution": {},
     "failed": 0,
@@ -63,10 +63,10 @@
     "remote_eval": true,
     "sanitizer": {},
     "sanitizer_quality_issues": [],
-    "single_turn_test_run_id": "remote-run-001",
+    "single_turn_test_run_id": "remote-run-002",
     "status": "ok",
     "technique": "template",
-    "test_run_id": "remote-run-001",
+    "test_run_id": "remote-run-002",
     "total": 1
   },
   "technique": "template"

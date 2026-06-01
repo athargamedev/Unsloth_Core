@@ -245,10 +245,10 @@ def test_ollama_category_prompts_remain_short_and_specific():
     assert "under 200 characters" in dialogue
     assert "one specific detail or example" in dialogue
     assert "aim for 12-20 words" in dialogue
-    assert "do not add an unrelated history fact" in refusal.lower()
+    assert "do not add an unrelated fact" in refusal.lower()
     assert "drift to another topic" in refusal.lower()
     assert "Instead, I can help with" in refusal
-    assert "one concrete in-scope topic like chronology or sources" in refusal
+    assert "one concrete in-scope topic related to history, such as chronology or sources" in refusal
 
 
 def test_ollama_multi_turn_selection_is_deterministic():

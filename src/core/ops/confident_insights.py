@@ -27,6 +27,7 @@ DATASET_REPAIR_METRIC_COLLECTION = {
 
 _COMPONENT_ACTIONS = {
     "judge_runner": "rerun a smaller semantic gate or fix judge/Ollama availability before changing data",
+    "memory_retention": "add multi-turn memory repair rows and verify user facts are retained across turns",
     "spec_contract": "tighten identity/refusal contract templates in spec or generator prompt",
     "generator_grounding": "repair reference-grounded prompt/context for weak concepts before training",
     "runtime_constraints": "shorten generation templates and enforce Unity dialogue limits before training",
@@ -48,6 +49,8 @@ def classify_failure_component(failure: dict[str, Any], summary: dict[str, Any] 
 
     if score is None or summary.get("status") == "inconclusive" or "timeout" in reason or "null" in reason:
         return "judge_runner"
+    if "knowledge" in metric_name or "retention" in metric_name or "remember" in reason or "recall" in reason or "forgot" in reason:
+        return "memory_retention"
     if summary.get("distribution_gaps") or "distribution" in reason or "missing category" in reason:
         return "dataset_distribution"
     if "metadata" in reason or "source" in reason or category in {"", "unknown"}:
@@ -106,6 +109,7 @@ def _to_confident_case(
 
 _COMPONENT_PRIORITY = {
     "judge_runner": 100,
+    "memory_retention": 95,
     "generator_grounding": 90,
     "spec_contract": 80,
     "runtime_constraints": 70,

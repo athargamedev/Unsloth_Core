@@ -71,3 +71,24 @@ def test_write_dataset_quality_insights_creates_actionable_artifact(tmp_path):
     assert out.name == "confident_insights.json"
     assert data["component_counts"]["judge_runner"] == 1
     assert data["recommended_next_actions"][0]["action"] == "rerun a smaller semantic gate or fix judge/Ollama availability before changing data"
+
+
+def test_knowledge_retention_failures_route_to_memory_repair():
+    from src.core.ops.confident_insights import build_dataset_quality_insights
+
+    insights = build_dataset_quality_insights(
+        summary={"status": "ok"},
+        failures=[
+            {
+                "input": "Remember I am allergic to peanuts. Suggest a snack later.",
+                "actualOutput": "Try peanut butter toast.",
+                "metadata": {"category": "dialogue", "concept": "allergy memory"},
+                "metric": {"name": "Knowledge Retention", "score": 0.1, "reason": "assistant failed to remember user allergy"},
+            }
+        ],
+        npc_key="chef_assistant",
+        technique="grounded",
+    )
+
+    assert insights["component_counts"]["memory_retention"] == 1
+    assert insights["recommended_next_actions"][0]["action"] == "add multi-turn memory repair rows and verify user facts are retained across turns"
