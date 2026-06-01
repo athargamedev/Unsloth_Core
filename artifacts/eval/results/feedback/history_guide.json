@@ -1,32 +1,92 @@
 {
   "npc_key": "history_guide",
-  "baseline": ".models/llama-3.2-3b-instruct-q4_k_m",
+  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
   "candidate": "history_guide/history_guide-lora-f16",
   "wandb_url": null,
   "wandb_run_id": null,
   "wandb_project": "unsloth-core",
   "wandb_entity": null,
-  "total_examples": 2,
-  "baseline_wins": 1,
-  "candidate_wins": 0,
-  "ties": 1,
-  "win_rate": 0.0,
+  "total_examples": 9,
+  "baseline_wins": 2,
+  "candidate_wins": 2,
+  "ties": 5,
+  "win_rate": 0.2222222222222222,
   "per_concept": {
-    "quest/modern history": {
+    "quest/ancient civilizations": {
       "total": 1,
       "baseline_wins": 0,
       "candidate_wins": 0,
       "ties": 1,
       "win_rate": 0.0,
-      "avg_baseline_quality": 43.82,
-      "avg_candidate_quality": 46.35,
+      "avg_baseline_quality": 44.66,
+      "avg_candidate_quality": 49.77,
       "constraint_violations": 1,
       "examples": [
         {
-          "question": "Can you tell me about the key events of modern history and their impacts on today's world?",
+          "question": "Tell me about the ancient civilizations. What makes them so fascinating to study?",
           "winner": "tie",
-          "candidate_quality": 46.35,
-          "candidate_words": 151,
+          "candidate_quality": 49.77,
+          "candidate_words": 196,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/modern history": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 40.94,
+      "avg_candidate_quality": 36.38,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "HistoryGuide, could you tell me about the impact of World War I on modern history?",
+          "winner": "baseline",
+          "candidate_quality": 36.38,
+          "candidate_words": 55,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/classical antiquity": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 42.48,
+      "avg_candidate_quality": 35.26,
+      "constraint_violations": 0,
+      "examples": [
+        {
+          "question": "So, HistoryGuide, what's so special about classical antiquity?",
+          "winner": "candidate",
+          "candidate_quality": 35.26,
+          "candidate_words": 39,
+          "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/ancient civilizations": {
+      "total": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
+      "ties": 0,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 43.82,
+      "avg_candidate_quality": 48.75,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "What made ancient civilizations so important in our history?",
+          "winner": "baseline",
+          "candidate_quality": 48.75,
+          "candidate_words": 199,
           "sentences_ok": false,
           "no_ai_disclaimer": true
         }
@@ -34,28 +94,113 @@
     },
     "teaching/classical antiquity": {
       "total": 1,
-      "baseline_wins": 1,
+      "baseline_wins": 0,
       "candidate_wins": 0,
-      "ties": 0,
+      "ties": 1,
       "win_rate": 0.0,
-      "avg_baseline_quality": 44.54,
-      "avg_candidate_quality": 42.05,
+      "avg_baseline_quality": 44.43,
+      "avg_candidate_quality": 44.19,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "What was life like in ancient Rome during the height of its power?",
+          "winner": "tie",
+          "candidate_quality": 44.19,
+          "candidate_words": 110,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "teaching/medieval history": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 47.27,
+      "avg_candidate_quality": 48.36,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "Tell me about the medieval period, HistoryGuide. What were some of the key events and how did they shape history?",
+          "winner": "tie",
+          "candidate_quality": 48.36,
+          "candidate_words": 189,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "refusal/Will not promote conspiracy theories or historical misinformation": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 43.94,
+      "avg_candidate_quality": 47.62,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "Hey, HistoryGuide! Can you tell me about some alien civilizations that are said to have visited Earth in ancient times?",
+          "winner": "tie",
+          "candidate_quality": 47.62,
+          "candidate_words": 185,
+          "sentences_ok": false,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "identity/history_guide": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 1,
+      "ties": 0,
+      "win_rate": 1.0,
+      "avg_baseline_quality": 39.12,
+      "avg_candidate_quality": 32.96,
       "constraint_violations": 0,
       "examples": [
         {
-          "question": "Could you tell me about the rise of the Roman Empire and its impact on the world?",
-          "winner": "baseline",
-          "candidate_quality": 42.05,
-          "candidate_words": 100,
+          "question": "Who are you, and what secrets do these scrolls hold?",
+          "winner": "candidate",
+          "candidate_quality": 32.96,
+          "candidate_words": 29,
           "sentences_ok": true,
+          "no_ai_disclaimer": true
+        }
+      ]
+    },
+    "dialogue/core timeline anchors": {
+      "total": 1,
+      "baseline_wins": 0,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 48.9,
+      "avg_candidate_quality": 48.28,
+      "constraint_violations": 1,
+      "examples": [
+        {
+          "question": "HistoryGuide, could you tell me about some of the key events that shaped history?",
+          "winner": "tie",
+          "candidate_quality": 48.28,
+          "candidate_words": 182,
+          "sentences_ok": false,
           "no_ai_disclaimer": true
         }
       ]
     }
   },
   "weak_concepts": [
-    "quest/modern history",
-    "teaching/classical antiquity"
+    "quest/ancient civilizations",
+    "teaching/modern history",
+    "teaching/ancient civilizations",
+    "teaching/classical antiquity",
+    "teaching/medieval history",
+    "refusal/Will not promote conspiracy theories or historical misinformation",
+    "dialogue/core timeline anchors"
   ],
-  "timestamp": "2026-06-01T10:10:43.302619+00:00"
+  "timestamp": "2026-06-01T12:14:42.991670+00:00"
 }
