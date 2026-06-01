@@ -4,6 +4,8 @@ import { fetchOptionalJson } from '../api';
 import type { Subject, ExportArtifact } from '../api';
 import { EvalReportsDataSchema } from '../schemas/eval-reports';
 import type { ValidatedEvalReportsData, EvalReportFile } from '../schemas/eval-reports';
+import { useOllamaModels } from '../hooks/useOllamaModels';
+import { RefreshCw } from 'lucide-react';
 
 interface EvalConfig {
   npcKey: string;
@@ -45,6 +47,7 @@ export const EvalWorkflowPanel = ({
   subjects: Subject[];
   exportArtifacts: ExportArtifact[];
 }) => {
+  const ollamaModels = useOllamaModels();
   const [config, setConfig] = useState<EvalConfig>({
     npcKey: '',
     spec: '',
@@ -382,14 +385,30 @@ export const EvalWorkflowPanel = ({
           {/* Model Selection - changes based on mode */}
           {evalMode === 'single' ? (
             <div className="sm:col-span-2 xl:col-span-3">
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Model GGUF Path</label>
-              <input
-                type="text"
-                value={config.model}
-                onChange={e => updateOpt('model', e.target.value)}
-                placeholder="/path/to/model.gguf or exports/{npc}/{npc}-lora-f16.gguf"
-                className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
-              />
+              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1 flex items-center justify-between">
+                <span>Model GGUF Path or Ollama Model</span>
+                {ollamaModels.loading && <RefreshCw className="w-3 h-3 animate-spin text-ink/30" />}
+              </label>
+              <div className="flex gap-1">
+                <select
+                  value={ollamaModels.models.some(m => m.name === config.model) || config.model === '' ? config.model : '__custom__'}
+                  onChange={e => updateOpt('model', e.target.value)}
+                  className="bg-bg border border-line rounded px-2 py-1.5 text-[11px] min-w-[140px]"
+                >
+                  <option value="">Select Ollama Model…</option>
+                  {ollamaModels.models.map(m => <option key={m.name} value={m.name}>{m.name}</option>)}
+                  <option value="__custom__">Custom Path…</option>
+                </select>
+                {(!ollamaModels.models.some(m => m.name === config.model) && config.model !== '') && (
+                  <input
+                    type="text"
+                    value={config.model === '__custom__' ? '' : config.model}
+                    onChange={e => updateOpt('model', e.target.value)}
+                    placeholder="/path/to/model.gguf or exports/{npc}/{npc}-lora-f16.gguf"
+                    className="flex-1 bg-bg border border-accent/40 rounded px-2 py-1.5 text-[11px] font-mono"
+                  />
+                )}
+              </div>
             </div>
           ) : (
             <>
@@ -592,14 +611,30 @@ export const EvalWorkflowPanel = ({
               </label>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Judge Model</label>
-              <input
-                type="text"
-                value={config.judgeModel}
-                onChange={e => updateOpt('judgeModel', e.target.value)}
-                placeholder={DEFAULT_JUDGE_MODEL}
-                className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
-              />
+              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1 flex items-center justify-between">
+                <span>Judge Model</span>
+                {ollamaModels.loading && <RefreshCw className="w-3 h-3 animate-spin text-ink/30" />}
+              </label>
+              <div className="flex gap-1">
+                <select
+                  value={ollamaModels.models.some(m => m.name === config.judgeModel) || config.judgeModel === '' ? config.judgeModel : '__custom__'}
+                  onChange={e => updateOpt('judgeModel', e.target.value)}
+                  className="bg-bg border border-line rounded px-2 py-1.5 text-[11px] flex-1"
+                >
+                  <option value="">{DEFAULT_JUDGE_MODEL}</option>
+                  {ollamaModels.models.map(m => <option key={m.name} value={m.name}>{m.name}</option>)}
+                  <option value="__custom__">Custom…</option>
+                </select>
+                {(!ollamaModels.models.some(m => m.name === config.judgeModel) && config.judgeModel !== '') && (
+                  <input
+                    type="text"
+                    value={config.judgeModel === '__custom__' ? '' : config.judgeModel}
+                    onChange={e => updateOpt('judgeModel', e.target.value)}
+                    placeholder={DEFAULT_JUDGE_MODEL}
+                    className="w-20 bg-bg border border-accent/40 rounded px-2 py-1.5 text-[11px] font-mono"
+                  />
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Feedback JSON</label>

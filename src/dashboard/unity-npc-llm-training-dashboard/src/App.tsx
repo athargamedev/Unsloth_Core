@@ -490,7 +490,7 @@ export default function App() {
         setDatasetViewTechnique(targetTechnique);
         setAvailableTechniques(targetDataset?.versions.map((version) => ({ name: version.tag, train_count: version.entries, val_count: 0 })) || []);
       }
-      const VALID_TABS = ['overview', 'pipeline', 'training', 'datasets', 'dataset_params', 'compare', 'analytics', 'eval', 'feedback', 'ollama', 'commands', 'parameters'] as const;
+      const VALID_TABS = ['overview', 'pipeline', 'training', 'datasets', 'dataset_params', 'compare', 'analytics', 'eval', 'feedback', 'ollama', 'commands', 'parameters', 'logs', 'dataset_pipeline', 'workflow_assistant', 'colab', 'jobs'] as const;
       type ValidTab = typeof VALID_TABS[number];
       if ((VALID_TABS as readonly string[]).includes(detail.tab)) {
         setActiveTab(detail.tab as ValidTab);
@@ -645,7 +645,7 @@ export default function App() {
       case 'dataset-generate':
         return { spec: trainingConfig.spec, options: { technique: trainingConfig.technique, modelId: trainingConfig.baseModel } };
       case 'generate-ollama':
-        return { spec: trainingConfig.spec, options: { model: 'llama3.2:3b' } };
+        return { spec: trainingConfig.spec, options: { model: trainingConfig.baseModel || 'llama3.2:3b' } };
       case 'train':
       case 'pipeline':
         return { spec: trainingConfig.spec, preset: trainingConfig.preset };
@@ -901,7 +901,7 @@ export default function App() {
         options: { 
           technique: trainingConfig.technique,
           modelId: trainingConfig.baseModel,
-          model: 'llama3.2:3b',
+          model: trainingConfig.baseModel || 'llama3.2:3b',
         } 
       });
     } catch (error) {
@@ -1044,47 +1044,60 @@ export default function App() {
         {/* Main Content: Matrix & Logs */}
         <main className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0 bg-bg">
           {/* Tab Selection */}
-          <div className="flex px-4 border-b border-line bg-surface/30 backdrop-blur-md overflow-x-auto whitespace-nowrap no-scrollbar">
+          <div className="flex flex-wrap px-4 pt-2 pb-0 border-b border-line bg-surface/30 backdrop-blur-md gap-x-2 gap-y-1">
             {[
-              { id: 'overview', label: 'Quick Start', shortLabel: 'Start', icon: Play, tip: 'Entry point for the current workspace.' },
-              { id: 'pipeline', label: 'Pipeline', shortLabel: 'Pipe', icon: Activity, tip: 'Visualize the spec-to-feedback flow.' },
-              { id: 'dataset_params', label: '1) Data', shortLabel: 'Data', icon: Database, tip: 'Check data quality before training.' },
-              { id: 'training', label: '2) Train', shortLabel: 'Train', icon: Cpu, tip: 'Tune and launch LoRA training.' },
-              { id: 'eval', label: '3) Eval', shortLabel: 'Eval', icon: BarChart3, tip: 'Compare candidates against baselines.' },
-              { id: 'feedback', label: '4) Feedback', shortLabel: 'FB', icon: MessageSquare, tip: 'Turn eval failures into regeneration.' },
-              { id: 'colab', label: 'Cloud (Colab)', shortLabel: 'Colab', icon: ExternalLink, tip: 'Cloud helper and remote notes.' },
-              { id: 'ollama', label: 'Ollama', shortLabel: 'Ollama', icon: Wrench, tip: 'Manage Ollama performance tuning, GPU offloading, and service lifecycle.' },
-              { id: 'workflow_assistant', label: 'WorkflowDocs', shortLabel: 'Docs', icon: Sparkles, tip: 'Canonical workflow reference.' },
-              { id: 'dataset_pipeline', label: 'Dataset Pipeline', shortLabel: 'Pipe', icon: Layers, tip: 'Inspect the dataset lifecycle.' },
-              { id: 'parameters', label: 'Parameters', shortLabel: 'Params', icon: SlidersHorizontal, tip: 'Browse, search, and override pipeline parameters.' },
-              { id: 'jobs', label: 'Ops', shortLabel: 'Ops', icon: Settings, tip: 'Control jobs and compare runs.' },
-              { id: 'analytics', label: 'TensorBoard', shortLabel: 'TB', icon: BarChart3, tip: 'Select and compare training curves.' },
-              { id: 'compare', label: 'Compare', shortLabel: 'Cmp', icon: Layers, tip: 'Multi-run side-by-side review.' },
-              { id: 'datasets', label: 'Datasets', shortLabel: 'DS', icon: Database, tip: 'Browse dataset versions and samples.' },
-              { id: 'logs', label: 'Console', shortLabel: 'Log', icon: Terminal, tip: 'Read raw execution logs.' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                title={tab.tip}
-                className={cn(
-                  "shrink-0 px-4 py-3 text-[12px] font-bold uppercase tracking-[0.12em] border-b-2 transition-all duration-300 relative group flex items-center gap-2",
-                  activeTab === tab.id ? "border-accent text-ink-bright" : "border-transparent text-ink/30 hover:text-ink/60",
-                )}
-              >
-                <tab.icon className={cn('w-3.5 h-3.5', activeTab === tab.id ? 'text-accent' : 'text-ink/35 group-hover:text-ink/60')} />
-                <span className="sm:hidden">{tab.shortLabel}</span>
-                <span className="hidden sm:inline">{tab.label}</span>
-                {tab.id === 'compare' && selectedJobIds.length > 0 && (
-                  <span className="ml-1 bg-accent text-bg px-1.5 rounded-full text-[12px] font-mono animate-pulse">
-                    {selectedJobIds.length}
-                  </span>
-                )}
-                {activeTab === tab.id && (
-                  <motion.div layoutId="activeTab" className="absolute inset-0 bg-accent/5 -z-10" />
-                )}
-                <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-accent transition-all duration-300 group-hover:w-full" />
-              </button>
+              { group: 'Core Workflow', tabs: [
+                { id: 'overview', label: 'Quick Start', shortLabel: 'Start', icon: Play, tip: 'Entry point for the current workspace.' },
+                { id: 'pipeline', label: 'Pipeline', shortLabel: 'Pipe', icon: Activity, tip: 'Visualize the spec-to-feedback flow.' },
+                { id: 'dataset_params', label: '1) Data', shortLabel: 'Data', icon: Database, tip: 'Check data quality before training.' },
+                { id: 'training', label: '2) Train', shortLabel: 'Train', icon: Cpu, tip: 'Tune and launch LoRA training.' },
+                { id: 'eval', label: '3) Eval', shortLabel: 'Eval', icon: BarChart3, tip: 'Compare candidates against baselines.' },
+                { id: 'feedback', label: '4) Feedback', shortLabel: 'FB', icon: MessageSquare, tip: 'Turn eval failures into regeneration.' }
+              ]},
+              { group: 'Analysis', tabs: [
+                { id: 'dataset_pipeline', label: 'Dataset Pipe', shortLabel: 'DSPipe', icon: Layers, tip: 'Inspect the dataset lifecycle.' },
+                { id: 'datasets', label: 'Datasets', shortLabel: 'DS', icon: Database, tip: 'Browse dataset versions and samples.' },
+                { id: 'compare', label: 'Compare Models', shortLabel: 'Cmp', icon: Layers, tip: 'Multi-run side-by-side review.' },
+                { id: 'analytics', label: 'TensorBoard', shortLabel: 'TB', icon: BarChart3, tip: 'Select and compare training curves.' }
+              ]},
+              { group: 'Tools & Config', tabs: [
+                { id: 'ollama', label: 'Ollama', shortLabel: 'Ollama', icon: Wrench, tip: 'Manage Ollama performance tuning.' },
+                { id: 'parameters', label: 'Parameters', shortLabel: 'Params', icon: SlidersHorizontal, tip: 'Override pipeline parameters.' },
+                { id: 'commands', label: 'Advanced', shortLabel: 'Cmd', icon: Settings, tip: 'System commands and advanced features.' },
+                { id: 'workflow_assistant', label: 'WorkflowDocs', shortLabel: 'Docs', icon: Sparkles, tip: 'Canonical workflow reference.' },
+                { id: 'colab', label: 'Colab', shortLabel: 'Colab', icon: ExternalLink, tip: 'Cloud helper and remote notes.' }
+              ]},
+              { group: 'System', tabs: [
+                { id: 'jobs', label: 'Ops', shortLabel: 'Ops', icon: Settings, tip: 'Control jobs and compare runs.' },
+                { id: 'logs', label: 'Console', shortLabel: 'Log', icon: Terminal, tip: 'Read raw execution logs.' }
+              ]}
+            ].map((section, sIdx) => (
+              <div key={sIdx} className="flex items-end gap-1 mb-1 mr-4 last:mr-0">
+                <div className="text-[9px] font-bold uppercase text-ink/30 mb-2 mr-2 whitespace-nowrap self-center">{section.group}</div>
+                {section.tabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    title={tab.tip}
+                    className={cn(
+                      "shrink-0 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] border-b-2 transition-all duration-300 relative group flex items-center gap-1.5 whitespace-nowrap",
+                      activeTab === tab.id ? "border-accent text-ink-bright bg-accent/5 rounded-t-md" : "border-transparent text-ink/40 hover:text-ink/70 hover:bg-white/5 rounded-t-md",
+                    )}
+                  >
+                    <tab.icon className={cn('w-3 h-3', activeTab === tab.id ? 'text-accent' : 'text-ink/35 group-hover:text-ink/60')} />
+                    <span className="xl:hidden">{tab.shortLabel}</span>
+                    <span className="hidden xl:inline">{tab.label}</span>
+                    {tab.id === 'compare' && selectedJobIds.length > 0 && (
+                      <span className="ml-1 bg-accent text-bg px-1 rounded-full text-[10px] font-mono animate-pulse">
+                        {selectedJobIds.length}
+                      </span>
+                    )}
+                    {activeTab === tab.id && (
+                      <motion.div layoutId="activeTab" className="absolute inset-0 bg-accent/10 -z-10 rounded-t-md" />
+                    )}
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
 

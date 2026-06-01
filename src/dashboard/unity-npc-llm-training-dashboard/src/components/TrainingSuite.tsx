@@ -1,8 +1,9 @@
 import { motion } from 'motion/react';
-import { Shield } from 'lucide-react';
+import { Shield, RefreshCw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Card } from './Card';
 import type { Subject, TrainingConfig } from '../api';
+import { useOllamaModels } from '../hooks/useOllamaModels';
 
 interface TrainingSuiteProps {
   subjects: Subject[];
@@ -29,6 +30,12 @@ function estimateVram(modelName: string, rank: number, packing = true, maxSeq = 
   return Math.round(gb * 10) / 10;
 }
 
+const hfPresets = [
+  'unsloth/Llama-3.2-1B-Instruct-bnb-4bit',
+  'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
+  'unsloth/Meta-Llama-3.1-8B-Instruct-bnb-4bit',
+];
+
 export const TrainingSuite = ({
   subjects,
   presets = [],
@@ -37,6 +44,7 @@ export const TrainingSuite = ({
   onUpdateTrainingConfig,
   onLaunchTraining,
 }: TrainingSuiteProps) => {
+  const ollamaModels = useOllamaModels();
   const modelId = trainingConfig.modelId || trainingConfig.baseModel;
   const vramGb = estimateVram(modelId, trainingConfig.rank);
 
@@ -78,7 +86,7 @@ export const TrainingSuite = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card title="Structural Parameters" subtitle="RANK_AND_DIM">
           <div className="space-y-4">
             <div>
@@ -124,17 +132,36 @@ export const TrainingSuite = ({
 
             {/* Model Selection */}
             <div>
-              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Model ID</label>
-              <input
-                value={trainingConfig.modelId}
-                onChange={(e) => onUpdateTrainingConfig({ modelId: e.target.value })}
-                placeholder="e.g., unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
-                className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-              />
-              <p className="text-[8px] mt-1 text-ink/30">Passed to <code>ucore train --model</code>. Named Ollama presets belong in dataset-eval or generation panels.</p>
+              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 flex items-center justify-between">
+                <span>Base Model (HuggingFace ID)</span>
+                {ollamaModels.loading && <RefreshCw className="w-3 h-3 animate-spin text-ink/30" />}
+              </label>
+              <select
+                value={hfPresets.includes(trainingConfig.modelId) || trainingConfig.modelId === '' ? trainingConfig.modelId : '__custom__'}
+                onChange={(e) => onUpdateTrainingConfig({ modelId: e.target.value, baseModel: e.target.value })}
+                className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none mb-1.5"
+              >
+                <option value="">— select a preset —</option>
+                <optgroup label="Unsloth Presets">
+                  {hfPresets.map(m => (
+                    <option key={m} value={m}>{m.split('/').pop()}</option>
+                  ))}
+                </optgroup>
+                <option value="__custom__">Custom HuggingFace ID…</option>
+              </select>
+              {/* Show text input when custom or value doesn't match presets */}
+              {(!hfPresets.includes(trainingConfig.modelId) && trainingConfig.modelId !== '') && (
+                <input
+                  value={trainingConfig.modelId === '__custom__' ? '' : trainingConfig.modelId}
+                  onChange={(e) => onUpdateTrainingConfig({ modelId: e.target.value, baseModel: e.target.value })}
+                  placeholder="e.g., unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+                  className="w-full bg-bg border border-accent/40 rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
+                />
+              )}
+              <p className="text-[8px] mt-1 text-ink/30">Passed to <code>ucore train --model</code>. Ollama models belong in generation/eval panels.</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">LoRA Rank (R)</label>
                 <input
@@ -180,7 +207,7 @@ export const TrainingSuite = ({
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Batch Size</label>
                   <select

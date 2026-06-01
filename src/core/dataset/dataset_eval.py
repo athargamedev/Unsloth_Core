@@ -18,6 +18,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.core.dataset.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
 from src.core.ops.confident_api import ConfidentAPIClient
+from src.core.ops.confident_insights import write_dataset_quality_insights
 from src.core.ops.env_loader import confident_available, ensure_confident_api_key
 from src.core.ops.preflight import run_preflight
 from src.core.ops.ollama_model_presets import resolve_ollama_model
@@ -603,10 +604,23 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     write_json(summary_path, summary)
                     write_json(failures_path, failures)
                     write_json(report_path, combined_report)
+                    insights_path = write_dataset_quality_insights(
+                        output_dir=output_dir,
+                        summary=summary,
+                        failures=failures,
+                        npc_key=npc_key,
+                        technique=technique,
+                        artifact_paths={
+                            "quality_summary": str(summary_path),
+                            "quality_failures": str(failures_path),
+                            "quality_report": str(report_path),
+                        },
+                    )
 
                     archive_quality_artifact(summary_path, run.run_id)
                     archive_quality_artifact(failures_path, run.run_id)
                     archive_quality_artifact(report_path, run.run_id)
+                    archive_quality_artifact(insights_path, run.run_id)
                 else:
                     # ── Local Eval Path ──────────────────────────────────────────
                     print(f"Running: {' '.join(cmd)}", flush=True)
@@ -662,10 +676,23 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     write_json(summary_path, summary)
                     write_json(failures_path, failures)
                     write_json(report_path, combined_report)
+                    insights_path = write_dataset_quality_insights(
+                        output_dir=output_dir,
+                        summary=summary,
+                        failures=failures,
+                        npc_key=npc_key,
+                        technique=technique,
+                        artifact_paths={
+                            "quality_summary": str(summary_path),
+                            "quality_failures": str(failures_path),
+                            "quality_report": str(report_path),
+                        },
+                    )
 
                     archive_quality_artifact(summary_path, run.run_id)
                     archive_quality_artifact(failures_path, run.run_id)
                     archive_quality_artifact(report_path, run.run_id)
+                    archive_quality_artifact(insights_path, run.run_id)
 
                     # (Test runs are uploaded automatically to Confident AI via the deepeval CLI)
 

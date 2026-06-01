@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { fetchOptionalJson } from '../api';
 import type { FeedbackFileInfo } from '../api';
 import { useFeedbackResultsQuery } from '../hooks/useReactQuery';
+import { useOllamaModels } from '../hooks/useOllamaModels';
+import { RefreshCw } from 'lucide-react';
 
 // 1. Zod Schema Definition
 const FeedbackGapResultSchema = z.object({
@@ -103,6 +105,7 @@ const TRAIN_PRESETS = [
 ];
 
 export const FeedbackLoopPanel = () => {
+  const ollamaModels = useOllamaModels();
   const [selectedFile, setSelectedFile] = useState<FeedbackFileInfo | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -606,14 +609,30 @@ export const FeedbackLoopPanel = () => {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Model</label>
-                          <input
-                            type="text"
-                            value={fbConfig.regenerationModel}
-                            onChange={e => updateConfig('regenerationModel', e.target.value)}
-                            placeholder="e.g., qwen3:latest"
-                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
-                          />
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1 flex items-center justify-between">
+                            <span>Model</span>
+                            {ollamaModels.loading && <RefreshCw className="w-3 h-3 animate-spin text-ink/30" />}
+                          </label>
+                          <div className="flex gap-1">
+                            <select
+                              value={ollamaModels.models.some(m => m.name === fbConfig.regenerationModel) || fbConfig.regenerationModel === '' ? fbConfig.regenerationModel : '__custom__'}
+                              onChange={e => updateConfig('regenerationModel', e.target.value)}
+                              className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                            >
+                              <option value="">Default</option>
+                              {ollamaModels.models.map(m => <option key={m.name} value={m.name}>{m.name}</option>)}
+                              <option value="__custom__">Custom…</option>
+                            </select>
+                            {(!ollamaModels.models.some(m => m.name === fbConfig.regenerationModel) && fbConfig.regenerationModel !== '') && (
+                              <input
+                                type="text"
+                                value={fbConfig.regenerationModel === '__custom__' ? '' : fbConfig.regenerationModel}
+                                onChange={e => updateConfig('regenerationModel', e.target.value)}
+                                placeholder="qwen3:latest"
+                                className="flex-1 bg-bg border border-accent/40 rounded px-2 py-1.5 text-[11px] font-mono"
+                              />
+                            )}
+                          </div>
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">URL</label>
@@ -655,14 +674,30 @@ export const FeedbackLoopPanel = () => {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Judge Model</label>
-                          <input
-                            type="text"
-                            value={fbConfig.deepevalJudgeModel}
-                            onChange={e => updateConfig('deepevalJudgeModel', e.target.value)}
-                            placeholder="qwen3:latest"
-                            className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
-                          />
+                          <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1 flex items-center justify-between">
+                            <span>Judge Model</span>
+                            {ollamaModels.loading && <RefreshCw className="w-3 h-3 animate-spin text-ink/30" />}
+                          </label>
+                          <div className="flex gap-1">
+                            <select
+                              value={ollamaModels.models.some(m => m.name === fbConfig.deepevalJudgeModel) || fbConfig.deepevalJudgeModel === '' ? fbConfig.deepevalJudgeModel : '__custom__'}
+                              onChange={e => updateConfig('deepevalJudgeModel', e.target.value)}
+                              className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                            >
+                              <option value="">Default</option>
+                              {ollamaModels.models.map(m => <option key={m.name} value={m.name}>{m.name}</option>)}
+                              <option value="__custom__">Custom…</option>
+                            </select>
+                            {(!ollamaModels.models.some(m => m.name === fbConfig.deepevalJudgeModel) && fbConfig.deepevalJudgeModel !== '') && (
+                              <input
+                                type="text"
+                                value={fbConfig.deepevalJudgeModel === '__custom__' ? '' : fbConfig.deepevalJudgeModel}
+                                onChange={e => updateConfig('deepevalJudgeModel', e.target.value)}
+                                placeholder="qwen3:latest"
+                                className="flex-1 bg-bg border border-accent/40 rounded px-2 py-1.5 text-[11px] font-mono"
+                              />
+                            )}
+                          </div>
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Ollama URL</label>

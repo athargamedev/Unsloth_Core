@@ -9,7 +9,7 @@ export const AIAssistant = () => {
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       role: 'assistant',
-      content: `Welcome to the **Workflow Assistant** tool. I use local Onyx retrieval and repo docs to help you master Unsloth_Core.
+      content: `Welcome to the **Workflow Assistant** tool. I use repo docs and project state to help you master Unsloth_Core.
 - Generating or auditing workflow datasets
 - Choosing the right training presets
 - Exporting models to GGUF
