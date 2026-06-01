@@ -12,14 +12,26 @@ import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_FILES = [
     "AGENTS.md",
     "README.md",
-    "docs/PROJECT_STATE.md",
-    "docs/TRAINING_WORKFLOW_CONTEXT.md",
-    ".hermes/README.md",
-    ".hermes/memories/unsloth_core_project_memory.md",
+    "docs/project-state.md",
+    "docs/training-workflow.md",
+    "MIGRATION_NOTES.md",
+]
+
+# Regex, severity, message for legacy paths migrated in Phases 3-5.
+LEGACY_PATTERNS: list[tuple[str, str, str]] = [
+    (r"\bconfigs/presets\b|\bconfigs/base_configs\b", "warn", "legacy configs preset/base path mentioned; should be etc/presets/ or etc/base_models/"),
+    (r"\bsubjects/NPC_specs\b", "warn", "legacy specs path subjects/NPC_specs mentioned; should be data/npcs/specs/"),
+    (r"\bsubjects/reference_docs\b", "warn", "legacy reference docs path subjects/reference_docs mentioned; should be data/npcs/reference_docs/"),
+    (r"\bsubjects/schemas\b", "warn", "legacy schemas path subjects/schemas mentioned; should be data/npcs/schemas/"),
+    (r"\bsubjects/datasets\b", "warn", "legacy datasets path subjects/datasets mentioned; should be data/datasets/"),
+    (r"\boutputs/", "warn", "legacy outputs path outputs/ mentioned; should be artifacts/models/"),
+    (r"(?<!artifacts/)\bexports/", "warn", "legacy exports path exports/ mentioned; should be artifacts/exports/"),
+    (r"(?<!artifacts/)\beval/", "warn", "legacy eval path eval/ mentioned; should be artifacts/eval/"),
+    (r"(?<!artifacts/)\blogs/", "warn", "legacy logs path logs/ mentioned; should be artifacts/logs/"),
 ]
 
 # Regex, severity, message. Keep these focused on references that caused drift.
@@ -31,7 +43,7 @@ PATTERNS: list[tuple[str, str, str]] = [
     (r"server-modular\.ts", "warn", "old modular entrypoint reference; verify against current dashboard package before using"),
     (r"auto-retrain.*6GB|6GB.*auto-retrain", "warn", "auto-retrain on 6GB can collide with Ollama/training VRAM"),
     (r"npc-fit/", "error", "old HF namespace; use andreathar/ or TWLgames/"),
-]
+] + LEGACY_PATTERNS
 
 ALLOWED_CONTEXT = {
     "astronomy_guide": ["deprecated", "inactive", "avoid", "do not"],
@@ -76,8 +88,12 @@ def audit(paths: list[str]) -> list[Finding]:
         except UnicodeDecodeError:
             continue
         rel = path.relative_to(PROJECT_ROOT).as_posix()
+        is_migration_notes = rel.lower() == "migration_notes.md"
         for idx, line in enumerate(text.splitlines(), start=1):
             for pattern, severity, message in PATTERNS:
+                # Skip legacy path validation patterns for migration notes file
+                if is_migration_notes and pattern in (lp[0] for lp in LEGACY_PATTERNS):
+                    continue
                 if re.search(pattern, line, flags=re.IGNORECASE) and not is_allowed(line, pattern):
                     findings.append(Finding(rel, idx, severity, pattern, message, line.strip()))
     return findings

@@ -20,8 +20,8 @@ source unsloth_env/bin/activate
 ./ucore audit check
 
 # Validate active NPC specs
-./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready
-./ucore validate-spec subjects/NPC_specs/chef_assistant.json --generation-ready
+./ucore validate-spec data/npcs/specs/history_guide.json --generation-ready
+./ucore validate-spec data/npcs/specs/chef_assistant.json --generation-ready
 ```
 
 Dashboard:
@@ -55,29 +55,29 @@ Deprecated as active context unless explicitly reactivated: `astronomy_guide`, `
 
 ```bash
 # 1. Validate
-./ucore validate-spec subjects/NPC_specs/<npc>.json --generation-ready
+./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
 
 # 2. Generate
 # Production: NotebookLM CLI / approved grounded workflow.
 # Smoke/dev only:
-./ucore generate subjects/NPC_specs/<npc>.json --technique template
+./ucore generate data/npcs/specs/<npc>.json --technique template
 
 # 3. Sanitize
-./ucore sanitize subjects/datasets/<npc>/<technique>/train.jsonl \
-  --output subjects/datasets/<npc>/<technique>/train_clean.jsonl \
+./ucore sanitize data/datasets/<npc>/<technique>/train.jsonl \
+  --output data/datasets/<npc>/<technique>/train_clean.jsonl \
   --strict-canonical --require-complete-metadata
 
 # 4. Quality gate
-./ucore dataset-eval subjects/NPC_specs/<npc>.json \
+./ucore dataset-eval data/npcs/specs/<npc>.json \
   --technique <technique> --mode fast --judge-model qwen2.5:7b
 
 # 5. Train/export
-./ucore train subjects/NPC_specs/<npc>.json \
+./ucore train data/npcs/specs/<npc>.json \
   --technique <technique> --preset fast-3b --export-gguf
 
 # 6. Evaluate
 ./ucore evaluate --baseline <baseline> --candidate <candidate> \
-  --base-model <base-gguf> --spec subjects/NPC_specs/<npc>.json --report-html
+  --base-model <base-gguf> --spec data/npcs/specs/<npc>.json --report-html
 ```
 
 ## Infrastructure
@@ -116,15 +116,15 @@ AGENTS.md                                  agent entrypoint
 README.md                                  human overview
 docs/project-state.md                      current state
 ucore                                      unified CLI
-subjects/NPC_specs/<npc>.json              NPC specs
-subjects/reference_docs/<npc>_primer.md    primers
-subjects/datasets/<npc>/<technique>/        datasets
-outputs/<npc>/runs/<run_id>/                training runs
-outputs/<npc>/best                          best pointer
-outputs/<npc>/latest                        latest pointer
-exports/<npc>/<npc>-lora-f16.gguf           adapter GGUF
-eval/reports/<npc>/                         reports
-eval/results/feedback/<npc>.json            feedback
+data/npcs/specs/<npc>.json                 NPC specs
+data/npcs/reference_docs/<npc>_primer.md   primers
+data/datasets/<npc>/<technique>/           datasets
+artifacts/models/<npc>/runs/<run_id>/      training runs
+artifacts/models/<npc>/best                best pointer
+artifacts/models/<npc>/latest              latest pointer
+artifacts/exports/<npc>/<npc>-lora-f16.gguf adapter GGUF
+artifacts/eval/reports/<npc>/              reports
+artifacts/eval/results/feedback/<npc>.json  feedback
 ```
 
 ## Context Hygiene
@@ -132,7 +132,7 @@ eval/results/feedback/<npc>.json            feedback
 Run stale-reference audit:
 
 ```bash
-python scripts/ops/context_audit.py
+python src/core/ops/context_audit.py
 ```
 
 Do not put long historical status dumps in `AGENTS.md`. Put current facts in `docs/project-state.md`; put procedures in `.hermes/skills/`; keep memory compact.

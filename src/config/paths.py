@@ -179,7 +179,8 @@ def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
 def resolve_dataset_context(npc_key: str, preferred_technique: str | None = None) -> tuple[str, Path, Path]:
     """Resolve the dataset technique and canonical train/val files for an NPC.
 
-    If a preferred technique is provided and its dataset exists, that dataset wins.
+    If a preferred technique is provided, that dataset wins even when it does
+    not exist yet so generation commands can create the requested technique.
     Otherwise we fall back to the best available technique on disk. If nothing exists
     yet, we return canonical paths for the preferred technique or template.
     """
@@ -189,8 +190,7 @@ def resolve_dataset_context(npc_key: str, preferred_technique: str | None = None
         clean = train.with_name("train_clean.jsonl")
         if clean.exists():
             return preferred, clean, dataset_val_path(npc_key, preferred)
-        if train.exists():
-            return preferred, train, dataset_val_path(npc_key, preferred)
+        return preferred, train, dataset_val_path(npc_key, preferred)
 
     detected = autodetect_dataset(npc_key)
     if detected:

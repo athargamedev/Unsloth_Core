@@ -8,8 +8,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from _config import paths
-from _config.workflow_context import resolve_workflow_context
+from src.config import paths
+from src.config.workflow_context import resolve_workflow_context
 
 
 def _write_spec(root: Path, npc_key: str) -> Path:
@@ -60,3 +60,17 @@ def test_resolve_workflow_context_prefers_requested_template_dataset(monkeypatch
     assert ctx.technique == "template"
     assert ctx.dataset_train_path.name == "train_clean.jsonl"
     assert ctx.dataset_val_path == paths.dataset_val_path("chef_demo", "template")
+
+
+def test_resolve_workflow_context_uses_requested_missing_docs_dataset(monkeypatch, tmp_path):
+    monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
+    spec_path = _write_spec(tmp_path, "history_demo")
+    _write_jsonl(paths.dataset_train_path("history_demo", "ollama"))
+    _write_jsonl(paths.dataset_train_path("history_demo", "ollama").with_name("train_clean.jsonl"))
+
+    ctx = resolve_workflow_context(spec_path, technique="docs")
+
+    assert ctx.npc_key == "history_demo"
+    assert ctx.technique == "docs"
+    assert ctx.dataset_train_path == paths.dataset_train_path("history_demo", "docs")
+    assert ctx.dataset_val_path == paths.dataset_val_path("history_demo", "docs")

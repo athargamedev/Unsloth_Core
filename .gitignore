@@ -19,6 +19,8 @@ skills-lock.json
 runs/
 !runs/**/.gitkeep
 *.gguf
+*.db
+*.checkpoint.db
 
 # Heavy local/vendor caches
 unsloth_compiled_cache/
