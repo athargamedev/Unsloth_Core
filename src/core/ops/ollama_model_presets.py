@@ -7,7 +7,7 @@ import yaml
 
 from src.config.constants import DEFAULT_JUDGE_MODEL
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 OLLAMA_MODEL_PRESETS_PATH = PROJECT_ROOT / "configs" / "ollama-model-presets.yaml"
 DEFAULT_GENERATION_PRESET = "generate-qwen25"
 DEFAULT_JUDGE_PRESET = "judge-qwen25"

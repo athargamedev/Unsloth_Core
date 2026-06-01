@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 DEFAULT_ARTIFACT_INDEX = PROJECT_ROOT / ".pipeline" / "artifacts.jsonl"
 
 

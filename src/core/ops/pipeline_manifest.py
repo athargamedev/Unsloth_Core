@@ -49,7 +49,7 @@ MANIFEST_VERSION = "1.0"
 MANIFEST_FILENAME = "run_manifest.json"
 MANIFEST_TEMP_SUFFIX = ".tmp"
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 _DEFAULT_MANIFEST_PATH = PROJECT_ROOT / ".pipeline" / MANIFEST_FILENAME
 

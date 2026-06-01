@@ -26,7 +26,7 @@ import requests
 
 from src.core.ops.ollama_lifecycle import register_ollama_unload
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 
 @dataclass

@@ -78,6 +78,13 @@ def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
     if announce:
         print(f"Running: {' '.join(cmd)}", flush=True)
     env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    repo_pythonpath = str(PROJECT_ROOT)
+    env["PYTHONPATH"] = (
+        f"{repo_pythonpath}{os.pathsep}{existing_pythonpath}"
+        if existing_pythonpath
+        else repo_pythonpath
+    )
     if extra_env:
         env.update(extra_env)
 

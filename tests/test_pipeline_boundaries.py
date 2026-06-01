@@ -146,9 +146,11 @@ def test_tracking_local_fallback_shape(tmp_path):
 
 def test_sanitizer_infers_relative_technique_and_counts_sibling_validation(monkeypatch, tmp_path):
     from _config import paths
+    from src.config import paths as src_paths
     from scripts import sanitize_dataset
 
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(src_paths, "PROJECT_ROOT", tmp_path)
     train_path = paths.dataset_train_path("demo_npc", "ollama")
     val_path = paths.dataset_val_path("demo_npc", "ollama")
     train_path.parent.mkdir(parents=True)
