@@ -1,701 +1,125 @@
-# Unsloth_Core: AI Agent Reference Guide
+# Unsloth_Core: Agent Context
 
-This document is the primary source of truth for AI agents (like Antigravity, Claude, or GPT) working on the **Unsloth_Core** repository. The project north star is to produce the best GGUF LoRA adapters for the llama3.2 3B base model so Unity NPCs can load at runtime in LLMUnity and manage dialogue sessions through local Supabase.
+Primary source of truth for agents in this repo. Keep this file short and current. Detailed state lives in `docs/PROJECT_STATE.md`; full workflow docs live in `docs/TRAINING_WORKFLOW_CONTEXT.md`.
 
-## 🚀 Quick Start for Agents
-1.  **Activate Env**: `source unsloth_env/bin/activate`
-2.  **Verify Setup**: `./ucore audit check`
-3.  **Validate Generation Inputs**: `./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready`
-4.  **Generate Dataset**: `./ucore generate subjects/NPC_specs/history_guide.json --technique template`
-5.  **Sanitize Dataset**: `./ucore sanitize subjects/datasets/history_guide/template/train.jsonl --output subjects/datasets/history_guide/template/train_clean.jsonl --strict-canonical --require-complete-metadata`
-6.  **Dataset Quality Gate**: `./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique template --mode fast --judge-model qwen3:latest`
-7.  **Smoke Test Pipeline**: `./ucore pipeline subjects/NPC_specs/history_guide.json --preset smoke`
-8.  **Production Train**: `./ucore train subjects/NPC_specs/history_guide.json --technique template --preset fast-3b --export-gguf`
-9.  **Evaluate Model**: `./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf --spec subjects/NPC_specs/history_guide.json --report-html`
+## Mission
 
-## 📂 Project Logic Map (Where things live)
-| Component | Directory / File | Description |
-| :--- | :--- | :--- |
-| **Auth & API Keys** | `src/backend/middleware/auth.ts`, `src/backend/routes/auth.ts` | Bearer token auth with bcrypt, role-based access (admin/operator/viewer), API key management endpoints (GET/POST/DELETE /api/auth/keys) |
-| **Audit Logging** | `src/backend/middleware/audit.ts` | Automatic audit logging to `api_audit_log` table — captures method, path, status, body (with sensitive field redaction), IP, duration |
-| **Core Scripts** | `scripts/` | Python implementation of the pipeline stages. |
-| **Dashboard Auth** | `scripts/ops/setup_admin_key.py` | Bootstrap script to generate the initial admin API key (stores bcrypt hash in `api_keys` table, key passed via stdin not env vars) |
-| **Dashboard Enhancement** | `src/components/NotificationCenter.tsx`, `src/components/GlobalSearch.tsx`, `src/components/LoadingSpinner.tsx`, `src/components/EmptyState.tsx` | Toast notification system (bell icon, auto-dismiss, type-colored), Ctrl+K global search across NPCs/datasets/runs/exports/jobs, loading spinner, empty state components |
-| **Datasets** | `subjects/datasets/{npc}/{technique}/` | Generated training/validation data (JSONL). `template/` = default dataset directory. |
-| **DeepEval Dataset Gate** | `tests/evals/`, `scripts/dataset/dataset_eval.py` | Local dataset-quality evals using the `qwen3:latest` Ollama judge (configured via `configs/ollama-model-presets.yaml`). |
-| **Evaluations** | `eval/reports/`, `eval/results/feedback/` | HTML/markdown eval reports, structured per-concept feedback JSON. |
-| **Feedback Gaps** | `eval/results/gaps/` | Knowledge gap analysis JSON reports from feedback loop. |
-| **Frontend** | `frontend_control/` | Monitoring dashboard and React controls. |
-| **GGUF Exports** | `exports/` | LoRA adapter GGUFs (MBs) for Unity/LLMUnity. |
-| **Keyboard Shortcuts** | `src/hooks/useKeyboardShortcuts.ts` | Ctrl+K (search), Ctrl+S (stop all jobs), Alt+1-4 (navigate tabs), Ctrl+R (refresh data) — input-aware (ignored when input focused) |
-| **llama.cpp** | `~/.unsloth/llama.cpp/` | Prebuilt CUDA binaries: llama-server, llama-quantize, convert_lora_to_gguf.py. |
-| **LoRA Adapters** | `outputs/` | Checkpoints and final adapters from training. |
-| **Modular Backend** | `src/backend/` | 27-file modular Express backend under `src/backend/` (routes/, services/, middleware/, lib/) — additive alongside existing server.ts |
-| **Modular Entry Point** | `server-modular.ts` | Production-ready Express server wiring modular backend with CORS, rate limiting, security headers, Vite dev middleware, job queue, and graceful shutdown |
-| **NPC Specs** | `subjects/NPC_specs/` | JSON files defining NPC identity and knowledge. |
-| **Pipeline DB (Python)** | `scripts/ops/pipeline_db.py` | Dual-mode DB client (direct PostgreSQL via psycopg2 + REST API fallback) for all pipeline tables — 20 methods, auto-detection from env vars, filesystem sync |
-| **Pipeline DB Tables** | `supabase/migrations/20260521000001_create_pipeline_tables.sql` | 8 pipeline tables: `pipeline_jobs`, `pipeline_runs`, `pipeline_artifacts`, `dataset_quality_gates`, `eval_sessions`, `pipeline_config_snapshots`, `api_keys`, `api_audit_log` — with 3 helper functions, 14 indexes, 8 RLS policies |
-| **React Query Hooks** | `src/hooks/useReactQuery.ts`, `src/hooks/useWebSocketQuery.ts` | React Query wrappers for 11 API endpoints + 6 mutations; WebSocket-to-React-Query bridge with stale-time management |
-| **Reference Docs** | `subjects/reference_docs/` | Centralized primer files for grounding dataset generation. |
-| **Schemas** | `subjects/schemas/` | JSON Schema validators for training data format. |
-| **Supabase** | `supabase/` | DB migrations and local Docker setup. |
-| **Training Configs**| `configs/` | YAML base configs and presets. |
-| **Unified CLI** | `ucore` | Main entry point for all operations. |
-| **Workflow Context** | `_config/workflow_context.py` | Centralized resolution of techniques, models, and dataset paths across generation, training, and evaluation. `WorkflowContext` dataclass with properties for clean/raw dataset paths, spec text, and model/preset fallback logic. |
-| **Workflow Chaining** | `src/backend/routes/workflow.ts` (chainToNextStep), `src/backend/services/job-queue.ts` | Multi-step workflow chaining (generate → sanitize → train → export) with auto-progression, DB-persistent job queue with PID liveness checks, FOR UPDATE SKIP LOCKED polling, exponential backoff retry |
-| **Workflow Hooks** | `scripts/ops/workflow_hooks.py` | Lifecycle recording for all pipeline stages via step() context managers. `WorkflowHookReader` for parsing hook JSONL. |
-| **Zustand Store** | `src/stores/app-store.ts` | UI state management (tabs, filters, toasts, selection, recent searches with localStorage persistence) |
+Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads one shared base GGUF and swaps lightweight LoRA adapter GGUFs plus NPC system prompts. Local Supabase stores dialogue/session state.
 
-## 🛠️ The Pipeline (7 Stages + Feedback Loop)
-Transforms a subject spec into a playable NPC:
+## Active project state
 
-1.  **Generation**: `scripts/dataset/generate_dataset.py`
-    - **Template** (default): Fast deterministic generation for pipeline testing.
-    - **Docs**: Deterministic generation grounded in curated repo/doc manifests.
-    - **Ollama / OpenAI / Anthropic**: Available for LLM-driven synthetic data.
-    - Output: `subjects/datasets/{npc_key}/{technique}/train.jsonl`.
+- Active NPCs: `history_guide`, `chef_assistant` only.
+- Production dataset rule: use NotebookLM CLI / approved grounded workflow. Template generation is smoke/dev only.
+- Local tested Ollama judge/default: `qwen2.5:7b` unless a fresh benchmark says otherwise.
+- Local GPU: RTX 3060-class 6GB VRAM. Unload Ollama before train/eval when it holds VRAM.
+- Dashboard app lives in `frontend_control/unity-npc-llm-training-dashboard/`.
+- Supabase local ports: DB `15434`, API/Kong `16437`, Studio `16438`.
 
-2.  **Sanitization**: `scripts/dataset/sanitize_dataset.py`
-    - Validates ChatML format, cleans whitespace, removes empty messages.
-    - Output: `.../train_clean.jsonl`.
+## Hard rules
 
-3.  **Dataset Quality Eval**: `scripts/dataset/dataset_eval.py` + `tests/evals/test_dataset_generation_quality.py`
-    - Runs DeepEval against `train_clean.jsonl` before training.
-    - Default local judge: Ollama `qwen3:latest` (8.2B params) at `http://localhost:11434`.
-    - Metrics check persona/category fit and training usefulness/specificity.
-    - Outputs: `quality_summary.json` and `quality_failures.json` beside the dataset.
-    - Treat `quality_failures.json` as the source of truth for what to regenerate or rewrite. Do not lower thresholds or delete rows to force a pass.
-    - Training is **blocked by default** unless a passing `quality_summary.json` exists for the exact sanitized dataset. Pass `--allow-ungated-dataset` to train.py to bypass this check.
+- Do not train production LoRA on template data.
+- Do not mark inactive NPCs as active unless the user reactivates them.
+- Do not lower eval thresholds, dataset minimums, or runtime constraints to force a pass.
+- Treat `quality_failures.json` as repair input, not something to delete.
+- Verify actual repo/tool state before updating docs or memories.
+- Keep durable memory compact. Procedures belong in skills.
+- Use caveman reporting: Done/Changed/Ran/Result/Blocked/Next.
 
-4.  **Training**: `scripts/training/train.py`
-    - Unsloth SFTTrainer with LoRA. Config hierarchy: Base YAML < Preset < CLI.
-    - Presets: `smoke` (debug), `fast-3b` (standard), `safe-any` (OOM fallback).
-    - `--export-gguf` exports adapter GGUF inline after training.
-    - Output: `outputs/{npc_key}/` (LoRA adapter) + `exports/{npc_key}/{npc}-lora-f16.gguf`.
-
-5.  **Export & Smoke Test**: `scripts/export/export.py` → `scripts/ops/smoke_test.py`
-    - **Adapter mode** (default): Converts LoRA to lightweight GGUF via `convert_lora_to_gguf.py` — MBs, no base model needed.
-    - **Full-merge** (`--full-merge-export`): Exports f16 GGUF + quantizes via `llama-quantize`.
-    - **Smoke test**: Validates persona adherence via automated prompts.
-
-6.  **Model Evaluation**: `scripts/evaluation/evaluate.py`
-    - Starts `llama-server` with `--lora` for adapter evaluation (no full-merge needed).
-    - Compares two models (baseline vs candidate) or measures standalone.
-    - Supports `--base-model` for LoRA-on-base-model evaluation.
-    - Output: HTML report (Chart.js), markdown per-question breakdown, structured feedback JSON.
-
-7.  **Feedback Loop**: `scripts/training/feedback_loop.py` + `scripts/evaluation/evaluate.py --feedback-json`
-    - Analyzes eval results → identifies weak concepts → determines gap type:
-      - `training_density`: Model didn't learn the topic → regenerate more examples
-      - `knowledge_gap`: No relevant reference material → add primer, re-index
-    - After regeneration the new dataset is sanitized and gated with `scripts/dataset/dataset_eval.py` before training.
-    - Use `--skip-dataset-eval` to bypass the pre-training dataset quality gate.
-    - Use `--deepeval-judge-model`, `--deepeval-ollama-url`, and `--deepeval-cases-per-category` to configure the local Ollama judge.
-    - Use `--deepeval-soft-fail` to continue training even when the dataset gate reports metric failures.
-    - Auto-retrain mode: `./ucore feedback npc.json --auto-retrain --baseline ...`
-    - **CRITICAL NOTE (6GB VRAM)**: Do NOT use `--auto-retrain` if doing LLM-grounded generation on an RTX 3060 6GB. Run generation (`--auto`) first, unload Ollama from memory, then manually run training to avoid OOM crashes.
-    - Groups results by category/concept for targeted analysis.
-
-### 🔍 Knowledge Gap Detection
-| Gap Type | Cause | Fix |
-|----------|-------|-----|
-| `training_density` | Not enough training examples | Regenerate with `--concept-focus` |
-| `knowledge_gap` | Missing reference material | Add reference docs + re-index |
-
-## 🛡️ Quality Gate System
-
-The pre-training dataset quality gate prevents training unless a fresh gate has passed against the exact sanitized dataset file. Use `--mode fast` for normal iteration and `--mode release` for strict final checks.
-
-### How It Works
-
-1. After generation and sanitization, `./ucore dataset-eval --mode fast` runs a lightweight local DeepEval sample and writes `quality_summary.json` and `quality_failures.json` beside the dataset. Use `--mode release` for the stricter full gate.
-2. `train.py` calls `dataset_quality_gate_errors()` at startup:
-   - Verifies the dataset is `train_clean.jsonl` (not raw `train.jsonl`)
-   - Checks `quality_summary.json` exists and has `status: "ok"`
-   - Confirms zero distribution gaps, zero unknown rows, clean sanitizer quality signals, and a matching dataset hash
-   - In `release` mode, also requires zero failing sampled DeepEval cases. In `fast` mode, sampled DeepEval failures are diagnostics and do not block training.
-   - Compares the current dataset content hash against the hash recorded when the gate ran — any modification invalidates the gate
-3. If any check fails, training exits with an error and a clear message.
-
-### Opt-Out
-
-Pass `--allow-ungated-dataset` to `train.py` (or to `./ucore train`) to bypass the gate entirely. This is intended for development iteration, not production pipeline runs.
-
-### Shared Constants
-
-The file `scripts/dataset/dataset_contracts.py` centralizes the contract data shared across generation, validation, and eval:
-
-| Constant | Value |
-|----------|-------|
-| `SUPPORTED_DATASET_CATEGORIES` | `("identity", "teaching", "dialogue", "quest", "refusal")` |
-| `MIN_DATASET_EXAMPLES_PER_CATEGORY` | `{"identity": 8, "teaching": 32, "dialogue": 16, "quest": 8, "refusal": 8}` |
-| `VALID_DIFFICULTY_LEVELS` | `("beginner", "intermediate", "advanced")` |
-
-It also provides helpers: `expected_examples_per_category()`, `calculate_distribution_gaps()`, `summarize_jsonl_dataset()`, and `dataset_contract_from_spec()`.
-
-### Related CLI Flags
-
-| Flag | Effect |
-|------|--------|
-| `--allow-ungated-dataset` | Skip quality gate and train regardless |
-| `--skip-dataset-eval` | Skip running DeepEval before feedback-loop retraining |
-| `--deepeval-soft-fail` | Run DeepEval but continue even on failures (writes artifacts) |
-
-## ✅ Preflight System
-
-The preflight system (`scripts/ops/preflight.py`) runs before expensive pipeline stages (training, dataset-eval) to check the local environment and apply safe defaults.
-
-### Checks Performed
-
-1. **GPU Memory Inventory**: Queries `nvidia-smi` for free and total VRAM in GiB.
-2. **Auto-Downgrade**: If `--preset fast-3b` is requested but total VRAM is below 10 GB, automatically downgrades to `safe-any` (the `DEFAULT_FALLBACK_PRESET`).
-3. **Ollama Auto-Unload**: Detects running Ollama models and stops them to free VRAM (can be disabled with `--no-auto-unload-ollama`).
-4. **GCC Toolchain Check**: Verifies `gcc` is available in PATH before training (Triton compilation requirement).
-
-### Report Structure
-
-The preflight returns a `PreflightReport` dataclass with:
-- `status`: `"ok"`, `"degraded"` (warnings), or `"blocked"` (errors)
-- `preset_requested` / `preset_effective`: What was asked for vs. what will run
-- `total_vram_gb` / `free_vram_gb`: GPU memory snapshot
-- `gcc_ok` / `gcc_path`: GCC availability
-- `running_ollama_models` / `stopped_ollama_models`: Ollama state changes
-- `recommendation`: Structured training location advice (local vs. remote Colab)
-
-### CLI Usage
+## Quick start
 
 ```bash
-# Standalone preflight check
-python scripts/ops/preflight.py --phase train --preset fast-3b --spec subjects/NPC_specs/history_guide.json
-
-# JSON output for programmatic use
-python scripts/ops/preflight.py --phase train --preset fast-3b --json
-
-# Skip Ollama unload or GCC check
-python scripts/ops/preflight.py --phase train --no-auto-unload-ollama --no-gcc-check
+source unsloth_env/bin/activate
+./ucore audit check
+./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready
+./ucore validate-spec subjects/NPC_specs/chef_assistant.json --generation-ready
 ```
 
-## 🔍 Workflow Hook System
-
-Every pipeline script records its lifecycle in a `workflow_hooks.jsonl` file co-located with the stage output (e.g., alongside the dataset for generation, beside the adapter for training). The hook system replaces the previous ad-hoc `emit(start/complete)` pattern with a clean context manager convention.
-
-### Core API
-
-- **`WorkflowHookRecorder`** (`scripts/ops/workflow_hooks.py`): Entry point for recording. Instantiated per pipeline run, accepts `spec_path` and `run_id` that propagate through all events.
-- **`WorkflowHookReader`**: Companion class for consuming hook files. Provides:
-  - `read()` — parse all events from a JSONL file
-  - `group_by_trace()` — group events by trace ID for per-run analysis
-  - `trace_summary(trace_id)` — summary of a single trace with elapsed time, status, and step count
-  - `pipeline_summary(path)` — entry point returning `{"total_events": int, "traces": list[dict]}`
-  - `pipeline_chain(hook_path)` — Returns pipeline chain state: `workflow_id`, completed stages, `next_expected` step, `artifacts_ready`, `awaiting_confirmation`. Agents use this to know what to do next.
-
-### `step()` Context Manager Convention
-
-All 11 pipeline scripts use the `with hook_recorder.step(...)` pattern:
-
-```python
-with hook_recorder.step("generate_dataset", spec_path=spec, run_id=run_id) as ctx:
-    ctx.log("Starting generation...")
-    # ... pipeline work ...
-    # No explicit emit() needed — step() records start on enter,
-    # complete on normal exit, or error on (Exception, SystemExit)
-```
-
-The context manager:
-- Captures `start` event on entry (with timestamp, spec_path, run_id)
-- Captures `complete` event on clean exit
-- Captures `error` event on `(Exception, SystemExit)` — ensuring error exits are never missed
-- Supports `ctx.log(message)` for intermediate diagnostic messages
-
-### `FeedbackLoopExit` Pattern
-
-The feedback loop (`scripts/training/feedback_loop.py`) uses a custom `FeedbackLoopExit` exception for early termination paths that should record an `"error"` status in the hooks (as opposed to a clean `"complete"`). This ensures the hook file accurately reflects that the feedback loop exited early with a decision (e.g., "no gaps to address") rather than succeeding.
-
-### Documented Exception: `batch_export.py`
-
-`scripts/export/batch_export.py` uses per-sub-step `emit()` calls instead of the `step()` context manager because it processes multiple export targets in a single run and needs fine-grained event recording for each sub-step. This is the only exception to the `step()` convention.
-
-### Reading Hook Files
-
-```python
-from scripts.ops.workflow_hooks import WorkflowHookReader
-
-summary = WorkflowHookReader.pipeline_summary("outputs/history_guide/runs/run_20260520_123456/workflow_hooks.jsonl")
-# Returns: {"total_events": 24, "traces": [{"trace_id": "...", "steps": [...], "status": "complete", "elapsed": 12.34}, ...]}
-```
-
-### CLI Flag
-
-Pipeline scripts accept `--workflow-hooks <path>` to specify a custom output path for the hook JSONL. When omitted, the default path is derived from the stage output directory.
-
-### Chain Linking Fields
-
-| Field | Source | Purpose |
-|-------|--------|---------|
-| `workflow_id` | `WORKFLOW_ID` env var (set by `ucore pipeline`) | Links all stages of one pipeline run |
-| `next_action` | `WORKFLOW_NEXT_ACTION` env var | Tells agents what step comes next |
-| `next_artifact` | `WORKFLOW_NEXT_ARTIFACT` env var | Path to the artifact the next step should consume |
-| `await_confirmation` | `WORKFLOW_AWAIT_CONFIRMATION` env var | Set to `true` when pipeline expects operator confirmation before proceeding |
-
-## 🏗️ NPC Scaffold Structure
-When creating a new NPC with `./ucore init <npc_key> --subject <subject>`:
-
-```
-subjects/NPC_specs/{npc_key}.json                          — spec with 4-section system prompt
-subjects/reference_docs/{npc_key}_primer.md       — stub primer for indexing
-subjects/datasets/{npc_key}/{technique}/          — dataset dirs per technique (5)
-outputs/{npc_key}/runs/                           — training checkpoints
-exports/{npc_key}/                                — GGUF exports
-eval/reports/{npc_key}/                           — evaluation reports & feedback NPs
-```
-
-Root-level directories created by `ensure_all()` at project init:
-
-```
-eval/results/feedback/                            — per-NPC feedback JSONs
-eval/results/gaps/                                — per-NPC gap analysis JSONs
-eval/comparisons/                                 — side-by-side comparison reports
-eval/training-metrics/                            — training metrics YAMLs
-.pipeline/runs/                                   — pipeline run registry
-```
-
-All 5 technique directories are created during scaffold. DeepEval dataset gate outputs
-(`quality_summary.json`, `quality_failures.json`) live beside the dataset.
-
-
-## 📜 Conventions
-- **NPC Keys**: Always `snake_case` (e.g., `history_guide`).
-- **GGUF Naming**: `{npc_key}-lora-f16.gguf` (adapter) or `{npc_key}-{model_short}-{quant}.gguf` (full-merge).
-- **Quantization**: Default to `q4_k_m` for full-merge; adapter mode uses f16.
-- **System Prompt**: 4-section LLMUnity format (IDENTITY | VOICE | KNOWLEDGE | RULES), ~90-105 tokens.
-- **Dataset Categories**: Each NPC trains on these 5 categories:
-  | Category | Examples | Purpose |
-  |----------|----------|---------|
-  | identity | 8 | Who the NPC is (personality, background, mannerisms) |
-  | teaching | 32 | Subject-matter explanations |
-  | dialogue | 16 | Natural conversation handling |
-  | quest | 8 | Scenario-based interactions |
-  | refusal | 8 | Safe boundary responses |
-  **Total: 72 examples** per NPC.
-- **Active SFT techniques**: `template`, `docs`, `ollama`, `openai`, `anthropic`.
-- **RL data state**: RL preference-pair and reward-rollout schemas exist in `subjects/schemas/`, with the contract in `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md`. Treat RL dataset generation as planned/contracted unless a concrete generator exists in `ucore`.
-- **Generation readiness**: `./ucore validate-spec <spec> --generation-ready` must pass before creating new datasets. This enforces reference-doc location/shape, all five categories, and minimum SFT counts.
-
-## 💾 Supabase Integration (optional)
-A local Supabase instance can track:
-- **`npc_profiles`**: Central catalog of all NPCs.
-- **`dialogue_sessions`**: Active conversation state.
-- **`npc_memories`**: Vector-searchable semantic memory.
-- **`test_results`**: Evaluation metrics for every run.
-
-**Useful Commands:**
-- `supabase start`: Start local Docker services.
-- `./ucore supabase-check --npc-key history_guide`: Verify profile alignment.
-
-## 🤖 AI Agent Best Practices
-- **Always use `ucore`**: Prefer the unified CLI over direct script calls.
-- **Reference-doc contract**: Use `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md` and `subjects/reference_docs/README.md`. A primer must have one H1, at least 5 H2 sections, at least 20 concrete bullets, at least 250 words, and safety/refusal/boundary/misconception notes.
-- **Dataset gate before training**: Run `./ucore dataset-eval <spec> --technique <technique> --mode fast` after sanitize and before SFT. Training is **blocked by default** unless a passing `quality_summary.json` exists for the exact sanitized dataset. Use `--mode release` for final strict checks. Pass `--allow-ungated-dataset` to train.py to bypass. Uses local Ollama `qwen3:latest` as the judge (configured in `configs/ollama-model-presets.yaml` and `scripts/ops/ollama_model_presets.py`).
-- **DeepEval artifacts**: `.deepeval/` is local runtime state and ignored. Dataset gate outputs `quality_summary.json` and `quality_failures.json` are regenerable and ignored.
-- **Export mode**: `ucore export <npc_key>` defaults to adapter-only mode. Use `--full-merge` for standalone merged GGUFs.
-- **Evaluation**: Use `./ucore evaluate --base-model <base.gguf>` to evaluate adapter GGUFs — no full-merge needed. Uses `llama-server --lora`, same mechanism as LLMUnity runtime. Base GGUF at `Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf`.
-- **Preset Selection**:
-  - `--preset smoke` for debugging/testing.
-  - `--preset fast-3b` for standard NPC training (tuned for RTX 3060 6GB).
-  - `--preset safe-any` if CUDA OOM occurs, or let the preflight system auto-downgrade from fast-3b to safe-any when VRAM < 10 GB.
-  - The preflight system auto-unloads Ollama models before training to free VRAM (disable with `--no-auto-unload-ollama`).
-  - If Triton fails before real training with `CudaUtils`, `gcc`, or `as` errors, use the PATH-safe compiler wrapper at `.toolchain/gcc-with-path.sh` instead of relying on ambient shell PATH.
-  - `--wandb` for W&B experiment tracking.
-- **llama.cpp toolchain** (`~/.unsloth/llama.cpp/`): Prebuilt CUDA binaries. `llama-server` (inference with `--lora` support), `llama-quantize` (fast local quantization), `convert_lora_to_gguf.py` (adapter export). No `llama-cli` binary.
-- **Error Handling**: Check `outputs/{npc_key}/runs/` for TensorBoard logs, `eval/results/` for validation metrics.
-- **Before generating a dataset**: Read the `subjects/NPC_specs/*.json` spec and the `subjects/reference_docs/*.md` primer to understand content grounding. If DeepEval fails, fix generation, prompts, concepts, or reference material first; do not change metric thresholds as the first response.
-- **Dataset/Eval Decision Rules**: Do not increase NPC sentence/character limits to force generation success. Do not lower dataset minimums to hide missing rows. If generation misses rows, fix generator retry/repair/sanitize behavior or report the gap explicitly. If DeepEval fails, fix prompts, primers, concepts, or generated rows; do not weaken thresholds first.
-- **Frontend trust rule**: The dashboard must reflect canonical backend state and process artifacts so non-coder developers can operate the workflow intuitively.
-- **Local Ollama rule**: Benchmark and tune local Ollama on this machine before claiming the need for remote capacity; measure tokens/sec, latency, VRAM use, loaded models, and failure rate.
-- **Hook system**: All pipeline scripts record lifecycle events in `workflow_hooks.jsonl` via `step()` context managers. Use `WorkflowHookReader.pipeline_summary(path)` to read. Hook files contain start/complete/error events per step with timing, `spec_path`, `run_id`, and step-specific metadata.
-- **Context-Mode Tool Usage**: Use `ctx_batch_execute` for multi-command pipeline diagnostics (e.g., inspecting quality gate summaries, hook files, and artifacts in one call). Use `ctx_execute_file` to analyze large JSONL datasets or training logs without loading raw bytes into context. Use `ctx_search(sort: "timeline")` after session resume/compaction to recover prior decisions. Never use context-mode tools for persistent file writes — use native Write/Edit tools.
-- **Auth**: After a fresh Supabase migration, run `python scripts/ops/setup_admin_key.py` to create the initial admin API key. Use the key with `curl -H "Authorization: Bearer <key>"` for all `/api` calls.
-- **Modular backend**: Prefer `npm run dev:modular` over `npm run dev` for new work — the modular backend (`server-modular.ts`) includes auth, rate limiting, audit logging, and a job queue. The legacy `server.ts` remains for backward compatibility.
-- **Job queue**: All pipeline operations use `JobQueue` from `src/backend/services/job-queue.ts` for process lifecycle management. Jobs survive server restarts. Monitor at `/api/jobs`.
-- **Code review gates**: Code review findings from `reviewer` agent use severity labels CRITICAL, MAJOR, MINOR. All CRITICAL and MAJOR issues must be resolved before merging. Fix using targeted coder tasks based on the review findings.
-
-## 🔐 Pipeline Infrastructure
-
-### Database (PostgreSQL via Supabase)
-
-The pipeline tracks all operations in 8 PostgreSQL tables:
-
-| Table | Purpose | Key Columns |
-|-------|---------|-------------|
-| `pipeline_jobs` | Job queue with process lifecycle | status, progress, logs, pid, workflow_id, retry_count |
-| `pipeline_runs` | Training/eval run metadata | status, loss, metrics, npc_key, technique |
-| `pipeline_artifacts` | Generated artifacts (GGUFs, datasets) | artifact_type, file_path, checksum, size_bytes |
-| `dataset_quality_gates` | DeepEval quality gate results | pass_rate, total/passed/failed, recommendation |
-| `eval_sessions` | Evaluation session tracking | judge_model, win_rate, per_category_results |
-| `pipeline_config_snapshots` | Frozen config at time of run | config_json, technique, preset, base_model |
-| `api_keys` | API key management | key_hash, key_prefix, name, role, last_used_at |
-| `api_audit_log` | Request audit trail | method, path, status_code, api_key_id, duration_ms |
-
-**Connection:**
-- Python scripts: `PipelineDB` auto-detects direct pg (`PIPELINE_DB_URL`) or Supabase REST (`SUPABASE_URL` + `SUPABASE_SERVICE_KEY`)
-- TS backend: Uses `pg.Pool` via `src/backend/lib/db.ts`
-- Local Supabase: `http://127.0.0.1:16437` (port may vary — check `supabase status`)
-
-### Pipeline Run Manifest
-
-A lightweight JSON manifest at `.pipeline/run_manifest.json` tracks every pipeline stage across a single run. Replaces ad-hoc artifact tracking with a unified, queryable record. Unlike the full DB-backed tables, the manifest requires no database connection and is always optional — failures to write never block the pipeline.
-
-**Implementation:** `scripts/ops/pipeline_manifest.py`
-
-#### Key Features
-
-- **Atomic writes**: Writes to `.json.tmp` then `os.replace()` — readers never see partial files
-- **Shared `run_id`**: All stages share the same run ID from `WORKFLOW_ID` env var (or auto-generated as `run_YYYYMMDD_HHMMSS`)
-- **Canonical stage order**: `spec → preflight → generate → sanitize → dataset_eval → train → export → evaluate → feedback`
-- **`next_expected_stage()`**: Returns the next unrecorded stage after the last completed one — useful for workflow automation
-- **Self-healing**: Missing directories and files are created on first write; missing manifest returns `None` (never crashes)
-
-#### Env Vars
-
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `NPC_KEY` | ✅ (no-op if unset) | NPC key for the manifest |
-| `TECHNIQUE` | ❌ (defaults to `"unknown"`) | Dataset generation technique |
-| `PRESET` | ❌ | Training preset name |
-| `WORKFLOW_ID` / `RUN_ID` | ❌ (auto-generated) | Shared run identifier across stages |
-| `UCORE_MANIFEST_PATH` | ❌ | Custom manifest path override |
-
-#### One-Shot Integration: `record_pipeline_stage()`
-
-The simplest way to record from any pipeline script:
-
-```python
-from scripts.ops.pipeline_manifest import record_pipeline_stage
-
-record_pipeline_stage("generate", "completed",
-    artifacts={"dataset": "subjects/datasets/history_guide/template/train.jsonl"},
-    metadata={"num_examples": 72},
-)
-```
-
-All integrations are wrapped in `try/except Exception: pass` — manifest recording is always optional and never blocks the pipeline.
-
-#### Per-Stage Metadata Recorded
-
-| Script | Stage | Artifacts | Metadata |
-|--------|-------|-----------|----------|
-| `preflight.py` | `preflight` | — | `total_vram_gb`, `free_vram_gb`, `preset_requested`, `preset_effective`, `gcc_ok`, `recommendation`, `confident_available`, `stopped_ollama_models` |
-| `generate_dataset.py` | `generate` | `train_path`, `validation_path` | — |
-| `sanitize_dataset.py` | `sanitize` | `output_path` | — |
-| `dataset_eval.py` | `dataset_eval` | `summary_path`, `failures_path`, `report_path` | `pass_rate`, `total_cases`, `passed`, `failed`, `deepeval_identifier`, `confident_url` |
-| `train.py` | `train` | `run_dir`, `output_dir` | `training_loss` |
-| `export.py` | `export` | `output_dir`, `gguf_files` | `mode` (adapter/full-merge) |
-| `evaluate.py` | `evaluate` | `candidate_path`, `baseline_path` | `deepeval_identifier`, `confident_url` |
-
-#### Advanced Usage: `PipelineManifest` Class
-
-For pipelines that need to inspect state across stages:
-
-```python
-from scripts.ops.pipeline_manifest import PipelineManifest
-
-m = PipelineManifest("run_20260531_110000", "history_guide", "template", "fast-3b")
-m.record_stage("generate", "completed",
-    artifacts={"dataset": "subjects/datasets/history_guide/template/train.jsonl"})
-m.save()
-
-# Later — load and inspect
-m2 = PipelineManifest.load()
-if m2 and m2.next_expected_stage() == "train":
-    print("Ready to train!")
-```
-
-**Available queries:** `stage_summary(stage)`, `last_completed_stage()`, `next_expected_stage()`, `pipeline_order()`.
-
-### Job Queue (PostgreSQL-backed, no Redis required)
-
-The job queue at `src/backend/services/job-queue.ts` provides:
-
-- **DB-persistent queue**: Jobs survive server restarts (backed by `pipeline_jobs` table)
-- **Process lifecycle**: `spawn` with PID tracking, SIGTERM → 30s → SIGKILL escalation
-- **Concurrency control**: Max concurrent jobs, per-startup PID recovery (checks `/proc/PID` liveness)
-- **Polling**: `FOR UPDATE SKIP LOCKED` query (default 2s interval) with incremental stats counters
-- **Retry**: Exponential backoff (2^n * 1s, max 5 attempts) for failed jobs
-- **Graceful shutdown**: Drains running jobs before exit, 10s force-kill timeout
-
-To swap to BullMQ (Redis), replace `JobQueue` with BullMQ's `Queue/Worker` — API-compatible.
-
-### Auth System
-
-The auth middleware at `src/backend/middleware/auth.ts` implements:
-
-- **Bearer token auth**: `Authorization: Bearer <64-char-hex-key>` header validation
-- **bcrypt hashing**: Keys hashed with bcrypt (cost 10) for constant-time comparison
-- **Prefix-based lookup**: First 8 hex chars indexed for efficient key lookup
-- **Three roles**: `admin` (full access), `operator` (manage jobs), `viewer` (read-only, write ops blocked)
-- **Optional auth**: `optionalAuth` middleware for public-read endpoints
-
-Bootstrap flow:
-```bash
-# Generate initial admin key (saves hash to DB, prints raw key to stdout)
-python scripts/ops/setup_admin_key.py
-
-# Use the key in all subsequent requests
-curl -H "Authorization: Bearer <key>" http://localhost:3100/api/auth/keys
-```
-
-### Frontend Architecture
-
-The dashboard uses a layered state architecture:
-
-- **React Query** (`@tanstack/react-query`): Server state — 11 query hooks, 6 mutations, staleTime=5s, retry=2
-- **Zod Validation**: Runtime schema validation integrated directly into React Query `queryFn` hooks to guarantee type safety and prevent silent frontend crashes from malformed API responses.
-- **Zustand**: UI-only state — active tab, filters, toasts, selection, sidebar state
-- **WebSocket bridge** (`useWebSocketQuery.ts`): WS events invalidate React Query caches
-- **Notifications**: `NotificationCenter` component with auto-dismiss (8s), type colors, badge count read state
-- **Global search**: Ctrl+K modal searching across NPCs, datasets, runs, exports, jobs with localStorage recent searches
-- **Keyboard shortcuts**: Input-aware shortcuts for navigation, search, refresh, stop-all
-
-### Workflow Assistant (Chat Feature)
-
-The dashboard includes a local Ollama-powered chat assistant for workflow guidance. It is designed with **6 safety layers** to never interfere with pipeline operations:
-
-**Architecture:**
-
-| Layer | File | Purpose |
-|-------|------|---------|
-| Chat UI | `src/components/AIAssistant.tsx` | Sidebar chat panel, markdown rendering, proposed command display |
-| Docs Pipeline UI | `src/components/WorkflowAssistantPanel.tsx` | Corpus manifest-driven dataset generation (docs technique) |
-| Routes | `src/backend/routes/assistant.ts` | 5 endpoints: status, chat, load, unload, execute (blocked) |
-| Orchestrator | `src/backend/services/assistant-orchestrator.ts` | Ollama API, profile loading, deterministic fallback |
-| Resource Guard | `src/backend/services/assistant-resource-guard.ts` | GPU conflict detection — blocks LLM during heavy jobs |
-| Prompts | `src/backend/services/assistant-prompts.ts` | System prompt + deterministic fallback reply builder |
-| Context | `src/backend/services/assistant-context.ts` | Read-only context from registry, filesystem, quality artifacts |
-| Config | `workflow_assistant/assistant_config.json` | 3 Ollama profiles: `fast_safe`, `balanced_idle`, `cpu_fallback` |
-
-**Resource Safety:**
-- The resource guard blocks LLM calls when any GPU-heavy job is active (`train`, `pipeline`, `dataset-eval`, `generate-ollama`, `export`, `evaluate`, `feedback`)
-- All config profiles use `keep_alive: "0s"` — Ollama immediately unloads the model after each response
-- Shell execution is hard-blocked with HTTP 403 on `/api/assistant/execute`
-- When blocked, the assistant returns deterministic state summaries (no GPU cost)
-- NPC key inference uses snake_case matching (requires underscore) to avoid phantom lookups from casual English words
-
-**Config Profiles** (`workflow_assistant/assistant_config.json`):
-
-| Profile | Model | Context | GPU | Use Case |
-|---------|-------|---------|-----|----------|
-| `balanced_idle` (default) | `qwen3:latest` | 8192 | full | Normal operation when GPU is idle |
-| `fast_safe` | `qwen2.5:3b` | 8192 | full | Lightweight queries |
-| `cpu_fallback` | `qwen2.5:3b` | 4096 | 0 | CPU-only when GPU is fully occupied |
-
-### Running in Modular Mode
+Dashboard:
 
 ```bash
-# Development (Vite dev server + modular backend)
-npm run dev:modular
-
-# Production (serve built static files + modular backend)
-npm run build
-npm run start:modular
-
-# Generate admin API key
-python scripts/ops/setup_admin_key.py
+cd frontend_control/unity-npc-llm-training-dashboard
+npm run dev
 ```
 
-## ⚡ Ollama Performance Tuning
+## Canonical paths
 
-The local Ollama server is tuned for maximum evaluation throughput:
+- Project state: `docs/PROJECT_STATE.md`
+- Unified CLI: `./ucore`
+- Specs: `subjects/NPC_specs/<npc>.json`
+- Reference docs: `subjects/reference_docs/<npc>_primer.md`
+- Datasets: `subjects/datasets/<npc>/<technique>/`
+- Clean train file: `subjects/datasets/<npc>/<technique>/train_clean.jsonl`
+- Training runs: `outputs/<npc>/runs/<run_id>/`
+- Pointers: `outputs/<npc>/best`, `outputs/<npc>/latest`
+- GGUF adapters: `exports/<npc>/<npc>-lora-f16.gguf`
+- Reports: `eval/reports/<npc>/`
+- Feedback: `eval/results/feedback/<npc>.json`
+- Unity project: `~/Setup Guide In-Editor Tutorial/`
+- Unity models: `Assets/StreamingAssets/Models/`
 
-### Environment Variables (systemd override)
-Set via `/etc/systemd/system/ollama.service.d/override.conf`:
-
-| Variable | Value | Effect |
-|----------|-------|--------|
-| `OLLAMA_NUM_PARALLEL` | `4` | 4 concurrent request slots → 5-10x faster DeepEval async evaluation |
-| `OLLAMA_FLASH_ATTENTION` | `1` | Enables flash attention (free speed + memory reduction) |
-| `OLLAMA_KV_CACHE_TYPE` | `q8_0` | 8-bit KV cache halves context memory with near-zero quality loss |
-
-### Judge Model Pipeline
-
-| Layer | Model | Params | Quant | Size |
-|-------|-------|--------|-------|------|
-| **Default judge** (dataset-eval) | `qwen3:latest` | 8.2B | Q4_K_M | 4.9GB |
-| **Fallback** (env `OLLAMA_MODEL_NAME`) | `qwen3:latest` | 8.2B | Q4_K_M | 4.9GB |
-
-The judge is configured at three levels (in priority order):
-1. CLI flag: `--judge-model qwen3:latest` (passed by `dataset_eval.py`)
-2. Env var: `DEEPEVAL_OLLAMA_MODEL` (injected by `dataset_eval.py` before `deepeval test run`)
-3. Code default: `default_judge` preset from `configs/ollama-model-presets.yaml` → `judge-qwen3-exp` → `qwen3:latest` (resolved by `scripts/ops/ollama_model_presets.py`)
-
-### Restarting Ollama with Tuning
-```bash
-# The systemd override is already active. To modify:
-sudo systemctl stop ollama
-# Edit /etc/systemd/system/ollama.service.d/override.conf
-# Then:
-sudo systemctl daemon-reload
-sudo systemctl restart ollama
-```
-
-### GPU + CPU Offloading
-Ollama (via llama.cpp) automatically distributes model layers between GPU and CPU when VRAM is insufficient. For our RTX 3060 6GB:
-- **7-8B models** (Q4_K_M): Full GPU offload (~4.9GB weights + ~1GB KV cache overhead)
-- **14B+ models** (Q4_K_M): Partial offload — Ollama auto-partitions layers by available VRAM
-- The `num_gpu` parameter (Modelfile or API option) controls explicit layer allocation
-
-To verify GPU utilization:
-```bash
-ollama ps              # Shows running models and GPU usage
-nvidia-smi             # VRAM consumption per process
-```
-
-### LM Studio Comparison
-Ollama matches LM Studio's offloading capability (both use llama.cpp under the hood) and is **better suited** for our concurrent DeepEval workload:
-- `OLLAMA_NUM_PARALLEL` enables native parallel request handling (LM Studio queues sequentially)
-- No second service or port needed
-- Deeper DeepEval integration via native `OllamaModel` class
-
-## 🎯 Ollama Model Presets
-
-Ollama model presets provide named aliases for generation and judging models, resolved from `configs/ollama-model-presets.yaml`. Explicit CLI model names always win over presets.
-
-### Preset File
-
-```yaml
-# configs/ollama-model-presets.yaml
-default_generation: generate-qwen25
-default_judge: judge-qwen3-exp
-
-generation:
-  generate-qwen25: qwen2.5:7b
-  generate-llama31: llama3.1:8b
-  generate-qwen35-exp: qwen3.5:latest
-  generate-qwen3-exp: qwen3:latest
-
-judge:
-  judge-qwen25: qwen2.5:7b
-  judge-llama31-exp: llama3.1:8b
-  judge-qwen35-exp: qwen3.5:latest
-  judge-qwen3-exp: qwen3:latest
-```
-
-### Resolution Logic
-
-`scripts/ops/ollama_model_presets.py` resolves the effective model via `resolve_ollama_model()` with this priority:
-
-1. **Explicit CLI model** — `--model qwen3:latest` wins unconditionally
-2. **Explicit CLI preset** — `--preset judge-qwen3-exp` maps through the preset file
-3. **Role-specific default preset** — `default_generation` / `default_judge` from YAML
-4. **Safety fallback** — `qwen3:latest` for judge, `qwen2.5:7b` for generation
-
-### Generation Presets
-
-| Preset Name | Model | Use Case |
-|-------------|-------|----------|
-| `generate-qwen25` | `qwen2.5:7b` | Default generation (balanced speed/quality) |
-| `generate-llama31` | `llama3.1:8b` | Alternative generation model |
-| `generate-qwen35-exp` | `qwen3.5:latest` | Experimental — latest Qwen 3.5 |
-| `generate-qwen3-exp` | `qwen3:latest` | Qwen 3 (used as judge default) |
-
-### Judge Presets
-
-| Preset Name | Model | Use Case |
-|-------------|-------|----------|
-| `judge-qwen25` | `qwen2.5:7b` | Alternative judge |
-| `judge-llama31-exp` | `llama3.1:8b` | Experimental judge |
-| `judge-qwen35-exp` | `qwen3.5:latest` | Experimental — latest Qwen 3.5 |
-| `judge-qwen3-exp` | `qwen3:latest` | **Default judge** (dataset-eval) — resolves to `qwen3:latest` |
-
-### Default Judge
-
-The default judge for dataset-eval is `judge-qwen3-exp` → `qwen3:latest` (8.2B params, Q4_K_M, ~4.9 GB). This is configured at three levels (in priority order):
-
-1. CLI flag: `--judge-model qwen3:latest` (passed by `dataset_eval.py`)
-2. Env var: `DEEPEVAL_OLLAMA_MODEL` (injected by `dataset_eval.py` before `deepeval test run`)
-3. Code default: `default_judge` preset from `configs/ollama-model-presets.yaml` → `judge-qwen3-exp` → `qwen3:latest` (resolved by `scripts/ops/ollama_model_presets.py`)
-
-## 📊 W&B Integration
-Weights & Biases tracks every training run with:
-- **Config snapshot**: Full frozen training config logged as a run file.
-- **Metrics**: Loss, learning rate, HF Trainer-reported scalars.
-- **Dataset artifact**: Dataset JSONL versioned by content hash, technique, row count.
-- **LoRA artifact**: Final adapter weights as `lora-{npc_key}` artifact.
-- **GGUF artifact**: Exported GGUF as `gguf-{npc_key}` artifact.
-
-**Dashboard:** Runs at `http://localhost:3100` (React SPA in `frontend_control/`):
-- Notification center with toast system (bell icon, auto-dismiss, type-colored alerts)
-- Ctrl+K global search across NPCs, datasets, runs, exports, jobs
-- Keyboard shortcuts: Ctrl+K (search), Ctrl+S (stop jobs), Alt+1-4 (navigate tabs), Ctrl+R (refresh)
-- Operations Matrix with pipeline control, W&B links, real-time job table
-- Training Suite hyperparameter panel
-- TensorBoard charts and W&B links
-- GPU telemetry and system monitoring
-- React Query for server state caching + Zustand for UI state
-
-**Modular Server (dev):** `npm run dev:modular` starts the new modular backend at port 3100 with Vite dev middleware, rate limiting, auth, and job queue.
-**Legacy Server:** `npm run dev` still starts the existing monolithic `server.ts` for backward compatibility.
-
-## ☁️ Confident AI Integration
-
-Confident AI is the hosted platform layer for DeepEval (free tier available at [app.confident-ai.com](https://app.confident-ai.com)). It provides dashboards, experiment tracking, dataset management, and human-in-the-loop annotations. Results auto-upload when `CONFIDENT_API_KEY` is set in the environment.
-
-### Setup
+## Current pipeline shape
 
 ```bash
-# Create a free account at https://app.confident-ai.com
-# Get your project API key from the dashboard
-# Then:
-deepeval login    # Interactive login
-# OR set via env:
-export CONFIDENT_API_KEY="confident_us_..."
+# 1. preflight / health
+./ucore audit check
+
+# 2. spec validation
+./ucore validate-spec subjects/NPC_specs/<npc>.json --generation-ready
+
+# 3. generation
+# Production: NotebookLM CLI / approved grounded workflow.
+# Smoke only:
+./ucore generate subjects/NPC_specs/<npc>.json --technique template
+
+# 4. sanitize
+./ucore sanitize subjects/datasets/<npc>/<technique>/train.jsonl \
+  --output subjects/datasets/<npc>/<technique>/train_clean.jsonl \
+  --strict-canonical --require-complete-metadata
+
+# 5. gate
+./ucore dataset-eval subjects/NPC_specs/<npc>.json \
+  --technique <technique> --mode fast --judge-model qwen2.5:7b
+
+# 6. train/export
+./ucore train subjects/NPC_specs/<npc>.json \
+  --technique <technique> --preset fast-3b --export-gguf
+
+# 7. evaluate adapter with base + LoRA when applicable
+./ucore evaluate --baseline <baseline> --candidate <candidate> \
+  --base-model <base-gguf> --spec subjects/NPC_specs/<npc>.json --report-html
 ```
 
-The `.env.local` file should contain `CONFIDENT_API_KEY=...` and the `scripts/ops/env_loader.py` utility sources it automatically across all pipeline scripts.
+## Context hygiene
 
-### Features Available
-
-| Feature | How to Use | Status |
-|---------|-----------|--------|
-| Hosted eval dashboards | Result auto-upload when `CONFIDENT_API_KEY` is set | ✅ Automatic |
-| Dataset management | `./ucore generate spec.json --push-to-confident` | ✅ Opt-in |
-| Model eval on Confident | `./ucore evaluate --deepeval` | ✅ Opt-in |
-| Preflight check | `./ucore audit check` warns if not configured | ✅ Automatic |
-| Experiment comparison | Use Confident AI web UI after pushing results | 🔜 Manual |
-| Human annotations | Annotate on app.confident-ai.com after eval runs | 🔜 Manual |
-| Online evals (prod) | Requires tracing instrumentation | 📋 Future |
-
-### Pipeline Behavior
-
-- **`dataset_eval.py`**: If `CONFIDENT_API_KEY` is set, results auto-upload to Confident AI dashboard after each `deepeval test run`. The `--confident` flag enforces that the API key is configured (exits with error if missing).
-- **`generate_dataset.py`**: `--push-to-confident` pushes generated datasets to Confident AI with alias `npc-dataset-{npc_key}-{technique}`.
-- **`evaluate.py`**: `--deepeval` flag runs DeepEval model quality evaluation as an additional step after conventional evaluation.
-- **`preflight.py`**: Checks for Confident availability as part of `./ucore audit check` and warns if not configured.
-
-### Viewing Results
+When project context looks stale:
 
 ```bash
-deepeval view    # Opens latest run in browser
+python scripts/ops/context_audit.py
 ```
 
-Or log in at [https://app.confident-ai.com](https://app.confident-ai.com) to see all runs, dashboards, and experiments.
+Then update in this order:
 
-## 🖥️ Active NPCs
-| NPC | Key | Subject | Current local state |
-|-----|-----|---------|---------------------|
-| History Guide | `history_guide` | World history | Spec, reference doc, template dataset, exported LoRA GGUFs |
-| Chef Assistant | `chef_assistant` | Culinary arts | Spec, reference doc, template dataset, exported LoRA GGUFs |
+1. Actual repo/tool state.
+2. `docs/PROJECT_STATE.md`.
+3. `AGENTS.md`.
+4. Project-local `.hermes/` memory/skills.
+5. Global Hermes memory only for stable facts.
 
-Current local exports are adapter GGUFs under `exports/{npc_key}/`. Unity runtime should load the shared llama3.2 3B base model once and swap LoRA adapters plus the NPC system prompt while dialoguing with the local Supabase container.
+## Deprecated / avoid
 
----
+- Deprecated inactive NPCs: `astronomy_guide`, `fitness_coach`.
+- Template datasets as production data.
+- Deprecated judge refs: do not use `qwen3:latest` as confirmed local default without re-verification.
+- Standalone evaluation of adapter GGUFs when base+LoRA is required.
+- `--allow-ungated-dataset` for production.
+- Long historical status dumps in `AGENTS.md`.
 
-## 📚 Key Reference Documents
+## Detailed docs
 
-| Document | Purpose |
-|----------|---------|
-| `docs/TRAINING_WORKFLOW_CONTEXT.md` | Full training pipeline detail — stages, presets, flags, data flow |
-| `README.md` | Project overview and quick start |
-| `AGENTS.md` | (this file) Quick-reference for AI agents |
-
----
-*For detailed human-readable guides, see the [README.md](README.md) and the `docs/` directory.*
+- `docs/PROJECT_STATE.md` — current canonical state.
+- `docs/TRAINING_WORKFLOW_CONTEXT.md` — full pipeline details.
+- `.hermes/README.md` — repo-local Hermes operating pack.
+- `.hermes/skills/unsloth-core-context-maintenance/SKILL.md` — context cleanup workflow.
+- `.hermes/skills/unsloth-core-operator/SKILL.md` — operator runbook.
+- `.hermes/skills/unsloth-core-low-vram-training/SKILL.md` — 6GB VRAM training/eval survival.
+- `.hermes/skills/llmunity-runtime-deploy/SKILL.md` — Unity deployment checks.

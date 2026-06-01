@@ -638,11 +638,151 @@ def compare_models(baseline_results, candidate_results, spec=None, judge=None):
     }
 
 
+def _constraint_violation_count(metrics):
+    """Count runtime-facing constraint failures from one metrics payload."""
+    checks = (
+        "sentences_ok",
+        "name_ok",
+        "no_ai_disclaimer",
+    )
+    count = sum(1 for key in checks if metrics.get(key) is False)
+    if metrics.get("has_think_tags") is True:
+        count += 1
+    return count
+
+
+def _average(values):
+    return round(sum(values) / len(values), 4) if values else 0.0
+
+
+def _slice_stats(comparisons):
+    total = len(comparisons)
+    candidate_wins = sum(1 for comp in comparisons if comp.get("winner") == "candidate")
+    baseline_wins = sum(1 for comp in comparisons if comp.get("winner") == "baseline")
+    ties = sum(1 for comp in comparisons if comp.get("winner") == "tie")
+    candidate_metrics = [comp.get("candidate_metrics", {}) for comp in comparisons]
+    baseline_metrics = [comp.get("baseline_metrics", {}) for comp in comparisons]
+    constraint_violations = sum(_constraint_violation_count(metrics) for metrics in candidate_metrics)
+    return {
+        "total": total,
+        "candidate_wins": candidate_wins,
+        "baseline_wins": baseline_wins,
+        "ties": ties,
+        "candidate_win_rate": round(candidate_wins / total, 4) if total else 0.0,
+        "baseline_win_rate": round(baseline_wins / total, 4) if total else 0.0,
+        "avg_candidate_quality": _average([float(m.get("quality", 0) or 0) for m in candidate_metrics]),
+        "avg_baseline_quality": _average([float(m.get("quality", 0) or 0) for m in baseline_metrics]),
+        "avg_candidate_words": _average([float(m.get("length", 0) or 0) for m in candidate_metrics]),
+        "avg_candidate_sentences": _average([float(m.get("sentences", 0) or 0) for m in candidate_metrics]),
+        "constraint_violations": constraint_violations,
+    }
+
+
+def build_eval_report_index(
+    comparison_result,
+    *,
+    baseline_name="baseline",
+    candidate_name="candidate",
+    spec=None,
+    run_metadata=None,
+):
+    """Build a stable categorized index for eval comparison reports.
+
+    This local artifact is the reliable source for comparing run/model/format/
+    parameter/logic changes, even when Confident AI upload is unavailable or
+    returns only a hosted run id.
+    """
+    spec = spec or {}
+    run_metadata = run_metadata or {}
+    comparisons = comparison_result.get("comparisons", []) or []
+    by_category = {}
+    by_concept = {}
+    by_format = {}
+    by_difficulty = {}
+    for comp in comparisons:
+        metadata = comp.get("metadata") or {}
+        category = metadata.get("category") or "unknown"
+        concept = metadata.get("concept") or "general"
+        fmt = metadata.get("format") or metadata.get("data_format") or run_metadata.get("format") or "unknown"
+        difficulty = metadata.get("difficulty") or "unknown"
+        by_category.setdefault(category, []).append(comp)
+        by_concept.setdefault(f"{category}/{concept}", []).append(comp)
+        by_format.setdefault(fmt, []).append(comp)
+        by_difficulty.setdefault(difficulty, []).append(comp)
+
+    categories = {name: _slice_stats(items) for name, items in sorted(by_category.items())}
+    concepts = {name: _slice_stats(items) for name, items in sorted(by_concept.items())}
+    formats = {name: _slice_stats(items) for name, items in sorted(by_format.items())}
+    difficulties = {name: _slice_stats(items) for name, items in sorted(by_difficulty.items())}
+    weak_slices = []
+    for name, stats in categories.items():
+        if stats["candidate_win_rate"] < 0.5 or stats["constraint_violations"] > 0 or stats["avg_candidate_quality"] < 20:
+            weak_slices.append({"slice_type": "category", "slice": name, **stats})
+    weak_slices.sort(key=lambda item: (item["candidate_win_rate"], -item["constraint_violations"], item["avg_candidate_quality"], item["slice"]))
+
+    confident = run_metadata.get("confident") or {}
+    if run_metadata.get("confident_test_run_id") and not confident.get("test_run_id"):
+        confident = {**confident, "test_run_id": run_metadata.get("confident_test_run_id")}
+    if run_metadata.get("confident_url") and not confident.get("url"):
+        confident = {**confident, "url": run_metadata.get("confident_url")}
+
+    total = comparison_result.get("total", len(comparisons))
+    return {
+        "schema_version": "eval_report_index.v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "run": {
+            "run_id": run_metadata.get("run_id"),
+            "npc_key": spec.get("npc_key") or run_metadata.get("npc_key"),
+            "npc_name": spec.get("npc_name") or run_metadata.get("npc_name"),
+            "technique": run_metadata.get("technique"),
+        },
+        "model": {
+            "baseline": baseline_name,
+            "candidate": candidate_name,
+            "base_model": run_metadata.get("base_model"),
+            "candidate_model": run_metadata.get("candidate_model", candidate_name),
+            "candidate_format": run_metadata.get("candidate_format") or run_metadata.get("format") or "unknown",
+            "judge_model": run_metadata.get("judge_model") or run_metadata.get("deepeval_judge_model"),
+            "judge_provider": run_metadata.get("judge_provider"),
+        },
+        "parameters": run_metadata.get("parameters") or {},
+        "logic": {
+            "version": run_metadata.get("logic_version") or "heuristic+optional-judge-v1",
+            "comparison_mode": "side-by-side",
+            "scoring_sources": run_metadata.get("scoring_sources") or ["heuristics", "optional_llm_judge"],
+        },
+        "confident": confident,
+        "summary": {
+            "total": total,
+            "baseline_wins": comparison_result.get("baseline_wins", 0),
+            "candidate_wins": comparison_result.get("candidate_wins", 0),
+            "ties": comparison_result.get("ties", 0),
+            "candidate_win_rate": round((comparison_result.get("candidate_wins", 0) / total), 4) if total else 0.0,
+        },
+        "categories": categories,
+        "concepts": concepts,
+        "formats": formats,
+        "difficulties": difficulties,
+        "weak_slices": weak_slices,
+    }
+
+
+def _report_index_for(comparison_result, baseline_name, candidate_name, spec):
+    return comparison_result.get("report_index") or build_eval_report_index(
+        comparison_result,
+        baseline_name=baseline_name,
+        candidate_name=candidate_name,
+        spec=spec,
+        run_metadata=comparison_result.get("run_metadata") or {},
+    )
+
+
 def generate_report(comparison_result, baseline_name="baseline", candidate_name="candidate",
                     spec=None, output_path=None):
     """Generate a markdown evaluation report."""
     output = []
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    report_index = _report_index_for(comparison_result, baseline_name, candidate_name, spec or {})
 
     output.append("# NPC Evaluation Report\n")
     output.append(f"- **Date:** {now}")
@@ -652,6 +792,28 @@ def generate_report(comparison_result, baseline_name="baseline", candidate_name=
     output.append(f"- **Baseline:** {baseline_name}")
     output.append(f"- **Candidate:** {candidate_name}")
     output.append(f"- **Examples:** {comparison_result['total']}\n")
+
+    output.append("## Run/Model/Parameter/Logic Index\n")
+    output.append(f"- Run ID: `{report_index['run'].get('run_id') or 'unknown'}`")
+    output.append(f"- Candidate format: `{report_index['model'].get('candidate_format')}`")
+    output.append(f"- Judge: `{report_index['model'].get('judge_provider') or 'unknown'}` / `{report_index['model'].get('judge_model') or 'unknown'}`")
+    output.append(f"- Logic: `{report_index['logic'].get('version')}`")
+    if report_index.get("parameters"):
+        output.append(f"- Parameters: `{json.dumps(report_index['parameters'], sort_keys=True)}`")
+    if report_index.get("confident", {}).get("url"):
+        output.append(f"- Confident: {report_index['confident']['url']}")
+    output.append("")
+
+    output.append("## Category Breakdown\n")
+    output.append("| Category | Total | Cand wins | Base wins | Ties | Cand win rate | Cand quality | Violations |")
+    output.append("|---|---:|---:|---:|---:|---:|---:|---:|")
+    for category, stats in report_index.get("categories", {}).items():
+        output.append(
+            f"| {category} | {stats['total']} | {stats['candidate_wins']} | {stats['baseline_wins']} | "
+            f"{stats['ties']} | {stats['candidate_win_rate']:.0%} | {stats['avg_candidate_quality']:.1f} | "
+            f"{stats['constraint_violations']} |"
+        )
+    output.append("")
 
     # Individual comparisons
     for i, comp in enumerate(comparison_result["comparisons"], 1):
@@ -759,6 +921,7 @@ def generate_html_report(comparison_result, baseline_name="baseline", candidate_
     """Generate an HTML evaluation report with embedded loss curves."""
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     npc_name = spec.get("npc_name", "Unknown") if spec else "Unknown"
+    report_index = _report_index_for(comparison_result, baseline_name, candidate_name, spec or {})
     
     # Aggregate metrics
     total = comparison_result["total"]
@@ -800,6 +963,8 @@ def generate_html_report(comparison_result, baseline_name="baseline", candidate_
   .constraint-ok {{ color: #2ecc71; }}
   .constraint-fail {{ color: #e74c3c; }}
   .meta {{ color: #666; font-size: 14px; }}
+  .index-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 20px 0; }}
+  .mono {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }}
 </style>
 </head>
 <body>
@@ -824,6 +989,20 @@ def generate_html_report(comparison_result, baseline_name="baseline", candidate_
     <div class="value">{ties}</div>
   </div>
 </div>
+
+<h2>Run/Model/Parameter/Logic Index</h2>
+<div class="index-grid">
+  <div class="card"><h3>Run</h3><div class="mono">{json.dumps(report_index.get('run', {}), sort_keys=True)}</div></div>
+  <div class="card"><h3>Model</h3><div class="mono">{json.dumps(report_index.get('model', {}), sort_keys=True)}</div></div>
+  <div class="card"><h3>Parameters</h3><div class="mono">{json.dumps(report_index.get('parameters', {}), sort_keys=True)}</div></div>
+  <div class="card"><h3>Logic</h3><div class="mono">{json.dumps(report_index.get('logic', {}), sort_keys=True)}</div></div>
+</div>
+
+<h2>Category Breakdown</h2>
+<table>
+<tr><th>Category</th><th>Total</th><th>Candidate wins</th><th>Baseline wins</th><th>Ties</th><th>Candidate win rate</th><th>Candidate quality</th><th>Violations</th></tr>
+{''.join(f"<tr><td>{cat}</td><td>{stats['total']}</td><td>{stats['candidate_wins']}</td><td>{stats['baseline_wins']}</td><td>{stats['ties']}</td><td>{stats['candidate_win_rate']:.0%}</td><td>{stats['avg_candidate_quality']:.1f}</td><td>{stats['constraint_violations']}</td></tr>" for cat, stats in report_index.get('categories', {}).items())}
+</table>
 
 <h2>Metrics Comparison</h2>
 <div class="chart-container">
@@ -870,16 +1049,18 @@ new Chart(document.getElementById('metricsChart'), {
     labels: ['Quality Score', 'Word Count', 'Sentence Count'],
     datasets: [
 """
+    avg_b_sent = sum(m["sentences"] for m in b_metrics) / len(b_metrics) if b_metrics else 0
+    avg_c_sent = sum(m["sentences"] for m in c_metrics) / len(c_metrics) if c_metrics else 0
     html += f"""      {{
         label: 'Baseline',
-        data: [{avg_b_qual:.1f}, {avg_b_words:.0f}, {sum(m['sentences'] for m in b_metrics) / len(b_metrics):.1f}],
+        data: [{avg_b_qual:.1f}, {avg_b_words:.0f}, {avg_b_sent:.1f}],
         backgroundColor: 'rgba(54, 162, 235, 0.5)',
         borderColor: 'rgba(54, 162, 235, 1)',
         borderWidth: 1
       }},
       {{
         label: 'Candidate',
-        data: [{avg_c_qual:.1f}, {avg_c_words:.0f}, {sum(m['sentences'] for m in c_metrics) / len(c_metrics):.1f}],
+        data: [{avg_c_qual:.1f}, {avg_c_words:.0f}, {avg_c_sent:.1f}],
         backgroundColor: 'rgba(255, 99, 132, 0.5)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1
@@ -1297,6 +1478,32 @@ def main():
             candidate_path = Path(str(candidate_gguf))
             candidate_name = f"{candidate_path.parent.name}/{candidate_path.stem}"
 
+        run_metadata = {
+            "run_id": getattr(args, "deepeval_identifier", None) or getattr(args, "_report_stamp", None),
+            "npc_key": spec.get("npc_key") if spec else None,
+            "technique": getattr(args, "technique", None),
+            "base_model": args.base_model,
+            "candidate_model": str(candidate_gguf),
+            "candidate_format": "gguf_lora_adapter" if args.base_model else "gguf_model",
+            "judge_model": args.judge_model if args.judge else None,
+            "judge_provider": args.judge_provider if args.judge else None,
+            "parameters": {
+                "lora_weight": args.lora_weight,
+                "gpu_layers": args.gpu_layers,
+                "max_tokens": args.max_tokens,
+                "num_questions": args.num_questions,
+            },
+            "logic_version": "heuristic+optional-judge-v1",
+        }
+        comparison["run_metadata"] = run_metadata
+        comparison["report_index"] = build_eval_report_index(
+            comparison,
+            baseline_name=baseline_name,
+            candidate_name=candidate_name,
+            spec=spec,
+            run_metadata=run_metadata,
+        )
+
         with hook_recorder.step("write_report", report_path=args.output):
             report = generate_report(
                 comparison,
@@ -1305,6 +1512,12 @@ def main():
                 spec=spec,
                 output_path=args.output,
             )
+            if args.output:
+                index_path = Path(args.output).with_suffix(".index.json")
+                index_path.parent.mkdir(parents=True, exist_ok=True)
+                with index_path.open("w", encoding="utf-8") as f:
+                    json.dump(comparison["report_index"], f, indent=2, ensure_ascii=False)
+                print(f"Report index saved to: {index_path}")
 
         print(report)
 
@@ -1618,14 +1831,21 @@ def _build_eval_test_cases(spec_data: dict) -> list[dict]:
     """Build test cases from the NPC spec for remote evaluation."""
     test_cases = []
     questions = spec_data.get("evaluation", []) or spec_data.get("eval_questions", [])
-    for q in questions:
+    for raw in questions:
+        q = {"question": raw} if isinstance(raw, str) else raw
         test_cases.append({
-            "input": q.get("question", q) if isinstance(q, str) else q.get("question", ""),
+            "input": q.get("question", ""),
             "actualOutput": "",
             "expectedOutput": q.get("expected_output", q.get("answer", "")),
             "context": [spec_data.get("system_prompt", "")],
             "name": q.get("name", q.get("question", ""))[:50],
-            "additionalMetadata": {"category": q.get("category", "general")},
+            "additionalMetadata": {
+                "npc_key": spec_data.get("npc_key", "unknown"),
+                "category": q.get("category", "general"),
+                "concept": q.get("concept", "general"),
+                "difficulty": q.get("difficulty", "unknown"),
+                "format": q.get("format", q.get("data_format", "eval_question")),
+            },
         })
     return test_cases
 

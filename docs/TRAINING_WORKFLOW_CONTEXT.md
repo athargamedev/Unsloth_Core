@@ -93,12 +93,12 @@ model validation step.
 ./ucore dataset-eval subjects/NPC_specs/history_guide.json \
   --technique template \
   --mode fast \
-  --judge-model qwen3:latest \
+  --judge-model qwen2.5:7b \
   --cases-per-category 1
 ```
 
 **Local defaults:**
-- Judge: `qwen3:latest` via Ollama, temperature 0.
+- Judge: `qwen2.5:7b` via Ollama, temperature 0.
 - Mode: `fast` by default, sampling 1 row per category. Use `--mode release` for the strict 5-row-per-category final check.
 - Confident AI: auto-uploads results when `CONFIDENT_API_KEY` is configured. Use `--confident` to enforce API key presence (exits if missing).
 - Dataset input: `subjects/datasets/{npc_key}/{technique}/train_clean.jsonl`.
@@ -318,19 +318,15 @@ always win over presets.
 ```yaml
 # configs/ollama-model-presets.yaml
 default_generation: generate-qwen25
-default_judge: judge-qwen3-exp
+default_judge: judge-qwen25
 
 generation:
   generate-qwen25: qwen2.5:7b
   generate-llama31: llama3.1:8b
-  generate-qwen35-exp: qwen3.5:latest
-  generate-qwen3-exp: qwen3:latest
 
 judge:
   judge-qwen25: qwen2.5:7b
   judge-llama31-exp: llama3.1:8b
-  judge-qwen35-exp: qwen3.5:latest
-  judge-qwen3-exp: qwen3:latest
 ```
 
 ### Resolution Logic
@@ -338,12 +334,12 @@ judge:
 `scripts/ops/ollama_model_presets.py` resolves the effective model via
 `resolve_ollama_model()` with this priority:
 
-1. **Explicit CLI model** — `--model qwen3:latest` wins unconditionally
-2. **Explicit CLI preset** — `--preset judge-qwen3-exp` maps through the preset
+1. **Explicit CLI model** — `--model qwen2.5:7b` wins unconditionally
+2. **Explicit CLI preset** — `--preset judge-qwen25` maps through the preset
    file
 3. **Role-specific default preset** — `default_generation` / `default_judge`
    from YAML
-4. **Safety fallback** — `qwen3:latest` for judge, `qwen2.5:7b` for generation
+4. **Safety fallback** — `qwen2.5:7b` for judge and generation
 
 ### Generation Presets
 
@@ -351,27 +347,22 @@ judge:
 |-------------|-------|----------|
 | `generate-qwen25` | `qwen2.5:7b` | Default generation (balanced speed/quality) |
 | `generate-llama31` | `llama3.1:8b` | Alternative generation model |
-| `generate-qwen35-exp` | `qwen3.5:latest` | Experimental — latest Qwen 3.5 |
-| `generate-qwen3-exp` | `qwen3:latest` | Qwen 3 (also used as judge default) |
 
 ### Judge Presets
 
 | Preset Name | Model | Use Case |
 |-------------|-------|----------|
-| `judge-qwen25` | `qwen2.5:7b` | Alternative judge |
+| `judge-qwen25` | `qwen2.5:7b` | **Default local judge** (dataset-eval) |
 | `judge-llama31-exp` | `llama3.1:8b` | Experimental judge |
-| `judge-qwen35-exp` | `qwen3.5:latest` | Experimental — latest Qwen 3.5 |
-| `judge-qwen3-exp` | `qwen3:latest` | **Default judge** (dataset-eval) |
 
 ### Default Judge
 
-The default judge for dataset-eval is `judge-qwen3-exp` → `qwen3:latest`
-(8.2B params, Q4_K_M, ~4.9 GB). This is configured at three levels (in
-priority order):
+The local default judge for dataset-eval is `judge-qwen25` → `qwen2.5:7b`.
+This is configured at three levels (in priority order):
 
-1. CLI flag: `--judge-model qwen3:latest`
+1. CLI flag: `--judge-model qwen2.5:7b`
 2. Env var: `DEEPEVAL_OLLAMA_MODEL` (injected by `dataset_eval.py`)
-3. Code default: YAML `default_judge` → `judge-qwen3-exp` → `qwen3:latest`
+3. Code default: YAML `default_judge` → `judge-qwen25` → `qwen2.5:7b`
    in `ollama_model_presets.py`
 
 ---

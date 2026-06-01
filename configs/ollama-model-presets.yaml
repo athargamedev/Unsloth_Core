@@ -2,16 +2,12 @@
 # Explicit CLI model names still win over presets.
 
 default_generation: generate-qwen25
-default_judge: judge-qwen3-exp
+default_judge: judge-qwen25
 
 generation:
   generate-qwen25: qwen2.5:7b
   generate-llama31: llama3.1:8b
-  generate-qwen35-exp: qwen3.5:latest
-  generate-qwen3-exp: qwen3:latest
 
 judge:
   judge-qwen25: qwen2.5:7b
   judge-llama31-exp: llama3.1:8b
-  judge-qwen35-exp: qwen3.5:latest
-  judge-qwen3-exp: qwen3:latest
