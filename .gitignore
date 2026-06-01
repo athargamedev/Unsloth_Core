@@ -75,3 +75,14 @@ frontend_control/**/.next/
 .env
 .env.local
 *.token
+
+# Reorganization Artifacts and Cache
+/artifacts/
+/var/
+/outputs
+/exports
+/eval
+/logs
+/unsloth_compiled_cache
+__pycache__/
+*.pyc

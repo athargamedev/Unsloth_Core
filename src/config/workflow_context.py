@@ -22,7 +22,7 @@ from typing import Any
 from src.config import paths
 from src.core.ops.model_presets import resolve_training_preset
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_MODEL_ID = "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
 
 

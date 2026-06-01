@@ -5,7 +5,7 @@ from typing import Any
 
 import yaml
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 MODEL_PRESETS_PATH = PROJECT_ROOT / "configs" / "model-presets.yaml"
 DEFAULT_FALLBACK_PRESET = "safe-any"
 

@@ -37,8 +37,9 @@ CONFIG_DIR = _new_config_dir if _new_config_dir.exists() else _old_config_dir
 # ── Pipeline registry (unified run/log source of truth) ──────────────────────
 
 def pipeline_root() -> Path:
-    """Return .pipeline/ — unified runtime registry root."""
-    return PROJECT_ROOT / ".pipeline"
+    """Return var/.pipeline/ or .pipeline/ — unified runtime registry root."""
+    new_path = PROJECT_ROOT / "var" / ".pipeline"
+    return new_path if new_path.exists() else PROJECT_ROOT / ".pipeline"
 
 
 def pipeline_index_path() -> Path:
@@ -103,8 +104,9 @@ DATASET_TECHNIQUES = ("docs", "ollama", "openai", "anthropic", "template")
 
 
 def dataset_root() -> Path:
-    """Return subjects/datasets/ — datasets live inside subjects/ since they're tightly coupled to NPC specs."""
-    return PROJECT_ROOT / "subjects" / "datasets"
+    """Return data/datasets/ or subjects/datasets/."""
+    new_path = PROJECT_ROOT / "data" / "datasets"
+    return new_path if new_path.exists() else PROJECT_ROOT / "subjects" / "datasets"
 
 
 def dataset_dir(npc_key: str) -> Path:
@@ -279,13 +281,15 @@ def generate_version_timestamp() -> str:
 # ── Subjects (NPC spec files) ────────────────────────────────────────────────
 
 def subjects_root() -> Path:
-    """Return subjects/ directory root."""
-    return PROJECT_ROOT / "subjects"
+    """Return data/npcs/ or subjects/ directory root."""
+    new_path = PROJECT_ROOT / "data" / "npcs"
+    return new_path if new_path.exists() else PROJECT_ROOT / "subjects"
 
 
 def spec_dir() -> Path:
-    """Return subjects/NPC_specs/ — canonical location for all NPC spec JSONs."""
-    return subjects_root() / "NPC_specs"
+    """Return data/npcs/specs/ or subjects/NPC_specs/."""
+    new_path = PROJECT_ROOT / "data" / "npcs" / "specs"
+    return new_path if new_path.exists() else subjects_root() / "NPC_specs"
 
 
 def spec_path(npc_key: str) -> Path:
@@ -296,8 +300,9 @@ def spec_path(npc_key: str) -> Path:
 # ── Per-NPC workflow config ───────────────────────────────────────────────────
 
 def npc_config_root() -> Path:
-    """Return configs/npcs/."""
-    return PROJECT_ROOT / "configs" / "npcs"
+    """Return etc/npcs/ or configs/npcs/."""
+    new_path = PROJECT_ROOT / "etc" / "npcs"
+    return new_path if new_path.exists() else PROJECT_ROOT / "configs" / "npcs"
 
 
 def npc_config_dir(npc_key: str) -> Path:
@@ -333,8 +338,9 @@ def sweep_dir(npc_key: str) -> Path:
 # ── Logs and per-NPC pipeline registry ────────────────────────────────────────
 
 def log_root() -> Path:
-    """Return logs/."""
-    return PROJECT_ROOT / "logs"
+    """Return artifacts/logs/ or logs/."""
+    new_path = PROJECT_ROOT / "artifacts" / "logs"
+    return new_path if new_path.exists() else PROJECT_ROOT / "logs"
 
 
 def npc_log_root(npc_key: str) -> Path:
@@ -370,7 +376,9 @@ def npc_pipeline_runs_path(npc_key: str) -> Path:
 # ── Outputs (LoRA adapters + checkpoints, NO GGUF) ──────────────────────────
 
 def output_root() -> Path:
-    return PROJECT_ROOT / "outputs"
+    """Return artifacts/models/ or outputs/."""
+    new_path = PROJECT_ROOT / "artifacts" / "models"
+    return new_path if new_path.exists() else PROJECT_ROOT / "outputs"
 
 
 def output_dir(npc_key: str) -> Path:
@@ -381,7 +389,9 @@ def output_dir(npc_key: str) -> Path:
 # ── Exports (GGUF only — deployable artifacts) ──────────────────────────────
 
 def export_root() -> Path:
-    return PROJECT_ROOT / "exports"
+    """Return artifacts/exports/ or exports/."""
+    new_path = PROJECT_ROOT / "artifacts" / "exports"
+    return new_path if new_path.exists() else PROJECT_ROOT / "exports"
 
 
 def export_dir(npc_key: str) -> Path:
@@ -423,7 +433,9 @@ def export_manifest_path(npc_key: str) -> Path:
 # ── Evaluation ───────────────────────────────────────────────────────────────
 
 def eval_root() -> Path:
-    return PROJECT_ROOT / "eval"
+    """Return artifacts/eval/ or eval/."""
+    new_path = PROJECT_ROOT / "artifacts" / "eval"
+    return new_path if new_path.exists() else PROJECT_ROOT / "eval"
 
 
 def eval_training_metrics_path(npc_key: str) -> Path:

@@ -25,7 +25,7 @@ import yaml
 from src.config import paths
 from src.config.workflow_context import resolve_workflow_context
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = paths.PROJECT_ROOT
 PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"
 BASE_CONFIG_PATH = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"
 POLICY_PATH = PROJECT_ROOT / "configs" / "workload-policy.yaml"

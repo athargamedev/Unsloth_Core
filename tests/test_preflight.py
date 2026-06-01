@@ -21,7 +21,7 @@ def test_run_preflight_auto_downgrades_fast3b_and_stops_ollama(tmp_path, monkeyp
         encoding="utf-8",
     )
 
-    monkeypatch.setattr(preflight, "query_gpu_memory", lambda: (0.9, 5.67))
+    monkeypatch.setattr(preflight, "query_gpu_memory", lambda: (0.9, 4.5))
     monkeypatch.setattr(preflight, "check_gcc", lambda: (True, "/usr/bin/gcc", None))
     monkeypatch.setattr(preflight, "list_running_ollama_models", lambda url: ["qwen2.5:7b"])
     monkeypatch.setattr(preflight, "stop_running_models", lambda url: ["qwen2.5:7b"])
