@@ -570,9 +570,10 @@ def main():
             print(f"  Size: {output_path.stat().st_size / 1e6:.1f} MB")
 
             # ── Record pipeline manifest stage ─────────────────────────────────
-            gguf_files: list = []
+            gguf_files: list = [str(output_path)]
             try:
                 from scripts.ops.pipeline_manifest import record_pipeline_stage
+                from scripts.ops.artifact_registry import record_stage_artifacts_best_effort
                 npc_key_for_manifest = _get_npc_key(str(output_dir))
                 os.environ.setdefault("TECHNIQUE", "export")
                 if npc_key_for_manifest:
@@ -581,6 +582,14 @@ def main():
                 if gguf_files:
                     manifest_artifacts["gguf_files"] = gguf_files
                 record_pipeline_stage("export", artifacts=manifest_artifacts)
+                record_stage_artifacts_best_effort(
+                    f"export-{int(time.time())}",
+                    npc_key,
+                    "export",
+                    manifest_artifacts,
+                    technique="export",
+                    metadata={"mode": "adapter", "outtype": args.outtype},
+                )
             except Exception:
                 pass  # manifest is optional, never block pipeline
             return
@@ -696,6 +705,7 @@ def main():
             # ── Record pipeline manifest stage ─────────────────────────────────
             try:
                 from scripts.ops.pipeline_manifest import record_pipeline_stage
+                from scripts.ops.artifact_registry import record_stage_artifacts_best_effort
                 npc_key_for_manifest = _get_npc_key(str(output_dir))
                 os.environ.setdefault("TECHNIQUE", "export")
                 if npc_key_for_manifest:
@@ -704,6 +714,14 @@ def main():
                 if gguf_files:
                     manifest_artifacts["gguf_files"] = gguf_files
                 record_pipeline_stage("export", artifacts=manifest_artifacts)
+                record_stage_artifacts_best_effort(
+                    f"export-{int(time.time())}",
+                    npc_key,
+                    "export",
+                    manifest_artifacts,
+                    technique="export",
+                    metadata={"mode": "full_merge", "quantization": args.quantization},
+                )
             except Exception:
                 pass  # manifest is optional, never block pipeline
 

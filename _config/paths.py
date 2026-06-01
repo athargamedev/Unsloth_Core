@@ -228,6 +228,44 @@ def infer_validation_path(train_path: str | Path) -> Path:
     return p.parent / "validation.jsonl"
 
 
+# ── Dataset versioning ───────────────────────────────────────────────────────
+
+def dataset_version_dir(npc_key: str, technique: str, version: str) -> Path:
+    """Return Path to versioned dataset dir: subjects/datasets/{npc}/{technique}/v{version}/"""
+    return dataset_dir(npc_key) / technique / f"v{version}"
+
+
+def dataset_latest_symlink(npc_key: str, technique: str) -> Path:
+    """Return Path to latest symlink: subjects/datasets/{npc}/{technique}/latest"""
+    return dataset_dir(npc_key) / technique / "latest"
+
+
+def dataset_latest_actual_dir(npc_key: str, technique: str) -> Path | None:
+    """Resolve 'latest' symlink to actual versioned dir. Returns None if no symlink."""
+    link = dataset_latest_symlink(npc_key, technique)
+    if link.is_symlink() and link.exists():
+        return link.resolve()
+    return None
+
+
+def dataset_latest_train_path(npc_key: str, technique: str) -> Path | None:
+    """Resolve latest train.jsonl, preferring train_clean.jsonl if available."""
+    actual = dataset_latest_actual_dir(npc_key, technique)
+    if actual is not None:
+        clean = actual / "train_clean.jsonl"
+        if clean.exists():
+            return clean
+        raw = actual / "train.jsonl"
+        if raw.exists():
+            return raw
+    return None
+
+
+def generate_version_timestamp() -> str:
+    """Generate version string: YYYYMMDD_HHMMSS"""
+    return datetime.now().strftime("%Y%m%d_%H%M%S")
+
+
 # ── Subjects (NPC spec files) ────────────────────────────────────────────────
 
 def subjects_root() -> Path:

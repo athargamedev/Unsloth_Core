@@ -804,6 +804,15 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 except Exception:
                     pass
                 record_pipeline_stage("dataset_eval", artifacts=manifest_artifacts, metadata=manifest_metadata)
+                from scripts.ops.artifact_registry import record_stage_artifacts_best_effort
+                record_stage_artifacts_best_effort(
+                    run.run_id,
+                    npc_key,
+                    "dataset_eval",
+                    manifest_artifacts,
+                    technique=technique,
+                    metadata=manifest_metadata,
+                )
             except Exception:
                 pass  # manifest is optional, never block pipeline
 

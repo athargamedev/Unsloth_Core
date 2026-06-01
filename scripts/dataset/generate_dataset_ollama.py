@@ -1136,6 +1136,31 @@ Examples:
             with open(manifest_path, "w") as f:
                 json.dump(manifest, f, indent=2)
             logger.info(f"✓ Wrote manifest to {manifest_path}")
+            
+            # ── Create versioned dataset directory ──
+            from _config.paths import dataset_version_dir, dataset_latest_symlink, generate_version_timestamp
+            import shutil
+            
+            version = generate_version_timestamp()
+            version_dir = dataset_version_dir(npc_key, technique, version)
+            version_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Copy files to versioned dir
+            val_file = output_path.parent / "validation.jsonl"
+            for src_file in [output_path, val_file, manifest_path]:
+                if src_file.exists():
+                    shutil.copy2(src_file, version_dir / src_file.name)
+            
+            # Update 'latest' symlink atomically
+            latest_link = dataset_latest_symlink(npc_key, technique)
+            latest_link.parent.mkdir(parents=True, exist_ok=True)
+            tmp_link = latest_link.parent / ".latest_tmp"
+            try:
+                tmp_link.unlink(missing_ok=True)
+                tmp_link.symlink_to(version_dir.name)
+                tmp_link.rename(latest_link)
+            except (OSError, FileNotFoundError) as e:
+                logger.warning(f"Could not update 'latest' symlink: {e}")
         
         # ── Report errors ──────────────────────────────────────────────────────
         if dataset_gen.progress and dataset_gen.progress.errors:

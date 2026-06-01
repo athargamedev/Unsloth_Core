@@ -1337,6 +1337,13 @@ def main():
                             discarded += 1
                             reasons[str(e)] = reasons.get(str(e), 0) + 1
 
+                # ── Also write clean file to versioned directory if it exists ──
+                import shutil
+                from _config.paths import dataset_latest_actual_dir
+                if input_path and input_path.parent.name.startswith("v"):  # Check if input is versioned
+                    version_dir = input_path.parent
+                    shutil.copy2(output_path, version_dir / "train_clean.jsonl")
+
                 # ── Phase 3b: Write enriched manifest ─────────────────────────────────
                 if args.write_manifest:
                     # Determine generation manifest path for provenance chaining
@@ -1443,6 +1450,15 @@ def main():
                     if output_path and os.path.exists(output_path):
                         manifest_artifacts["output"] = str(output_path)
                     record_pipeline_stage("sanitize", artifacts=manifest_artifacts)
+                    from scripts.ops.artifact_registry import record_stage_artifacts_best_effort
+                    record_stage_artifacts_best_effort(
+                        run.run_id,
+                        npc_key_val,
+                        "sanitize",
+                        manifest_artifacts,
+                        technique=tech_val,
+                        metadata={"total_input": total_input, "kept": kept, "discarded": discarded},
+                    )
                 except Exception:
                     pass  # manifest is optional, never block pipeline
 

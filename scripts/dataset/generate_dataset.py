@@ -1702,6 +1702,14 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
 
             print(f"  Manifest:        {manifest_path}")
 
+            # Record generation stage completion
+            try:
+                from scripts.ops import stage_gate
+                manifest = Path.cwd() / ".pipeline" / "run_manifest.json"
+                stage_gate.record_stage("generate", [output_path / "train.jsonl", output_path / "validation.jsonl"], manifest)
+            except Exception as e:
+                print(f"  [debug] Could not record stage: {e}")
+
     return {
         "spec": spec["npc_key"],
         "total": len(examples),
@@ -1995,6 +2003,7 @@ def main():
             # ── Record pipeline manifest stage ─────────────────────────────────
             try:
                 from scripts.ops.pipeline_manifest import record_pipeline_stage
+                from scripts.ops.artifact_registry import record_stage_artifacts_best_effort
                 os.environ.setdefault("NPC_KEY", npc_key)
                 os.environ.setdefault("TECHNIQUE", technique)
                 manifest_artifacts = {}
@@ -2003,6 +2012,14 @@ def main():
                 if result and result.get("val_path"):
                     manifest_artifacts["validation"] = str(result["val_path"])
                 record_pipeline_stage("generate", artifacts=manifest_artifacts)
+                record_stage_artifacts_best_effort(
+                    run.run_id,
+                    npc_key,
+                    "generate",
+                    manifest_artifacts,
+                    technique=technique,
+                    metadata={"total": result["total"], "train": result["train"], "validation": result["validation"]},
+                )
             except Exception:
                 pass  # manifest is optional, never block pipeline
 

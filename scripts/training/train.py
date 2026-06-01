@@ -479,6 +479,19 @@ def get_config_from_spec(spec_path, preset=None, overrides=None):
             train_path = clean_candidate
     if not train_path.exists():
         _, train_path, _ = paths.resolve_dataset_context(npc_key, technique)
+    
+    # Try versioned dataset path first
+    versioned = paths.dataset_latest_train_path(npc_key, technique)
+    if versioned and versioned.exists():
+        train_path = versioned
+
+    # Verify dataset integrity before training
+    from scripts.ops.stage_gate import verify_inputs
+    missing = verify_inputs("train", [train_path] if train_path else [])
+    if missing:
+        print(f"  [error] Dataset not found for training: {missing[0]}")
+        print(f"  [error] Please run: ./ucore generate {npc_key} --technique {technique}")
+        return 1
 
     # Output dir
     output_dir = paths.output_dir(npc_key)
@@ -1430,6 +1443,15 @@ def main():
         if training_loss is not None:
             manifest_metadata["training_loss"] = training_loss
         record_pipeline_stage("train", artifacts=manifest_artifacts, metadata=manifest_metadata)
+        from scripts.ops.artifact_registry import record_stage_artifacts_best_effort
+        record_stage_artifacts_best_effort(
+            run_id,
+            npc_key,
+            "train",
+            manifest_artifacts,
+            technique=technique,
+            metadata=manifest_metadata,
+        )
     except Exception:
         pass  # manifest is optional, never block pipeline
 

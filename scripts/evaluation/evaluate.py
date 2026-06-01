@@ -1529,6 +1529,20 @@ def main():
                 with index_path.open("w", encoding="utf-8") as f:
                     json.dump(comparison["report_index"], f, indent=2, ensure_ascii=False)
                 print(f"Report index saved to: {index_path}")
+                try:
+                    from scripts.ops.artifact_registry import record_stage_artifacts_best_effort
+                    npc_key = spec.get("npc_key", "unknown") if spec else "unknown"
+                    run_id = comparison.get("run_metadata", {}).get("run_id") or f"evaluate-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+                    record_stage_artifacts_best_effort(
+                        run_id,
+                        npc_key,
+                        "evaluate",
+                        {"eval_index": index_path},
+                        technique="evaluation",
+                        metadata=comparison.get("report_index", {}).get("model", {}),
+                    )
+                except Exception:
+                    pass
 
         print(report)
 
@@ -1876,6 +1890,16 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
             npc_key = spec.get("npc_key", "unknown")
         except Exception as exc:
             print(f"  [deepeval] Could not load spec for NPC key: {exc}")
+
+    # Verify model files before starting server
+    from scripts.ops.stage_gate import verify_inputs
+    model_files = [candidate_path]
+    if baseline_path:
+        model_files.append(baseline_path)
+    missing = verify_inputs("evaluate", model_files)
+    if missing:
+        print(f"  [error] Missing model files for evaluation: {missing}")
+        return
 
     # ── Fail fast: must have Confident API key ───────────────────────────
     try:

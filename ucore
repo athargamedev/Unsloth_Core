@@ -570,6 +570,12 @@ def main():
     audit_check.add_argument("--full", action="store_true", help="Full audit (env + NPC + datasets + training + eval)")
     audit_diag = audit_subcmd.add_parser("diagnose", help="Diagnose NPC issue")
     audit_diag.add_argument("--npc", required=True, help="NPC key to diagnose")
+    audit_plan = audit_subcmd.add_parser("pipeline-plan", help="Audit canonical pipeline DAG prerequisites")
+    audit_plan.add_argument("--npc-key", required=True, help="NPC key to audit")
+    audit_plan.add_argument("--technique", default=None, help="Dataset technique/artifact lane")
+    audit_plan.add_argument("--target-stage", default="evaluate", choices=["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"], help="Stage to plan up to")
+    audit_plan.add_argument("--artifact-index", default=None, help="ArtifactRegistry JSONL path override")
+    audit_plan.add_argument("--write", default=None, help="Write plan JSON to this path")
     audit_subcmd.add_parser("resume", help="Recover session context (full audit)")
 
     args = parser.parse_args()
@@ -589,6 +595,20 @@ def main():
         sys.exit(0)
 
     if args.command == "audit":
+        if args.audit_command == "pipeline-plan":
+            from scripts.ops.artifact_registry import ArtifactRegistry
+            from scripts.ops.pipeline_dag import PipelineDAG
+
+            registry = ArtifactRegistry(args.artifact_index) if args.artifact_index else ArtifactRegistry()
+            dag = PipelineDAG(registry=registry)
+            plan = dag.plan_to_stage(args.target_stage, npc_key=args.npc_key, technique=args.technique)
+            if args.write:
+                out = dag.write_plan(args.write, args.target_stage, npc_key=args.npc_key, technique=args.technique)
+                print(f"Pipeline plan written: {out}")
+            else:
+                print(json.dumps(plan, indent=2, ensure_ascii=False))
+            sys.exit(0)
+
         from scripts.ops.audit import ProjectAudit
         audit = ProjectAudit()
         if args.audit_command == "check":
