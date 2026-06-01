@@ -155,4 +155,4 @@ curl -X POST -H "Authorization: Bearer <viewer-key>" \
 
 ## Database Table
 
-See [SUPABASE_SCHEMA.md](SUPABASE_SCHEMA.md) for the full `api_keys` and `api_audit_log` table schemas.
+See [supabase-schema.md](supabase-schema.md) for the full `api_keys` and `api_audit_log` table schemas.

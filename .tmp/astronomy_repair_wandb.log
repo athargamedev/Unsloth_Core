@@ -1,159 +1,0 @@
-
-============================================================
-  Unsloth Training Launcher
-============================================================
-  NPC:            astronomy_guide
-  Model:          unsloth/Llama-3.2-3B-Instruct-bnb-4bit
-  Technique:      ollama
-  LoRA Rank:      8
-  LoRA Alpha:     16
-  LR Scheduler:   cosine
-  Estimated VRAM: 3.1GB (Fits 12GB+ cards)
-  Preset:         safe-any
-  W&B:            enabled
-  Export GGUF:    yes
-============================================================
-
-{"ts": "2026-05-21T21:20:21.973598+00:00", "event": "training_start", "npc_key": "astronomy_guide", "run_id": "20260521_safe-any_llama3.2-3b_014", "model": "unsloth/Llama-3.2-3B-Instruct-bnb-4bit", "preset": "safe-any"}
-18:20:21 [INFO ] ucore: [1/4] Loading model and tokenizer...
-🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
-Unsloth: Your Flash Attention 2 installation seems to be broken. Using Xformers instead. No performance changes will be seen.
-🦥 Unsloth Zoo will now patch everything to make training faster!
-  Loading model: unsloth/Llama-3.2-3B-Instruct-bnb-4bit
-  Max seq length: 1024
-  LoRA rank: 8, alpha: 16
-  GPU memory utilization: 0.9
-==((====))==  Unsloth 2026.5.2: Fast Llama patching. Transformers: 5.5.0.
-   \\   /|    NVIDIA GeForce RTX 3060 Laptop GPU. Num GPUs = 1. Max memory: 5.67 GB. Platform: Linux.
-O^O/ \_/ \    Torch: 2.10.0+cu130. CUDA: 8.6. CUDA Toolkit: 13.0. Triton: 3.6.0
-\        /    Bfloat16 = TRUE. FA [Xformers = 0.0.35. FA2 = False]
- "-____-"     Free license: http://github.com/unslothai/unsloth
-Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
-Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]Loading weights:  11%|█         | 27/254 [00:00<00:00, 268.49it/s]Loading weights:  42%|████▏     | 106/254 [00:00<00:00, 573.41it/s]Loading weights:  72%|███████▏  | 184/254 [00:00<00:00, 663.63it/s]Loading weights:  99%|█████████▉| 251/254 [00:00<00:00, 657.09it/s]Loading weights: 100%|██████████| 254/254 [00:00<00:00, 623.44it/s]
-Unsloth: Will load unsloth/Llama-3.2-3B-Instruct-bnb-4bit as a legacy tokenizer.
-Unsloth 2026.5.2 patched 28 layers with 28 QKV layers, 28 O layers and 28 MLP layers.
-18:20:55 [INFO ] ucore: Model loaded
-[ucore|INFO]Model loaded
-18:20:55 [INFO ] ucore: [2/4] Loading dataset...
-[ucore|INFO][2/4] Loading dataset...
-18:20:55 [INFO ] ucore: Loading dataset from: /home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/train_clean.jsonl
-[ucore|INFO]Loading dataset from: /home/athar/Projects/Unsloth_Core/subjects/datasets/astronomy_guide/ollama/train_clean.jsonl
-18:20:55 [INFO ] ucore: Dataset loaded: 137 examples
-[ucore|INFO]Dataset loaded: 137 examples
-18:20:55 [INFO ] ucore: [3/4] Running training...
-[ucore|INFO][3/4] Running training...
-wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/athar/.netrc.
-wandb: Currently logged in as: andreabenathar (andreabenathar-twl-games) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
-wandb: setting up run oy28oejv
-wandb: Tracking run with wandb version 0.26.1
-wandb: Run data is saved locally in /home/athar/Projects/Unsloth_Core/wandb/run-20260521_182057-oy28oejv
-wandb: Run `wandb offline` to turn off syncing.
-wandb: Syncing run train-astronomy_guide-ollama-safe-any-20260521_safe-any_llama3.2-3b_014
-wandb: ⭐️ View project at https://wandb.ai/andreabenathar-twl-games/unsloth-core
-wandb: 🚀 View run at https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/oy28oejv
-wandb: Initializing weave.
-[36m[1mweave[0m: weave version 0.52.41 is available!  To upgrade, please run:
-[36m[1mweave[0m:  $ pip install weave --upgrade
-[weave.trace.init_message|INFO]weave version 0.52.41 is available!  To upgrade, please run:
- $ pip install weave --upgrade
-[36m[1mweave[0m: Logged in as Weights & Biases user: andreabenathar.
-[36m[1mweave[0m: View Weave data at https://wandb.ai/andreabenathar-twl-games/unsloth-core/weave
-[weave.trace.init_message|INFO]Logged in as Weights & Biases user: andreabenathar.
-View Weave data at https://wandb.ai/andreabenathar-twl-games/unsloth-core/weave
-  Loaded 137 training examples
-  Output: outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_014
-  [wandb] Run URL: https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/oy28oejv
-Unsloth: Tokenizing ["text"]:   0%|          | 0/137 [00:00<?, ? examples/s]Unsloth: Tokenizing ["text"]: 100%|██████████| 137/137 [00:00<00:00, 2092.78 examples/s]
-Unsloth: Packing train dataset:   0%|          | 0/137 [00:00<?, ? examples/s]Unsloth: Packing train dataset: 100%|██████████| 137/137 [00:00<00:00, 32768.00 examples/s]
-==((====))==  Unsloth - 2x faster free finetuning | Num GPUs used = 1
-   \\   /|    Num examples = 38 | Num Epochs = 3 | Total steps = 15
-O^O/ \_/ \    Batch size per device = 1 | Gradient accumulation steps = 8
-\        /    Data Parallel GPUs = 1 | Total batch size (1 x 8 x 1) = 8
- "-____-"     Trainable parameters = 12,156,928 of 3,224,906,752 (0.38% trained)
-🦥 Unsloth: Packing enabled - training is >2x faster and uses less VRAM!
-  [WARN] train_on_responses_only requested, but current trainer API does not expose it; continuing without response-only masking
-  Starting training (3 epochs, 1 batch)...
-  0%|          | 0/15 [00:00<?, ?it/s]`use_return_dict` is deprecated! Use `return_dict` instead!
-  7%|▋         | 1/15 [00:10<02:22, 10.20s/it]                                                7%|▋         | 1/15 [00:10<02:22, 10.20s/it] 13%|█▎        | 2/15 [00:20<02:10, 10.06s/it]                                               13%|█▎        | 2/15 [00:20<02:10, 10.06s/it] 20%|██        | 3/15 [00:29<01:58,  9.90s/it]                                               20%|██        | 3/15 [00:29<01:58,  9.90s/it] 27%|██▋       | 4/15 [00:39<01:47,  9.80s/it]                                               27%|██▋       | 4/15 [00:39<01:47,  9.80s/it] 33%|███▎      | 5/15 [00:47<01:29,  8.99s/it]                                               33%|███▎      | 5/15 [00:47<01:29,  8.99s/it] 40%|████      | 6/15 [00:56<01:20,  8.98s/it]                                               40%|████      | 6/15 [00:56<01:20,  8.98s/it] 47%|████▋     | 7/15 [01:05<01:14,  9.27s/it]                                               47%|████▋     | 7/15 [01:05<01:14,  9.27s/it] 53%|█████▎    | 8/15 [01:15<01:06,  9.50s/it]                                               53%|█████▎    | 8/15 [01:15<01:06,  9.50s/it] 60%|██████    | 9/15 [01:26<00:58,  9.72s/it]                                               60%|██████    | 9/15 [01:26<00:58,  9.72s/it] 67%|██████▋   | 10/15 [01:33<00:45,  9.07s/it]                                                67%|██████▋   | 10/15 [01:33<00:45,  9.07s/it] 73%|███████▎  | 11/15 [01:43<00:37,  9.33s/it]                                                73%|███████▎  | 11/15 [01:43<00:37,  9.33s/it] 80%|████████  | 12/15 [01:52<00:27,  9.33s/it]                                                80%|████████  | 12/15 [01:52<00:27,  9.33s/it] 87%|████████▋ | 13/15 [02:03<00:19,  9.64s/it]                                                87%|████████▋ | 13/15 [02:03<00:19,  9.64s/it] 93%|█████████▎| 14/15 [02:14<00:10, 10.04s/it]                                                93%|█████████▎| 14/15 [02:14<00:10, 10.04s/it]100%|██████████| 15/15 [02:22<00:00,  9.55s/it]                                               100%|██████████| 15/15 [02:22<00:00,  9.55s/it]Unsloth: Restored added_tokens_decoder metadata in /home/athar/Projects/Unsloth_Core/outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_014/checkpoint-15/tokenizer_config.json.
-                                               100%|██████████| 15/15 [02:25<00:00,  9.55s/it]100%|██████████| 15/15 [02:25<00:00,  9.67s/it]
-Unsloth: Restored added_tokens_decoder metadata in /home/athar/Projects/Unsloth_Core/outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_014/tokenizer_config.json.
-wandb: updating run metadata
-wandb: uploading output.log; uploading wandb-summary.json; uploading config.yaml
-wandb: uploading history steps 15-15, summary, console lines 19-19
-wandb: uploading console lines 22-39
-wandb: 
-wandb: Run history:
-wandb:         train/epoch ▁▂▂▃▃▄▄▅▅▅▆▇▇███
-wandb:   train/global_step ▁▁▂▃▃▃▄▅▅▅▆▇▇▇██
-wandb:     train/grad_norm ▇▆█▆▄▅▂▁▄▄▂▂▂▃▃
-wandb: train/learning_rate ▁▂▄▅▇██▇▇▆▅▃▂▂▁
-wandb:          train/loss █▇█▆▅▆▄▃▄▃▂▁▁▁▁
-wandb: 
-wandb: Run summary:
-wandb:          total_flos 1788361524264960.0
-wandb:         train/epoch 3
-wandb:    train/final_loss 2.42417
-wandb:   train/global_step 15
-wandb:     train/grad_norm 1.37381
-wandb: train/learning_rate 0.0
-wandb:          train/loss 1.60277
-wandb:  train/num_examples 137
-wandb:    train/output_dir /home/athar/Projects...
-wandb:     train/wandb_url https://wandb.ai/and...
-wandb:                  +4 ...
-wandb: 
-wandb: 🚀 View run train-astronomy_guide-ollama-safe-any-20260521_safe-any_llama3.2-3b_014 at: https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/oy28oejv
-wandb: ⭐️ View project at: https://wandb.ai/andreabenathar-twl-games/unsloth-core
-wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
-wandb: Find logs at: ./wandb/run-20260521_182057-oy28oejv/logs
-18:23:35 [INFO ] ucore: W&B run: https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/oy28oejv
-[ucore|INFO]W&B run: https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/oy28oejv
-18:23:35 [INFO ] ucore: Training complete: loss=2.4242
-[ucore|INFO]Training complete: loss=2.4242
-Unsloth: Will smartly offload gradients to save VRAM!
-Unsloth: Double buffering enabled (parallel H2D + compute) for backward pass.
-{'loss': '3.428', 'grad_norm': '2.152', 'learning_rate': '0', 'epoch': '0.2105'}
-{'loss': '3.244', 'grad_norm': '1.983', 'learning_rate': '4e-05', 'epoch': '0.4211'}
-{'loss': '3.547', 'grad_norm': '2.285', 'learning_rate': '8e-05', 'epoch': '0.6316'}
-{'loss': '3.109', 'grad_norm': '1.894', 'learning_rate': '0.00012', 'epoch': '0.8421'}
-{'loss': '2.726', 'grad_norm': '1.444', 'learning_rate': '0.00016', 'epoch': '1'}
-{'loss': '3.006', 'grad_norm': '1.717', 'learning_rate': '0.0002', 'epoch': '1.211'}
-{'loss': '2.405', 'grad_norm': '1.075', 'learning_rate': '0.0001951', 'epoch': '1.421'}
-{'loss': '2.11', 'grad_norm': '0.8808', 'learning_rate': '0.0001809', 'epoch': '1.632'}
-{'loss': '2.364', 'grad_norm': '1.467', 'learning_rate': '0.0001588', 'epoch': '1.842'}
-{'loss': '2.076', 'grad_norm': '1.409', 'learning_rate': '0.0001309', 'epoch': '2'}
-{'loss': '1.76', 'grad_norm': '1.022', 'learning_rate': '0.0001', 'epoch': '2.211'}
-{'loss': '1.662', 'grad_norm': '1.102', 'learning_rate': '6.91e-05', 'epoch': '2.421'}
-{'loss': '1.659', 'grad_norm': '1.069', 'learning_rate': '4.122e-05', 'epoch': '2.632'}
-{'loss': '1.664', 'grad_norm': '1.35', 'learning_rate': '1.91e-05', 'epoch': '2.842'}
-{'loss': '1.603', 'grad_norm': '1.374', 'learning_rate': '4.894e-06', 'epoch': '3'}
-{'train_runtime': '145', 'train_samples_per_second': '0.786', 'train_steps_per_second': '0.103', 'train_loss': '2.424', 'epoch': '3'}
-  Saving model...
-  [wandb] Logged run: https://wandb.ai/andreabenathar-twl-games/unsloth-core/runs/oy28oejv
-{"ts": "2026-05-21T21:23:35.017856+00:00", "event": "training_complete", "npc_key": "astronomy_guide", "run_id": "20260521_safe-any_llama3.2-3b_014", "loss": 2.4241696278254192, "examples": 137}
-18:23:35 [WARNING] ucore: Promotion rules failed:
-[ucore|WARNING]Promotion rules failed:
-18:23:35 [WARNING] ucore:   - Training loss 2.4242 exceeds threshold 2.0000
-[ucore|WARNING]  - Training loss 2.4242 exceeds threshold 2.0000
-18:23:35 [INFO ] ucore: Updated 'latest' symlink → runs/20260521_safe-any_llama3.2-3b_014
-[ucore|INFO]Updated 'latest' symlink → runs/20260521_safe-any_llama3.2-3b_014
-18:23:35 [INFO ] ucore: [4/4] Exporting to GGUF (adapter mode for Unity)...
-[ucore|INFO][4/4] Exporting to GGUF (adapter mode for Unity)...
-18:23:35 [INFO ] ucore:   Mode: adapter-only (LLMUnity compatible)
-[ucore|INFO]  Mode: adapter-only (LLMUnity compatible)
-18:23:35 [INFO ] ucore:   Running: /home/athar/Projects/Unsloth_Core/outputs/astronomy_guide
-[ucore|INFO]  Running: /home/athar/Projects/Unsloth_Core/outputs/astronomy_guide
-/home/athar/Projects/Unsloth_Core/unsloth_env/bin/python: can't open file '/home/athar/Projects/Unsloth_Core/scripts/export.py': [Errno 2] No such file or directory
-18:23:35 [ERROR] ucore: GGUF export failed (exit 2)
-[ucore|ERROR]GGUF export failed (exit 2)
-18:23:35 [INFO ] ucore:   Manifest: /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/manifest.json
-[ucore|INFO]  Manifest: /home/athar/Projects/Unsloth_Core/exports/astronomy_guide/manifest.json
-{"ts": "2026-05-21T21:23:35.043236+00:00", "event": "training_finished", "npc_key": "astronomy_guide", "run_id": "20260521_safe-any_llama3.2-3b_014", "loss": 2.4241696278254192, "export": true, "promoted": false}
-
-============================================================
-  Training complete!
-  Run ID:  20260521_safe-any_llama3.2-3b_014
-  Output:  /home/athar/Projects/Unsloth_Core/outputs/astronomy_guide/runs/20260521_safe-any_llama3.2-3b_014
-  Exports: /home/athar/Projects/Unsloth_Core/exports/astronomy_guide
-============================================================
-

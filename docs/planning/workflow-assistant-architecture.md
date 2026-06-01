@@ -224,8 +224,8 @@ The assistant should retrieve compact, structured context from:
 
 - `AGENTS.md`
 - `README.md`
-- `docs/TRAINING_WORKFLOW_CONTEXT.md`
-- `docs/NPC_DATA_RL_EXECUTION_CONTRACT.md`
+- `docs/training-workflow.md`
+- `docs/npc-data-rl-execution-contract.md`
 - `subjects/reference_docs/README.md`
 - `configs/ollama-model-presets.yaml`
 - `configs/presets/*.yaml`

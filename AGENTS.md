@@ -1,6 +1,6 @@
 # Unsloth_Core: Agent Context
 
-Primary source of truth for agents in this repo. Keep this file short and current. Detailed state lives in `docs/PROJECT_STATE.md`; full workflow docs live in `docs/TRAINING_WORKFLOW_CONTEXT.md`.
+Primary source of truth for agents in this repo. Keep this file short and current. Detailed state lives in `docs/project-state.md`; full workflow docs live in `docs/training-workflow.md`.
 
 ## Mission
 
@@ -43,7 +43,7 @@ npm run dev
 
 ## Canonical paths
 
-- Project state: `docs/PROJECT_STATE.md`
+- Project state: `docs/project-state.md`
 - Unified CLI: `./ucore`
 - Specs: `subjects/NPC_specs/<npc>.json`
 - Reference docs: `subjects/reference_docs/<npc>_primer.md`
@@ -100,7 +100,7 @@ python scripts/ops/context_audit.py
 Then update in this order:
 
 1. Actual repo/tool state.
-2. `docs/PROJECT_STATE.md`.
+2. `docs/project-state.md`.
 3. `AGENTS.md`.
 4. Project-local `.hermes/` memory/skills.
 5. Global Hermes memory only for stable facts.
@@ -116,8 +116,8 @@ Then update in this order:
 
 ## Detailed docs
 
-- `docs/PROJECT_STATE.md` — current canonical state.
-- `docs/TRAINING_WORKFLOW_CONTEXT.md` — full pipeline details.
+- `docs/project-state.md` — current canonical state.
+- `docs/training-workflow.md` — full pipeline details.
 - `.hermes/README.md` — repo-local Hermes operating pack.
 - `.hermes/skills/unsloth-core-context-maintenance/SKILL.md` — context cleanup workflow.
 - `.hermes/skills/unsloth-core-operator/SKILL.md` — operator runbook.

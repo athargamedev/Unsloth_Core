@@ -1,6 +1,6 @@
 # Subject Specification Schema (subjects/NPC_specs/*.json)
 
-> **Cross-reference**: For the complete dataset lifecycle, generation techniques, sanitization rules, training data flow, and minimum requirements, see [`TRAINING_WORKFLOW_CONTEXT.md`](../TRAINING_WORKFLOW_CONTEXT.md).
+> **Cross-reference**: For the complete dataset lifecycle, generation techniques, sanitization rules, training data flow, and minimum requirements, see [`training-workflow.md`](../training-workflow.md).
 
 The `subjects/` directory contains JSON files that define the identity, knowledge, and behavior of an NPC. These files are the primary input for the dataset generation pipeline.
 

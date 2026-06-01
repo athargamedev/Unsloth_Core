@@ -570,8 +570,8 @@ Docs is the grounded generation path. The pipeline uses it to:
 |----------|---------|
 | `README.md` | Project overview and quick start |
 | `AGENTS.md` | AI agent reference (architecture, commands, logic map) |
-| `docs/TRAINING_WORKFLOW_CONTEXT.md` | This document — full pipeline detail |
-| `docs/CLI_REFERENCE.md` | Docs flags, generation, and dataset workflow |
+| `docs/training-workflow.md` | This document — full pipeline detail |
+| `docs/legacy-cli-reference.md` | Docs flags, generation, and dataset workflow |
 | `subjects/NPC_specs/*.json` | NPC specification files |
 | `configs/*.yaml` | Training configuration base files |
 | `configs/presets/*.yaml` | Training presets (hyperparameter profiles) |

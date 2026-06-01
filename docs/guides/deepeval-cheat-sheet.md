@@ -979,17 +979,17 @@ if latest_run.exists():
 
 ---
 
-> **Related docs:** [`OLLAMA_LOCAL_PERFORMANCE.md`](OLLAMA_LOCAL_PERFORMANCE.md) — judge tuning,
-> [`TRAINING_WORKFLOW_CONTEXT.md`](TRAINING_WORKFLOW_CONTEXT.md) — full pipeline integration,
+> **Related docs:** [`ollama-local-performance.md`](ollama-local-performance.md) — judge tuning,
+> [`training-workflow.md`](../training-workflow.md) — full pipeline integration,
 > [`tests/evals/metrics.py`](../tests/evals/metrics.py) — our shared metric definitions,
 > [`scripts/dataset/dataset_eval.py`](../scripts/dataset/dataset_eval.py) — quality gate entry point,
-> [`COMMANDS_DICTIONARY.md`](COMMANDS_DICTIONARY.md) — all CLI flags for dataset-eval.
+> [`cli-commands.md`](../reference/cli-commands.md) — all CLI flags for dataset-eval.
 
 [⤴ back to TOC](#table-of-contents)
 
-# Additions for DEEPEVAL_CHEAT_SHEET.md
+# Additions for deepeval-cheat-sheet.md
 
-Here are the proposed additions to enhance the `DEEPEVAL_CHEAT_SHEET.md` file, based on the official Confident AI documentation.
+Here are the proposed additions to enhance the `deepeval-cheat-sheet.md` file, based on the official Confident AI documentation.
 
 ---
 

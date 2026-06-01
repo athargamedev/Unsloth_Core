@@ -2,7 +2,7 @@
 
 Agent-first pipeline for building GGUF LoRA adapters for `llama-3.2-3b-instruct`, so Unity NPCs can load adapters at runtime through LLMUnity and store dialogue/session state in local Supabase.
 
-Current canonical state: `docs/PROJECT_STATE.md`
+Current canonical state: `docs/project-state.md`
 
 ## North Star
 
@@ -114,7 +114,7 @@ npm run dev
 ```text
 AGENTS.md                                  agent entrypoint
 README.md                                  human overview
-docs/PROJECT_STATE.md                      current state
+docs/project-state.md                      current state
 ucore                                      unified CLI
 subjects/NPC_specs/<npc>.json              NPC specs
 subjects/reference_docs/<npc>_primer.md    primers
@@ -135,13 +135,13 @@ Run stale-reference audit:
 python scripts/ops/context_audit.py
 ```
 
-Do not put long historical status dumps in `AGENTS.md`. Put current facts in `docs/PROJECT_STATE.md`; put procedures in `.hermes/skills/`; keep memory compact.
+Do not put long historical status dumps in `AGENTS.md`. Put current facts in `docs/project-state.md`; put procedures in `.hermes/skills/`; keep memory compact.
 
 ## Documentation
 
 - `AGENTS.md` — concise agent entrypoint
-- `docs/PROJECT_STATE.md` — current operational truth
-- `docs/TRAINING_WORKFLOW_CONTEXT.md` — detailed training pipeline
+- `docs/project-state.md` — current operational truth
+- `docs/training-workflow.md` — detailed training pipeline
 - `.hermes/README.md` — repo-local Hermes operating pack
 
 ## License

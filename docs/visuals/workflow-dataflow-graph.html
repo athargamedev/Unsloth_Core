@@ -56,7 +56,7 @@
 <g class="node"><rect class="artifact" x="1445" y="250" width="130" height="92" rx="7"/><text x="1462" y="275">quality_*</text><text class="small" x="1462" y="292">quality_summary</text><text class="small" x="1462" y="306">failures/report</text><text class="small" x="1462" y="320">registry-tracked</text></g>
 
 <!-- train export -->
-<g class="node"><rect class="script" x="120" y="540" width="190" height="62" rx="7"/><text x="145" y="565">train.py</text><text class="small" x="142" y="582">SFT + LoRA + W&B</text></g>
+<g class="node"><rect class="script" x="120" y="540" width="190" height="62" rx="7"/><text x="145" y="565">train.py / grpo</text><text class="small" x="125" y="582">SFT or GRPO (DeepEval Reward)</text></g>
 <g class="node"><rect class="artifact" x="360" y="540" width="205" height="62" rx="7"/><text x="383" y="565">outputs/&lt;npc&gt;/runs</text><text class="small" x="383" y="582">adapter_checkpoint</text></g>
 <g class="node"><rect class="artifact" x="610" y="540" width="180" height="62" rx="7"/><text x="635" y="565">best/latest</text><text class="small" x="635" y="582">symlink pointers</text></g>
 <g class="node"><rect class="script" x="840" y="540" width="175" height="62" rx="7"/><text x="865" y="565">export.py</text><text class="small" x="860" y="582">adapter/full merge</text></g>
@@ -64,10 +64,10 @@
 <g class="node"><rect class="external" x="1290" y="540" width="220" height="62" rx="7"/><text x="1312" y="565">Unity LLMUnity</text><text class="small" x="1312" y="582">StreamingAssets/Models</text></g>
 
 <!-- eval feedback -->
-<g class="node"><rect class="script" x="80" y="810" width="185" height="62" rx="7"/><text x="105" y="835">evaluate.py</text><text class="small" x="102" y="852">base + LoRA compare</text></g>
+<g class="node"><rect class="script" x="80" y="810" width="185" height="62" rx="7"/><text x="105" y="835">evaluate.py / RAG</text><text class="small" x="85" y="852">LangGraph Trace + DeepEval</text></g>
 <g class="node"><rect class="artifact" x="310" y="810" width="205" height="62" rx="7"/><text x="332" y="835">eval reports</text><text class="small" x="332" y="852">eval_index</text></g>
 <g class="node"><rect class="artifact" x="560" y="810" width="190" height="62" rx="7"/><text x="583" y="835">feedback JSON</text><text class="small" x="583" y="852">weak concepts</text></g>
-<g class="node"><rect class="script" x="795" y="810" width="190" height="62" rx="7"/><text x="818" y="835">feedback_loop.py</text><text class="small" x="816" y="852">repair / auto retrain</text></g>
+<g class="node"><rect class="script" x="795" y="810" width="190" height="62" rx="7"/><text x="805" y="835">feedback_loop_deepeval.py</text><text class="small" x="810" y="852">LLM auto-repair on failure</text></g>
 <g class="node"><rect class="external" x="1030" y="790" width="185" height="90" rx="7"/><text x="1052" y="817">Confident AI</text><text class="small" x="1052" y="834">hosted runs/link</text><text class="small" x="1052" y="850">metadata payload</text></g>
 <g class="node"><rect class="external" x="1260" y="790" width="185" height="90" rx="7"/><text x="1282" y="817">W&B</text><text class="small" x="1282" y="834">train/eval ledger</text><text class="small" x="1282" y="850">artifacts + URLs</text></g>
 
@@ -132,10 +132,11 @@
 <tr><td class="warn">G4</td><td>Train/export handoff now records <code>adapter_checkpoint</code> and <code>gguf_adapter</code>.</td><td>Readiness audit can see if export is blocked by missing training output.</td><td>Next: make export consume a manifest-backed run ID by default; keep aliases as convenience only.</td></tr>
 <tr><td class="bad">G5</td><td>Unity deployment is separate from export manifest.</td><td>Export success does not prove runtime model path or base+LoRA pairing is deployable.</td><td>Add deploy stage with checksums, base model alias, adapter path, and Unity StreamingAssets verification.</td></tr>
 <tr><td class="warn">G6</td><td>Eval report index is now represented as <code>eval_index</code>.</td><td>The pipeline registry can tell whether evaluation output exists for an NPC/technique.</td><td>Next: add global comparison ledger/dashboard view across all eval indexes.</td></tr>
-<tr><td class="bad">G7</td><td>Feedback loop calls generate/train/evaluate through subprocess seams.</td><td>Auto-repair can skip or mismatch gate/order unless every subprocess shares context.</td><td>Promote feedback loop to DAG node using same run context and required artifact checks.</td></tr>
+<tr><td class="ok">G7</td><td>Manual Dataset Repair.</td><td>Requires human editing of quality_failures.json to fix pipeline breaks.</td><td>[SOLVED] <code>feedback_loop_deepeval.py</code> automatically LLM-repairs failed rows using DeepEval's metric reasons.</td></tr>
 <tr><td class="ok">G8</td><td><code>ArtifactRegistry</code> + <code>PipelineDAG</code> now exist and <code>./ucore audit pipeline-plan</code> reads registry state.</td><td>Operators can see missing artifacts before running later stages.</td><td>Next: expose the readiness plan in the dashboard and make production hook policy fail-closed.</td></tr>
 <tr><td class="warn">G9</td><td>Direct script entrypoints still exist.</td><td>Useful for dev, dangerous for operators because they may bypass <code>./ucore</code> preflight/parity.</td><td>Add deprecation warnings or wrappers that delegate to <code>./ucore</code> when invoked directly.</td></tr>
 <tr><td class="bad">G10</td><td>Tests still contain stale qwen3 refs while config/docs moved to qwen2.5.</td><td>Future agents may think qwen3 is still a valid default.</td><td>Update/segregate challenger-model tests from default-model tests.</td></tr>
+<tr><td class="warn">G11</td><td>Static SFT constraints on 3B models.</td><td>Baking knowledge into 3B weights causes hallucinations.</td><td>[IN PROGRESS] Migrating to LangGraph RAG Agent + GRPO (Reward Modeling). Prototypes complete; need Unity C# client parity.</td></tr>
 </tbody></table>
 </div>
 

@@ -1,6 +1,6 @@
 # CLI Reference: `./ucore`
 
-> **DEPRECATED**: This reference is superseded by [`docs/COMMANDS_DICTIONARY.md`](../COMMANDS_DICTIONARY.md) which is the authoritative CLI reference (1305 lines, auto-verified against actual CLI).
+> **DEPRECATED**: This reference is superseded by [`docs/cli-commands.md`](cli-commands.md) which is the authoritative CLI reference (1305 lines, auto-verified against actual CLI).
 
 The `ucore` tool is the unified entry point for the Unsloth_Core pipeline. It wraps the underlying Python scripts into a clean, command-driven interface.
 
