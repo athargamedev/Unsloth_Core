@@ -359,12 +359,12 @@ parameters:
 
   judge_model:
     type: str
-    default: "qwen3:latest"
+    default: "qwen2.5:7b"
     stage: deepeval
     description: "Ollama judge model name"
     tooltip: "Ollama model used as evaluator judge."
     resource_impact: none
-    resource_notes: "qwen3:latest (8.2B Q4_K_M) uses ~5.0GB VRAM. On 6GB RTX 3060: fits but leaves ~1GB for KV cache. Set OLLAMA_NUM_PARALLEL=3 not 4. Unload before training."
+    resource_notes: "qwen2.5:7b (Q4_K_M) uses ~4.5GB VRAM. On 6GB RTX 3060: fits comfortably with ~1.5GB for KV cache. Set OLLAMA_NUM_PARALLEL=3. Unload before training."
     cli_flag: "--judge-model"
 
   judge_temperature:

@@ -36,6 +36,7 @@ MULTI_TURN_CATEGORIES = ["teaching", "dialogue"]
 # ── Prompt / string literals ──────────────────────────────────────────────────
 DEFAULT_OLLAMA_MODEL = "llama3.1:latest"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/chat"
+DEFAULT_JUDGE_MODEL = "qwen2.5:7b"            # judge/eval model (pipeline-wide default)
 DEFAULT_OPENAI_MODEL = "gpt-4o"
 DEFAULT_OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 DEFAULT_ANTHROPIC_MODEL = "claude-3-5-sonnet-20240620"

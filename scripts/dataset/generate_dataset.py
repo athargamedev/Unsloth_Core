@@ -525,6 +525,8 @@ class OllamaGenerator(RetryableAPIClient):
             )
 
 
+# DEPRECATED: OpenAIGenerator is not reachable from any ucore subcommand.
+# No CLI path exists for --technique openai. Keep for future use.
 class OpenAIGenerator(RetryableAPIClient):
     def __init__(self, model="gpt-4o", api_key=None, max_retries: int = 3):
         self.model = model
@@ -591,6 +593,8 @@ class OpenAIGenerator(RetryableAPIClient):
             )
 
 
+# DEPRECATED: AnthropicGenerator is not reachable from any ucore subcommand.
+# No CLI path exists for --technique anthropic. Keep for future use.
 class AnthropicGenerator(RetryableAPIClient):
     def __init__(self, model="claude-3-5-sonnet-20240620", api_key=None, max_retries: int = 3):
         self.model = model
@@ -1353,6 +1357,81 @@ def fallback_generation_run_id(npc_key: str | None, technique: str) -> str:
     return f"{stamp}_{npc_key or 'unknown'}_generate_{technique}_{uuid.uuid4().hex[:8]}"
 
 
+def validate_generated_dataset(train_path, val_path=None):
+    """
+    Validate a generated dataset JSONL file for structural integrity.
+    Checks: file exists, non-empty, valid JSONL, required ChatML fields.
+    Returns True if valid, False otherwise.
+    """
+    if not train_path.exists():
+        log_error(f"Dataset validation FAILED: {train_path} does not exist")
+        return False
+
+    with open(train_path) as f:
+        lines = f.readlines()
+
+    if len(lines) == 0:
+        log_error(f"Dataset validation FAILED: {train_path} is empty")
+        return False
+
+    errors = 0
+    for i, line in enumerate(lines):
+        line = line.strip()
+        if not line:
+            errors += 1
+            log_warn(f"Dataset validation: empty line {i+1} in {train_path}")
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError as e:
+            log_error(f"Dataset validation FAILED: line {i+1} is not valid JSON: {e}")
+            errors += 1
+            continue
+
+        # Check required fields
+        if "messages" not in obj:
+            log_error(f"Dataset validation FAILED: line {i+1} missing 'messages' field")
+            errors += 1
+            continue
+
+        if not isinstance(obj["messages"], list) or len(obj["messages"]) == 0:
+            log_error(f"Dataset validation FAILED: line {i+1} 'messages' is empty or not a list")
+            errors += 1
+            continue
+
+        # Check each message has role and content
+        for j, msg in enumerate(obj["messages"]):
+            if not isinstance(msg, dict):
+                log_error(f"Dataset validation FAILED: line {i+1}, message {j+1} is not a dict")
+                errors += 1
+                continue
+            if "role" not in msg:
+                log_error(f"Dataset validation FAILED: line {i+1}, message {j+1} missing 'role'")
+                errors += 1
+            if "content" not in msg:
+                log_error(f"Dataset validation FAILED: line {i+1}, message {j+1} missing 'content'")
+                errors += 1
+
+    # Check for null bytes
+    with open(train_path, "rb") as f:
+        content = f.read()
+        if b"\x00" in content:
+            log_error(f"Dataset validation FAILED: {train_path} contains null bytes")
+            errors += 1
+
+    if errors > 0:
+        log_error(f"Dataset validation: {errors} error(s) found in {train_path}")
+        return False
+
+    row_count = len(lines)
+    log_info(f"Dataset validation PASSED: {train_path} — {row_count} rows, all valid ChatML")
+
+    if val_path and val_path.exists():
+        return validate_generated_dataset(val_path, None)
+
+    return True
+
+
 def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.6, technique="template", spec_path=None, telemetry_ipc=None, workflow_hooks=None, run_id=None, fresh=False):
     """Generate a complete dataset from a subject spec."""
     random.seed(seed)
@@ -1554,6 +1633,11 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                     for ex in val_examples:
                         f.write(json.dumps(ex) + "\n")
 
+            # ── Validate generated dataset ──
+            if not validate_generated_dataset(train_path, val_path):
+                log_error("Dataset generation produced invalid output — aborting")
+                sys.exit(1)
+
             # ── Compute statistics for manifest ──
             by_category = defaultdict(int)
             by_difficulty = defaultdict(int)
@@ -1651,7 +1735,7 @@ def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, outp
     text = Path(ref_doc_path).read_text(encoding="utf-8")
     chunks = [c.strip() for c in text.split("\n\n") if len(c.strip()) > 50]
 
-    judge_model = os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen3:latest")
+    judge_model = os.getenv("DEEPEVAL_OLLAMA_MODEL", C.DEFAULT_JUDGE_MODEL)
     judge_base_url = os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434")
     judge = OllamaModel(
         model=judge_model,

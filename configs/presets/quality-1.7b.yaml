@@ -1,0 +1,17 @@
+# Quality preset for 1.5B-1.7B models on 6GB VRAM
+# More epochs and higher rank for better quality, at cost of training time
+training:
+  batch_size: 1
+  gradient_accumulation_steps: 8
+  max_seq_length: 2048
+  num_epochs: 5
+  learning_rate: 0.00015
+  lr_scheduler_type: cosine
+  warmup_steps: 15
+  weight_decay: 0.01
+  packing: true
+  train_on_responses_only: true
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.05

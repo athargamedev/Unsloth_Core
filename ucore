@@ -321,6 +321,10 @@ def main():
     spec_val_p.add_argument("--require-dataset-minimums", action="store_true", help="Fail unless all dataset categories meet minimum SFT counts")
     spec_val_p.add_argument("--generation-ready", action="store_true", help="Fail unless the spec is ready for fresh dataset generation")
 
+    # Validate params
+    val_params_p = subparsers.add_parser("validate-params", help="Validate parameter-registry.yaml against codebase")
+    val_params_p.add_argument("--json", action="store_true", help="Output as JSON")
+
     # Export (adapter-only by default for Unity, --full-merge for standalone GGUF)
     export_p = subparsers.add_parser("export", help="Export trained LoRA adapter to GGUF (adapter-only by default)")
     export_p.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
@@ -799,6 +803,12 @@ def main():
         if args.generation_ready:
             cmd.append("--generation-ready")
         run_cmd(cmd, announce=not args.json)
+
+    elif args.command == "validate-params":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "validate_params.py")]
+        if args.json:
+            cmd.append("--json")
+        run_cmd(cmd)
 
     elif args.command == "export":
         cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "export.py"), args.npc_key]

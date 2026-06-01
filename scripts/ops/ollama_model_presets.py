@@ -5,10 +5,12 @@ from typing import Any
 
 import yaml
 
+from _config.constants import DEFAULT_JUDGE_MODEL
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 OLLAMA_MODEL_PRESETS_PATH = PROJECT_ROOT / "configs" / "ollama-model-presets.yaml"
 DEFAULT_GENERATION_PRESET = "generate-qwen25"
-DEFAULT_JUDGE_PRESET = "judge-qwen3-exp"
+DEFAULT_JUDGE_PRESET = "judge-qwen25"
 
 
 def load_ollama_model_preset_map() -> dict[str, Any]:
@@ -26,7 +28,7 @@ def resolve_ollama_model(*, preset: str | None = None, model: str | None = None,
     2. Explicit CLI preset
     3. Role-specific default preset from configs/ollama-model-presets.yaml
     4. Role-specific default model mapping
-    5. Safety fallback to qwen3:latest for judging, qwen2.5:7b for generation
+    5. Safety fallback to DEFAULT_JUDGE_MODEL for judging, qwen2.5:7b for generation
     """
     if model:
         return model.strip()
@@ -48,5 +50,5 @@ def resolve_ollama_model(*, preset: str | None = None, model: str | None = None,
             return chosen_model.strip()
 
     if role == "judge":
-        return "qwen3:latest"
+        return DEFAULT_JUDGE_MODEL
     return "qwen2.5:7b"

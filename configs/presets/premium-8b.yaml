@@ -1,0 +1,18 @@
+# Premium preset for 7B-8B models on 15GB+ VRAM (Colab T4/L4)
+# Same parameters as premium-3b, scaled for larger models
+training:
+  batch_size: 2
+  gradient_accumulation_steps: 8
+  max_seq_length: 2048
+  num_epochs: 3
+  learning_rate: 0.00015
+  lr_scheduler_type: cosine
+  warmup_steps: 20
+  weight_decay: 0.01
+  packing: true
+  train_on_responses_only: true
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: "q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj"

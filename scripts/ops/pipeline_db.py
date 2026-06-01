@@ -47,6 +47,8 @@ logger = logging.getLogger(__name__)
 
 # ── Constants ──────────────────────────────────────────────────────────────
 
+from _config.constants import DEFAULT_JUDGE_MODEL
+
 _DEFAULT_SUPABASE_HOST = "127.0.0.1"
 _DEFAULT_SUPABASE_PORT = 15434
 _DEFAULT_SUPABASE_USER = "postgres"
@@ -1178,7 +1180,7 @@ class PipelineDB:
         metrics: Optional[dict[str, Any]] = None,
         categories: Optional[dict[str, Any]] = None,
         failures: Optional[list[dict[str, Any]]] = None,
-        judge_model: str = "qwen3:latest",
+        judge_model: str = DEFAULT_JUDGE_MODEL,
         dataset_path: Optional[str] = None,
         **kwargs: Any,
     ) -> dict:
@@ -1194,7 +1196,7 @@ class PipelineDB:
             metrics: Optional metrics dict (JSONB).
             categories: Optional per-category breakdown dict (JSONB).
             failures: Optional list of failure dicts (JSONB).
-            judge_model: Judge model name (default "qwen3:latest").
+            judge_model: Judge model name (default DEFAULT_JUDGE_MODEL).
             dataset_path: Optional path to the evaluated dataset.
             **kwargs: Additional columns for forward compatibility.
 

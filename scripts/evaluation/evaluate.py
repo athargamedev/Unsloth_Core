@@ -35,7 +35,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from _config import paths
+from _config import constants, paths
 from _config.workflow_context import load_subject_spec as load_shared_subject_spec
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.ops.confident_api import ConfidentAPIClient
@@ -223,12 +223,13 @@ def quality_estimate(text):
 class LlamaServer:
     """Manage a llama.cpp server subprocess for model inference."""
 
-    def __init__(self, gguf_path, port=8888, host="127.0.0.1", lora_path=None, lora_weight=1.0, gpu_layers=99, max_tokens=256):
+    def __init__(self, gguf_path, port=8888, host="127.0.0.1", lora_path=None, lora_weight=1.0, gpu_layers=99, max_tokens=256, log_dir=None):
         self.gguf_path = Path(gguf_path)
         self.lora_path = Path(lora_path) if lora_path else None
         self.lora_weight = lora_weight
         self.gpu_layers = gpu_layers
         self.max_tokens = max_tokens
+        self.log_dir = Path(log_dir) if log_dir else None
         self.port = port
         self.host = host
         self.process = None
@@ -240,7 +241,6 @@ class LlamaServer:
         candidates = [
             self.gguf_path.parent / "llama-server",
             self.gguf_path.parent.parent / "llama-server",
-            Path("/home/athar/.unsloth/llama.cpp/build/bin/llama-server"),
             Path.home() / ".unsloth/llama.cpp/build/bin/llama-server",
         ]
         llama_server = None
@@ -256,7 +256,7 @@ class LlamaServer:
             if not llama_server:
                 # Fall back: try to find it
                 search = subprocess.run(
-                    ["find", "/home/athar", "-name", "llama-server", "-type", "f"],
+                    ["find", str(Path.home()), "-name", "llama-server", "-type", "f"],
                     capture_output=True, text=True, timeout=10
                 )
                 if search.stdout.strip():
@@ -281,10 +281,21 @@ class LlamaServer:
             print(f"[server] LoRA adapter: {self.lora_path}")
 
         print(f"[server] Starting: {' '.join(cmd)}")
+
+        # Route stderr to log file for diagnostics
+        if self.log_dir:
+            self.log_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            log_file = self.log_dir / f"llama_server_{self.port}_{timestamp}.log"
+            print(f"[server] stderr log: {log_file}")
+            stderr_target = open(log_file, "w")
+        else:
+            stderr_target = subprocess.DEVNULL
+
         self.process = subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stderr=stderr_target,
         )
 
         # Wait for server to be ready — probe HTTP endpoint, not just TCP
@@ -413,7 +424,7 @@ FORMAT: Return ONLY a JSON object with:
 """
 
 class OllamaJudge:
-    def __init__(self, model="qwen3:latest", url="http://localhost:11434/api/chat"):
+    def __init__(self, model=constants.DEFAULT_JUDGE_MODEL, url="http://localhost:11434/api/chat"):
         self.model = model
         self.url = url
 
@@ -1286,7 +1297,7 @@ def main():
     # Judge
     parser.add_argument("--judge", action="store_true", help="Use an LLM judge")
     parser.add_argument("--judge-provider", default="ollama", choices=["ollama", "wandb"], help="Judge backend")
-    parser.add_argument("--judge-model", default="qwen3:latest", help="Judge model")
+    parser.add_argument("--judge-model", default=constants.DEFAULT_JUDGE_MODEL, help="Judge model")
     parser.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference")
     parser.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference")
 
@@ -1303,7 +1314,7 @@ def main():
     # DeepEval
     parser.add_argument("--deepeval", action="store_true", default=False,
                         help="Also run DeepEval model quality evaluation and push results to Confident AI")
-    parser.add_argument("--deepeval-judge-model", default="qwen3:latest",
+    parser.add_argument("--deepeval-judge-model", default=constants.DEFAULT_JUDGE_MODEL,
                         help="DeepEval judge model for model evaluation")
     parser.add_argument("--deepeval-identifier", default=None,
                         help="Identifier for the DeepEval test run")
@@ -1394,7 +1405,7 @@ def main():
 
         # Start baseline server
         print("\n[1/4] Starting baseline server...")
-        baseline_kwargs = dict(port=args.port, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens)
+        baseline_kwargs = dict(port=args.port, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens, log_dir=report_dir / "logs")
         if args.base_model:
             base_model_path = Path(args.base_model)
             if not base_model_path.exists():
@@ -1422,7 +1433,7 @@ def main():
 
         # Start candidate server
         print("\n[3/4] Starting candidate server...")
-        candidate_kwargs = dict(port=args.port + 1, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens)
+        candidate_kwargs = dict(port=args.port + 1, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens, log_dir=report_dir / "logs")
         if args.base_model:
             # LoRA mode: candidate is an adapter, start server with base model + --lora
             base_model_path = Path(args.base_model)
@@ -1452,7 +1463,7 @@ def main():
             if args.judge:
                 if args.judge_provider == "wandb":
                     judge_model = args.judge_model
-                    if judge_model in {"qwen3:latest", "llama3.1:latest"}:
+                    if judge_model in {constants.DEFAULT_JUDGE_MODEL, "llama3.1:latest"}:
                         judge_model = DEFAULT_WANDB_INFERENCE_MODEL
                     print(f"Initializing W&B Inference judge ({judge_model})...")
                     judge = WandbInferenceJudge(
@@ -1931,7 +1942,7 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
                           "confident_url": dashboard_url,
                           "remote_eval": True,
                           "test_run_id": test_run_id or "",
-                          "judge_model": getattr(args, 'deepeval_judge_model', 'qwen3:latest')},
+                           "judge_model": getattr(args, 'deepeval_judge_model', constants.DEFAULT_JUDGE_MODEL)},
             )
         except Exception:
             pass

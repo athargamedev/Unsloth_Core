@@ -39,6 +39,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
+from _config.constants import DEFAULT_JUDGE_MODEL, DEFAULT_OLLAMA_MODEL
 from _config.workflow_context import resolve_workflow_context
 from scripts.ops.ollama_model_presets import resolve_ollama_model
 from scripts.ops.run_registry import make_pipeline_run_id
@@ -52,7 +53,7 @@ DEFAULT_QUALITY_THRESHOLD = 25.0
 DEFAULT_VIOLATION_THRESHOLD = 1
 DEFAULT_EXTRA_EXAMPLES = 4
 DEFAULT_TRAIN_PRESET = "fast-3b"
-DEFAULT_REGENERATION_TECHNIQUE = "template"
+DEFAULT_REGENERATION_TECHNIQUE = "ollama"
 DEFAULT_REGENERATION_MODEL = "qwen2.5:7b"
 DEFAULT_REGENERATION_URL = "http://localhost:11434"
 DEFAULT_REGENERATION_BATCH_SIZE = 4
@@ -305,7 +306,7 @@ def run_training(npc_key, preset, technique="template", dry_run=False, allow_ung
     return None
 
 
-def run_dataset_eval(npc_key, technique="template", judge_model="qwen3:latest",
+def run_dataset_eval(npc_key, technique="template", judge_model=DEFAULT_JUDGE_MODEL,
                      ollama_base_url="http://localhost:11434",
                      cases_per_category=1, dry_run=False, soft_fail=False,
                      judge_provider="ollama", wandb_inference_project=None, wandb_inference_entity=None):
@@ -429,8 +430,8 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       url=DEFAULT_REGENERATION_URL,
                       batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
                       skip_dataset_eval=False,
-                      deepeval_judge_provider="ollama",
-                      deepeval_judge_model="qwen3:latest",
+                       deepeval_judge_provider="ollama",
+                       deepeval_judge_model=DEFAULT_JUDGE_MODEL,
                       deepeval_ollama_url="http://localhost:11434",
                       deepeval_cases_per_category=5,
                       deepeval_soft_fail=False,
@@ -459,6 +460,11 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
         except Exception as e:
             resolved_technique = None
     technique = resolved_technique or DEFAULT_REGENERATION_TECHNIQUE
+
+    VALID_TECHNIQUES = ["template", "ollama", "docs"]
+    if technique not in VALID_TECHNIQUES:
+        print(f"  [warn] Unknown technique '{technique}', defaulting to '{DEFAULT_REGENERATION_TECHNIQUE}'")
+        technique = DEFAULT_REGENERATION_TECHNIQUE
 
     hook_recorder = WorkflowHookRecorder(
         Path(workflow_hooks) if workflow_hooks else default_hook_path(Path(feedback_path).parent),
@@ -515,7 +521,10 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                 if not skip_gap_detection:
                     print(f"\n{'─' * 40}")
                     print("  Checking knowledge coverage for weak concepts...")
-                    print("  (gap detection requires external service — skipping)")
+                    gap_results = identify_weak_concepts(
+                        feedback_data, win_rate_threshold, quality_threshold,
+                        violation_threshold, extra_examples
+                    )
                     result["gap_results"] = gap_results
 
                     if save_gaps:

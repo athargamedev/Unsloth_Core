@@ -1,0 +1,11 @@
+# Fast preset for 0.5B models on 6GB VRAM
+# Uses safe-any as base with optimizations for smaller models
+training:
+  batch_size: 2
+  gradient_accumulation_steps: 4
+  max_seq_length: 1024
+  warmup_steps: 5
+  learning_rate: 0.0003
+lora:
+  r: 8
+  alpha: 16

@@ -40,7 +40,7 @@ from _config.workflow_context import resolve_workflow_context
 from _config.log_setup import log_info, log_warn, log_error, log_state
 from scripts.dataset.dataset_contracts import file_sha256
 from scripts.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
-from scripts.ops.preflight import run_preflight
+from scripts.ops.preflight import query_gpu_memory, run_preflight
 from scripts.ops.model_presets import resolve_training_preset
 
 # ── Model-size-aware presets ────────────────────────────────────────────────
@@ -1242,6 +1242,25 @@ def main():
     log_config_snapshot(config, run_dir)
     log_state("training_start", npc_key=npc_key, run_id=run_id, model=model_name, preset=preset_name)
     training_loss = None  # initialize early so it always exists in manifest scope
+
+    # ── VRAM pre-flight check ───────────────────────────────────────────────
+    free_vram_gb, total_vram_gb = query_gpu_memory()
+    if free_vram_gb is not None:
+        threshold = 1.25 * vram_gb
+        if free_vram_gb < threshold:
+            log_warn(
+                "VRAM check: %.1fGB free / %.1fGB total — estimated need: %.1fGB (threshold: %.1fGB). "
+                "Training may OOM. Consider a smaller preset, model, or lowering max_seq_length.",
+                free_vram_gb, total_vram_gb or 0.0, vram_gb, threshold,
+            )
+        else:
+            log_info(
+                "VRAM check: %.1fGB free / %.1fGB total — estimated need: %.1fGB ✓",
+                free_vram_gb, total_vram_gb or 0.0, vram_gb,
+            )
+    else:
+        log_warn("VRAM check: could not query GPU memory (nvidia-smi not available)")
+
     with hook_recorder.step("training_pipeline", run_id=run_id, output_dir=run_dir, export_gguf=bool(args.export_gguf), preset=preset_name):
 
         # ── Load model ─────────────────────────────────────────────────────

@@ -18,7 +18,9 @@ import subprocess
 
 
 class ProjectAudit:
-    def __init__(self, project_root="/home/athar/Projects/Unsloth_Core"):
+    def __init__(self, project_root=None):
+        if project_root is None:
+            project_root = Path.cwd()
         self.root = Path(project_root)
         self.state_file = self.root / "eval/results/pipeline_state.json"
         self.supabase_db_url = "postgresql://postgres:postgres@127.0.0.1:15434/postgres"
