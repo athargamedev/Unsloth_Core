@@ -19,7 +19,8 @@ function getRegistry(repoRoot: string): unknown {
     const parsed = YAML.parse(raw);
     _registryCache = { data: parsed, path: registryPath, mtime: stat.mtimeMs };
     return parsed;
-  } catch {
+  } catch (err) {
+    console.error(`[PARAMS] Error loading registry at ${registryPath}:`, err);
     return null;
   }
 }
@@ -35,13 +36,15 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
     try {
       const parsed = getRegistry(repoRoot);
       if (!parsed) {
-        res.status(404).json({ error: "Parameter registry not found" });
+        const registryPath = path.join(repoRoot, "configs", "parameter-registry.yaml");
+        const exists = fs.existsSync(registryPath);
+        res.status(404).json({ error: "Parameter registry not found", repoRoot, registryPath, exists });
         return;
       }
       res.json(parsed);
     } catch (err) {
       console.error("[PARAMS] Failed to parse parameter registry:", err);
-      res.status(500).json({ error: "Failed to parse parameter registry" });
+      res.status(500).json({ error: "Failed to parse parameter registry", details: String(err) });
     }
   });
 

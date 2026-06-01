@@ -22,7 +22,7 @@ parameters:
     default: 0.7
     min: 0.0
     max: 2.0
-    stage: generation
+    stage: global
     description: "LLM generation temperature"
     tooltip: "Higher = more creative/random. Lower = deterministic. 0.6-0.8 for generation."
     resource_impact: none
@@ -34,7 +34,7 @@ parameters:
     default: 512
     min: 64
     max: 8192
-    stage: generation
+    stage: global
     description: "Max tokens per generated response"
     tooltip: "Max tokens per generated response. NPC teaching needs more (512-1024), simple identity needs less."
     resource_impact: none
@@ -91,9 +91,9 @@ parameters:
     type: choice
     default: template
     choices: [template, docs, ollama, openai, anthropic]
-    stage: generation
-    description: "Dataset generation technique"
-    tooltip: "Generation technique. template=fast deterministic, ollama=local LLM, openai/anthropic=API."
+    stage: global
+    description: "Dataset generation / training technique"
+    tooltip: "Technique to use (e.g. template, docs, ollama)."
     resource_impact: none
     cli_flag: "--technique"
 
@@ -217,7 +217,7 @@ parameters:
   dry_run:
     type: bool
     default: false
-    stage: generation
+    stage: global
     description: "Show plan without executing"
     tooltip: "Show generation plan without executing."
     resource_impact: none
@@ -439,7 +439,7 @@ parameters:
   wandb:
     type: bool
     default: false
-    stage: deepeval
+    stage: global
     description: "Enable W&B logging for dataset eval"
     tooltip: "Enable W&B logging for dataset eval."
     resource_impact: none
@@ -729,15 +729,7 @@ parameters:
     resource_impact: none
     cli_flag: "--report-to"
 
-  technique:
-    type: choice
-    default: ""
-    choices: [template, docs, ollama, openai, anthropic]
-    stage: training
-    description: "Dataset technique for data path resolution"
-    tooltip: "Dataset technique to use for training data path resolution."
-    resource_impact: none
-    cli_flag: "--technique"
+
 
   model:
     type: str
@@ -864,29 +856,6 @@ parameters:
 
   # ── Evaluation ─────────────────────────────────────────────────────────
 
-  temperature:
-    type: float
-    default: 0.7
-    min: 0.0
-    max: 2.0
-    stage: evaluation
-    description: "Eval generation temperature"
-    tooltip: "Eval generation temperature. Lower = more consistent answers."
-    resource_impact: none
-    cli_flag: "--temperature"
-    aliases: ["-t"]
-
-  max_tokens:
-    type: int
-    default: 256
-    min: 16
-    max: 4096
-    stage: evaluation
-    description: "Max tokens per eval answer"
-    tooltip: "Max tokens per eval answer. 256 for concise, 512+ for verbose."
-    resource_impact: none
-    cli_flag: "--max-tokens"
-
   num_questions:
     type: int
     default: 10
@@ -975,15 +944,6 @@ parameters:
     resource_impact: disk
     cli_flag: "--track"
 
-  wandb:
-    type: bool
-    default: false
-    stage: evaluation
-    description: "Enable W&B evaluation tracking"
-    tooltip: "Enable W&B evaluation tracking."
-    resource_impact: none
-    cli_flag: "--wandb"
-
   interactive:
     type: bool
     default: false
@@ -1027,15 +987,6 @@ parameters:
     tooltip: "Max constraint violations allowed per concept."
     resource_impact: none
     cli_flag: "--violation-threshold"
-
-  dry_run:
-    type: bool
-    default: false
-    stage: feedback
-    description: "Analyze without executing regeneration"
-    tooltip: "Analyze without executing regeneration."
-    resource_impact: none
-    cli_flag: "--dry-run"
 
   auto:
     type: bool
