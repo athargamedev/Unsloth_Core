@@ -19,31 +19,35 @@ Usage:
 from __future__ import annotations
 
 import os
-from functools import wraps
 from contextlib import contextmanager
+from functools import wraps
 from typing import Any, Callable, TypeVar
 
 try:
-    from deepeval.tracing import trace as deepeval_trace
-    
-    @contextmanager
-    def trace_type(span_type: str, metrics: list[str] | None = None, name: str | None = None):
-        """Context manager to trace a block of code with a specific span type in DeepEval."""
-        with deepeval_trace(name=name, metric_collection=span_type):
-            yield
-            
+    from deepeval.tracing import trace as deepeval_trace, current_trace_context
 except ImportError:
-    @contextmanager
-    def trace_type(span_type: str, metrics: list[str] | None = None, name: str | None = None):
-        """Safe fallback context manager when deepeval tracing is not available."""
+    deepeval_trace = None  # type: ignore
+    current_trace_context = None  # type: ignore
+
+
+@contextmanager
+def trace_type(span_type: str, metrics: list[str] | None = None, name: str | None = None):
+    """Context manager to trace a block of code with a specific DeepEval span type."""
+    if deepeval_trace is None:
+        yield
+        return
+
+    span_name = name or span_type
+    metadata = {
+        "span_type": span_type,
+        "span_name": span_name,
+        "metrics": metrics or [],
+        "prompt_version": os.environ.get("DEEPEVAL_PROMPT_VERSION", "unknown"),
+    }
+
+    with deepeval_trace(name=span_name, metric_collection=span_type, metadata=metadata):
         yield
 
-try:
-    from deepeval.tracing import get_trace_stack
-except ImportError:
-    def get_trace_stack() -> list[Any] | None:
-        """Safe fallback when get_trace_stack is not available."""
-        return None
 
 __all__ = [
     "trace_agent_node",
@@ -231,9 +235,15 @@ def get_current_trace_context() -> dict[str, Any] | None:
         Trace metadata (span name, type, metrics) or None if not tracing.
     """
     try:
-        stack = get_trace_stack()
-        if stack:
-            return {"depth": len(stack), "active": True}
+        if current_trace_context is not None:
+            ctx = current_trace_context.get()
+            if ctx is not None:
+                return {
+                    "active": True,
+                    "context": str(ctx),
+                    "span_type": getattr(ctx, "span_type", None),
+                    "name": getattr(ctx, "name", None),
+                }
     except Exception:
         pass
     return None

@@ -12,6 +12,7 @@ from src.core.tracing.deepeval_tracing import (
     trace_agent_node,
     trace_tool,
     trace_retrieval,
+    trace_type,
     AGENT_METRICS,
     RETRIEVAL_METRICS,
 )
@@ -92,7 +93,8 @@ def search_lore(query: str) -> str:
     simple text search otherwise.
     """
     # Try vector search first, fall back to text search
-    return _search_lore_vector(query)
+    with trace_type(name="search_lore", span_type="tool", metrics=RETRIEVAL_METRICS):
+        return _search_lore_vector(query)
 
 
 tools = [search_lore]

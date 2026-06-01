@@ -6,7 +6,7 @@ from typing import Optional, Tuple, Union
 from deepeval.metrics import (
     AnswerRelevancyMetric,
     BiasMetric,
-    ContextualPrecisionMetric,
+    ContextualRelevancyMetric,
     ConversationCompletenessMetric,
     FaithfulnessMetric,
     GEval,
@@ -184,7 +184,7 @@ DATASET_QUALITY_METRICS = [
 RAG_QUALITY_METRICS = [
     FaithfulnessMetric(model=JUDGE_MODEL, threshold=0.85, async_mode=True),
     AnswerRelevancyMetric(model=JUDGE_MODEL, threshold=0.80, async_mode=True),
-    ContextualPrecisionMetric(model=JUDGE_MODEL, threshold=0.75, async_mode=True),
+    ContextualRelevancyMetric(model=JUDGE_MODEL, threshold=0.75, async_mode=True),
 ]
 
 CONVERSATIONAL_METRICS = [
