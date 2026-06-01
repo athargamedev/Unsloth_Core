@@ -3,6 +3,36 @@ import path from "path";
 import fs from "fs";
 import type { RouterDependencies, PipelineRunRecord } from "../types";
 
+const CANONICAL_STAGE_ORDER = ["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"] as const;
+const STAGE_OUTPUT_ARTIFACTS: Record<string, string[]> = {
+  generate: ["dataset_raw"],
+  sanitize: ["dataset_clean"],
+  dataset_eval: ["quality_summary"],
+  train: ["adapter_checkpoint"],
+  export: ["gguf_adapter"],
+  evaluate: ["eval_index"],
+};
+const STAGE_REQUIRED_ARTIFACTS: Record<string, string[]> = {
+  generate: [],
+  sanitize: ["dataset_raw"],
+  dataset_eval: ["dataset_clean"],
+  train: ["dataset_clean", "quality_summary"],
+  export: ["adapter_checkpoint"],
+  evaluate: ["gguf_adapter"],
+};
+
+interface ArtifactRecord {
+  ts?: string;
+  npc_key?: string;
+  technique?: string | null;
+  stage?: string;
+  artifact_type?: string;
+  path?: string;
+  sha256?: string | null;
+  metadata?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 /**
  * Registers /api/pipeline/* routes.
  */
@@ -12,6 +42,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
   const pipelineRoot = path.join(repoRoot, ".pipeline");
   const pipelineRunsRoot = path.join(pipelineRoot, "runs");
   const pipelineIndexPath = path.join(pipelineRoot, "runs.jsonl");
+  const artifactIndexPath = path.join(pipelineRoot, "artifacts.jsonl");
 
   function readTailLines(filePath: string, maxLines = 40): string[] {
     try {
@@ -66,6 +97,79 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
     return readTailLines(path.join(pipelineRunsRoot, runId, "log_state.jsonl"), 1000);
   }
 
+  function readArtifactRecords(
+    limit = 2000,
+    npcKey?: string,
+    technique?: string | null,
+  ): ArtifactRecord[] {
+    return readTailLines(artifactIndexPath, limit * 2)
+      .map((line) => {
+        try {
+          return JSON.parse(line) as ArtifactRecord;
+        } catch {
+          return null;
+        }
+      })
+      .filter((record): record is ArtifactRecord => Boolean(record))
+      .filter((record) => !npcKey || record.npc_key === npcKey)
+      .filter((record) => technique === undefined || record.technique === technique)
+      .slice(-limit);
+  }
+
+  function latestArtifact(records: ArtifactRecord[], artifactType: string): ArtifactRecord | null {
+    for (let index = records.length - 1; index >= 0; index -= 1) {
+      if (records[index]?.artifact_type === artifactType) return records[index];
+    }
+    return null;
+  }
+
+  function producerFor(artifactType: string): string | null {
+    for (const [stage, outputs] of Object.entries(STAGE_OUTPUT_ARTIFACTS)) {
+      if (outputs.includes(artifactType)) return stage;
+    }
+    return null;
+  }
+
+  function buildReadinessPlan(
+    npcKey: string,
+    targetStage: string,
+    technique?: string | null,
+  ) {
+    const normalizedTarget = targetStage || "evaluate";
+    if (!CANONICAL_STAGE_ORDER.includes(normalizedTarget as typeof CANONICAL_STAGE_ORDER[number])) {
+      return { error: `Unknown pipeline stage: ${normalizedTarget}` };
+    }
+    const records = readArtifactRecords(2000, npcKey, technique);
+    const targetIndex = CANONICAL_STAGE_ORDER.indexOf(normalizedTarget as typeof CANONICAL_STAGE_ORDER[number]);
+    const steps = CANONICAL_STAGE_ORDER.slice(0, targetIndex + 1).map((stage) => {
+      const missingArtifacts = (STAGE_REQUIRED_ARTIFACTS[stage] ?? []).filter(
+        (artifactType) => latestArtifact(records, artifactType) === null,
+      );
+      const producedArtifacts = Object.fromEntries(
+        (STAGE_OUTPUT_ARTIFACTS[stage] ?? []).map((artifactType) => [artifactType, latestArtifact(records, artifactType)]),
+      );
+      return {
+        stage,
+        ready: missingArtifacts.length === 0,
+        missing_artifacts: missingArtifacts,
+        missing_stages: missingArtifacts.map(producerFor).filter(Boolean),
+        produces: STAGE_OUTPUT_ARTIFACTS[stage] ?? [],
+        artifacts: producedArtifacts,
+      };
+    });
+    const nextRequiredStage = steps.find((step) => Object.values(step.artifacts).every((artifact) => artifact === null))?.stage ?? null;
+    return {
+      npc_key: npcKey,
+      technique: technique ?? null,
+      target_stage: normalizedTarget,
+      ready: steps.every((step) => step.ready),
+      next_required_stage: nextRequiredStage,
+      artifact_registry_path: artifactIndexPath,
+      artifact_count: records.length,
+      steps,
+    };
+  }
+
   // ── GET /api/pipeline/runs ─────────────────────────────────────────────
   app.get("/api/pipeline/runs", (req: Request, res: Response) => {
     const npcKey = typeof req.query.npc_key === "string" ? req.query.npc_key : undefined;
@@ -103,6 +207,23 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
   app.get("/api/pipeline/runs/:run_id/log", (req: Request, res: Response) => {
     res.json({ lines: readPipelineRunLog(req.params.run_id) });
+  });
+
+  // ── GET /api/pipeline/readiness ─────────────────────────────────────────
+  app.get("/api/pipeline/readiness", (req: Request, res: Response) => {
+    const npcKey = typeof req.query.npc_key === "string" ? req.query.npc_key : undefined;
+    const technique = typeof req.query.technique === "string" ? req.query.technique : undefined;
+    const targetStage = typeof req.query.target_stage === "string" ? req.query.target_stage : "evaluate";
+    if (!npcKey) {
+      res.status(400).json({ error: "npc_key is required" });
+      return;
+    }
+    const plan = buildReadinessPlan(npcKey, targetStage, technique);
+    if ("error" in plan) {
+      res.status(400).json(plan);
+      return;
+    }
+    res.json(plan);
   });
 
   // ── GET /api/npc/:npc_key/status ───────────────────────────────────────

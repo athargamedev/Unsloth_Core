@@ -312,6 +312,38 @@ export interface PipelineRunDetail {
   log: string[];
 }
 
+export interface PipelineArtifactRecord {
+  ts?: string;
+  npc_key?: string;
+  technique?: string | null;
+  stage?: string;
+  artifact_type?: string;
+  path?: string;
+  sha256?: string | null;
+  metadata?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface PipelineReadinessStep {
+  stage: string;
+  ready: boolean;
+  missing_artifacts: string[];
+  missing_stages: string[];
+  produces: string[];
+  artifacts: Record<string, PipelineArtifactRecord | null>;
+}
+
+export interface PipelineReadinessPlan {
+  npc_key: string;
+  technique: string | null;
+  target_stage: string;
+  ready: boolean;
+  next_required_stage: string | null;
+  artifact_registry_path: string;
+  artifact_count: number;
+  steps: PipelineReadinessStep[];
+}
+
 // --- Feedback types ---
 
 export interface ConceptFeedback {

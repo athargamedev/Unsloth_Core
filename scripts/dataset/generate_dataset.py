@@ -1755,16 +1755,15 @@ def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, outp
     synthesizer = Synthesizer(model=judge, async_mode=True)
     print(f"Synthesizing goldens for {npc_key} using DeepEval...")
     try:
-        synthesizer.generate_test_cases(
-            docs=chunks,
-            num_test_cases=20,
-            max_retries=3,
-            include_expected_output=True,
+        synthesizer.generate_goldens_from_contexts(
+            contexts=[chunks],
+            max_goldens_per_context=5
         )
-        dataset = EvaluationDataset(test_cases=synthesizer.test_cases)
+        from deepeval.dataset import EvaluationDataset
+        dataset = EvaluationDataset(goldens=synthesizer.synthetic_goldens)
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         dataset.save_as_json(output_path)
-        print(f"Saved {len(synthesizer.test_cases)} synthetic goldens to {output_path}")
+        print(f"Saved {len(synthesizer.synthetic_goldens)} synthetic goldens to {output_path}")
 
         if push_to_confident:
             ensure_confident_api_key()

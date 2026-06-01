@@ -16,6 +16,7 @@ import {
   type OllamaModelList,
   type PipelineState,
   type PipelineRunsResponse,
+  type PipelineReadinessPlan,
   type QualitySummary,
   type QualityFailure,
   type EvalReportsData,
@@ -57,6 +58,7 @@ export const queryKeys = {
     state: ['pipeline', 'state'] as const,
     npcStatus: (npcKey: string) => ['pipeline', 'npc', npcKey] as const,
     runs: (npcKey?: string, limit?: number) => ['pipeline', 'runs', npcKey, limit] as const,
+    readiness: (npcKey?: string, technique?: string, targetStage?: string) => ['pipeline', 'readiness', npcKey, technique, targetStage] as const,
   },
   evalReports: ['eval-reports'] as const,
   feedbackResults: ['feedback-results'] as const,
@@ -277,10 +279,27 @@ export function usePipelineRunsQuery(npcKey?: string, limit = 24) {
   return useQuery({
     queryKey: queryKeys.pipeline.runs(npcKey, limit),
     queryFn: () =>
-      fetchJson<PipelineRunsResponse>(`/api/pipeline/runs?limit=${limit}${npcKey ? `&npcKey=${encodeURIComponent(npcKey)}` : ''}`),
+      fetchJson<PipelineRunsResponse>(`/api/pipeline/runs?limit=${limit}${npcKey ? `&npc_key=${encodeURIComponent(npcKey)}` : ''}`),
     refetchInterval: 15_000,
     staleTime: 10_000,
     retry: 2,
+  });
+}
+
+/**
+ * Registry-backed readiness plan for an NPC pipeline target stage.
+ */
+export function usePipelineReadinessQuery(npcKey?: string, technique = 'notebooklm', targetStage = 'evaluate') {
+  return useQuery({
+    queryKey: queryKeys.pipeline.readiness(npcKey, technique, targetStage),
+    queryFn: () =>
+      fetchJson<PipelineReadinessPlan>(
+        `/api/pipeline/readiness?npc_key=${encodeURIComponent(npcKey ?? '')}&technique=${encodeURIComponent(technique)}&target_stage=${encodeURIComponent(targetStage)}`,
+      ),
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+    retry: 2,
+    enabled: !!npcKey,
   });
 }
 

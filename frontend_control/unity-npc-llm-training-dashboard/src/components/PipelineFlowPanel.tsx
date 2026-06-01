@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import type { PipelineState, PipelineNpcState, Subject, Dataset, RunArtifact, ExportArtifact, PipelineRunRecord } from '../api';
-import { usePipelineStateQuery, usePipelineRunsQuery, usePipelineRunDetailQuery } from '../hooks/useReactQuery';
+import type { PipelineState, PipelineNpcState, Subject, Dataset, RunArtifact, ExportArtifact, PipelineRunRecord, PipelineReadinessPlan } from '../api';
+import { usePipelineStateQuery, usePipelineRunsQuery, usePipelineRunDetailQuery, usePipelineReadinessQuery } from '../hooks/useReactQuery';
 
 // Each stage in the pipeline lifecycle
 interface PipelineStage {
@@ -27,6 +27,43 @@ function computeStages(npcKey: string, state: PipelineNpcState | undefined, subj
     { id: 'eval', label: 'Eval', completed: hasEval, actionable: !hasEval && hasExport, description: 'Baseline comparison' },
     { id: 'feedback', label: 'Feedback', completed: hasFeedback, actionable: !hasFeedback && hasEval, description: 'Self-improvement loop' },
   ];
+}
+
+function ReadinessSummary({ npcKey, technique = 'notebooklm' }: { npcKey: string; technique?: string }) {
+  const { data: readiness, isLoading } = usePipelineReadinessQuery(npcKey, technique, 'evaluate');
+  const plan = readiness as PipelineReadinessPlan | undefined;
+  const nextStage = plan?.next_required_stage ?? plan?.steps.find((step) => Object.values(step.artifacts).some((artifact) => artifact === null))?.stage ?? null;
+  const missing = plan?.steps.flatMap((step) => step.missing_artifacts.map((artifact) => `${step.stage}:${artifact}`)) ?? [];
+  const produced = plan?.steps.reduce((count, step) => count + Object.values(step.artifacts).filter(Boolean).length, 0) ?? 0;
+
+  if (isLoading) {
+    return <div className="text-[9px] text-ink/30 font-mono">Registry readiness: loading...</div>;
+  }
+  if (!plan) {
+    return <div className="text-[9px] text-ink/30 font-mono">Registry readiness: unavailable</div>;
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-line/30 bg-black/10 rounded-sm p-2">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="text-[9px] uppercase tracking-widest text-ink/40">Registry DAG</span>
+        <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono border ${plan.ready ? 'text-success border-success/30 bg-success/10' : 'text-warning border-warning/30 bg-warning/10'}`}>
+          {plan.ready ? 'READY' : `NEXT ${nextStage ?? '—'}`}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[9px] font-mono">
+        <div><span className="text-ink/40">Technique:</span> {plan.technique ?? 'any'}</div>
+        <div><span className="text-ink/40">Artifacts:</span> {produced}/{plan.steps.reduce((count, step) => count + step.produces.length, 0)}</div>
+        <div><span className="text-ink/40">Registry rows:</span> {plan.artifact_count}</div>
+        <div><span className="text-ink/40">Target:</span> {plan.target_stage}</div>
+      </div>
+      {missing.length > 0 && (
+        <div className="mt-2 text-[9px] text-warning font-mono break-all">
+          Missing: {missing.slice(0, 4).join(', ')}{missing.length > 4 ? ` +${missing.length - 4}` : ''}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export const PipelineFlowPanel = ({
@@ -165,6 +202,8 @@ export const PipelineFlowPanel = ({
                 {state.weak_concepts_count !== undefined && <div><span className="text-ink/40">Weak: </span><span className="text-warning">{state.weak_concepts_count} concepts</span></div>}
               </div>
             )}
+
+            <ReadinessSummary npcKey={npcKey} />
 
             {/* Action button for next stage */}
             {(() => {
