@@ -10,7 +10,7 @@ Subject Spec → [Preflight] → [Generate] → [Sanitize] → [Dataset Eval] �
 
 > **Pipeline Manifest:** Each stage auto-records to `.pipeline/run_manifest.json` via `record_pipeline_stage()`.
 >
-> **Environment:** All pipeline scripts auto-load `.env.local` via `scripts/ops/env_loader.py` — no manual `export` needed.
+> **Environment:** All pipeline scripts auto-load `.env.local` via `src/core/ops/env_loader.py` — no manual `export` needed.
 
 ---
 
@@ -18,7 +18,7 @@ Subject Spec → [Preflight] → [Generate] → [Sanitize] → [Dataset Eval] �
 
 ### Stage 0: Preflight
 
-**Script:** `scripts/ops/preflight.py`
+**Script:** `src/core/ops/preflight.py`
 
 Runs before expensive pipeline stages to check the local environment and apply safe defaults:
 - **GPU Memory Inventory**: Queries `nvidia-smi` for free and total VRAM in GiB
@@ -28,14 +28,14 @@ Runs before expensive pipeline stages to check the local environment and apply s
 - **Confident AI**: Checks if `CONFIDENT_API_KEY` is configured
 - Records preflight metadata (VRAM, GCC status, etc.) to the pipeline manifest
 
-**CLI:** `./ucore audit check` or standalone `python scripts/ops/preflight.py --phase train --preset fast-3b`
+**CLI:** `./ucore audit check` or standalone `python src/core/ops/preflight.py --phase train --preset fast-3b`
 
 ---
 
 ### Stage 1: Generate Dataset
 
 **Entry point:** `./ucore generate <spec>`
-**Script:** `scripts/dataset/generate_dataset.py`
+**Script:** `src/core/dataset/generate_dataset.py`
 
 Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 
@@ -46,21 +46,21 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 | `template` | **Default.** Fast deterministic generation for pipeline testing. | Smoke tests and pipeline testing |
 | `ollama` / `openai` / `anthropic` | LLM-driven synthetic data generation | Production-quality datasets using external LLMs |
 
-**Output:** `subjects/datasets/{npc_key}/{technique}/train.jsonl`
+**Output:** `data/datasets/{npc_key}/{technique}/train.jsonl`
 
 **Onyx generation (v2):**
 - Uses natural conversation templates with deterministic variant selection via `_pick_variant()` (hash-based)
 - Variants per category: teaching (3), dialogue (3), identity (2), quest (2), refusal (2)
 - Content cleaner strips markdown headings, bold markers, list prefixes
-- Reference docs indexed at `subjects/reference_docs/` (centralized, per-NPC primer files)
+- Reference docs indexed at `data/npcs/reference_docs/` (centralized, per-NPC primer files)
 - ~72 examples per NPC: 8 identity + 32 teaching + 16 dialogue + 8 quest + 8 refusal
 
 **Key CLI flags:**
 ```bash
-./ucore generate subjects/NPC_specs/history_guide.json
-./ucore generate subjects/NPC_specs/history_guide.json --technique template
-./ucore generate subjects/NPC_specs/history_guide.json --technique ollama --model llama3.1
-./ucore generate subjects/NPC_specs/history_guide.json --technique template --push-to-confident  # Push dataset to Confident AI
+./ucore generate data/npcs/specs/history_guide.json
+./ucore generate data/npcs/specs/history_guide.json --technique template
+./ucore generate data/npcs/specs/history_guide.json --technique ollama --model llama3.1
+./ucore generate data/npcs/specs/history_guide.json --technique template --push-to-confident  # Push dataset to Confident AI
 ```
 
 *Records `generate` stage to pipeline manifest with train/validation paths.*
@@ -68,7 +68,7 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 ### Stage 2: Sanitize Dataset
 
 **Entry point:** `./ucore sanitize <input>`
-**Script:** `scripts/dataset/sanitize_dataset.py`
+**Script:** `src/core/dataset/sanitize_dataset.py`
 
 Validates dataset integrity:
 - Confirms ChatML format (role/content turn structure)
@@ -83,14 +83,14 @@ Validates dataset integrity:
 ### Stage 2b: Dataset Quality Eval
 
 **Entry point:** `./ucore dataset-eval <spec>`
-**Script:** `scripts/dataset/dataset_eval.py`
+**Script:** `src/core/dataset/dataset_eval.py`
 
 Runs the committed DeepEval suite against the sanitized dataset before training.
 This is the local build-loop gate for dataset generation quality, not a final
 model validation step.
 
 ```bash
-./ucore dataset-eval subjects/NPC_specs/history_guide.json \
+./ucore dataset-eval data/npcs/specs/history_guide.json \
   --technique template \
   --mode fast \
   --judge-model qwen2.5:7b \
@@ -101,12 +101,12 @@ model validation step.
 - Judge: `qwen2.5:7b` via Ollama, temperature 0.
 - Mode: `fast` by default, sampling 1 row per category. Use `--mode release` for the strict 5-row-per-category final check.
 - Confident AI: auto-uploads results when `CONFIDENT_API_KEY` is configured. Use `--confident` to enforce API key presence (exits if missing).
-- Dataset input: `subjects/datasets/{npc_key}/{technique}/train_clean.jsonl`.
+- Dataset input: `data/datasets/{npc_key}/{technique}/train_clean.jsonl`.
 - Test suite: `tests/evals/test_dataset_generation_quality.py`.
 
 **Outputs:**
-- `subjects/datasets/{npc_key}/{technique}/quality_summary.json`
-- `subjects/datasets/{npc_key}/{technique}/quality_failures.json`
+- `data/datasets/{npc_key}/{technique}/quality_summary.json`
+- `data/datasets/{npc_key}/{technique}/quality_failures.json`
 
 Use `quality_failures.json` as the source of truth for what to regenerate or
 rewrite next. Do not lower metric thresholds or delete failing rows to make a
@@ -129,7 +129,7 @@ this check for development iteration. Production pipeline runs should never
 skip the gate.
 
 **Shared contract constants:**
-The file `scripts/dataset/dataset_contracts.py` centralizes the contract data
+The file `src/core/dataset/dataset_contracts.py` centralizes the contract data
 used across generation, validation, and eval stages:
 
 | Constant | Value |
@@ -147,13 +147,13 @@ It also provides helpers: `expected_examples_per_category()`,
 ### Stage 3: Training
 
 **Entry point:** `./ucore train <spec>`
-**Script:** `scripts/training/train.py`
+**Script:** `src/core/training/train.py`
 
 Uses Unsloth's `SFTTrainer` with LoRA for parameter-efficient fine-tuning. Config hierarchy:
 
 ```
 Base config → Preset override → CLI override
-(configs/lora-sft-*.yaml)  (configs/presets/*.yaml)  (--flags)
+(etc/lora-sft-*.yaml)  (etc/presets/*.yaml)  (--flags)
 ```
 
 **Preset selection:**
@@ -165,34 +165,34 @@ Base config → Preset override → CLI override
 | `safe-any` | Auto-detect | 8 | 3 | 2 | CUDA OOM fallback |
 | `wandb` | (inherits) | --- | --- | --- | W&B experiment tracking (use as overlay) |
 
-**Output:** `outputs/{npc_key}/` (LoRA adapter weights)
+**Output:** `artifacts/models/{npc_key}/` (LoRA adapter weights)
 
 **GPU:** RTX 3060 Laptop 6GB → `fast-3b` tuned with `packing: true`, `batch_size: 1`, `gradient_accumulation_steps: 8`.
 
 **Checkpointing:**
-- Intermediate checkpoints saved to `outputs/{npc_key}/runs/{run_id}/`
-- TensorBoard logs also in `outputs/{npc_key}/runs/`
+- Intermediate checkpoints saved to `artifacts/models/{npc_key}/runs/{run_id}/`
+- TensorBoard logs also in `artifacts/models/{npc_key}/runs/`
 
 **Export flag:**
 - `--export-gguf` exports adapter GGUF automatically after training (no separate export step needed)
-- Output: `exports/{npc_key}/{npc_key}-lora-f16.gguf`
+- Output: `artifacts/exports/{npc_key}/{npc_key}-lora-f16.gguf`
 
 *Records `train` stage to pipeline manifest with run_dir, output_dir, training_loss.*
 
 ### Stage 4: Export
 
 **Entry point:** `./ucore export <npc_key>`
-**Scripts:** `scripts/export/export.py`
+**Scripts:** `src/core/export/export.py`
 
 **Adapter mode (default):**
 - Converts LoRA adapter to lightweight f16 GGUF via `convert_lora_to_gguf.py`
 - Fast, no base model loading (~30 seconds)
-- Output: `exports/{npc_key}/{npc_key}-lora-f16.gguf` (~47 MB)
+- Output: `artifacts/exports/{npc_key}/{npc_key}-lora-f16.gguf` (~47 MB)
 - **This is what Unity/LLMUnity loads at runtime** (base model stays in StreamingAssets)
 
 **Full-merge mode (`--full-merge`):**
 - Merges LoRA into base model, then quantizes
-- Output: `exports/{npc_key}/{npc_key}-{model}-{quant}.gguf`
+- Output: `artifacts/exports/{npc_key}/{npc_key}-{model}-{quant}.gguf`
 - Note: May timeout on HF safetensor download
 
 *Records `export` stage to pipeline manifest with output_dir, gguf_files, mode.*
@@ -200,23 +200,23 @@ Base config → Preset override → CLI override
 ### Stage 5: Model Evaluation
 
 **Entry point:** `./ucore evaluate <args>`
-**Scripts:** `scripts/evaluation/evaluate.py`
+**Scripts:** `src/core/evaluation/evaluate.py`
 
 Compares two models (baseline vs candidate) or measures standalone:
 
 ```bash
 # Side-by-side comparison
 ./ucore evaluate \
-  --baseline exports/history_guide/round1/history_guide-lora-f16.gguf \
-  --candidate exports/history_guide/history_guide-lora-f16.gguf \
+  --baseline artifacts/exports/history_guide/round1/history_guide-lora-f16.gguf \
+  --candidate artifacts/exports/history_guide/history_guide-lora-f16.gguf \
   --base-model /path/to/llama-3.2-3b-instruct-q4_k_m.gguf \
-  --spec subjects/NPC_specs/history_guide.json \
+  --spec data/npcs/specs/history_guide.json \
   --report-html \
-  --feedback-json eval/results/feedback/history_guide_round2.json
+  --feedback-json artifacts/eval/results/feedback/history_guide_round2.json
 
 # Standalone measurement (no comparison)
-./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf \
-  --spec subjects/NPC_specs/history_guide.json --report-html
+./ucore evaluate --baseline artifacts/exports/history_guide/history_guide-lora-f16.gguf \
+  --spec data/npcs/specs/history_guide.json --report-html
 ```
 
 **Key details:**
@@ -237,7 +237,7 @@ Compares two models (baseline vs candidate) or measures standalone:
 ### Stage 6: Feedback Loop
 
 **Entry point:** `./ucore feedback <feedback.json>`
-**Scripts:** `scripts/training/feedback_loop.py`, `scripts/evaluation/evaluate.py --feedback-json`
+**Scripts:** `src/core/training/feedback_loop.py`, `src/core/evaluation/evaluate.py --feedback-json`
 
 Closes the loop between evaluation and dataset generation:
 
@@ -258,7 +258,7 @@ Closes the loop between evaluation and dataset generation:
 
 ## Environment Auto-Configuration
 
-The `scripts/ops/env_loader.py` module auto-sources `.env.local` on import across all pipeline scripts. This means:
+The `src/core/ops/env_loader.py` module auto-sources `.env.local` on import across all pipeline scripts. This means:
 - `CONFIDENT_API_KEY` is automatically loaded from `.env.local` — no manual `export` needed
 - All pipeline scripts get consistent environment without individual setup
 - Idempotent: only loads once per process
@@ -267,7 +267,7 @@ The `scripts/ops/env_loader.py` module auto-sources `.env.local` on import acros
 
 ## 8. Preflight System
 
-The preflight system (`scripts/ops/preflight.py`) runs before expensive pipeline
+The preflight system (`src/core/ops/preflight.py`) runs before expensive pipeline
 stages (training, dataset-eval) to check the local environment and apply safe
 defaults.
 
@@ -296,13 +296,13 @@ Returned as a `PreflightReport` dataclass with:
 
 ```bash
 # Standalone preflight check
-python scripts/ops/preflight.py --phase train --preset fast-3b --spec subjects/NPC_specs/history_guide.json
+python src/core/ops/preflight.py --phase train --preset fast-3b --spec data/npcs/specs/history_guide.json
 
 # JSON output for programmatic use
-python scripts/ops/preflight.py --phase train --preset fast-3b --json
+python src/core/ops/preflight.py --phase train --preset fast-3b --json
 
 # Skip Ollama unload or GCC check
-python scripts/ops/preflight.py --phase train --no-auto-unload-ollama --no-gcc-check
+python src/core/ops/preflight.py --phase train --no-auto-unload-ollama --no-gcc-check
 ```
 
 ---
@@ -310,13 +310,13 @@ python scripts/ops/preflight.py --phase train --no-auto-unload-ollama --no-gcc-c
 ## 9. Ollama Model Presets
 
 Ollama model presets provide named aliases for generation and judging models,
-resolved from `configs/ollama-model-presets.yaml`. Explicit CLI model names
+resolved from `etc/ollama-model-presets.yaml`. Explicit CLI model names
 always win over presets.
 
 ### Preset File
 
 ```yaml
-# configs/ollama-model-presets.yaml
+# etc/ollama-model-presets.yaml
 default_generation: generate-qwen25
 default_judge: judge-qwen25
 
@@ -331,7 +331,7 @@ judge:
 
 ### Resolution Logic
 
-`scripts/ops/ollama_model_presets.py` resolves the effective model via
+`src/core/ops/ollama_model_presets.py` resolves the effective model via
 `resolve_ollama_model()` with this priority:
 
 1. **Explicit CLI model** — `--model qwen2.5:7b` wins unconditionally
@@ -369,7 +369,7 @@ This is configured at three levels (in priority order):
 
 ## 10. Subject Spec Format
 
-Located in `subjects/NPC_specs/*.json`. Structure (using history_guide as example):
+Located in `data/npcs/specs/*.json`. Structure (using history_guide as example):
 
 ```json
 {
@@ -400,7 +400,7 @@ Located in `subjects/NPC_specs/*.json`. Structure (using history_guide as exampl
     "redirect_policy": "Redirects to verified historical sources and scholarly consensus"
   },
   "subject": "World history: ancient civilizations, classical antiquity, medieval period...",
-  "reference_doc": "subjects/reference_docs/history_primer.md",
+  "reference_doc": "data/npcs/reference_docs/history_primer.md",
   "system_prompt": "## IDENTITY\nName: HistoryGuide | Role: engaging world history storyteller\n\n## VOICE\n...\n\n## KNOWLEDGE\nAncient civilizations, Roman Empire, medieval period...\n\n## RULES\nNEVER speculate without labeling | NEVER promote misinformation...",
   "research_queries": [
     {"query": "key events and causes of the fall of the Roman Empire", "mode": "fast"},
@@ -419,7 +419,7 @@ Located in `subjects/NPC_specs/*.json`. Structure (using history_guide as exampl
 ```
 
 **Key fields:**
-- `reference_doc`: Path to the primer file in `subjects/reference_docs/` — used for Onyx indexing
+- `reference_doc`: Path to the primer file in `data/npcs/reference_docs/` — used for Onyx indexing
 - `system_prompt`: 4-section IDENTITY|VOICE|KNOWLEDGE|RULES format for LLMUnity compatibility
 - `examples_per_category`: Onyx-optimized distribution (72 total)
 - `research_queries`: Domain-specific queries used for Onyx coverage checking (no `from: "web"` needed)
@@ -441,30 +441,30 @@ source unsloth_env/bin/activate
 ./ucore init new_npc --subject "Topic description"
 
 # 3. Generate a docs-backed dataset
-./ucore generate subjects/NPC_specs/new_npc.json --technique docs --docs-manifest path/to/curated_corpus.jsonl
+./ucore generate data/npcs/specs/new_npc.json --technique docs --docs-manifest path/to/curated_corpus.jsonl
 
 # 4. Quick smoke test
-./ucore pipeline subjects/NPC_specs/new_npc.json --preset smoke
+./ucore pipeline data/npcs/specs/new_npc.json --preset smoke
 
 # 5. Full production pipeline
-./ucore generate subjects/NPC_specs/new_npc.json --technique docs --docs-manifest path/to/curated_corpus.jsonl
-./ucore sanitize subjects/datasets/new_npc/docs/train.jsonl
-./ucore train subjects/NPC_specs/new_npc.json --technique docs --preset fast-3b --export-gguf
-./ucore evaluate --baseline exports/new_npc/new_npc-lora-f16.gguf \
-  --spec subjects/NPC_specs/new_npc.json --report-html
+./ucore generate data/npcs/specs/new_npc.json --technique docs --docs-manifest path/to/curated_corpus.jsonl
+./ucore sanitize data/datasets/new_npc/docs/train.jsonl
+./ucore train data/npcs/specs/new_npc.json --technique docs --preset fast-3b --export-gguf
+./ucore evaluate --baseline artifacts/exports/new_npc/new_npc-lora-f16.gguf \
+  --spec data/npcs/specs/new_npc.json --report-html
 
 # 6. W&B tracking
-./ucore train subjects/NPC_specs/new_npc.json --technique docs --preset fast-3b --wandb --export-gguf
+./ucore train data/npcs/specs/new_npc.json --technique docs --preset fast-3b --wandb --export-gguf
 
 # 7. Compare two rounds
 ./ucore evaluate \
-  --baseline exports/new_npc/round1/new_npc-lora-f16.gguf \
-  --candidate exports/new_npc/new_npc-lora-f16.gguf \
+  --baseline artifacts/exports/new_npc/round1/new_npc-lora-f16.gguf \
+  --candidate artifacts/exports/new_npc/new_npc-lora-f16.gguf \
   --base-model Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf \
-  --spec subjects/NPC_specs/new_npc.json --report-html
+  --spec data/npcs/specs/new_npc.json --report-html
 
 # 8. Feedback loop
-./ucore feedback eval/results/feedback/new_npc_round2.json --dry-run
+./ucore feedback artifacts/eval/results/feedback/new_npc_round2.json --dry-run
 ```
 
 ---
@@ -473,44 +473,44 @@ source unsloth_env/bin/activate
 
 | Stage | Output Path | Format |
 |-------|-------------|--------|
-| Generate | `subjects/datasets/{npc_key}/{technique}/train.jsonl` | JSONL (ChatML) |
-| Sanitize | `subjects/datasets/{npc_key}/{technique}/train_clean.jsonl` | JSONL (cleaned) |
-| Train | `outputs/{npc_key}/runs/{run_id}/` | LoRA adapter (SafeTensors) |
-| Export | `exports/{npc_key}/{npc_key}-lora-f16.gguf` | GGUF (adapter) |
-| Evaluate | `eval/reports/{npc_key}/eval_*.html` | HTML (Chart.js) |
-| Evaluate | `eval/results/feedback/{npc_key}_*.json` | JSON (per-concept) |
-| Feedback | `eval/results/gaps/{npc_key}.json` | JSON (gap analysis) |
+| Generate | `data/datasets/{npc_key}/{technique}/train.jsonl` | JSONL (ChatML) |
+| Sanitize | `data/datasets/{npc_key}/{technique}/train_clean.jsonl` | JSONL (cleaned) |
+| Train | `artifacts/models/{npc_key}/runs/{run_id}/` | LoRA adapter (SafeTensors) |
+| Export | `artifacts/exports/{npc_key}/{npc_key}-lora-f16.gguf` | GGUF (adapter) |
+| Evaluate | `artifacts/eval/reports/{npc_key}/eval_*.html` | HTML (Chart.js) |
+| Evaluate | `artifacts/eval/results/feedback/{npc_key}_*.json` | JSON (per-concept) |
+| Feedback | `artifacts/eval/results/gaps/{npc_key}.json` | JSON (gap analysis) |
 
 ---
 
 ## 13. Data Flow Diagram
 
 ```
-subjects/NPC_specs/{npc_key}.json ──── subjects/reference_docs/{npc_key}_primer.md
+data/npcs/specs/{npc_key}.json ──── data/npcs/reference_docs/{npc_key}_primer.md
           │
           ▼
-  ./ucore generate subjects/NPC_specs/{npc_key}.json --technique docs --docs-manifest path/to/curated_corpus.jsonl ──► Docs retrieval/manifest prep
+  ./ucore generate data/npcs/specs/{npc_key}.json --technique docs --docs-manifest path/to/curated_corpus.jsonl ──► Docs retrieval/manifest prep
           │
           ▼
-  scripts/dataset/generate_dataset.py ──► Docs retrieval
+  src/core/dataset/generate_dataset.py ──► Docs retrieval
           │
           ▼
-  subjects/datasets/{npc_key}/docs/train.jsonl
+  data/datasets/{npc_key}/docs/train.jsonl
           │
           ▼
-  scripts/dataset/sanitize_dataset.py ──► train_clean.jsonl
+  src/core/dataset/sanitize_dataset.py ──► train_clean.jsonl
           │
           ▼
-  scripts/training/train.py ──► configs/*.yaml + presets/*.yaml
+  src/core/training/train.py ──► etc/*.yaml + etc/presets/*.yaml
           │
           ▼
-  outputs/{npc_key}/runs/{run_id}/  (LoRA adapter)
+  artifacts/models/{npc_key}/runs/{run_id}/  (LoRA adapter)
           │
           ▼
-  scripts/export/export.py ──► exports/{npc_key}/{npc_key}-lora-f16.gguf
+  src/core/export/export.py ──► artifacts/exports/{npc_key}/{npc_key}-lora-f16.gguf
           │
           ▼
-  scripts/evaluation/evaluate.py ──► eval/reports/ + eval/results/feedback/
+  src/core/evaluation/evaluate.py ──► artifacts/eval/reports/ + artifacts/eval/results/feedback/
           │
           ▼
   Unity StreamingAssets/Models/{npc_key}-lora-f16.gguf
@@ -522,16 +522,16 @@ subjects/NPC_specs/{npc_key}.json ──── subjects/reference_docs/{npc_key}
 
 Training configs are intentionally simple now:
 
-1. **Spec-derived base**: `scripts/training/train.py` builds the effective config from `subjects/NPC_specs/{npc}.json`, the detected canonical dataset path, and the default Llama 3.2 3B model.
-2. **Preset** (`configs/presets/{name}.yaml`) overrides hyperparameters. Current active presets are `fast-3b`, `safe-any`, `smoke`.
+1. **Spec-derived base**: `src/core/training/train.py` builds the effective config from `data/npcs/specs/{npc}.json`, the detected canonical dataset path, and the default Llama 3.2 3B model.
+2. **Preset** (`etc/presets/{name}.yaml`) overrides hyperparameters. Current active presets are `fast-3b`, `safe-any`, `smoke`.
 3. **CLI flags** (`--lr`, `--epochs`, `--wandb`, etc.) override everything above.
 
 Use one training preset plus `--wandb` as a flag:
 ```bash
-./ucore train subjects/NPC_specs/history_guide.json --preset fast-3b --wandb --export-gguf
+./ucore train data/npcs/specs/history_guide.json --preset fast-3b --wandb --export-gguf
 ```
 
-`configs/lora-sft-base.yaml` remains as the canonical base config for validation/planning tools (`validate_config.py`, `plan_execution.py`). Duplicate top-level model configs and old Qwen/0.5B/1B presets were removed to avoid drift.
+`etc/lora-sft-base.yaml` remains as the canonical base config for validation/planning tools (`validate_config.py`, `plan_execution.py`). Duplicate top-level model configs and old Qwen/0.5B/1B presets were removed to avoid drift.
 
 Example preset (`fast-3b.yaml`):
 ```yaml
@@ -557,7 +557,7 @@ Docs is the grounded generation path. The pipeline uses it to:
 
 **Docs-backed generation:**
 ```bash
-./ucore generate subjects/NPC_specs/history_guide.json \
+./ucore generate data/npcs/specs/history_guide.json \
   --technique docs \
   --docs-manifest path/to/curated_corpus.jsonl
 ```
@@ -572,6 +572,6 @@ Docs is the grounded generation path. The pipeline uses it to:
 | `AGENTS.md` | AI agent reference (architecture, commands, logic map) |
 | `docs/training-workflow.md` | This document — full pipeline detail |
 | `docs/legacy-cli-reference.md` | Docs flags, generation, and dataset workflow |
-| `subjects/NPC_specs/*.json` | NPC specification files |
-| `configs/*.yaml` | Training configuration base files |
-| `configs/presets/*.yaml` | Training presets (hyperparameter profiles) |
+| `data/npcs/specs/*.json` | NPC specification files |
+| `etc/*.yaml` | Training configuration base files |
+| `etc/presets/*.yaml` | Training presets (hyperparameter profiles) |

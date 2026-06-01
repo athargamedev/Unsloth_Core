@@ -28,15 +28,15 @@ If old docs mention other NPCs as active, treat that as deprecated unless the us
 ```bash
 source unsloth_env/bin/activate
 ./ucore audit check
-./ucore validate-spec subjects/NPC_specs/<npc>.json --generation-ready
+./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
 # production: generate via NotebookLM/approved grounded path; template only for smoke
-./ucore sanitize subjects/datasets/<npc>/<technique>/train.jsonl \
-  --output subjects/datasets/<npc>/<technique>/train_clean.jsonl \
+./ucore sanitize data/datasets/<npc>/<technique>/train.jsonl \
+  --output data/datasets/<npc>/<technique>/train_clean.jsonl \
   --strict-canonical --require-complete-metadata
-./ucore dataset-eval subjects/NPC_specs/<npc>.json --technique <technique> --mode fast --judge-model qwen2.5:7b
-./ucore train subjects/NPC_specs/<npc>.json --technique <technique> --preset fast-3b --export-gguf
+./ucore dataset-eval data/npcs/specs/<npc>.json --technique <technique> --mode fast --judge-model qwen2.5:7b
+./ucore train data/npcs/specs/<npc>.json --technique <technique> --preset fast-3b --export-gguf
 ./ucore evaluate --baseline <base-or-baseline-gguf> --candidate <adapter-or-run> \
-  --base-model <base-gguf> --spec subjects/NPC_specs/<npc>.json --report-html
+  --base-model <base-gguf> --spec data/npcs/specs/<npc>.json --report-html
 ```
 
 ## Quality gate
@@ -50,14 +50,14 @@ source unsloth_env/bin/activate
 
 ## Canonical paths
 
-- Specs: `subjects/NPC_specs/<npc>.json`
-- Reference docs: `subjects/reference_docs/<npc>_primer.md`
-- Datasets: `subjects/datasets/<npc>/<technique>/`
-- Training runs: `outputs/<npc>/runs/<run_id>/`
-- Pointers: `outputs/<npc>/best`, `outputs/<npc>/latest`
-- GGUF adapters: `exports/<npc>/<npc>-lora-f16.gguf`
-- Reports: `eval/reports/<npc>/`
-- Feedback JSON: `eval/results/feedback/<npc>.json`
+- Specs: `data/npcs/specs/<npc>.json`
+- Reference docs: `data/npcs/reference_docs/<npc>_primer.md`
+- Datasets: `data/datasets/<npc>/<technique>/`
+- Training runs: `artifacts/models/<npc>/runs/<run_id>/`
+- Pointers: `artifacts/models/<npc>/best`, `artifacts/models/<npc>/latest`
+- GGUF adapters: `artifacts/exports/<npc>/<npc>-lora-f16.gguf`
+- Reports: `artifacts/eval/reports/<npc>/`
+- Feedback JSON: `artifacts/eval/results/feedback/<npc>.json`
 - Unity project: `~/Setup Guide In-Editor Tutorial/`
 - Unity model folder: `Assets/StreamingAssets/Models/`
 
@@ -67,8 +67,8 @@ source unsloth_env/bin/activate
 - Supabase DB: `15434`
 - Supabase API/Kong: `16437`
 - Supabase Studio: `16438`
-- Dashboard package: `frontend_control/unity-npc-llm-training-dashboard/`
-- Dashboard dev: `cd frontend_control/unity-npc-llm-training-dashboard && npm run dev`
+- Dashboard package: `src/dashboard/unity-npc-llm-training-dashboard/`
+- Dashboard dev: `cd src/dashboard/unity-npc-llm-training-dashboard && npm run dev`
 - Dashboard port: `3100`
 
 ## Local machine constraints

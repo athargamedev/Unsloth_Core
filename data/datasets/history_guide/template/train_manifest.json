@@ -4,8 +4,8 @@
   "sanitized": true,
   "sanitizer": {
     "version": "v2",
-    "date": "2026-05-31T20:50:57Z",
-    "argv": "/home/athar/Projects/Unsloth_Core/scripts/dataset/sanitize_dataset.py /home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/train.jsonl --output /home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/train_clean.jsonl --strict-canonical",
+    "date": "2026-06-01T10:04:33Z",
+    "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py /home/athar/Projects/Unsloth_Core/data/datasets/history_guide/template/train.jsonl --output /home/athar/Projects/Unsloth_Core/data/datasets/history_guide/template/train_clean.jsonl --strict-canonical",
     "artifact_check_mode": "strict",
     "strict_mode": false
   },
@@ -15,7 +15,7 @@
     "ref_doc": "subjects/reference_docs/history_guide_primer.md"
   },
   "input": {
-    "file": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/template/train.jsonl",
+    "file": "/home/athar/Projects/Unsloth_Core/data/datasets/history_guide/template/train.jsonl",
     "hash": "sha256:8e7eb2c38e99ba47f02acb51f8c03d0bca039b545077e50b690f84da56f7ea06",
     "total_examples": 72
   },
@@ -143,7 +143,7 @@
   ],
   "content_hash_prefix": "sha256:",
   "generation": {
-    "date": "2026-05-31T20:50:57Z",
+    "date": "2026-06-01T10:04:32Z",
     "seed": 42,
     "generator_version": "improved-workflow-v1",
     "sanitizer_version": "v1"

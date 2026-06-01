@@ -12,7 +12,7 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 - Production dataset rule: use NotebookLM CLI / approved grounded workflow. Template generation is smoke/dev only.
 - Local tested Ollama judge/default: `qwen2.5:7b` unless a fresh benchmark says otherwise.
 - Local GPU: RTX 3060-class 6GB VRAM. Unload Ollama before train/eval when it holds VRAM.
-- Dashboard app lives in `frontend_control/unity-npc-llm-training-dashboard/`.
+- Dashboard app lives in `src/dashboard/unity-npc-llm-training-dashboard/`.
 - Supabase local ports: DB `15434`, API/Kong `16437`, Studio `16438`.
 
 ## Hard rules
@@ -30,14 +30,14 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 ```bash
 source unsloth_env/bin/activate
 ./ucore audit check
-./ucore validate-spec subjects/NPC_specs/history_guide.json --generation-ready
-./ucore validate-spec subjects/NPC_specs/chef_assistant.json --generation-ready
+./ucore validate-spec data/npcs/specs/history_guide.json --generation-ready
+./ucore validate-spec data/npcs/specs/chef_assistant.json --generation-ready
 ```
 
 Dashboard:
 
 ```bash
-cd frontend_control/unity-npc-llm-training-dashboard
+cd src/dashboard/unity-npc-llm-training-dashboard
 npm run dev
 ```
 
@@ -45,15 +45,15 @@ npm run dev
 
 - Project state: `docs/project-state.md`
 - Unified CLI: `./ucore`
-- Specs: `subjects/NPC_specs/<npc>.json`
-- Reference docs: `subjects/reference_docs/<npc>_primer.md`
-- Datasets: `subjects/datasets/<npc>/<technique>/`
-- Clean train file: `subjects/datasets/<npc>/<technique>/train_clean.jsonl`
-- Training runs: `outputs/<npc>/runs/<run_id>/`
-- Pointers: `outputs/<npc>/best`, `outputs/<npc>/latest`
-- GGUF adapters: `exports/<npc>/<npc>-lora-f16.gguf`
-- Reports: `eval/reports/<npc>/`
-- Feedback: `eval/results/feedback/<npc>.json`
+- Specs: `data/npcs/specs/<npc>.json`
+- Reference docs: `data/npcs/reference_docs/<npc>_primer.md`
+- Datasets: `data/datasets/<npc>/<technique>/`
+- Clean train file: `data/datasets/<npc>/<technique>/train_clean.jsonl`
+- Training runs: `artifacts/models/<npc>/runs/<run_id>/`
+- Pointers: `artifacts/models/<npc>/best`, `artifacts/models/<npc>/latest`
+- GGUF adapters: `artifacts/exports/<npc>/<npc>-lora-f16.gguf`
+- Reports: `artifacts/eval/reports/<npc>/`
+- Feedback: `artifacts/eval/results/feedback/<npc>.json`
 - Unity project: `~/Setup Guide In-Editor Tutorial/`
 - Unity models: `Assets/StreamingAssets/Models/`
 
@@ -64,29 +64,29 @@ npm run dev
 ./ucore audit check
 
 # 2. spec validation
-./ucore validate-spec subjects/NPC_specs/<npc>.json --generation-ready
+./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
 
 # 3. generation
 # Production: NotebookLM CLI / approved grounded workflow.
 # Smoke only:
-./ucore generate subjects/NPC_specs/<npc>.json --technique template
+./ucore generate data/npcs/specs/<npc>.json --technique template
 
 # 4. sanitize
-./ucore sanitize subjects/datasets/<npc>/<technique>/train.jsonl \
-  --output subjects/datasets/<npc>/<technique>/train_clean.jsonl \
+./ucore sanitize data/datasets/<npc>/<technique>/train.jsonl \
+  --output data/datasets/<npc>/<technique>/train_clean.jsonl \
   --strict-canonical --require-complete-metadata
 
 # 5. gate
-./ucore dataset-eval subjects/NPC_specs/<npc>.json \
+./ucore dataset-eval data/npcs/specs/<npc>.json \
   --technique <technique> --mode fast --judge-model qwen2.5:7b
 
 # 6. train/export
-./ucore train subjects/NPC_specs/<npc>.json \
+./ucore train data/npcs/specs/<npc>.json \
   --technique <technique> --preset fast-3b --export-gguf
 
 # 7. evaluate adapter with base + LoRA when applicable
 ./ucore evaluate --baseline <baseline> --candidate <candidate> \
-  --base-model <base-gguf> --spec subjects/NPC_specs/<npc>.json --report-html
+  --base-model <base-gguf> --spec data/npcs/specs/<npc>.json --report-html
 ```
 
 ## Context hygiene
@@ -94,7 +94,7 @@ npm run dev
 When project context looks stale:
 
 ```bash
-python scripts/ops/context_audit.py
+python src/core/ops/context_audit.py
 ```
 
 Then update in this order:
