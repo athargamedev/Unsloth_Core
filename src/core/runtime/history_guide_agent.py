@@ -9,6 +9,7 @@ from pathlib import Path
 
 # Tracing and observability
 from src.core.tracing.deepeval_tracing import (
+    configure_tracing,
     trace_agent_node,
     trace_tool,
     trace_retrieval,
@@ -155,6 +156,7 @@ app = workflow.compile()
 
 def run_history_guide(query: str) -> str:
     """Helper to run the agent and return just the final string."""
+    configure_tracing()
     inputs = {"messages": [HumanMessage(content=query)]}
     final_state = app.invoke(inputs)
     return final_state["messages"][-1].content

@@ -48,7 +48,6 @@ def trace_type(span_type: str, metrics: list[str] | None = None, name: str | Non
     with deepeval_trace(name=span_name, metric_collection=span_type, metadata=metadata):
         yield
 
-
 __all__ = [
     "trace_agent_node",
     "trace_tool",
@@ -204,7 +203,8 @@ def trace_retrieval(
 def configure_tracing() -> None:
     """Configure DeepEval tracing globally.
 
-    Verifies that CONFIDENT_API_KEY is set for trace uploads.
+    Verifies that CONFIDENT_API_KEY is set for trace uploads and enables
+    trace flushing when Confident AI is configured.
     Call once at application startup.
 
     Raises
@@ -212,28 +212,27 @@ def configure_tracing() -> None:
     EnvironmentError
         If CONFIDENT_API_KEY is not set and traces cannot be uploaded.
     """
-    confident_key = os.environ.get("CONFIDENT_API_KEY")
-    if not confident_key:
+    from src.core.ops.env_loader import ensure_confident_api_key
+
+    try:
+        if ensure_confident_api_key():
+            os.environ.setdefault("CONFIDENT_TRACE_FLUSH", "1")
+        else:
+            import warnings
+
+            warnings.warn(
+                "CONFIDENT_API_KEY not set. DeepEval traces will be recorded locally only. "
+                "Set CONFIDENT_API_KEY to enable cloud tracing.",
+                stacklevel=2,
+            )
+    except EnvironmentError as exc:
         import warnings
 
-        warnings.warn(
-            "CONFIDENT_API_KEY not set. DeepEval traces will be recorded locally only. "
-            "Set CONFIDENT_API_KEY to enable cloud tracing.",
-            stacklevel=2,
-        )
-    else:
-        # Traces will auto-upload to Confident AI
-        pass
+        warnings.warn(str(exc), stacklevel=2)
 
 
 def get_current_trace_context() -> dict[str, Any] | None:
-    """Get the current trace context if inside an @observe or trace_type block.
-
-    Returns
-    -------
-    dict | None
-        Trace metadata (span name, type, metrics) or None if not tracing.
-    """
+    """Get the current trace context if inside an active DeepEval trace."""
     try:
         if current_trace_context is not None:
             ctx = current_trace_context.get()
