@@ -30,6 +30,13 @@ STAGE_REQUIRED_ARTIFACTS = {
     "evaluate": ["gguf_adapter"],
 }
 
+TECHNIQUE_SCOPED_ARTIFACTS = {
+    "dataset_raw",
+    "dataset_clean",
+    "quality_summary",
+    "adapter_checkpoint",
+}
+
 
 @dataclass(frozen=True)
 class StageValidation:
@@ -61,7 +68,12 @@ class PipelineDAG:
         missing_artifacts = [
             artifact_type
             for artifact_type in required
-            if self.registry.latest_artifact(npc_key, artifact_type, technique=technique) is None
+            if self.registry.latest_artifact(
+                npc_key,
+                artifact_type,
+                technique=technique if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS else None,
+            )
+            is None
         ]
         missing_stages = [self._producer_for(artifact_type) for artifact_type in missing_artifacts]
         missing_stages = [s for s in missing_stages if s]
@@ -110,7 +122,11 @@ class PipelineDAG:
         target_index = CANONICAL_STAGE_ORDER.index(target_stage)
         for stage in CANONICAL_STAGE_ORDER[:target_index]:
             for artifact_type in STAGE_OUTPUT_ARTIFACTS.get(stage, []):
-                if self.registry.latest_artifact(npc_key, artifact_type, technique=technique) is None:
+                if self.registry.latest_artifact(
+                    npc_key,
+                    artifact_type,
+                    technique=technique if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS else None,
+                ) is None:
                     return stage
         return None
 
