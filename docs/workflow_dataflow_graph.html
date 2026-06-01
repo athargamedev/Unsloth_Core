@@ -20,7 +20,7 @@
 </head>
 <body><div class="wrap">
 <h1><span class="dot"></span>Unsloth_Core end-to-end dataflow + gap map</h1>
-<div class="sub">Generated from current repo inspection. Purpose: expose disconnected scripts, hardcoded parameters, execution-order ambiguity, and missing professional workflow hooks.</div>
+<div class="sub">Generated from current repo inspection. Purpose: show current script dataflow, implemented artifact registry hooks, DAG readiness audit, and remaining professional workflow gaps.</div>
 <div class="card">
 <svg viewBox="0 0 1660 1180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Unsloth Core dataflow graph">
 <defs>
@@ -39,7 +39,7 @@
 
 <!-- entry -->
 <g class="node"><rect class="entry" x="70" y="95" width="140" height="54" rx="7"/><text x="88" y="119">Dashboard UI</text><text class="small" x="88" y="136">server.ts / job queue</text></g>
-<g class="node"><rect class="entry" x="250" y="95" width="130" height="54" rx="7"/><text x="281" y="119">./ucore</text><text class="small" x="270" y="136">canonical CLI?</text></g>
+<g class="node"><rect class="entry" x="250" y="95" width="130" height="54" rx="7"/><text x="281" y="119">./ucore</text><text class="small" x="270" y="136">canonical CLI</text></g>
 <g class="node"><rect class="external" x="420" y="95" width="150" height="54" rx="7"/><text x="440" y="119">Direct scripts</text><text class="small" x="438" y="136">legacy entrypoints</text></g>
 <g class="node"><rect class="artifact" x="620" y="95" width="165" height="54" rx="7"/><text x="642" y="119">NPC spec JSON</text><text class="small" x="638" y="136">subjects/NPC_specs</text></g>
 <g class="node"><rect class="artifact" x="825" y="95" width="190" height="54" rx="7"/><text x="843" y="119">Reference docs</text><text class="small" x="843" y="136">subjects/reference_docs</text></g>
@@ -49,34 +49,34 @@
 <!-- dataset -->
 <g class="node"><rect class="script" x="70" y="265" width="170" height="62" rx="7"/><text x="95" y="290">validate-spec</text><text class="small" x="88" y="307">schema + readiness</text></g>
 <g class="node"><rect class="script" x="285" y="265" width="195" height="62" rx="7"/><text x="308" y="290">generate_dataset.py</text><text class="small" x="306" y="307">NotebookLM / template / Ollama</text></g>
-<g class="node"><rect class="artifact" x="525" y="265" width="185" height="62" rx="7"/><text x="548" y="290">train.jsonl</text><text class="small" x="548" y="307">raw + checkpoint DB</text></g>
+<g class="node"><rect class="artifact" x="525" y="265" width="185" height="62" rx="7"/><text x="548" y="290">train.jsonl</text><text class="small" x="548" y="307">dataset_raw</text></g>
 <g class="node"><rect class="script" x="755" y="265" width="185" height="62" rx="7"/><text x="777" y="290">sanitize_dataset.py</text><text class="small" x="776" y="307">dedup + metadata + quality</text></g>
-<g class="node"><rect class="artifact" x="985" y="265" width="185" height="62" rx="7"/><text x="1012" y="290">train_clean.jsonl</text><text class="small" x="1003" y="307">canonical train input</text></g>
+<g class="node"><rect class="artifact" x="985" y="265" width="185" height="62" rx="7"/><text x="1012" y="290">train_clean.jsonl</text><text class="small" x="1003" y="307">dataset_clean</text></g>
 <g class="node"><rect class="script" x="1215" y="265" width="190" height="62" rx="7"/><text x="1238" y="290">dataset_eval.py</text><text class="small" x="1240" y="307">DeepEval quality gate</text></g>
-<g class="node"><rect class="artifact" x="1445" y="250" width="130" height="92" rx="7"/><text x="1462" y="275">quality_*</text><text class="small" x="1462" y="292">summary</text><text class="small" x="1462" y="306">failures</text><text class="small" x="1462" y="320">report</text></g>
+<g class="node"><rect class="artifact" x="1445" y="250" width="130" height="92" rx="7"/><text x="1462" y="275">quality_*</text><text class="small" x="1462" y="292">quality_summary</text><text class="small" x="1462" y="306">failures/report</text><text class="small" x="1462" y="320">registry-tracked</text></g>
 
 <!-- train export -->
 <g class="node"><rect class="script" x="120" y="540" width="190" height="62" rx="7"/><text x="145" y="565">train.py</text><text class="small" x="142" y="582">SFT + LoRA + W&B</text></g>
-<g class="node"><rect class="artifact" x="360" y="540" width="205" height="62" rx="7"/><text x="383" y="565">outputs/&lt;npc&gt;/runs</text><text class="small" x="383" y="582">config + adapters + logs</text></g>
+<g class="node"><rect class="artifact" x="360" y="540" width="205" height="62" rx="7"/><text x="383" y="565">outputs/&lt;npc&gt;/runs</text><text class="small" x="383" y="582">adapter_checkpoint</text></g>
 <g class="node"><rect class="artifact" x="610" y="540" width="180" height="62" rx="7"/><text x="635" y="565">best/latest</text><text class="small" x="635" y="582">symlink pointers</text></g>
 <g class="node"><rect class="script" x="840" y="540" width="175" height="62" rx="7"/><text x="865" y="565">export.py</text><text class="small" x="860" y="582">adapter/full merge</text></g>
-<g class="node"><rect class="artifact" x="1060" y="540" width="185" height="62" rx="7"/><text x="1086" y="565">exports/&lt;npc&gt;</text><text class="small" x="1085" y="582">GGUF adapter + manifest</text></g>
+<g class="node"><rect class="artifact" x="1060" y="540" width="185" height="62" rx="7"/><text x="1086" y="565">exports/&lt;npc&gt;</text><text class="small" x="1085" y="582">gguf_adapter</text></g>
 <g class="node"><rect class="external" x="1290" y="540" width="220" height="62" rx="7"/><text x="1312" y="565">Unity LLMUnity</text><text class="small" x="1312" y="582">StreamingAssets/Models</text></g>
 
 <!-- eval feedback -->
 <g class="node"><rect class="script" x="80" y="810" width="185" height="62" rx="7"/><text x="105" y="835">evaluate.py</text><text class="small" x="102" y="852">base + LoRA compare</text></g>
-<g class="node"><rect class="artifact" x="310" y="810" width="205" height="62" rx="7"/><text x="332" y="835">eval reports</text><text class="small" x="332" y="852">md/html/index.json</text></g>
+<g class="node"><rect class="artifact" x="310" y="810" width="205" height="62" rx="7"/><text x="332" y="835">eval reports</text><text class="small" x="332" y="852">eval_index</text></g>
 <g class="node"><rect class="artifact" x="560" y="810" width="190" height="62" rx="7"/><text x="583" y="835">feedback JSON</text><text class="small" x="583" y="852">weak concepts</text></g>
 <g class="node"><rect class="script" x="795" y="810" width="190" height="62" rx="7"/><text x="818" y="835">feedback_loop.py</text><text class="small" x="816" y="852">repair / auto retrain</text></g>
 <g class="node"><rect class="external" x="1030" y="790" width="185" height="90" rx="7"/><text x="1052" y="817">Confident AI</text><text class="small" x="1052" y="834">hosted runs/link</text><text class="small" x="1052" y="850">metadata payload</text></g>
 <g class="node"><rect class="external" x="1260" y="790" width="185" height="90" rx="7"/><text x="1282" y="817">W&B</text><text class="small" x="1282" y="834">train/eval ledger</text><text class="small" x="1282" y="850">artifacts + URLs</text></g>
 
 <!-- hooks -->
-<g class="node"><rect class="ops" x="95" y="1060" width="210" height="54" rx="7"/><text x="118" y="1084">WorkflowHookRecorder</text><text class="small" x="118" y="1101">workflow_hooks.jsonl</text></g>
-<g class="node"><rect class="ops" x="350" y="1060" width="205" height="54" rx="7"/><text x="375" y="1084">PipelineRun</text><text class="small" x="375" y="1101">.pipeline/runs/*</text></g>
-<g class="node"><rect class="ops" x="600" y="1060" width="220" height="54" rx="7"/><text x="625" y="1084">pipeline_manifest</text><text class="small" x="625" y="1101">.pipeline/run_manifest.json</text></g>
-<g class="node"><rect class="ops" x="865" y="1060" width="210" height="54" rx="7"/><text x="888" y="1084">log_state</text><text class="small" x="888" y="1101">structured runtime events</text></g>
-<g class="node"><rect class="risk" x="1120" y="1045" width="390" height="84" rx="7"/><text x="1145" y="1070">Main gap</text><text class="small" x="1145" y="1087">hooks exist but not enforced as one DAG</text><text class="small" x="1145" y="1103">stage order/inputs can still diverge</text></g>
+<g class="node"><rect class="ops" x="95" y="1060" width="210" height="54" rx="7"/><text x="118" y="1084">ArtifactRegistry</text><text class="small" x="118" y="1101">.pipeline/artifacts.jsonl</text></g>
+<g class="node"><rect class="ops" x="350" y="1060" width="205" height="54" rx="7"/><text x="375" y="1084">PipelineDAG</text><text class="small" x="375" y="1101">required artifacts</text></g>
+<g class="node"><rect class="ops" x="600" y="1060" width="220" height="54" rx="7"/><text x="625" y="1084">audit pipeline-plan</text><text class="small" x="625" y="1101">next missing stage</text></g>
+<g class="node"><rect class="ops" x="865" y="1060" width="210" height="54" rx="7"/><text x="888" y="1084">stage recorders</text><text class="small" x="888" y="1101">best-effort writes</text></g>
+<g class="node"><rect class="risk" x="1120" y="1045" width="390" height="84" rx="7"/><text x="1145" y="1070">Remaining gap</text><text class="small" x="1145" y="1087">dashboard graph not registry-driven yet</text><text class="small" x="1145" y="1103">legacy/direct paths still need parity</text></g>
 
 <!-- flows -->
 <path class="flow" d="M210 122 H250"/><path class="flow" d="M380 122 H420"/><path class="flow" d="M570 122 H620"/><path class="flow" d="M785 122 H825"/><path class="flow" d="M1015 122 H1060"/><path class="gap" d="M570 150 C760 198 1070 205 1290 150"/>
@@ -86,8 +86,8 @@
 <path class="flow" d="M895 872 C760 970 360 980 382 327"/>
 
 <!-- hook dashed lines -->
-<path class="hook" d="M382 327 C382 540 180 640 200 1060"/><path class="hook" d="M847 327 C850 620 215 900 200 1060"/><path class="hook" d="M215 602 C230 780 250 970 200 1060"/><path class="hook" d="M928 602 C940 790 1030 970 200 1060"/><path class="hook" d="M172 872 C190 960 195 1015 200 1060"/>
-<path class="hook" d="M1310 327 C1260 590 760 920 700 1060"/><path class="hook" d="M1122 880 C1060 970 760 1030 700 1060"/>
+<path class="hook" d="M382 327 C382 540 180 640 200 1060"/><path class="hook" d="M847 327 C850 620 215 900 200 1060"/><path class="hook" d="M1310 327 C1260 590 210 930 200 1060"/><path class="hook" d="M215 602 C230 780 250 970 200 1060"/><path class="hook" d="M928 602 C940 790 260 970 200 1060"/><path class="hook" d="M172 872 C190 960 195 1015 200 1060"/>
+<path class="hook" d="M200 1060 H350"/><path class="hook" d="M452 1060 H600"/><path class="hook" d="M710 1060 H865"/>
 
 <!-- gap callouts -->
 <g class="node"><rect class="risk" x="285" y="352" width="250" height="58" rx="7"/><text x="305" y="376">G1 generation ambiguity</text><text class="small" x="305" y="393">NotebookLM required; template still easy</text></g>
@@ -114,13 +114,13 @@
   <div><span class="sw" style="background:rgba(76,29,149,.44);border-color:#a78bfa"></span>Artifact/data product</div>
   <div><span class="sw" style="background:rgba(120,53,15,.35);border-color:#fbbf24"></span>Registry/hooks/config</div>
   <div><span class="sw" style="background:rgba(136,19,55,.40);border-color:#fb7185"></span>Gap/risk/ambiguous seam</div>
-  <div><span class="sw" style="background:transparent;border-color:#fb923c"></span>Dashed orange = hook/manifest telemetry</div>
+  <div><span class="sw" style="background:transparent;border-color:#fb923c"></span>Dashed orange = artifact registry / readiness audit</div>
 </div>
 
 <div class="grid">
-  <div class="card mini"><h3>Canonical stage order</h3><ul><li>0 preflight/audit</li><li>1 validate spec</li><li>2 generate grounded dataset</li><li>3 sanitize clean dataset</li><li>4 dataset-eval quality gate</li><li>5 train LoRA</li><li>6 export GGUF adapter</li><li>7 evaluate base+LoRA</li><li>8 feedback repair loop</li></ul></div>
-  <div class="card mini"><h3>Artifacts that should be immutable/run-scoped</h3><ul><li>spec hash + ref doc hash</li><li>raw/clean dataset + sanitizer manifest</li><li>quality_summary/failures/report</li><li>train config snapshot + dataset SHA256</li><li>adapter + export manifest</li><li>eval md/html/index.json + feedback JSON</li><li>W&B/Confident URLs as metadata only</li></ul></div>
-  <div class="card mini"><h3>Professional workflow target</h3><ul><li>One run ID from generation to feedback</li><li>One DAG orchestrator owns order and required inputs</li><li>All scripts accept shared WorkflowContext</li><li>No direct script bypass without warning</li><li>Dashboard uses same command schema as CLI</li><li>Hooks are mandatory for production mode</li></ul></div>
+  <div class="card mini"><h3>Canonical stage order</h3><ul><li>0 preflight/audit</li><li>1 validate spec</li><li>2 generate -> dataset_raw</li><li>3 sanitize -> dataset_clean</li><li>4 dataset-eval -> quality_summary</li><li>5 train -> adapter_checkpoint</li><li>6 export -> gguf_adapter</li><li>7 evaluate -> eval_index</li><li>8 feedback repair loop</li></ul></div>
+  <div class="card mini"><h3>Registry-backed artifacts</h3><ul><li><code>.pipeline/artifacts.jsonl</code> is append-only</li><li>Records npc, technique, stage, artifact_type, path, sha256</li><li>Current stage outputs: dataset_raw, dataset_clean, quality_summary</li><li>Training/export/eval outputs: adapter_checkpoint, gguf_adapter, eval_index</li><li><code>./ucore audit pipeline-plan</code> reports missing artifacts and next stage</li></ul></div>
+  <div class="card mini"><h3>Remaining workflow target</h3><ul><li>One run ID from generation to feedback</li><li>Dashboard reads registry/DAG state directly</li><li>Direct scripts keep CLI parity or warn clearly</li><li>Generate Ollama/legacy paths write the same registry artifacts</li><li>Hook policy can become fail-closed for production</li></ul></div>
 </div>
 
 <div class="card">
@@ -128,12 +128,12 @@
 <table><thead><tr><th>ID</th><th>Observed seam</th><th>Why it can confuse runs</th><th>Suggested fix</th></tr></thead><tbody>
 <tr><td class="bad">G1</td><td>Generation has several providers/paths and template remains easy to invoke.</td><td>Production vs smoke data can blur unless provenance is enforced.</td><td>Add production mode gate: NotebookLM/grounded-only unless <code>--smoke</code>; record provider/model/prompt hash in manifest.</td></tr>
 <tr><td class="bad">G2</td><td>Sanitizer CLI defaults like max sentences can diverge from NPC spec/runtime limits.</td><td>Rows may pass sanitize but fail Unity-facing eval constraints.</td><td>Derive sanitizer thresholds from spec by default; CLI overrides must be logged as run parameters.</td></tr>
-<tr><td class="bad">G3</td><td>Dataset eval, DeepEval, Confident, and local quality artifacts are parallel truths.</td><td>Operator may compare hosted run, local report, and feedback from different contexts.</td><td>Use one eval run ID and write one <code>quality_index.json</code> equivalent with Confident URL nested as metadata.</td></tr>
-<tr><td class="bad">G4</td><td>Train/export handoff can use output_dir, run_dir, best/latest, or newest fallback.</td><td>Wrong adapter can be exported/evaluated after multiple runs.</td><td>Make export consume a manifest-backed training run ID only; aliases are convenience, not source of truth.</td></tr>
+<tr><td class="ok">G3</td><td>Dataset-eval now records <code>quality_summary</code> in the artifact registry.</td><td>Local quality artifact has a canonical registry handle; hosted/extra URLs remain metadata.</td><td>Next: add cross-run comparison command/dashboard view that joins quality/eval indexes.</td></tr>
+<tr><td class="warn">G4</td><td>Train/export handoff now records <code>adapter_checkpoint</code> and <code>gguf_adapter</code>.</td><td>Readiness audit can see if export is blocked by missing training output.</td><td>Next: make export consume a manifest-backed run ID by default; keep aliases as convenience only.</td></tr>
 <tr><td class="bad">G5</td><td>Unity deployment is separate from export manifest.</td><td>Export success does not prove runtime model path or base+LoRA pairing is deployable.</td><td>Add deploy stage with checksums, base model alias, adapter path, and Unity StreamingAssets verification.</td></tr>
-<tr><td class="warn">G6</td><td>Eval report index now exists but is local per report.</td><td>Good for one run; not yet a global comparison ledger.</td><td>Add registry command/dashboard view that joins all <code>eval_*.index.json</code> by NPC/run/model/params/logic.</td></tr>
+<tr><td class="warn">G6</td><td>Eval report index is now represented as <code>eval_index</code>.</td><td>The pipeline registry can tell whether evaluation output exists for an NPC/technique.</td><td>Next: add global comparison ledger/dashboard view across all eval indexes.</td></tr>
 <tr><td class="bad">G7</td><td>Feedback loop calls generate/train/evaluate through subprocess seams.</td><td>Auto-repair can skip or mismatch gate/order unless every subprocess shares context.</td><td>Promote feedback loop to DAG node using same run context and required artifact checks.</td></tr>
-<tr><td class="warn">G8</td><td>Hooks exist but appear best-effort and not universally enforced.</td><td>Missing hook logs make incomplete runs look normal.</td><td>Production mode should fail if hook recorder/manifest write fails; dev mode can stay best-effort.</td></tr>
+<tr><td class="ok">G8</td><td><code>ArtifactRegistry</code> + <code>PipelineDAG</code> now exist and <code>./ucore audit pipeline-plan</code> reads registry state.</td><td>Operators can see missing artifacts before running later stages.</td><td>Next: expose the readiness plan in the dashboard and make production hook policy fail-closed.</td></tr>
 <tr><td class="warn">G9</td><td>Direct script entrypoints still exist.</td><td>Useful for dev, dangerous for operators because they may bypass <code>./ucore</code> preflight/parity.</td><td>Add deprecation warnings or wrappers that delegate to <code>./ucore</code> when invoked directly.</td></tr>
 <tr><td class="bad">G10</td><td>Tests still contain stale qwen3 refs while config/docs moved to qwen2.5.</td><td>Future agents may think qwen3 is still a valid default.</td><td>Update/segregate challenger-model tests from default-model tests.</td></tr>
 </tbody></table>
@@ -143,8 +143,8 @@
 <h2>Next modularization target</h2>
 <table><thead><tr><th>Module</th><th>Responsibility</th><th>Inputs</th><th>Outputs</th></tr></thead><tbody>
 <tr><td><code>WorkflowContext</code></td><td>Single run identity + npc/technique/preset/model paths.</td><td>spec path, production/smoke mode, overrides</td><td>run_id, artifact IDs, canonical paths, hashes</td></tr>
-<tr><td><code>PipelineDAG</code></td><td>Owns stage order and required predecessors.</td><td>WorkflowContext + requested target stage</td><td>validated execution plan + blocked reasons</td></tr>
-<tr><td><code>ArtifactRegistry</code></td><td>Append-only source of truth for artifacts.</td><td>stage outputs + checksums + metadata</td><td>queryable run ledger and comparison matrix</td></tr>
+<tr><td><code>PipelineDAG</code></td><td>Owns stage order and required predecessor artifact checks.</td><td>ArtifactRegistry + requested target stage</td><td><code>ready</code>, missing artifacts, missing stages, next stage</td></tr>
+<tr><td><code>ArtifactRegistry</code></td><td>Append-only source of truth for stage artifacts.</td><td>stage outputs + checksums + metadata</td><td><code>.pipeline/artifacts.jsonl</code> and latest-artifact queries</td></tr>
 <tr><td><code>HookPolicy</code></td><td>Best-effort in dev, fail-closed in production.</td><td>mode + hook path + registry status</td><td>complete step logs or hard failure</td></tr>
 <tr><td><code>ComparisonIndex</code></td><td>Cross-run report categorization.</td><td>eval index JSON files + Confident/W&B URLs</td><td>sortable dashboard table by model/format/params/logic/category</td></tr>
 </tbody></table>
