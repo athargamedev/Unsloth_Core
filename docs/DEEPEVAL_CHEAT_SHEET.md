@@ -23,6 +23,12 @@
 10. [NPC Pipeline Recommendations](#10-npc-pipeline-recommendations)
 11. [Troubleshooting Quick Reference](#11-troubleshooting-quick-reference)
 12. [Quick Reference Code Snippets](#12-quick-reference-code-snippets)
+13. [Evals REST API](#13-evals-rest-api)
+14. [Remote Red Teaming and Security](#14-remote-red-teaming-and-security)
+15. [CI/CD Integration](#15-cicd-integration)
+16. [Monitoring and Alerting](#16-monitoring-and-alerting)
+17. [Data Privacy and Compliance](#17-data-privacy-and-compliance)
+18. [Scheduled Assessments](#18-scheduled-assessments)
 
 ---
 
@@ -980,3 +986,103 @@ if latest_run.exists():
 > [`COMMANDS_DICTIONARY.md`](COMMANDS_DICTIONARY.md) — all CLI flags for dataset-eval.
 
 [⤴ back to TOC](#table-of-contents)
+
+# Additions for DEEPEVAL_CHEAT_SHEET.md
+
+Here are the proposed additions to enhance the `DEEPEVAL_CHEAT_SHEET.md` file, based on the official Confident AI documentation.
+
+---
+
+## 13. Evals REST API
+
+While the `deepeval` Python library is the primary way to interact with Confident AI, a REST API is available for direct integration, especially in non-Python environments.
+
+### API Quickstart
+
+- **Authentication**: The API uses Bearer token authentication.
+- **Data Models**: Core data models include `evaluations`, `datasets`, and `metrics`.
+- **API Conventions**: The API follows standard REST conventions with predictable response formats and status codes.
+
+For detailed information, refer to the [official API reference](https://www.confident-ai.com/docs/api-reference/introduction).
+
+---
+
+## 14. Remote Red Teaming and Security
+
+Confident AI provides a powerful platform for remote red teaming and security assessments, going beyond the local capabilities of `deepteam`.
+
+### Key Features
+
+- **Vulnerability Assessment**: Systematically identify weaknesses like bias, toxicity, PII leakage, and prompt injection vulnerabilities.
+- **Adversarial Testing**: Simulate real-world attacks using jailbreaking, prompt injection, and other sophisticated methods.
+- **Risk Profiling**: Comprehensive evaluation across 40+ vulnerability types with detailed risk assessments and remediation guidance.
+
+### Security Frameworks
+
+You can use pre-defined security frameworks for comprehensive assessments:
+- **OWASP Top 10 for LLMs**
+- **NIST AI RMF** (AI Risk Management Framework)
+- **MITRE ATLAS**
+
+These frameworks can be applied directly from the Confident AI platform or programmatically via `deepteam`.
+
+### Best Practices for Red Teaming
+
+1.  **Start with frameworks**: Use OWASP Top 10 or NIST AI RMF for comprehensive coverage.
+2.  **Test early and often**: Integrate red teaming into your development cycle.
+3.  **Focus on your use case**: Customize vulnerabilities based on your application’s risks.
+4.  **Monitor continuously**: Set up ongoing safety assessments for production systems.
+5.  **Document and remediate**: Keep detailed records of findings and remediation efforts.
+
+---
+
+## 15. CI/CD Integration
+
+Automate your quality and security assessments by integrating Confident AI into your CI/CD pipeline.
+
+### Recommendations
+
+- **Use environment variables**: Store your `CONFIDENT_API_KEY` as a secret in your CI/CD provider.
+- **Run evaluations on every pull request**: Catch regressions before they are merged.
+- **Use `deepeval test run` with the `-x` flag**: To exit on the first failure and fail the build.
+- **Integrate Red Teaming**: Use `deepteam` to run security assessments as part of your pipeline.
+- **Persist reports**: Use the `results_folder` and `file_output_dir` display configurations to save HTML or Markdown reports as artifacts of your CI/CD runs.
+
+---
+
+## 16. Monitoring and Alerting
+
+Confident AI's platform offers real-time monitoring and alerting to ensure the quality of your AI applications in production.
+
+### How it works
+
+- **Tracing**: The `@observe` decorator in the `deepeval` library sends traces of your AI application's executions to Confident AI.
+- **Real-time Evals**: Configure real-time evaluations on the platform to continuously monitor the quality of your application.
+- **Alerting**: Set up alerts to be notified via email or other channels when the quality of your AI application degrades.
+
+---
+
+## 17. Data Privacy and Compliance
+
+Confident AI is designed with data security in mind, offering features to meet enterprise-grade compliance requirements.
+
+### Key Features
+
+- **Encryption**: All data is encrypted at rest and protected by TLS in transit.
+- **SOC II Compliance**: Available for customers on the **Enterprise plan**.
+- **HIPAA Compliance**: Business Associate Agreements (BAAs) are available for customers on the **Premium Plan** as an add-on.
+
+For more details, refer to the [Data Handling documentation](https://www.confident-ai.com/docs/resources/data-handling).
+
+---
+
+## 18. Scheduled Assessments
+
+Automate your red teaming and risk assessments by scheduling them to run at regular intervals.
+
+### How to create a schedule
+
+1.  Navigate to the **Automations** tab in the Confident AI platform.
+2.  Click **Add Schedule** and choose your configuration.
+3.  Specify the interval for the assessments (e.g., daily, weekly).
+4.  Click **Create Schedule**.

@@ -101,9 +101,13 @@ def _run_via_server(server_bin, model_path, prompt, system_prompt=None, max_toke
     if system_prompt:
         messages.insert(0, {"role": "system", "content": system_prompt})
 
+    base_model_path = PROJECT_ROOT / "Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf"
+    if not base_model_path.exists():
+        return f"[ERROR] Base model not found at {base_model_path}"
+
     proc = subprocess.Popen(
-        [server_bin, "-m", str(model_path), "--port", str(port),
-         "-ngl", "99", "--no-web"],
+        [server_bin, "-m", str(base_model_path), "--lora", str(model_path),
+         "--port", str(port), "-ngl", "99", "--no-web"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )
 
