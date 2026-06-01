@@ -65,7 +65,7 @@ class TestKeyResolution:
         from scripts.ops.confident_api import ConfidentAPIClient
 
         monkeypatch.delenv("CONFIDENT_API_KEY", raising=False)
-        with patch("scripts.ops.env_loader.load_env_local", return_value=False):
+        with patch("src.core.ops.env_loader.load_env_local", return_value=False):
             with pytest.raises(EnvironmentError, match="CONFIDENT_API_KEY"):
                 ConfidentAPIClient()
 

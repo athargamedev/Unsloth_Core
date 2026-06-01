@@ -625,7 +625,7 @@ def test_evaluate_remote_eval_uses_confident_api(monkeypatch, tmp_path):
     with (
         patch("scripts.evaluation.evaluate.ConfidentAPIClient", return_value=mock_client),
         patch("scripts.evaluation.evaluate.ensure_confident_api_key", return_value=True),
-        patch("scripts.ops.pipeline_manifest.record_pipeline_stage"),
+        patch("src.core.ops.pipeline_manifest.record_pipeline_stage"),
     ):
         _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=spec_data)
 
@@ -695,7 +695,7 @@ def test_evaluate_remote_eval_includes_confident_url_in_manifest(monkeypatch, tm
     with (
         patch("scripts.evaluation.evaluate.ConfidentAPIClient", return_value=mock_client),
         patch("scripts.evaluation.evaluate.ensure_confident_api_key", return_value=True),
-        patch("scripts.ops.pipeline_manifest.record_pipeline_stage", side_effect=_capture_manifest),
+        patch("src.core.ops.pipeline_manifest.record_pipeline_stage", side_effect=_capture_manifest),
     ):
         _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=spec_data)
 

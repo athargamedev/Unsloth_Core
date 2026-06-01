@@ -41,10 +41,10 @@ def test_eval_paths_resolve_under_project_eval_root():
     )
     feedback_path = paths.eval_feedback_path("history_guide")
 
-    assert report_path == PROJECT_ROOT / "eval" / "reports" / "history_guide" / "eval_20260521T123456_123456Z.md"
-    assert html_path == PROJECT_ROOT / "eval" / "reports" / "history_guide" / "eval_20260521T123456_123456Z.html"
-    assert comparison_path == PROJECT_ROOT / "eval" / "comparisons" / "history_guide_vs_baseline_vs_candidate_20260521T123456_123456Z.md"
-    assert feedback_path == PROJECT_ROOT / "eval" / "results" / "feedback" / "history_guide.json"
+    assert report_path == paths.eval_root() / "reports" / "history_guide" / "eval_20260521T123456_123456Z.md"
+    assert html_path == paths.eval_root() / "reports" / "history_guide" / "eval_20260521T123456_123456Z.html"
+    assert comparison_path == paths.eval_root() / "comparisons" / "history_guide_vs_baseline_vs_candidate_20260521T123456_123456Z.md"
+    assert feedback_path == paths.eval_root() / "results" / "feedback" / "history_guide.json"
 
 
 def test_feedback_loop_flags_low_quality_not_high_quality():

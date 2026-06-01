@@ -82,6 +82,7 @@ def is_allowed(line: str, pattern: str) -> bool:
 
 def audit(paths: list[str]) -> list[Finding]:
     findings: list[Finding] = []
+    legacy_pattern_strs = {lp[0] for lp in LEGACY_PATTERNS}
     for path in iter_files(paths):
         try:
             text = path.read_text(encoding="utf-8")
@@ -92,7 +93,7 @@ def audit(paths: list[str]) -> list[Finding]:
         for idx, line in enumerate(text.splitlines(), start=1):
             for pattern, severity, message in PATTERNS:
                 # Skip legacy path validation patterns for migration notes file
-                if is_migration_notes and pattern in (lp[0] for lp in LEGACY_PATTERNS):
+                if is_migration_notes and pattern in legacy_pattern_strs:
                     continue
                 if re.search(pattern, line, flags=re.IGNORECASE) and not is_allowed(line, pattern):
                     findings.append(Finding(rel, idx, severity, pattern, message, line.strip()))
