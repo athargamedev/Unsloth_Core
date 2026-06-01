@@ -33,6 +33,64 @@ interface ArtifactRecord {
   [key: string]: unknown;
 }
 
+export function buildReadinessPlanFromRecords(
+  records: ArtifactRecord[],
+  npcKey: string,
+  targetStage = "evaluate",
+  technique?: string | null,
+  artifactRegistryPath = ".pipeline/artifacts.jsonl",
+) {
+  const normalizedTarget = targetStage || "evaluate";
+  if (!CANONICAL_STAGE_ORDER.includes(normalizedTarget as typeof CANONICAL_STAGE_ORDER[number])) {
+    return { error: `Unknown pipeline stage: ${normalizedTarget}` };
+  }
+  const filteredRecords = records.filter((record) => {
+    if (record.npc_key !== npcKey) return false;
+    if (technique !== undefined && record.technique !== technique) return false;
+    return true;
+  });
+  const latestArtifact = (artifactType: string): ArtifactRecord | null => {
+    for (let index = filteredRecords.length - 1; index >= 0; index -= 1) {
+      if (filteredRecords[index]?.artifact_type === artifactType) return filteredRecords[index];
+    }
+    return null;
+  };
+  const producerFor = (artifactType: string): string | null => {
+    for (const [stage, outputs] of Object.entries(STAGE_OUTPUT_ARTIFACTS)) {
+      if (outputs.includes(artifactType)) return stage;
+    }
+    return null;
+  };
+  const targetIndex = CANONICAL_STAGE_ORDER.indexOf(normalizedTarget as typeof CANONICAL_STAGE_ORDER[number]);
+  const steps = CANONICAL_STAGE_ORDER.slice(0, targetIndex + 1).map((stage) => {
+    const missingArtifacts = (STAGE_REQUIRED_ARTIFACTS[stage] ?? []).filter(
+      (artifactType) => latestArtifact(artifactType) === null,
+    );
+    const producedArtifacts = Object.fromEntries(
+      (STAGE_OUTPUT_ARTIFACTS[stage] ?? []).map((artifactType) => [artifactType, latestArtifact(artifactType)]),
+    );
+    return {
+      stage,
+      ready: missingArtifacts.length === 0,
+      missing_artifacts: missingArtifacts,
+      missing_stages: missingArtifacts.map(producerFor).filter(Boolean),
+      produces: STAGE_OUTPUT_ARTIFACTS[stage] ?? [],
+      artifacts: producedArtifacts,
+    };
+  });
+  const nextRequiredStage = steps.find((step) => Object.values(step.artifacts).every((artifact) => artifact === null))?.stage ?? null;
+  return {
+    npc_key: npcKey,
+    technique: technique ?? null,
+    target_stage: normalizedTarget,
+    ready: steps.every((step) => step.ready),
+    next_required_stage: nextRequiredStage,
+    artifact_registry_path: artifactRegistryPath,
+    artifact_count: filteredRecords.length,
+    steps,
+  };
+}
+
 /**
  * Registers /api/pipeline/* routes.
  */
@@ -135,39 +193,8 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
     targetStage: string,
     technique?: string | null,
   ) {
-    const normalizedTarget = targetStage || "evaluate";
-    if (!CANONICAL_STAGE_ORDER.includes(normalizedTarget as typeof CANONICAL_STAGE_ORDER[number])) {
-      return { error: `Unknown pipeline stage: ${normalizedTarget}` };
-    }
     const records = readArtifactRecords(2000, npcKey, technique);
-    const targetIndex = CANONICAL_STAGE_ORDER.indexOf(normalizedTarget as typeof CANONICAL_STAGE_ORDER[number]);
-    const steps = CANONICAL_STAGE_ORDER.slice(0, targetIndex + 1).map((stage) => {
-      const missingArtifacts = (STAGE_REQUIRED_ARTIFACTS[stage] ?? []).filter(
-        (artifactType) => latestArtifact(records, artifactType) === null,
-      );
-      const producedArtifacts = Object.fromEntries(
-        (STAGE_OUTPUT_ARTIFACTS[stage] ?? []).map((artifactType) => [artifactType, latestArtifact(records, artifactType)]),
-      );
-      return {
-        stage,
-        ready: missingArtifacts.length === 0,
-        missing_artifacts: missingArtifacts,
-        missing_stages: missingArtifacts.map(producerFor).filter(Boolean),
-        produces: STAGE_OUTPUT_ARTIFACTS[stage] ?? [],
-        artifacts: producedArtifacts,
-      };
-    });
-    const nextRequiredStage = steps.find((step) => Object.values(step.artifacts).every((artifact) => artifact === null))?.stage ?? null;
-    return {
-      npc_key: npcKey,
-      technique: technique ?? null,
-      target_stage: normalizedTarget,
-      ready: steps.every((step) => step.ready),
-      next_required_stage: nextRequiredStage,
-      artifact_registry_path: artifactIndexPath,
-      artifact_count: records.length,
-      steps,
-    };
+    return buildReadinessPlanFromRecords(records, npcKey, targetStage, technique, artifactIndexPath);
   }
 
   // ── GET /api/pipeline/runs ─────────────────────────────────────────────
