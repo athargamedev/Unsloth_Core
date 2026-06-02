@@ -385,6 +385,17 @@ class ConfidentGoldensConverter:
         single_turn_path = confident_dir / "single_turn_goldens.jsonl"
         conversational_path = confident_dir / "conversational_goldens.jsonl"
 
+        # Preserve manually created or pre-existing conversational goldens if they exist in the target path
+        if conversational_path.exists():
+            existing_conversational = _read_jsonl(conversational_path)
+            seen_scenarios = {cg.get("scenario") for cg in conversational_goldens if cg.get("scenario")}
+            for cg in existing_conversational:
+                scenario = cg.get("scenario")
+                if not scenario or scenario not in seen_scenarios:
+                    conversational_goldens.append(cg)
+                    if scenario:
+                        seen_scenarios.add(scenario)
+
         _write_jsonl(single_turn_path, single_goldens)
         _write_jsonl(conversational_path, conversational_goldens)
 

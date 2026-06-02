@@ -3,8 +3,8 @@
   "technique": "ollama",
   "dataset_sha": "bd08f547b46f9166e017b6eeebd88dc9fd52bfef6f8680546d87171fe5732cfd",
   "single_turn_count": 65,
-  "conversational_count": 0,
-  "created_at": "2026-06-02T16:25:00Z",
+  "conversational_count": 20,
+  "created_at": "2026-06-02T16:56:57Z",
   "default_alias": "ucore-history-guide-ollama-single-v1",
   "default_version": "20260602-bd08f547",
   "version": "20260602-bd08f547",
@@ -14,11 +14,11 @@
   },
   "counts": {
     "single_turn": 65,
-    "conversational": 0
+    "conversational": 20
   },
   "files": {
-    "single_turn": "data/datasets/history_guide/ollama/confident/single_turn_goldens.jsonl",
-    "conversational": "data/datasets/history_guide/ollama/confident/conversational_goldens.jsonl"
+    "single_turn": "/home/athar/Projects/Unsloth_Core/data/datasets/history_guide/ollama/confident/single_turn_goldens.jsonl",
+    "conversational": "/home/athar/Projects/Unsloth_Core/data/datasets/history_guide/ollama/confident/conversational_goldens.jsonl"
   },
   "push_defaults": {
     "finalized": false

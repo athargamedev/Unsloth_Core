@@ -3,8 +3,8 @@
   "technique": "ollama",
   "dataset_sha": "a7d3fcd92e5bf553da981172b65e4fbc1727b90c1e929bfc7855610d03e147af",
   "single_turn_count": 70,
-  "conversational_count": 2,
-  "created_at": "2026-06-02T16:25:00Z",
+  "conversational_count": 22,
+  "created_at": "2026-06-02T16:57:00Z",
   "default_alias": "ucore-chef-assistant-ollama-single-v1",
   "default_version": "20260602-a7d3fcd9",
   "version": "20260602-a7d3fcd9",
@@ -14,11 +14,11 @@
   },
   "counts": {
     "single_turn": 70,
-    "conversational": 2
+    "conversational": 22
   },
   "files": {
-    "single_turn": "data/datasets/chef_assistant/ollama/confident/single_turn_goldens.jsonl",
-    "conversational": "data/datasets/chef_assistant/ollama/confident/conversational_goldens.jsonl"
+    "single_turn": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/confident/single_turn_goldens.jsonl",
+    "conversational": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/confident/conversational_goldens.jsonl"
   },
   "push_defaults": {
     "finalized": false
