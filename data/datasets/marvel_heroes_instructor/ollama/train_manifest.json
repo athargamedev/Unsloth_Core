@@ -1,114 +1,137 @@
 {
   "npc_key": "marvel_heroes_instructor",
   "technique": "ollama",
-  "model": "qwen2.5:7b",
+  "sanitized": true,
+  "sanitizer": {
+    "version": "v2",
+    "date": "2026-06-02T23:21:14Z",
+    "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/marvel_heroes_instructor/ollama/train.jsonl --output data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl --strict-canonical --require-complete-metadata --dedup",
+    "artifact_check_mode": "strict",
+    "strict_mode": false
+  },
+  "spec": {
+    "file": "/home/athar/Projects/Unsloth_Core/data/npcs/specs/marvel_heroes_instructor.json",
+    "hash": "sha256:94ffd17e601ec941124c0593df78c44985174518fbfaaf97454fc7f2be3f0e44"
+  },
+  "input": {
+    "file": "data/datasets/marvel_heroes_instructor/ollama/train.jsonl",
+    "hash": "sha256:18f32cd74314b0a5ed706a383b1b608749568e2145e9e1090568f17e7354eee4",
+    "total_examples": 59
+  },
+  "statistics": {
+    "total_input": 59,
+    "total_output": 59,
+    "total_train": 59,
+    "total_validation": 7,
+    "by_category": {
+      "teaching": 24,
+      "dialogue": 14,
+      "refusal": 8,
+      "quest": 5,
+      "identity": 8
+    },
+    "by_difficulty": {
+      "beginner": 31,
+      "intermediate": 15,
+      "advanced": 13
+    },
+    "by_safety_tag": {
+      "boundary_enforcement": 8
+    },
+    "quality_scores": {
+      "mean": 82.0,
+      "median": 81,
+      "min": 74,
+      "max": 94,
+      "std_dev": 3.9,
+      "passed_threshold": 59,
+      "flagged_for_review": 0,
+      "distribution": {
+        "0-9": 0,
+        "10-19": 0,
+        "20-29": 0,
+        "30-39": 0,
+        "40-49": 0,
+        "50-59": 0,
+        "60-69": 0,
+        "70-79": 15,
+        "80-89": 41,
+        "90-99": 3,
+        "100+": 0
+      }
+    }
+  },
+  "discarded": {
+    "total": 0,
+    "by_reason": {}
+  },
+  "content_hashes": [
+    "92cfebd5eae98c76d9137dca16fdd97b7529d0355810d2a417ad676dc24c35c5",
+    "726e6178c778138a5f818824e567c4b65283d800d39e251f86a4c3c28053eb2c",
+    "610953ce213c8e16e33b786af85098897ff095e36276543a36e6384dc8e5d0d7",
+    "cbdcd3d0170699ea4881748a0dc3a5553137c42556eea1b699a5d8bae279df8d",
+    "c7bc07527bb9c2465d6fbb74e085f355900cc71e07edb8908f1e1b9135746934",
+    "a716dff5e430a45fb83d45f2be9ec24ad127a3100832925223bc2175ba6509bf",
+    "ca5e08cde1f3c1c65c477f8f5b7cb5216e97e087fa8d39e38c9a61efbddce097",
+    "71a2be8e4bd98459bd15861a75b0e10cffa5d6cc401208f41607f303231d6203",
+    "37e6e0297bab7d10cdc899a14da7dbbcfa0a594f5255505daf88dfd6d745a5ca",
+    "e32e8a8e0c1f25cb8fc9aad12cb14033d74349aa2d35d5d59bfa8c4e08883365",
+    "5f57ff8592ec48d4c4dedc3583d41260b12046ac92071fc5371cbbb394657088",
+    "4c93eb6578a030e3d4ec2cc3fb25d634c2e715217cae5cef13657ba3b6eea0b0",
+    "548852e522fa627cef55e43ecdca59ee3be3accbb2d55d927e652e9d3c26a746",
+    "69678984e2fd4a02f955d2a639df3e8e9334100ff1f89c661455abeb608ddb2d",
+    "a4ad980750b2d61ec53cfc6d876b57ccc18efdc17baef5bce11ef750eb1268e3",
+    "2d65a72605567ee162867046dc80e9189a52e644ed9690095ee7f21d397e0397",
+    "cea3c9b0cfe08a4f5ef6191737d198ac207669930782360db0ae1c454beb4c1f",
+    "d45ca0adac767d693bfcfe839547a38f6a5f2da344ad66eef7d1bc166ea520c6",
+    "f2ab3b035dc1710f79ff8cd6c9bb6bb65bd997f7abeb891d9956c5c119a0b3c7",
+    "fc2f1650e756e0a6c0a66768a8103eb74cd4650e5d31860a4bcc15ad86728e51",
+    "62a61595e0ccfb0063f92ed22d9f8ee46f6f416ca369db3e51c2847976db5f4b",
+    "7a42e03410c460a8ce3768c0cf78cc9e3f77132dfede640965abf9ce73a4001c",
+    "8d18bd3aa25bfff06838db581e9e195a99131b850b3640a5397ac98df5bbfae3",
+    "e42ea67988a304db46074de05c0db6a744b5904c05ff68ffaa2c4da07761c251",
+    "7f15621b613d3bd399b9cca6a7385ae985a0ed339fbe450edc14fafe758ea792",
+    "8b4b7c21c776a03a1f0a851f09eaa5ccf890762c53c1cff328391faff28a128f",
+    "f802ffa0420b9df27556bfb582518fed31c647905ff346867aa6cf84bd716236",
+    "92397db924a42deb6e85c81c6b708555166e3ca84699cca15decbdb99b509381",
+    "b8b712aee2d83745b787e9149a50ae42bef8b0b22549b737fd0fd3431de4a6b2",
+    "05d7f882a39ad559ffeb84e08b32b5648a25c51effa297d77db931da50eb161f",
+    "d798536495681be2f3bc42296f219b765bb6e93fbd8d164cbdc20a39f152c5f6",
+    "431113a8145ae6de6045ed90298280b1bcdc8ff0a91e241e4c87884a25ff8d8c",
+    "acc0324ba75e88e097776265273951707495d8fa74b3323630479c74bcbd40d9",
+    "e6d820bb5174b1dd05197becd2a0171ff0a149cc2077d64d0d1338d499c075b1",
+    "538f7723f6551a606d52109b59286d231549910d2a27ca1baf52233c4a2ce608",
+    "84764f107d1820de5dda4062d1ee2e3d73def7c2f5ad9417e9d9eb3eca03af92",
+    "f9eb66d2a0b48999aa19eccc3a6823b24f2e0adef0eb27d53fc325a290a5ef14",
+    "7dae6a899cc0740c9c7f6b015c620aa299159fd953d12ac75d63d8f78eb4d305",
+    "d4bebd9db2e9ee23e2b087225db7773bf324f2d14497836351f87d08eb9f66f0",
+    "936af2e466979d4ef18de3ff61043f83393496e4ba4c4fc2cf7f89749d325f1a",
+    "16571408946f2030851ef952ef194d93e9677e02c23b04400f35a4a6be677560",
+    "1507698eee249b3c3482083c8fbfb562004c0f3fbd112372362e22bf72e03186",
+    "8fb6848aa269c949cf7d239f2178329bb298a2a71cb507380a9ece303fce95b7",
+    "7af7698a4d3f1ee8a8b18dfa672304a7da28b7d63734d456ea0f5ceb09ee94e0",
+    "5c1c09a99e17eb8c3ba7764813ac4d0e45f27d5649d2553b5221fc83300268cd",
+    "fa49f941e6087a860dc4d3a5754d1b49279a3705f47dcef7644bb6b1bd73d61c",
+    "4288dc65fdcd34e2bf334e4a4fae2459f1f596239fcb82ddc5686ef25b8a18e8",
+    "b00edb2c2730fbc5965c95b13acabd2a0983391dde640154e7c2bb4593643732",
+    "3b2c7a1d75101935eb9acaaf1dff0fb55428e663dbac79ee40ccb57425add21d",
+    "54d9384dea8bc4d1b15ad896d8a6b302a6418921d901af42c0c893edc1f16d68",
+    "538f7723f6551a606d52109b59286d231549910d2a27ca1baf52233c4a2ce608",
+    "1f4622495bab56bd16d6a7a4ed1b2a73151dc0043f7317a0b0396623a9c51d4c",
+    "6d6f3eb6cdf9fb1ff109261f4405bf11885e0dd7a13450d066454a322d7f80b3",
+    "cb0eb48aec4035411d0b35ec71071bebe880783f14db98143b23d3779c16950e",
+    "63663dc5b4b4411f8c91ba3602f40b39d7a569098b9bc2b8ab98ccca32a13dba",
+    "29cf5de15c2b2f8101f00a7a36297334244ce087cbd1a25c8628a2830af2e2df",
+    "afc5d9341189a6f713f7cb242917c6914937425218dbf33e32719313836f2d60",
+    "713d9342031a94abc3fa27b7402581f95d491a7bb9066423f41139fc3688db4d",
+    "9e264cbd28c6db5d78548a7d203620eff49c079105d2a69130a063500ece7373"
+  ],
+  "content_hash_prefix": "sha256:",
   "generation": {
     "date": "2026-06-02T21:26:26Z",
     "seed": 42,
     "temperature": 0.6,
     "multi_turn_ratio": 0.25,
     "version": "ollama-v2"
-  },
-  "spec": {
-    "file": "/home/athar/Projects/Unsloth_Core/data/npcs/specs/marvel_heroes_instructor.json",
-    "hash": "sha256:94ffd17e601ec941124c0593df78c44985174518fbfaaf97454fc7f2be3f0e44"
-  },
-  "contract": {
-    "supported_categories": [
-      "identity",
-      "teaching",
-      "dialogue",
-      "quest",
-      "refusal"
-    ],
-    "minimum_examples_per_category": {
-      "identity": 8,
-      "teaching": 32,
-      "dialogue": 16,
-      "quest": 8,
-      "refusal": 8
-    },
-    "expected_examples_per_category": {
-      "identity": 8,
-      "teaching": 32,
-      "dialogue": 16,
-      "quest": 8,
-      "refusal": 8
-    },
-    "valid_difficulty_levels": [
-      "beginner",
-      "intermediate",
-      "advanced"
-    ],
-    "spec_npc_key": "marvel_heroes_instructor",
-    "reference_doc": "data/npcs/reference_docs/marvel_heroes_instructor_primer.md",
-    "technique": null
-  },
-  "distribution": {
-    "expected_examples_per_category": {
-      "identity": 8,
-      "teaching": 32,
-      "dialogue": 16,
-      "quest": 8,
-      "refusal": 8
-    },
-    "generation_request_examples_per_category": {
-      "identity": 9,
-      "teaching": 36,
-      "dialogue": 18,
-      "quest": 9,
-      "refusal": 9
-    },
-    "observed_examples_per_category": {
-      "dialogue": 16,
-      "teaching": 32,
-      "quest": 8,
-      "identity": 8,
-      "refusal": 8
-    },
-    "distribution_gaps": []
-  },
-  "statistics": {
-    "total": 72,
-    "train": 72,
-    "validation": 0,
-    "by_category": {
-      "dialogue": 16,
-      "teaching": 32,
-      "quest": 8,
-      "identity": 8,
-      "refusal": 8
-    },
-    "by_difficulty": {
-      "beginner": 30,
-      "intermediate": 22,
-      "null": 9,
-      "advanced": 11
-    },
-    "by_concept": {
-      "overview": 2,
-      "street-level vigilantes": 16,
-      "tactical assessments": 6,
-      "mutants and x-men": 3,
-      "cosmic threats": 11,
-      "mutant abilities": 9,
-      "marvel_heroes_instructor": 8,
-      "cosmic entities and threats": 7,
-      "shield history": 4,
-      "core avengers": 1,
-      "boundary conditions and refusals": 3,
-      "Will not engage in speculative 'who would win' debates without emphasizing tactics.": 2
-    },
-    "generator_stats": {
-      "requests": 81,
-      "successes": 81,
-      "errors": 0,
-      "success_rate": 1.0
-    }
-  },
-  "repair": {
-    "date": "2026-06-02T23:08:46.926491+00:00",
-    "reason": "top up refusal category and tighten sampled quality-gate rows after fast eval",
-    "clean_sha256": "sha256:885cb2347dfe1348af8a12d7739c5e9e5204a84d3ba5982f4c05208b3a33a4b5"
   }
 }
