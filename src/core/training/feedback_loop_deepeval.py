@@ -14,7 +14,7 @@ except ImportError:
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 async def repair_failures(npc_key: str, technique: str):
-    base_dir = PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique
+    base_dir = PROJECT_ROOT / "data" / "datasets" / npc_key / technique
     failures_path = base_dir / "quality_failures.json"
     train_path = base_dir / "train_clean.jsonl"
     repaired_path = base_dir / "train_repaired.jsonl"

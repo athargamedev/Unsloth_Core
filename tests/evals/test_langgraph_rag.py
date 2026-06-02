@@ -12,12 +12,9 @@ from deepeval import assert_test
 from deepeval.test_case import LLMTestCase, ConversationalTestCase, Turn
 from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric
 
-_DEEPEVAL_LIVE_URL = os.getenv("DEEPEVAL_LIVE_MODEL_URL", "").strip()
-if not _DEEPEVAL_LIVE_URL:
-    pytest.skip(
-        "Set DEEPEVAL_LIVE_MODEL_URL to activate LangGraph RAG evaluation tests",
-        allow_module_level=True,
-    )
+_DEEPEVAL_LIVE_URL = os.getenv("DEEPEVAL_LIVE_MODEL_URL", "http://localhost:11434").strip()
+os.environ["DEEPEVAL_OLLAMA_MODEL"] = "qwen2.5:7b"
+os.environ["LLMUNITY_AGENT_MODEL"] = "qwen2.5:7b"
 
 # Ensure the Ollama judge uses the configured live URL when evaluating.
 os.environ.setdefault("DEEPEVAL_OLLAMA_BASE_URL", _DEEPEVAL_LIVE_URL)
@@ -41,7 +38,7 @@ def test_history_guide_rag_single_turn():
     actual_output = run_history_guide(query)
     
     # Load the expected context from the primer to check faithfulness
-    primer_path = Path(__file__).resolve().parents[2] / "subjects" / "reference_docs" / "history_guide_primer.md"
+    primer_path = Path(__file__).resolve().parents[2] / "data" / "npcs" / "reference_docs" / "history_guide_primer.md"
     expected_context = [primer_path.read_text(encoding="utf-8")]
 
     # Construct the DeepEval test case
@@ -65,7 +62,7 @@ def test_history_guide_rag_multi_turn():
     ]
     
     # Load reference context
-    primer_path = Path(__file__).resolve().parents[2] / "subjects" / "reference_docs" / "history_guide_primer.md"
+    primer_path = Path(__file__).resolve().parents[2] / "data" / "npcs" / "reference_docs" / "history_guide_primer.md"
     reference_context = [primer_path.read_text(encoding="utf-8")]
     
     # Run multi-turn conversation and build turns
@@ -101,7 +98,7 @@ def test_history_guide_rag_with_tracing():
     query = "What was the Byzantine Empire?"
     actual_output = run_history_guide(query)
     
-    primer_path = Path(__file__).resolve().parents[2] / "subjects" / "reference_docs" / "history_guide_primer.md"
+    primer_path = Path(__file__).resolve().parents[2] / "data" / "npcs" / "reference_docs" / "history_guide_primer.md"
     expected_context = [primer_path.read_text(encoding="utf-8")]
     
     test_case = LLMTestCase(
