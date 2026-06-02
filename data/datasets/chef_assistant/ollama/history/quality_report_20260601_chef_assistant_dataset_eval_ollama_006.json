@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-02T05:05:28.817303+00:00",
+  "created_at": "2026-06-01T14:38:25.108618+00:00",
   "npc_key": "chef_assistant",
   "technique": "ollama",
   "spec": {
@@ -218,7 +218,7 @@
     "summary": {
       "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
       "exists": true,
-      "content_sha256": "sha256:a7d3fcd92e5bf553da981172b65e4fbc1727b90c1e929bfc7855610d03e147af",
+      "content_sha256": "sha256:1debaacd0649be957c416962295190d08d4e92fd97d7d192aedc8f91dc0c754f",
       "total": 72,
       "by_category": {
         "dialogue": 16,
@@ -266,20 +266,20 @@
   },
   "deepeval": {
     "summary": {
-      "created_at": "2026-06-02T05:05:28.815058+00:00",
+      "created_at": "2026-06-01T14:38:25.107429+00:00",
       "npc_key": "chef_assistant",
       "technique": "ollama",
       "judge_provider": "ollama",
       "judge_model": "qwen2.5:7b",
-      "deepeval_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
-      "deepeval_result_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+      "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-113553",
+      "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-113553",
       "command": [
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
         "test",
         "run",
         "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
         "--identifier",
-        "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+        "dataset-quality-chef_assistant-ollama-fast-20260601-113553",
         "--display",
         "all",
         "--skip-on-missing-params"
@@ -295,13 +295,13 @@
       "metrics": {
         "Persona and Category Fit [GEval]": {
           "count": 5,
-          "average_score": 0.82,
+          "average_score": 0.8,
           "pass_rate": 0.8
         },
         "Training Usefulness and Specificity [GEval]": {
           "count": 5,
-          "average_score": 0.86,
-          "pass_rate": 1.0
+          "average_score": 0.76,
+          "pass_rate": 0.8
         }
       },
       "categories": {
@@ -337,7 +337,7 @@
       "dataset_summary": {
         "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
         "exists": true,
-        "content_sha256": "sha256:a7d3fcd92e5bf553da981172b65e4fbc1727b90c1e929bfc7855610d03e147af",
+        "content_sha256": "sha256:1debaacd0649be957c416962295190d08d4e92fd97d7d192aedc8f91dc0c754f",
         "total": 72,
         "by_category": {
           "dialogue": 16,
@@ -418,7 +418,7 @@
       {
         "test_name": "chef_assistant:identity:3",
         "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
-        "actual_output": "I am ChefAssistant. I guide your cooking steps and food safety.",
+        "actual_output": "I am ChefAssistant. I am here to help you master cooking techniques and kitchen safety.",
         "metadata": {
           "npc_key": "chef_assistant",
           "category": "identity",
@@ -431,7 +431,28 @@
           "score": 0.7,
           "threshold": 0.75,
           "success": false,
-          "reason": "The response fits the NPC system prompt by addressing the user's question directly. However, it exceeds the maximum sentence length rule as it is a single long sentence. It also uses informal language and punctuation which are not aligned with the 'Direct, calm, and practical' voice guideline.",
+          "reason": "The response fits the NPC system prompt by directly addressing the user's question with a clear, direct answer. However, it exceeds the maximum sentence length rule as it is one long sentence without natural breaks. It also uses unnecessary punctuation and capitalization that could be avoided according to the voice guidelines.",
+          "evaluation_model": "qwen2.5:7b (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "chef_assistant:identity:3",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
+        "actual_output": "I am ChefAssistant. I am here to help you master cooking techniques and kitchen safety.",
+        "metadata": {
+          "npc_key": "chef_assistant",
+          "category": "identity",
+          "concept": "chef_assistant",
+          "source_path": "subjects/datasets/chef_assistant/ollama/train_clean.jsonl",
+          "line_number": 3
+        },
+        "metric": {
+          "name": "Training Usefulness and Specificity [GEval]",
+          "score": 0.2,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The response provides a concrete identity for the chef_assistant but lacks actionable details specific to cooking techniques or kitchen safety. It fails to address the user's question with relevant, domain-specific content as required by the evaluation steps.",
           "evaluation_model": "qwen2.5:7b (Ollama)",
           "error": null
         }
@@ -450,6 +471,13 @@
       "type": "deepeval_metric_failure",
       "severity": "medium",
       "metric": "Persona and Category Fit [GEval]",
+      "count": 1,
+      "suggested_action": "review_failed_rows_and_prompts"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Training Usefulness and Specificity [GEval]",
       "count": 1,
       "suggested_action": "review_failed_rows_and_prompts"
     }

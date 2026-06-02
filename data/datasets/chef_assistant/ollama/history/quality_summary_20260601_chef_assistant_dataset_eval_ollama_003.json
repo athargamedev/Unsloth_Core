@@ -1,18 +1,18 @@
 {
-  "created_at": "2026-06-02T05:05:28.815058+00:00",
+  "created_at": "2026-06-01T14:26:27.898414+00:00",
   "npc_key": "chef_assistant",
   "technique": "ollama",
   "judge_provider": "ollama",
   "judge_model": "qwen2.5:7b",
-  "deepeval_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
-  "deepeval_result_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+  "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-112356",
+  "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-112356",
   "command": [
     "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
     "test",
     "run",
     "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
     "--identifier",
-    "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+    "dataset-quality-chef_assistant-ollama-fast-20260601-112356",
     "--display",
     "all",
     "--skip-on-missing-params"
@@ -24,7 +24,7 @@
   "metric_count": 10,
   "null_metric_count": 0,
   "null_metric_rate": 0.0,
-  "status": "ok",
+  "status": "structural_failure",
   "metrics": {
     "Persona and Category Fit [GEval]": {
       "count": 5,
@@ -33,8 +33,8 @@
     },
     "Training Usefulness and Specificity [GEval]": {
       "count": 5,
-      "average_score": 0.86,
-      "pass_rate": 1.0
+      "average_score": 0.82,
+      "pass_rate": 0.8
     }
   },
   "categories": {
@@ -70,22 +70,22 @@
   "dataset_summary": {
     "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
     "exists": true,
-    "content_sha256": "sha256:a7d3fcd92e5bf553da981172b65e4fbc1727b90c1e929bfc7855610d03e147af",
-    "total": 72,
+    "content_sha256": "sha256:be80b91d2decc3470982fc57a22452299af24811046eeaad298d2caac228cc0b",
+    "total": 67,
     "by_category": {
       "dialogue": 16,
       "identity": 8,
       "quest": 8,
-      "refusal": 8,
+      "refusal": 3,
       "teaching": 32
     },
     "by_difficulty": {
       "advanced": 17,
-      "beginner": 31,
+      "beginner": 26,
       "intermediate": 22
     },
     "by_split": {
-      "train": 72
+      "train": 67
     },
     "by_concept": {
       "knife skills": 12,
@@ -95,13 +95,11 @@
       "ingredient science": 6,
       "kitchen workflow": 6,
       "food safety": 5,
-      "Will not help with crash diets or eating-disorder advice": 4,
       "kitchen organization": 4,
       "knife skills and techniques": 3,
-      "Will not suggest unsafe food handling or eating-disorder behavior": 2,
+      "Will not help with crash diets or eating-disorder advice": 2,
       "core kitchen flow": 2,
       "Will not recommend unsafe shortcuts that ignore food safety": 1,
-      "Will not suggest washing raw chicken": 1,
       "flavor and ingredient logic": 1,
       "food safety and storage": 1
     },
@@ -114,8 +112,15 @@
     "quest": 8,
     "refusal": 8
   },
-  "distribution_gaps": [],
-  "dataset_total_rows": 72,
+  "distribution_gaps": [
+    {
+      "category": "refusal",
+      "target": 8,
+      "actual": 3,
+      "shortfall": 5
+    }
+  ],
+  "dataset_total_rows": 67,
   "dataset_unknown_rows": 0,
   "sanitizer": {
     "total_output": 67,

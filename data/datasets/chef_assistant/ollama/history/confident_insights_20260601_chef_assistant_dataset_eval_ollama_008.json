@@ -14,10 +14,10 @@
       "project": "Unsloth_Core",
       "technique": "ollama"
     },
-    "identifier": "dataset-quality:chef_assistant:ollama:20260602T050528Z",
+    "identifier": "dataset-quality:chef_assistant:ollama:20260601T144610Z",
     "llmTestCases": [
       {
-        "actualOutput": "I am ChefAssistant. I guide your cooking steps and food safety.",
+        "actualOutput": "I am ChefAssistant. In this kitchen, I will guide you on knife skills, cooking methods, and food safety to help you prepare beautiful meals.",
         "context": [],
         "customColumnKeyValues": {
           "category": "identity",
@@ -27,7 +27,7 @@
           "metric": "Persona and Category Fit [GEval]",
           "npc_key": "chef_assistant",
           "project": "Unsloth_Core",
-          "reason": "The response fits the NPC system prompt by addressing the user's question directly. However, it exceeds the maximum sentence length rule as it is a single long sentence. It also uses informal language and punctuation which are not aligned with the 'Direct, calm, and practical' voice guideline.",
+          "reason": "The response fits the NPC system prompt by addressing the user's question directly. However, it exceeds the maximum sentence length rule and uses a sentence structure that is longer than recommended for the role of ChefAssistant. It also provides more detail than necessary for a beginner-level interaction.",
           "repair_action": "tighten identity/refusal contract templates in spec or generator prompt",
           "score": 0.7,
           "technique": "ollama"
@@ -47,7 +47,7 @@
       "name": "unsloth-core-dataset-repair"
     }
   },
-  "created_at": "2026-06-02T05:05:28.818280+00:00",
+  "created_at": "2026-06-01T14:46:10.772690+00:00",
   "kind": "dataset_quality_insights",
   "npc_key": "chef_assistant",
   "project": "Unsloth_Core",
@@ -94,12 +94,12 @@
       "run",
       "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
       "--identifier",
-      "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+      "dataset-quality-chef_assistant-ollama-fast-20260601-114336",
       "--display",
       "all",
       "--skip-on-missing-params"
     ],
-    "created_at": "2026-06-02T05:05:28.815058+00:00",
+    "created_at": "2026-06-01T14:46:10.770005+00:00",
     "dataset_summary": {
       "by_category": {
         "dialogue": 16,
@@ -134,7 +134,7 @@
       "by_split": {
         "train": 72
       },
-      "content_sha256": "sha256:a7d3fcd92e5bf553da981172b65e4fbc1727b90c1e929bfc7855610d03e147af",
+      "content_sha256": "sha256:801d54bc4a2185773243ef0d71579ce39e6df7aab797d339a9b81fd3af951bc3",
       "exists": true,
       "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
       "total": 72,
@@ -142,8 +142,8 @@
     },
     "dataset_total_rows": 72,
     "dataset_unknown_rows": 0,
-    "deepeval_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
-    "deepeval_result_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+    "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-114336",
+    "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-114336",
     "distribution_gaps": [],
     "expected_distribution": {
       "dialogue": 16,
@@ -164,7 +164,7 @@
         "pass_rate": 0.8
       },
       "Training Usefulness and Specificity [GEval]": {
-        "average_score": 0.86,
+        "average_score": 0.84,
         "count": 5,
         "pass_rate": 1.0
       }

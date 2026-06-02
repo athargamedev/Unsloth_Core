@@ -4,8 +4,8 @@
   "sanitized": true,
   "sanitizer": {
     "version": "v2",
-    "date": "2026-06-01T13:45:33Z",
-    "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/chef_assistant/ollama/train.jsonl --output data/datasets/chef_assistant/ollama/train_clean.jsonl --spec data/npcs/specs/chef_assistant.json --strict-canonical --require-complete-metadata --dedup",
+    "date": "2026-06-01T14:19:29Z",
+    "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/chef_assistant/ollama/train.jsonl --output data/datasets/chef_assistant/ollama/train_clean.jsonl --strict-canonical --require-complete-metadata --dedup",
     "artifact_check_mode": "strict",
     "strict_mode": false
   },

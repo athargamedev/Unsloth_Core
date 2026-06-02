@@ -4,9 +4,7 @@
     "quality_report": "/home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/ollama/quality_report.json",
     "quality_summary": "/home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/ollama/quality_summary.json"
   },
-  "component_counts": {
-    "spec_contract": 1
-  },
+  "component_counts": {},
   "confident_payload": {
     "hyperparameters": {
       "local_status": "ok",
@@ -14,29 +12,8 @@
       "project": "Unsloth_Core",
       "technique": "ollama"
     },
-    "identifier": "dataset-quality:chef_assistant:ollama:20260602T050528Z",
-    "llmTestCases": [
-      {
-        "actualOutput": "I am ChefAssistant. I guide your cooking steps and food safety.",
-        "context": [],
-        "customColumnKeyValues": {
-          "category": "identity",
-          "component": "spec_contract",
-          "concept": "chef_assistant",
-          "line_number": 3,
-          "metric": "Persona and Category Fit [GEval]",
-          "npc_key": "chef_assistant",
-          "project": "Unsloth_Core",
-          "reason": "The response fits the NPC system prompt by addressing the user's question directly. However, it exceeds the maximum sentence length rule as it is a single long sentence. It also uses informal language and punctuation which are not aligned with the 'Direct, calm, and practical' voice guideline.",
-          "repair_action": "tighten identity/refusal contract templates in spec or generator prompt",
-          "score": 0.7,
-          "technique": "ollama"
-        },
-        "expectedOutput": "",
-        "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
-        "name": "chef_assistant:identity:3"
-      }
-    ],
+    "identifier": "dataset-quality:chef_assistant:ollama:20260601T145241Z",
+    "llmTestCases": [],
     "metricCollection": {
       "include": [
         "Persona and Category Fit",
@@ -47,17 +24,11 @@
       "name": "unsloth-core-dataset-repair"
     }
   },
-  "created_at": "2026-06-02T05:05:28.818280+00:00",
+  "created_at": "2026-06-01T14:52:41.995635+00:00",
   "kind": "dataset_quality_insights",
   "npc_key": "chef_assistant",
   "project": "Unsloth_Core",
-  "recommended_next_actions": [
-    {
-      "action": "tighten identity/refusal contract templates in spec or generator prompt",
-      "component": "spec_contract",
-      "count": 1
-    }
-  ],
+  "recommended_next_actions": [],
   "status": "ok",
   "summary": {
     "cases_per_category": 1,
@@ -68,8 +39,8 @@
         "total": 1
       },
       "identity": {
-        "pass_rate": 0.0,
-        "passed": 0,
+        "pass_rate": 1.0,
+        "passed": 1,
         "total": 1
       },
       "quest": {
@@ -94,12 +65,12 @@
       "run",
       "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
       "--identifier",
-      "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+      "dataset-quality-chef_assistant-ollama-fast-20260601-115009",
       "--display",
       "all",
       "--skip-on-missing-params"
     ],
-    "created_at": "2026-06-02T05:05:28.815058+00:00",
+    "created_at": "2026-06-01T14:52:41.993620+00:00",
     "dataset_summary": {
       "by_category": {
         "dialogue": 16,
@@ -142,8 +113,8 @@
     },
     "dataset_total_rows": 72,
     "dataset_unknown_rows": 0,
-    "deepeval_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
-    "deepeval_result_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+    "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-115009",
+    "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-115009",
     "distribution_gaps": [],
     "expected_distribution": {
       "dialogue": 16,
@@ -152,16 +123,16 @@
       "refusal": 8,
       "teaching": 32
     },
-    "failed": 1,
+    "failed": 0,
     "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/ollama/quality_failures.json",
     "judge_model": "qwen2.5:7b",
     "judge_provider": "ollama",
     "metric_count": 10,
     "metrics": {
       "Persona and Category Fit [GEval]": {
-        "average_score": 0.82,
+        "average_score": 0.86,
         "count": 5,
-        "pass_rate": 0.8
+        "pass_rate": 1.0
       },
       "Training Usefulness and Specificity [GEval]": {
         "average_score": 0.86,
@@ -172,8 +143,8 @@
     "npc_key": "chef_assistant",
     "null_metric_count": 0,
     "null_metric_rate": 0.0,
-    "pass_rate": 0.8,
-    "passed": 4,
+    "pass_rate": 1.0,
+    "passed": 5,
     "quality_gate_mode": "fast",
     "sanitizer": {
       "discarded_total": 5,

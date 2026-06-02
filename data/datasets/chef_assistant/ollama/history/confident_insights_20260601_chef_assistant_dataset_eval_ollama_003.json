@@ -5,31 +5,51 @@
     "quality_summary": "/home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/ollama/quality_summary.json"
   },
   "component_counts": {
-    "spec_contract": 1
+    "dataset_distribution": 2
   },
   "confident_payload": {
     "hyperparameters": {
-      "local_status": "ok",
+      "local_status": "structural_failure",
       "npc_key": "chef_assistant",
       "project": "Unsloth_Core",
       "technique": "ollama"
     },
-    "identifier": "dataset-quality:chef_assistant:ollama:20260602T050528Z",
+    "identifier": "dataset-quality:chef_assistant:ollama:20260601T142627Z",
     "llmTestCases": [
       {
-        "actualOutput": "I am ChefAssistant. I guide your cooking steps and food safety.",
+        "actualOutput": "I'm ChefAssistant. If you tell me what you have, I can help choose the next step, the heat, and the result to look for.",
         "context": [],
         "customColumnKeyValues": {
           "category": "identity",
-          "component": "spec_contract",
+          "component": "dataset_distribution",
           "concept": "chef_assistant",
           "line_number": 3,
           "metric": "Persona and Category Fit [GEval]",
           "npc_key": "chef_assistant",
           "project": "Unsloth_Core",
-          "reason": "The response fits the NPC system prompt by addressing the user's question directly. However, it exceeds the maximum sentence length rule as it is a single long sentence. It also uses informal language and punctuation which are not aligned with the 'Direct, calm, and practical' voice guideline.",
-          "repair_action": "tighten identity/refusal contract templates in spec or generator prompt",
+          "reason": "The response fits the NPC system prompt by addressing the user's question directly. However, it exceeds the maximum sentence length rule as it is a single long sentence. It also uses informal language and includes unnecessary details that could be trimmed for brevity.",
+          "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
           "score": 0.7,
+          "technique": "ollama"
+        },
+        "expectedOutput": "",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
+        "name": "chef_assistant:identity:3"
+      },
+      {
+        "actualOutput": "I'm ChefAssistant. If you tell me what you have, I can help choose the next step, the heat, and the result to look for.",
+        "context": [],
+        "customColumnKeyValues": {
+          "category": "identity",
+          "component": "dataset_distribution",
+          "concept": "chef_assistant",
+          "line_number": 3,
+          "metric": "Training Usefulness and Specificity [GEval]",
+          "npc_key": "chef_assistant",
+          "project": "Unsloth_Core",
+          "reason": "The response provides a concrete identity for the NPC (ChefAssistant) but lacks actionable details in addressing the user's question. It avoids broad subject areas, which is positive, but does not directly answer what to call the NPC or provide any practical cooking guidance relevant to the context.",
+          "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
+          "score": 0.5,
           "technique": "ollama"
         },
         "expectedOutput": "",
@@ -47,18 +67,18 @@
       "name": "unsloth-core-dataset-repair"
     }
   },
-  "created_at": "2026-06-02T05:05:28.818280+00:00",
+  "created_at": "2026-06-01T14:26:27.901303+00:00",
   "kind": "dataset_quality_insights",
   "npc_key": "chef_assistant",
   "project": "Unsloth_Core",
   "recommended_next_actions": [
     {
-      "action": "tighten identity/refusal contract templates in spec or generator prompt",
-      "component": "spec_contract",
-      "count": 1
+      "action": "top up missing categories/concepts, then sanitize and re-gate",
+      "component": "dataset_distribution",
+      "count": 2
     }
   ],
-  "status": "ok",
+  "status": "structural_failure",
   "summary": {
     "cases_per_category": 1,
     "categories": {
@@ -94,25 +114,23 @@
       "run",
       "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
       "--identifier",
-      "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+      "dataset-quality-chef_assistant-ollama-fast-20260601-112356",
       "--display",
       "all",
       "--skip-on-missing-params"
     ],
-    "created_at": "2026-06-02T05:05:28.815058+00:00",
+    "created_at": "2026-06-01T14:26:27.898414+00:00",
     "dataset_summary": {
       "by_category": {
         "dialogue": 16,
         "identity": 8,
         "quest": 8,
-        "refusal": 8,
+        "refusal": 3,
         "teaching": 32
       },
       "by_concept": {
-        "Will not help with crash diets or eating-disorder advice": 4,
+        "Will not help with crash diets or eating-disorder advice": 2,
         "Will not recommend unsafe shortcuts that ignore food safety": 1,
-        "Will not suggest unsafe food handling or eating-disorder behavior": 2,
-        "Will not suggest washing raw chicken": 1,
         "chef_assistant": 8,
         "cooking techniques": 7,
         "core kitchen flow": 2,
@@ -128,23 +146,30 @@
       },
       "by_difficulty": {
         "advanced": 17,
-        "beginner": 31,
+        "beginner": 26,
         "intermediate": 22
       },
       "by_split": {
-        "train": 72
+        "train": 67
       },
-      "content_sha256": "sha256:a7d3fcd92e5bf553da981172b65e4fbc1727b90c1e929bfc7855610d03e147af",
+      "content_sha256": "sha256:be80b91d2decc3470982fc57a22452299af24811046eeaad298d2caac228cc0b",
       "exists": true,
       "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
-      "total": 72,
+      "total": 67,
       "unknown_rows": 0
     },
-    "dataset_total_rows": 72,
+    "dataset_total_rows": 67,
     "dataset_unknown_rows": 0,
-    "deepeval_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
-    "deepeval_result_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
-    "distribution_gaps": [],
+    "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-112356",
+    "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-112356",
+    "distribution_gaps": [
+      {
+        "actual": 3,
+        "category": "refusal",
+        "shortfall": 5,
+        "target": 8
+      }
+    ],
     "expected_distribution": {
       "dialogue": 16,
       "identity": 8,
@@ -164,9 +189,9 @@
         "pass_rate": 0.8
       },
       "Training Usefulness and Specificity [GEval]": {
-        "average_score": 0.86,
+        "average_score": 0.82,
         "count": 5,
-        "pass_rate": 1.0
+        "pass_rate": 0.8
       }
     },
     "npc_key": "chef_assistant",
@@ -204,7 +229,7 @@
       "total_output": 67
     },
     "sanitizer_quality_issues": [],
-    "status": "ok",
+    "status": "structural_failure",
     "technique": "ollama",
     "total": 5
   },

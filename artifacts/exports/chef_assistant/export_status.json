@@ -3,14 +3,14 @@
   "updated_at": "2026-05-28T19:20:13Z",
   "state": "completed",
   "substep": "adapter_done",
-  "started_at": "2026-06-01T13:53:52Z",
+  "started_at": "2026-06-01T15:00:22Z",
   "mode": "adapter",
   "quantization": "q4_k_m",
   "resume": false,
-  "pid": 2475614,
+  "pid": 4030130,
   "timeout_seconds": 5400,
   "artifacts": [
     "/home/athar/Projects/Unsloth_Core/artifacts/exports/chef_assistant/chef_assistant-lora-f16.gguf"
   ],
-  "completed_at": "2026-06-01T13:53:57Z"
+  "completed_at": "2026-06-01T15:00:26Z"
 }

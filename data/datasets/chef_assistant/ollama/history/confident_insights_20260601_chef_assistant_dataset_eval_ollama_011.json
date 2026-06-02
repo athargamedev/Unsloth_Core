@@ -14,7 +14,7 @@
       "project": "Unsloth_Core",
       "technique": "ollama"
     },
-    "identifier": "dataset-quality:chef_assistant:ollama:20260602T050528Z",
+    "identifier": "dataset-quality:chef_assistant:ollama:20260601T145603Z",
     "llmTestCases": [
       {
         "actualOutput": "I am ChefAssistant. I guide your cooking steps and food safety.",
@@ -47,7 +47,7 @@
       "name": "unsloth-core-dataset-repair"
     }
   },
-  "created_at": "2026-06-02T05:05:28.818280+00:00",
+  "created_at": "2026-06-01T14:56:03.227917+00:00",
   "kind": "dataset_quality_insights",
   "npc_key": "chef_assistant",
   "project": "Unsloth_Core",
@@ -94,12 +94,12 @@
       "run",
       "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
       "--identifier",
-      "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+      "dataset-quality-chef_assistant-ollama-fast-20260601-115329",
       "--display",
       "all",
       "--skip-on-missing-params"
     ],
-    "created_at": "2026-06-02T05:05:28.815058+00:00",
+    "created_at": "2026-06-01T14:56:03.224970+00:00",
     "dataset_summary": {
       "by_category": {
         "dialogue": 16,
@@ -142,8 +142,8 @@
     },
     "dataset_total_rows": 72,
     "dataset_unknown_rows": 0,
-    "deepeval_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
-    "deepeval_result_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+    "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-115329",
+    "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-115329",
     "distribution_gaps": [],
     "expected_distribution": {
       "dialogue": 16,
@@ -159,12 +159,12 @@
     "metric_count": 10,
     "metrics": {
       "Persona and Category Fit [GEval]": {
-        "average_score": 0.82,
+        "average_score": 0.84,
         "count": 5,
         "pass_rate": 0.8
       },
       "Training Usefulness and Specificity [GEval]": {
-        "average_score": 0.86,
+        "average_score": 0.82,
         "count": 5,
         "pass_rate": 1.0
       }

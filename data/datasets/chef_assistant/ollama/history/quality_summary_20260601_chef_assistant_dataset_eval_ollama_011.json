@@ -1,18 +1,18 @@
 {
-  "created_at": "2026-06-02T05:05:28.815058+00:00",
+  "created_at": "2026-06-01T14:56:03.224970+00:00",
   "npc_key": "chef_assistant",
   "technique": "ollama",
   "judge_provider": "ollama",
   "judge_model": "qwen2.5:7b",
-  "deepeval_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
-  "deepeval_result_identifier": "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+  "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-115329",
+  "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260601-115329",
   "command": [
     "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
     "test",
     "run",
     "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
     "--identifier",
-    "chef_assistant_local_confident_insights_smoke_20260602T050301Z",
+    "dataset-quality-chef_assistant-ollama-fast-20260601-115329",
     "--display",
     "all",
     "--skip-on-missing-params"
@@ -28,12 +28,12 @@
   "metrics": {
     "Persona and Category Fit [GEval]": {
       "count": 5,
-      "average_score": 0.82,
+      "average_score": 0.84,
       "pass_rate": 0.8
     },
     "Training Usefulness and Specificity [GEval]": {
       "count": 5,
-      "average_score": 0.86,
+      "average_score": 0.82,
       "pass_rate": 1.0
     }
   },
