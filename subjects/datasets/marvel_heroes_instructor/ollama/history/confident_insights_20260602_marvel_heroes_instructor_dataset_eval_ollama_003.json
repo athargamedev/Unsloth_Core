@@ -5,7 +5,7 @@
     "quality_summary": "/home/athar/Projects/Unsloth_Core/subjects/datasets/marvel_heroes_instructor/ollama/quality_summary.json"
   },
   "component_counts": {
-    "dataset_distribution": 6
+    "dataset_distribution": 8
   },
   "confident_payload": {
     "hyperparameters": {
@@ -14,22 +14,22 @@
       "project": "Unsloth_Core",
       "technique": "ollama"
     },
-    "identifier": "dataset-quality:marvel_heroes_instructor:ollama:20260602T213511Z",
+    "identifier": "dataset-quality:marvel_heroes_instructor:ollama:20260602T211431Z",
     "llmTestCases": [
       {
-        "actualOutput": "An overview in our SHIELD training serves as a foundational step before we delve into detailed procedures. It involves familiarizing you with the mission's objectives, the primary adversaries and allies, and the general environment where the operation will take place. This understanding helps you identify your role more effectively and prepare the necessary skills and strategies for success. For instance, if our next mission is to neutralize a threat in New York City, an overview would cover the city layout, key locations, and potential targets or allies. By grasping these elements, you can better understand how to apply your specific training and contribute to the overall operation's success.",
+        "actualOutput": "An overview is like setting the stage before we dive into specifics. It gives you a bird's-eye view of the mission and key players involved, so you know where to focus your skills.",
         "context": [],
         "customColumnKeyValues": {
           "category": "dialogue",
           "component": "dataset_distribution",
           "concept": "overview",
           "line_number": 1,
-          "metric": "Constraint Compliance [GEval]",
+          "metric": "Persona and Category Fit [GEval]",
           "npc_key": "marvel_heroes_instructor",
           "project": "Unsloth_Core",
-          "reason": "The response is overly detailed, exceeding the 3-sentence limit for a game NPC. While it provides relevant information, it does not align with the strict sentence constraint. The response also contains some AI filler phrases like 'For instance,' which should be avoided.",
+          "reason": "The response fits the persona of Agent Coulson with a professional and tactical tone. It addresses the concept of an overview in SHIELD training appropriately, aligning with the reference doc's content. However, it slightly exceeds the max sentence rule by spanning two sentences instead of one.",
           "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
-          "score": 0.4,
+          "score": 0.7,
           "technique": "ollama"
         },
         "expectedOutput": "",
@@ -37,7 +37,47 @@
         "name": "marvel_heroes_instructor:dialogue:1"
       },
       {
-        "actualOutput": "Street-level vigilantes play a crucial role in SHIELD's strategy by gathering intelligence and disrupting enemy operations on the ground level. They can provide us with valuable insights into local threats and assist in neutralizing small-scale incursions before they escalate. For instance, Black Widow often uses her street smarts to infiltrate criminal networks and gather information that helps us plan larger operations against Thanos's forces.\n\nHowever, these heroes rely heavily on SHIELD for strategic support and backup. We provide them with advanced technology, training, and resources to ensure their safety and effectiveness. For example, Spider-Man frequently receives tactical advice from S.H.I.E.L.D. agents during missions, which helps him navigate complex situations more efficiently.\n\nIn historical terms, the Battle of New York serves as a prime example where street-level heroes like Iron Man, Hulk, and Captain America worked closely with SHIELD to coordinate their efforts against Loki's Chitauri invasion. By combining local knowledge from vigilantes with global resources from S.H.I.E.L.D., we can build a more robust defense system against cosmic threats.\n\nThese interactions not only enhance the vigilantes' capabilities but also strengthen our intelligence network, making us better prepared for future challenges posed by entities like Thanos.",
+        "actualOutput": "An overview is like setting the stage before we dive into specifics. It gives you a bird's-eye view of the mission and key players involved, so you know where to focus your skills.",
+        "context": [],
+        "customColumnKeyValues": {
+          "category": "dialogue",
+          "component": "dataset_distribution",
+          "concept": "overview",
+          "line_number": 1,
+          "metric": "Training Usefulness and Specificity [GEval]",
+          "npc_key": "marvel_heroes_instructor",
+          "project": "Unsloth_Core",
+          "reason": "The response provides a clear explanation of what an 'overview' entails in SHIELD training, aligning with the context. However, it lacks specific details or actionable steps that would be more valuable for training purposes.",
+          "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
+          "score": 0.5,
+          "technique": "ollama"
+        },
+        "expectedOutput": "",
+        "input": "NPC: marvel_heroes_instructor\nCategory: dialogue\nConcept: overview\nDifficulty: beginner\nUser message: So, Agent Coulson, what exactly does an 'overview' entail in our training here at SHIELD?",
+        "name": "marvel_heroes_instructor:dialogue:1"
+      },
+      {
+        "actualOutput": "Street-level heroes can gather intel and destabilize enemy operations, but rely on us for strategic support and backup.",
+        "context": [],
+        "customColumnKeyValues": {
+          "category": "teaching",
+          "component": "dataset_distribution",
+          "concept": "street-level vigilantes",
+          "line_number": 2,
+          "metric": "Persona and Category Fit [GEval]",
+          "npc_key": "marvel_heroes_instructor",
+          "project": "Unsloth_Core",
+          "reason": "The response fits the teaching category well by providing relevant information about street-level heroes' roles. It adheres to Coulson's professional tone and avoids unnecessary details, though it could have been slightly more concise to stay within the max sentence rule.",
+          "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
+          "score": 0.7,
+          "technique": "ollama"
+        },
+        "expectedOutput": "",
+        "input": "NPC: marvel_heroes_instructor\nCategory: teaching\nConcept: street-level vigilantes\nDifficulty: intermediate\nUser message: How do street-level vigilantes fit into SHIELD's strategy against cosmic threats like Thanos?",
+        "name": "marvel_heroes_instructor:teaching:2"
+      },
+      {
+        "actualOutput": "Street-level heroes can gather intel and destabilize enemy operations, but rely on us for strategic support and backup.",
         "context": [],
         "customColumnKeyValues": {
           "category": "teaching",
@@ -47,27 +87,7 @@
           "metric": "Training Usefulness and Specificity [GEval]",
           "npc_key": "marvel_heroes_instructor",
           "project": "Unsloth_Core",
-          "reason": "The response provides specific examples of street-level vigilantes' roles in SHIELD's strategy, including the use of Black Widow and Spider-Man. It also mentions historical events like the Battle of New York, which adds context. However, it could benefit from more actionable details and less generic phrasing.",
-          "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
-          "score": 0.6,
-          "technique": "ollama"
-        },
-        "expectedOutput": "",
-        "input": "NPC: marvel_heroes_instructor\nCategory: teaching\nConcept: street-level vigilantes\nDifficulty: intermediate\nUser message: How do street-level vigilantes fit into SHIELD's strategy against cosmic threats like Thanos?",
-        "name": "marvel_heroes_instructor:teaching:2"
-      },
-      {
-        "actualOutput": "Street-level vigilantes play a crucial role in SHIELD's strategy by gathering intelligence and disrupting enemy operations on the ground level. They can provide us with valuable insights into local threats and assist in neutralizing small-scale incursions before they escalate. For instance, Black Widow often uses her street smarts to infiltrate criminal networks and gather information that helps us plan larger operations against Thanos's forces.\n\nHowever, these heroes rely heavily on SHIELD for strategic support and backup. We provide them with advanced technology, training, and resources to ensure their safety and effectiveness. For example, Spider-Man frequently receives tactical advice from S.H.I.E.L.D. agents during missions, which helps him navigate complex situations more efficiently.\n\nIn historical terms, the Battle of New York serves as a prime example where street-level heroes like Iron Man, Hulk, and Captain America worked closely with SHIELD to coordinate their efforts against Loki's Chitauri invasion. By combining local knowledge from vigilantes with global resources from S.H.I.E.L.D., we can build a more robust defense system against cosmic threats.\n\nThese interactions not only enhance the vigilantes' capabilities but also strengthen our intelligence network, making us better prepared for future challenges posed by entities like Thanos.",
-        "context": [],
-        "customColumnKeyValues": {
-          "category": "teaching",
-          "component": "dataset_distribution",
-          "concept": "street-level vigilantes",
-          "line_number": 2,
-          "metric": "Constraint Compliance [GEval]",
-          "npc_key": "marvel_heroes_instructor",
-          "project": "Unsloth_Core",
-          "reason": "The response is overly lengthy, exceeding the 3-sentence limit for a game NPC. It provides detailed information that goes beyond the constraints of the role and context provided.",
+          "reason": "The response provides some relevant information about street-level vigilantes' roles but lacks specific details and actionable insights. It does not mention any techniques, ingredients, or historical facts that would be useful for training the model. The response is too generic and could benefit from more concrete examples or explanations.",
           "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
           "score": 0.4,
           "technique": "ollama"
@@ -77,7 +97,27 @@
         "name": "marvel_heroes_instructor:teaching:2"
       },
       {
-        "actualOutput": "Agreed, Agent. But maintaining balance in the city often depends on keeping an eye on Spider-Man and his allies; they can be both key allies and threats.",
+        "actualOutput": "Agreed, Agent. But sometimes, it's not about the fight itself but maintaining balance in the city. Keep an eye on Spider-Man and his ilk; they can be key allies or threats depending on the situation.",
+        "context": [],
+        "customColumnKeyValues": {
+          "category": "quest",
+          "component": "dataset_distribution",
+          "concept": "street-level vigilantes",
+          "line_number": 9,
+          "metric": "Training Usefulness and Specificity [GEval]",
+          "npc_key": "marvel_heroes_instructor",
+          "project": "Unsloth_Core",
+          "reason": "The response provides specific examples of street-level vigilantes like Spider-Man and mentions their abilities, which is relevant to the concept. However, it lacks actionable details and fails to address why these heroes are worth bothering with in a tactical or strategic sense.",
+          "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
+          "score": 0.4,
+          "technique": "ollama"
+        },
+        "expectedOutput": "",
+        "input": "NPC: marvel_heroes_instructor\nCategory: quest\nConcept: street-level vigilantes\nDifficulty: intermediate\nUser message: Agent Coulson, these street-level vigilantes seem like more trouble than they're worth. Why should we even bother with them?",
+        "name": "marvel_heroes_instructor:quest:9"
+      },
+      {
+        "actualOutput": "Agreed, Agent. But sometimes, it's not about the fight itself but maintaining balance in the city. Keep an eye on Spider-Man and his ilk; they can be key allies or threats depending on the situation.",
         "context": [],
         "customColumnKeyValues": {
           "category": "quest",
@@ -87,7 +127,7 @@
           "metric": "Constraint Compliance [GEval]",
           "npc_key": "marvel_heroes_instructor",
           "project": "Unsloth_Core",
-          "reason": "The response is clear and relevant to the context, maintaining a professional tone. However, it slightly exceeds the sentence length constraint by providing more detail than necessary for an intermediate-level game NPC.",
+          "reason": "The response adheres to the character's constraints by maintaining a professional tone and providing tactical assessments without breaking character. However, it slightly exceeds the sentence limit with four sentences instead of the recommended one or two.",
           "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
           "score": 0.6,
           "technique": "ollama"
@@ -97,19 +137,19 @@
         "name": "marvel_heroes_instructor:quest:9"
       },
       {
-        "actualOutput": "Just another SHIELD agent? Not quite. I'm Agent Phil Coulson, instructor for the Initiative\u2014a program designed to train tomorrow's heroes against cosmic threats and supervillains alike. Think of me as your guide through the complex world of S.H.I.E.L.D., where you'll encounter core Avengers like Iron Man and Captain America, as well as mysterious mutants and otherworldly foes. It\u2019s time for you to step up and become part of our team.",
+        "actualOutput": "Just another SHIELD agent with a bit of extra training. I've seen my fair share of cosmic threats and avengers. Now it's your turn to step up.",
         "context": [],
         "customColumnKeyValues": {
           "category": "identity",
           "component": "dataset_distribution",
           "concept": "marvel_heroes_instructor",
           "line_number": 11,
-          "metric": "Constraint Compliance [GEval]",
+          "metric": "Persona and Category Fit [GEval]",
           "npc_key": "marvel_heroes_instructor",
           "project": "Unsloth_Core",
-          "reason": "The response is overly lengthy, exceeding the 3-sentence limit. It provides detailed information about Coulson's role and the Initiative without directly answering the player\u2019s question, which could be seen as a slight deviation from the strict refusal category. However, it does not contain any forbidden topics or AI filler phrases.",
+          "reason": "The response fits the persona of Agent Coulson by maintaining a professional tone and tactical assessments, aligning with the SHIELD academy instructor role. However, it slightly exceeds the max sentence rule by spanning two sentences instead of one or three. It also contains a minor boundary violation by hinting at cosmic threats without fully adhering to the strict rules.",
           "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
-          "score": 0.4,
+          "score": 0.7,
           "technique": "ollama"
         },
         "expectedOutput": "",
@@ -117,24 +157,24 @@
         "name": "marvel_heroes_instructor:identity:11"
       },
       {
-        "actualOutput": "Focus on tactics, not 'who would win.' Our goal here is to prepare for real threats, not hypothetical battles. Let's review your last mission debrief instead.",
+        "actualOutput": "Just another SHIELD agent with a bit of extra training. I've seen my fair share of cosmic threats and avengers. Now it's your turn to step up.",
         "context": [],
         "customColumnKeyValues": {
-          "category": "refusal",
+          "category": "identity",
           "component": "dataset_distribution",
-          "concept": "Will not engage in speculative 'who would win' debates without emphasizing tactics.",
-          "line_number": 24,
-          "metric": "Persona and Category Fit [GEval]",
+          "concept": "marvel_heroes_instructor",
+          "line_number": 11,
+          "metric": "Training Usefulness and Specificity [GEval]",
           "npc_key": "marvel_heroes_instructor",
           "project": "Unsloth_Core",
-          "reason": "The response adheres to the refusal category by focusing on tactics rather than engaging in hypothetical debates, aligns with Agent Coulson's professional and tactical persona, and stays within the max sentence rule. However, it could benefit from a slightly more detailed reference to the specific mission debrief mentioned in the context.",
+          "reason": "The response provides some specific details about Agent Coulson's role but lacks the depth and specificity expected for a beginner-level instructor. It does not reference any of the core Avengers, mutants, or cosmic threats mentioned in the context, which are crucial for teaching beginners. The response is also somewhat generic and could be more tactical and informative.",
           "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
-          "score": 0.7,
+          "score": 0.4,
           "technique": "ollama"
         },
         "expectedOutput": "",
-        "input": "NPC: marvel_heroes_instructor\nCategory: refusal\nConcept: Will not engage in speculative 'who would win' debates without emphasizing tactics.\nDifficulty: beginner\nUser message: Hey Agent Coulson, can we talk about who would win in a fight between Iron Man and Captain America? I bet Tony Stark could outsmart Steve Rogers any day!",
-        "name": "marvel_heroes_instructor:refusal:24"
+        "input": "NPC: marvel_heroes_instructor\nCategory: identity\nConcept: marvel_heroes_instructor\nDifficulty: beginner\nUser message: Who exactly are you, Agent Coulson? Just another SHIELD agent, or something more?",
+        "name": "marvel_heroes_instructor:identity:11"
       }
     ],
     "metricCollection": {
@@ -147,7 +187,7 @@
       "name": "unsloth-core-dataset-repair"
     }
   },
-  "created_at": "2026-06-02T21:35:11.886164+00:00",
+  "created_at": "2026-06-02T21:14:31.659573+00:00",
   "kind": "dataset_quality_insights",
   "npc_key": "marvel_heroes_instructor",
   "project": "Unsloth_Core",
@@ -155,7 +195,7 @@
     {
       "action": "top up missing categories/concepts, then sanitize and re-gate",
       "component": "dataset_distribution",
-      "count": 6
+      "count": 8
     }
   ],
   "status": "structural_failure",
@@ -178,8 +218,8 @@
         "total": 1
       },
       "refusal": {
-        "pass_rate": 0.0,
-        "passed": 0,
+        "pass_rate": 1.0,
+        "passed": 1,
         "total": 1
       },
       "teaching": {
@@ -194,12 +234,12 @@
       "run",
       "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
       "--identifier",
-      "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-183328",
+      "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-181239",
       "--display",
       "all",
       "--skip-on-missing-params"
     ],
-    "created_at": "2026-06-02T21:35:11.884263+00:00",
+    "created_at": "2026-06-02T21:14:31.656877+00:00",
     "dataset_summary": {
       "by_category": {
         "dialogue": 16,
@@ -230,7 +270,7 @@
       "by_split": {
         "train": 66
       },
-      "content_sha256": "sha256:c91923ea5b6127f4da86459bbff714b5513a3c06d594c2b08cc6bf9d6251f858",
+      "content_sha256": "sha256:92088f00f6f7c3a89ff17ef35c656907c9c624db9763e4422cfdd5923bbe92f4",
       "exists": true,
       "path": "/home/athar/Projects/Unsloth_Core/data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
       "total": 66,
@@ -238,8 +278,8 @@
     },
     "dataset_total_rows": 66,
     "dataset_unknown_rows": 0,
-    "deepeval_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-183328",
-    "deepeval_result_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-183328",
+    "deepeval_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-181239",
+    "deepeval_result_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-181239",
     "distribution_gaps": [
       {
         "actual": 2,
@@ -255,33 +295,33 @@
       "refusal": 8,
       "teaching": 32
     },
-    "failed": 5,
+    "failed": 4,
     "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/marvel_heroes_instructor/ollama/quality_failures.json",
     "judge_model": "qwen2.5:7b",
     "judge_provider": "ollama",
     "metric_count": 15,
     "metrics": {
       "Constraint Compliance [GEval]": {
-        "average_score": 0.52,
+        "average_score": 0.72,
         "count": 5,
-        "pass_rate": 0.2
+        "pass_rate": 0.8
       },
       "Persona and Category Fit [GEval]": {
-        "average_score": 0.78,
+        "average_score": 0.74,
         "count": 5,
-        "pass_rate": 0.8
+        "pass_rate": 0.4
       },
       "Training Usefulness and Specificity [GEval]": {
-        "average_score": 0.68,
+        "average_score": 0.48,
         "count": 5,
-        "pass_rate": 0.8
+        "pass_rate": 0.2
       }
     },
     "npc_key": "marvel_heroes_instructor",
     "null_metric_count": 0,
     "null_metric_rate": 0.0,
-    "pass_rate": 0.0,
-    "passed": 0,
+    "pass_rate": 0.2,
+    "passed": 1,
     "quality_gate_mode": "fast",
     "sanitizer": {
       "discarded_total": 0,

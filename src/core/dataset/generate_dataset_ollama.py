@@ -927,6 +927,8 @@ Examples:
                        help="Verify Ollama is running and model exists")
     parser.add_argument("--pull-model", action="store_true",
                        help="Auto-pull model if not found")
+    parser.add_argument("--fresh", action="store_true",
+                       help="Ignore checkpoint recovery and regenerate the dataset from scratch")
     parser.add_argument("--workflow-hooks", default=None,
                        help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
     parser.add_argument("--dry-run", action="store_true",

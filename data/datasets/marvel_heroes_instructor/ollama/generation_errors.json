@@ -1,0 +1,92 @@
+[
+  {
+    "category": "teaching",
+    "concept": "cosmic entities and threats",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:18:15.449605+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "tactical factions",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:18:24.736945+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "core avengers",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:19:18.317810+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "mutants and x-men",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:19:25.827899+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "tactical factions",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:19:43.081069+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "mutants and x-men",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:20:51.390852+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "cosmic entities and threats",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:20:57.404322+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "tactical factions",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:21:12.041371+00:00"
+  },
+  {
+    "category": "teaching",
+    "concept": "cosmic threats",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:21:44.349983+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "tactical factions",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:23:11.843116+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "mutant abilities",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:23:23.028237+00:00"
+  },
+  {
+    "category": "dialogue",
+    "concept": "shield history",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:23:51.491494+00:00"
+  },
+  {
+    "category": "quest",
+    "concept": "core avengers",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:24:42.108491+00:00"
+  },
+  {
+    "category": "quest",
+    "concept": "cosmic entities and threats",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:24:56.286725+00:00"
+  },
+  {
+    "category": "quest",
+    "concept": "tactical factions",
+    "error": "Generation returned None",
+    "timestamp": "2026-06-02T21:25:03.356182+00:00"
+  }
+]
