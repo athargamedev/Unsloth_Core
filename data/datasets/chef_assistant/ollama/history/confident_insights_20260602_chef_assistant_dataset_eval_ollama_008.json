@@ -12,7 +12,7 @@
       "project": "Unsloth_Core",
       "technique": "ollama"
     },
-    "identifier": "dataset-quality:chef_assistant:ollama:20260602T145835Z",
+    "identifier": "dataset-quality:chef_assistant:ollama:20260602T145504Z",
     "llmTestCases": [],
     "metricCollection": {
       "include": [
@@ -24,7 +24,7 @@
       "name": "unsloth-core-dataset-repair"
     }
   },
-  "created_at": "2026-06-02T14:58:35.451104+00:00",
+  "created_at": "2026-06-02T14:55:04.911922+00:00",
   "kind": "dataset_quality_insights",
   "npc_key": "chef_assistant",
   "project": "Unsloth_Core",
@@ -32,45 +32,11 @@
   "status": "ok",
   "summary": {
     "cases_per_category": 1,
-    "categories": {
-      "dialogue": {
-        "pass_rate": 1.0,
-        "passed": 1,
-        "total": 1
-      },
-      "identity": {
-        "pass_rate": 1.0,
-        "passed": 1,
-        "total": 1
-      },
-      "quest": {
-        "pass_rate": 1.0,
-        "passed": 1,
-        "total": 1
-      },
-      "refusal": {
-        "pass_rate": 1.0,
-        "passed": 1,
-        "total": 1
-      },
-      "teaching": {
-        "pass_rate": 1.0,
-        "passed": 1,
-        "total": 1
-      }
-    },
-    "command": [
-      "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
-      "test",
-      "run",
-      "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
-      "--identifier",
-      "chef_assistant_deepeval_project_upload_smoke_20260602T145613Z",
-      "--display",
-      "all",
-      "--skip-on-missing-params"
-    ],
-    "created_at": "2026-06-02T14:58:35.448489+00:00",
+    "categories": {},
+    "confident_knowledge_retention_url": "",
+    "confident_url": "",
+    "conversational_test_run_id": "",
+    "created_at": "2026-06-02T14:55:04.910187+00:00",
     "dataset_summary": {
       "by_category": {
         "dialogue": 16,
@@ -113,8 +79,7 @@
     },
     "dataset_total_rows": 72,
     "dataset_unknown_rows": 0,
-    "deepeval_identifier": "chef_assistant_deepeval_project_upload_smoke_20260602T145613Z",
-    "deepeval_result_identifier": "chef_assistant_deepeval_project_upload_smoke_20260602T145613Z",
+    "deepeval_identifier": "chef_assistant_confident_kr_project_smoke_20260602T145458Z",
     "distribution_gaps": [],
     "expected_distribution": {
       "dialogue": 16,
@@ -124,28 +89,17 @@
       "teaching": 32
     },
     "failed": 0,
-    "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/ollama/quality_failures.json",
-    "judge_model": "qwen2.5:7b",
-    "judge_provider": "ollama",
-    "metric_count": 10,
-    "metrics": {
-      "Persona and Category Fit [GEval]": {
-        "average_score": 0.8,
-        "count": 5,
-        "pass_rate": 1.0
-      },
-      "Training Usefulness and Specificity [GEval]": {
-        "average_score": 0.88,
-        "count": 5,
-        "pass_rate": 1.0
-      }
-    },
+    "judge_model": "hosted",
+    "judge_provider": "confident",
+    "metric_count": 0,
+    "metrics": {},
     "npc_key": "chef_assistant",
     "null_metric_count": 0,
     "null_metric_rate": 0.0,
-    "pass_rate": 1.0,
-    "passed": 5,
+    "pass_rate": 0.0,
+    "passed": 0,
     "quality_gate_mode": "fast",
+    "remote_eval": true,
     "sanitizer": {
       "discarded_total": 5,
       "flagged_for_review": 0,
@@ -175,9 +129,11 @@
       "total_output": 67
     },
     "sanitizer_quality_issues": [],
+    "single_turn_test_run_id": "",
     "status": "ok",
     "technique": "ollama",
-    "total": 5
+    "test_run_id": "",
+    "total": 72
   },
   "technique": "ollama"
 }

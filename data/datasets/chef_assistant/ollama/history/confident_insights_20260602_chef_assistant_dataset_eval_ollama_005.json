@@ -12,7 +12,7 @@
       "project": "Unsloth_Core",
       "technique": "ollama"
     },
-    "identifier": "dataset-quality:chef_assistant:ollama:20260602T145835Z",
+    "identifier": "dataset-quality:chef_assistant:ollama:20260602T144606Z",
     "llmTestCases": [],
     "metricCollection": {
       "include": [
@@ -24,7 +24,7 @@
       "name": "unsloth-core-dataset-repair"
     }
   },
-  "created_at": "2026-06-02T14:58:35.451104+00:00",
+  "created_at": "2026-06-02T14:46:06.898411+00:00",
   "kind": "dataset_quality_insights",
   "npc_key": "chef_assistant",
   "project": "Unsloth_Core",
@@ -65,12 +65,12 @@
       "run",
       "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
       "--identifier",
-      "chef_assistant_deepeval_project_upload_smoke_20260602T145613Z",
+      "chef_assistant_deepeval_account_smoke_20260602T144349Z",
       "--display",
       "all",
       "--skip-on-missing-params"
     ],
-    "created_at": "2026-06-02T14:58:35.448489+00:00",
+    "created_at": "2026-06-02T14:46:06.895338+00:00",
     "dataset_summary": {
       "by_category": {
         "dialogue": 16,
@@ -113,8 +113,8 @@
     },
     "dataset_total_rows": 72,
     "dataset_unknown_rows": 0,
-    "deepeval_identifier": "chef_assistant_deepeval_project_upload_smoke_20260602T145613Z",
-    "deepeval_result_identifier": "chef_assistant_deepeval_project_upload_smoke_20260602T145613Z",
+    "deepeval_identifier": "chef_assistant_deepeval_account_smoke_20260602T144349Z",
+    "deepeval_result_identifier": "chef_assistant_deepeval_account_smoke_20260602T144349Z",
     "distribution_gaps": [],
     "expected_distribution": {
       "dialogue": 16,
@@ -130,12 +130,12 @@
     "metric_count": 10,
     "metrics": {
       "Persona and Category Fit [GEval]": {
-        "average_score": 0.8,
+        "average_score": 0.84,
         "count": 5,
         "pass_rate": 1.0
       },
       "Training Usefulness and Specificity [GEval]": {
-        "average_score": 0.88,
+        "average_score": 0.8,
         "count": 5,
         "pass_rate": 1.0
       }

@@ -98,7 +98,7 @@ class TestEvaluate:
         assert req.full_url.endswith("/evaluate")
 
         body = json.loads(req.data)
-        assert body["metricCollection"] == metrics
+        assert body["metricCollection"] == "test"
         assert body["llmTestCases"] == test_cases
         assert body["identifier"] == "my-eval"
         assert body["hyperparameters"] == {}
@@ -143,7 +143,7 @@ class TestEvaluateConversational:
 
         body = json.loads(req.data)
         assert body["conversationalTestCases"] == test_cases
-        assert body["metricCollection"] == metrics
+        assert body["metricCollection"] == "conv-test"
         assert body["identifier"] == "conv-eval"
         assert body["hyperparameters"] == {}
 

@@ -32,6 +32,22 @@ DEFAULT_DATASET_EVAL_MODE = "fast"
 DATASET_EVAL_MODES = ("fast", "release")
 
 
+def _confident_key_looks_project_scoped() -> bool:
+    """Return True when CONFIDENT_API_KEY does not look like an org-scoped key."""
+    key = (os.getenv("CONFIDENT_API_KEY") or "").strip()
+    return bool(key) and "_org_" not in key
+
+
+def _confident_test_run_id(result: dict[str, Any]) -> str:
+    """Extract Confident test run id from current or older response shapes."""
+    if not isinstance(result, dict):
+        return ""
+    data = result.get("data", {})
+    if not isinstance(data, dict):
+        return ""
+    return str(data.get("id") or data.get("testRunId") or "")
+
+
 def load_json(path: Path) -> Any:
     with path.open(encoding="utf-8") as f:
         return json.load(f)
@@ -539,7 +555,13 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 # ── Confident AI Setup ────────────────────────────────────────
                 confident_key_found = ensure_confident_api_key()
                 if confident_key_found:
-                    print("Confident AI: results will auto-upload to hosted dashboard", flush=True)
+                    if _confident_key_looks_project_scoped():
+                        print("Confident AI: results will auto-upload to hosted dashboard", flush=True)
+                    else:
+                        print(
+                            "Confident AI: CONFIDENT_API_KEY looks organization-scoped; DeepEval eval upload requires a project API key.",
+                            flush=True,
+                        )
                 else:
                     print(
                         "Confident AI: not configured (set CONFIDENT_API_KEY or run 'deepeval login')",
@@ -549,6 +571,11 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     raise SystemExit(
                         "Error: --confident was passed but CONFIDENT_API_KEY is not set.\n"
                         "Set the environment variable or run 'deepeval login' first."
+                    )
+                if args.confident and confident_key_found and not _confident_key_looks_project_scoped():
+                    raise SystemExit(
+                        "Error: --confident requires a Confident AI project API key, but CONFIDENT_API_KEY looks organization-scoped.\n"
+                        "Create/copy the Project API Key from the target Confident AI project, update .env.local, then rerun."
                     )
 
                 # ── Remote Eval Path (Confident AI) ──────────────────────────
@@ -564,7 +591,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     test_cases, conversational_cases = _convert_test_cases_for_remote(clean_path)
 
                     result = client.evaluate(test_cases, metric_collection, identifier=identifier) if test_cases else {}
-                    test_run_id = result.get("data", {}).get("testRunId", "") if isinstance(result, dict) else ""
+                    test_run_id = _confident_test_run_id(result)
                     conversational_test_run_id = ""
                     if conversational_cases:
                         conversational_result = client.evaluate_conversational(
@@ -573,7 +600,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                             identifier=f"{identifier}-conversation",
                         )
                         if isinstance(conversational_result, dict):
-                            conversational_test_run_id = conversational_result.get("data", {}).get("testRunId", "")
+                            conversational_test_run_id = _confident_test_run_id(conversational_result)
                     primary_run_id = test_run_id or conversational_test_run_id
                     print(f"Remote evaluation submitted. Test Run ID: {primary_run_id}", flush=True)
                     if primary_run_id:

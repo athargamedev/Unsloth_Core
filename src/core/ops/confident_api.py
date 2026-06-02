@@ -25,6 +25,16 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+
+def _metric_collection_name(metric_collection: str | dict[str, Any]) -> str:
+    """Return the Confident metric collection name expected by /v1/evaluate."""
+    if isinstance(metric_collection, str):
+        return metric_collection
+    name = metric_collection.get("name")
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("metric_collection must be a name string or a dict with a non-empty 'name'")
+    return name
+
 # ---------------------------------------------------------------------------
 # Client
 # ---------------------------------------------------------------------------
@@ -70,8 +80,8 @@ class ConfidentAPIClient:
             A list of test-case dicts.  Each dict must contain at least
             ``input`` and ``actualOutput``.
         metric_collection : dict
-            Describes which metrics to evaluate.  Must contain ``name``
-            and ``include`` (a list of metric-name strings).
+            Local descriptor for the Confident metric collection. The REST API
+            expects the collection name string in ``metricCollection``.
         identifier : str, optional
             Optional label to identify this evaluation run.
 
@@ -81,7 +91,7 @@ class ConfidentAPIClient:
             ``{"success": bool, "data": {"testRunId": str}}``
         """
         body: dict[str, Any] = {
-            "metricCollection": metric_collection,
+            "metricCollection": _metric_collection_name(metric_collection),
             "llmTestCases": test_cases,
             "hyperparameters": {},
         }
@@ -113,7 +123,7 @@ class ConfidentAPIClient:
             ``{"success": bool, "data": {"testRunId": str}}``
         """
         body: dict[str, Any] = {
-            "metricCollection": metric_collection,
+            "metricCollection": _metric_collection_name(metric_collection),
             "conversationalTestCases": test_cases,
             "hyperparameters": {},
         }
@@ -335,7 +345,7 @@ class ConfidentAPIClient:
         """
         url = f"{self.BASE_URL}{path}"
         headers = {
-            "Authorization": f"Bearer {self._api_key}",
+            "CONFIDENT_API_KEY": self._api_key,
             "Content-Type": "application/json",
         }
 
