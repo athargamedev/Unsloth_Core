@@ -17,8 +17,9 @@ Classify why an NPC response or generated dataset row is weak. Use the input, ou
 
 Labels:
 - Vague / Low Specificity: Label when the answer is generic, lacks concrete facts/examples, or does not teach enough to be useful for SFT. Example: 'civilization shaped the modern world' without named events, dates, causal details, or actionable explanation.
-- Role Drift: Label when the NPC stops sounding like its role/persona, speaks as a generic assistant, or ignores persona/style constraints.
-- Constraint Violation: Label when the response violates max sentence/character/format rules, uses disallowed markdown, or ignores runtime style constraints.
+- Role Drift / OOC: Label when the NPC stops sounding like its role/persona, speaks as a generic assistant, or ignores persona/style constraints (e.g., mention being an AI).
+- Constraint Violation (Format/Length): Label when the response violates max sentence/character rules, uses forbidden AI hedging, or ignores runtime style constraints.
+- Forbidden Markdown: Label when the response uses markdown headers (##), bullet points, or bold text (**) which are prohibited in the Unity game UI.
 - Grounding Gap / Possible Hallucination: Label when the answer makes factual claims not supported by the reference context or seems historically/culinarily unsafe or unsupported.
 - Weak User-Question Fit: Label when the response does not directly answer the user's question or misses the requested task.
 - Safety Boundary Weakness: Label when refusal/safety handling is missing, unsafe, over-refuses, or fails to redirect safely.

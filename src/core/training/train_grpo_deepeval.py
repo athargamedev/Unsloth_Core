@@ -22,54 +22,69 @@ except ImportError:
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 # --- DeepEval Reward Function ---
-# In GRPO, the reward function takes a list of prompts and corresponding completions.
-# It returns a list of floats (the rewards).
 
 def deepeval_persona_reward(prompts: list[str], completions: list[list[dict]], **kwargs) -> list[float]:
     """
     Reward function that uses DeepEval's LLM-as-a-judge to score the completion.
-    This simulates RLHF without human labelers.
     """
-    # Import inside to avoid slow startup if just viewing help
     from deepeval.metrics import GEval
     from deepeval.test_case import LLMTestCase, SingleTurnParams
     from tests.evals.metrics import JUDGE_MODEL
-    import asyncio
     
-    # We use a custom lightweight GEval to score the model's output
+    # Use the same rubric as dataset evaluation for consistency
     metric = GEval(
         name="GRPO Persona Reward",
-        criteria="Score whether the response is exactly 3-5 sentences, uses cause and effect, and avoids markdown.",
+        criteria=(
+            "Score whether the response matches the NPC persona: expert, short (1-3 sentences), "
+            "never mentions being an AI, and strictly avoids markdown (##, **, lists)."
+        ),
         evaluation_params=[SingleTurnParams.INPUT, SingleTurnParams.ACTUAL_OUTPUT],
         model=JUDGE_MODEL,
-        threshold=0.5,
+        threshold=0.7,
     )
     
     rewards = []
-    
-    # GRPOTrainer passes completions as a list of message lists (if format is conversational)
-    # We extract the last assistant message content.
     for prompt, completion_msgs in zip(prompts, completions):
         try:
-            # completion_msgs is usually [{'role': 'assistant', 'content': '...'}]
-            # We extract the actual string output
             output_text = completion_msgs[-1]["content"] if isinstance(completion_msgs, list) else completion_msgs
-            
-            test_case = LLMTestCase(
-                input=prompt,
-                actual_output=output_text,
-            )
-            
-            # DeepEval is async by default, we can run sync here for the reward pipeline
-            # Note: For production, batching API calls is highly recommended.
+            test_case = LLMTestCase(input=prompt, actual_output=output_text)
             metric.measure(test_case)
-            
-            # Use the score as the reward (0.0 to 1.0)
             rewards.append(float(metric.score))
         except Exception as e:
             print(f"Reward scoring failed: {e}")
-            rewards.append(0.0) # 0 reward on failure
+            rewards.append(0.0)
             
+    return rewards
+
+def sentence_length_reward(prompts: list[str], completions: list[list[dict]], **kwargs) -> list[float]:
+    """Reward for keeping responses between 1 and 3 sentences."""
+    import re
+    rewards = []
+    for completion_msgs in completions:
+        text = completion_msgs[-1]["content"] if isinstance(completion_msgs, list) else completion_msgs
+        sentences = [s for s in re.split(r'[.!?]+', text) if s.strip()]
+        count = len(sentences)
+        if 1 <= count <= 3:
+            rewards.append(1.0)
+        elif count == 0:
+            rewards.append(0.0)
+        else:
+            # Linear penalty for being too long
+            rewards.append(max(0.0, 1.0 - (count - 3) * 0.2))
+    return rewards
+
+def no_markdown_reward(prompts: list[str], completions: list[list[dict]], **kwargs) -> list[float]:
+    """Penalty for using forbidden markdown (bold, headers, lists)."""
+    forbidden = [r"\*\*", r"###", r"##", r"^- ", r"^\d\. "]
+    import re
+    rewards = []
+    for completion_msgs in completions:
+        text = completion_msgs[-1]["content"] if isinstance(completion_msgs, list) else completion_msgs
+        penalty = 0.0
+        for pattern in forbidden:
+            if re.search(pattern, text, re.MULTILINE):
+                penalty += 0.5
+        rewards.append(max(0.0, 1.0 - penalty))
     return rewards
 
 def main():
@@ -124,7 +139,11 @@ def main():
     
     trainer = GRPOTrainer(
         model=model,
-        reward_funcs=[deepeval_persona_reward],
+        reward_funcs=[
+            deepeval_persona_reward,
+            sentence_length_reward,
+            no_markdown_reward,
+        ],
         args=training_args,
         train_dataset=dataset,
     )

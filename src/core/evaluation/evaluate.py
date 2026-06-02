@@ -1323,8 +1323,10 @@ def main():
                         help="DeepEval judge model for model evaluation")
     parser.add_argument("--deepeval-identifier", default=None,
                         help="Identifier for the DeepEval test run")
+    parser.add_argument("--confident", action="store_true", default=False,
+                        help="Initialize DeepEval tracing for observability")
     parser.add_argument("--remote-eval", action="store_true", default=False,
-                        help="Evaluate on Confident AI infrastructure instead of locally. Requires --deepeval.")
+                        help="Evaluate on Confident AI infrastructure instead of locally. Requires --deepeval or --confident.")
 
     # LoRA mode (evaluate adapter GGUFs without full-merge)
     parser.add_argument("--base-model", help="Base GGUF model path (required when --candidate is a LoRA adapter)")
@@ -1332,6 +1334,10 @@ def main():
                         help="LoRA adapter weight (default: 1.0)")
 
     args = parser.parse_args()
+
+    # Initialize DeepEval tracing if requested
+    if args.confident or args.deepeval or args.remote_eval:
+        configure_tracing()
 
     # Training metrics mode
     if args.training_metrics is not None:
