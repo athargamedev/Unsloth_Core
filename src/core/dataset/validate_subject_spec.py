@@ -172,8 +172,8 @@ def validate_reference_docs(
     contract_errors: list[str] = []
     contract_warnings: list[str] = []
 
-    if not str(reference_doc).startswith("subjects/reference_docs/"):
-        contract_errors.append("`reference_doc` must live under subjects/reference_docs/.")
+    if not str(reference_doc).startswith(("subjects/reference_docs/", "data/npcs/reference_docs/")):
+        contract_errors.append("`reference_doc` must live under data/npcs/reference_docs/.")
 
     if doc_path.suffix.lower() != ".md":
         contract_errors.append("`reference_doc` must be a Markdown file.")

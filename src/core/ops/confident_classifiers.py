@@ -35,12 +35,16 @@ TRACE_CLASSIFIERS: list[dict[str, Any]] = [
                 ),
             },
             {
-                "name": "Role Drift",
-                "description": "Label when the NPC stops sounding like its role/persona, speaks as a generic assistant, or ignores persona/style constraints.",
+                "name": "Role Drift / OOC",
+                "description": "Label when the NPC stops sounding like its role/persona, speaks as a generic assistant, or ignores persona/style constraints (e.g., mention being an AI).",
             },
             {
-                "name": "Constraint Violation",
-                "description": "Label when the response violates max sentence/character/format rules, uses disallowed markdown, or ignores runtime style constraints.",
+                "name": "Constraint Violation (Format/Length)",
+                "description": "Label when the response violates max sentence/character rules, uses forbidden AI hedging, or ignores runtime style constraints.",
+            },
+            {
+                "name": "Forbidden Markdown",
+                "description": "Label when the response uses markdown headers (##), bullet points, or bold text (**) which are prohibited in the Unity game UI.",
             },
             {
                 "name": "Grounding Gap / Possible Hallucination",

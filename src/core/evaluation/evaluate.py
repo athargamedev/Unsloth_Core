@@ -42,6 +42,7 @@ from src.core.ops.confident_api import ConfidentAPIClient
 from src.core.ops.env_loader import ensure_confident_api_key, confident_available
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from src.core.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient, extract_json_object
+from src.core.tracing.deepeval_tracing import configure_tracing, trace_type
 
 def _resolve_deepeval_bin() -> str:
     """Resolve deepeval binary from active venv first, fall back to PATH."""
@@ -515,49 +516,53 @@ def generic_eval_questions(spec=None):
 def evaluate_model(server, questions, spec=None):
     """Run a model through a set of eval questions and score the responses."""
     results = []
-    for i, q in enumerate(questions):
-        question = q["question"] if isinstance(q, dict) else q
-        expected = q.get("expected") if isinstance(q, dict) else None
+    npc_key = spec.get("npc_key", "unknown") if spec else "unknown"
+    
+    with trace_type("agent", name=f"Evaluate Model: {npc_key}", npc_key=npc_key):
+        for i, q in enumerate(questions):
+            question = q["question"] if isinstance(q, dict) else q
+            expected = q.get("expected") if isinstance(q, dict) else None
 
-        messages = [{"role": "user", "content": question}]
-        if spec and spec.get("system_prompt"):
-            messages = [
-                {"role": "system", "content": spec["system_prompt"]},
-                {"role": "user", "content": question},
-            ]
+            messages = [{"role": "user", "content": question}]
+            if spec and spec.get("system_prompt"):
+                messages = [
+                    {"role": "system", "content": spec["system_prompt"]},
+                    {"role": "user", "content": question},
+                ]
 
-        response, latency = server.query(messages)
+            with trace_type("llm", name=f"Eval Question {i+1}", input=question):
+                response, latency = server.query(messages)
 
-        metrics = diversity_score(response)
-        metrics["latency"] = round(latency, 2)
-        metrics["quality"] = quality_estimate(response)
+            metrics = diversity_score(response)
+            metrics["latency"] = round(latency, 2)
+            metrics["quality"] = quality_estimate(response)
 
-        # Constraint checks
-        sent_ok, sent_count = check_sentence_count(response)
-        metrics["sentences"] = sent_count
-        metrics["sentences_ok"] = sent_ok
+            # Constraint checks
+            sent_ok, sent_count = check_sentence_count(response)
+            metrics["sentences"] = sent_count
+            metrics["sentences_ok"] = sent_ok
 
-        if spec and identity_prompt_requires_name(question):
-            name_ok, name_count = check_contains_name(response, spec.get("npc_name"))
-            metrics["name_mentions"] = name_count
-            metrics["name_ok"] = name_ok
-        else:
-            metrics["name_mentions"] = 0
-            metrics["name_ok"] = True
+            if spec and identity_prompt_requires_name(question):
+                name_ok, name_count = check_contains_name(response, spec.get("npc_name"))
+                metrics["name_mentions"] = name_count
+                metrics["name_ok"] = name_ok
+            else:
+                metrics["name_mentions"] = 0
+                metrics["name_ok"] = True
 
-        ai_ok, ai_pattern = check_no_ai_disclaimer(response)
-        metrics["no_ai_disclaimer"] = ai_ok
-        metrics["ai_pattern"] = ai_pattern
+            ai_ok, ai_pattern = check_no_ai_disclaimer(response)
+            metrics["no_ai_disclaimer"] = ai_ok
+            metrics["ai_pattern"] = ai_pattern
 
-        metrics["has_think_tags"] = not check_no_think_tags(response)
+            metrics["has_think_tags"] = not check_no_think_tags(response)
 
-        results.append({
-            "question": question,
-            "expected": expected,
-            "response": response,
-            "metrics": metrics,
-            "metadata": q.get("metadata", {}) if isinstance(q, dict) else {},
-        })
+            results.append({
+                "question": question,
+                "expected": expected,
+                "response": response,
+                "metrics": metrics,
+                "metadata": q.get("metadata", {}) if isinstance(q, dict) else {},
+            })
 
     return results
 

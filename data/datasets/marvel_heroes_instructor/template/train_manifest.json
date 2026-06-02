@@ -1,0 +1,152 @@
+{
+  "npc_key": "marvel_heroes_instructor",
+  "technique": "template",
+  "sanitized": true,
+  "sanitizer": {
+    "version": "v2",
+    "date": "2026-06-02T20:19:29Z",
+    "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/marvel_heroes_instructor/template/train.jsonl --output data/datasets/marvel_heroes_instructor/template/train_clean.jsonl --strict-canonical --require-complete-metadata --dedup",
+    "artifact_check_mode": "strict",
+    "strict_mode": false
+  },
+  "spec": {
+    "file": "data/npcs/specs/marvel_heroes_instructor.json",
+    "hash": "sha256:94ffd17e601ec941124c0593df78c44985174518fbfaaf97454fc7f2be3f0e44",
+    "ref_doc": "data/npcs/reference_docs/marvel_heroes_instructor_primer.md"
+  },
+  "input": {
+    "file": "data/datasets/marvel_heroes_instructor/template/train.jsonl",
+    "hash": "sha256:5828452b2294e3c784fd15882c6eb15cd6e32457a3359f0401a6927392aa9a04",
+    "total_examples": 72
+  },
+  "statistics": {
+    "total_input": 72,
+    "total_output": 71,
+    "total_train": 71,
+    "total_validation": 9,
+    "by_category": {
+      "teaching": 31,
+      "quest": 8,
+      "dialogue": 16,
+      "identity": 8,
+      "refusal": 8
+    },
+    "by_difficulty": {
+      "intermediate": 25,
+      "beginner": 32,
+      "advanced": 14
+    },
+    "by_safety_tag": {
+      "boundary_enforcement": 8,
+      "specified_boundary": 8
+    },
+    "quality_scores": {
+      "mean": 87.2,
+      "median": 87,
+      "min": 78,
+      "max": 94,
+      "std_dev": 4.3,
+      "passed_threshold": 71,
+      "flagged_for_review": 0,
+      "distribution": {
+        "0-9": 0,
+        "10-19": 0,
+        "20-29": 0,
+        "30-39": 0,
+        "40-49": 0,
+        "50-59": 0,
+        "60-69": 0,
+        "70-79": 5,
+        "80-89": 37,
+        "90-99": 29,
+        "100+": 0
+      }
+    }
+  },
+  "discarded": {
+    "total": 1,
+    "by_reason": {
+      "Assistant response too long (541 chars, max 450)": 1
+    }
+  },
+  "content_hashes": [
+    "9ce38f6f3ace5879a1d9d95c568092e8e95a6c61ce33178378dabfa8df7255e4",
+    "2608626bd037f862c135d8f386bd0c28448ea49aa1d9d947e23db306b718774c",
+    "7d3d1f93dad701f2a1ab07e3079c322de2943cca11519bd3a7c4eae4713e6c81",
+    "cad8f41cfc46dc6131569a564496ee0c36b8a46373f91d3a44ae9d8e89ee4cf0",
+    "304e15acea8332eeee4c21fdacb97e80f484d11e2e1ecf3a807615b984a6c6da",
+    "864deee1a6a0f2fa75f9299d3c658ae51ec8607a30db8f828e62b3358a3a64f9",
+    "dfe507c1cc07f7fc1833ed878f695f52f7ab3ad8f6d60da6fa1f28817435e1b9",
+    "35c258ff7fa91d8716f6cea1b6e059b1a6fd012daa33311bd4a5ac1f861e30cf",
+    "819cf0040d038fe82b72a1d55bbc11a6ad76cd1e61098f506dc565e6fa292aa4",
+    "3f9aaa26947415713a9ff9f551cefc96a6fc8212211998917e288a9cacf5bf0b",
+    "9c624a545d5f48309a26db9e6398e67d4cf71a53f8471849f7f481c6acf3ce0b",
+    "c9fb98abffc994d369a82b8150af55c9f54979891d02579dd8908b65927b26a3",
+    "30382ae1f2947ee7cd447b91986abf255d078e7a7433ac344543eb1f5a5e665d",
+    "1aaa1f45bc5dba8921cefe654628e052c80df9c9189479b95b37ee065099a1df",
+    "2227c4b55a04b70534d108e010b2f11b83c89423ac140e78c6274d604dffbc8c",
+    "6deff2cc25ecf1fc9249f1aeacc91a316fb6b25801cb69419965b178c6dc742d",
+    "f6b665bffe151d57c74c897dd4d8e16813b4f4508f44b6c0d168c85f2492a2ec",
+    "2d0bf7267aeabf17836091660b4077f556371f9e20f95dc199cb9fdccead3e83",
+    "538f7723f6551a606d52109b59286d231549910d2a27ca1baf52233c4a2ce608",
+    "6373b289540597703f7a7352477658c062f837351ffa2823c2fc1732cd44e078",
+    "9d06154d4ffcc5ebaaee3fd6e7304c988f10cbba7f55b6f7de39df9159348e86",
+    "f685c24687cba4dfe698d4fb56e69b274c75881d207dc7d4c1d0b0dc0549579a",
+    "08bc8ef972f7de0994cac8883406ad928f9a71d599408224c0d865ae06a0a362",
+    "60b9be6d81acde16c237da000f84c634442dfff2fa52a51b1ebaf876505083a1",
+    "00a9165e2347146d86b2bbf0d70b68cc949657ffae2337e9423fc18918b31195",
+    "587de368aaf7bdff65a5a5061396e40b2544cdb83addf766107d943018229c38",
+    "4826d45611063b741afa92895ba7b44f6a1083277bc5cce35530eda5f4eb3301",
+    "8e522f339952650117008a34029f1463f581321590e0dd49fd6176e6b0f9a96c",
+    "b7b7300f39d6bb82a593384314fcb1c085011eb2fc8094800dda994518876b92",
+    "f8f090e2185896b34a1f000854c89f47b085890f364139d1187439c0aa8e4930",
+    "95e84197a3e9168e26460bb9da5e0685f52e75df0724bb6c18842791fa12753b",
+    "e6cc94606e952e78a084cd9ed97ac57e873cfd0cbcc3a91dda1e4ceecddf8d08",
+    "782c09c1276440c3ead306329af3252d3b88edaf7addd40976de43d6e18d7ea7",
+    "0f4dd0a17bf9135ea22742efa478b14b42cd3263f2fc325407aeb0de4bd122df",
+    "35bbcebef3523f5888078bd53940ae9d7e000cd227b9dc75451ca1d35346a53c",
+    "29901155d3e7fe66f8ebbeb26fe660cdfeb0803ccb259b75bdebe209a6cb40e6",
+    "9503978e4d1c8e8b03156620c3b2685a0b33943eb2324c941bf50bd7ad3835f9",
+    "f9dd13ef77fd5128555ab8cfae26ace3c8eef0a864aaf5ed5f0ffd91623ee8aa",
+    "ccf86857d1c275012e2295663ac665b4e08ad530a813ca0349312701328e9b0f",
+    "4199d1dc45888e83696f052564f4a3855e62e1d5145ca77b4e6e1114911ef90c",
+    "4288dc65fdcd34e2bf334e4a4fae2459f1f596239fcb82ddc5686ef25b8a18e8",
+    "154fbef258ed71c0bc4c2c987e5d70467679495f0e5c223bdee29fb5b6feb778",
+    "69d4344bb0f954331945605fe88fd7448cb252be4739e4fc474fdc68bd875f7e",
+    "63c5119b2ad604c2772ade6bd589340893bd95c6246309712e33727fcb2710d4",
+    "007533a4b10d73f56c8afe748748f5f511b7d898093245226502ba5c56f8ad7a",
+    "f0c9bf8e538e15308e31462807c4f12b2e01f9e4bb3ae5df88117e047b29a820",
+    "acdc9b7b635d0723be1a3241dcf4df66360406bcb6fa4b1f1f4cf68c2d2192ef",
+    "3c71a79f0bb5cf2762cafc48735e36b1f698dfdf6117a7284a35c324380db2d5",
+    "5a54f3471b888ef2b251f8cd0a4272a3169db7f58644a68e4e1599fc0c874a6a",
+    "f9d2acbdcbd439fe77d8e67564d68c66c2c94530b378ef8f58dadd80d5df12d9",
+    "220ed4fbbee657e19a266d0132cce914cfc5938884c6ce4a346aef4d3321439c",
+    "e19e51429decb3ef68e87985c0d7da335617953715e4d3f469f0a0e7abacd6f1",
+    "16d1560513bcb096962482b0cc8ef6836e3ce262e4b3b63007c0f6264be60f85",
+    "d03dc7e2f2bfa266b136092280b7b93ea334c337116744818db81c9c9d109905",
+    "8136d3e635176a1fd9febeae96c1a33b9571b26fa83f6e750f985576fd43d5da",
+    "c5883d019fa35eca31f28edc016b9e775cdb794698ae7b3eb6bb8e5114464993",
+    "ca55dde9b0db7676d905442e9a728e145684245016e7b9a03fef6a0bd4124987",
+    "5836b38813efcc38073deeadc81e9579615dcaace4ab0c09425098bbf4b15e4c",
+    "15a1c09b9b7217beed8a78e3055890e1ed897921039375c3e4b9ec521c98dc41",
+    "b81a48ecb395e62338a1bbb0f557843d1d400694f13d2a0da7146a30f931d800",
+    "5d663e6e56f399b42a066631953684ee61996b8676e64da7a1ee745ae3ee7aa2",
+    "95e019b3a5462a36dc4a43c1ecadd333ee0ba5162354f4177a93721588876dae",
+    "7944df3203af2a067a4c3f26ed3cfd050afbf68ab092355865a55f673f788412",
+    "1524b50b47b3fbd79d39f8940450eebc417ff171b777e011343bb2697d1b7115",
+    "5974854b95c37d92a9067e199f6312dc53f99dd22d8c1b1c80239dbd8ff3d822",
+    "1648b3ca868ffcda9e93a973959aa472c41ffea444cbae2dcb46c4b53f8089f0",
+    "4e2c32da4928d8be6d41819ef26f2192f8f7fadfebc59acb9256ca618ec82da1",
+    "ed5584556e03549111ecdd8dd7e648c41f18df588fba04d5143f217b8588e5ab",
+    "52a0d7eca928c76b38b1a3ff5a02cea1622c826ec45cbce2e57e252d2cd0c9dc",
+    "17bee89debf1fe79123de06e7700639c9df7ee7091f16a386fd09de3e6078531",
+    "4196a21ec20057fbed71031991ddf44d4b382a225ec6b51b1a26f65f4364054e"
+  ],
+  "content_hash_prefix": "sha256:",
+  "generation": {
+    "date": "2026-06-02T20:19:18Z",
+    "seed": 42,
+    "generator_version": "improved-workflow-v1",
+    "sanitizer_version": "v1"
+  }
+}

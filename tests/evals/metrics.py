@@ -158,12 +158,12 @@ DATASET_QUALITY_METRICS = [
             "style as described in the system prompt and subject field in the context.",
             "Verify the response belongs to the correct training category (teaching, dialogue, quest, "
             "refusal, or identity) and addresses the concept and difficulty stated in the input.",
-            "Penalize responses that contain AI disclaimers ('As an AI...'), break character, "
-            "or ignore the category metadata.",
-            "Severely penalize responses that use markdown formatting (## headers, bullet points, bold "
-            "text) when the NPC prompt or training category forbids it.",
+            "Penalize responses that contain AI disclaimers ('As an AI...', 'I am a large language model'), "
+            "break character, or ignore the category metadata.",
+            "STRICT RULE: Penalize any use of markdown headers (##), bullet points, or bold text (**) "
+            "unless explicitly required by the category. The Unity UI cannot render these.",
             "Penalize responses that are too short (single sentence for teaching) or exceed "
-            "the NPC's stated max sentence rule.",
+            "the NPC's stated max sentence rule (usually 3 sentences).",
             "Penalize unsafe boundary handling, inappropriate role drift, or off-topic answers.",
         ],
         evaluation_params=[
@@ -172,10 +172,10 @@ DATASET_QUALITY_METRICS = [
             SingleTurnParams.CONTEXT,
         ],
         rubric=[
-            Rubric(score_range=(0, 3), expected_outcome="Fails persona, category, or format rules."),
-            Rubric(score_range=(4, 6), expected_outcome="Partially fits persona or category; minor issues."),
-            Rubric(score_range=(7, 8), expected_outcome="Good persona and category fit with small gaps."),
-            Rubric(score_range=(9, 10), expected_outcome="Perfect persona and category fit; no violations."),
+            Rubric(score_range=(0, 3), expected_outcome="Fails persona, category, or strict format rules."),
+            Rubric(score_range=(4, 6), expected_outcome="Partially fits persona or category; minor issues or slight format slip."),
+            Rubric(score_range=(7, 8), expected_outcome="Good persona and category fit with small gaps; clean format."),
+            Rubric(score_range=(9, 10), expected_outcome="Perfect persona and category fit; no violations; game-ready format."),
         ],
         model=JUDGE_MODEL,
         threshold=0.75,
@@ -219,7 +219,8 @@ DATASET_QUALITY_METRICS = [
             "— responses over 3 sentences for a game NPC should be penalized unless category demands it.",
             "Check there are no forbidden topics addressed (e.g., medical advice for chef NPC, "
             "dangerous historical endorsements for history guide NPC).",
-            "Verify the response does not contain filler, hedging, or over-apologetic phrasing.",
+            "STRICT RULE: Verify the response does not contain AI-typical filler, hedging ('It is important to note'), "
+            "or over-apologetic phrasing.",
             "Reward tight, in-character refusals or compliant responses that feel natural in a game context.",
         ],
         evaluation_params=[
@@ -228,8 +229,8 @@ DATASET_QUALITY_METRICS = [
             SingleTurnParams.CONTEXT,
         ],
         rubric=[
-            Rubric(score_range=(0, 3), expected_outcome="Violates constraint, refuses incorrectly, or ignores brevity."),
-            Rubric(score_range=(4, 6), expected_outcome="Mostly compliant but with minor violations."),
+            Rubric(score_range=(0, 3), expected_outcome="Violates constraint, refuses incorrectly, or uses forbidden AI phrasing."),
+            Rubric(score_range=(4, 6), expected_outcome="Mostly compliant but with minor violations or slight wordiness."),
             Rubric(score_range=(7, 8), expected_outcome="Compliant with small stylistic gaps."),
             Rubric(score_range=(9, 10), expected_outcome="Fully compliant, natural, game-ready response."),
         ],

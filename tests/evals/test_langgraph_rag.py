@@ -46,6 +46,7 @@ def test_history_guide_rag_single_turn():
         input=query,
         actual_output=actual_output,
         retrieval_context=expected_context,
+        context=expected_context,
         name="LangGraph RAG Single-Turn Test"
     )
 
@@ -105,6 +106,7 @@ def test_history_guide_rag_with_tracing():
         input=query,
         actual_output=actual_output,
         retrieval_context=expected_context,
+        context=expected_context,
         name="LangGraph RAG with Tracing"
     )
     

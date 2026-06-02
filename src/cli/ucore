@@ -35,6 +35,7 @@ PYTHON = str(VENV_PYTHON) if (VENV_PYTHON.exists() and not is_colab) else sys.ex
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import paths
+from src.core.tracing.deepeval_tracing import configure_tracing, trace_type
 
 EARLY_ALERT_PATTERNS = [
     re.compile(r"Traceback \(most recent call last\):"),
@@ -427,6 +428,10 @@ def main():
     eval_p.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference")
     eval_p.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference")
     eval_p.add_argument("--npc-key", help="NPC key for per-model TensorBoard runs lookup")
+    eval_p.add_argument("--confident", action="store_true", default=False,
+                        help="Require Confident AI API key (exits with error if not configured)")
+    eval_p.add_argument("--remote-eval", action="store_true", default=False,
+                        help="Evaluate on Confident AI infrastructure instead of locally. Requires --confident.")
     # Quick-eval
     qe_p = subparsers.add_parser("quick-eval", help="Quick local evaluation (llama-cpp-python)")
     qe_p.add_argument("--adapter", required=True, help="Path to LoRA adapter directory")
@@ -550,6 +555,10 @@ def main():
                         help="Judge backend for pipeline model evaluation")
     pipe_p.add_argument("--eval-judge-model", default="llama3.1:latest",
                         help="Judge model for pipeline model evaluation")
+    pipe_p.add_argument("--confident", action="store_true", default=False,
+                        help="Require Confident AI API key for pipeline tracing/evals")
+    pipe_p.add_argument("--remote-eval", action="store_true", default=False,
+                        help="Perform evaluations on Confident AI infrastructure. Requires --confident.")
     pipe_p.add_argument("--wandb-inference-project", default=None,
                         help="W&B project used for hosted judge inference in pipeline gates/evals")
     pipe_p.add_argument("--wandb-inference-entity", default=None,
@@ -1036,158 +1045,176 @@ def main():
         run_cmd(cmd)
 
     elif args.command == "pipeline":
-        # ── Shared W&B pipeline identity ───────────────────────────────
+        # ── Pipeline Metadata & Identity ───────────────────────────────
         pipeline_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         npc_key = Path(args.spec).stem
         workflow_id = uuid.uuid4().hex
         technique = "ollama" if args.ollama else args.technique
         wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
         pipeline_hooks = args.workflow_hooks or str(PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique / "workflow_hooks.jsonl")
+        
         # Set on the base environment so all child processes inherit it
         if args.wandb:
             os.environ["WANDB_GROUP"] = wandb_group
             os.environ["WANDB_RUN_GROUP"] = wandb_group
         os.environ["WORKFLOW_HOOKS_PATH"] = pipeline_hooks
         os.environ["WORKFLOW_ID"] = workflow_id
+        
+        # Metadata for DeepEval Tracing
+        trace_metadata = {
+            "npc_key": npc_key,
+            "technique": technique,
+            "workflow_id": workflow_id,
+            "pipeline_timestamp": pipeline_timestamp
+        }
 
-        print("[STAGE] spec")
-        if not args.skip_spec_validate:
-            print(f"--- Phase 0: Validating Spec ---")
-            validate_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "validate_subject_spec.py"), args.spec, "--generation-ready"]
-            run_cmd(validate_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
+        with trace_type("agent", name=f"Pipeline: {npc_key}", **trace_metadata):
+            print("[STAGE] spec")
+            if not args.skip_spec_validate:
+                with trace_type("agent", name="Phase 0: Validating Spec"):
+                    print(f"--- Phase 0: Validating Spec ---")
+                    validate_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "validate_subject_spec.py"), args.spec, "--generation-ready"]
+                    run_cmd(validate_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
-        print("[STAGE] dataset")
-        print(f"--- Phase 1: Generating Dataset ---")
-        gen_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec]
-        gen_cmd.extend(["--technique", technique])
-        if technique == "ollama":
-            gen_cmd.append("--ollama")
-        if args.docs_manifest:
-            gen_cmd.extend(["--docs-manifest", args.docs_manifest])
-        if args.model:
-            gen_cmd.extend(["--model", args.model])
-        os.environ["WORKFLOW_NEXT_ACTION"] = "sanitize_dataset"
-        os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(paths.dataset_train_path(npc_key, technique))
-        run_cmd(gen_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
+            print("[STAGE] dataset")
+            with trace_type("agent", name="Phase 1: Generating Dataset"):
+                print(f"--- Phase 1: Generating Dataset ---")
+                gen_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec]
+                gen_cmd.extend(["--technique", technique])
+                if technique == "ollama":
+                    gen_cmd.append("--ollama")
+                if args.docs_manifest:
+                    gen_cmd.extend(["--docs-manifest", args.docs_manifest])
+                if args.model:
+                    gen_cmd.extend(["--model", args.model])
+                os.environ["WORKFLOW_NEXT_ACTION"] = "sanitize_dataset"
+                os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(paths.dataset_train_path(npc_key, technique))
+                run_cmd(gen_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
-        # Determine paths
-        dataset_path = paths.dataset_train_path(npc_key, technique)
+            # Determine paths
+            dataset_path = paths.dataset_train_path(npc_key, technique)
 
-        print("[STAGE] dataset")
-        print(f"\n--- Phase 2: Sanitizing Dataset ---")
-        san_path = paths.dataset_train_path(npc_key, technique).with_name("train_clean.jsonl")
-        san_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), str(dataset_path), "--output", str(san_path), "--strict-canonical"]
-        os.environ["WORKFLOW_NEXT_ACTION"] = "deepeval_run" if not args.skip_dataset_eval else "training_pipeline"
-        os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(san_path)
-        run_cmd(san_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
+            print("[STAGE] dataset")
+            with trace_type("tool", name="Phase 2: Sanitizing Dataset"):
+                print(f"\n--- Phase 2: Sanitizing Dataset ---")
+                san_path = paths.dataset_train_path(npc_key, technique).with_name("train_clean.jsonl")
+                san_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), str(dataset_path), "--output", str(san_path), "--strict-canonical"]
+                os.environ["WORKFLOW_NEXT_ACTION"] = "deepeval_run" if not args.skip_dataset_eval else "training_pipeline"
+                os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(san_path)
+                run_cmd(san_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
-        if not args.skip_dataset_eval:
-            print("[STAGE] quality-gate")
-            print(f"\n--- Phase 3: DeepEval Dataset Quality Gate ---")
-            eval_cmd = [
-                PYTHON,
-                str(SCRIPTS_DIR / "dataset" / "dataset_eval.py"),
-                args.spec,
-                "--technique",
-                technique,
-                "--mode",
-                args.dataset_eval_mode,
-            ]
-            if args.dataset_eval_cases_per_category is not None:
-                eval_cmd.extend(["--cases-per-category", str(args.dataset_eval_cases_per_category)])
-            if args.dataset_eval_judge_provider != "ollama":
-                eval_cmd.extend(["--judge-provider", args.dataset_eval_judge_provider])
-            if args.dataset_eval_judge_preset:
-                eval_cmd.extend(["--judge-preset", args.dataset_eval_judge_preset])
-            if args.dataset_eval_judge_model:
-                eval_cmd.extend(["--judge-model", args.dataset_eval_judge_model])
-            if args.dataset_eval_ollama_url:
-                eval_cmd.extend(["--ollama-base-url", args.dataset_eval_ollama_url])
-            if args.wandb_inference_project:
-                eval_cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
-            if args.wandb_inference_entity:
-                eval_cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
-            os.environ["WORKFLOW_NEXT_ACTION"] = "training_pipeline"
-            os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(san_path)
-            os.environ["WORKFLOW_AWAIT_CONFIRMATION"] = "deepeval_run"
-            run_cmd(eval_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
-        os.environ.pop("WORKFLOW_AWAIT_CONFIRMATION", None)
-
-        # Determine paths for GGUF output early so export_dir is available
-        # for chain-linking env vars.
-        export_dir = paths.export_dir(npc_key)
-
-        print("[STAGE] training")
-        print(f"\n--- Phase 4: Training Model ---")
-        train_cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "train.py"), args.spec, "--from-spec",
-                     "--technique", technique, "--preset", args.preset]
-        if args.skip_dataset_eval:
-            train_cmd.append("--allow-ungated-dataset")
-        if args.full_merge_export:
-            train_cmd.append("--full-merge-export")
-        else:
-            train_cmd.append("--export-gguf")
-        if args.wandb:
-            train_cmd.append("--wandb")
-        os.environ["WORKFLOW_NEXT_ACTION"] = "export_adapter"
-        os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(export_dir)
-        train_env = {"WANDB_JOB_TYPE": "train", "WORKFLOW_HOOKS_PATH": pipeline_hooks}
-        run_cmd(train_cmd, extra_env=train_env)
-        ggufs = list(export_dir.glob("*.gguf")) if export_dir.exists() else []
-        if ggufs:
-            ggufs.sort(key=lambda x: x.stat().st_mtime, reverse=True)
-
-        print("[STAGE] export")
-        if not args.skip_smoke:
-            print(f"\n--- Phase 5: Smoke Testing ---")
-            if ggufs:
-                smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
-                if args.track:
-                    smoke_cmd.append("--track")
-                os.environ["WORKFLOW_NEXT_ACTION"] = "evaluate_pipeline"
-                os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(ggufs[0])
-                run_cmd(smoke_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
-            else:
-                print("Warning: No GGUF found for smoke testing")
-
-        if not args.skip_eval:
-            print(f"\n--- Phase 6: Evaluation ---")
-            # Re-scan for GGUFs if not already found
-            if not ggufs and export_dir.exists():
-                ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
-            if len(ggufs) >= 2:
-                # Candidate = newest GGUF (just exported), Baseline = previous export
-                candidate_path = ggufs[0]
-                baseline_path = ggufs[1]
-                print(f"  Candidate (new): {candidate_path.name}")
-                print(f"  Baseline (prev): {baseline_path.name}")
-                print(f"  Running side-by-side evaluation...")
-                eval_cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "evaluate.py"),
-                            "--baseline", str(baseline_path),
-                            "--candidate", str(candidate_path),
-                            "--spec", args.spec,
-                            "--num-questions", str(args.num_eval_questions),
-                            "--track"]
-                if args.eval_judge:
-                    eval_cmd.append("--judge")
-                    if args.eval_judge_provider != "ollama":
-                        eval_cmd.extend(["--judge-provider", args.eval_judge_provider])
-                    if args.eval_judge_model:
-                        eval_cmd.extend(["--judge-model", args.eval_judge_model])
+            if not args.skip_dataset_eval:
+                with trace_type("agent", name="Phase 3: DeepEval Quality Gate"):
+                    print("[STAGE] quality-gate")
+                    print(f"\n--- Phase 3: DeepEval Dataset Quality Gate ---")
+                    eval_cmd = [
+                        PYTHON,
+                        str(SCRIPTS_DIR / "dataset" / "dataset_eval.py"),
+                        args.spec,
+                        "--technique",
+                        technique,
+                        "--mode",
+                        args.dataset_eval_mode,
+                    ]
+                    if args.dataset_eval_cases_per_category is not None:
+                        eval_cmd.extend(["--cases-per-category", str(args.dataset_eval_cases_per_category)])
+                    if args.dataset_eval_judge_provider != "ollama":
+                        eval_cmd.extend(["--judge-provider", args.dataset_eval_judge_provider])
+                    if args.dataset_eval_judge_preset:
+                        eval_cmd.extend(["--judge-preset", args.dataset_eval_judge_preset])
+                    if args.dataset_eval_judge_model:
+                        eval_cmd.extend(["--judge-model", args.dataset_eval_judge_model])
+                    if args.dataset_eval_ollama_url:
+                        eval_cmd.extend(["--ollama-base-url", args.dataset_eval_ollama_url])
                     if args.wandb_inference_project:
                         eval_cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
                     if args.wandb_inference_entity:
                         eval_cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
+                    os.environ["WORKFLOW_NEXT_ACTION"] = "training_pipeline"
+                    os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(san_path)
+                    os.environ["WORKFLOW_AWAIT_CONFIRMATION"] = "deepeval_run"
+                    run_cmd(eval_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
+            os.environ.pop("WORKFLOW_AWAIT_CONFIRMATION", None)
+
+            # Determine paths for GGUF output early so export_dir is available
+            # for chain-linking env vars.
+            export_dir = paths.export_dir(npc_key)
+
+            print("[STAGE] training")
+            with trace_type("agent", name="Phase 4: Training Model"):
+                print(f"\n--- Phase 4: Training Model ---")
+                train_cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "train.py"), args.spec, "--from-spec",
+                             "--technique", technique, "--preset", args.preset]
+                if args.skip_dataset_eval:
+                    train_cmd.append("--allow-ungated-dataset")
+                if args.full_merge_export:
+                    train_cmd.append("--full-merge-export")
+                else:
+                    train_cmd.append("--export-gguf")
                 if args.wandb:
-                    eval_cmd.append("--wandb")
-                os.environ["WORKFLOW_NEXT_ACTION"] = "NONE"
-                os.environ.pop("WORKFLOW_NEXT_ARTIFACT", None)
-                run_cmd(eval_cmd, extra_env={"WANDB_JOB_TYPE": "eval", "WORKFLOW_HOOKS_PATH": pipeline_hooks})
-            elif len(ggufs) == 1:
-                print(f"  Only one GGUF export found ({ggufs[0].name}) — no baseline to compare against.")
-                print(f"  Run pipeline again after a future training to get a side-by-side evaluation.")
-            else:
-                print("  Warning: No GGUF found — skipping evaluation")
+                    train_cmd.append("--wandb")
+                os.environ["WORKFLOW_NEXT_ACTION"] = "export_adapter"
+                os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(export_dir)
+                train_env = {"WANDB_JOB_TYPE": "train", "WORKFLOW_HOOKS_PATH": pipeline_hooks}
+                run_cmd(train_cmd, extra_env=train_env)
+            
+            ggufs = list(export_dir.glob("*.gguf")) if export_dir.exists() else []
+            if ggufs:
+                ggufs.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+
+            print("[STAGE] export")
+            if not args.skip_smoke:
+                with trace_type("agent", name="Phase 5: Smoke Testing"):
+                    print(f"\n--- Phase 5: Smoke Testing ---")
+                    if ggufs:
+                        smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
+                        if args.track:
+                            smoke_cmd.append("--track")
+                        os.environ["WORKFLOW_NEXT_ACTION"] = "evaluate_pipeline"
+                        os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(ggufs[0])
+                        run_cmd(smoke_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
+                    else:
+                        print("Warning: No GGUF found for smoke testing")
+
+            if not args.skip_eval:
+                with trace_type("agent", name="Phase 6: Evaluation"):
+                    print(f"\n--- Phase 6: Evaluation ---")
+                    # Re-scan for GGUFs if not already found
+                    if not ggufs and export_dir.exists():
+                        ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
+                    if len(ggufs) >= 2:
+                        # Candidate = newest GGUF (just exported), Baseline = previous export
+                        candidate_path = ggufs[0]
+                        baseline_path = ggufs[1]
+                        print(f"  Candidate (new): {candidate_path.name}")
+                        print(f"  Baseline (prev): {baseline_path.name}")
+                        print(f"  Running side-by-side evaluation...")
+                        eval_cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "evaluate.py"),
+                                    "--baseline", str(baseline_path),
+                                    "--candidate", str(candidate_path),
+                                    "--spec", args.spec,
+                                    "--num-questions", str(args.num_eval_questions),
+                                    "--track"]
+                        if args.eval_judge:
+                            eval_cmd.append("--judge")
+                            if args.eval_judge_provider != "ollama":
+                                eval_cmd.extend(["--judge-provider", args.eval_judge_provider])
+                            if args.eval_judge_model:
+                                eval_cmd.extend(["--judge-model", args.eval_judge_model])
+                            if args.wandb_inference_project:
+                                eval_cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
+                            if args.wandb_inference_entity:
+                                eval_cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
+                        if args.wandb:
+                            eval_cmd.append("--wandb")
+                        os.environ["WORKFLOW_NEXT_ACTION"] = "NONE"
+                        os.environ.pop("WORKFLOW_NEXT_ARTIFACT", None)
+                        run_cmd(eval_cmd, extra_env={"WANDB_JOB_TYPE": "eval", "WORKFLOW_HOOKS_PATH": pipeline_hooks})
+                    elif len(ggufs) == 1:
+                        print(f"  Only one GGUF export found ({ggufs[0].name}) — no baseline to compare against.")
+                        print(f"  Run pipeline again after a future training to get a side-by-side evaluation.")
+                    else:
+                        print("  Warning: No GGUF found — skipping evaluation")
 
         # Clean up workflow env vars to avoid polluting subsequent commands
         for var in ["WORKFLOW_ID", "WORKFLOW_NEXT_ACTION", "WORKFLOW_NEXT_ARTIFACT", "WORKFLOW_AWAIT_CONFIRMATION"]:
