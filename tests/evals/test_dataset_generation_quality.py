@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import deepeval
 from deepeval import assert_test
 from deepeval.test_case import LLMTestCase
 
@@ -81,6 +82,33 @@ def _iter_rows(npc_key: str, technique: str) -> list[dict]:
 
 
 def _build_cases() -> list[LLMTestCase]:
+    pull_alias = os.getenv("DEEPEVAL_DATASET_PULL_ALIAS", "").strip()
+    if pull_alias:
+        from deepeval.dataset import EvaluationDataset
+        dataset = EvaluationDataset()
+        dataset.pull(alias=pull_alias)
+        cases = []
+        for idx, golden in enumerate(dataset.goldens):
+            metadata = getattr(golden, "additional_metadata", {}) or {}
+            if not isinstance(metadata, dict):
+                metadata = {}
+            actual_output = golden.actual_output or golden.expected_output or ""
+            context = golden.context or []
+            npc_key = metadata.get("npc_key", "unknown")
+            category = metadata.get("category", "unknown")
+            cases.append(
+                LLMTestCase(
+                    name=f"{npc_key}:{category}:{idx}",
+                    input=golden.input,
+                    actual_output=actual_output,
+                    context=context,
+                    retrieval_context=context,
+                    metadata=metadata,
+                    tags=[npc_key, category],
+                )
+            )
+        return cases
+
     npc_keys = _csv_env("DEEPEVAL_DATASET_NPC_KEYS", DEFAULT_NPCS)
     categories = _csv_env("DEEPEVAL_DATASET_CATEGORIES", DEFAULT_CATEGORIES)
     technique = os.getenv("DEEPEVAL_DATASET_TECHNIQUE", DEFAULT_TECHNIQUE)
@@ -140,6 +168,17 @@ def _build_cases() -> list[LLMTestCase]:
             )
 
     return cases
+
+
+@deepeval.log_hyperparameters
+def log_hyperparameters():
+    return {
+        "judge_model": os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen2.5:7b"),
+        "judge_provider": os.getenv("DEEPEVAL_JUDGE_PROVIDER", "ollama"),
+        "temperature": os.getenv("DEEPEVAL_OLLAMA_TEMPERATURE", "0.3"),
+        "technique": os.getenv("DEEPEVAL_DATASET_TECHNIQUE", "template"),
+        "pull_alias": os.getenv("DEEPEVAL_DATASET_PULL_ALIAS", ""),
+    }
 
 
 TEST_CASES = _build_cases()

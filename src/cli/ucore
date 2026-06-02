@@ -265,11 +265,27 @@ def main():
     de_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
     de_p.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference")
     de_p.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference")
+    de_p.add_argument("--pull-alias", default=None, help="Pull dataset by alias from Confident AI instead of loading local JSONL files")
+    de_p.add_argument("--confident", action="store_true", default=False,
+                      help="Require Confident AI API key (exits with error if not configured)")
+    de_p.add_argument("--remote-eval", action="store_true", default=False,
+                      help="Evaluate on Confident AI infrastructure instead of locally. Requires --confident.")
 
     cg_p = subparsers.add_parser("confident-goldens", help="Project ChatML rows into Confident AI single/conversational golden files")
-    cg_p.add_argument("dataset", help="Path to train_clean.jsonl or other ChatML JSONL")
+    cg_p.add_argument("dataset", help="Path to train_clean.jsonl or other ChatML JSONL or NPC spec JSON")
     cg_p.add_argument("--spec", help="NPC spec JSON for reference_doc/context/provenance")
     cg_p.add_argument("--output-dir", help="Output directory (default: dataset sibling confident/)")
+    cg_p.add_argument("--technique", choices=["docs", "ollama", "template", "openai", "anthropic"], help="Override/resolve dataset technique")
+    cg_p.add_argument("--push", action="store_true", help="Push projected goldens to Confident AI")
+    cg_final_group = cg_p.add_mutually_exclusive_group()
+    cg_final_group.add_argument("--finalized", dest="finalized", action="store_true", default=True, help="Mark pushed goldens finalized/eval-ready")
+    cg_final_group.add_argument("--unfinalized", dest="finalized", action="store_false", help="Queue pushed goldens for Confident review")
+
+    cc_p = subparsers.add_parser("confident-classifiers", help="Print/write Confident AI classifier setup specs for manual UI entry")
+    cc_p.add_argument("--write", action="store_true", help="Write configs/confident/classifiers_setup.{json,md}")
+    cc_p.add_argument("--json-path", help="Override JSON output path")
+    cc_p.add_argument("--markdown-path", help="Override Markdown output path")
+    cc_p.add_argument("--format", choices=["json", "markdown"], default="markdown", help="Print format")
 
     # Train
     train_p = subparsers.add_parser("train", help="Train a model")
@@ -743,12 +759,26 @@ def main():
         if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
         if args.wandb_inference_project: cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
         if args.wandb_inference_entity: cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
+        if getattr(args, "pull_alias", None): cmd.extend(["--pull-alias", args.pull_alias])
+        if getattr(args, "confident", False): cmd.append("--confident")
+        if getattr(args, "remote_eval", False): cmd.append("--remote-eval")
         run_cmd(cmd)
 
     elif args.command == "confident-goldens":
         cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "confident_goldens.py"), args.dataset]
         if args.spec: cmd.extend(["--spec", args.spec])
         if args.output_dir: cmd.extend(["--output-dir", args.output_dir])
+        if getattr(args, "technique", None): cmd.extend(["--technique", args.technique])
+        if getattr(args, "push", False): cmd.append("--push")
+        if not getattr(args, "finalized", True): cmd.append("--unfinalized")
+        run_cmd(cmd)
+
+    elif args.command == "confident-classifiers":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "confident_classifiers.py")]
+        if getattr(args, "write", False): cmd.append("--write")
+        if getattr(args, "json_path", None): cmd.extend(["--json-path", args.json_path])
+        if getattr(args, "markdown_path", None): cmd.extend(["--markdown-path", args.markdown_path])
+        if getattr(args, "format", None): cmd.extend(["--format", args.format])
         run_cmd(cmd)
 
     elif args.command == "train":

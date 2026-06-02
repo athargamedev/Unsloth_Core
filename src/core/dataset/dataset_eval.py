@@ -432,7 +432,8 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     npc_key = workflow.npc_key
     technique = workflow.technique
     clean_path = workflow.dataset_path if workflow.dataset_path.name == "train_clean.jsonl" else workflow.dataset_clean_path
-    if not clean_path.exists():
+    is_pull = bool(getattr(args, "pull_alias", None))
+    if not is_pull and not clean_path.exists():
         raise SystemExit(
             f"Error: {clean_path} does not exist. Run sanitize first, for example:\n"
             f"  ./ucore sanitize subjects/datasets/{npc_key}/{technique}/train.jsonl "
@@ -529,6 +530,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 env.update(
                     {
                         "DEEPEVAL_DATASET_LIVE": "1",
+                        "DEEPEVAL_DATASET_PULL_ALIAS": getattr(args, "pull_alias", None) or "",
                         "DEEPEVAL_DATASET_NPC_KEYS": npc_key,
                         "DEEPEVAL_DATASET_TECHNIQUE": technique,
                         "DEEPEVAL_DATASET_CASES_PER_CATEGORY": str(cases_per_category),
@@ -590,7 +592,21 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     conversational_metric_collection = _build_conversational_metric_collection()
                     test_cases, conversational_cases = _convert_test_cases_for_remote(clean_path)
 
-                    result = client.evaluate(test_cases, metric_collection, identifier=identifier) if test_cases else {}
+                    hyperparameters = {
+                        "judge_model": resolved_judge_model,
+                        "judge_provider": "hosted",
+                        "temperature": str(args.judge_temperature),
+                        "technique": technique,
+                    }
+                    if args.pull_alias:
+                        hyperparameters["pull_alias"] = args.pull_alias
+
+                    result = client.evaluate(
+                        test_cases,
+                        metric_collection,
+                        identifier=identifier,
+                        hyperparameters=hyperparameters,
+                    ) if test_cases else {}
                     test_run_id = _confident_test_run_id(result)
                     conversational_test_run_id = ""
                     if conversational_cases:
@@ -598,6 +614,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                             conversational_cases,
                             conversational_metric_collection,
                             identifier=f"{identifier}-conversation",
+                            hyperparameters=hyperparameters,
                         )
                         if isinstance(conversational_result, dict):
                             conversational_test_run_id = _confident_test_run_id(conversational_result)
@@ -962,6 +979,7 @@ def parse_args() -> argparse.Namespace:
                         help="Require Confident AI API key (exits with error if not configured)")
     parser.add_argument("--remote-eval", action="store_true", default=False,
                         help="Evaluate on Confident AI infrastructure instead of locally. Requires --confident.")
+    parser.add_argument("--pull-alias", default=None, help="Pull dataset by alias from Confident AI instead of loading local JSONL files")
     return parser.parse_args()
 
 

@@ -71,6 +71,7 @@ class ConfidentAPIClient:
         test_cases: list[dict[str, Any]],
         metric_collection: dict[str, Any],
         identifier: str | None = None,
+        hyperparameters: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Submit a batch of LLM test cases for remote evaluation.
 
@@ -84,6 +85,8 @@ class ConfidentAPIClient:
             expects the collection name string in ``metricCollection``.
         identifier : str, optional
             Optional label to identify this evaluation run.
+        hyperparameters : dict, optional
+            Optional hyperparameters to log for this evaluation run.
 
         Returns
         -------
@@ -93,7 +96,7 @@ class ConfidentAPIClient:
         body: dict[str, Any] = {
             "metricCollection": _metric_collection_name(metric_collection),
             "llmTestCases": test_cases,
-            "hyperparameters": {},
+            "hyperparameters": hyperparameters if hyperparameters is not None else {},
         }
         if identifier is not None:
             body["identifier"] = identifier
@@ -104,6 +107,7 @@ class ConfidentAPIClient:
         test_cases: list[dict[str, Any]],
         metric_collection: dict[str, Any],
         identifier: str | None = None,
+        hyperparameters: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Submit multi-turn conversational test cases for evaluation.
 
@@ -116,6 +120,8 @@ class ConfidentAPIClient:
             Describes which metrics to evaluate.
         identifier : str, optional
             Optional label for this evaluation run.
+        hyperparameters : dict, optional
+            Optional hyperparameters to log for this evaluation run.
 
         Returns
         -------
@@ -125,7 +131,7 @@ class ConfidentAPIClient:
         body: dict[str, Any] = {
             "metricCollection": _metric_collection_name(metric_collection),
             "conversationalTestCases": test_cases,
-            "hyperparameters": {},
+            "hyperparameters": hyperparameters if hyperparameters is not None else {},
         }
         if identifier is not None:
             body["identifier"] = identifier

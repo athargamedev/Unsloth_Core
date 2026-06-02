@@ -81,10 +81,15 @@ def test_projects_multi_turn_chatml_to_conversational_golden(tmp_path):
     assert artifacts.single_turn_goldens == []
     assert len(artifacts.conversational_goldens) == 1
     golden = artifacts.conversational_goldens[0]
-    assert golden["scenario"].startswith("chef_assistant dialogue")
+    assert golden["scenario"] == "memory retention"
     assert golden["expectedOutcome"]
-    assert golden["turns"] == [{"role": "user", "content": "Remember I avoid peanuts."}]
-    assert golden["customColumnKeyValues"]["turn_type"] == "multi"
+    assert golden["turns"] == [
+        {"role": "user", "content": "Remember I avoid peanuts."},
+        {"role": "assistant", "content": "I’ll remember no peanuts."},
+        {"role": "user", "content": "What sauce can I make?"},
+        {"role": "assistant", "content": "Use yogurt sauce and avoid peanut sauces."},
+    ]
+    assert golden["customColumnKeyValues"]["turn_type"] == "conversational"
     assert golden["customColumnKeyValues"]["metric_focus"] == "knowledge_retention"
 
 

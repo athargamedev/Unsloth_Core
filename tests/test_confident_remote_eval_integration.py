@@ -66,11 +66,13 @@ def _make_dataset_eval_args(
     remote_eval: bool = False,
     confident: bool = False,
     identifier: str | None = None,
+    pull_alias: str | None = None,
 ) -> Namespace:
     """Build a real ``argparse.Namespace`` for ``dataset_eval.py`` ``run_deepeval()``."""
     return Namespace(
         remote_eval=remote_eval,
         confident=confident,
+        pull_alias=pull_alias,
         judge_provider="ollama",
         judge_preset=None,
         judge_model=None,

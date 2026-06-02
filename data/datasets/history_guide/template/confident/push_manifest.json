@@ -1,0 +1,26 @@
+{
+  "npc_key": "history_guide",
+  "technique": "template",
+  "dataset_sha": "8e7eb2c38e99ba47f02acb51f8c03d0bca039b545077e50b690f84da56f7ea06",
+  "single_turn_count": 72,
+  "conversational_count": 0,
+  "created_at": "2026-06-02T16:20:25Z",
+  "default_alias": "ucore-history-guide-template-single-v1",
+  "default_version": "20260602-8e7eb2c3",
+  "version": "20260602-8e7eb2c3",
+  "aliases": {
+    "single_turn": "ucore-history-guide-template-single-v1",
+    "conversational": "ucore-history-guide-template-conversation-v1"
+  },
+  "counts": {
+    "single_turn": 72,
+    "conversational": 0
+  },
+  "files": {
+    "single_turn": "data/datasets/history_guide/template/confident/single_turn_goldens.jsonl",
+    "conversational": "data/datasets/history_guide/template/confident/conversational_goldens.jsonl"
+  },
+  "push_defaults": {
+    "finalized": false
+  }
+}

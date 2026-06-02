@@ -1,0 +1,10 @@
+services:
+  confident-agent:
+    image: confidentai/confident-agent
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      CONFIDENT_WS_BASE_URL: ${CONFIDENT_WS_BASE_URL:-wss://deepeval.confident-ai.com/ws/relay}
+    # Agent is for future AI Connections to local/private endpoints.
+    # It is not required for Confident classifiers.

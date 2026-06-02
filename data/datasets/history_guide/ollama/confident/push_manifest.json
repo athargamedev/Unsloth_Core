@@ -1,8 +1,13 @@
 {
-  "created_at": "2026-06-02T15:48:52Z",
-  "source_dataset": "data/datasets/history_guide/ollama/train_clean.jsonl",
-  "spec_path": "data/npcs/specs/history_guide.json",
-  "version": "20260602-bd08f547-55535042-81c6d2dd",
+  "npc_key": "history_guide",
+  "technique": "ollama",
+  "dataset_sha": "bd08f547b46f9166e017b6eeebd88dc9fd52bfef6f8680546d87171fe5732cfd",
+  "single_turn_count": 65,
+  "conversational_count": 0,
+  "created_at": "2026-06-02T16:25:00Z",
+  "default_alias": "ucore-history-guide-ollama-single-v1",
+  "default_version": "20260602-bd08f547",
+  "version": "20260602-bd08f547",
   "aliases": {
     "single_turn": "ucore-history-guide-ollama-single-v1",
     "conversational": "ucore-history-guide-ollama-conversation-v1"
