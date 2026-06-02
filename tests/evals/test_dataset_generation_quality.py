@@ -52,8 +52,15 @@ def _csv_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
 
 
 def _load_spec(npc_key: str) -> dict:
-    with (PROJECT_ROOT / "subjects" / "NPC_specs" / f"{npc_key}.json").open() as f:
-        return json.load(f)
+    candidates = [
+        PROJECT_ROOT / "data" / "npcs" / "specs" / f"{npc_key}.json",
+        PROJECT_ROOT / "subjects" / "NPC_specs" / f"{npc_key}.json",
+    ]
+    for path in candidates:
+        if path.exists():
+            with path.open() as f:
+                return json.load(f)
+    raise FileNotFoundError(f"No spec found for {npc_key}; checked: {', '.join(str(p) for p in candidates)}")
 
 
 def _load_reference_doc(spec: dict) -> str:
@@ -74,7 +81,11 @@ def _message(messages: list[dict], role: str) -> str:
 
 
 def _iter_rows(npc_key: str, technique: str) -> list[dict]:
-    path = PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique / "train_clean.jsonl"
+    candidates = [
+        PROJECT_ROOT / "data" / "datasets" / npc_key / technique / "train_clean.jsonl",
+        PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique / "train_clean.jsonl",
+    ]
+    path = next((candidate for candidate in candidates if candidate.exists()), candidates[0])
     rows = []
     with path.open() as f:
         for line_number, line in enumerate(f, start=1):

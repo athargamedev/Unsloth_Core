@@ -1,10 +1,10 @@
 {
-  "created_at": "2026-06-02T17:58:47.860951+00:00",
-  "npc_key": "chef_assistant",
+  "created_at": "2026-06-02T18:16:31.181012+00:00",
+  "npc_key": "history_guide",
   "technique": "ollama",
   "judge_provider": "ollama",
   "judge_model": "qwen2.5:7b",
-  "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260602-145558",
+  "deepeval_identifier": "dataset-quality-history_guide-ollama-fast-20260602-151629",
   "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260602-145558",
   "command": [
     "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
@@ -12,7 +12,7 @@
     "run",
     "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
     "--identifier",
-    "dataset-quality-chef_assistant-ollama-fast-20260602-145558",
+    "dataset-quality-history_guide-ollama-fast-20260602-151629",
     "--display",
     "all",
     "--skip-on-missing-params"
@@ -24,7 +24,7 @@
   "metric_count": 10,
   "null_metric_count": 0,
   "null_metric_rate": 0.0,
-  "status": "structural_failure",
+  "status": "inconclusive",
   "metrics": {
     "Persona and Category Fit [GEval]": {
       "count": 5,
@@ -64,13 +64,17 @@
       "pass_rate": 0.0
     }
   },
-  "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/ollama/quality_failures.json",
+  "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/history_guide/ollama/quality_failures.json",
+  "result_identifier_mismatch": {
+    "expected": "dataset-quality-history_guide-ollama-fast-20260602-151629",
+    "actual": "dataset-quality-chef_assistant-ollama-fast-20260602-145558"
+  },
   "quality_gate_mode": "fast",
   "cases_per_category": 1,
   "dataset_summary": {
-    "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
+    "path": "/home/athar/Projects/Unsloth_Core/data/datasets/history_guide/ollama/train_clean.jsonl",
     "exists": true,
-    "content_sha256": "sha256:6176528c82ce4dfc4c84821cba2079d2c57c784c9c6af65cae109da73c0fc909",
+    "content_sha256": "sha256:bf04058c2f8e6837597086de01a3df21fcd038f6fe1413e804d9007744cb73ab",
     "total": 68,
     "by_category": {
       "dialogue": 16,
@@ -80,27 +84,23 @@
       "teaching": 32
     },
     "by_difficulty": {
-      "advanced": 18,
-      "beginner": 30,
+      "advanced": 15,
+      "beginner": 27,
       "intermediate": 20
     },
     "by_split": {
       "train": 68
     },
     "by_concept": {
-      "kitchen workflow": 10,
-      "knife skills": 10,
-      "chef_assistant": 8,
-      "flavor balance": 8,
-      "food safety": 8,
-      "ingredient science": 6,
-      "cooking techniques": 5,
-      "kitchen organization": 4,
-      "Will not help with crash diets or eating-disorder advice": 3,
-      "core kitchen flow": 2,
-      "knife skills and techniques": 2,
-      "Will not recommend unsafe shortcuts that ignore food safety": 1,
-      "flavor and ingredient logic": 1
+      "historical methodology": 14,
+      "classical antiquity": 10,
+      "ancient civilizations": 9,
+      "medieval history": 9,
+      "history_guide": 8,
+      "modern history": 8,
+      "historical thinking": 6,
+      "Will not present speculation as fact": 3,
+      "Will not promote conspiracy theories or historical misinformation": 1
     },
     "unknown_rows": 0
   },
@@ -122,32 +122,11 @@
   "dataset_total_rows": 68,
   "dataset_unknown_rows": 0,
   "sanitizer": {
-    "total_output": 68,
-    "discarded_total": 4,
+    "total_output": 0,
+    "discarded_total": 0,
     "flagged_for_review": 0,
-    "passed_threshold": 68,
-    "quality_scores": {
-      "mean": 80.9,
-      "median": 81.0,
-      "min": 77,
-      "max": 91,
-      "std_dev": 3.5,
-      "passed_threshold": 68,
-      "flagged_for_review": 0,
-      "distribution": {
-        "0-9": 0,
-        "10-19": 0,
-        "20-29": 0,
-        "30-39": 0,
-        "40-49": 0,
-        "50-59": 0,
-        "60-69": 0,
-        "70-79": 21,
-        "80-89": 43,
-        "90-99": 4,
-        "100+": 0
-      }
-    }
+    "passed_threshold": 0,
+    "quality_scores": {}
   },
   "sanitizer_quality_issues": []
 }

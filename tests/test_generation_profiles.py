@@ -103,6 +103,22 @@ def test_history_refusal_labels_speculation():
     assert "speculation" in response.lower()
 
 
+def test_refusal_templates_keep_explicit_boundary_and_redirect(monkeypatch):
+    monkeypatch.setattr("scripts.dataset.generation_profiles.random.choice", lambda seq: seq[-1])
+
+    for spec, boundary in [
+        (history_spec(), "topic change request"),
+        (history_spec(), "misinformation or conspiracy"),
+        (chef_spec(), "medical or dietary"),
+        (chef_spec(), "unsafe food preparation"),
+        (chef_spec(), "generic boundary"),
+    ]:
+        response = generate_refusal_response(spec, boundary)
+        lowered = response.lower()
+        assert any(marker in lowered for marker in ["i can't", "i cannot", "i don't", "outside"])
+        assert "instead" in lowered or "i can help with" in lowered
+
+
 def test_guardrail_rejects_disclaimers_and_markdown():
     guardrail = DialogueGuardrail()
 

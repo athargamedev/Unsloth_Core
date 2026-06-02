@@ -1,24 +1,24 @@
 {
   "npc_key": "history_guide",
   "technique": "ollama",
-  "dataset_sha": "bd08f547b46f9166e017b6eeebd88dc9fd52bfef6f8680546d87171fe5732cfd",
-  "single_turn_count": 65,
-  "conversational_count": 20,
-  "created_at": "2026-06-02T16:56:57Z",
+  "dataset_sha": "21006da58643bc7254169c04f324ae88473a43bd3b6521f5d9d3de262c279103",
+  "single_turn_count": 62,
+  "conversational_count": 26,
+  "created_at": "2026-06-02T18:45:18Z",
   "default_alias": "ucore-history-guide-ollama-single-v1",
-  "default_version": "20260602-bd08f547",
-  "version": "20260602-bd08f547",
+  "default_version": "20260602-21006da5",
+  "version": "20260602-21006da5",
   "aliases": {
     "single_turn": "ucore-history-guide-ollama-single-v1",
     "conversational": "ucore-history-guide-ollama-conversation-v1"
   },
   "counts": {
-    "single_turn": 65,
-    "conversational": 20
+    "single_turn": 62,
+    "conversational": 26
   },
   "files": {
-    "single_turn": "/home/athar/Projects/Unsloth_Core/data/datasets/history_guide/ollama/confident/single_turn_goldens.jsonl",
-    "conversational": "/home/athar/Projects/Unsloth_Core/data/datasets/history_guide/ollama/confident/conversational_goldens.jsonl"
+    "single_turn": "data/datasets/history_guide/ollama/confident/single_turn_goldens.jsonl",
+    "conversational": "data/datasets/history_guide/ollama/confident/conversational_goldens.jsonl"
   },
   "push_defaults": {
     "finalized": false

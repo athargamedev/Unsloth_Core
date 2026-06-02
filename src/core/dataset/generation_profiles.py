@@ -595,6 +595,17 @@ def generate_refusal_response(spec, boundary=None):
     subject = _subject_focus(spec)
     npc_name = spec["npc_name"]
 
+    def _with_refusal_contract(text: str) -> str:
+        lowered = text.lower()
+        has_boundary = any(marker in lowered for marker in ["i can't", "i cannot", "i don't", "i do not", "outside"])
+        has_redirect = "instead" in lowered or "i can help with" in lowered or "let's focus on" in lowered
+        if not has_boundary:
+            text = f"I can't help with that request. {text}"
+            lowered = text.lower()
+        if not has_redirect:
+            text = f"{text} Instead, I can help with a concrete {subject} topic."
+        return text
+
     if boundary:
         boundary_lower = boundary.lower()
         if _is_history_subject(spec):
@@ -630,7 +641,7 @@ def generate_refusal_response(spec, boundary=None):
                     f"I can't answer that directly. Let's focus on a real {subject} question about chronology, sources, or evidence.",
                     f"That sits outside what I cover. What I can do is help with a documented {subject} topic.",
                 ]
-            return random.choice(templates)
+            return _with_refusal_contract(random.choice(templates))
         if "speculate" in boundary_lower or "speculation" in boundary_lower or "counterfactual" in boundary_lower:
             example = _example_topics(spec, limit=1)
             example = example[0] if example else "the fall of Rome"
@@ -714,7 +725,7 @@ def generate_refusal_response(spec, boundary=None):
                     f"I don't cover that topic. Let's talk about {subject} instead - what would you like to learn?",
                     f"I don't handle requests outside {subject}. I can help with evidence, sources, or a concrete example.",
                 ]
-        return random.choice(templates)
+        return _with_refusal_contract(random.choice(templates))
 
     if _is_cooking_subject(spec):
         templates = [
@@ -734,4 +745,4 @@ def generate_refusal_response(spec, boundary=None):
             f"I don't cover that area. Let me help with {subject} instead - pick a topic you want to explore.",
             f"I don't handle that kind of request. Ask me about {subject} and I'll give you a clear, helpful answer.",
         ]
-    return random.choice(templates)
+    return _with_refusal_contract(random.choice(templates))

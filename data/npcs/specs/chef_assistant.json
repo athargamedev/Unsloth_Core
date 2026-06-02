@@ -154,5 +154,25 @@
       "quest": 8,
       "refusal": 8
     }
+  },
+  "confident": {
+    "dataset_alias_prefix": "ucore-chef-assistant-ollama",
+    "single_turn_collection": "npc-dataset-quality",
+    "conversation_collection": "npc-conversation-quality",
+    "push_default_finalized": false,
+    "custom_columns": [
+      "npc_key", "category", "concept", "difficulty", "technique", "source",
+      "split", "turn_type", "metric_focus", "quality_status"
+    ],
+    "memory_retention": {
+      "minimum_goldens": 20,
+      "fact_types": ["preference", "allergy", "skill_level", "goal", "constraint"]
+    }
+  },
+  "evaluation_contract": {
+    "input_mapping": "last_user_message",
+    "expected_output_mapping": "assistant_message_for_approved_rows",
+    "context_sources": ["reference_doc", "system_prompt_rules"],
+    "runtime_output_required": true
   }
 }
