@@ -103,6 +103,22 @@ class TestEvaluate:
         assert body["identifier"] == "my-eval"
         assert body["hyperparameters"] == {}
 
+    def test_sends_custom_hyperparameters(self):
+        """When hyperparameters dict is provided, it is populated in the body."""
+        from scripts.ops.confident_api import ConfidentAPIClient
+
+        client = ConfidentAPIClient(api_key="test-key")
+        test_cases = [{"input": "Hello", "actualOutput": "Hi"}]
+        metrics = {"name": "test", "include": ["faithfulness"]}
+        mock = _mock_response({"success": True, "data": {"testRunId": "run-1"}})
+        hparams = {"temperature": "0.3", "judge_model": "qwen2.5:7b"}
+
+        with patch("urllib.request.urlopen", return_value=mock) as mock_urlopen:
+            client.evaluate(test_cases, metrics, identifier="my-eval", hyperparameters=hparams)
+
+        body = json.loads(mock_urlopen.call_args[0][0].data)
+        assert body["hyperparameters"] == hparams
+
     def test_without_identifier_omits_field(self):
         """When identifier is None it must not appear in the body."""
         from scripts.ops.confident_api import ConfidentAPIClient
@@ -146,6 +162,22 @@ class TestEvaluateConversational:
         assert body["metricCollection"] == "conv-test"
         assert body["identifier"] == "conv-eval"
         assert body["hyperparameters"] == {}
+
+    def test_sends_custom_hyperparameters(self):
+        """Conversational eval propagates custom hyperparameters dict in the body."""
+        from scripts.ops.confident_api import ConfidentAPIClient
+
+        client = ConfidentAPIClient(api_key="test-key")
+        test_cases = [{"messages": [{"role": "user", "content": "Hi"}]}]
+        metrics = {"name": "conv-test", "include": ["coherence"]}
+        mock = _mock_response({"success": True, "data": {"testRunId": "conv-run-1"}})
+        hparams = {"temperature": "0.3", "judge_model": "qwen2.5:7b"}
+
+        with patch("urllib.request.urlopen", return_value=mock) as mock_urlopen:
+            client.evaluate_conversational(test_cases, metrics, identifier="conv-eval", hyperparameters=hparams)
+
+        body = json.loads(mock_urlopen.call_args[0][0].data)
+        assert body["hyperparameters"] == hparams
 
     def test_without_identifier_omits_field(self):
         """Conversational eval without identifier field."""

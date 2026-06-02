@@ -591,6 +591,9 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     metric_collection = _build_metric_collection()
                     conversational_metric_collection = _build_conversational_metric_collection()
                     test_cases, conversational_cases = _convert_test_cases_for_remote(clean_path)
+                    if not test_cases and not conversational_cases:
+                        print(f"Error: No valid test cases found in '{clean_path}' for remote evaluation.", flush=True)
+                        sys.exit(1)
 
                     hyperparameters = {
                         "judge_model": resolved_judge_model,

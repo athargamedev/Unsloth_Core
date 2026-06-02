@@ -17,6 +17,10 @@ import pytest
 import deepeval
 from deepeval import assert_test
 from deepeval.test_case import LLMTestCase
+from deepeval.dataset import EvaluationDataset
+
+
+PULLED_DATASET: EvaluationDataset | None = None
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -84,9 +88,22 @@ def _iter_rows(npc_key: str, technique: str) -> list[dict]:
 def _build_cases() -> list[LLMTestCase]:
     pull_alias = os.getenv("DEEPEVAL_DATASET_PULL_ALIAS", "").strip()
     if pull_alias:
+        api_key = os.getenv("CONFIDENT_API_KEY", "").strip()
+        if not api_key:
+            raise ValueError("CONFIDENT_API_KEY environment variable is not set. Cannot run pull-based evaluation.")
+
+        global PULLED_DATASET
         from deepeval.dataset import EvaluationDataset
         dataset = EvaluationDataset()
-        dataset.pull(alias=pull_alias)
+        try:
+            dataset.pull(alias=pull_alias)
+        except Exception as exc:
+            raise ValueError(f"Failed to pull dataset '{pull_alias}' from Confident AI: {exc}") from exc
+
+        if not dataset.goldens:
+            raise ValueError(f"Pulled dataset '{pull_alias}' is empty or contains no goldens.")
+
+        PULLED_DATASET = dataset
         cases = []
         for idx, golden in enumerate(dataset.goldens):
             metadata = getattr(golden, "additional_metadata", {}) or {}
@@ -186,4 +203,9 @@ TEST_CASES = _build_cases()
 
 @pytest.mark.parametrize("test_case", TEST_CASES, ids=lambda case: case.name)
 def test_generated_dataset_row_quality(test_case: LLMTestCase):
+    if PULLED_DATASET is not None:
+        try:
+            PULLED_DATASET.add_test_case(test_case)
+        except Exception:
+            pass
     assert_test(test_case=test_case, metrics=DATASET_QUALITY_METRICS)

@@ -380,6 +380,10 @@ class ConfidentAPIClient:
                 raw = resp.read()
                 parsed: Any = json.loads(raw)
                 return parsed
+        except TimeoutError as exc:
+            raise RuntimeError(
+                f"Timeout (60s) connecting to Confident AI API at {url}: {exc}"
+            ) from exc
         except urllib.error.HTTPError as exc:
             status = exc.code
             body_text = exc.read().decode("utf-8", errors="replace")
