@@ -24,35 +24,74 @@ from functools import wraps
 from typing import Any, Callable, TypeVar
 
 try:
-    from deepeval.tracing import trace as deepeval_trace, current_trace_context
+    from deepeval.tracing import (
+        current_trace_context,
+        observe as deepeval_observe,
+        trace as deepeval_trace,
+        update_current_span,
+    )
 except ImportError:
-    deepeval_trace = None  # type: ignore
     current_trace_context = None  # type: ignore
+    deepeval_observe = None  # type: ignore
+    deepeval_trace = None  # type: ignore
+    update_current_span = None  # type: ignore
 
 
-@contextmanager
-def trace_type(span_type: str, metrics: list[str] | None = None, name: str | None = None):
-    """Context manager to trace a block of code with a specific DeepEval span type."""
-    if deepeval_trace is None:
-        yield
-        return
+def _normalize_span_type(span_type: str) -> str:
+    """Normalize project names to Confident AI span types."""
+    if span_type == "retrieval":
+        return "retriever"
+    return span_type
 
-    span_name = name or span_type
-    metadata = {
-        "span_type": span_type,
+
+def build_span_metadata(
+    *,
+    span_type: str,
+    span_name: str,
+    metrics: list[str] | None = None,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    metadata: dict[str, Any] = {
+        "span_type": _normalize_span_type(span_type),
         "span_name": span_name,
         "metrics": metrics or [],
         "prompt_version": os.environ.get("DEEPEVAL_PROMPT_VERSION", "unknown"),
     }
+    if extra:
+        metadata.update(extra)
+    return metadata
 
-    with deepeval_trace(name=span_name, metric_collection=span_type, metadata=metadata):
+
+@contextmanager
+def trace_type(span_type: str, metrics: list[str] | None = None, name: str | None = None, **metadata: Any):
+    """Trace a block with the current DeepEval/Confident AI context API."""
+    normalized_type = _normalize_span_type(span_type)
+    span_name = name or normalized_type
+    span_metadata = build_span_metadata(
+        span_type=normalized_type,
+        span_name=span_name,
+        metrics=metrics,
+        extra=metadata,
+    )
+    if deepeval_trace is None:
         yield
+        return
+
+    with deepeval_trace(
+        name=span_name,
+        metadata=span_metadata,
+        metric_collection=normalized_type,
+    ):
+        yield
+
 
 __all__ = [
     "trace_agent_node",
     "trace_tool",
     "trace_retrieval",
     "configure_tracing",
+    "build_span_metadata",
+    "trace_type",
     "AGENT_METRICS",
     "RETRIEVAL_METRICS",
     "LLM_METRICS",
@@ -117,10 +156,21 @@ def trace_agent_node(
         span_name = name or func.__name__
         metric_list = metrics or AGENT_METRICS
 
+        if deepeval_observe is None:
+            return func
+
+        @deepeval_observe(type="agent", name=span_name, metric_collection="agent")
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            with trace_type("agent", metrics=metric_list, name=span_name):
-                return func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            if update_current_span is not None:
+                update_current_span(
+                    output=result,
+                    metadata=build_span_metadata(span_type="agent", span_name=span_name, metrics=metric_list),
+                    name=span_name,
+                    metric_collection="agent",
+                )
+            return result
 
         return wrapper  # type: ignore
 
@@ -151,10 +201,21 @@ def trace_tool(
         tool_name = name or func.__name__
         metric_list = metrics or RETRIEVAL_METRICS
 
+        if deepeval_observe is None:
+            return func
+
+        @deepeval_observe(type="tool", name=tool_name, metric_collection="tool")
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            with trace_type("tool", metrics=metric_list, name=tool_name):
-                return func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            if update_current_span is not None:
+                update_current_span(
+                    output=result,
+                    metadata=build_span_metadata(span_type="tool", span_name=tool_name, metrics=metric_list),
+                    name=tool_name,
+                    metric_collection="tool",
+                )
+            return result
 
         return wrapper  # type: ignore
 
@@ -185,10 +246,23 @@ def trace_retrieval(
         op_name = name or func.__name__
         metric_list = metrics or RETRIEVAL_METRICS
 
+        if deepeval_observe is None:
+            return func
+
+        @deepeval_observe(type="retriever", name=op_name, metric_collection="retriever")
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            with trace_type("retrieval", metrics=metric_list, name=op_name):
-                return func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            retrieval_context = [str(item) for item in result] if isinstance(result, list) else [str(result)]
+            if update_current_span is not None:
+                update_current_span(
+                    output=result,
+                    retrieval_context=retrieval_context,
+                    metadata=build_span_metadata(span_type="retriever", span_name=op_name, metrics=metric_list),
+                    name=op_name,
+                    metric_collection="retriever",
+                )
+            return result
 
         return wrapper  # type: ignore
 

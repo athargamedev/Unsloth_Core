@@ -1,3 +1,5 @@
+import pytest
+
 from src.core.tracing.confident_observatory import (
     build_npc_trace_tags,
     build_npc_trace_metadata,
@@ -39,7 +41,7 @@ def test_trace_metadata_includes_classifier_and_dataset_context():
         line_number=3,
         turn_type="conversational",
         classifier_hints={
-            "classifier_expected_failure_mode": "Memory Retention Risk",
+            "classifier_expected_failure_mode": "Constraint Violation",
             "classifier_repair_priority": "P1 Training Harmful",
         },
         model="llama-3.2-3b",
@@ -47,8 +49,57 @@ def test_trace_metadata_includes_classifier_and_dataset_context():
     )
     assert metadata["npc_key"] == "chef_assistant"
     assert metadata["turn_type"] == "conversational"
-    assert metadata["classifier_expected_failure_mode"] == "Memory Retention Risk"
+    assert metadata["classifier_expected_failure_mode"] == "Constraint Violation"
     assert metadata["classifier_repair_priority"] == "P1 Training Harmful"
     assert metadata["source_path"].endswith("conversational_goldens.jsonl")
     assert metadata["model"] == "llama-3.2-3b"
     assert metadata["adapter"] == "chef-lora-f16.gguf"
+
+
+def test_validate_classifier_hints_valid():
+    hints = {
+        "classifier_expected_failure_mode": "Role Drift",
+        "classifier_strength_hint": "Concrete Teaching",
+        "classifier_repair_priority": "P0 Safety/Factual Risk",
+        "classifier_conversation_outcome": "Resolved Helpful",
+        "classifier_conversation_weakness": "Lost Context",
+        "non_classifier_key": "Any Value"
+    }
+    metadata = build_npc_trace_metadata(
+        npc_key="chef_assistant",
+        technique="ollama",
+        category="dialogue",
+        classifier_hints=hints,
+    )
+    assert metadata["classifier_expected_failure_mode"] == "Role Drift"
+    assert metadata["classifier_strength_hint"] == "Concrete Teaching"
+    assert metadata["classifier_repair_priority"] == "P0 Safety/Factual Risk"
+    assert metadata["classifier_conversation_outcome"] == "Resolved Helpful"
+    assert metadata["classifier_conversation_weakness"] == "Lost Context"
+    assert "non_classifier_key" not in metadata
+
+
+def test_validate_classifier_hints_invalid_key():
+    hints = {
+        "classifier_invalid_key_name": "Any Value"
+    }
+    with pytest.raises(ValueError, match="Unrecognized classifier key"):
+        build_npc_trace_metadata(
+            npc_key="chef_assistant",
+            technique="ollama",
+            category="dialogue",
+            classifier_hints=hints,
+        )
+
+
+def test_validate_classifier_hints_invalid_label():
+    hints = {
+        "classifier_expected_failure_mode": "Invalid Label Value"
+    }
+    with pytest.raises(ValueError, match="Invalid label"):
+        build_npc_trace_metadata(
+            npc_key="chef_assistant",
+            technique="ollama",
+            category="dialogue",
+            classifier_hints=hints,
+        )

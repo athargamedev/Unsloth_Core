@@ -24,6 +24,69 @@ ObservabilityUseCase = Literal[
 ]
 
 
+VALID_CLASSIFIERS: dict[str, set[str]] = {
+    "classifier_expected_failure_mode": {
+        "Vague / Low Specificity",
+        "Role Drift",
+        "Constraint Violation",
+        "Grounding Gap / Possible Hallucination",
+        "Weak User-Question Fit",
+        "Safety Boundary Weakness",
+    },
+    "classifier_strength_hint": {
+        "Concrete Teaching",
+        "Strong Persona Fit",
+        "Good Refusal / Safe Redirect",
+        "Good Runtime Fit",
+        "Good Memory Use",
+        "Needs Review",
+    },
+    "classifier_repair_priority": {
+        "P0 Safety/Factual Risk",
+        "P1 Training Harmful",
+        "P2 Improve Later",
+        "No Repair Needed",
+    },
+    "classifier_conversation_outcome": {
+        "Resolved Helpful",
+        "Unresolved / User Still Confused",
+        "Memory Retained",
+        "Memory Lost",
+        "Escalated Safety Boundary",
+    },
+    "classifier_conversation_weakness": {
+        "Lost Context",
+        "Too Generic",
+        "Too Long / Not Game-Ready",
+        "Unsafe or Unverified Advice",
+        "Role Inconsistent",
+        "Did Not Complete Task",
+    },
+}
+
+
+def validate_classifier_hints(hints: dict[str, Any]) -> None:
+    """Validate classifier hints against official classifier specifications.
+
+    Raises:
+        ValueError: If any key starting with 'classifier_' is unrecognized,
+                    or if its value is not in the allowed labels.
+    """
+    for key, value in hints.items():
+        if key.startswith("classifier_"):
+            if key not in VALID_CLASSIFIERS:
+                raise ValueError(
+                    f"Unrecognized classifier key '{key}'. "
+                    f"Allowed keys are: {sorted(list(VALID_CLASSIFIERS.keys()))}"
+                )
+            allowed_labels = VALID_CLASSIFIERS[key]
+            if value not in allowed_labels:
+                raise ValueError(
+                    f"Invalid label '{value}' for classifier key '{key}'. "
+                    f"Allowed values are: {sorted(list(allowed_labels))}"
+                )
+
+
 def choose_observability_path(use_case: str) -> dict[str, str]:
     """Choose native DeepEval eval upload vs manual Observatory tracing.
 
@@ -97,6 +160,7 @@ def build_npc_trace_metadata(
         "dataset_version": dataset_version,
     }
     if classifier_hints:
+        validate_classifier_hints(classifier_hints)
         metadata.update({k: v for k, v in classifier_hints.items() if k.startswith("classifier_")})
     if extra:
         metadata.update(extra)
