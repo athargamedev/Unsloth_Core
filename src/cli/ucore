@@ -266,6 +266,11 @@ def main():
     de_p.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference")
     de_p.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference")
 
+    cg_p = subparsers.add_parser("confident-goldens", help="Project ChatML rows into Confident AI single/conversational golden files")
+    cg_p.add_argument("dataset", help="Path to train_clean.jsonl or other ChatML JSONL")
+    cg_p.add_argument("--spec", help="NPC spec JSON for reference_doc/context/provenance")
+    cg_p.add_argument("--output-dir", help="Output directory (default: dataset sibling confident/)")
+
     # Train
     train_p = subparsers.add_parser("train", help="Train a model")
     train_p.add_argument("config_or_spec", help="Path to config YAML or subject spec")
@@ -738,6 +743,12 @@ def main():
         if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
         if args.wandb_inference_project: cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
         if args.wandb_inference_entity: cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
+        run_cmd(cmd)
+
+    elif args.command == "confident-goldens":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "confident_goldens.py"), args.dataset]
+        if args.spec: cmd.extend(["--spec", args.spec])
+        if args.output_dir: cmd.extend(["--output-dir", args.output_dir])
         run_cmd(cmd)
 
     elif args.command == "train":

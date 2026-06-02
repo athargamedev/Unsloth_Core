@@ -206,6 +206,39 @@ class TestPushDataset:
         assert body["finalized"] is False
         assert "version" not in body
 
+    def test_sends_conversational_goldens_without_single_turn_goldens(self):
+        """Multi-turn dataset push uses conversationalGoldens, not goldens."""
+        from scripts.ops.confident_api import ConfidentAPIClient
+
+        client = ConfidentAPIClient(api_key="test-key")
+        conversational = [{"scenario": "remember user facts"}]
+        mock = _mock_response({"success": True, "link": "https://app.confident-ai.com/datasets/x"})
+
+        with patch("urllib.request.urlopen", return_value=mock) as mock_urlopen:
+            result = client.push_dataset(
+                "my-conversation-dataset",
+                conversational_goldens=conversational,
+                finalized=False,
+            )
+
+        assert result["success"] is True
+        body = json.loads(mock_urlopen.call_args[0][0].data)
+        assert body["conversationalGoldens"] == conversational
+        assert "goldens" not in body
+        assert body["finalized"] is False
+
+    def test_rejects_mixed_single_and_conversational_goldens(self):
+        """Confident datasets should not mix single-turn and multi-turn payloads."""
+        from scripts.ops.confident_api import ConfidentAPIClient
+
+        client = ConfidentAPIClient(api_key="test-key")
+        with pytest.raises(ValueError, match="exactly one"):
+            client.push_dataset(
+                "mixed",
+                goldens=[{"input": "Q"}],
+                conversational_goldens=[{"scenario": "S"}],
+            )
+
 
 class TestPullDataset:
     """``pull_dataset()`` — GET /v1/datasets/:alias."""

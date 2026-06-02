@@ -64,6 +64,8 @@ def push_goldens_if_confident(
     jsonl_path: str,
     alias: str | None = None,
     version: str | None = None,
+    finalized: bool = True,
+    turn_type: str = "single",
 ) -> bool:
     """Push goldens from a JSONL/JSON file to Confident AI as a named dataset.
 
@@ -77,6 +79,11 @@ def push_goldens_if_confident(
         when omitted.
     version
         Optional semantic version string (e.g. ``"1.0.0"``).
+    finalized
+        Whether pushed goldens should be finalized/eval-ready. Use False for
+        generated candidates queued for Confident review.
+    turn_type
+        ``single`` for Golden payloads or ``conversation`` for ConversationalGolden payloads.
 
     Returns
     -------
@@ -131,7 +138,15 @@ def push_goldens_if_confident(
             f"[confident_push] Pushing {len(goldens)} goldens "
             f"\u2192 alias='{alias}' ..."
         )
-        client.push_dataset(alias, goldens, version=version)
+        if turn_type in {"conversation", "conversational", "multi"}:
+            client.push_dataset(
+                alias,
+                conversational_goldens=goldens,
+                version=version,
+                finalized=finalized,
+            )
+        else:
+            client.push_dataset(alias, goldens, version=version, finalized=finalized)
         print(f"[confident_push] \u2713 Pushed to Confident AI as '{alias}'.")
         return True
     except Exception as exc:
@@ -296,9 +311,13 @@ def get_test_run(test_run_id: str) -> dict:
 
 
 def _build_alias(
-    npc_key: str, technique: str, prefix: str = "npc-goldens"
+    npc_key: str, technique: str, prefix: str = "npc-goldens", turn_type: str | None = None
 ) -> str:
     """Build a standardised Confident AI dataset alias from NPC metadata."""
+    if prefix == "ucore":
+        npc_slug = npc_key.replace("_", "-")
+        suffix = "conversation-v1" if turn_type in {"conversation", "conversational", "multi"} else "single-v1"
+        return f"ucore-{npc_slug}-{technique}-{suffix}"
     return f"{prefix}-{npc_key}-{technique}"
 
 
@@ -327,6 +346,15 @@ def _parse_args() -> argparse.Namespace:
     push_p.add_argument(
         "--version", default=None, help="Optional semantic version string"
     )
+    push_p.add_argument(
+        "--turn-type",
+        choices=["single", "conversation"],
+        default="single",
+        help="Confident payload type: single -> goldens, conversation -> conversationalGoldens",
+    )
+    final_group = push_p.add_mutually_exclusive_group()
+    final_group.add_argument("--finalized", dest="finalized", action="store_true", default=True, help="Mark pushed goldens finalized/eval-ready")
+    final_group.add_argument("--unfinalized", dest="finalized", action="store_false", help="Queue pushed goldens for Confident review")
 
     pull_p = sub.add_parser(
         "pull", help="Pull a dataset from Confident AI"
@@ -361,7 +389,11 @@ def main() -> None:
 
     if args.cmd == "push":
         ok = push_goldens_if_confident(
-            args.jsonl_path, alias=args.alias, version=args.version
+            args.jsonl_path,
+            alias=args.alias,
+            version=args.version,
+            finalized=args.finalized,
+            turn_type=args.turn_type,
         )
         sys.exit(0 if ok else 1)
 

@@ -138,9 +138,10 @@ class ConfidentAPIClient:
     def push_dataset(
         self,
         alias: str,
-        goldens: list[dict[str, Any]],
+        goldens: list[dict[str, Any]] | None = None,
         version: str | None = None,
         finalized: bool = True,
+        conversational_goldens: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Create or update a dataset identified by *alias*.
 
@@ -154,16 +155,29 @@ class ConfidentAPIClient:
             Semantic version string (e.g. ``"1.0.0"``).
         finalized : bool
             Whether the dataset is finalised for use (default ``True``).
+        conversational_goldens : list[dict], optional
+            Conversational golden test cases to store. Provide exactly one of
+            ``goldens`` or ``conversational_goldens``; Confident datasets should
+            not mix single-turn and multi-turn payloads.
 
         Returns
         -------
         dict
             The API response (typically ``{"success": bool, ...}``).
         """
-        body: dict[str, Any] = {
-            "finalized": finalized,
-            "goldens": goldens,
-        }
+        has_goldens = goldens is not None
+        has_conversational = conversational_goldens is not None
+        if has_goldens == has_conversational:
+            raise ValueError(
+                "Provide exactly one of `goldens` or `conversational_goldens` "
+                "when pushing a Confident dataset."
+            )
+
+        body: dict[str, Any] = {"finalized": finalized}
+        if has_conversational:
+            body["conversationalGoldens"] = conversational_goldens or []
+        else:
+            body["goldens"] = goldens or []
         if version is not None:
             body["version"] = version
         return self._request("POST", f"/datasets/{alias}", body)
