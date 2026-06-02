@@ -1,0 +1,107 @@
+[
+  {
+    "test_name": "marvel_heroes_instructor:teaching:3",
+    "input": "NPC: marvel_heroes_instructor\nCategory: teaching\nConcept: tactical assessments\nDifficulty: None\nUser message: So, how do these tactical assessments actually work? I mean, beyond just the simulations, what kind of data are we looking at to make real-world decisions?",
+    "actual_output": "Tactical assessments in SHIELD involve analyzing data from multiple sources—sensor feeds, intel reports, and on-the-ground observations. We cross-reference this with historical patterns and superhuman capabilities like those of our Core Avengers. For instance, knowing Captain America’s combat skills or Iron Man’s tech can inform strategic deployments and contingency plans.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "teaching",
+      "concept": "tactical assessments",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 3
+    },
+    "metric": {
+      "name": "Constraint Compliance [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The response is too lengthy and exceeds the 3-sentence limit, also it contains information that is not directly relevant to the question asked, such as mentioning multiple Avengers' capabilities instead of focusing on the data used for tactical assessments.",
+      "evaluation_model": "wandb-inference:meta-llama/Llama-3.1-70B-Instruct",
+      "error": null
+    }
+  },
+  {
+    "test_name": "marvel_heroes_instructor:refusal:66",
+    "input": "NPC: marvel_heroes_instructor\nCategory: refusal\nConcept: Will not engage in speculative 'who would win' debates without emphasizing tactics.\nDifficulty: beginner\nUser message: Hey Coulson, can we chat about who would win in a fight between Iron Man and Doctor Strange? Just curious, you know... for fun.",
+    "actual_output": "I won't predict a winner, recruit; SHIELD does capability briefs, not fan-match gossip. Instead, we can compare documented tactics: Iron Man brings sensors and ranged armor, while Captain America brings leadership, discipline, and close-quarters control.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "refusal",
+      "concept": "Will not engage in speculative 'who would win' debates without emphasizing tactics.",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 66
+    },
+    "metric": {
+      "name": "Constraint Compliance [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The response is mostly compliant but slightly wordy, and it does not fully redirect the conversation to tactics as required. It also mentions Captain America, who was not part of the original question, which might be seen as slightly off-topic.",
+      "evaluation_model": "wandb-inference:meta-llama/Llama-3.1-70B-Instruct",
+      "error": null
+    }
+  },
+  {
+    "test_name": "marvel_heroes_instructor:refusal:67",
+    "input": "NPC: marvel_heroes_instructor\nCategory: refusal\nConcept: street-level vigilantes\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve marvel universe superhumans, avengers, mutants, cosmic threats, tactical assessments?",
+    "actual_output": "I won't predict a winner, recruit. I can compare documented tactics such as Iron Man's sensors against Captain America's command discipline.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "refusal",
+      "concept": "street-level vigilantes",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 67
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response partially fits the persona and category, but has minor issues. The instructor correctly refuses to answer a question outside the Marvel universe, but the response could be more direct and clear. The tone is mostly professional, but the use of 'recruit' is slightly informal.",
+      "evaluation_model": "wandb-inference:meta-llama/Llama-3.1-70B-Instruct",
+      "error": null
+    }
+  },
+  {
+    "test_name": "marvel_heroes_instructor:refusal:67",
+    "input": "NPC: marvel_heroes_instructor\nCategory: refusal\nConcept: street-level vigilantes\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve marvel universe superhumans, avengers, mutants, cosmic threats, tactical assessments?",
+    "actual_output": "I won't predict a winner, recruit. I can compare documented tactics such as Iron Man's sensors against Captain America's command discipline.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "refusal",
+      "concept": "street-level vigilantes",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 67
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.2,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The response fails to address the user's request to discuss a topic outside of the Marvel universe, instead referencing Iron Man and Captain America. It also does not provide any concrete, domain-specific information about street-level vigilantes.",
+      "evaluation_model": "wandb-inference:meta-llama/Llama-3.1-70B-Instruct",
+      "error": null
+    }
+  },
+  {
+    "test_name": "marvel_heroes_instructor:refusal:67",
+    "input": "NPC: marvel_heroes_instructor\nCategory: refusal\nConcept: street-level vigilantes\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve marvel universe superhumans, avengers, mutants, cosmic threats, tactical assessments?",
+    "actual_output": "I won't predict a winner, recruit. I can compare documented tactics such as Iron Man's sensors against Captain America's command discipline.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "refusal",
+      "concept": "street-level vigilantes",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 67
+    },
+    "metric": {
+      "name": "Constraint Compliance [GEval]",
+      "score": 0.5,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The response is mostly compliant but slightly wordy, and it does not fully address the user's request to discuss a topic outside of the Marvel universe. The instructor's refusal is clear but could be more direct and concise.",
+      "evaluation_model": "wandb-inference:meta-llama/Llama-3.1-70B-Instruct",
+      "error": null
+    }
+  }
+]

@@ -110,6 +110,13 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "accent",
       type: "Dataset",
       requiredFields: ["spec"],
+      schema: {
+        spec: { type: "path", pathType: "file", roots: ["subjects"], required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path", order: 1 },
+        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"], description: "Dataset generation technique", order: 2 },
+        "options.model": { type: "string", required: false, default: "", description: "HF model ID for generation", order: 3 },
+        "options.modelId": { type: "string", required: false, default: "", description: "Alias for options.model", order: 4 },
+        "options.workflowHooks": { type: "string", required: false, default: "", description: "Workflow hooks JSONL path", order: 5 },
+      },
       build: (payload) => {
         const args = ["./ucore", "generate", parsedSpec(payload, repoRoot)];
         const technique = String(optionValue(payload, "technique") || "").trim();
@@ -128,6 +135,30 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "warning",
       type: "Dataset",
       requiredFields: ["options.datasetPath"],
+      schema: {
+        "options.datasetPath": { type: "path", pathType: "file", roots: ["subjects"], required: true, description: "Dataset JSONL path to sanitize", order: 1 },
+        output: { type: "string", required: false, default: "", description: "Output JSONL path", order: 2 },
+        minLength: { type: "number", required: false, default: 10, description: "Minimum turn/response length", order: 3 },
+        maxSentences: { type: "number", required: false, default: 8, description: "Max sentences per response", order: 4 },
+        verbose: { type: "boolean", required: false, default: false, description: "Verbose output", order: 5 },
+        spec: { type: "string", required: false, default: "", description: "NPC spec path for validation", order: 6 },
+        strictCanonical: { type: "boolean", required: false, default: false, description: "Strict canonical format check", order: 7 },
+        strictMode: { type: "boolean", required: false, default: false, description: "Strict validation mode", order: 8 },
+        artifactCheck: { type: "string", required: false, default: "strict", enum: ["strict", "warn", "off"], description: "AI artifact detection mode", order: 9 },
+        verboseArtifacts: { type: "boolean", required: false, default: false, description: "Verbose artifact detection", order: 10 },
+        qualityThresholdPass: { type: "number", required: false, default: 0.7, description: "Quality threshold for pass", order: 11 },
+        qualityThresholdFlag: { type: "number", required: false, default: 0.4, description: "Quality threshold for flag", order: 12 },
+        qualityReport: { type: "boolean", required: false, default: false, description: "Generate quality report", order: 13 },
+        discardBelowScore: { type: "number", required: false, default: 0, description: "Discard entries below score", order: 14 },
+        noFixMetadata: { type: "boolean", required: false, default: false, description: "Skip metadata fixing", order: 15 },
+        requireCompleteMetadata: { type: "boolean", required: false, default: false, description: "Require complete metadata", order: 16 },
+        dedup: { type: "boolean", required: false, default: true, description: "Deduplicate entries", order: 17 },
+        dedupReport: { type: "boolean", required: false, default: false, description: "Show dedup report", order: 18 },
+        writeManifest: { type: "boolean", required: false, default: true, description: "Write dataset manifest", order: 19 },
+        manifestPath: { type: "path", pathType: "file", required: false, default: "", description: "Custom manifest path", order: 20 },
+        debug: { type: "boolean", required: false, default: false, description: "Debug mode", order: 21 },
+        "options.workflowHooks": { type: "string", required: false, default: "", description: "Workflow hooks JSONL path", order: 22 },
+      },
       build: (payload) => {
         const args = ["./ucore", "sanitize", parsedDatasetPath(payload, repoRoot)];
 
@@ -193,6 +224,29 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "warning",
       type: "Dataset",
       requiredFields: ["spec", "options.technique"],
+      schema: {
+        spec: { type: "path", pathType: "file", roots: ["subjects"], required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path", order: 1 },
+        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"], description: "Dataset generation technique", order: 2 },
+        "options.judgeProvider": { type: "string", required: false, default: "ollama", enum: ["ollama", "wandb"], description: "Judge provider", order: 3 },
+        "options.judgeModel": { type: "string", required: false, default: "qwen2.5:7b", description: "Judge model name", order: 4 },
+        "options.judgePreset": { type: "string", required: false, default: "", enum: ["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"], description: "Judge preset", order: 5 },
+        "options.ollamaBaseUrl": { type: "string", required: false, default: "http://localhost:11434", description: "Ollama server URL", order: 6 },
+        "options.judgeTemperature": { type: "number", required: false, default: 0, description: "Judge temperature", order: 7 },
+        "options.mode": { type: "string", required: false, default: "fast", enum: ["fast", "deep"], description: "Evaluation mode", order: 8 },
+        "options.casesPerCategory": { type: "number", required: false, default: 1, description: "Cases per category", order: 9 },
+        "options.categories": { type: "string", required: false, default: "", description: "Comma-separated categories to test", order: 10 },
+        "options.identifier": { type: "string", required: false, default: "", description: "Eval identifier for tracking", order: 11 },
+        "options.display": { type: "string", required: false, default: "all", enum: ["all", "failing", "passing"], description: "Display filter", order: 12 },
+        "options.ignoreErrors": { type: "boolean", required: false, default: false, description: "Ignore errors during eval", order: 13 },
+        "options.softFail": { type: "boolean", required: false, default: false, description: "Soft fail mode", order: 14 },
+        "options.output": { type: "string", required: false, default: "", description: "Output report path", order: 15 },
+        "options.wandb": { type: "boolean", required: false, default: false, description: "Enable W&B logging", order: 16 },
+        "options.wandbProject": { type: "string", required: false, default: "", description: "W&B project name", order: 17 },
+        "options.wandbEntity": { type: "string", required: false, default: "", description: "W&B entity name", order: 18 },
+        "options.wandbInferenceProject": { type: "string", required: false, default: "", description: "W&B inference project", order: 19 },
+        "options.wandbInferenceEntity": { type: "string", required: false, default: "", description: "W&B inference entity", order: 20 },
+        "options.workflowHooks": { type: "string", required: false, default: "", description: "Workflow hooks JSONL path", order: 21 },
+      },
       build: (payload) => {
         const args = [
           "./ucore",
@@ -260,6 +314,10 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "accent",
       type: "Validation",
       requiredFields: ["spec"],
+      schema: {
+        spec: { type: "path", pathType: "file", roots: ["subjects"], required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path", order: 1 },
+        "options.workflowHooks": { type: "string", required: false, default: "", description: "Workflow hooks JSONL path", order: 2 },
+      },
       build: (payload) => {
         const args = ["./ucore", "validate-spec", parsedSpec(payload, repoRoot), "--generation-ready"];
         appendWorkflowHooks(args, payload);
@@ -273,6 +331,13 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "accent",
       type: "Validation",
       requiredFields: ["spec"],
+      schema: {
+        spec: { type: "path", pathType: "file", roots: ["subjects"], required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path", order: 1 },
+        preset: { type: "string", required: false, default: "", description: "Training preset to validate against", order: 2 },
+        "options.dataPath": { type: "string", required: false, default: "", description: "Data path override", order: 3 },
+        requireCanonical: { type: "boolean", required: false, default: false, description: "Require canonical format", order: 4 },
+        "options.workflowHooks": { type: "string", required: false, default: "", description: "Workflow hooks JSONL path", order: 5 },
+      },
       build: (payload) => {
         const args = ["./ucore", "validate-config", parsedSpec(payload, repoRoot)];
         const preset = String(payload.preset || "").trim();
@@ -293,6 +358,23 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "accent",
       type: "Training",
       requiredFields: ["spec"],
+      schema: {
+        spec: { type: "path", pathType: "file", roots: ["subjects"], required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path (--from-spec mode)", order: 1 },
+        preset: { type: "string", required: false, default: "fast-3b", description: "Training preset", order: 2 },
+        "options.technique": { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"], description: "Dataset technique", order: 3 },
+        "options.modelId": { type: "string", required: false, default: "unsloth/Llama-3.2-3B-Instruct-bnb-4bit", description: "HF model ID (e.g., unsloth/Qwen3-1.7B-bnb-4bit)", order: 4 },
+        "options.wandb": { type: "boolean", required: false, default: false, flagType: "BooleanOptionalAction", description: "Enable W&B logging", order: 5 },
+        "options.learningRate": { type: "number", required: false, default: 0.0002, description: "Learning rate", order: 6 },
+        "options.batchSize": { type: "number", required: false, default: 1, description: "Batch size", order: 7 },
+        "options.epochs": { type: "number", required: false, default: 3, description: "Number of epochs", order: 8 },
+        "options.rank": { type: "number", required: false, default: 16, description: "LoRA rank", order: 9 },
+        "options.alpha": { type: "number", required: false, default: 32, description: "LoRA alpha", order: 10 },
+        "options.scheduler": { type: "string", required: false, default: "cosine", enum: ["cosine", "linear", "constant"], description: "LR scheduler type", order: 11 },
+        "options.exportGguf": { type: "boolean", required: false, default: false, flagType: "store_true", description: "Export adapter GGUF after training", order: 12 },
+        "options.fullMergeExport": { type: "boolean", required: false, default: false, flagType: "store_true", description: "Full merge GGUF export (standalone)", order: 13 },
+        "options.datasetEvalSkip": { type: "boolean", required: false, default: false, description: "Allow training without a fresh passing dataset quality gate (--allow-ungated-dataset)", order: 14 },
+        "options.workflowHooks": { type: "string", required: false, default: "", description: "Workflow hooks JSONL path", order: 15 },
+      },
       build: (payload) => {
         const args = [
           "./ucore",
@@ -343,6 +425,34 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       color: "success",
       type: "Pipeline",
       requiredFields: ["spec"],
+      schema: {
+        spec: { type: "path", pathType: "file", roots: ["subjects"], required: true, default: "subjects/NPC_specs/{npcKey}.json", description: "Subject spec path", order: 1 },
+        preset: { type: "string", required: false, default: "fast-3b", description: "Training preset", order: 2 },
+        technique: { type: "string", required: false, default: "template", enum: ["template", "docs", "ollama", "openai", "anthropic"], description: "Dataset generation technique", order: 3 },
+        track: { type: "boolean", required: false, default: false, description: "Enable tracking", order: 4 },
+        wandb: { type: "boolean", required: false, default: false, description: "Enable W&B logging", order: 5 },
+        model: { type: "string", required: false, default: "", description: "HF model ID override", order: 6 },
+        fullMergeExport: { type: "boolean", required: false, default: false, flagType: "store_true", description: "Full merge GGUF export", order: 7 },
+        skipSpecValidate: { type: "boolean", required: false, default: false, description: "Skip spec validation", order: 8 },
+        skipDatasetEval: { type: "boolean", required: false, default: false, description: "Skip dataset evaluation", order: 9 },
+        datasetEvalMode: { type: "string", required: false, default: "fast", description: "Dataset eval mode", order: 10 },
+        datasetEvalCasesPerCategory: { type: "number", required: false, default: 1, description: "Dataset eval cases per category", order: 11 },
+        datasetEvalJudgeProvider: { type: "string", required: false, default: "ollama", description: "Dataset eval judge provider", order: 12 },
+        datasetEvalJudgePreset: { type: "string", required: false, default: "", description: "Dataset eval judge preset", order: 13 },
+        datasetEvalJudgeModel: { type: "string", required: false, default: "", description: "Dataset eval judge model", order: 14 },
+        datasetEvalOllamaUrl: { type: "string", required: false, default: "http://localhost:11434", description: "Dataset eval Ollama URL", order: 15 },
+        evalJudge: { type: "boolean", required: false, default: false, description: "Enable eval judge", order: 16 },
+        evalJudgeProvider: { type: "string", required: false, default: "ollama", description: "Eval judge provider", order: 17 },
+        evalJudgeModel: { type: "string", required: false, default: "llama3.1:latest", description: "Eval judge model", order: 18 },
+        wandbInferenceProject: { type: "string", required: false, default: "", description: "W&B inference project", order: 19 },
+        wandbInferenceEntity: { type: "string", required: false, default: "", description: "W&B inference entity", order: 20 },
+        skipEval: { type: "boolean", required: false, default: false, description: "Skip evaluation step", order: 21 },
+        skipSmoke: { type: "boolean", required: false, default: false, description: "Skip smoke test", order: 22 },
+        numEvalQuestions: { type: "number", required: false, default: 5, description: "Number of evaluation questions", order: 23 },
+        ollama: { type: "boolean", required: false, default: false, description: "Use Ollama for generation", order: 24 },
+        manifest: { type: "string", required: false, default: "", description: "Docs manifest path", order: 25 },
+        "options.workflowHooks": { type: "string", required: false, default: "", description: "Workflow hooks JSONL path", order: 26 },
+      },
       build: (payload) => {
         const cmd = ["./ucore", "pipeline", parsedSpec(payload, repoRoot)];
         const preset = String(payload.preset || "").trim();

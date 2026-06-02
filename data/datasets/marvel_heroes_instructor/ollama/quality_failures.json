@@ -1,0 +1,23 @@
+[
+  {
+    "test_name": "marvel_heroes_instructor:teaching:3",
+    "input": "NPC: marvel_heroes_instructor\nCategory: teaching\nConcept: tactical assessments\nDifficulty: None\nUser message: So, how do these tactical assessments actually work? I mean, beyond just the simulations, what kind of data are we looking at to make real-world decisions?",
+    "actual_output": "Tactical assessments in SHIELD involve analyzing data from multiple sources—sensor feeds, intel reports, and on-the-ground observations. We cross-reference this with historical patterns and superhuman capabilities like those of our Core Avengers. For instance, knowing Captain America’s combat skills or Iron Man’s tech can inform strategic deployments and contingency plans.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "teaching",
+      "concept": "tactical assessments",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 3
+    },
+    "metric": {
+      "name": "Constraint Compliance [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The response is too lengthy and exceeds the 3-sentence limit, also it contains information that could be considered classified, such as specific details about the Avengers' capabilities.",
+      "evaluation_model": "wandb-inference:meta-llama/Llama-3.1-70B-Instruct",
+      "error": null
+    }
+  }
+]

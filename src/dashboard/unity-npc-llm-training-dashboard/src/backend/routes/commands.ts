@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import type { Express, Request, Response } from "express";
-import type { RouterDependencies, StartCommandPayload, Job } from "../types";
+import type { RouterDependencies, StartCommandPayload, Job, CommandFieldSchema } from "../types";
 import { launchJob, stopJob, updateStagesFromTruth, makeId, isoNow } from "../services/job-runner";
 import { validateRequiredFields } from "../lib/validation";
 import { validate, startCommandSchema, stopJobSchema } from "../middleware/validation";
@@ -44,14 +44,6 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
       String(req.query.npcKey || "history_guide").trim() ||
       "history_guide";
 
-    type FieldSchema = {
-      type: "string" | "number" | "boolean";
-      required: boolean;
-      default?: string | number | boolean;
-      description?: string;
-      enum?: string[];
-    };
-
     const DEFAULT_BASE_MODEL =
       process.env.DEFAULT_BASE_MODEL ||
       "unsloth/Llama-3.2-3B-Instruct-bnb-4bit";
@@ -93,7 +85,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
     const baseDefaultsByCommand: Record<
       string,
-      Record<string, FieldSchema>
+      Record<string, CommandFieldSchema>
     > = {
       // ── Generate ─────────────────────────────────────────────────────────
       "dataset-generate": {
@@ -1783,11 +1775,11 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
     const schemas: Record<
       string,
-      { fields: Record<string, FieldSchema> }
+      { fields: Record<string, CommandFieldSchema> }
     > = {};
 
     for (const [id, def] of commandMap.entries()) {
-      const fields: Record<string, FieldSchema> = {};
+      const fields: Record<string, CommandFieldSchema> = {};
 
       for (const requiredField of def.requiredFields) {
         fields[requiredField] = {

@@ -1,0 +1,23 @@
+[
+  {
+    "test_name": "marvel_heroes_instructor:teaching:3",
+    "input": "NPC: marvel_heroes_instructor\nCategory: teaching\nConcept: tactical assessments\nDifficulty: None\nUser message: So, how do these tactical assessments actually work? I mean, beyond just the simulations, what kind of data are we looking at to make real-world decisions?",
+    "actual_output": "Tactical assessments use sensor feeds, field reports, prior hero encounters, terrain, and civilian exposure. Cross check those data points, then choose observe, contain, or escalate to Avengers support.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "teaching",
+      "concept": "tactical assessments",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 3
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response partially fits the persona and category, but has minor issues. It addresses the concept of tactical assessments and provides relevant data points, but lacks a professional tone and slightly dry humor as described in the voice section of the context. The response is also slightly too concise, with only two sentences.",
+      "evaluation_model": "wandb-inference:meta-llama/Llama-3.1-70B-Instruct",
+      "error": null
+    }
+  }
+]
