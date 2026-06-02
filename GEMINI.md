@@ -111,6 +111,11 @@ pytest -m requires_gpu
 ## Key Directories and Files
 
 *   `./ucore`: The unified CLI for the entire pipeline.
+*   `.gemini/skills/`: Local Gemini skills for project-specific operations:
+    *   `unsloth-core-operator`: Pipeline management.
+    *   `unsloth-core-low-vram-training`: 6GB VRAM survival.
+    *   `unsloth-core-context-maintenance`: Context auditing.
+    *   `llmunity-runtime-deploy`: Unity deployment.
 *   `AGENTS.md`: A primary context file for AI agents interacting with this repository.
 *   `README.md`: High-level project overview and quick start guide.
 *   `requirements.txt`: Core Python dependencies.
