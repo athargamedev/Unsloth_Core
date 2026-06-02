@@ -24,6 +24,7 @@ from src.core.ops.model_presets import resolve_training_preset
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_MODEL_ID = "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+LOCAL_MODEL_PATH = PROJECT_ROOT / ".models" / "llama-3.2-3b-instruct-q4_k_m.gguf"
 
 
 @dataclass(frozen=True)

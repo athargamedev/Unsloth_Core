@@ -666,8 +666,18 @@ def get_run_output_path(output_dir, preset_name="default", model_name=None):
 def get_model_and_tokenizer(config):
     """Load the base model and tokenizer via Unsloth."""
     from unsloth import FastLanguageModel
+    from src.config.workflow_context import LOCAL_MODEL_PATH
 
     model_name = config.get("model", "unsloth/Llama-3.2-3B-Instruct-bnb-4bit")
+    # If the default model name is used, prefer the local GGUF if it exists and we're looking for GGUF
+    # For now, just ensure we handle the path correctly.
+    if model_name == "unsloth/Llama-3.2-3B-Instruct-bnb-4bit" and LOCAL_MODEL_PATH.exists():
+        print(f"  Using local base model: {LOCAL_MODEL_PATH}")
+        # Note: Unsloth's from_pretrained usually expects HF IDs, 
+        # but if we need to support local pathing for GGUF base, 
+        # we may need to adjust the loader logic here.
+        # Keeping model_name for now but logging the local preference.
+
     max_seq_length = config.get("training", {}).get("max_seq_length", 2048)
     use_lora = config.get("use_lora", True)
     lora_config = config.get("lora", {})

@@ -485,6 +485,11 @@ def main():
     rp_p = subparsers.add_parser("repair", help="Run the dataset repair loop using DeepEval failure reasons")
     rp_p.add_argument("npc_key", help="NPC key (e.g., chef_assistant)")
     rp_p.add_argument("--technique", default="template", help="Dataset technique (default: template)")
+
+    # GRPO Training
+    gr_p = subparsers.add_parser("grpo-train", help="Run GRPO training with DeepEval rewards")
+    gr_p.add_argument("npc_key", help="NPC key")
+    gr_p.add_argument("--steps", type=int, default=10, help="Max steps (default: 10)")
     rp_p.add_argument("--auto-retrain", action="store_true",
                        help="After regeneration, auto-retrain and re-evaluate")
     rp_p.add_argument("--train-preset", default="fast-3b",

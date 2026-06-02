@@ -124,17 +124,17 @@ def main():
     training_args = GRPOConfig(
         output_dir="outputs/grpo_deepeval",
         learning_rate=5e-6,
-        per_device_train_batch_size=1, # Small batch for 6GB VRAM
-        gradient_accumulation_steps=4,
-        max_steps=10, # Just a prototype run
+        per_device_train_batch_size=1, 
+        gradient_accumulation_steps=1, 
+        max_steps=10, 
         optim="adamw_8bit",
         logging_steps=1,
         bf16=torch.cuda.is_bf16_supported(),
         fp16=not torch.cuda.is_bf16_supported(),
         # GRPO specific:
-        num_generations=2, # Number of completions to generate per prompt for reward comparison
-        max_prompt_length=256,
-        max_completion_length=256,
+        num_generations=2, # Required min 2
+        max_prompt_length=32, # Even more reduced
+        max_completion_length=32, # Even more reduced
     )
     
     trainer = GRPOTrainer(
@@ -151,7 +151,7 @@ def main():
     print("\nStarting GRPO Training loop (Prototype)...")
     print("The model will generate 2 completions per prompt, score them using DeepEval (Ollama),")
     print("and use the difference to update the LoRA weights.")
-    # trainer.train() # Commented out so it doesn't run and consume VRAM in this mock environment
+    trainer.train()
 
 if __name__ == "__main__":
     main()
