@@ -11,7 +11,7 @@ except ImportError:
     print("deepeval not installed. Please install it.")
     sys.exit(1)
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 async def repair_failures(npc_key: str, technique: str):
     base_dir = PROJECT_ROOT / "data" / "datasets" / npc_key / technique
