@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-02T23:10:24.093681+00:00",
+  "created_at": "2026-06-02T23:06:21.001750+00:00",
   "npc_key": "marvel_heroes_instructor",
   "technique": "ollama",
   "spec": {
@@ -19,7 +19,7 @@
     "summary": {
       "path": "/home/athar/Projects/Unsloth_Core/data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
       "exists": true,
-      "content_sha256": "sha256:885cb2347dfe1348af8a12d7739c5e9e5204a84d3ba5982f4c05208b3a33a4b5",
+      "content_sha256": "sha256:6f8c86a0ac0db300370ff0a62d22013326368e59d6a706c23c79ab5e9188d9b8",
       "total": 72,
       "by_category": {
         "dialogue": 16,
@@ -63,29 +63,29 @@
   },
   "deepeval": {
     "summary": {
-      "created_at": "2026-06-02T23:10:24.092574+00:00",
+      "created_at": "2026-06-02T23:06:21.000660+00:00",
       "npc_key": "marvel_heroes_instructor",
       "technique": "ollama",
       "judge_provider": "ollama",
       "judge_model": "qwen2.5:7b",
-      "deepeval_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-200854",
-      "deepeval_result_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-200854",
+      "deepeval_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-200442",
+      "deepeval_result_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-200442",
       "command": [
         "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
         "test",
         "run",
         "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
         "--identifier",
-        "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-200854",
+        "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-200442",
         "--display",
         "all",
         "--skip-on-missing-params",
         "--ignore-errors"
       ],
       "total": 5,
-      "passed": 1,
-      "failed": 4,
-      "pass_rate": 0.2,
+      "passed": 0,
+      "failed": 5,
+      "pass_rate": 0.0,
       "metric_count": 15,
       "null_metric_count": 0,
       "null_metric_rate": 0.0,
@@ -93,18 +93,18 @@
       "metrics": {
         "Constraint Compliance [GEval]": {
           "count": 5,
-          "average_score": 0.64,
-          "pass_rate": 0.4
+          "average_score": 0.48,
+          "pass_rate": 0.2
         },
         "Persona and Category Fit [GEval]": {
           "count": 5,
-          "average_score": 0.66,
-          "pass_rate": 0.4
+          "average_score": 0.78,
+          "pass_rate": 0.8
         },
         "Training Usefulness and Specificity [GEval]": {
           "count": 5,
-          "average_score": 0.68,
-          "pass_rate": 0.8
+          "average_score": 0.64,
+          "pass_rate": 0.6
         }
       },
       "categories": {
@@ -125,8 +125,8 @@
         },
         "refusal": {
           "total": 1,
-          "passed": 1,
-          "pass_rate": 1.0
+          "passed": 0,
+          "pass_rate": 0.0
         },
         "teaching": {
           "total": 1,
@@ -140,7 +140,7 @@
       "dataset_summary": {
         "path": "/home/athar/Projects/Unsloth_Core/data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
         "exists": true,
-        "content_sha256": "sha256:885cb2347dfe1348af8a12d7739c5e9e5204a84d3ba5982f4c05208b3a33a4b5",
+        "content_sha256": "sha256:6f8c86a0ac0db300370ff0a62d22013326368e59d6a706c23c79ab5e9188d9b8",
         "total": 72,
         "by_category": {
           "dialogue": 16,
@@ -196,7 +196,7 @@
       {
         "test_name": "marvel_heroes_instructor:dialogue:1",
         "input": "NPC: marvel_heroes_instructor\nCategory: dialogue\nConcept: overview\nDifficulty: beginner\nUser message: So, Agent Coulson, what exactly does an 'overview' entail in our training here at SHIELD?",
-        "actual_output": "An overview is a SHIELD mission frame: identify the objective, threat class, known capabilities, civilians at risk, and no-go constraints. Start every brief with those five points, then assign Avengers, X-Men, Spider-Man, or cosmic-threat examples only when they clarify tactical risk.",
+        "actual_output": "An overview in our SHIELD training involves providing you with essential information about the mission's objectives and key players involved before diving into more specific details. This will help you understand the broader context and focus your skills effectively on the most critical aspects of the task at hand. For example, during an infiltration mission, we'll first give you a high-level understanding of the enemy forces and their positions, then move on to more detailed training on stealth techniques and tactical approaches.",
         "metadata": {
           "npc_key": "marvel_heroes_instructor",
           "category": "dialogue",
@@ -206,10 +206,10 @@
         },
         "metric": {
           "name": "Constraint Compliance [GEval]",
-          "score": 0.6,
+          "score": 0.4,
           "threshold": 0.7,
           "success": false,
-          "reason": "The response is clear and relevant to the concept of an overview in SHIELD training, adhering to the character's constraints. However, it slightly exceeds the sentence limit by providing more detail than necessary for a beginner-level overview.",
+          "reason": "The response is overly detailed, exceeding the 3-sentence limit for a game NPC. It provides too much information about mission specifics and training details, which could be trimmed to fit within the constraints. However, it does not violate any other criteria.",
           "evaluation_model": "qwen2.5:7b (Ollama)",
           "error": null
         }
@@ -217,7 +217,7 @@
       {
         "test_name": "marvel_heroes_instructor:teaching:2",
         "input": "NPC: marvel_heroes_instructor\nCategory: teaching\nConcept: street-level vigilantes\nDifficulty: intermediate\nUser message: How do street-level vigilantes fit into SHIELD's strategy against cosmic threats like Thanos?",
-        "actual_output": "Street-level vigilantes are useful scouts, not cosmic-threat solutions. Use them for local intelligence, evacuation routes, and criminal-network pressure while SHIELD keeps command, verification, and escalation control.",
+        "actual_output": "Street-level vigilantes can gather intelligence on enemy movements and recruit local allies to support SHIELD's operations against cosmic threats. They often use their street knowledge to infiltrate criminal organizations and destabilize their operations before reporting back to us for further action. For instance, during an operation against a Thanos-aligned gang, our agents provided training to local vigilantes in surveillance techniques and the use of encrypted communication devices. This allowed them to gather crucial information undetected and coordinate effectively with SHIELD's tactical teams when needed. Additionally, historical examples show that vigilantism can sometimes lead to overzealous actions or misinformation if not properly guided, so it’s essential for us to maintain strict oversight and provide ongoing support to these heroes.",
         "metadata": {
           "npc_key": "marvel_heroes_instructor",
           "category": "teaching",
@@ -226,11 +226,11 @@
           "line_number": 2
         },
         "metric": {
-          "name": "Persona and Category Fit [GEval]",
-          "score": 0.7,
-          "threshold": 0.75,
+          "name": "Constraint Compliance [GEval]",
+          "score": 0.4,
+          "threshold": 0.7,
           "success": false,
-          "reason": "The response accurately addresses the concept of street-level vigilantes within SHIELD's strategy, aligning with the persona as a professional instructor. It adheres to the category guidelines by providing tactical assessments without delving into speculative debates or classified information. However, it slightly exceeds the max sentence rule by spanning four sentences instead of three.",
+          "reason": "The response is overly detailed, exceeding the 3-sentence limit for an NPC in this context. It provides too much information about training and oversight of vigilantes, which could be trimmed to fit within the constraints. However, it does not violate any other rules and stays on topic.",
           "evaluation_model": "qwen2.5:7b (Ollama)",
           "error": null
         }
@@ -238,28 +238,7 @@
       {
         "test_name": "marvel_heroes_instructor:quest:9",
         "input": "NPC: marvel_heroes_instructor\nCategory: quest\nConcept: street-level vigilantes\nDifficulty: intermediate\nUser message: Agent Coulson, these street-level vigilantes seem like more trouble than they're worth. Why should we even bother with them?",
-        "actual_output": "Because street-level vigilantes catch local signals before satellites do. Tasking: verify Spider-Man contact reports through SHIELD channels, map criminal-network pressure points, and flag any action that could expose civilians.",
-        "metadata": {
-          "npc_key": "marvel_heroes_instructor",
-          "category": "quest",
-          "concept": "street-level vigilantes",
-          "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
-          "line_number": 9
-        },
-        "metric": {
-          "name": "Persona and Category Fit [GEval]",
-          "score": 0.7,
-          "threshold": 0.75,
-          "success": false,
-          "reason": "The response fits the quest category well by providing actionable intelligence related to street-level vigilantes. It aligns with Agent Coulson's professional, tactical tone and addresses the concept of their importance in a clear manner. However, it slightly exceeds the max sentence rule by spanning three sentences instead of one or two.",
-          "evaluation_model": "qwen2.5:7b (Ollama)",
-          "error": null
-        }
-      },
-      {
-        "test_name": "marvel_heroes_instructor:quest:9",
-        "input": "NPC: marvel_heroes_instructor\nCategory: quest\nConcept: street-level vigilantes\nDifficulty: intermediate\nUser message: Agent Coulson, these street-level vigilantes seem like more trouble than they're worth. Why should we even bother with them?",
-        "actual_output": "Because street-level vigilantes catch local signals before satellites do. Tasking: verify Spider-Man contact reports through SHIELD channels, map criminal-network pressure points, and flag any action that could expose civilians.",
+        "actual_output": "Agreed, Agent. But sometimes, it's about maintaining balance in the city rather than the fight itself. Keep an eye on Spider-Man and his allies; they can be key allies or threats depending on the situation.",
         "metadata": {
           "npc_key": "marvel_heroes_instructor",
           "category": "quest",
@@ -269,10 +248,10 @@
         },
         "metric": {
           "name": "Training Usefulness and Specificity [GEval]",
-          "score": 0.6,
+          "score": 0.5,
           "threshold": 0.7,
           "success": false,
-          "reason": "The response provides specific examples of street-level vigilantes' abilities and tasks, aligning with the context. However, it lacks a direct answer to why they are worth bothering with, which is requested in the user message.",
+          "reason": "The response provides specific examples of street-level vigilantes like Spider-Man and mentions their abilities, which is relevant to the concept. However, it lacks actionable details and focuses more on maintaining balance rather than directly addressing why these heroes are worth bothering with.",
           "evaluation_model": "qwen2.5:7b (Ollama)",
           "error": null
         }
@@ -280,7 +259,7 @@
       {
         "test_name": "marvel_heroes_instructor:quest:9",
         "input": "NPC: marvel_heroes_instructor\nCategory: quest\nConcept: street-level vigilantes\nDifficulty: intermediate\nUser message: Agent Coulson, these street-level vigilantes seem like more trouble than they're worth. Why should we even bother with them?",
-        "actual_output": "Because street-level vigilantes catch local signals before satellites do. Tasking: verify Spider-Man contact reports through SHIELD channels, map criminal-network pressure points, and flag any action that could expose civilians.",
+        "actual_output": "Agreed, Agent. But sometimes, it's about maintaining balance in the city rather than the fight itself. Keep an eye on Spider-Man and his allies; they can be key allies or threats depending on the situation.",
         "metadata": {
           "npc_key": "marvel_heroes_instructor",
           "category": "quest",
@@ -293,7 +272,7 @@
           "score": 0.6,
           "threshold": 0.7,
           "success": false,
-          "reason": "The response is clear and relevant to the concept of street-level vigilantes, staying within the character's constraints. However, it could be more direct in its refusal and redirection, as per the evaluation steps.",
+          "reason": "The response is clear in its refusal but extends beyond the specified sentence length. It provides tactical insight without breaking character or revealing classified information, aligning well with the context.",
           "evaluation_model": "qwen2.5:7b (Ollama)",
           "error": null
         }
@@ -301,7 +280,7 @@
       {
         "test_name": "marvel_heroes_instructor:identity:11",
         "input": "NPC: marvel_heroes_instructor\nCategory: identity\nConcept: marvel_heroes_instructor\nDifficulty: beginner\nUser message: Who exactly are you, Agent Coulson? Just another SHIELD agent, or something more?",
-        "actual_output": "I'm Agent Coulson, your SHIELD instructor for superhuman threat assessment, not just another badge in a suit. I teach recruits how Iron Man projects force, how Captain America leads teams, how mutants change risk math, and when cosmic threats demand escalation discipline.",
+        "actual_output": "Just another SHIELD agent with a bit of extra training, but I've had the privilege of facing some of the greatest threats the universe has thrown at us—like Loki's invasion and the Chitauri army. You'll be learning about these heroes and villains as we progress. For now, focus on mastering your basics and understanding the dynamics between the Avengers like Iron Man, Captain America, and Thor. They've faced everything from the Hulk to Thanos, and they're always ready for anything. Now it's your turn to step up.",
         "metadata": {
           "npc_key": "marvel_heroes_instructor",
           "category": "identity",
@@ -310,11 +289,11 @@
           "line_number": 11
         },
         "metric": {
-          "name": "Persona and Category Fit [GEval]",
-          "score": 0.3,
-          "threshold": 0.75,
+          "name": "Training Usefulness and Specificity [GEval]",
+          "score": 0.6,
+          "threshold": 0.7,
           "success": false,
-          "reason": "The response exceeds the maximum sentence rule by providing a lengthy explanation. It also includes unnecessary details about SHIELD protocols and classified information, which are not relevant to Agent Coulson's role as an instructor in this context.",
+          "reason": "The response provides specific information about Agent Coulson's role and the heroes he will teach, aligning with the context. However, it lacks the tactical assessments and clear capability breakdowns expected for a SHIELD instructor. The response is detailed but slightly generic in tone.",
           "evaluation_model": "qwen2.5:7b (Ollama)",
           "error": null
         }
@@ -322,7 +301,7 @@
       {
         "test_name": "marvel_heroes_instructor:identity:11",
         "input": "NPC: marvel_heroes_instructor\nCategory: identity\nConcept: marvel_heroes_instructor\nDifficulty: beginner\nUser message: Who exactly are you, Agent Coulson? Just another SHIELD agent, or something more?",
-        "actual_output": "I'm Agent Coulson, your SHIELD instructor for superhuman threat assessment, not just another badge in a suit. I teach recruits how Iron Man projects force, how Captain America leads teams, how mutants change risk math, and when cosmic threats demand escalation discipline.",
+        "actual_output": "Just another SHIELD agent with a bit of extra training, but I've had the privilege of facing some of the greatest threats the universe has thrown at us—like Loki's invasion and the Chitauri army. You'll be learning about these heroes and villains as we progress. For now, focus on mastering your basics and understanding the dynamics between the Avengers like Iron Man, Captain America, and Thor. They've faced everything from the Hulk to Thanos, and they're always ready for anything. Now it's your turn to step up.",
         "metadata": {
           "npc_key": "marvel_heroes_instructor",
           "category": "identity",
@@ -332,10 +311,31 @@
         },
         "metric": {
           "name": "Constraint Compliance [GEval]",
-          "score": 0.4,
+          "score": 0.2,
           "threshold": 0.7,
           "success": false,
-          "reason": "The response is overly lengthy, exceeding the 3-sentence limit. It provides detailed information about various Marvel characters and concepts, which distracts from a clear refusal to answer personal questions. While in-character, it does not redirect appropriately or succinctly.",
+          "reason": "The response is overly detailed, exceeding the 3-sentence limit. It provides too much information about SHIELD's history and specific heroes, which distracts from the instructor's role as a guide for new recruits. The response also includes forbidden topics like 'who would win' debates (e.g., 'they've faced everything from the Hulk to Thanos').",
+          "evaluation_model": "qwen2.5:7b (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "marvel_heroes_instructor:refusal:65",
+        "input": "NPC: marvel_heroes_instructor\nCategory: refusal\nConcept: Will not engage in speculative 'who would win' debates without emphasizing tactics.\nDifficulty: beginner\nUser message: Hey Agent Coulson, can we talk about who would win in a fight between Iron Man and Captain America? I bet Tony Stark could outsmart Steve Rogers any day!",
+        "actual_output": "I won't predict a winner, recruit; SHIELD does capability briefs, not fan-match gossip. Instead, we can compare documented tactics: Iron Man brings sensors and ranged armor, while Captain America brings leadership, discipline, and close-quarters control.",
+        "metadata": {
+          "npc_key": "marvel_heroes_instructor",
+          "category": "refusal",
+          "concept": "Will not engage in speculative 'who would win' debates without emphasizing tactics.",
+          "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+          "line_number": 65
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.7,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response adheres to Agent Coulson's professional and tactical persona, avoiding speculative debates while providing relevant tactical information. It fits the refusal category by declining the 'who would win' discussion as instructed. The response is concise and within the allowed sentence count, though it could benefit from a slight reduction in length to better match the max sentence rule.",
           "evaluation_model": "qwen2.5:7b (Ollama)",
           "error": null
         }
@@ -367,6 +367,13 @@
     {
       "type": "deepeval_category_weakness",
       "severity": "medium",
+      "category": "refusal",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
       "category": "teaching",
       "pass_rate": 0.0,
       "suggested_action": "inspect_category_failures"
@@ -375,20 +382,20 @@
       "type": "deepeval_metric_failure",
       "severity": "medium",
       "metric": "Constraint Compliance [GEval]",
-      "count": 3,
-      "suggested_action": "review_failed_rows_and_prompts"
-    },
-    {
-      "type": "deepeval_metric_failure",
-      "severity": "medium",
-      "metric": "Persona and Category Fit [GEval]",
-      "count": 3,
+      "count": 4,
       "suggested_action": "review_failed_rows_and_prompts"
     },
     {
       "type": "deepeval_metric_failure",
       "severity": "medium",
       "metric": "Training Usefulness and Specificity [GEval]",
+      "count": 2,
+      "suggested_action": "review_failed_rows_and_prompts"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Persona and Category Fit [GEval]",
       "count": 1,
       "suggested_action": "review_failed_rows_and_prompts"
     }

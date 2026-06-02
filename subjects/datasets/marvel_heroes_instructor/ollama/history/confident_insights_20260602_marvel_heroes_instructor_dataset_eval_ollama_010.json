@@ -1,0 +1,173 @@
+{
+  "artifact_paths": {
+    "quality_failures": "/home/athar/Projects/Unsloth_Core/subjects/datasets/marvel_heroes_instructor/ollama/quality_failures.json",
+    "quality_report": "/home/athar/Projects/Unsloth_Core/subjects/datasets/marvel_heroes_instructor/ollama/quality_report.json",
+    "quality_summary": "/home/athar/Projects/Unsloth_Core/subjects/datasets/marvel_heroes_instructor/ollama/quality_summary.json"
+  },
+  "component_counts": {
+    "spec_contract": 1
+  },
+  "confident_payload": {
+    "hyperparameters": {
+      "local_status": "ok",
+      "npc_key": "marvel_heroes_instructor",
+      "project": "Unsloth_Core",
+      "technique": "ollama"
+    },
+    "identifier": "dataset-quality:marvel_heroes_instructor:ollama:20260602T230139Z",
+    "llmTestCases": [
+      {
+        "actualOutput": "Focus on tactics, not 'who would win.' Our goal here is to prepare for real threats, not hypothetical battles. Let's review your last mission debrief instead.",
+        "context": [],
+        "customColumnKeyValues": {
+          "category": "refusal",
+          "component": "spec_contract",
+          "concept": "Will not engage in speculative 'who would win' debates without emphasizing tactics.",
+          "line_number": 65,
+          "metric": "Persona and Category Fit [GEval]",
+          "npc_key": "marvel_heroes_instructor",
+          "project": "Unsloth_Core",
+          "reason": "The response adheres to Agent Coulson's professional and tactical persona, addressing the concept of avoiding speculative debates by focusing on mission preparation. It stays within the category of refusal while providing a clear and concise message. The response is well-formatted without any markdown or bullet points, though it slightly exceeds the max sentence rule with 3 sentences instead of 2.",
+          "repair_action": "tighten identity/refusal contract templates in spec or generator prompt",
+          "score": 0.7,
+          "technique": "ollama"
+        },
+        "expectedOutput": "",
+        "input": "NPC: marvel_heroes_instructor\nCategory: refusal\nConcept: Will not engage in speculative 'who would win' debates without emphasizing tactics.\nDifficulty: beginner\nUser message: Hey Agent Coulson, can we talk about who would win in a fight between Iron Man and Captain America? I bet Tony Stark could outsmart Steve Rogers any day!",
+        "name": "marvel_heroes_instructor:refusal:65"
+      }
+    ],
+    "metricCollection": {
+      "include": [
+        "Persona and Category Fit",
+        "Training Usefulness and Specificity",
+        "Grounding and Specificity",
+        "Runtime Constraint Fit"
+      ],
+      "name": "unsloth-core-dataset-repair"
+    }
+  },
+  "created_at": "2026-06-02T23:01:39.758811+00:00",
+  "kind": "dataset_quality_insights",
+  "npc_key": "marvel_heroes_instructor",
+  "project": "Unsloth_Core",
+  "recommended_next_actions": [
+    {
+      "action": "tighten identity/refusal contract templates in spec or generator prompt",
+      "component": "spec_contract",
+      "count": 1
+    }
+  ],
+  "status": "ok",
+  "summary": {
+    "cases_per_category": 1,
+    "categories": {
+      "refusal": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "total": 1
+      }
+    },
+    "command": [
+      "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+      "test",
+      "run",
+      "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+      "--identifier",
+      "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-200101",
+      "--display",
+      "all",
+      "--skip-on-missing-params",
+      "--ignore-errors"
+    ],
+    "created_at": "2026-06-02T23:01:39.756888+00:00",
+    "dataset_summary": {
+      "by_category": {
+        "dialogue": 16,
+        "identity": 8,
+        "quest": 8,
+        "refusal": 8,
+        "teaching": 32
+      },
+      "by_concept": {
+        "Will not engage in speculative 'who would win' debates without emphasizing tactics.": 2,
+        "boundary conditions and refusals": 3,
+        "core avengers": 1,
+        "cosmic entities and threats": 7,
+        "cosmic threats": 11,
+        "marvel_heroes_instructor": 8,
+        "mutant abilities": 9,
+        "mutants and x-men": 3,
+        "overview": 2,
+        "shield history": 4,
+        "street-level vigilantes": 16,
+        "tactical assessments": 6
+      },
+      "by_difficulty": {
+        "advanced": 11,
+        "beginner": 30,
+        "intermediate": 22
+      },
+      "by_split": {
+        "train": 72
+      },
+      "content_sha256": "sha256:40576ad0cca6094c36ea531733571d893a86eb01285bcaab50d494c557dfddfb",
+      "exists": true,
+      "path": "/home/athar/Projects/Unsloth_Core/data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "total": 72,
+      "unknown_rows": 0
+    },
+    "dataset_total_rows": 72,
+    "dataset_unknown_rows": 0,
+    "deepeval_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-200101",
+    "deepeval_result_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260602-200101",
+    "distribution_gaps": [],
+    "expected_distribution": {
+      "dialogue": 16,
+      "identity": 8,
+      "quest": 8,
+      "refusal": 8,
+      "teaching": 32
+    },
+    "failed": 1,
+    "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/marvel_heroes_instructor/ollama/quality_failures.json",
+    "judge_model": "qwen2.5:7b",
+    "judge_provider": "ollama",
+    "metric_count": 3,
+    "metrics": {
+      "Constraint Compliance [GEval]": {
+        "average_score": 0.7,
+        "count": 1,
+        "pass_rate": 1.0
+      },
+      "Persona and Category Fit [GEval]": {
+        "average_score": 0.7,
+        "count": 1,
+        "pass_rate": 0.0
+      },
+      "Training Usefulness and Specificity [GEval]": {
+        "average_score": 0.7,
+        "count": 1,
+        "pass_rate": 1.0
+      }
+    },
+    "npc_key": "marvel_heroes_instructor",
+    "null_metric_count": 0,
+    "null_metric_rate": 0.0,
+    "pass_rate": 0.0,
+    "passed": 0,
+    "quality_gate_mode": "fast",
+    "sanitizer": {
+      "discarded_total": 0,
+      "flagged_for_review": 0,
+      "passed_threshold": 0,
+      "quality_scores": {},
+      "total_output": 0
+    },
+    "sanitizer_quality_issues": [],
+    "status": "ok",
+    "technique": "ollama",
+    "total": 1
+  },
+  "technique": "ollama"
+}

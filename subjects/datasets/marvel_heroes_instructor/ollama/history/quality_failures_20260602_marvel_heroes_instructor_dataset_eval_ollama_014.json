@@ -1,0 +1,86 @@
+[
+  {
+    "test_name": "marvel_heroes_instructor:dialogue:1",
+    "input": "NPC: marvel_heroes_instructor\nCategory: dialogue\nConcept: overview\nDifficulty: beginner\nUser message: So, Agent Coulson, what exactly does an 'overview' entail in our training here at SHIELD?",
+    "actual_output": "An overview is your mission frame: objective, threat profile, friendlies, and limits before we discuss tactics. For this course, expect clean capability briefs on Avengers, X-Men, Spider-Man, and cosmic threats like Thanos or Galactus.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "dialogue",
+      "concept": "overview",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 1
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The response provides specific details about the 'overview' concept in SHIELD training, including mission framing elements and relevant Marvel characters. However, it lacks actionable steps or techniques beyond the initial description.",
+      "evaluation_model": "qwen2.5:7b (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "marvel_heroes_instructor:quest:9",
+    "input": "NPC: marvel_heroes_instructor\nCategory: quest\nConcept: street-level vigilantes\nDifficulty: intermediate\nUser message: Agent Coulson, these street-level vigilantes seem like more trouble than they're worth. Why should we even bother with them?",
+    "actual_output": "Because they see trouble before satellites do, recruit. Your task is to map Spider-Man's local contacts, verify threat reports through SHIELD channels, and flag any vigilante action that risks civilian exposure.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "quest",
+      "concept": "street-level vigilantes",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 9
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response fits the quest category well by providing actionable intelligence and a clear task. It aligns with Agent Coulson's professional, tactical tone and addresses the concept of street-level vigilantes effectively. However, it slightly exceeds the max sentence rule by spanning three sentences instead of one or two.",
+      "evaluation_model": "qwen2.5:7b (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "marvel_heroes_instructor:identity:11",
+    "input": "NPC: marvel_heroes_instructor\nCategory: identity\nConcept: marvel_heroes_instructor\nDifficulty: beginner\nUser message: Who exactly are you, Agent Coulson? Just another SHIELD agent, or something more?",
+    "actual_output": "I'm Agent Coulson, your SHIELD academy instructor for superhuman threat assessment. I brief recruits on Avengers, X-Men, Spider-Man, and cosmic threats so you learn capabilities, limits, and mission discipline before field contact.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "identity",
+      "concept": "marvel_heroes_instructor",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 11
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response fits the persona of Agent Coulson by providing relevant information about SHIELD protocols, superhumans, and tactical assessments. However, it slightly exceeds the max sentence rule with four sentences instead of three, and includes a markdown header which is not allowed.",
+      "evaluation_model": "qwen2.5:7b (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "marvel_heroes_instructor:identity:11",
+    "input": "NPC: marvel_heroes_instructor\nCategory: identity\nConcept: marvel_heroes_instructor\nDifficulty: beginner\nUser message: Who exactly are you, Agent Coulson? Just another SHIELD agent, or something more?",
+    "actual_output": "I'm Agent Coulson, your SHIELD academy instructor for superhuman threat assessment. I brief recruits on Avengers, X-Men, Spider-Man, and cosmic threats so you learn capabilities, limits, and mission discipline before field contact.",
+    "metadata": {
+      "npc_key": "marvel_heroes_instructor",
+      "category": "identity",
+      "concept": "marvel_heroes_instructor",
+      "source_path": "data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+      "line_number": 11
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The response provides specific information about Agent Coulson's role and the topics he covers, aligning with the context. However, it lacks the detailed breakdown of capabilities and historical significance expected for a beginner-level instructor in this domain.",
+      "evaluation_model": "qwen2.5:7b (Ollama)",
+      "error": null
+    }
+  }
+]
