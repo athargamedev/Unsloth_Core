@@ -1,29 +1,35 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unsloth-core.local/subjects/schemas/sft_record.schema.json",
+  "$id": "https://unsloth-core.local/data/npcs/schemas/sft_record.schema.json",
   "title": "SFT ChatML JSONL Record",
+  "description": "Canonical supervised fine-tuning row for NPC ChatML datasets. Evaluation reports, Confident AI goldens, W&B runs, and Unity runtime manifests may project these rows into richer artifact-specific schemas.",
   "type": "object",
   "required": ["messages", "metadata"],
   "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Optional row schema version for future migrations."
+    },
     "messages": {
       "type": "array",
-      "minItems": 2,
-      "items": {
-        "type": "object",
-        "required": ["role", "content"],
-        "properties": {
-          "role": { "type": "string", "enum": ["system", "user", "assistant"] },
-          "content": { "type": "string", "minLength": 1 }
-        },
-        "additionalProperties": true
-      },
+      "description": "ChatML messages. Training rows should start with one system prompt, then contain at least one user/assistant exchange.",
+      "minItems": 3,
+      "prefixItems": [
+        { "$ref": "#/$defs/system_message" }
+      ],
+      "items": { "$ref": "#/$defs/message" },
       "allOf": [
-        { "contains": { "type": "object", "properties": { "role": { "const": "user" } }, "required": ["role"] } },
-        { "contains": { "type": "object", "properties": { "role": { "const": "assistant" } }, "required": ["role"] } }
+        {
+          "contains": { "$ref": "#/$defs/user_message" }
+        },
+        {
+          "contains": { "$ref": "#/$defs/assistant_message" }
+        }
       ]
     },
     "metadata": {
       "type": "object",
+      "description": "Dataset row metadata used by sanitize, dataset-eval, Confident AI projection, W&B tracking, training gates, feedback strategy, and Unity runtime export traceability.",
       "required": [
         "npc_key",
         "technique",
@@ -37,22 +43,227 @@
         "safety_tags"
       ],
       "properties": {
-        "npc_key": { "type": "string", "pattern": "^[a-z0-9_]+$" },
-        "technique": { "type": "string", "enum": ["docs", "ollama", "template", "openai", "anthropic"] },
-        "split": { "type": "string", "enum": ["train", "validation", "test"] },
-        "category": { "type": "string", "enum": ["identity", "teaching", "dialogue", "quest", "refusal"] },
-        "concept": { "type": "string", "minLength": 1 },
-        "difficulty": { "type": "string", "enum": ["beginner", "intermediate", "advanced"] },
-        "source": { "type": "string", "minLength": 1 },
-        "content_hash": { "type": "string", "minLength": 16 },
+        "npc_key": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "technique": {
+          "type": "string",
+          "enum": ["docs", "grounded", "ollama", "template", "openai", "anthropic"]
+        },
+        "split": {
+          "type": "string",
+          "enum": ["train", "validation", "test"]
+        },
+        "category": {
+          "type": "string",
+          "enum": ["identity", "teaching", "dialogue", "quest", "refusal"]
+        },
+        "concept": {
+          "type": "string",
+          "minLength": 1
+        },
+        "concept_category": {
+          "type": ["string", "null"]
+        },
+        "difficulty": {
+          "type": ["string", "null"],
+          "enum": ["beginner", "intermediate", "advanced", null]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content_hash": {
+          "type": "string",
+          "pattern": "^(sha256:)?[A-Fa-f0-9]{16,64}$"
+        },
+        "system_prompt_hash": {
+          "$ref": "#/$defs/sha256_or_null"
+        },
+        "reference_doc_hash": {
+          "$ref": "#/$defs/sha256_or_null"
+        },
         "generator_params": {
           "type": "object",
+          "properties": {
+            "seed": { "type": "integer" },
+            "temperature": { "type": "number" },
+            "multi_turn": { "type": "boolean" },
+            "turn_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "model": { "type": "string" },
+            "provider": { "type": "string" },
+            "reference_doc": { "type": "string" },
+            "player_persona": { "type": "string" },
+            "strategy_profile": { "type": "string" },
+            "prompt_version": { "type": "string" }
+          },
           "additionalProperties": true
         },
-        "safety_tags": { "type": "array", "items": { "type": "string" } }
+        "safety_tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "dialogue_type": {
+          "type": "string",
+          "enum": ["clarification", "deep_dive", "application", "misconception"]
+        },
+        "scenario_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "boundary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "turn_type": {
+          "type": "string",
+          "enum": ["single", "conversation", "conversational", "multi"]
+        },
+        "metric_focus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quality_status": {
+          "type": "string",
+          "enum": ["candidate", "approved", "rejected", "needs_review", "repair"]
+        },
+        "classifier_expected_failure_mode": {
+          "type": "string"
+        },
+        "classifier_repair_priority": {
+          "type": "string"
+        },
+        "classifier_strength_hint": {
+          "type": "string"
+        },
+        "classifier_metric_focus": {
+          "type": "string"
+        },
+        "classifier_conversation_weakness_hint": {
+          "type": "string"
+        },
+        "classifier_expected_strength": {
+          "type": "string"
+        },
+        "dataset_alias": {
+          "type": "string"
+        },
+        "dataset_version": {
+          "type": "string"
+        },
+        "generation_run_id": {
+          "type": "string"
+        },
+        "strategy_profile": {
+          "type": "string"
+        },
+        "quality_gate_mode": {
+          "type": "string",
+          "enum": ["fast", "release", "wandb", "confident"]
+        },
+        "judge_provider": {
+          "type": "string"
+        },
+        "judge_model": {
+          "type": "string"
+        },
+        "wandb_run_id": {
+          "type": "string"
+        },
+        "wandb_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "confident_dataset_alias": {
+          "type": "string"
+        },
+        "confident_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "base_model": {
+          "type": "string"
+        },
+        "adapter": {
+          "type": "string"
+        },
+        "lora_weight": {
+          "type": "number"
+        },
+        "candidate_format": {
+          "type": "string",
+          "enum": ["base", "lora", "base+lora", "gguf", "unity"]
+        }
       },
       "additionalProperties": true
     }
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "$defs": {
+    "message": {
+      "type": "object",
+      "required": ["role", "content"],
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["system", "user", "assistant"]
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "system_message": {
+      "allOf": [
+        { "$ref": "#/$defs/message" },
+        {
+          "type": "object",
+          "properties": {
+            "role": { "const": "system" }
+          }
+        }
+      ]
+    },
+    "user_message": {
+      "allOf": [
+        { "$ref": "#/$defs/message" },
+        {
+          "type": "object",
+          "properties": {
+            "role": { "const": "user" }
+          }
+        }
+      ]
+    },
+    "assistant_message": {
+      "allOf": [
+        { "$ref": "#/$defs/message" },
+        {
+          "type": "object",
+          "properties": {
+            "role": { "const": "assistant" }
+          }
+        }
+      ]
+    },
+    "sha256_or_null": {
+      "type": ["string", "null"],
+      "pattern": "^(sha256:)?[A-Fa-f0-9]{64}$"
+    }
+  }
 }

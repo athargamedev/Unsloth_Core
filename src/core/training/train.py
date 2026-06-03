@@ -47,8 +47,9 @@ from src.core.ops.model_presets import resolve_training_preset
 # Each preset overrides the base YAML config for specific model sizes.
 # Effective batch size = batch_size * gradient_accumulation_steps.
 # Target: 16 for stable convergence (per QLoRA paper), adjusted for 6GB VRAM.
-# Presets are loaded from configs/presets/ as override-only YAML files.
-PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"  # TODO: consider centralizing
+# Presets are loaded from etc/presets/ as override-only YAML files.
+PRESETS_DIR = PROJECT_ROOT / "etc" / "presets"
+LEGACY_PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"
 
 _TOKENIZER_PLACEHOLDER_MAP = {
     "<EOS_TOKEN>": "eos_token",
@@ -95,9 +96,22 @@ def deep_merge(base, override):
     return result
 
 
+def resolve_preset_path(preset_name):
+    """Resolve a preset YAML path, preferring the canonical etc/presets directory."""
+    canonical_preset_path = PRESETS_DIR / f"{preset_name}.yaml"
+    if canonical_preset_path.exists():
+        return canonical_preset_path
+
+    legacy_preset_path = LEGACY_PRESETS_DIR / f"{preset_name}.yaml"
+    if legacy_preset_path.exists():
+        return legacy_preset_path
+
+    return canonical_preset_path
+
+
 def load_preset(preset_name):
-    """Load a preset YAML file from configs/presets/."""
-    preset_path = PRESETS_DIR / f"{preset_name}.yaml"
+    """Load a preset YAML file from the canonical presets directory."""
+    preset_path = resolve_preset_path(preset_name)
     if not preset_path.exists():
         print(f"Error: Unknown preset '{preset_name}'")
         available = get_available_presets()
@@ -108,15 +122,18 @@ def load_preset(preset_name):
 
 
 def get_available_presets():
-    """List available presets from the presets directory."""
-    if not PRESETS_DIR.exists():
-        return []
-    return sorted(p.name.replace(".yaml", "") for p in PRESETS_DIR.glob("*.yaml"))
+    """List available presets, preferring canonical paths with legacy compatibility."""
+    preset_names = set()
+    for presets_dir in (LEGACY_PRESETS_DIR, PRESETS_DIR):
+        if not presets_dir.exists():
+            continue
+        preset_names.update(p.stem for p in presets_dir.glob("*.yaml"))
+    return sorted(preset_names)
 
 
 def get_preset_description(preset_name):
     """Get the first comment/description from a preset YAML."""
-    preset_path = PRESETS_DIR / f"{preset_name}.yaml"
+    preset_path = resolve_preset_path(preset_name)
     if preset_path.exists():
         with open(preset_path) as f:
             for line in f:
@@ -863,9 +880,6 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
         "eval_dataset": eval_dataset,
         "args": args,
     }
-    neftune_noise_alpha = training.get("neftune_noise_alpha", None)
-    if neftune_noise_alpha is not None:
-        trainer_kwargs["neftune_noise_alpha"] = neftune_noise_alpha
 
     trainer = SFTTrainer(**trainer_kwargs)
 

@@ -19,6 +19,14 @@ Environment variables:
   DEEPEVAL_GOLDEN_CATEGORIES      — Comma-separated categories (default: all 5)
   DEEPEVAL_GOLDEN_PER_CATEGORY    — Goldens per category per NPC (default: 3)
   DEEPEVAL_GOLDEN_TECHNIQUE       — Golden dataset technique to load (default: template)
+  DEEPEVAL_MODEL_MAX_WORKERS       — Optional model eval workers (default: 1; set 4 only for endpoints that support it)
+  DEEPEVAL_MAX_WORKERS             — Backward-compatible fallback for model eval workers
+
+Model quality cases run in aggregate batches so all failing case names can be
+reported together.  The default is sequential because local RTX 3060/Ollama
+setups are commonly overloaded by concurrent DeepEval requests.  Opt in to
+parallelism with ``DEEPEVAL_MODEL_MAX_WORKERS=4`` (or ``DEEPEVAL_MAX_WORKERS``)
+when the target endpoint is provisioned for it.
 """
 
 from __future__ import annotations
@@ -27,6 +35,7 @@ import concurrent.futures
 import json
 import os
 import sys
+import traceback
 from pathlib import Path
 
 import pytest
@@ -81,6 +90,23 @@ def _csv_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
     if not value:
         return default
     return tuple(part.strip() for part in value.split(",") if part.strip())
+
+
+def _model_max_workers() -> int:
+    """Parse optional DeepEval model concurrency, defaulting to sequential-safe execution."""
+    raw_workers = os.getenv("DEEPEVAL_MODEL_MAX_WORKERS") or os.getenv("DEEPEVAL_MAX_WORKERS")
+    if not raw_workers:
+        return 1
+
+    try:
+        workers = int(raw_workers)
+    except ValueError:
+        return 1
+
+    if workers < 1:
+        return 1
+
+    return workers
 
 
 def _load_goldens() -> list[dict]:
@@ -197,8 +223,14 @@ def _evaluate_case(
     """Run one DeepEval case and return failure details, if any."""
     try:
         assert_test(test_case=test_case, metrics=metrics)
+    except AssertionError as exc:
+        return _case_name(test_case), f"Metric assertion failed:\n{exc}"
     except Exception as exc:
-        return _case_name(test_case), str(exc)
+        exception_name = type(exc).__name__
+        return (
+            _case_name(test_case),
+            f"Unexpected {exception_name}: {exc}\n\nTraceback:\n{traceback.format_exc()}",
+        )
     return None
 
 
@@ -207,15 +239,19 @@ def _assert_cases_concurrently(
     metrics: list,
     suite_name: str,
 ) -> None:
-    """Evaluate DeepEval cases concurrently and fail with aggregated case details."""
+    """Evaluate DeepEval cases with configured workers and aggregate named failures."""
     if not test_cases:
         pytest.skip(f"No {suite_name} test cases generated.")
 
     def evaluate_case(test_case: LLMTestCase | ConversationalTestCase) -> tuple[str, str] | None:
         return _evaluate_case(test_case, metrics)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        results = list(executor.map(evaluate_case, test_cases))
+    max_workers = _model_max_workers()
+    if max_workers == 1:
+        results = [evaluate_case(test_case) for test_case in test_cases]
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = list(executor.map(evaluate_case, test_cases))
 
     failures = [result for result in results if result is not None]
     if not failures:
