@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections import Counter
+import re
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -61,6 +62,39 @@ def file_sha256(path: str | Path) -> str | None:
     return f"sha256:{digest.hexdigest()}"
 
 
+def _assistant_text(record: dict[str, Any]) -> str:
+    messages = record.get("messages")
+    if not isinstance(messages, list):
+        return ""
+    return "\n".join(
+        str(message.get("content") or "")
+        for message in messages
+        if isinstance(message, dict) and message.get("role") == "assistant" and message.get("content")
+    ).strip()
+
+
+def _text_density(text: str) -> dict[str, int]:
+    words = re.findall(r"\b[\w'-]+\b", text or "")
+    sentences = re.findall(r"[^.!?]+[.!?]", text or "")
+    return {
+        "words": len(words),
+        "sentences": len(sentences) or (1 if (text or "").strip() else 0),
+        "chars": len(text or ""),
+    }
+
+
+def _summarize_density(values: list[int]) -> dict[str, Any]:
+    if not values:
+        return {"count": 0, "avg": 0.0, "min": 0, "max": 0}
+    ordered = sorted(values)
+    return {
+        "count": len(values),
+        "avg": round(sum(values) / len(values), 2),
+        "min": ordered[0],
+        "max": ordered[-1],
+    }
+
+
 def generation_request_counts_for_training_targets(
     target_counts: dict[str, int],
     *,
@@ -100,6 +134,12 @@ def summarize_jsonl_dataset(jsonl_path: str | Path) -> dict[str, Any]:
         "by_split": {},
         "by_concept": {},
         "unknown_rows": 0,
+        "assistant_density": {
+            "words": {"count": 0, "avg": 0.0, "min": 0, "max": 0},
+            "sentences": {"count": 0, "avg": 0.0, "min": 0, "max": 0},
+            "chars": {"count": 0, "avg": 0.0, "min": 0, "max": 0},
+            "by_category": {},
+        },
     }
     if not path.exists():
         return summary
@@ -108,6 +148,10 @@ def summarize_jsonl_dataset(jsonl_path: str | Path) -> dict[str, Any]:
     by_difficulty: Counter[str] = Counter()
     by_split: Counter[str] = Counter()
     by_concept: Counter[str] = Counter()
+    density_words: list[int] = []
+    density_sentences: list[int] = []
+    density_chars: list[int] = []
+    density_by_category: dict[str, dict[str, list[int]]] = defaultdict(lambda: {"words": [], "sentences": [], "chars": []})
     unknown_rows = 0
 
     with path.open(encoding="utf-8") as handle:
@@ -136,12 +180,33 @@ def summarize_jsonl_dataset(jsonl_path: str | Path) -> dict[str, Any]:
             concept = metadata.get("concept")
             if isinstance(concept, str) and concept:
                 by_concept[concept] += 1
+            assistant_density = _text_density(_assistant_text(record))
+            density_words.append(assistant_density["words"])
+            density_sentences.append(assistant_density["sentences"])
+            density_chars.append(assistant_density["chars"])
+            density_category = category if isinstance(category, str) and category else "unknown"
+            density_by_category[density_category]["words"].append(assistant_density["words"])
+            density_by_category[density_category]["sentences"].append(assistant_density["sentences"])
+            density_by_category[density_category]["chars"].append(assistant_density["chars"])
             summary["total"] += 1
 
     summary["by_category"] = dict(sorted(by_category.items()))
     summary["by_difficulty"] = dict(sorted(by_difficulty.items()))
     summary["by_split"] = dict(sorted(by_split.items()))
     summary["by_concept"] = dict(sorted(by_concept.items(), key=lambda item: (-item[1], item[0])))
+    summary["assistant_density"] = {
+        "words": _summarize_density(density_words),
+        "sentences": _summarize_density(density_sentences),
+        "chars": _summarize_density(density_chars),
+        "by_category": {
+            category: {
+                "words": _summarize_density(values["words"]),
+                "sentences": _summarize_density(values["sentences"]),
+                "chars": _summarize_density(values["chars"]),
+            }
+            for category, values in sorted(density_by_category.items())
+        },
+    }
     summary["unknown_rows"] = unknown_rows
     return summary
 

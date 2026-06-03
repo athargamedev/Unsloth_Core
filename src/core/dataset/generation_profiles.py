@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 import re
+from collections import defaultdict
 
 CATEGORY_TEMPLATES = {
     "identity": {
@@ -108,6 +109,8 @@ CATEGORY_TEMPLATES = {
     },
 }
 
+_REFUSAL_VARIANT_COUNTER: dict[tuple[str, str, str], int] = defaultdict(int)
+
 
 def _subject_focus(spec):
     subject = spec.get("subject", "this topic")
@@ -143,6 +146,23 @@ def _lower_first(text: str):
     if not text:
         return text
     return text[0].lower() + text[1:]
+
+
+def _sanitize_grounding_text(text: str) -> str:
+    """Collapse retrieved context into a single clean line before anchoring it."""
+    if not text:
+        return ""
+    parts = []
+    for line in str(text).splitlines():
+        clean = line.strip()
+        if not clean:
+            continue
+        if re.match(r"^[-*•\d]+\.?\s+", clean):
+            clean = re.sub(r"^[-*•\d]+\.?\s+", "", clean)
+        parts.append(clean)
+    cleaned = " ".join(parts)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
 
 
 def _topic_to_anchor(topic: str, subject: str) -> str:
@@ -194,7 +214,7 @@ def _concept_anchor(concept: str, spec, retriever=None) -> str:
     if retriever:
         contexts = retriever.get_grounding_context(concept, top_k=1)
         if contexts:
-            first_sent = re.split(r'[.!?]+', contexts[0])[0].strip()
+            first_sent = re.split(r'[.!?]+', _sanitize_grounding_text(contexts[0]))[0].strip()
             if first_sent:
                 return _capitalize_first(first_sent)
     concept_l = concept.lower()
@@ -234,6 +254,99 @@ def _concept_anchor(concept: str, spec, retriever=None) -> str:
         if needle in concept_l:
             return _capitalize_first(anchor)
     return _capitalize_first(f"{concept} in {subject}")
+
+
+def _history_fact_anchor(concept: str) -> str:
+    concept_l = str(concept).lower()
+    fact_map = [
+        (
+            "ancient civilization",
+            "Mesopotamia around 3500 BCE used cuneiform, city walls, and law codes like Hammurabi to manage grain, taxes, and disputes; Egypt paired central authority with irrigation, temples, and monumental building",
+        ),
+        (
+            "classical antiquity",
+            "Athens experimented with democracy, Rome built republican institutions, and later imperial administration carried those legal and political ideas across a larger world",
+        ),
+        (
+            "medieval history",
+            "feudal obligations tied land, labor, and protection together, Byzantium preserved eastern Roman institutions, and the Black Death sharply changed labor and social power",
+        ),
+        (
+            "modern history",
+            "the printing press sped up the spread of ideas, the Industrial Revolution transformed work and cities, and the world wars and Cold War reshaped mass politics",
+        ),
+        (
+            "historical methodology",
+            "historians compare primary sources with later secondary analysis, then check chronology, context, bias, and cause and effect before they trust a claim",
+        ),
+        (
+            "historical thinking",
+            "historians place events in order, test cause and effect, compare sources, and keep perspective and evidence separate from speculation",
+        ),
+    ]
+    for needle, anchor in fact_map:
+        if needle in concept_l:
+            return anchor
+    return _concept_anchor(concept, {"subject": "world history"})
+
+
+def _history_fact_lines(concept: str) -> list[str]:
+    """Return short, full sentences for history-specific answers."""
+    concept_l = str(concept).lower()
+    fact_map = [
+        (
+            "ancient civilization",
+            [
+                "Mesopotamia around 3500 BCE used cuneiform and law codes to manage grain, taxes, and disputes.",
+                "Egypt paired central authority with irrigation, temples, and monumental building to stabilize royal power.",
+            ],
+        ),
+        (
+            "classical antiquity",
+            [
+                "Athens experimented with democracy, and Rome built republican institutions that shaped later law and government.",
+                "Imperial rule then spread those political ideas across a much larger world.",
+            ],
+        ),
+        (
+            "medieval history",
+            [
+                "Feudal obligations tied land, labor, and protection together across much of medieval Europe.",
+                "Byzantium preserved eastern Roman institutions, and the Black Death later reshaped labor and social power.",
+            ],
+        ),
+        (
+            "modern history",
+            [
+                "The printing press sped up the spread of ideas, and the Renaissance and Reformation widened that change.",
+                "The Industrial Revolution, the world wars, and the Cold War then transformed work, cities, and mass politics.",
+            ],
+        ),
+        (
+            "historical methodology",
+            [
+                "Historians compare primary sources with later secondary analysis before they trust a claim.",
+                "They then check chronology, context, bias, and cause and effect so the explanation stays grounded.",
+            ],
+        ),
+        (
+            "historical thinking",
+            [
+                "Historians place events in order and test cause and effect before they draw a conclusion.",
+                "They compare sources and keep perspective and evidence separate from speculation.",
+            ],
+        ),
+    ]
+    for needle, lines in fact_map:
+        if needle in concept_l:
+            return lines
+    anchor = _concept_anchor(concept, {"subject": "world history"})
+    return [f"{anchor}.", f"It helps keep the timeline clear."]
+
+
+def _history_fact_pair(concept: str) -> tuple[str, str]:
+    lines = _history_fact_lines(concept)
+    return lines[0], lines[1] if len(lines) > 1 else ""
 
 
 class DialogueGuardrail:
@@ -296,21 +409,18 @@ def generate_identity_response(spec):
 
     if _is_history_subject(spec):
         templates = [
-            f"I'm {npc_name}, and I help you study {subject_short} by comparing sources, tracing cause and effect, and showing why events mattered, like the fall of Rome.",
-            f"I'm {npc_name}, your {subject_short} guide. I answer directly, then point to evidence and one concrete example like ancient civilizations or medieval history.",
-            f"Hi, I'm {npc_name}. If you ask about {subject_short}, I can walk you through a topic, a source, or a turning point like the printing press.",
-            f"I'm {npc_name}, a careful {subject_short} guide who checks dates, evidence, and historical importance first, especially for modern history.",
-            f"I'm {npc_name}; I help place events on a timeline and compare primary sources so you can see why historians disagree about ancient civilizations.",
-            f"I'm {npc_name}; I help separate legend from evidence in {subject_short} and show why details matter in medieval history.",
+            "I'm HistoryGuide from Mesopotamia around 3500 BCE to Rome's Republic from 509 BCE.",
+            "I'm HistoryGuide, and I connect ancient cities and empires to the evidence behind them.",
+            "I'm HistoryGuide, and I guide key dates and sources in world history.",
         ]
     elif _is_cooking_subject(spec):
         templates = [
-            f"I'm {npc_name}. I help with safe, practical cooking, clear next steps, and the check that shows the dish is ready.",
-            f"I'm {npc_name}. If you tell me what you have, I can help choose the next step, the heat, and the result to look for.",
-            f"I'm {npc_name}, your cooking guide for clear steps, safe temperatures, and good results in the kitchen.",
-            f"Hi, I'm {npc_name}. I keep cooking advice practical, calm, specific, and easy to use.",
-            f"I'm {npc_name}; I help with kitchen workflow, flavor balance, and food safety, with one concrete action at a time.",
-            f"I'm {npc_name}; I turn cooking problems into clear steps, from prep to finish, and I can help you choose the next move.",
+            f"I'm {npc_name}. I help with safe, practical cooking, clear next steps, and the check that shows the dish is ready. I keep the order simple: prep first, then heat, then taste and adjust. If something goes wrong, I help you fix it without making the whole dish more complicated.",
+            f"I'm {npc_name}. If you tell me what you have, I can help choose the next step, the heat, and the result to look for. I focus on one concrete move at a time so the kitchen stays under control. That makes the advice easier to use right away.",
+            f"I'm {npc_name}, your cooking guide for clear steps, safe temperatures, and good results in the kitchen. I explain why a technique works, not just what to do next. That helps you repeat the result instead of guessing.",
+            f"Hi, I'm {npc_name}. I keep cooking advice practical, calm, specific, and easy to use. I also flag safety problems early so you can keep the food and the kitchen in good shape. The goal is a clear result you can repeat.",
+            f"I'm {npc_name}; I help with kitchen workflow, flavor balance, and food safety, with one concrete action at a time. I explain the step, the reason behind it, and the check that tells you it worked. That keeps the cooking process steady from prep to finish.",
+            f"I'm {npc_name}; I turn cooking problems into clear steps, from prep to finish, and I can help you choose the next move. I keep the answer grounded in temperature, texture, and safe handling. That way the fix is practical, not vague.",
         ]
     else:
         templates = [
@@ -328,29 +438,40 @@ def generate_identity_response(spec):
 
 def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="beginner", retriever=None):
     subject = _subject_focus(spec)
-    detail_a = _concept_anchor(concept_a, spec, retriever)
-    detail_b = _concept_anchor(concept_b, spec, retriever) if concept_b else None
+    detail_a = _history_fact_anchor(concept_a) if _is_history_subject(spec) else _concept_anchor(concept_a, spec, retriever)
+    detail_b = _history_fact_anchor(concept_b) if concept_b and _is_history_subject(spec) else (_concept_anchor(concept_b, spec, retriever) if concept_b else None)
     if "methodology" in concept_a.lower():
-        detail_a = "Comparing sources carefully and checking for bias"
+        detail_a = "comparing primary sources, secondary analysis, chronology, context, bias, and cause and effect"
     detail_a_lower = _lower_first(detail_a)
 
     if _is_history_subject(spec):
+        same_concept = bool(concept_b) and concept_a.strip().lower() == concept_b.strip().lower()
         if concept_b:
-            templates = [
-                f"Compare {concept_a} and {concept_b} by looking at how each changed society.",
-                f"A useful contrast is that {concept_a} centers on {detail_a}, while {concept_b} centers on {detail_b}.",
-            ]
+            if same_concept:
+                templates = [
+                    f"{concept_a.capitalize()} is easier to see when you name one source, one date, and one consequence. The idea is the same, but the evidence tells you whether the claim is strong.",
+                    f"{concept_a.capitalize()} becomes clear when you keep the timeline and the evidence in order. That prevents the same topic from turning into a vague summary.",
+                ]
+            else:
+                lines_a = _history_fact_lines(concept_a)
+                lines_b = _history_fact_lines(concept_b)
+                templates = [
+                    f"{lines_a[0]} {lines_b[0]} That is why the two ideas changed society in different ways.",
+                    f"{lines_a[1]} {lines_b[1]} One is about evidence, and the other is about consequence.",
+                ]
         else:
             if "ancient civilization" in concept_a.lower():
                 templates = [
-                    "Ancient civilizations work by turning scattered villages into organized societies with cities, writing, laws, trade, and rulers. Start with Mesopotamia around 3500 BCE: clay tablets and later law codes show how people tracked grain, taxes, labor, and disputes, which made large cities easier to govern.",
-                    "For ancient civilizations, use Mesopotamia as the anchor: irrigation supported cities, writing preserved records, and law codes helped rulers manage conflict. Those sources matter because they show the shift from local farming communities to complex societies with memory, authority, and trade.",
+                    "Mesopotamia around 3500 BCE turned farming villages into cities with cuneiform, law codes, and records for grain, taxes, and disputes. Egypt followed with central authority, irrigation, and monumental building tied to religion and administration.",
+                    "Around 3500 BCE, Mesopotamia shows how writing and law made large societies easier to govern. Egypt adds another example, where kingship and engineering reinforced each other and made power last.",
+                    "Ancient civilizations were the first clear leap from farming settlements to durable states. Mesopotamia and Egypt show how cities, writing, law, and administration changed daily life and long-term power.",
                 ]
             else:
+                lines = _history_fact_lines(concept_a)
                 templates = [
-                    f"Start with {detail_a_lower}, then anchor it to a date, a source, and a consequence. That gives the player a clear timeline, shows what evidence supports the claim, and explains why the event changed what came next.",
-                    f"A concrete example is {detail_a_lower}. Use it to compare evidence, name the historical setting, and explain one consequence so the answer feels like a guided archive note rather than a loose fact.",
-                    f"The key idea is {detail_a_lower}; it helps you link evidence to historical change without guessing. A good explanation names the source, places it in time, then shows how that detail reshaped people, power, or trade.",
+                    f"{lines[0]} {lines[1]} That shows how history turns on evidence, not guesswork.",
+                    f"{lines[0]} It matters because it links a real source to a real consequence.",
+                    f"{lines[0]} {lines[1]} That helps you see what changed, who was affected, and why the evidence matters.",
                 ]
     elif _is_cooking_subject(spec):
         action_a, result_a = _cooking_practical_focus(concept_a, spec, retriever)
@@ -358,49 +479,49 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
         concept_l = concept_a.lower()
         if "ingredient science" in concept_l:
             templates = [
-                f"Think of ingredient science as a test kitchen method: change one thing at a time, such as heat, acid, or fat, so you can see exactly what shifted in the dish. For example, a small heat change can thicken a sauce, brown a crust, or alter texture.",
-                f"Ingredient science means treating ingredients like controlled variables. If you adjust only one dial, you can compare the before and after and see whether the dish became thicker, sharper, or more stable.",
+                f"Think of ingredient science as a test kitchen method: change one thing at a time, such as heat, acid, or fat, so you can see exactly what shifted in the dish. For example, a small heat change can thicken a sauce, brown a crust, or alter texture. That is how you learn which variable actually caused the result.",
+                f"Ingredient science means treating ingredients like controlled variables. If you adjust only one dial, you can compare the before and after and see whether the dish became thicker, sharper, or more stable. The practical lesson is to test one change, then taste again.",
             ]
         elif "knife" in concept_l:
             templates = [
-                f"Knife skills is about control, angle, and rhythm, but the useful part is seeing how those choices affect safety and evenness. For example, a steady grip and a consistent motion give cleaner cuts that cook at the same rate.",
-                f"Think of knife skills as controlled cutting practice: keep the blade steady, use a safe grip, and adjust pressure so the pieces stay uniform. That is what makes prep safer and more consistent.",
+                f"Knife skills is about control, angle, and rhythm, but the useful part is seeing how those choices affect safety and evenness. For example, a steady grip and a consistent motion give cleaner cuts that cook at the same rate. The result is safer prep and more even texture in the finished dish.",
+                f"Think of knife skills as controlled cutting practice: keep the blade steady, use a safe grip, and adjust pressure so the pieces stay uniform. That is what makes prep safer and more consistent. A good cut is the one you can repeat without rushing.",
             ]
         elif "flavor balance" in concept_l:
             templates = [
-                f"Flavor balance is about tasting, then adjusting salt, acid, fat, or sweetness one step at a time so the whole dish feels complete. For example, a flat soup may need acid or salt before it needs anything else.",
-                f"Think of flavor balance as tuning a dish in small moves: change one flavor note, taste again, and check whether the result feels fuller or sharper. That is how you avoid making the whole dish swing too far.",
+                f"Flavor balance is about tasting, then adjusting salt, acid, fat, or sweetness one step at a time so the whole dish feels complete. For example, a flat soup may need acid or salt before it needs anything else. The right move is the one that changes the whole bowl without overpowering it.",
+                f"Think of flavor balance as tuning a dish in small moves: change one flavor note, taste again, and check whether the result feels fuller or sharper. That is how you avoid making the whole dish swing too far. One careful adjustment is usually better than three guesses.",
             ]
         elif "food safety" in concept_l:
             templates = [
-                f"Food safety is about separation, temperature, and time. Keep raw meat away from ready-to-eat food, cook poultry to 165 F, and chill leftovers within 2 hours so bacteria do not get time to grow.",
-                f"Think of food safety as a chain of checks: separate raw foods, cook to a safe temperature, cool quickly, and store cold. For example, chicken needs a thermometer check, then leftovers need the refrigerator before they sit out too long.",
+                f"Food safety is about separation, temperature, and time. Keep raw meat away from ready-to-eat food, cook poultry to 165 F, and chill leftovers within 2 hours so bacteria do not get time to grow. That sequence prevents the most common mistakes.",
+                f"Think of food safety as a chain of checks: separate raw foods, cook to a safe temperature, cool quickly, and store cold. For example, chicken needs a thermometer check, then leftovers need the refrigerator before they sit out too long. The safe habit is the one you repeat every time.",
             ]
         elif "kitchen workflow" in concept_l or "kitchen organization" in concept_l or "core kitchen flow" in concept_l:
             templates = [
-                f"Kitchen workflow is the order of the job: set up first, then cook in a clean sequence so prep, heat, and cleanup do not fight each other. For example, mise en place saves time because the tools and ingredients are ready before the pan gets hot.",
-                f"Think of kitchen workflow like a route through the kitchen: organize the station, work in order, and keep the counter clear so the dish moves from prep to plating smoothly. That is what makes the whole process faster and safer.",
+                f"Kitchen workflow is the order of the job: set up first, then cook in a clean sequence so prep, heat, and cleanup do not fight each other. For example, mise en place saves time because the tools and ingredients are ready before the pan gets hot. That keeps the pan, the board, and the timer from competing for attention.",
+                f"Think of kitchen workflow like a route through the kitchen: organize the station, work in order, and keep the counter clear so the dish moves from prep to plating smoothly. That is what makes the whole process faster and safer. A good workflow leaves fewer surprises at the end.",
             ]
         elif concept_b:
             templates = [
-                f"{concept_a} is about {action_a}, while {concept_b} is about {action_b}, so they lead to different results.",
-                f"Compare them like this: {concept_a} means {action_a}, and {concept_b} means {action_b}, so the dish changes in a real, visible way.",
+                f"{concept_a} is about {action_a}, while {concept_b} is about {action_b}, so they lead to different results. One changes the prep step, the other changes the finished dish. The useful answer says which effect you are trying to get.",
+                f"Compare them like this: {concept_a} means {action_a}, and {concept_b} means {action_b}, so the dish changes in a real, visible way. That difference matters because the right technique depends on the result you want. A clear example makes the contrast obvious.",
             ]
         elif difficulty == "beginner":
             templates = [
-                f"Start with {concept_a}: {action_a}. That helps because {result_a}, and you can compare the before and after.",
-                f"A simple way to think about {concept_a} is {action_a}. You can see it when {result_a}, especially after one small adjustment.",
-                f"{concept_a} means {action_a}, and that gives you {result_a} in a real dish.",
+                f"Start with {concept_a}: {action_a}. That helps because {result_a}, and you can compare the before and after. The point is to watch the change instead of guessing at it.",
+                f"A simple way to think about {concept_a} is {action_a}. You can see it when {result_a}, especially after one small adjustment. That makes the technique easy to repeat.",
+                f"{concept_a} means {action_a}, and that gives you {result_a} in a real dish. The result is practical because you can taste or see the difference right away.",
             ]
         elif difficulty == "intermediate":
             templates = [
-                f"A useful way to study {concept_a} is to {action_a}, then compare before and after and name {result_a} in the finished dish.",
-                f"{concept_a} works best when you {action_a}, then check whether {result_a} after the change.",
+                f"A useful way to study {concept_a} is to {action_a}, then compare before and after and name {result_a} in the finished dish. That makes the cause and effect easier to see.",
+                f"{concept_a} works best when you {action_a}, then check whether {result_a} after the change. If the result is not clear, change only one thing at a time.",
             ]
         else:
             templates = [
-                f"{concept_a} is easier to understand when you {action_a}. For example, notice whether {result_a}.",
-                f"In practice, {concept_a} matters because {action_a}, which means {result_a}.",
+                f"{concept_a} is easier to understand when you {action_a}. For example, notice whether {result_a}. That is the practical signal that the method worked.",
+                f"In practice, {concept_a} matters because {action_a}, which means {result_a}. The advanced part is knowing which variable to change first.",
             ]
     elif difficulty == "beginner":
         if concept_b:
@@ -442,51 +563,54 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
 def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriever=None):
     npc_name = spec["npc_name"]
     subject = _subject_focus(spec)
-    detail = _concept_anchor(concept, spec, retriever)
+    detail = _history_fact_anchor(concept) if _is_history_subject(spec) else _concept_anchor(concept, spec, retriever)
     detail_lower = _lower_first(detail)
 
     if _is_history_subject(spec):
+        lines = _history_fact_lines(concept)
+        first_line = lines[0]
+        second_line = lines[1] if len(lines) > 1 else ""
         if dialogue_type == "clarification":
             templates = [
-                f"If you apply {concept} incorrectly, causes can look backwards and evidence can support the wrong claim. Check the date and source.",
-                f"A mistake with {concept} can turn an effect into a cause. Re-anchor the event with one date, one source, and one consequence.",
+                f"You asked about {concept}: {first_line} {second_line} That keeps the date, the source, and the consequence in order.",
+                f"You asked about {concept}: historians place the event in time and then test the source against the claim.",
             ]
         elif dialogue_type == "deep_dive":
             templates = [
-                f"Go deeper by linking {concept} to {detail_lower}. Then ask what happened first, which source supports it, and what consequence followed, so the history stays chronological instead of vague.",
-                f"{concept.capitalize()} is clearer when you connect {detail_lower} to one visible historical change. Name the setting, the evidence, and the consequence before drawing the conclusion.",
+                f"You asked about {concept}: {first_line} {second_line} First the source, then the consequence.",
+                f"For {concept}, name the setting, the evidence, and the consequence.",
             ]
         elif dialogue_type == "application":
             templates = [
-                f"Use {concept} with one documented case, like {detail}. Start with the date or source, then explain what changed and why that evidence supports the answer.",
-                f"A practical way to apply {concept} is to test it against a real event such as {detail}. Compare the claim to the source, then explain the cause and consequence.",
+                f"You asked about {concept}: {first_line} {second_line} Use that example to trace cause and consequence.",
+                f"For your question about {concept}, {first_line} That makes the idea easier to see.",
             ]
         else:
             templates = [
-                f"That is a common misconception. A better example is {detail}, because it shows the idea in a real historical case with evidence, context, and consequence.",
-                f"Not quite — use {detail} as the concrete example. If you apply {concept} loosely, you can blur cause and effect; keep the source, the timeline, and the consequence separate.",
+                f"That is a common misconception. For {concept}, {first_line.rstrip('.')} shows the idea with evidence, context, and consequence.",
+                f"Not quite. For {concept}, {first_line} {second_line}",
             ]
     elif _is_cooking_subject(spec):
         action, result = _cooking_practical_focus(concept, spec, retriever)
         if dialogue_type == "clarification":
             templates = [
-                f"Yes. {concept.capitalize()} means {action}, and you can see it in the dish when {result}. For example, that change is obvious in the texture or timing.",
-                f"Yes, {concept.capitalize()} is easier to understand when you {action}. For example, you can watch the result show up in texture, safety, or doneness right away.",
+                f"Yes. {concept.capitalize()} means {action}, and you can see it in the dish when {result}. For example, that change is obvious in the texture or timing. The point is to watch one result, not three at once.",
+                f"Yes, {concept.capitalize()} is easier to understand when you {action}. For example, you can watch the result show up in texture, safety, or doneness right away. That makes the technique easy to check while you cook.",
             ]
         elif dialogue_type == "deep_dive":
             templates = [
                 f"No, it is not outdated. {concept.capitalize()} still matters because {action}, and that is what changes the result. If you already know the basics, this is the next layer that makes the dish more controlled.",
-                f"{concept.capitalize()} is clearer when you {action}, then notice whether {result}. That links the idea to a real dish instead of leaving it abstract.",
+                f"{concept.capitalize()} is clearer when you {action}, then notice whether {result}. That links the idea to a real dish instead of leaving it abstract. The difference shows up in the final texture or flavor.",
             ]
         elif dialogue_type == "application":
             templates = [
-                f"Use {concept} by {action}, then check whether {result}. For example, compare the first bite or the final cut before and after the change.",
-                f"A practical way to apply {concept} is to {action} and watch for {result}. That gives you a simple before-and-after check you can reuse.",
+                f"Use {concept} by {action}, then check whether {result}. For example, compare the first bite or the final cut before and after the change. That tells you if the adjustment actually worked.",
+                f"A practical way to apply {concept} is to {action} and watch for {result}. That gives you a simple before-and-after check you can reuse. The useful part is repeating the same test every time.",
             ]
         else:
             templates = [
-                f"Without {concept}, prep, cooking, and cleanup collide: tools go missing, heat timing slips, and safety checks get rushed. A better way is to {action}, because {result}.",
-                f"Not quite — use {action} as the concrete example and explain what changes in the dish. That makes the answer specific enough to be useful.",
+                f"Without {concept}, prep, cooking, and cleanup collide: tools go missing, heat timing slips, and safety checks get rushed. A better way is to {action}, because {result}. That keeps the kitchen steady and the food safer.",
+                f"Not quite — use {action} as the concrete example and explain what changes in the dish. That makes the answer specific enough to be useful. The best answer says what you would do next.",
             ]
     elif dialogue_type == "clarification":
         templates = [
@@ -514,26 +638,27 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriev
 
 def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
     subject = _subject_focus(spec)
-    detail = _concept_anchor(concept, spec, retriever)
+    detail = _history_fact_anchor(concept) if _is_history_subject(spec) else _concept_anchor(concept, spec, retriever)
     detail_lower = _lower_first(detail)
 
     if scenario_name:
+        lines = _history_fact_lines(concept)
         scenario_templates = {
             "timeline_analysis": [
-                f"Challenge: pick one event related to {concept}, like {detail_lower}. Place it on a timeline, name one source that could support the date, then explain one cause and one consequence so the answer shows why the event mattered.",
-                f"Scenario: an archive card lists {detail_lower} but gives no context. Put it in sequence, identify what happened before it, and explain what changed afterward so the player practices cause and consequence.",
+                f"Scenario: an archive card lists {lines[0].rstrip('.')} but gives no context. Put it on a timeline, name one source that could support the date, then explain one cause and one consequence.",
+                f"Scenario: two notes disagree about {concept}. Pick the stronger one by naming the source type, the date, and the consequence it supports.",
             ],
             "primary_source": [
-                f"Scenario: two sources date one event differently. Use {concept} to place it, cite one source, and explain one consequence.",
-                f"Try this: use {concept} to order one event, cite one source for its date, then explain what changed next.",
+                f"Scenario: two sources date one event differently. Pick the stronger one by naming the source type, the date, and the consequence it supports.",
+                f"Scenario: one source gives a date and another gives only a story. Choose the stronger source, then explain what changed next.",
             ],
             "technique_mastery": [
-                f"Your challenge: apply {concept} to {detail_lower}, then explain one cause and one consequence.",
-                f"Name one mistake with {concept}, then use {detail_lower} to correct the timeline or evidence.",
+                f"Task: apply {concept} to {lines[0].rstrip('.')}. Then explain one cause and one consequence with a date or source.",
+                f"Task: name one mistake with {concept}, then use {lines[0].rstrip('.')} to correct the timeline or evidence.",
             ],
             "meal_planning": [
                 f"Scenario: you have rice, chicken, and vegetables. Use {detail_lower} to plan the order, then name the first step, the reason it comes first, and the check you would make next.",
-                f"Plan a simple dinner around {detail_lower}; choose the order, the heat, and the final check, then explain what you would do before serving.",
+                f"Scenario: plan a simple dinner around {detail_lower}; choose the order, the heat, and the final check, then explain what you would do before serving.",
             ],
         }
         cat_templates = scenario_templates.get(scenario_name, [])
@@ -545,41 +670,42 @@ def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
         concept_l = concept.lower()
         if "knife" in concept_l:
             templates = [
-                f"Exercise: chop one onion into even slices, then say what changed when you kept the cuts steady and the pieces matched in size. Focus on grip, angle, and control.",
-                f"Scenario: cut carrots into the same size pieces, then explain the first adjustment you made and why it improved control. Say whether the cuts felt safer, smoother, or more even.",
+                f"Exercise: chop one onion into even slices, then say what changed when you kept the cuts steady and the pieces matched in size. Focus on grip, angle, and control. Explain the safety benefit as well as the visual result.",
+                f"Scenario: cut carrots into the same size pieces, then explain the first adjustment you made and why it improved control. Say whether the cuts felt safer, smoother, or more even. The goal is repeatable knife work, not speed alone.",
             ]
         elif "food safety" in concept_l:
             templates = [
-                f"Scenario: you have raw chicken and salad ingredients. What is the first safe move, and how does that prevent contamination? Name the separation step and the storage step you would use next.",
-                f"Exercise: choose the safest way to handle leftovers before serving. What do you do first, and what temperature check comes next? Explain how that keeps the food safe.",
+                f"Scenario: you have raw chicken and salad ingredients. What is the first safe move, and how does that prevent contamination? Name the separation step and the storage step you would use next. Then say what temperature check comes before serving.",
+                f"Exercise: choose the safest way to handle leftovers before serving. What do you do first, and what temperature check comes next? Explain how that keeps the food safe. The answer should show the sequence, not just the rule.",
             ]
         elif "ingredient science" in concept_l:
             templates = [
-                f"Exercise: change only one thing, like heat or acid, then describe what happened to texture and flavor, and name the visible result. Keep the comparison to one variable only.",
-                f"Scenario: you adjust one ingredient variable in a dish. What changes first, and how do you know the adjustment worked? Explain the before-and-after difference in plain language.",
+                f"Exercise: change only one thing, like heat or acid, then describe what happened to texture and flavor, and name the visible result. Keep the comparison to one variable only. That makes the cause easy to spot.",
+                f"Scenario: you adjust one ingredient variable in a dish. What changes first, and how do you know the adjustment worked? Explain the before-and-after difference in plain language. The useful part is the observed result.",
             ]
         elif "flavor balance" in concept_l:
             templates = [
-                f"Exercise: taste a dish and adjust only salt, acid, fat, or sweetness. What changes first, and what is the next taste check? Say which flavor you would test again afterward.",
-                f"Scenario: your soup tastes flat. Which single flavor dial do you turn first, why that one, and what result are you looking for? Explain the effect on the final taste.",
+                f"Exercise: taste a dish and adjust only salt, acid, fat, or sweetness. What changes first, and what is the next taste check? Say which flavor you would test again afterward. Keep the feedback loop small and obvious.",
+                f"Scenario: your soup tastes flat. Which single flavor dial do you turn first, why that one, and what result are you looking for? Explain the effect on the final taste. A good answer names the before and after.",
             ]
         elif "kitchen workflow" in concept_l or "kitchen organization" in concept_l or "core kitchen flow" in concept_l:
             templates = [
-                f"Scenario: your prep, cooking, and cleanup all overlap. What order do you choose, and what is the first thing you set up? Explain why that order keeps the station under control.",
-                f"Exercise: plan the order for a simple dinner, then name the first station you set and why it comes first. Include the step that saves the most time.",
+                f"Scenario: your prep, cooking, and cleanup all overlap. What order do you choose, and what is the first thing you set up? Explain why that order keeps the station under control. Then name the step that saves the most time.",
+                f"Exercise: plan the order for a simple dinner, then name the first station you set and why it comes first. Include the step that saves the most time. The answer should make the workflow obvious from the first sentence.",
             ]
         else:
             templates = [
-                f"Scenario: you are cooking dinner and the pan, board, and timer are all in use. Use {action}; then name the first move, the timing choice, and the check before you serve. Explain the effect on the dish.",
-                f"Scenario: your sauce tastes flat. Use {action} and explain what changed in the flavor, then say what you would taste next. Keep the answer tied to one clear adjustment.",
-                f"You have plain rice, chicken, and vegetables. Use {action} to make the meal balanced and explain the first thing you would do, plus the final check before serving. Say what result you are looking for.",
+                f"Scenario: you are cooking dinner and the pan, board, and timer are all in use. Use {action}; then name the first move, the timing choice, and the check before you serve. Explain the effect on the dish. Keep the answer tied to one clear sequence.",
+                f"Scenario: your sauce tastes flat. Use {action} and explain what changed in the flavor, then say what you would taste next. Keep the answer tied to one clear adjustment. The result should be easy to observe.",
+                f"You have plain rice, chicken, and vegetables. Use {action} to make the meal balanced and explain the first thing you would do, plus the final check before serving. Say what result you are looking for. The answer should read like a real kitchen plan.",
             ]
     else:
         if _is_history_subject(spec):
+            lines = _history_fact_lines(concept)
             templates = [
-                f"Challenge: a player finds two conflicting accounts about {detail_lower}. Decide which account is stronger by naming the source type, placing it on the timeline, and explaining one consequence.",
-                f"Scenario: a museum label about {concept} is too vague. Rewrite it using {detail_lower}, one date or period, and one cause-and-effect link so the visitor can see why it matters.",
-                f"Quest: sort three clues about {concept}: a source, a date, and a consequence. Use {detail_lower} as the example, then explain which clue should come first and why.",
+                f"Scenario: two conflicting accounts about {lines[0].rstrip('.')} need sorting. Decide which one is stronger by naming the source type, the date, and the consequence.",
+                f"Scenario: a museum label about {concept} is too vague. Rewrite it using {lines[0].rstrip('.')}, one date or period, and one cause-and-effect link.",
+                f"Scenario: compare a source, a date, and a consequence for {lines[0].rstrip('.')}. Explain which clue comes first and why the order matters.",
             ]
         else:
             templates = [
@@ -594,17 +720,42 @@ def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
 def generate_refusal_response(spec, boundary=None):
     subject = _subject_focus(spec)
     npc_name = spec["npc_name"]
+    boundary_key = (npc_name, subject, boundary or "")
 
     def _with_refusal_contract(text: str) -> str:
+        text = re.sub(r"\s+", " ", (text or "")).strip()
         lowered = text.lower()
-        has_boundary = any(marker in lowered for marker in ["i can't", "i cannot", "i don't", "i do not", "outside"])
-        has_redirect = "instead" in lowered or "i can help with" in lowered or "let's focus on" in lowered
+        has_boundary = any(
+            marker in lowered
+            for marker in [
+                "i can't",
+                "i cannot",
+                "i don't",
+                "i do not",
+                "not safe",
+                "unsafe",
+                "outside my scope",
+                "outside my area of expertise",
+            ]
+        )
+        has_redirect = (
+            "instead" in lowered
+            or "i can help with" in lowered
+            or "let's focus on" in lowered
+            or "what i can do" in lowered
+        )
         if not has_boundary:
             text = f"I can't help with that request. {text}"
-            lowered = text.lower()
         if not has_redirect:
             text = f"{text} Instead, I can help with a concrete {subject} topic."
-        return text
+        return re.sub(r"\s+", " ", text).strip()
+
+    def _choose_variant(templates: list[str]) -> str:
+        if not templates:
+            return ""
+        idx = _REFUSAL_VARIANT_COUNTER[boundary_key]
+        _REFUSAL_VARIANT_COUNTER[boundary_key] = idx + 1
+        return templates[idx % len(templates)]
 
     if boundary:
         boundary_lower = boundary.lower()
@@ -614,15 +765,15 @@ def generate_refusal_response(spec, boundary=None):
                 example = example[0] if example else "the fall of Rome"
                 concrete = example.replace("What caused ", "").replace("?", "")
                 templates = [
-                    f"I can't treat counterfactuals as fact, so I would label that as speculation. Instead, we can stick to the real event and its sources, like {concrete}, then separate what happened from what people imagine might have happened.",
-                    f"That is hypothetical, so I would mark it as speculation. Instead, I can help with the documented event, its chronology, and the evidence historians use to explain the actual outcome.",
-                    f"I can't present an alternate outcome as fact. Instead, I can separate the speculation from what the sources actually show, then describe the documented cause and consequence.",
+                    f"I can't treat counterfactuals as fact, so I would label that as speculation. Instead, we can stick to the real event and its sources, like {concrete}.",
+                    f"That is hypothetical, so I would mark it as speculation. Instead, I can help with the documented event and the evidence historians use to explain the outcome.",
+                    f"I can't present an alternate outcome as fact. Instead, I can separate the speculation from what the sources actually show.",
                 ]
             elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
                 templates = [
-                    f"I can't help spread unsupported claims. Instead, I can help with verified chronology, sources, and evidence.",
-                    f"I need to stay with evidence-based history. Let's focus on the documented version and the sources behind it.",
-                    f"I can't endorse a conspiracy account without evidence. Instead, I can compare the claim with documented sources and scholarly consensus.",
+                    f"I can't help spread unsupported claims. Instead, I can help with verified chronology, sources, and evidence, then show where the record confirms or rejects the claim.",
+                    f"I need to stay with evidence-based history. Let's focus on the documented version, the sources behind it, and the dates historians use to check it.",
+                    f"I can't endorse a conspiracy account without evidence. Instead, I can compare the claim with documented sources, the provenance of the story, and scholarly consensus.",
                 ]
             elif "unsupported certainty" in boundary_lower or "date range" in boundary_lower:
                 templates = [
@@ -631,29 +782,29 @@ def generate_refusal_response(spec, boundary=None):
                 ]
             elif "topic change" in boundary_lower or "different topic" in boundary_lower:
                 templates = [
-                    f"Absolutely — we can switch topics, and I can still help with a history topic like ancient civilizations, medieval history, or modern history.",
-                    f"Yes, let's change direction. If you'd like, we can talk about the fall of Rome, the Middle Ages, or the printing press instead.",
+                    f"Absolutely, we can switch topics. I can still help with ancient civilizations, medieval history, or modern history.",
+                    f"Yes, let's change direction. We could look at the fall of Rome, the Black Death, or the printing press instead.",
                 ]
             else:
                 templates = [
-                    f"That is outside my role as {npc_name}. Instead, I can help with chronology, sources, or evidence in {subject}.",
-                    f"I can't help with that request. Instead, I can explain a documented {subject} topic about chronology or sources.",
+                    f"That is outside my role as {npc_name}. Instead, I can help with Mesopotamia, Rome, Byzantium, or the printing press.",
+                    f"I can't help with that request. Instead, I can explain a documented {subject} topic like the fall of Rome or the Black Death.",
                     f"I can't answer that directly. Let's focus on a real {subject} question about chronology, sources, or evidence.",
-                    f"That sits outside what I cover. What I can do is help with a documented {subject} topic.",
+                    f"That sits outside what I cover. What I can do is help with a documented {subject} topic like ancient civilizations or modern history.",
                 ]
-            return _with_refusal_contract(random.choice(templates))
+            return _with_refusal_contract(_choose_variant(templates))
         if "speculate" in boundary_lower or "speculation" in boundary_lower or "counterfactual" in boundary_lower:
             example = _example_topics(spec, limit=1)
             example = example[0] if example else "the fall of Rome"
             concrete = example.replace("What caused ", "").replace("?", "")
             templates = [
                 f"I can't treat counterfactuals as fact, so I would label them as speculation and stick to the real event, like {concrete}.",
-                f"That is hypothetical, so I would mark it as speculation. A better {subject} question is how the real event unfolded, like {concrete}.",
+                f"That is hypothetical, so I would mark it as speculation. A better {subject} question is how the real event unfolded, like {concrete}, and which source supports that sequence.",
             ]
         elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
             templates = [
-                f"I can't help spread unsupported claims. Instead, I can help with verified {subject} information.",
-                f"I need to stay with evidence-based {subject}. Let's focus on the documented version instead.",
+                f"I can't help spread unsupported claims. Instead, I can help with verified {subject} information and the sources historians actually cite.",
+                f"I need to stay with evidence-based {subject}. Let's focus on the documented version, the dates, and the evidence behind it.",
             ]
         elif "aliens" in boundary_lower or "extraterrestrial" in boundary_lower:
             templates = [
@@ -669,9 +820,9 @@ def generate_refusal_response(spec, boundary=None):
             if any(word in subject.lower() for word in ["cook", "culinary", "chef"]):
                 templates = [
                     f"I can't make a diet plan or treat a medical condition. Instead, I can help with safe recipes and meal prep.",
-                    f"I can't prescribe a diet, but I can walk you through a cooking technique or a simple balanced meal.",
-                    f"I don't give medical or dietary advice. What I can do is share cooking techniques and balanced recipes.",
-                    f"I don't handle treatment plans. Let's focus on safe cooking methods and flavor instead.",
+                    f"I can't prescribe a diet. Instead, I can walk you through a safe cooking technique or a simple balanced meal.",
+                    f"I don't give medical or dietary advice. Instead, I can share safe cooking techniques and balanced recipes.",
+                    f"I don't handle treatment plans. Instead, I can help with safe cooking methods and flavor.",
                 ]
             elif any(word in subject.lower() for word in ["fitness", "exercise"]):
                 templates = [
@@ -711,21 +862,21 @@ def generate_refusal_response(spec, boundary=None):
         else:
             if any(word in subject.lower() for word in ["cook", "culinary", "chef"]):
                 templates = [
-                    f"That is outside my role as {npc_name}. Instead, I can help with a safe recipe, a technique, or a safer cooking alternative with a clear next step.",
-                    f"I can't help with that request. I can still answer a safe cooking question or walk through a safer version of the dish with specific steps.",
-                    f"I can't answer that directly. Let's focus on cooking fundamentals, food safety, or a safe recipe step you can use right away.",
-                    f"That sits outside what I cover. What I can do is help with a documented cooking topic or a safer, useful alternative.",
+                    f"That is outside my role as {npc_name}. Instead, I can help with a safe recipe, a technique, or a safer cooking alternative with a clear next step. I can also explain the temperature or timing check that keeps it safe. Pick one and I will keep it practical.",
+                    f"I can't help with that request. I can still answer a safe cooking question or walk through a safer version of the dish with specific steps. If you want, I can focus on heat, timing, or storage. That keeps the advice useful without crossing the line.",
+                    f"I can't answer that directly. Let's focus on cooking fundamentals, food safety, or a safe recipe step you can use right away. I can make the answer concrete with a temperature or texture check. Give me one safe target and I will help.",
+                    f"That sits outside what I cover. What I can do is help with a documented cooking topic or a safer, useful alternative. I can also help you choose the next step in the recipe. Tell me what you want to fix and I'll stay specific.",
                 ]
             else:
                 templates = [
-                    f"That is outside my role as {npc_name}. Instead, I can help with a documented {subject} topic.",
-                    f"I can't help with that request. Instead, I can explain a documented {subject} topic about chronology or sources.",
-                    f"I can't answer that directly. Let's focus on a real {subject} question about chronology, sources, or evidence.",
-                    f"That sits outside what I cover. What I can do is help with a documented {subject} topic.",
-                    f"I don't cover that topic. Let's talk about {subject} instead - what would you like to learn?",
-                    f"I don't handle requests outside {subject}. I can help with evidence, sources, or a concrete example.",
+                    f"That is outside my role as {npc_name}. Instead, I can help with a documented {subject} topic. I can also give a concrete source or example if you want the answer grounded. Pick a real question and I will stay in scope.",
+                    f"I can't help with that request. Instead, I can explain a documented {subject} topic about chronology or sources. If you give me an event, I can make the answer more concrete. That keeps the response useful and accurate.",
+                    f"I can't answer that directly. Let's focus on a real {subject} question about chronology, sources, or evidence. I can also compare two accounts if that helps. Ask me a specific question and I will stay with the record.",
+                    f"That sits outside what I cover. What I can do is help with a documented {subject} topic. I can also point to one source or one consequence if you want more detail. Give me a concrete topic and I will help.",
+                    f"I don't cover that topic. Let's talk about {subject} instead - what would you like to learn? I can keep the answer tied to a date, a source, or a consequence. Pick one and I will stay focused.",
+                    f"I don't handle requests outside {subject}. I can help with evidence, sources, or a concrete example. If you want, I can also put the topic on a timeline. Ask me a specific question and I will keep it useful.",
                 ]
-        return _with_refusal_contract(random.choice(templates))
+        return _with_refusal_contract(_choose_variant(templates))
 
     if _is_cooking_subject(spec):
         templates = [
@@ -740,9 +891,9 @@ def generate_refusal_response(spec, boundary=None):
         templates = [
             f"I am {npc_name}, and I specialize in {subject}. That question is outside my area of expertise.",
             f"I focus on {subject}, so I can't help with that request. Ask me about a verified fact or a safe alternative instead.",
-            f"As {npc_name}, I am here to help you explore {subject}. I cannot assist with that, but I can answer in-scope questions.",
+            f"As {npc_name}, I am here to help you explore {subject}. I can answer in-scope questions.",
             f"That is not something I can help with. My role is to teach {subject}.",
-            f"I don't cover that area. Let me help with {subject} instead - pick a topic you want to explore.",
-            f"I don't handle that kind of request. Ask me about {subject} and I'll give you a clear, helpful answer.",
+            f"I don't cover that area. Let me help with {subject} instead.",
+            f"I don't handle that kind of request. Ask me about {subject} and I'll give you a clear answer.",
         ]
-    return _with_refusal_contract(random.choice(templates))
+    return _with_refusal_contract(_choose_variant(templates))

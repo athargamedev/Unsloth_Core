@@ -30,6 +30,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import paths
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
+from src.core.ops.canonical_artifacts import record_canonical_bundle
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -1562,6 +1563,15 @@ def main():
                         manifest_artifacts,
                         technique=tech_val,
                         metadata={"total_input": total_input, "kept": kept, "discarded": discarded},
+                    )
+                    record_canonical_bundle(
+                        run_id=run.run_id,
+                        stage="sanitize",
+                        npc_key=npc_key_val,
+                        technique=tech_val,
+                        artifacts=manifest_artifacts,
+                        metrics={"total_input": total_input, "kept": kept, "discarded": discarded},
+                        metadata={"output_path": str(output_path), "manifest_path": str(locals().get("manifest_path")) if locals().get("manifest_path") else None},
                     )
                 except Exception:
                     pass  # manifest is optional, never block pipeline

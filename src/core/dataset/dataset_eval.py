@@ -12,17 +12,20 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.core.dataset.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
+from src.core.dataset.dataset_contracts import SUPPORTED_DATASET_CATEGORIES, calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
+from src.core.ops.npc_production_strategy import load_strategy_profile
 from src.core.ops.confident_api import ConfidentAPIClient
 from src.core.ops.confident_insights import write_dataset_quality_insights
 from src.core.ops.env_loader import confident_available, ensure_confident_api_key
 from src.core.ops.preflight import run_preflight
 from src.core.ops.ollama_model_presets import resolve_ollama_model
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
+from src.core.ops.canonical_artifacts import record_canonical_bundle
 from src.config.workflow_context import resolve_workflow_context
 
 DEEPEVAL_TEST = PROJECT_ROOT / "tests" / "evals" / "test_dataset_generation_quality.py"
@@ -76,6 +79,15 @@ def load_spec(spec_path: Path) -> dict:
         raise SystemExit(f"Error: missing npc_key in {spec_path}")
     spec.setdefault("__path__", str(spec_path))
     return spec
+
+
+def _normalize_ollama_base_url(base_url: str) -> str:
+    """Prefer an explicit IPv4 loopback address for local Ollama access."""
+    parsed = urlparse(base_url)
+    if parsed.hostname == "localhost":
+        netloc = parsed.netloc.replace("localhost", "127.0.0.1", 1)
+        return urlunparse(parsed._replace(netloc=netloc))
+    return base_url
 
 
 def dataset_dir(npc_key: str, technique: str) -> Path:
@@ -284,8 +296,58 @@ def load_optional_json(path: Path) -> dict | None:
         return None
 
 
+def _strategy_density_targets(profile: str = "npc-production-grounded") -> dict[str, dict[str, int]]:
+    try:
+        density = ((load_strategy_profile(profile).get("dataset") or {}).get("density") or {})
+    except Exception:
+        return {}
+    targets: dict[str, dict[str, int]] = {}
+    for category in SUPPORTED_DATASET_CATEGORIES:
+        cfg = density.get(category) if isinstance(density, dict) else None
+        if isinstance(cfg, dict):
+            targets[category] = {
+                "min_words": int(cfg.get("min_words", 0) or 0),
+                "max_words": int(cfg.get("max_words", 0) or 0),
+            }
+    return targets
+
+
+def derive_density_signals(dataset_summary: dict, *, profile: str = "npc-production-grounded") -> list[dict]:
+    signals: list[dict] = []
+    targets = _strategy_density_targets(profile)
+    by_category = ((dataset_summary.get("assistant_density") or {}).get("by_category") or {})
+    for category, target in targets.items():
+        words = ((by_category.get(category) or {}).get("words") or {})
+        count = int(words.get("count", 0) or 0)
+        avg_words = float(words.get("avg", 0.0) or 0.0)
+        min_words = int(target.get("min_words", 0) or 0)
+        max_words = int(target.get("max_words", 0) or 0)
+        if count and min_words and avg_words < min_words:
+            signals.append({
+                "type": "dataset_density_gap",
+                "severity": "high" if avg_words < min_words * 0.75 else "medium",
+                "category": category,
+                "avg_words": avg_words,
+                "target_min_words": min_words,
+                "target_max_words": max_words,
+                "suggested_action": "apply_shared_density_generation_profile",
+            })
+        elif count and max_words and avg_words > max_words:
+            signals.append({
+                "type": "dataset_density_overflow",
+                "severity": "medium",
+                "category": category,
+                "avg_words": avg_words,
+                "target_min_words": min_words,
+                "target_max_words": max_words,
+                "suggested_action": "compress_shared_generation_profile",
+            })
+    return signals
+
+
 def derive_feedback_signals(summary: dict, failures: list[dict], dataset_summary: dict, expected_distribution: dict[str, int]) -> list[dict]:
     signals: list[dict] = []
+    signals.extend(derive_density_signals(dataset_summary))
     for gap in summary.get("distribution_gaps", []) or []:
         signals.append({
             "type": "distribution_gap",
@@ -432,6 +494,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     npc_key = workflow.npc_key
     technique = workflow.technique
     clean_path = workflow.dataset_path if workflow.dataset_path.name == "train_clean.jsonl" else workflow.dataset_clean_path
+    ollama_base_url = _normalize_ollama_base_url(args.ollama_base_url)
     is_pull = bool(getattr(args, "pull_alias", None))
     if not is_pull and not clean_path.exists():
         raise SystemExit(
@@ -492,7 +555,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         preset=None,
                         spec_path=args.spec,
                         technique=technique,
-                        ollama_url=args.ollama_base_url,
+                        ollama_url=ollama_base_url,
                         auto_unload_ollama=True,
                         require_gcc=False,
                     )
@@ -526,17 +589,24 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 # Propagate Confident AI key explicitly so the deepeval subprocess
                 # can upload results even when its cwd differs from PROJECT_ROOT
                 # (DeepEval 4.x auto-loads .env.local from cwd, but belt-and-suspenders).
-                confident_key = os.getenv("CONFIDENT_API_KEY", "")
+                confident_key = (
+                    os.getenv("CONFIDENT_API_KEY", "")
+                    if (args.confident or args.remote_eval or args.push_to_confident)
+                    else ""
+                )
                 env.update(
                     {
                         "DEEPEVAL_DATASET_LIVE": "1",
+                        "DEEPEVAL_DISABLE_CONFIDENT_UPLOAD": "0"
+                        if (args.confident or args.remote_eval or args.push_to_confident)
+                        else "1",
                         "DEEPEVAL_DATASET_PULL_ALIAS": getattr(args, "pull_alias", None) or "",
                         "DEEPEVAL_DATASET_NPC_KEYS": npc_key,
                         "DEEPEVAL_DATASET_TECHNIQUE": technique,
                         "DEEPEVAL_DATASET_CASES_PER_CATEGORY": str(cases_per_category),
                         "DEEPEVAL_JUDGE_PROVIDER": judge_provider,
                         "DEEPEVAL_OLLAMA_MODEL": resolved_judge_model,
-                        "DEEPEVAL_OLLAMA_BASE_URL": args.ollama_base_url,
+                        "DEEPEVAL_OLLAMA_BASE_URL": ollama_base_url,
                         "DEEPEVAL_OLLAMA_TEMPERATURE": str(args.judge_temperature),
                         "DEEPEVAL_WANDB_MODEL": resolved_judge_model,
                         "DEEPEVAL_WANDB_TEMPERATURE": str(args.judge_temperature),
@@ -551,6 +621,9 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         } if confident_key else {}),
                     }
                 )
+                pytest_addopts = env.get("PYTEST_ADDOPTS", "").strip()
+                no_rerunfailures = "-p no:rerunfailures -p no:pytest_rerunfailures"
+                env["PYTEST_ADDOPTS"] = f"{pytest_addopts} {no_rerunfailures}".strip() if pytest_addopts else no_rerunfailures
                 if args.categories:
                     env["DEEPEVAL_DATASET_CATEGORIES"] = args.categories
 
@@ -923,6 +996,15 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     "dataset_eval",
                     manifest_artifacts,
                     technique=technique,
+                    metadata=manifest_metadata,
+                )
+                record_canonical_bundle(
+                    run_id=run.run_id,
+                    stage="dataset_eval",
+                    npc_key=npc_key,
+                    technique=technique,
+                    artifacts=manifest_artifacts,
+                    metrics=summary,
                     metadata=manifest_metadata,
                 )
             except Exception as e:

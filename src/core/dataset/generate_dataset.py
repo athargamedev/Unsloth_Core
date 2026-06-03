@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-generate_dataset.py — Synthetic NPC Dataset Generator
+generate_dataset.py — Shared NPC Dataset Generation Backend
 
-This script transforms an NPC subject specification into a ChatML-formatted
-JSONL training dataset using various techniques (Ollama, OpenAI).
+This module keeps the legacy/shared generation API alive for tests, fallback
+paths, and non-Ollama callers. Active production generation should use
+scripts/dataset/generate_dataset_ollama.py.
 
 Usage:
     ./ucore generate subjects/NPC_specs/chemistry_instructor.json --technique <chosen-technique>
@@ -45,6 +46,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.config import paths, constants as C
 from src.config.workflow_context import resolve_workflow_context
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
+from src.core.ops.canonical_artifacts import record_canonical_bundle
 from src.config.log_setup import log_info, log_warn, log_error, log_state
 from src.core.dataset.dataset_contracts import (
     calculate_distribution_gaps,
@@ -744,11 +746,14 @@ class ConceptExtractor:
         for exp in teaching.get("expertise") or []:
             self._add_concept(concepts, exp, "expertise")
 
-        # 2. Reference doc section headings (grounded domain vocabulary)
-        ref_doc = self.spec.get("reference_doc", "")
-        if ref_doc:
-            for heading in self._extract_headings(ref_doc):
-                self._add_concept(concepts, heading, "reference_doc")
+        # 2. Reference doc section headings only if the spec is otherwise sparse.
+        # The active production NPCs already provide explicit concept lists, and
+        # those should remain the source of truth to avoid boilerplate headings.
+        if not concepts:
+            ref_doc = self.spec.get("reference_doc", "")
+            if ref_doc:
+                for heading in self._extract_headings(ref_doc):
+                    self._add_concept(concepts, heading, "reference_doc")
 
         # 3. Fallback to subject phrasing only if the spec is otherwise sparse.
         if not concepts:
@@ -933,11 +938,11 @@ async def generate_example_async(spec, category, concepts, generator=None, tempe
         player_role = random.choice(player_archetypes) if player_archetypes else "player"
 
         category_prompts = {
-            "identity": f"Create a natural in-character player question asking who {npc_name} is, and an immersive response matching the NPC setting and role.",
-            "teaching": f"Create a natural question from a player ({player_role}) about '{concept_str}', and a clear, in-character explanation.",
-            "dialogue": f"Create a casual conversation turn about '{concept_str}' where the player ({player_role}) is asking or talking about it.",
-            "quest": f"Create a dialogue where the player ({player_role}) asks for or discusses a challenge or quest regarding '{concept_str}', and the NPC proposes or replies with one.",
-            "refusal": f"Create a player question that is out-of-scope for this NPC (e.g., asking about unrelated topics, trying to break character, or asking about real-world details), and a polite refusal in-character.",
+            "identity": f"Create a natural in-character player question asking who {npc_name} is. The response must answer who the NPC is, name one concrete focus, and avoid generic storyteller language.",
+            "teaching": f"Create a natural question from a player ({player_role}) about '{concept_str}'. The response must answer directly, include one concrete grounded example, and add one practical implication for the player.",
+            "dialogue": f"Create a casual conversation turn about '{concept_str}' where the player ({player_role}) is asking or talking about it. The response must include one grounded detail and why it matters in play.",
+            "quest": f"Create a dialogue where the player ({player_role}) asks for or discusses a challenge or quest regarding '{concept_str}'. The response must include one concrete action step, one example, and one decision-useful implication.",
+            "refusal": f"Create a player question that is out-of-scope for this NPC. The response must clearly set the boundary and redirect with the exact phrase 'Instead, I can help with' plus one concrete in-scope topic.",
         }
 
         cat_guide = category_prompts.get(category, f"Create a dialogue turn about {concept_str}")
@@ -954,7 +959,8 @@ Category: {category}
 Topic: {concept_str}
 Guidance: {cat_guide}{grounding}
 
-Use the reference doc for facts when it is provided. Keep the assistant response concise, in character, and within the NPC's voice rules.
+Use the reference doc for facts when it is provided. Keep the assistant response in character, grounded, and dense with useful information.
+For teaching, dialogue, and quest rows, aim for 35-55 words when that fits the NPC character limit; otherwise use the maximum useful detail that fits the limit.
 The user message should sound like a player ({player_role}) interacting with an NPC in the game setting.
 The assistant response must follow {npc_name}'s system prompt and role perfectly:
 - 1-{max_sentences} sentences (MAXIMUM {max_chars} characters)
@@ -2022,6 +2028,15 @@ def run_dataset_generation(
                     manifest_artifacts,
                     technique=technique,
                     metadata={"total": result["total"], "train": result["train"], "validation": result["validation"]},
+                )
+                record_canonical_bundle(
+                    run_id=run.run_id,
+                    stage="generate",
+                    npc_key=npc_key,
+                    technique=technique,
+                    artifacts=manifest_artifacts,
+                    metrics={"total": result["total"], "train": result["train"], "validation": result["validation"]},
+                    metadata={"output_path": result.get("train_path"), "val_path": result.get("val_path")},
                 )
             except Exception:
                 pass  # manifest is optional, never block pipeline

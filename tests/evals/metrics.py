@@ -159,6 +159,11 @@ DATASET_QUALITY_METRICS = [
             "Penalize AI disclaimers ('As an AI'), character breaks, or unsafe/off-topic drift.",
             "STRICT: Penalize markdown headers (##), bullet points, or bold text (**). Unity UI cannot render these.",
             "Penalize responses exceeding the max sentence rule (usually 3 sentences) or too-short teaching responses.",
+            "For identity rows, accept a short role statement that names the NPC's function and one concrete domain anchor; do not require a full teaching answer.",
+            "FEW-SHOT PASSING (history_guide, identity):\n"
+            "Input: 'Are you a teacher?'\n"
+            "Actual Output: 'No. I guide history with sources and dates, like Mesopotamia around 3500 BCE and Rome from 509 to 27 BCE.'\n"
+            "(Passes: direct identity, concise, concrete, no markdown or AI disclaimers).",
             "FEW-SHOT PASSING (history_guide, teaching, max 3 sentences):\n"
             "Input: 'Tell me about Rome.'\n"
             "Actual Output: 'Rome was founded in 753 BC on the Tiber River. It grew from a small trading town into a massive empire.'\n"
@@ -189,6 +194,11 @@ DATASET_QUALITY_METRICS = [
             "Verify the response provides concrete, expert, domain-specific information (dates, ingredients, techniques) to teach the target concept.",
             "Penalize template greetings/filler ('Great question!', 'Happy to help!', 'Let's dive in') and vague/generic overviews.",
             "Penalize unsupported claims or empty/non-actionable statements that reduce training value.",
+            "For identity rows, reward a brief self-description with one or two concrete anchors; do not penalize the absence of instructional detail that belongs in teaching rows.",
+            "FEW-SHOT PASSING (history_guide, identity):\n"
+            "Input: 'Are you a teacher?'\n"
+            "Actual Output: 'No. I guide history with sources and dates, like Mesopotamia around 3500 BCE and Rome from 509 to 27 BCE.'\n"
+            "(Passes: concise identity, concrete historical anchors, useful as training data for the NPC's role).",
             "FEW-SHOT PASSING (chef_assistant, teaching, concept: knife safety):\n"
             "Input: 'How do I hold a chef's knife?'\n"
             "Actual Output: 'Curl your fingers into a claw shape, keeping your knuckles pressed against the side of the blade. This guides the knife safely while protecting your fingertips.'\n"

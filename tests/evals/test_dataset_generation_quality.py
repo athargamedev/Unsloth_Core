@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 import deepeval
 from deepeval import assert_test
+from deepeval.test_run import global_test_run_manager
 from deepeval.test_case import LLMTestCase
 from deepeval.dataset import EvaluationDataset
 
@@ -40,6 +41,9 @@ if not _DATASET_LIVE:
         allow_module_level=True,
     )
 
+if os.getenv("DEEPEVAL_DISABLE_CONFIDENT_UPLOAD", "1").strip().lower() not in {"0", "false", "no", "off"}:
+    global_test_run_manager.disable_request = True
+
 DEFAULT_NPCS = ("history_guide", "chef_assistant")
 DEFAULT_CATEGORIES = ("identity", "teaching", "dialogue", "quest", "refusal")
 DEFAULT_TECHNIQUE = "template"
@@ -50,6 +54,32 @@ def _csv_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
     if not value:
         return default
     return tuple(part.strip() for part in value.split(",") if part.strip())
+
+
+def _dataset_max_workers() -> int:
+    """Return the dataset gate worker count.
+
+    Local Ollama judges are typically the bottleneck on the 6GB workstation, so
+    the safe default is sequential execution. Parallelism can be enabled
+    explicitly for hosted judges or larger local endpoints.
+    """
+    raw_workers = (
+        os.getenv("DEEPEVAL_DATASET_MAX_WORKERS")
+        or os.getenv("DEEPEVAL_MODEL_MAX_WORKERS")
+        or os.getenv("DEEPEVAL_MAX_WORKERS")
+    )
+    if not raw_workers:
+        return 1
+
+    try:
+        workers = int(raw_workers)
+    except ValueError:
+        return 1
+
+    if workers < 1:
+        return 1
+
+    return workers
 
 
 def _load_spec(npc_key: str) -> dict:
@@ -229,8 +259,12 @@ def test_generated_dataset_quality():
         except Exception as exc:
             return test_case.name, str(exc)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        results = list(executor.map(evaluate_case, TEST_CASES))
+    max_workers = _dataset_max_workers()
+    if max_workers == 1:
+        results = [evaluate_case(test_case) for test_case in TEST_CASES]
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = list(executor.map(evaluate_case, TEST_CASES))
 
     failures = [res for res in results if res is not None]
 

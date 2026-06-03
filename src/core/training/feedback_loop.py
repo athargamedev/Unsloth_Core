@@ -4,7 +4,7 @@ feedback_loop.py — Self-Improving Feedback Loop
 
 Ingests structured evaluation results from evaluate.py's --feedback-json output,
 identifies weak concepts (low win rate, poor quality, constraint violations),
-and automatically triggers targeted dataset regeneration via generate_dataset.py
+and automatically triggers targeted dataset regeneration via the shared generator backend
 to address those weaknesses.
 
 Usage:

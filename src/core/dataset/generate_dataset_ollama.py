@@ -72,6 +72,7 @@ from src.core.dataset.generation_profiles import (
 from generate_dataset import (
     ConceptExtractor,
     ReferenceDocRetriever,
+    generate_example_async,
     fallback_generation_run_id,
     _refusal_user_message,
     compute_content_hash,
@@ -170,6 +171,28 @@ GENERIC_FILLER_REPLACEMENTS = [
     r"let me tell you something about it\. ?",
 ]
 
+PROMPT_LEAK_PATTERNS = [
+    r"evaluation contract",
+    r"contract role",
+    r"source snippets",
+    r"memory retention scenarios",
+    r"guided archive note",
+    r"category:\s*",
+    r"difficulty:\s*",
+]
+
+
+def _contains_prompt_leak(text: str) -> bool:
+    lowered = (text or "").lower()
+    return any(re.search(pattern, lowered) for pattern in PROMPT_LEAK_PATTERNS)
+
+
+def _clean_llm_response_text(text: str, concept: str) -> str:
+    cleaned = clean_generic_filler(text, concept)
+    cleaned = re.sub(r"\b(?:evaluation contract|contract role|source snippets|memory retention scenarios)\b", "", cleaned, flags=re.I)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
+
 
 def build_category_generation_prompt(
     category: str,
@@ -182,9 +205,9 @@ def build_category_generation_prompt(
     """Backward-compatible category prompt helper used by tests and callers."""
     return {
         "identity": f"Write a very short first-person self-introduction for {npc_name}. Say who you are, directly answer what you do, name one focus related to {subject}, such as {concepts_str}, avoid generic storyteller language, and keep it to 1-2 sentences.",
-        "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Answer the first sentence directly, include one concrete fact or example from the reference doc, and avoid inventing new details. Aim for 12-20 words. Keep it to 1-2 short sentences.",
-        "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer directly, add one specific detail or example grounded in the spec, and aim for 12-20 words. Keep it under 200 characters.",
-        "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character. Include one concrete action step or example and aim for 12-20 words. Keep it to 1-2 short sentences.",
+        "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Answer directly, include one concrete fact or example from the reference doc, and add one practical implication for the player. Aim for 35-55 words when the NPC limits allow it; otherwise be as dense and specific as possible.",
+        "dialogue": f"Write a casual turn about '{concept_str}' with an in-character answer. Answer directly, add one grounded detail or example, and include why it matters in play. Aim for 35-55 words when the NPC limits allow it; otherwise be as dense and specific as possible.",
+        "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character. Include one concrete action step, one example, and one decision-useful implication. Aim for 35-55 words when the NPC limits allow it; otherwise be as dense and specific as possible.",
         "refusal": f"Write an out-of-scope question for {npc_name}, state the boundary clearly, and redirect to a safe in-scope alternative. Do not add an unrelated fact or drift to another topic. Include 'Instead, I can help with...' plus one concrete in-scope topic related to {subject}, such as {concepts_str}. Keep it to 1-2 sentences.",
     }.get(category, f"Generate a concise educational dialogue about '{concept_str}' with one concrete detail.")
 
@@ -595,6 +618,7 @@ class OllamaDatasetGenerator:
         dialogue_conf = self.spec.get("dialogue") or {}
         max_sentences = dialogue_conf.get("max_sentences", 3)
         max_chars = dialogue_conf.get("max_characters", 200)
+        allow_formatting = dialogue_conf.get("allow_formatting", True)
         player_archetypes = dialogue_conf.get("player_archetypes", ["player"])
         player_role = random.choice(player_archetypes) if player_archetypes else "player"
 
@@ -610,9 +634,9 @@ class OllamaDatasetGenerator:
 
         category_prompt = {
             "identity": f"Write a short self-introduction for {npc_name} in first person. Include one concrete topic you can help with related to {subject}, such as {concepts_str}.",
-            "teaching": f"Write a question from a {player_role} about '{concept_str}' and a short, helpful answer.",
-            "dialogue": f"Write a casual turn about '{concept_str}' with a concise in-character answer. Answer the user's question directly in the first sentence and avoid generic lead-ins like 'going deeper' or 'start with'.",
-            "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character.",
+            "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Include one concrete grounded example and one practical implication. Aim for 35-55 words when the NPC limits allow it; otherwise be as dense and specific as possible.",
+            "dialogue": f"Write a casual turn about '{concept_str}' with an in-character answer. Answer directly, include one grounded detail, and explain why it matters in play. Aim for 35-55 words when the NPC limits allow it; otherwise be as dense and specific as possible.",
+            "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character. Include one concrete action step, one example, and one decision-useful implication. Aim for 35-55 words when the NPC limits allow it; otherwise be as dense and specific as possible.",
             "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that directly acknowledges the topic change and offers another in-scope topic related to {subject}. Include both an explicit boundary phrase and a redirect phrase such as 'Instead, I can help with...'.",
         }.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
         if difficulty:
@@ -655,6 +679,32 @@ class OllamaDatasetGenerator:
         history_subject = _is_history_subject(self.spec)
         effective_temperature = min(temperature, 0.25) if history_subject else temperature
 
+        async def fallback_template_example() -> dict | None:
+            fallback = await generate_example_async(
+                self.spec,
+                category,
+                [concept_str],
+                generator=None,
+                temperature=temperature,
+                difficulty=difficulty,
+                dialogue_type=dialogue_type,
+                scenario_name=scenario_name,
+                boundary=boundary,
+                seed=None,
+                technique="ollama",
+                session=session,
+                executor=executor,
+                retriever=self.retriever,
+                guardrail=self.guardrail,
+                checkpoint_store=None,
+            )
+            if fallback:
+                logger.warning(f"Falling back to deterministic template for {category}:{concept_str}")
+            return fallback
+
+        if history_subject:
+            return await fallback_template_example()
+
         response = await self.generator.generate_async(
             system_prompt="You are a training data generator for educational NPCs. Output valid JSON.",
             user_prompt=generation_prompt,
@@ -664,9 +714,9 @@ class OllamaDatasetGenerator:
             session=session,
             executor=executor
         )
-        
+
         if not response:
-            return None
+            return await fallback_template_example()
         
         try:
             # Extract JSON from response (handle markdown code blocks)
@@ -678,9 +728,9 @@ class OllamaDatasetGenerator:
             
             res_json = json.loads(json_str.strip())
             user_msg = res_json.get("user", "").strip()
-            asst_msg = clean_generic_filler(res_json.get("assistant", "").strip(), concept_str)
+            asst_msg = _clean_llm_response_text(res_json.get("assistant", "").strip(), concept_str)
             user2_msg = res_json.get("user2", "").strip()
-            asst2_msg = clean_generic_filler(res_json.get("assistant2", "").strip(), concept_str) if res_json.get("assistant2") else ""
+            asst2_msg = _clean_llm_response_text(res_json.get("assistant2", "").strip(), concept_str) if res_json.get("assistant2") else ""
 
             if category == "identity":
                 asst_msg = generate_identity_response(self.spec)
@@ -692,7 +742,15 @@ class OllamaDatasetGenerator:
                 asst_msg = generate_quest_response(self.spec, concept_str, scenario_name=scenario_name, retriever=self.retriever)
 
             if not user_msg or not asst_msg:
-                return None
+                return await fallback_template_example()
+
+            if _contains_prompt_leak(asst_msg):
+                logger.warning("Prompt leak detected in LLM response; falling back to deterministic template")
+                return await fallback_template_example()
+
+            if len(asst_msg) > max_chars:
+                logger.warning(f"LLM response exceeded char limit ({len(asst_msg)} > {max_chars}); using fallback template")
+                return await fallback_template_example()
             
             # Validate with guardrail
             is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
@@ -704,9 +762,9 @@ class OllamaDatasetGenerator:
                     is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
                     if not is_valid:
                         logger.warning(f"Refusal fallback rejected: {reason}")
-                        return None
+                        return await fallback_template_example()
                 else:
-                    return None
+                    return await fallback_template_example()
             if category == "refusal":
                 boundary_hint = self._infer_refusal_boundary(user_msg, concept_str)
                 user_msg = _refusal_user_message(self.spec, boundary_hint)
@@ -716,7 +774,7 @@ class OllamaDatasetGenerator:
                 is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
                 if not is_valid:
                     logger.warning(f"Refusal fallback rejected: {reason}")
-                    return None
+                    return await fallback_template_example()
             
             messages = [
                 {"role": "system", "content": system_prompt},
@@ -727,7 +785,7 @@ class OllamaDatasetGenerator:
                 is_valid2, reason2 = self.guardrail.validate(asst2_msg, [grounding], self.spec)
                 if not is_valid2:
                     logger.warning(f"Guardrail rejection: {reason2}")
-                    return None
+                    return await fallback_template_example()
                 messages.extend([
                     {"role": "user", "content": user2_msg},
                     {"role": "assistant", "content": asst2_msg},
@@ -766,7 +824,7 @@ class OllamaDatasetGenerator:
         
         except (json.JSONDecodeError, KeyError) as e:
             logger.warning(f"Failed to parse LLM response: {e}")
-            return None
+            return await fallback_template_example()
     
     async def generate_dataset_async(self, examples_per_category: dict, 
                                     temperature: float = 0.6, max_workers: int = 4,
@@ -776,6 +834,7 @@ class OllamaDatasetGenerator:
         all_examples = []
         total_count = sum(examples_per_category.values())
         self.progress = ProgressTracker(total_count)
+        allow_formatting = (self.spec.get("dialogue") or {}).get("allow_formatting", True)
         
         semaphore = asyncio.Semaphore(max_workers)
         
@@ -786,6 +845,8 @@ class OllamaDatasetGenerator:
                 try:
                     concept = self._pick_concept(category, index)
                     multi_turn = False if category in {"identity", "refusal"} else should_generate_multi_turn(category, index, multi_turn_ratio)
+                    if not allow_formatting:
+                        multi_turn = False
                     example = await self.generate_example_llm(
                         category, str(concept), difficulty=difficulty,
                         dialogue_type=dialogue_type, scenario_name=scenario_name,

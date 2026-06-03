@@ -239,12 +239,13 @@ def test_ollama_category_prompts_remain_short_and_specific():
 
     assert "name one historical method or focus" in identity or "chronology or sources" in identity
     assert "generic storyteller language" in identity
-    assert "1-2 short sentences" in teaching
+    assert "direct answer" in teaching
     assert "one concrete fact or example" in teaching
-    assert "Aim for 12-20 words" in teaching
-    assert "under 200 characters" in dialogue
-    assert "one specific detail or example" in dialogue
-    assert "aim for 12-20 words" in dialogue
+    assert "Aim for 35-55 words" in teaching
+    assert "Aim for 35-55 words" in dialogue
+    assert "one grounded detail or example" in dialogue
+    assert "why it matters in play" in dialogue
+    assert "Aim for 35-55 words" in dialogue
     assert "do not add an unrelated fact" in refusal.lower()
     assert "drift to another topic" in refusal.lower()
     assert "Instead, I can help with" in refusal

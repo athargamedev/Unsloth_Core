@@ -92,3 +92,4 @@ def test_combined_quality_report_merges_manifest_sanitize_and_deepeval(tmp_path:
     assert report["feedback_signals"]
     assert any(signal["type"] == "distribution_gap" for signal in report["feedback_signals"])
     assert any(signal["type"] == "deepeval_metric_failure" for signal in report["feedback_signals"])
+    assert any(signal["type"] == "dataset_density_gap" and signal["category"] == "teaching" for signal in report["feedback_signals"])

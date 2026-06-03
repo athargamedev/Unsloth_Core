@@ -76,3 +76,6 @@ def test_summarize_jsonl_dataset_counts_rows(tmp_path: Path):
     assert summary["by_difficulty"] == {"beginner": 1, "intermediate": 1}
     assert summary["by_split"] == {"train": 1, "validation": 1}
     assert summary["content_sha256"].startswith("sha256:")
+    assert summary["assistant_density"]["words"]["count"] == 2
+    assert summary["assistant_density"]["by_category"]["identity"]["words"]["avg"] == 1.0
+    assert summary["assistant_density"]["by_category"]["teaching"]["words"]["avg"] == 1.0
