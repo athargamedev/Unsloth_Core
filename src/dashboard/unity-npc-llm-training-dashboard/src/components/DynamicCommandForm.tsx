@@ -17,6 +17,10 @@ export interface DynamicCommandFormProps {
   context?: Record<string, string>;
   loading?: boolean;
   onRetry?: () => void;
+  /** Only render fields matching these keys (e.g., ["spec", "preset", "options.technique"]) */
+  fieldKeys?: readonly string[];
+  /** Suppress the Command ID read-only box (for inline usage inside custom layouts) */
+  hideCommandId?: boolean;
 }
 
 interface SortedField {
@@ -36,11 +40,15 @@ export function DynamicCommandForm({
   context,
   loading = false,
   onRetry,
+  fieldKeys,
+  hideCommandId = false,
 }: DynamicCommandFormProps) {
   // ── Sort & filter fields ────────────────────────────────────────────────
   const sortedFields: SortedField[] = useMemo(() => {
+    const fieldKeySet = fieldKeys ? new Set(fieldKeys) : null;
     return Object.entries(fields)
       .filter(([key]) => !SKIP_FIELDS.has(key))
+      .filter(([fieldPath]) => !fieldKeySet || fieldKeySet.has(fieldPath))
       .map(([fieldPath, schema]) => ({ fieldPath, schema }))
       .sort((a, b) => {
         const orderA = a.schema.order ?? Number.MAX_SAFE_INTEGER;
@@ -48,7 +56,7 @@ export function DynamicCommandForm({
         if (orderA !== orderB) return orderA - orderB;
         return a.fieldPath.localeCompare(b.fieldPath);
       });
-  }, [fields]);
+  }, [fields, fieldKeys]);
 
   // ── Loading skeleton ────────────────────────────────────────────────────
   if (loading) {
@@ -67,13 +75,15 @@ export function DynamicCommandForm({
   // ── Render ──────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      {/* Command ID (read-only) */}
-      <div className="space-y-1">
-        <span className="block text-sm font-bold text-ink/60">Command ID</span>
-        <div className="p-2 bg-bg border border-line rounded text-sm font-mono">
-          {commandId}
+      {/* Command ID (read-only) — hidden when hideCommandId is set */}
+      {!hideCommandId && (
+        <div className="space-y-1">
+          <span className="block text-sm font-bold text-ink/60">Command ID</span>
+          <div className="p-2 bg-bg border border-line rounded text-sm font-mono">
+            {commandId}
+          </div>
         </div>
-      </div>
+      )}
 
       {sortedFields.map(({ fieldPath, schema }) => {
         const value = getNestedValue(values, fieldPath);

@@ -1,9 +1,17 @@
 import { motion } from 'motion/react';
-import { Shield, RefreshCw } from 'lucide-react';
+import { Shield } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 import { cn } from '../lib/utils';
 import { Card } from './Card';
+import { DynamicCommandForm } from './DynamicCommandForm';
 import type { Subject, TrainingConfig } from '../api';
-import { useOllamaModels } from '../hooks/useOllamaModels';
+import type { CommandFieldSchema } from '../schemas/command-field';
+
+const CARD_FIELD_GROUPS = {
+  structural: ['spec', 'preset', 'options.technique', 'options.modelId', 'options.rank', 'options.alpha'],
+  optimization: ['options.learningRate', 'options.scheduler', 'options.batchSize', 'options.epochs'],
+  export: ['options.exportGguf', 'options.fullMergeExport'],
+} as const;
 
 interface TrainingSuiteProps {
   subjects: Subject[];
@@ -12,6 +20,7 @@ interface TrainingSuiteProps {
   trainingConfig: TrainingConfig;
   onUpdateTrainingConfig: (config: Partial<TrainingConfig>) => void;
   onLaunchTraining: () => Promise<void>;
+  trainSchema?: Record<string, CommandFieldSchema>;
 }
 
 /** Replicates train.py's estimate_vram() logic for the frontend */
@@ -43,10 +52,38 @@ export const TrainingSuite = ({
   trainingConfig,
   onUpdateTrainingConfig,
   onLaunchTraining,
+  trainSchema,
 }: TrainingSuiteProps) => {
-  const ollamaModels = useOllamaModels();
   const modelId = trainingConfig.modelId || trainingConfig.baseModel;
   const vramGb = estimateVram(modelId, trainingConfig.rank);
+
+  // Build schema-flat values object mapping dotted fieldPaths -> TrainingConfig fields
+  const schemaValues = useMemo(() => {
+    const map: Record<string, unknown> = {};
+    map['spec'] = trainingConfig.spec;
+    map['preset'] = trainingConfig.preset;
+    if (trainingConfig.technique) map['options.technique'] = trainingConfig.technique;
+    if (trainingConfig.modelId) map['options.modelId'] = trainingConfig.modelId;
+    if (trainingConfig.wandb !== undefined) map['options.wandb'] = trainingConfig.wandb;
+    if (trainingConfig.learningRate) map['options.learningRate'] = trainingConfig.learningRate;
+    if (trainingConfig.batchSize) map['options.batchSize'] = trainingConfig.batchSize;
+    if (trainingConfig.epochs) map['options.epochs'] = trainingConfig.epochs;
+    if (trainingConfig.rank) map['options.rank'] = trainingConfig.rank;
+    if (trainingConfig.alpha) map['options.alpha'] = trainingConfig.alpha;
+    if (trainingConfig.scheduler) map['options.scheduler'] = trainingConfig.scheduler;
+    if (trainingConfig.exportGguf !== undefined) map['options.exportGguf'] = trainingConfig.exportGguf;
+    if (trainingConfig.fullMergeExport !== undefined) map['options.fullMergeExport'] = trainingConfig.fullMergeExport;
+    if (trainingConfig.datasetEvalSkip !== undefined) map['options.datasetEvalSkip'] = trainingConfig.datasetEvalSkip;
+    return map;
+  }, [trainingConfig]);
+
+  // Map dotted fieldPaths back to flat TrainingConfig keys
+  const handleFieldChange = useCallback((fieldPath: string, value: unknown) => {
+    const configKey = fieldPath.startsWith('options.')
+      ? fieldPath.slice('options.'.length)
+      : fieldPath;
+    onUpdateTrainingConfig({ [configKey]: value } as Partial<TrainingConfig>);
+  }, [onUpdateTrainingConfig]);
 
   // Real config validation
   const validation = (() => {
@@ -88,177 +125,50 @@ export const TrainingSuite = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card title="Structural Parameters" subtitle="RANK_AND_DIM">
-          <div className="space-y-4">
-            <div>
-              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Subject Spec</label>
-              <select
-                value={trainingConfig.spec}
-                onChange={(e) => onUpdateTrainingConfig({ spec: e.target.value })}
-                className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none mb-2"
-              >
-                {subjects.map((subject) => (
-                  <option key={subject.id} value={subject.path}>{subject.path}</option>
-                ))}
-              </select>
-
-              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Preset</label>
-              <select
-                value={trainingConfig.preset}
-                onChange={(e) => onUpdateTrainingConfig({ preset: e.target.value })}
-                className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-              >
-                <option value="">None (manual config)</option>
-                {presets.map((p) => (
-                  <option key={p.name} value={p.name}>{p.name}</option>
-                ))}
-              </select>
-              {trainingConfig.preset && presetDesc[trainingConfig.preset] && (
-                <p className="text-[8px] mt-1 text-ink/30 italic">{presetDesc[trainingConfig.preset]}</p>
-              )}
-
-              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block mt-4">Dataset Technique</label>
-              <select
-                value={trainingConfig.technique}
-                onChange={(e) => onUpdateTrainingConfig({ technique: e.target.value })}
-                className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-              >
-                <option value="template">template</option>
-                <option value="docs">docs</option>
-                <option value="ollama">ollama</option>
-                <option value="openai">openai</option>
-                <option value="anthropic">anthropic</option>
-              </select>
-            </div>
-
-            {/* Model Selection */}
-            <div>
-              <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 flex items-center justify-between">
-                <span>Base Model (HuggingFace ID)</span>
-                {ollamaModels.loading && <RefreshCw className="w-3 h-3 animate-spin text-ink/30" />}
-              </label>
-              <select
-                value={hfPresets.includes(trainingConfig.modelId) || trainingConfig.modelId === '' ? trainingConfig.modelId : '__custom__'}
-                onChange={(e) => onUpdateTrainingConfig({ modelId: e.target.value, baseModel: e.target.value })}
-                className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none mb-1.5"
-              >
-                <option value="">— select a preset —</option>
-                <optgroup label="Unsloth Presets">
-                  {hfPresets.map(m => (
-                    <option key={m} value={m}>{m.split('/').pop()}</option>
-                  ))}
-                </optgroup>
-                <option value="__custom__">Custom HuggingFace ID…</option>
-              </select>
-              {/* Show text input when custom or value doesn't match presets */}
-              {(!hfPresets.includes(trainingConfig.modelId) && trainingConfig.modelId !== '') && (
-                <input
-                  value={trainingConfig.modelId === '__custom__' ? '' : trainingConfig.modelId}
-                  onChange={(e) => onUpdateTrainingConfig({ modelId: e.target.value, baseModel: e.target.value })}
-                  placeholder="e.g., unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
-                  className="w-full bg-bg border border-accent/40 rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-                />
-              )}
-              <p className="text-[8px] mt-1 text-ink/30">Passed to <code>ucore train --model</code>. Ollama models belong in generation/eval panels.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">LoRA Rank (R)</label>
-                <input
-                  type="number"
-                  value={trainingConfig.rank}
-                  onChange={(e) => onUpdateTrainingConfig({ rank: parseInt(e.target.value) || 0 })}
-                  className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-                />
-                <p className="text-[8px] mt-1 text-ink/30">Higher = more capacity but larger file size.</p>
-              </div>
-              <div>
-                <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">LoRA Alpha</label>
-                <input
-                  type="number"
-                  value={trainingConfig.alpha}
-                  onChange={(e) => onUpdateTrainingConfig({ alpha: parseInt(e.target.value) || 0 })}
-                  className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-                />
-              </div>
-            </div>
-          </div>
+          {trainSchema ? (
+            <DynamicCommandForm
+              commandId="train"
+              fields={trainSchema}
+              values={schemaValues}
+              onChange={handleFieldChange}
+              fieldKeys={CARD_FIELD_GROUPS.structural}
+              hideCommandId
+            />
+          ) : (
+            <div className="text-xs text-ink/40 italic py-4 text-center">Loading schema...</div>
+          )}
         </Card>
 
         <div className="space-y-4">
           <Card title="Optimization Logic" subtitle="SCHEDULER_V1">
-            <div className="space-y-4">
-              <div>
-                <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Learning Rate</label>
-                <div className="flex gap-2">
-                  <input
-                    value={trainingConfig.learningRate}
-                    onChange={(e) => onUpdateTrainingConfig({ learningRate: e.target.value })}
-                    className="flex-1 bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-                  />
-                  <select
-                    value={trainingConfig.scheduler}
-                    onChange={(e) => onUpdateTrainingConfig({ scheduler: e.target.value as any })}
-                    className="bg-bg border border-line rounded px-2 text-[10px] text-ink/60 outline-none"
-                  >
-                    <option value="cosine">Cosine</option>
-                    <option value="linear">Linear</option>
-                    <option value="constant">Constant</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Batch Size</label>
-                  <select
-                    value={trainingConfig.batchSize}
-                    onChange={(e) => onUpdateTrainingConfig({ batchSize: parseInt(e.target.value) })}
-                    className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-                  >
-                    <option value={1}>1</option>
-                    <option value={2}>2</option>
-                    <option value={4}>4</option>
-                    <option value={8}>8</option>
-                    <option value={16}>16</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[12px] uppercase font-bold text-ink/30 mb-1.5 block">Epochs</label>
-                  <input
-                    type="number"
-                    value={trainingConfig.epochs}
-                    onChange={(e) => onUpdateTrainingConfig({ epochs: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-bg border border-line rounded px-3 py-2 text-xs font-mono focus:border-accent outline-none"
-                  />
-                </div>
-              </div>
-            </div>
+            {trainSchema ? (
+              <DynamicCommandForm
+                commandId="train"
+                fields={trainSchema}
+                values={schemaValues}
+                onChange={handleFieldChange}
+                fieldKeys={CARD_FIELD_GROUPS.optimization}
+                hideCommandId
+              />
+            ) : (
+              <div className="text-xs text-ink/40 italic py-4 text-center">Loading schema...</div>
+            )}
           </Card>
 
           {/* Export Options */}
           <Card title="Export Options" subtitle="GGUF_V1">
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={trainingConfig.exportGguf ?? true}
-                  onChange={(e) => onUpdateTrainingConfig({ exportGguf: e.target.checked })}
-                  className="w-3 h-3 accent-accent rounded"
-                />
-                <span className="text-[10px] font-bold uppercase tracking-tighter">Export GGUF After Training</span>
-              </label>
-              {trainingConfig.exportGguf && (
-                <label className="flex items-center gap-2 cursor-pointer select-none ml-4">
-                  <input
-                    type="checkbox"
-                    checked={trainingConfig.fullMergeExport ?? false}
-                    onChange={(e) => onUpdateTrainingConfig({ fullMergeExport: e.target.checked })}
-                    className="w-3 h-3 accent-accent rounded"
-                  />
-                  <span className="text-[10px] text-ink/70 uppercase tracking-tighter">Full Merge Export</span>
-                </label>
-              )}
-            </div>
+            {trainSchema ? (
+              <DynamicCommandForm
+                commandId="train"
+                fields={trainSchema}
+                values={schemaValues}
+                onChange={handleFieldChange}
+                fieldKeys={CARD_FIELD_GROUPS.export}
+                hideCommandId
+              />
+            ) : (
+              <div className="text-xs text-ink/40 italic py-4 text-center">Loading schema...</div>
+            )}
           </Card>
         </div>
       </div>

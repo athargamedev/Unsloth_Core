@@ -4,7 +4,7 @@ import type { CommandFieldSchema } from "../schemas/command-field";
 
 export interface FieldRendererProps {
   fieldPath: string;
-  schema: CommandFieldSchema;
+  schema?: CommandFieldSchema;
   value: unknown;
   onChange: (fieldPath: string, value: unknown) => void;
   error?: string;
@@ -42,6 +42,7 @@ export function FieldRenderer({
   error,
   context,
 }: FieldRendererProps) {
+  if (!schema) return <div className="text-xs text-ink/30 italic">Unknown field: {fieldPath}</div>;
   const description = resolveIfString(schema.description, context) as string | undefined;
   const label = formatLabel(fieldPath);
   const hasValue = value !== undefined && value !== null;

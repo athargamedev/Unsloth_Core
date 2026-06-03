@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchOptionalJson } from '../api';
 import type { Subject, ExportArtifact } from '../api';
@@ -6,6 +6,7 @@ import { EvalReportsDataSchema } from '../schemas/eval-reports';
 import type { ValidatedEvalReportsData, EvalReportFile } from '../schemas/eval-reports';
 import { useOllamaModels } from '../hooks/useOllamaModels';
 import { RefreshCw } from 'lucide-react';
+import { FieldRenderer } from './FieldRenderer';
 
 interface EvalConfig {
   npcKey: string;
@@ -42,10 +43,11 @@ const DEFAULT_JUDGE_MODEL = 'qwen2.5:7b';
 type EvalMode = 'compare' | 'single';
 
 export const EvalWorkflowPanel = ({
-  subjects, exportArtifacts,
+  subjects, exportArtifacts, evaluateSchema,
 }: {
   subjects: Subject[];
   exportArtifacts: ExportArtifact[];
+  evaluateSchema: Record<string, any>;
 }) => {
   const ollamaModels = useOllamaModels();
   const [config, setConfig] = useState<EvalConfig>({
@@ -317,6 +319,38 @@ export const EvalWorkflowPanel = ({
     setConfig(prev => ({ ...prev, [key]: value }));
   };
 
+  const templateContext = useMemo(() => ({
+    npcKey: config.npcKey || '',
+    technique: 'template',
+  }), [config.npcKey]);
+
+  const schemaPathToEvalConfig: Record<string, keyof EvalConfig | undefined> = {
+    'options.baseModel': 'baseModel',
+    'options.numQuestions': 'numQuestions',
+    'options.loraWeight': 'loraWeight',
+    'options.valData': 'valData',
+    'options.wandb': 'wandb',
+    'options.wandbProject': 'wandbProject',
+    'options.wandbEntity': 'wandbEntity',
+    'options.host': 'host',
+    'options.port': 'port',
+    'options.gpuLayers': 'gpuLayers',
+    'options.maxTokens': 'maxTokens',
+    'options.reportHtml': 'reportHtml',
+    'options.track': 'track',
+    'options.judge': 'judge',
+    'options.feedbackJson': 'feedbackJson',
+    'options.output': 'output',
+    'options.interactive': 'interactive',
+  };
+
+  const handleFieldChange = useCallback((fieldPath: string, value: unknown) => {
+    const configKey = schemaPathToEvalConfig[fieldPath];
+    if (configKey) {
+      setConfig(prev => ({ ...prev, [configKey]: value as EvalConfig[typeof configKey] }));
+    }
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0">
       {/* Top config panel */}
@@ -458,47 +492,39 @@ export const EvalWorkflowPanel = ({
           </summary>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-[11px]">
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Base Model <span className="text-accent">(LoRA)</span></label>
-              <input
-                type="text"
+              <FieldRenderer
+                fieldPath="options.baseModel"
+                schema={evaluateSchema['options.baseModel']}
                 value={config.baseModel}
-                onChange={e => updateOpt('baseModel', e.target.value)}
-                placeholder={DEFAULT_BASE}
-                className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
-              <div className="text-[8px] text-ink/30 mt-0.5">Required when candidate is a LoRA adapter</div>
             </div>
-
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Questions</label>
-              <input
-                type="number"
+              <FieldRenderer
+                fieldPath="options.numQuestions"
+                schema={evaluateSchema['options.numQuestions']}
                 value={config.numQuestions}
-                onChange={e => updateOpt('numQuestions', parseInt(e.target.value) || 10)}
-                min={1} max={50}
-                className="w-20 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
-
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">LoRA Weight</label>
-              <input
-                type="number"
+              <FieldRenderer
+                fieldPath="options.loraWeight"
+                schema={evaluateSchema['options.loraWeight']}
                 value={config.loraWeight}
-                onChange={e => updateOpt('loraWeight', parseFloat(e.target.value) || 1.0)}
-                min={0} max={2} step={0.1}
-                className="w-20 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
-
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Validation Data</label>
-              <input
-                type="text"
+              <FieldRenderer
+                fieldPath="options.valData"
+                schema={evaluateSchema['options.valData']}
                 value={config.valData}
-                onChange={e => updateOpt('valData', e.target.value)}
-                placeholder="subjects/datasets/{npc}/{technique}/val.jsonl"
-                className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
           </div>
@@ -510,33 +536,31 @@ export const EvalWorkflowPanel = ({
             W&B Tracking
           </summary>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-[11px]">
-            <div className="flex items-end gap-2">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={config.wandb}
-                  onChange={e => updateOpt('wandb', e.target.checked)}
-                />
-                <span className="text-[10px]">Enable W&B</span>
-              </label>
-            </div>
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Project</label>
-              <input
-                type="text"
-                value={config.wandbProject}
-                onChange={e => updateOpt('wandbProject', e.target.value)}
-                className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+              <FieldRenderer
+                fieldPath="options.wandb"
+                schema={evaluateSchema['options.wandb']}
+                value={config.wandb}
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Entity</label>
-              <input
-                type="text"
+              <FieldRenderer
+                fieldPath="options.wandbProject"
+                schema={evaluateSchema['options.wandbProject']}
+                value={config.wandbProject}
+                onChange={handleFieldChange}
+                context={templateContext}
+              />
+            </div>
+            <div>
+              <FieldRenderer
+                fieldPath="options.wandbEntity"
+                schema={evaluateSchema['options.wandbEntity']}
                 value={config.wandbEntity}
-                onChange={e => updateOpt('wandbEntity', e.target.value)}
-                placeholder="username or team"
-                className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
           </div>
@@ -549,42 +573,39 @@ export const EvalWorkflowPanel = ({
           </summary>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-[11px]">
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Host</label>
-              <input
-                type="text"
+              <FieldRenderer
+                fieldPath="options.host"
+                schema={evaluateSchema['options.host']}
                 value={config.host}
-                onChange={e => updateOpt('host', e.target.value)}
-                className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Port</label>
-              <input
-                type="number"
+              <FieldRenderer
+                fieldPath="options.port"
+                schema={evaluateSchema['options.port']}
                 value={config.port}
-                onChange={e => updateOpt('port', parseInt(e.target.value) || 8888)}
-                min={1} max={65535}
-                className="w-24 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">GPU Layers</label>
-              <input
-                type="number"
+              <FieldRenderer
+                fieldPath="options.gpuLayers"
+                schema={evaluateSchema['options.gpuLayers']}
                 value={config.gpuLayers}
-                onChange={e => updateOpt('gpuLayers', parseInt(e.target.value) || 99)}
-                min={0} max={200}
-                className="w-20 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Max Tokens</label>
-              <input
-                type="number"
+              <FieldRenderer
+                fieldPath="options.maxTokens"
+                schema={evaluateSchema['options.maxTokens']}
                 value={config.maxTokens}
-                onChange={e => updateOpt('maxTokens', parseInt(e.target.value) || 256)}
-                min={1} max={4096}
-                className="w-20 bg-bg border border-line rounded px-2 py-1.5 text-[11px]"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
           </div>
@@ -596,19 +617,32 @@ export const EvalWorkflowPanel = ({
             Output Options
           </summary>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-[11px]">
-            <div className="flex items-end gap-3">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input type="checkbox" checked={config.reportHtml} onChange={e => updateOpt('reportHtml', e.target.checked)} />
-                <span className="text-[10px]">HTML Report</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input type="checkbox" checked={config.track} onChange={e => updateOpt('track', e.target.checked)} />
-                <span className="text-[10px]">Track</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input type="checkbox" checked={config.judge} onChange={e => updateOpt('judge', e.target.checked)} />
-                <span className="text-[10px]">Judge</span>
-              </label>
+            <div>
+              <FieldRenderer
+                fieldPath="options.reportHtml"
+                schema={evaluateSchema['options.reportHtml']}
+                value={config.reportHtml}
+                onChange={handleFieldChange}
+                context={templateContext}
+              />
+            </div>
+            <div>
+              <FieldRenderer
+                fieldPath="options.track"
+                schema={evaluateSchema['options.track']}
+                value={config.track}
+                onChange={handleFieldChange}
+                context={templateContext}
+              />
+            </div>
+            <div>
+              <FieldRenderer
+                fieldPath="options.judge"
+                schema={evaluateSchema['options.judge']}
+                value={config.judge}
+                onChange={handleFieldChange}
+                context={templateContext}
+              />
             </div>
             <div>
               <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1 flex items-center justify-between">
@@ -637,22 +671,21 @@ export const EvalWorkflowPanel = ({
               </div>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Feedback JSON</label>
-              <input
-                type="text"
+              <FieldRenderer
+                fieldPath="options.feedbackJson"
+                schema={evaluateSchema['options.feedbackJson']}
                 value={config.feedbackJson}
-                onChange={e => updateOpt('feedbackJson', e.target.value)}
-                className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-ink/40 uppercase mb-1">Output Report Path</label>
-              <input
-                type="text"
+              <FieldRenderer
+                fieldPath="options.output"
+                schema={evaluateSchema['options.output']}
                 value={config.output}
-                onChange={e => updateOpt('output', e.target.value)}
-                placeholder="eval/reports/{npc}/report.html"
-                className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
+                onChange={handleFieldChange}
+                context={templateContext}
               />
             </div>
           </div>
@@ -664,15 +697,14 @@ export const EvalWorkflowPanel = ({
             Advanced
           </summary>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 text-[11px]">
-            <div className="flex items-end gap-3">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={config.interactive}
-                  onChange={e => updateOpt('interactive', e.target.checked)}
-                />
-                <span className="text-[10px]">Interactive Chat</span>
-              </label>
+            <div>
+              <FieldRenderer
+                fieldPath="options.interactive"
+                schema={evaluateSchema['options.interactive']}
+                value={config.interactive}
+                onChange={handleFieldChange}
+                context={templateContext}
+              />
             </div>
 
             {/* Training Metrics: checkbox + optional path */}

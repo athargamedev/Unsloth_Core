@@ -45,6 +45,7 @@ import { DatasetPipelinePanel } from './components/DatasetPipelinePanel';
 import { NotificationCenter } from './components/NotificationCenter';
 import { GlobalSearch } from './components/GlobalSearch';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { DynamicCommandForm } from './components/DynamicCommandForm';
 
 import { DatasetFactory } from './components/DatasetFactory';
 import { TabChrome } from './components/TabChrome';
@@ -932,19 +933,9 @@ export default function App() {
     return missing;
   };
 
-  const handleSetCommandPayload = useCallback((field: string, value: string) => {
-    const selectedSchema = selectedCommand ? commandSchemas[selectedCommand]?.fields?.[field] : undefined;
-
-    let typedValue: unknown = value;
-    if (selectedSchema?.type === 'number') {
-      const n = Number(value);
-      typedValue = Number.isFinite(n) ? n : value;
-    } else if (selectedSchema?.type === 'boolean') {
-      typedValue = value === 'true';
-    }
-
-    setCommandPayload((prev: Record<string, unknown>) => setNestedValue(prev, field, typedValue));
-  }, [selectedCommand, commandSchemas]);
+  const handleDynamicFormChange = useCallback((field: string, value: unknown) => {
+    setCommandPayload((prev: Record<string, unknown>) => setNestedValue(prev, field, value));
+  }, []);
 
   const localModel = status?.localModel;
   const isLocalModelLoaded = Boolean(localModel?.loaded);
@@ -1261,6 +1252,7 @@ export default function App() {
                   <EvalWorkflowPanel
                     subjects={subjects}
                     exportArtifacts={exportArtifacts}
+                    evaluateSchema={commandSchemas['evaluate']?.fields || {}}
                   />
                 </Suspense>
               </motion.div>
@@ -1377,6 +1369,7 @@ export default function App() {
                 trainingConfig={trainingConfig}
                 onUpdateTrainingConfig={handleUpdateTrainingConfig}
                 onLaunchTraining={handleLaunchTraining}
+                trainSchema={commandSchemas['train']?.fields || {}}
               />
             )}
 
@@ -1889,105 +1882,46 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-ink/60 mb-2">Command ID</label>
-                  <div className="p-2 bg-bg border border-line rounded text-sm font-mono">{selectedCommand}</div>
-                </div>
+              <DynamicCommandForm
+                commandId={selectedCommand}
+                fields={commandSchemas[selectedCommand]?.fields || {}}
+                values={commandPayload as Record<string, unknown>}
+                onChange={handleDynamicFormChange}
+                context={commandPayload as Record<string, string>}
+              />
 
-                {(selectedCommand && commandSchemas[selectedCommand]?.fields
-                  ? Object.entries(commandSchemas[selectedCommand].fields)
-                    .filter(([field]) => field !== 'commandId' && field !== 'type')
-                    .map(([field, schema]: [string, any]) => {
-                      const rawValue = getNestedValue(commandPayload as Record<string, unknown>, field);
-                      const value = rawValue === undefined || rawValue === null ? '' : String(rawValue);
-                      return (
-                        <div key={field}>
-                          <label className="block text-sm font-bold text-ink/60 mb-2">
-                            {field.replace(/\./g, ' → ').replace(/([A-Z])/g, ' $1')}
-                            {schema?.required ? <span className="text-danger"> *</span> : null}
-                          </label>
-                          {Array.isArray(schema?.enum) && schema.enum.length > 0 ? (
-                            <select
-                              value={value}
-                              onChange={(e) => handleSetCommandPayload(field, e.target.value)}
-                              className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
-                            >
-                              {schema.enum.map((opt: string) => (
-                                <option key={opt} value={opt}>{opt}</option>
-                              ))}
-                            </select>
-                          ) : schema?.type === 'boolean' ? (
-                            <select
-                              value={value || 'false'}
-                              onChange={(e) => handleSetCommandPayload(field, e.target.value)}
-                              className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
-                            >
-                              <option value="false">false</option>
-                              <option value="true">true</option>
-                            </select>
-                          ) : (
-                            <input
-                              type={schema?.type === 'number' ? 'number' : 'text'}
-                              value={value}
-                              onChange={(e) => handleSetCommandPayload(field, e.target.value)}
-                              className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
-                            />
-                          )}
-                          {schema?.description ? (
-                            <div className="text-[10px] text-ink/40 mt-1">{schema.description}</div>
-                          ) : null}
-                        </div>
-                      );
-                    })
-                  : Object.keys(commandPayload)
-                    .filter((key: string) => key !== 'commandId' && key !== 'type')
-                    .map((field: string) => (
-                      <div key={field}>
-                        <label className="block text-sm font-bold text-ink/60 mb-2 capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
-                        <input
-                          type="text"
-                          value={String((commandPayload as Record<string, unknown>)[field] || '')}
-                          onChange={(e) => handleSetCommandPayload(field, e.target.value)}
-                          className="w-full p-2 bg-bg border border-line rounded text-sm focus:outline-none focus:border-accent"
-                        />
-                      </div>
-                    )))
-                }
-
-                <div className="flex gap-2 pt-4">
-                  <button
-                    onClick={async () => {
-                      try {
-                        const missing = validateCommandPayload(selectedCommand, commandPayload as Record<string, unknown>);
-                        if (missing.length > 0) {
-                          throw new Error(`Missing required fields: ${missing.join(', ')}`);
-                        }
-                        await triggerCommand(commandPayload);
-                        setCommandModalOpen(false);
-                        setSelectedCommand(null);
-                        setCommandPayload({});
-                      } catch (error) {
-                        addToast(error instanceof Error ? error.message : 'Command execution failed', 'error');
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={async () => {
+                    try {
+                      const missing = validateCommandPayload(selectedCommand, commandPayload as Record<string, unknown>);
+                      if (missing.length > 0) {
+                        throw new Error(`Missing required fields: ${missing.join(', ')}`);
                       }
-                    }}
-                    disabled={isRemoteMode}
-                    title={isRemoteMode ? 'Remote runner is not implemented. Switch to Local before executing commands.' : 'Execute command locally'}
-                    className="flex-1 py-2 bg-accent text-bg rounded font-bold hover:bg-accent/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {isRemoteMode ? 'Remote Runner Unavailable' : 'Execute Command'}
-                  </button>
-                  <button
-                    onClick={() => {
+                      await triggerCommand(commandPayload);
                       setCommandModalOpen(false);
                       setSelectedCommand(null);
                       setCommandPayload({});
-                    }}
-                    className="px-4 py-2 bg-line/20 text-ink/60 rounded hover:bg-line/40 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                    } catch (error) {
+                      addToast(error instanceof Error ? error.message : 'Command execution failed', 'error');
+                    }
+                  }}
+                  disabled={isRemoteMode}
+                  title={isRemoteMode ? 'Remote runner is not implemented. Switch to Local before executing commands.' : 'Execute command locally'}
+                  className="flex-1 py-2 bg-accent text-bg rounded font-bold hover:bg-accent/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isRemoteMode ? 'Remote Runner Unavailable' : 'Execute Command'}
+                </button>
+                <button
+                  onClick={() => {
+                    setCommandModalOpen(false);
+                    setSelectedCommand(null);
+                    setCommandPayload({});
+                  }}
+                  className="px-4 py-2 bg-line/20 text-ink/60 rounded hover:bg-line/40 transition-colors"
+                >
+                  Cancel
+                </button>
               </div>
             </motion.div>
           </motion.div>
