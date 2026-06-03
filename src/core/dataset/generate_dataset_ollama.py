@@ -860,23 +860,19 @@ class OllamaDatasetGenerator:
                              multi_turn_ratio: float = 0.25) -> list[dict]:
         """Synchronous wrapper for async generation."""
         try:
-            loop = asyncio.get_event_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        with ThreadPoolExecutor(max_workers=self.batch_size) as executor:
-            examples = loop.run_until_complete(
-                self.generate_dataset_async(
-                    examples_per_category,
-                    temperature=temperature,
-                    max_workers=self.batch_size,
-                    multi_turn_ratio=multi_turn_ratio,
-                    executor=executor
+            with ThreadPoolExecutor(max_workers=self.batch_size) as executor:
+                return asyncio.run(
+                    self.generate_dataset_async(
+                        examples_per_category,
+                        temperature=temperature,
+                        max_workers=self.batch_size,
+                        multi_turn_ratio=multi_turn_ratio,
+                        executor=executor
+                    )
                 )
-            )
-        
-        return examples
+        raise RuntimeError("Synchronous dataset generation cannot run inside an active event loop.")
 
 
 def main():

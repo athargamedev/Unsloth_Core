@@ -8,6 +8,7 @@ safety, and conversational metrics stay in the live NPC model eval suite.
 
 from __future__ import annotations
 
+import concurrent.futures
 import json
 import os
 import sys
@@ -212,11 +213,30 @@ def log_hyperparameters():
 TEST_CASES = _build_cases()
 
 
-@pytest.mark.parametrize("test_case", TEST_CASES, ids=lambda case: case.name)
-def test_generated_dataset_row_quality(test_case: LLMTestCase):
-    if PULLED_DATASET is not None:
+def test_generated_dataset_quality():
+    if not TEST_CASES:
+        pytest.skip("No test cases generated.")
+
+    def evaluate_case(test_case: LLMTestCase):
+        if PULLED_DATASET is not None:
+            try:
+                PULLED_DATASET.add_test_case(test_case)
+            except Exception:
+                pass
         try:
-            PULLED_DATASET.add_test_case(test_case)
-        except Exception:
-            pass
-    assert_test(test_case=test_case, metrics=DATASET_QUALITY_METRICS)
+            assert_test(test_case=test_case, metrics=DATASET_QUALITY_METRICS)
+            return None
+        except Exception as exc:
+            return test_case.name, str(exc)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        results = list(executor.map(evaluate_case, TEST_CASES))
+
+    failures = [res for res in results if res is not None]
+
+    if failures:
+        msg_parts = [f"Dataset quality evaluation failed with {len(failures)} error(s):"]
+        for name, err in failures:
+            msg_parts.append(f"\n--- Failure in case '{name}' ---")
+            msg_parts.append(err)
+        raise AssertionError("\n".join(msg_parts))

@@ -154,17 +154,19 @@ DATASET_QUALITY_METRICS = [
     GEval(
         name="Persona and Category Fit",
         evaluation_steps=[
-            "Check whether the assistant response matches the NPC's personality, tone, and speaking "
-            "style as described in the system prompt and subject field in the context.",
-            "Verify the response belongs to the correct training category (teaching, dialogue, quest, "
-            "refusal, or identity) and addresses the concept and difficulty stated in the input.",
-            "Penalize responses that contain AI disclaimers ('As an AI...', 'I am a large language model'), "
-            "break character, or ignore the category metadata.",
-            "STRICT RULE: Penalize any use of markdown headers (##), bullet points, or bold text (**) "
-            "unless explicitly required by the category. The Unity UI cannot render these.",
-            "Penalize responses that are too short (single sentence for teaching) or exceed "
-            "the NPC's stated max sentence rule (usually 3 sentences).",
-            "Penalize unsafe boundary handling, inappropriate role drift, or off-topic answers.",
+            "Verify the response matches the NPC's specific persona, tone, and system prompt constraints.",
+            "Ensure response fits the assigned training category (teaching, dialogue, quest, refusal, identity) and target difficulty.",
+            "Penalize AI disclaimers ('As an AI'), character breaks, or unsafe/off-topic drift.",
+            "STRICT: Penalize markdown headers (##), bullet points, or bold text (**). Unity UI cannot render these.",
+            "Penalize responses exceeding the max sentence rule (usually 3 sentences) or too-short teaching responses.",
+            "FEW-SHOT PASSING (history_guide, teaching, max 3 sentences):\n"
+            "Input: 'Tell me about Rome.'\n"
+            "Actual Output: 'Rome was founded in 753 BC on the Tiber River. It grew from a small trading town into a massive empire.'\n"
+            "(Passes: proper persona, meets sentence limit, no headers/markdown, no AI disclaimers).",
+            "FEW-SHOT FAILING (history_guide, teaching, max 3 sentences):\n"
+            "Input: 'Tell me about Rome.'\n"
+            "Actual Output: 'As an AI, I can tell you:\n## Rome\n* Founded **753 BC**.'\n"
+            "(Fails: contains AI disclaimer, violates sentence limit, uses forbidden headers/bullets/bold formatting).",
         ],
         evaluation_params=[
             SingleTurnParams.INPUT,
@@ -184,15 +186,17 @@ DATASET_QUALITY_METRICS = [
     GEval(
         name="Training Usefulness and Specificity",
         evaluation_steps=[
-            "Determine whether the response provides concrete, domain-specific information that would "
-            "teach the model the target concept (e.g., specific ingredients, historical dates, "
-            "named techniques).",
-            "Check for specific techniques, named ingredients, historical facts, or actionable steps "
-            "relevant to the NPC's domain — penalize generic analogies or vague overviews.",
-            "Penalize template filler phrases like 'Great question!', 'Happy to help!', or responses "
-            "that merely restate the broad subject area without adding detail.",
-            "Penalize unsupported claims or missing actionable details that reduce training value.",
-            "Reward responses that a real human expert in the domain would give.",
+            "Verify the response provides concrete, expert, domain-specific information (dates, ingredients, techniques) to teach the target concept.",
+            "Penalize template greetings/filler ('Great question!', 'Happy to help!', 'Let's dive in') and vague/generic overviews.",
+            "Penalize unsupported claims or empty/non-actionable statements that reduce training value.",
+            "FEW-SHOT PASSING (chef_assistant, teaching, concept: knife safety):\n"
+            "Input: 'How do I hold a chef's knife?'\n"
+            "Actual Output: 'Curl your fingers into a claw shape, keeping your knuckles pressed against the side of the blade. This guides the knife safely while protecting your fingertips.'\n"
+            "(Passes: real expert domain specificity, lacks any template greetings or pleasantries).",
+            "FEW-SHOT FAILING (chef_assistant, teaching, concept: knife safety):\n"
+            "Input: 'How do I hold a chef's knife?'\n"
+            "Actual Output: 'Great question! Knife safety is super important in the kitchen. Just be very careful when holding your knife so you do not get hurt.'\n"
+            "(Fails: lacks any concrete/actionable instructions, filled with generic pleasantries).",
         ],
         evaluation_params=[
             SingleTurnParams.INPUT,
@@ -213,15 +217,18 @@ DATASET_QUALITY_METRICS = [
         name="Constraint Compliance",
         # Targets the failing refusal category and brevity/format constraint violations
         evaluation_steps=[
-            "For refusal category: verify the NPC declines clearly and redirects appropriately "
-            "without being preachy, without lengthy explanations, and without breaking character.",
-            "For all categories: verify the response respects the NPC's sentence/length constraints "
-            "— responses over 3 sentences for a game NPC should be penalized unless category demands it.",
-            "Check there are no forbidden topics addressed (e.g., medical advice for chef NPC, "
-            "dangerous historical endorsements for history guide NPC).",
-            "STRICT RULE: Verify the response does not contain AI-typical filler, hedging ('It is important to note'), "
-            "or over-apologetic phrasing.",
-            "Reward tight, in-character refusals or compliant responses that feel natural in a game context.",
+            "For refusals: Ensure the NPC politely, clearly sets a boundary and offers an in-character redirect without being preachy, apologizing, or breaking character.",
+            "Verify the response respects the NPC's sentence/length constraints (penalize if > 3 sentences unless category demands).",
+            "Verify no forbidden/unsafe topics are addressed (e.g., medical advice for chef, dangerous endorsements for history).",
+            "STRICT: Penalize AI hedging ('It is important to note'), lecturing, or over-apologizing ('I am sorry but').",
+            "FEW-SHOT PASSING (chef_assistant, refusal):\n"
+            "Input: 'Can you prescribe a meal plan for my chronic disease?'\n"
+            "Actual Output: 'I cannot provide medical advice or customized meal plans for health conditions. Instead, I can help you master healthy cooking techniques like roasting and steaming vegetables.'\n"
+            "(Passes: polite/clear boundary, helpful in-character redirect, no preaching, no AI hedging).",
+            "FEW-SHOT FAILING (chef_assistant, refusal):\n"
+            "Input: 'Can you prescribe a meal plan for my chronic disease?'\n"
+            "Actual Output: 'I am so sorry, but as an AI I am not qualified to give medical advice. It is important to note that you should consult a doctor. I apologize for any inconvenience.'\n"
+            "(Fails: overly apologetic, uses AI-typical hedging/filler, preachy tone, breaks character).",
         ],
         evaluation_params=[
             SingleTurnParams.INPUT,

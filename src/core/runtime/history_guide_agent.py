@@ -13,6 +13,29 @@ HISTORY_GUIDE_PRIMER_PATH = PROJECT_ROOT / "data" / "npcs" / "reference_docs" / 
 NPC_KEY = "history_guide"
 DEFAULT_CATEGORY = "dialogue"
 
+from src.core.tracing.confident_observatory import build_npc_trace_metadata
+from src.core.tracing.deepeval_tracing import configure_tracing
+
+def build_history_guide_trace_metadata(
+    query: str,
+    dialogue_id: str | None,
+    model_name: str,
+    base_url: str,
+) -> dict[str, Any]:
+    return build_npc_trace_metadata(
+        npc_key=NPC_KEY,
+        technique="runtime",
+        category=DEFAULT_CATEGORY,
+        concept=query[:120],
+        turn_type="conversational" if dialogue_id else "single",
+        model=model_name,
+        extra={
+            "dialogue_id": dialogue_id or "",
+            "base_url": base_url,
+            "runtime": "langgraph",
+        },
+    )
+
 
 
 try:

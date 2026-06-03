@@ -35,29 +35,29 @@ from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 AI_ARTIFACT_PATTERNS = [
     # ── Original patterns ──
-    r"as an AI",
-    r"language model",
-    r"I don't have feelings",
-    r"I am not a person",
-    r"my programming",
-    r"based on my knowledge cutoff",
-    r"I am a large language model",
-    r"I do not have a physical body",
-    r"I cannot feel",
-    r"I don't have a personal identity",
+    r"\bas an AI\b",
+    r"\blanguage model\b",
+    r"\bI don't have feelings\b",
+    r"\bI am not a person\b",
+    r"\bmy programming\b",
+    r"\bbased on my knowledge cutoff\b",
+    r"\bI am a large language model\b",
+    r"\bI do not have a physical body\b",
+    r"\bI cannot feel\b",
+    r"\bI don't have a personal identity\b",
     # ── Phase 2 additions ──
-    r"I don't have personal opinions",
-    r"I don't have personal experiences",
-    r"As a machine learning model",
-    r"based on my training data",
-    r"I'm just an AI",
-    r"I cannot feel emotions",
-    r"from my training data",
-    r"according to my training",
-    r"I don't have personal",
-    r"I do not have personal",
-    r"as a machine learning",
-    r"I'm a large language model",
+    r"\bI don't have personal opinions\b",
+    r"\bI don't have personal experiences\b",
+    r"\bAs a machine learning model\b",
+    r"\bbased on my training data\b",
+    r"\bI'm just an AI\b",
+    r"\bI cannot feel emotions\b",
+    r"\bfrom my training data\b",
+    r"\baccording to my training\b",
+    r"\bI don't have personal\b",
+    r"\bI do not have personal\b",
+    r"\bas a machine learning\b",
+    r"\bI'm a large language model\b",
 ]
 
 REQUIRED_METADATA_FIELDS = [
@@ -149,6 +149,84 @@ def count_sentences(text):
     cleaned = cleaned.replace('...', '<ELLIPSIS>')
     sentences = [s.strip() for s in re.split(r'[.!?]+', cleaned) if s.strip()]
     return len(sentences)
+
+
+def trim_to_max_sentences(text: str, max_sentences: int) -> str:
+    """Trim text to max_sentences using exact boundary-finding and normalization.
+
+    Handles abbreviations and ellipsis matches gracefully.
+    """
+    if not text:
+        return ""
+    if max_sentences <= 0:
+        return ""
+
+    # Replace abbreviations and initialisms with same-length placeholders to preserve indices
+    cleaned = _ABBREVIATIONS_PATTERN.sub(lambda m: m.group(0).replace('.', '\x00'), text)
+    cleaned = _INITIALISM_PATTERN.sub(lambda m: m.group(0).replace('.', '\x00'), cleaned)
+    cleaned = cleaned.replace('...', '\x00\x00\x00')
+
+    # Find all sentence terminators in cleaned
+    matches = list(re.finditer(r'[.!?]+', cleaned))
+
+    if len(matches) < max_sentences:
+        trimmed = text.strip()
+    else:
+        boundary_match = matches[max_sentences - 1]
+        end_idx = boundary_match.end()
+        trimmed = text[:end_idx].strip()
+
+    if trimmed and not trimmed[-1] in '.!?':
+        trimmed += '.'
+
+    return trimmed
+
+
+def split_into_sentences(text: str) -> list[str]:
+    """Helper to split a text into individual sentences while preserving indices/punctuation."""
+    if not text:
+        return []
+    cleaned = _ABBREVIATIONS_PATTERN.sub(lambda m: m.group(0).replace('.', '\x00'), text)
+    cleaned = _INITIALISM_PATTERN.sub(lambda m: m.group(0).replace('.', '\x00'), cleaned)
+    cleaned = cleaned.replace('...', '\x00\x00\x00')
+
+    matches = list(re.finditer(r'[.!?]+', cleaned))
+    if not matches:
+        return [text]
+
+    sentences = []
+    start_idx = 0
+    for match in matches:
+        end_idx = match.end()
+        sentences.append(text[start_idx:end_idx])
+        start_idx = end_idx
+
+    if start_idx < len(text):
+        remaining = text[start_idx:]
+        if remaining.strip():
+            sentences.append(remaining)
+        else:
+            if sentences:
+                sentences[-1] += remaining
+
+    return sentences
+
+
+def repair_and_filter_artifacts(content: str) -> str:
+    """Slices content into individual sentences, filters out those matching contains_ai_artifact, and joins."""
+    if not content:
+        return ""
+    sentences = split_into_sentences(content)
+    kept_sentences = []
+    for s in sentences:
+        has_artifact, _ = contains_ai_artifact(s)
+        if not has_artifact:
+            kept_sentences.append(s.strip())
+
+    repaired = " ".join(kept_sentences).strip()
+    if repaired and not repaired[-1] in '.!?':
+        repaired += '.'
+    return repaired
 
 
 # ── Content Hashing ───────────────────────────────────────────────────────────
@@ -355,10 +433,17 @@ def score_rule_compliance(example, max_sentences=5, min_length=10, max_character
 
     score = 10
 
-    # -3 if assistant response has more sentences than allowed
+    # Apply soft sliding-scale deduction for exceeding max_sentences:
+    # -1 if 1 sentence over, -2 if 2 sentences over, -3 if >2 sentences over.
     sentence_count = count_sentences(response)
     if sentence_count > max_sentences:
-        score -= 3
+        diff = sentence_count - max_sentences
+        if diff == 1:
+            score -= 1
+        elif diff == 2:
+            score -= 2
+        else:
+            score -= 3
 
     # -2 if assistant response is too short
     if len(response) < min_length:
@@ -370,9 +455,17 @@ def score_rule_compliance(example, max_sentences=5, min_length=10, max_character
     elif len(response) > 500:
         score -= 2
 
-    # -1 if user message has no question mark (less natural)
+    # -1 if user message has no question mark (less natural),
+    # but skip this if user message starts with command verbs.
     if user_msg and "?" not in user_msg:
-        score -= 1
+        command_verbs = (
+            "introduce", "describe", "explain", "roleplay", "tell", "show",
+            "give", "list", "name", "say", "talk", "greet", "share", "write", "create"
+        )
+        user_msg_lower = user_msg.strip().lower()
+        starts_with_command = any(re.match(rf"^{re.escape(verb)}\b", user_msg_lower) for verb in command_verbs)
+        if not starts_with_command:
+            score -= 1
 
     # -2 if formatting is disabled but response has bold/headings/lists
     if not allow_formatting:
@@ -769,6 +862,7 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
     Returns (clean_example, quality_score, meta_warnings, discard_reason).
     Each part is None when not applicable.
     """
+    example = copy.deepcopy(example)
     messages = example.get("messages", [])
     if not messages:
         return None, None, [], "No messages"
@@ -795,6 +889,9 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
         require_complete=require_complete_metadata,
     )
 
+    # Re-retrieve messages from the newly copied/enriched example to prevent reference separation/disconnection
+    messages = example.get("messages", [])
+
     # 2. Structural validation (guard: reject bad format early)
     valid, error = validate_structure(messages, strict_mode=strict_mode)
     if not valid:
@@ -813,16 +910,23 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
                     detail += f" (all matches: {all_matches})"
                 if artifact_check == "strict":
                     return None, None, meta_warnings, detail
+                elif artifact_check == "repair":
+                    repaired_content = repair_and_filter_artifacts(content)
+                    m["content"] = repaired_content
+                    content = repaired_content
+                    meta_warnings.append(f"Repaired AI artifact in content (original matched pattern '{pattern}')")
 
         if m["role"] == "assistant":
+            sentence_count = count_sentences(content)
+            if sentence_count > max_sentences:
+                trimmed_content = trim_to_max_sentences(content, max_sentences)
+                m["content"] = trimmed_content
+                content = trimmed_content
+                meta_warnings.append(f"Trimmed content from {sentence_count} to {max_sentences} sentences")
+
             if len(content) < min_length:
                 return None, None, meta_warnings, \
                     f"Assistant response too short ({len(content)} chars)"
-
-            sentence_count = count_sentences(content)
-            if sentence_count > max_sentences:
-                return None, None, meta_warnings, \
-                    f"Assistant response too verbose ({sentence_count} sentences, max {max_sentences})"
 
             if len(content) > max_characters:
                 return None, None, meta_warnings, \
@@ -1082,7 +1186,7 @@ def main():
                         help="Raise on structural validation errors instead of discarding")
 
     # 2b: AI artifact filtering
-    parser.add_argument("--artifact-check", choices=["strict", "warn", "off"],
+    parser.add_argument("--artifact-check", choices=["strict", "warn", "off", "repair"],
                         default="strict",
                         help="How to handle AI artifacts (default: strict)")
     parser.add_argument("--verbose-artifacts", action="store_true",

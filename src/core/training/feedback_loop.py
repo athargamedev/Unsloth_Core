@@ -146,6 +146,147 @@ def identify_weak_concepts(feedback_data, win_rate_threshold, quality_threshold,
     return weak
 
 
+class LocalGapDetector:
+    def __init__(self, npc_key: str, technique: str = "template"):
+        self.npc_key = npc_key
+        self.technique = technique
+        self.spec_path = None
+        self.primer_path = None
+        self.train_clean_path = None
+        self.spec_concepts = []
+        self.primer_text = ""
+        self._resolve_and_load()
+
+    def _resolve_and_load(self):
+        # Resolve paths using paths helper with project fallbacks
+        try:
+            self.spec_path = paths.spec_path(self.npc_key)
+        except Exception:
+            self.spec_path = PROJECT_ROOT / "data" / "npcs" / "specs" / f"{self.npc_key}.json"
+
+        self.primer_path = PROJECT_ROOT / "data" / "npcs" / "reference_docs" / f"{self.npc_key}_primer.md"
+
+        try:
+            self.train_clean_path = paths.dataset_dir(self.npc_key) / self.technique / "train_clean.jsonl"
+        except Exception:
+            self.train_clean_path = PROJECT_ROOT / "data" / "datasets" / self.npc_key / self.technique / "train_clean.jsonl"
+
+        # Load NPC spec
+        if self.spec_path and self.spec_path.exists():
+            try:
+                with open(self.spec_path, "r", encoding="utf-8") as f:
+                    spec_data = json.load(f)
+                    self.spec_concepts = spec_data.get("concepts", [])
+            except Exception as e:
+                print(f"  [LocalGapDetector] Warning: failed to load spec JSON: {e}")
+        else:
+            print(f"  [LocalGapDetector] Warning: spec path not found: {self.spec_path}")
+
+        # Load reference primer
+        if self.primer_path and self.primer_path.exists():
+            try:
+                with open(self.primer_path, "r", encoding="utf-8") as f:
+                    self.primer_text = f.read()
+            except Exception as e:
+                print(f"  [LocalGapDetector] Warning: failed to load primer markdown: {e}")
+        else:
+            print(f"  [LocalGapDetector] Warning: primer path not found: {self.primer_path}")
+
+    def count_primer_occurrences(self, concept_name: str, aliases: list) -> int:
+        if not self.primer_text:
+            return 0
+        text_lower = self.primer_text.lower()
+        count = text_lower.count(concept_name.lower().strip())
+        for alias in aliases:
+            count += text_lower.count(alias.lower().strip())
+        return count
+
+    def count_training_examples(self, concept_name: str) -> int:
+        if not self.train_clean_path or not self.train_clean_path.exists():
+            return 0
+        count = 0
+        target_concept = concept_name.lower().strip()
+        try:
+            with open(self.train_clean_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        data = json.loads(line)
+                        meta = data.get("metadata", {})
+                        ex_concept = meta.get("concept")
+                        if ex_concept and ex_concept.lower().strip() == target_concept:
+                            count += 1
+                    except Exception:
+                        continue
+        except Exception as e:
+            print(f"  [LocalGapDetector] Warning: failed to read cleaned training file: {e}")
+        return count
+
+    def detect_gaps(self, weak_concepts: list) -> list:
+        gap_results = []
+        for wc in weak_concepts:
+            concept_key = wc.get("concept", "unknown")
+            reasons = wc.get("reasons", [])
+
+            # Parse category and concept_name from concept_key (e.g., "teaching/Ancient civilizations")
+            category = None
+            concept_name = concept_key
+            if "/" in concept_key:
+                category, concept_name = concept_key.split("/", 1)
+
+            # Match spec concept case-insensitively
+            spec_c = None
+            concept_name_lower = concept_name.lower().strip()
+            category_lower = category.lower().strip() if category else None
+
+            for c in self.spec_concepts:
+                name = c.get("name", "")
+                c_category = c.get("category", "")
+                if name.lower().strip() == concept_name_lower:
+                    if category_lower is None or c_category.lower().strip() == category_lower:
+                        spec_c = c
+                        break
+            if not spec_c:
+                for c in self.spec_concepts:
+                    name = c.get("name", "")
+                    if name.lower().strip() == concept_name_lower:
+                        spec_c = c
+                        break
+
+            aliases = []
+            if spec_c:
+                aliases = spec_c.get("aliases", [])
+                concept_name = spec_c.get("name", concept_name)
+
+            # 4. Count occurrences in primer
+            primer_occurrences = self.count_primer_occurrences(concept_name, aliases)
+
+            # 5. Count examples in train_clean.jsonl
+            training_examples_count = self.count_training_examples(concept_name)
+
+            # 6. Classify gap type
+            if primer_occurrences == 0:
+                gap_type = "knowledge_gap"
+                rec = "Source document lacks coverage. Add descriptive sections to primer."
+            elif training_examples_count < 8:
+                gap_type = "training_density_gap"
+                rec = "Low example density. Trigger synthetic generation for concept with focus."
+            else:
+                gap_type = "model_capacity_gap"
+                rec = "The model failed to acquire the concept; upgrade training preset, increase epochs, or check format."
+
+            gap_results.append({
+                "concept": concept_key,
+                "gap_type": gap_type,
+                "primer_occurrences": primer_occurrences,
+                "training_examples_count": training_examples_count,
+                "action_recommendation": rec,
+                "reasons": reasons,
+            })
+        return gap_results
+
+
 def print_analysis(feedback_data, weak_concepts):
     print("=" * 60)
     print(f"  FEEDBACK LOOP ANALYSIS")
@@ -532,11 +673,18 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                 if not skip_gap_detection:
                     print(f"\n{'─' * 40}")
                     print("  Checking knowledge coverage for weak concepts...")
-                    gap_results = identify_weak_concepts(
-                        feedback_data, win_rate_threshold, quality_threshold,
-                        violation_threshold, extra_examples
-                    )
+                    detector = LocalGapDetector(resolved_npc_key, technique=technique)
+                    gap_results = detector.detect_gaps(weak_concepts)
                     result["gap_results"] = gap_results
+
+                    print(f"\n  Gap Analysis Results ({len(gap_results)}):")
+                    for diag in gap_results:
+                        print(f"  • Concept: {diag['concept']}")
+                        print(f"    Gap Type: {diag['gap_type']}")
+                        print(f"    Primer Occurrences: {diag['primer_occurrences']}")
+                        print(f"    Training Examples: {diag['training_examples_count']}")
+                        print(f"    Action Recommendation: {diag['action_recommendation']}")
+                        print()
 
                     if save_gaps:
                         save_path = Path(save_gaps)
@@ -551,8 +699,10 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                 if wandb:
                     try:
                         import wandb as _wandb
-                        training_density_gaps = sum(1 for wc in weak_concepts if "win_rate" in " ".join(wc.get("reasons", [])))
-                        knowledge_gaps = sum(1 for wc in weak_concepts if "quality" in " ".join(wc.get("reasons", [])))
+                        total_knowledge_gaps = sum(1 for g in gap_results if g["gap_type"] == "knowledge_gap") if gap_results else 0
+                        total_density_gaps = sum(1 for g in gap_results if g["gap_type"] == "training_density_gap") if gap_results else 0
+                        total_capacity_gaps = sum(1 for g in gap_results if g["gap_type"] == "model_capacity_gap") if gap_results else 0
+
                         _wandb_run = _wandb.init(
                             project=wandb_project or "unsloth-core",
                             entity=wandb_entity,
@@ -575,19 +725,22 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
 
                         _wandb.log({
                             "feedback/total_weak_concepts": len(weak_concepts),
-                            "feedback/training_density_gaps": training_density_gaps,
-                            "feedback/knowledge_gaps": knowledge_gaps,
+                            "feedback/knowledge_gaps": total_knowledge_gaps,
+                            "feedback/training_density_gaps": total_density_gaps,
+                            "feedback/model_capacity_gaps": total_capacity_gaps,
                         })
 
                         # Log per-concept metrics
                         for wc in weak_concepts:
                             concept = wc.get("concept", "unknown")
                             data = wc.get("data", {})
+                            diag = next((g for g in gap_results if g["concept"] == concept), None)
+                            diag_gap_type = diag["gap_type"] if diag else "unknown"
                             _wandb.log({
                                 f"feedback/{concept}/win_rate": data.get("win_rate", 0),
                                 f"feedback/{concept}/avg_quality": data.get("avg_candidate_quality", 0),
                                 f"feedback/{concept}/violations": data.get("constraint_violations", 0),
-                                f"feedback/{concept}/gap_type": "knowledge_gap" if knowledge_gaps else "training_density",
+                                f"feedback/{concept}/gap_type": diag_gap_type,
                             })
 
                         # Log gap analysis as artifact if saved

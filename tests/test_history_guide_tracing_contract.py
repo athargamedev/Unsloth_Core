@@ -4,7 +4,7 @@ from src.core.runtime import history_guide_agent as agent
 
 
 def test_history_guide_primer_path_points_to_existing_reference_doc():
-    assert agent.HISTORY_GUIDE_PRIMER_PATH == Path("/home/athar/Projects/Unsloth_Core/subjects/reference_docs/history_guide_primer.md")
+    assert agent.HISTORY_GUIDE_PRIMER_PATH == Path("/home/athar/Projects/Unsloth_Core/data/npcs/reference_docs/history_guide_primer.md")
 
 
 def test_build_trace_metadata_includes_thread_and_classifier_dimensions():
@@ -26,7 +26,7 @@ def test_runtime_query_accepts_dialogue_id(monkeypatch):
     class Message:
         content = "Rome fell through political, military, and economic pressures."
 
-    def fake_invoke(inputs):
+    def fake_invoke(inputs, *args, **kwargs):
         assert inputs["dialogue_id"] == "dialogue-1"
         assert inputs["messages"][0].content == "Why did Rome fall?"
         return {"messages": [Message()]}

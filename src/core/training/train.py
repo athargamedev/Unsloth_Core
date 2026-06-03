@@ -667,6 +667,8 @@ def get_model_and_tokenizer(config):
     """Load the base model and tokenizer via Unsloth."""
     from unsloth import FastLanguageModel
     from src.config.workflow_context import LOCAL_MODEL_PATH
+    from transformers import BitsAndBytesConfig
+    import torch
 
     model_name = config.get("model", "unsloth/Llama-3.2-3B-Instruct-bnb-4bit")
     # If the default model name is used, prefer the local GGUF if it exists and we're looking for GGUF
@@ -690,11 +692,19 @@ def get_model_and_tokenizer(config):
 
     gpu_memory_utilization = float(config.get("training", {}).get("gpu_memory_utilization", 0.9))
 
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16,
+    )
+
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model_name,
         max_seq_length=max_seq_length,
         dtype=None,
         load_in_4bit=True,
+        quantization_config=bnb_config,
         device_map="auto",
         gpu_memory_utilization=gpu_memory_utilization,
     )
@@ -846,13 +856,18 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
     if torch.cuda.is_available():
         model = model.to("cuda")
 
-    trainer = SFTTrainer(
-        model=model,
-        processing_class=tokenizer,
-        train_dataset=dataset,
-        eval_dataset=eval_dataset,
-        args=args,
-    )
+    trainer_kwargs = {
+        "model": model,
+        "processing_class": tokenizer,
+        "train_dataset": dataset,
+        "eval_dataset": eval_dataset,
+        "args": args,
+    }
+    neftune_noise_alpha = training.get("neftune_noise_alpha", None)
+    if neftune_noise_alpha is not None:
+        trainer_kwargs["neftune_noise_alpha"] = neftune_noise_alpha
+
+    trainer = SFTTrainer(**trainer_kwargs)
 
     # Apply train_on_responses_only to mask user tokens in loss when available.
     # Uses unsloth's train_on_responses_only (standalone function, not a trainer method).
@@ -1069,7 +1084,7 @@ def main():
     parser.add_argument("--lora-r", type=int, help="LoRA rank")
     parser.add_argument("--lora-alpha", type=int, help="LoRA alpha")
     parser.add_argument("--lora-dropout", type=float, help="LoRA dropout")
-    parser.add_argument("--neftune", type=float, dest="neftune_noise_alpha", help="NEFTune noise alpha")
+    parser.add_argument("--neftune", "--neftune-noise-alpha", type=float, dest="neftune_noise_alpha", default=None, help="NEFTune noise alpha")
     parser.add_argument("--weight-decay", type=float, dest="weight_decay", help="Weight decay")
     parser.add_argument("--warmup", type=int, dest="warmup_steps", help="Warmup steps")
     parser.add_argument("--lr-scheduler", dest="lr_scheduler_type",

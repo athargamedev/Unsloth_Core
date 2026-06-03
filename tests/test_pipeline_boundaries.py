@@ -99,7 +99,7 @@ def test_concept_extractor_ignores_meta_reference_headings():
         "npc_key": "chef_assistant",
         "npc_name": "ChefAssistant",
         "subject": "Cooking fundamentals: knife skills, heat, flavor, food safety, and kitchen workflow",
-        "reference_doc": "subjects/reference_docs/chef_assistant_primer.md",
+        "reference_doc": "data/npcs/reference_docs/chef_assistant_primer.md",
         "teaching": {"expertise": ["knife skills", "flavor balance"]},
     }
 
@@ -359,7 +359,7 @@ def test_validate_spec_generation_ready_requires_reference_contract(monkeypatch,
     spec["refusal"] = {"boundaries": ["unsafe demo claims"], "redirect_policy": "redirect to evidence"}
     spec["research_queries"] = [{"query": "demo facts", "mode": "fast"}]
     spec["dataset"] = {"examples_per_category": {"identity": 1, "teaching": 1, "dialogue": 1, "quest": 1, "refusal": 1}}
-    spec["reference_doc"] = "subjects/reference_docs/demo_primer.md"
+    spec["reference_doc"] = "data/npcs/reference_docs/demo_primer.md"
 
     root = tmp_path
     monkeypatch.setattr(validator, "PROJECT_ROOT", root)
@@ -399,3 +399,236 @@ def test_all_current_specs_are_generation_ready():
 
     failures = {result.path: result.errors for result in results if result.errors}
     assert failures == {}
+
+
+def test_trim_to_max_sentences():
+    from src.core.dataset.sanitize_dataset import trim_to_max_sentences
+
+    assert trim_to_max_sentences("", 2) == ""
+    assert trim_to_max_sentences("Hello.", 0) == ""
+    
+    # Simple trim
+    text1 = "Sentence one. Sentence two. Sentence three."
+    assert trim_to_max_sentences(text1, 2) == "Sentence one. Sentence two."
+    assert trim_to_max_sentences(text1, 1) == "Sentence one."
+    assert trim_to_max_sentences(text1, 5) == "Sentence one. Sentence two. Sentence three."
+
+    # Abbreviation handling
+    text2 = "Dr. Smith went home. He was very happy. This is sentence three."
+    assert trim_to_max_sentences(text2, 1) == "Dr. Smith went home."
+    assert trim_to_max_sentences(text2, 2) == "Dr. Smith went home. He was very happy."
+
+    # Ellipsis handling
+    text3 = "Wait for it... It was great! Yes."
+    assert trim_to_max_sentences(text3, 1) == "Wait for it... It was great!"
+    assert trim_to_max_sentences(text3, 2) == "Wait for it... It was great! Yes."
+
+    # Appending punctuation if missing
+    assert trim_to_max_sentences("Hello", 1) == "Hello."
+
+
+def test_repair_and_filter_artifacts():
+    from src.core.dataset.sanitize_dataset import repair_and_filter_artifacts
+
+    # Clean text unchanged
+    assert repair_and_filter_artifacts("Hello there. How are you?") == "Hello there. How are you?"
+
+    # AI artifact filtered
+    text = "Hello. As an AI, I don't have feelings. But I can help you."
+    # The middle sentence has "As an AI". It should be filtered out.
+    assert repair_and_filter_artifacts(text) == "Hello. But I can help you."
+
+
+def test_artifact_check_repair_mode():
+    from src.core.dataset.sanitize_dataset import sanitize_example
+
+    example = {
+        "messages": [
+            {"role": "system", "content": "You are a guide."},
+            {"role": "user", "content": "Tell me a story."},
+            {"role": "assistant", "content": "Sure. As an AI language model, I love stories. Once upon a time, a hero saved the day."}
+        ],
+        "metadata": {
+            "npc_key": "history_guide",
+            "category": "dialogue"
+        }
+    }
+
+    # Under strict check, it gets discarded/refused
+    clean, score, warnings, reason = sanitize_example(example, "data/npcs/history_guide/train.jsonl", artifact_check="strict")
+    assert clean is None
+    assert "Contains AI artifact" in reason
+
+    # Under repair check, it is cleaned and kept
+    clean, score, warnings, reason = sanitize_example(example, "data/npcs/history_guide/train.jsonl", artifact_check="repair")
+    assert clean is not None
+    assert reason is None
+    # Verify the middle sentence with artifact was filtered
+    assistant_content = clean["messages"][-1]["content"]
+    assert "language model" not in assistant_content
+    assert "Sure." in assistant_content
+    assert "Once upon a time" in assistant_content
+    assert any("Repaired AI artifact" in w for w in warnings)
+
+
+def test_score_rule_compliance_sliding_scale_and_command_verbs():
+    from src.core.dataset.sanitize_dataset import score_rule_compliance
+
+    # 1. Sliding scale check for sentence count
+    # Let's mock an example where response is:
+    # 1 sentence over (max 2): "One. Two. Three." -> sentence count = 3 -> 1 sentence over -> -1 penalty -> score 9
+    example1 = {
+        "messages": [
+            {"role": "user", "content": "Is this a test?"},
+            {"role": "assistant", "content": "One. Two. Three."}
+        ]
+    }
+    score1 = score_rule_compliance(example1, max_sentences=2)
+    # Total score starts at 10.
+    # sentence count = 3. max = 2. 1 sentence over -> score starts at 10, -1 = 9.
+    assert score1 == 9
+
+    # 2 sentences over (max 1): "One. Two. Three." -> sentence count = 3 -> 2 sentences over -> -2 penalty -> score 8
+    score2 = score_rule_compliance(example1, max_sentences=1)
+    assert score2 == 8
+
+    # >2 sentences over (max 1): "One. Two. Three. Four." -> sentence count = 4 -> 3 sentences over -> -3 penalty -> score 7
+    example2 = {
+        "messages": [
+            {"role": "user", "content": "Is this a test?"},
+            {"role": "assistant", "content": "One. Two. Three. Four."}
+        ]
+    }
+    score3 = score_rule_compliance(example2, max_sentences=1)
+    assert score3 == 7
+
+    # 2. Command verb question mark penalty bypass
+    # Without command verb, user msg with no ? gets -1 penalty -> score 9
+    example3 = {
+        "messages": [
+            {"role": "user", "content": "You should check this"},
+            {"role": "assistant", "content": "Sure, I will do that."}
+        ]
+    }
+    assert score_rule_compliance(example3) == 9
+
+    # With command verb (e.g. "Introduce yourself"), user msg with no ? skips penalty -> score 10
+    example4 = {
+        "messages": [
+            {"role": "user", "content": "Introduce yourself to me"},
+            {"role": "assistant", "content": "Sure, I will do that."}
+        ]
+    }
+    assert score_rule_compliance(example4) == 10
+
+    # With lowercase command verb ("tell"), skips penalty -> score 10
+    example5 = {
+        "messages": [
+            {"role": "user", "content": "tell me a story"},
+            {"role": "assistant", "content": "Sure, I will do that."}
+        ]
+    }
+    assert score_rule_compliance(example5) == 10
+
+
+def test_local_gap_detector(tmp_path, monkeypatch):
+    from src.core.training.feedback_loop import LocalGapDetector
+    from _config import paths
+
+    # Set up mock spec, primer, and train_clean files
+    npc_key = "test_npc"
+    technique = "template"
+
+    spec_dir = tmp_path / "data" / "npcs" / "specs"
+    spec_dir.mkdir(parents=True, exist_ok=True)
+    spec_file = spec_dir / f"{npc_key}.json"
+
+    spec_data = {
+        "concepts": [
+            {
+                "name": "Swordplay",
+                "category": "teaching",
+                "aliases": ["fencing", "blade"]
+            },
+            {
+                "name": "Archery",
+                "category": "teaching",
+                "aliases": ["bow", "arrows"]
+            },
+            {
+                "name": "Magic",
+                "category": "teaching",
+                "aliases": ["spells", "alchemy"]
+            }
+        ]
+    }
+    spec_file.write_text(json.dumps(spec_data))
+
+    primer_dir = tmp_path / "data" / "npcs" / "reference_docs"
+    primer_dir.mkdir(parents=True, exist_ok=True)
+    primer_file = primer_dir / f"{npc_key}_primer.md"
+
+    # "swordplay" is in primer, "magic" is in primer, "archery" is NOT in primer.
+    primer_text = "The guide to fencing and blade skills. Magic and spells are also vital."
+    primer_file.write_text(primer_text)
+
+    dataset_dir = tmp_path / "data" / "datasets" / npc_key / technique
+    dataset_dir.mkdir(parents=True, exist_ok=True)
+    train_clean_file = dataset_dir / "train_clean.jsonl"
+
+    # Training records:
+    # "magic" has 9 examples (>= 8)
+    # "swordplay" has 3 examples (< 8)
+    # "archery" has 0 examples (< 8)
+    records = []
+    for _ in range(9):
+        records.append({"messages": [], "metadata": {"concept": "Magic"}})
+    for _ in range(3):
+        records.append({"messages": [], "metadata": {"concept": "swordplay"}})
+
+    write_jsonl(train_clean_file, records)
+
+    # Patch the PROJECT_ROOT to our tmp_path
+    monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
+    from src.config import paths as src_paths
+    monkeypatch.setattr(src_paths, "PROJECT_ROOT", tmp_path)
+    import src.core.training.feedback_loop as fb_module
+    monkeypatch.setattr(fb_module, "PROJECT_ROOT", tmp_path)
+
+    # Initialize detector
+    detector = LocalGapDetector(npc_key, technique=technique)
+
+    # Verify spec concepts and primer loaded
+    assert len(detector.spec_concepts) == 3
+    assert "fencing" in detector.primer_text
+
+    # Run detect_gaps
+    weak_concepts = [
+        {"concept": "teaching/Archery", "reasons": ["low quality"]},
+        {"concept": "teaching/Swordplay", "reasons": ["low win rate"]},
+        {"concept": "teaching/Magic", "reasons": ["high violations"]}
+    ]
+
+    gaps = detector.detect_gaps(weak_concepts)
+
+    # Classify results:
+    # 1. Archery -> 0 occurrences in primer -> knowledge_gap
+    archery_gap = next(g for g in gaps if g["concept"] == "teaching/Archery")
+    assert archery_gap["gap_type"] == "knowledge_gap"
+    assert "Source document lacks coverage" in archery_gap["action_recommendation"]
+    assert archery_gap["primer_occurrences"] == 0
+    assert archery_gap["training_examples_count"] == 0
+
+    # 2. Swordplay -> 2 occurrences (fencing, blade), 3 examples (< 8) -> training_density_gap
+    swordplay_gap = next(g for g in gaps if g["concept"] == "teaching/Swordplay")
+    assert swordplay_gap["gap_type"] == "training_density_gap"
+    assert "Low example density" in swordplay_gap["action_recommendation"]
+    assert swordplay_gap["primer_occurrences"] == 2
+    assert swordplay_gap["training_examples_count"] == 3
+
+    # 3. Magic -> 2 occurrences (magic, spells), 9 examples (>= 8) -> model_capacity_gap
+    magic_gap = next(g for g in gaps if g["concept"] == "teaching/Magic")
+    assert magic_gap["gap_type"] == "model_capacity_gap"
+    assert "failed to acquire the concept" in magic_gap["action_recommendation"]
+    assert magic_gap["primer_occurrences"] == 2
+    assert magic_gap["training_examples_count"] == 9

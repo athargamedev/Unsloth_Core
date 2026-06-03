@@ -238,6 +238,31 @@ class LlamaServer:
 
     def start(self, timeout=180):
         """Start the llama.cpp server and wait until it's ready."""
+        # Port-binding preflight check
+        import socket
+        
+        original_port = self.port
+        checked_ports = 0
+        max_port_attempts = 20
+        
+        while checked_ports < max_port_attempts:
+            try:
+                # Attempt to temporarily bind a socket to (self.host, self.port)
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    s.bind((self.host, self.port))
+                # If successfully bound, port is free!
+                break
+            except (OSError, socket.error) as e:
+                print(f"[server] Warning: Port {self.port} is already in use (error: {e}). Trying next port...")
+                self.port += 1
+                checked_ports += 1
+        else:
+            raise RuntimeError(f"Could not find a free port in range {original_port} - {original_port + max_port_attempts - 1}")
+        
+        # Once a free port is found, update self.port and self.api_url before launching the server
+        self.api_url = f"http://{self.host}:{self.port}/v1/chat/completions"
+
         # Try to find llama-server binary
         candidates = [
             self.gguf_path.parent / "llama-server",

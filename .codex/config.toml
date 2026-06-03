@@ -1,0 +1,21 @@
+model_reasoning_effort = "high"
+
+[projects."/home/athar/Projects/Unsloth_Core"]
+trust_level = "trusted"
+
+[features]
+hooks = true
+memories = true
+
+[mcp_servers.GitKraken]
+command = "/home/athar/.config/Code/User/globalStorage/eamodio.gitlens/gk"
+args = ["mcp", "--host=codex", "--source=gitlens", "--scheme=vscode"]
+
+[mcp_servers.ucore_context]
+command = "python3"
+args = ["/home/athar/Projects/Unsloth_Core/.codex/mcp/ucore_context_server.py"]
+env = { UCORE_PROJECT_ROOT = "/home/athar/Projects/Unsloth_Core" }
+
+[mcp_servers.gladekit-unity]
+command = "uvx"
+args = ["gladekit-mcp"]

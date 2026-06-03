@@ -11,7 +11,7 @@ from scripts.dataset_eval import build_combined_quality_report, summarize_jsonl_
 def test_combined_quality_report_merges_manifest_sanitize_and_deepeval(tmp_path: Path):
     spec = {
         "npc_key": "history_guide",
-        "reference_doc": "subjects/reference_docs/history_guide_primer.md",
+        "reference_doc": "data/npcs/reference_docs/history_guide_primer.md",
         "system_prompt": "IDENTITY\nVOICE\nKNOWLEDGE\nRULES",
         "__path__": "subjects/NPC_specs/history_guide.json",
     }
