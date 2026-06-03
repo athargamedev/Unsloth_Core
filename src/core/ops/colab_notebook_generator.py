@@ -14,6 +14,13 @@ from pathlib import Path
 from typing import Any
 
 
+def _find_project_root(start: Path) -> Path:
+    for parent in [start.resolve()] + list(start.resolve().parents):
+        if (parent / "ucore").exists() and (parent / "src").exists():
+            return parent
+    return start.resolve().parents[2]
+
+
 def _code_cell(source: str) -> dict[str, Any]:
     return {
         "cell_type": "code",
@@ -46,11 +53,13 @@ def build_notebook(
     ds_train = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
     ds_clean = f"subjects/datasets/{npc_key}/{technique}/train_clean.jsonl"
     spec_name = Path(spec_relpath).name
-    project_root = Path(__file__).resolve().parent.parent
+    project_root = _find_project_root(Path(__file__))
 
     # Read local preset content
     preset_yaml_content = ""
-    preset_path = project_root / "configs" / "presets" / f"{preset}.yaml"
+    preset_path = project_root / "etc" / "presets" / f"{preset}.yaml"
+    if not preset_path.exists():
+        preset_path = project_root / "configs" / "presets" / f"{preset}.yaml"
     if preset_path.exists():
         with open(preset_path, "r", encoding="utf-8") as f:
             preset_yaml_content = f.read()
@@ -202,11 +211,11 @@ print('Current working directory:', os.getcwd())
 preset_name = {preset!r}
 preset_content = {preset_yaml_content!r}
 if preset_content:
-    presets_dir = Path("configs") / "presets"
-    presets_dir.mkdir(parents=True, exist_ok=True)
-    preset_file = presets_dir / f"{{preset_name}}.yaml"
-    preset_file.write_text(preset_content)
-    print(f"Synchronized preset config file: {{preset_file}}")
+    for presets_dir in (Path("etc") / "presets", Path("configs") / "presets"):
+        presets_dir.mkdir(parents=True, exist_ok=True)
+        preset_file = presets_dir / f"{{preset_name}}.yaml"
+        preset_file.write_text(preset_content)
+        print(f"Synchronized preset config file: {{preset_file}}")
 
 spec_relpath = {spec_relpath!r}
 spec_content = {spec_json_content!r}

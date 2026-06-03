@@ -6,14 +6,25 @@ from typing import Any
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-MODEL_PRESETS_PATH = PROJECT_ROOT / "configs" / "model-presets.yaml"
+MODEL_PRESETS_PATH = PROJECT_ROOT / "etc" / "model-presets.yaml"
+LEGACY_MODEL_PRESETS_PATH = PROJECT_ROOT / "configs" / "model-presets.yaml"
 DEFAULT_FALLBACK_PRESET = "safe-any"
 
 
+def resolve_model_presets_path() -> Path:
+    """Resolve the model-to-training-preset map, preferring the canonical etc path."""
+    if MODEL_PRESETS_PATH.exists():
+        return MODEL_PRESETS_PATH
+    if LEGACY_MODEL_PRESETS_PATH.exists():
+        return LEGACY_MODEL_PRESETS_PATH
+    return MODEL_PRESETS_PATH
+
+
 def load_model_preset_map() -> dict[str, Any]:
-    if not MODEL_PRESETS_PATH.exists():
+    preset_path = resolve_model_presets_path()
+    if not preset_path.exists():
         return {}
-    with MODEL_PRESETS_PATH.open("r", encoding="utf-8") as f:
+    with preset_path.open("r", encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
 
 
@@ -45,8 +56,8 @@ def resolve_training_preset(
     Priority order:
     1. Explicit CLI preset
     2. Spec-defined preset
-    3. Exact model match in configs/model-presets.yaml
-    4. Bucket match in configs/model-presets.yaml
+    3. Exact model match in etc/model-presets.yaml
+    4. Bucket match in etc/model-presets.yaml
     5. Default map fallback
     6. safe-any as the last safety net
     """

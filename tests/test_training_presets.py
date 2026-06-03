@@ -10,8 +10,31 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.core.ops import model_presets, ollama_model_presets
 from src.core.training import train as train_module
 from src.core.training.train import PRESETS_DIR, get_available_presets, load_config, load_preset, resolve_preset_path
+
+ALLOWED_PRESET_TOP_LEVEL_KEYS = {"model", "training", "lora", "wandb", "logging"}
+ALLOWED_TRAINING_KEYS = {
+    "output_dir",
+    "num_epochs",
+    "max_steps",
+    "batch_size",
+    "gradient_accumulation_steps",
+    "warmup_steps",
+    "learning_rate",
+    "lr_scheduler_type",
+    "weight_decay",
+    "neftune_noise_alpha",
+    "save_steps",
+    "eval_steps",
+    "dataset_text_field",
+    "dataset_num_proc",
+    "max_seq_length",
+    "packing",
+    "train_on_responses_only",
+}
+ALLOWED_LORA_KEYS = {"r", "alpha", "dropout", "target_modules"}
 
 
 def test_fast_3b_preset_is_discovered_from_canonical_etc_presets():
@@ -26,6 +49,33 @@ def test_fast_3b_preset_loads_neftune_from_training_config():
     preset = load_preset("fast-3b")
 
     assert preset["training"]["neftune_noise_alpha"] == 5.0
+
+
+def test_all_canonical_training_presets_use_supported_override_shape():
+    preset_paths = sorted(PRESETS_DIR.glob("*.yaml"))
+    assert preset_paths
+
+    for preset_path in preset_paths:
+        preset = yaml.safe_load(preset_path.read_text(encoding="utf-8")) or {}
+        assert set(preset) <= ALLOWED_PRESET_TOP_LEVEL_KEYS, preset_path.name
+        assert any(key in preset for key in ("model", "training", "lora", "wandb")), preset_path.name
+
+        training = preset.get("training")
+        if training is not None:
+            assert isinstance(training, dict), preset_path.name
+            assert set(training) <= ALLOWED_TRAINING_KEYS, preset_path.name
+
+        lora = preset.get("lora")
+        if lora is not None:
+            assert isinstance(lora, dict), preset_path.name
+            assert set(lora) <= ALLOWED_LORA_KEYS, preset_path.name
+
+
+def test_model_and_ollama_preset_maps_resolve_from_canonical_etc_files():
+    assert model_presets.resolve_model_presets_path() == PROJECT_ROOT / "etc" / "model-presets.yaml"
+    assert ollama_model_presets.resolve_ollama_model_presets_path() == PROJECT_ROOT / "etc" / "ollama-model-presets.yaml"
+    assert model_presets.resolve_training_preset("unsloth/Llama-3.2-3B-Instruct-bnb-4bit") == "fast-3b"
+    assert ollama_model_presets.resolve_ollama_model(role="judge") == "qwen2.5:7b"
 
 
 def test_canonical_preset_wins_over_legacy_duplicate(monkeypatch, tmp_path):

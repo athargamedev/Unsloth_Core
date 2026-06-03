@@ -26,9 +26,26 @@ from src.config import paths
 from src.config.workflow_context import resolve_workflow_context
 
 PROJECT_ROOT = paths.PROJECT_ROOT
-PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"
-BASE_CONFIG_PATH = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"
-POLICY_PATH = PROJECT_ROOT / "configs" / "workload-policy.yaml"
+PRESETS_DIR = PROJECT_ROOT / "etc" / "presets"
+LEGACY_PRESETS_DIR = PROJECT_ROOT / "configs" / "presets"
+BASE_CONFIG_PATH = PROJECT_ROOT / "etc" / "lora-sft-base.yaml"
+LEGACY_BASE_CONFIG_PATH = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"
+POLICY_PATH = PROJECT_ROOT / "etc" / "workload-policy.yaml"
+LEGACY_POLICY_PATH = PROJECT_ROOT / "configs" / "workload-policy.yaml"
+
+
+def first_existing_path(*paths: Path) -> Path:
+    for path in paths:
+        if path.exists():
+            return path
+    return paths[0]
+
+
+def resolve_preset_path(preset_name: str) -> Path:
+    return first_existing_path(
+        PRESETS_DIR / f"{preset_name}.yaml",
+        LEGACY_PRESETS_DIR / f"{preset_name}.yaml",
+    )
 
 
 def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -112,13 +129,13 @@ def estimate_training_vram_gb(config: dict[str, Any], policy: dict[str, Any]) ->
 
 
 def load_resolved_config(spec: dict[str, Any], preset_name: str | None) -> dict[str, Any]:
-    base = parse_yaml(BASE_CONFIG_PATH)
+    base = parse_yaml(first_existing_path(BASE_CONFIG_PATH, LEGACY_BASE_CONFIG_PATH))
 
     ctx = resolve_workflow_context(spec=spec, preset=preset_name)
     resolved = deep_merge(base, {"model": ctx.model_id, "dataset": {"technique": ctx.technique}})
 
     if ctx.preset:
-        preset_path = PRESETS_DIR / f"{ctx.preset}.yaml"
+        preset_path = resolve_preset_path(ctx.preset)
         if not preset_path.exists():
             raise ValueError(f"Unknown preset: {ctx.preset}")
         resolved = deep_merge(resolved, parse_yaml(preset_path))
@@ -141,7 +158,7 @@ def sum_examples(spec: dict[str, Any]) -> int:
 
 
 def recommend(spec: dict[str, Any], preset: str | None, local_vram_gb: float | None) -> dict[str, Any]:
-    policy = parse_yaml(POLICY_PATH)
+    policy = parse_yaml(first_existing_path(POLICY_PATH, LEGACY_POLICY_PATH))
     config = load_resolved_config(spec, preset)
 
     technique = str(config.get("dataset", {}).get("technique", "template"))

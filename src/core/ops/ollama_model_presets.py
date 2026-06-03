@@ -8,15 +8,26 @@ import yaml
 from src.config.constants import DEFAULT_JUDGE_MODEL
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-OLLAMA_MODEL_PRESETS_PATH = PROJECT_ROOT / "configs" / "ollama-model-presets.yaml"
+OLLAMA_MODEL_PRESETS_PATH = PROJECT_ROOT / "etc" / "ollama-model-presets.yaml"
+LEGACY_OLLAMA_MODEL_PRESETS_PATH = PROJECT_ROOT / "configs" / "ollama-model-presets.yaml"
 DEFAULT_GENERATION_PRESET = "generate-qwen25"
 DEFAULT_JUDGE_PRESET = "judge-qwen25"
 
 
+def resolve_ollama_model_presets_path() -> Path:
+    """Resolve the Ollama model preset map, preferring the canonical etc path."""
+    if OLLAMA_MODEL_PRESETS_PATH.exists():
+        return OLLAMA_MODEL_PRESETS_PATH
+    if LEGACY_OLLAMA_MODEL_PRESETS_PATH.exists():
+        return LEGACY_OLLAMA_MODEL_PRESETS_PATH
+    return OLLAMA_MODEL_PRESETS_PATH
+
+
 def load_ollama_model_preset_map() -> dict[str, Any]:
-    if not OLLAMA_MODEL_PRESETS_PATH.exists():
+    preset_path = resolve_ollama_model_presets_path()
+    if not preset_path.exists():
         return {}
-    with OLLAMA_MODEL_PRESETS_PATH.open("r", encoding="utf-8") as handle:
+    with preset_path.open("r", encoding="utf-8") as handle:
         return yaml.safe_load(handle) or {}
 
 
@@ -26,7 +37,7 @@ def resolve_ollama_model(*, preset: str | None = None, model: str | None = None,
     Priority order:
     1. Explicit CLI model
     2. Explicit CLI preset
-    3. Role-specific default preset from configs/ollama-model-presets.yaml
+    3. Role-specific default preset from etc/ollama-model-presets.yaml
     4. Role-specific default model mapping
     5. Safety fallback to DEFAULT_JUDGE_MODEL for judging, qwen2.5:7b for generation
     """
