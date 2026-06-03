@@ -13,10 +13,10 @@ TEST_ROOT = PROJECT_ROOT / "tests"
 
 OWNER_RULES: list[tuple[str, tuple[str, ...]]] = [
     ("dataset-eval", ("dataset_eval", "quality", "deepeval")),
-    ("dataset", ("generate_dataset", "generation", "dataset_contract", "sanitize", "schema", "llm_generator", "ollama_generator")),
+    ("dataset", ("generate_dataset", "generation", "dataset_contract", "sanitize", "schema", "llm_generator", "ollama_generator", "ollama_prompts", "ollama_orchestrator")),
     ("training", ("training", "train", "preflight", "model_preset", "wandb")),
     ("export", ("export", "smoke")),
-    ("evaluation", ("evaluate", "eval_", "npc_model", "judge", "scoring", "reporting", "metrics")),
+    ("evaluation", ("evaluate", "eval_", "npc_model", "judge", "scoring", "reporting", "metrics", "compare_local_models")),
     ("orchestration", ("workflow", "pipeline", "ucore", "track", "db", "alias", "legacy")),
     ("contract", ("contract", "coherence", "boundary", "path", "reference")),
 ]

@@ -17,8 +17,7 @@ from src.core.dataset.ollama_prompts import build_generation_prompt as _build_ge
 
 
 def _clean_llm_response_text(text: str, concept: str) -> str:
-    cleaned = clean_generic_filler(text, concept)
-    return cleaned
+    return clean_generic_filler(text, concept)
 from src.core.dataset.ollama_artifacts import build_ollama_manifest, write_ollama_dataset_artifacts
 from src.config.log_setup import log_info, log_warn, log_error, log_state
 
@@ -28,15 +27,21 @@ logger = logging.getLogger(__name__)
 class OllamaDatasetGenerator:
     """High-level Ollama dataset generation orchestrator."""
     
-    def __init__(self, spec: dict, generator: OllamaGeneratorV2, batch_size: int = 4):
+    def __init__(self, spec: dict, generator: OllamaGeneratorV2, batch_size: int = 4, hook_recorder=None):
         self.spec = spec
         self.generator = generator
         self.batch_size = batch_size
+        self.hook_recorder = hook_recorder
         self.concepts = ConceptExtractor(spec).extract()
         self.retriever = ReferenceDocRetriever(spec.get("reference_doc"))
         self.guardrail = DialogueGuardrail()
         self.progress = None
+        self.hook_recorder = hook_recorder
     
+    def _emit_hook(self, step: str, status: str, **fields) -> None:
+        if self.hook_recorder:
+            self.hook_recorder.emit(step, status, **fields)
+
     def _pick_concept(self, category: str, index: int) -> str:
         """Cycle through concepts deterministically to maximize coverage."""
         if not self.concepts:
@@ -140,7 +145,9 @@ class OllamaDatasetGenerator:
         history_subject = _is_history_subject(self.spec)
         effective_temperature = min(temperature, 0.25) if history_subject else temperature
 
-        async def fallback_template_example() -> dict | None:
+        self._emit_hook("generate_example", "start", category=category, concept=concept_str, difficulty=difficulty, dialogue_type=dialogue_type, scenario_name=scenario_name, boundary=boundary, multi_turn=multi_turn)
+
+        async def fallback_template_example(reason: str) -> dict | None:
             fallback = await generate_example_async(
                 self.spec,
                 category,
@@ -161,10 +168,13 @@ class OllamaDatasetGenerator:
             )
             if fallback:
                 logger.warning(f"Falling back to deterministic template for {category}:{concept_str}")
+                self._emit_hook("generate_example", "complete", category=category, concept=concept_str, outcome="fallback", reason=reason)
+            else:
+                self._emit_hook("generate_example", "error", category=category, concept=concept_str, outcome="fallback", reason=reason)
             return fallback
 
         if history_subject:
-            return await fallback_template_example()
+            return await fallback_template_example("history_subject")
 
         response = await self.generator.generate_async(
             system_prompt="You are a training data generator for educational NPCs. Output valid JSON.",
@@ -177,7 +187,7 @@ class OllamaDatasetGenerator:
         )
 
         if not response:
-            return await fallback_template_example()
+            return await fallback_template_example("empty_response")
         
         try:
             # Extract JSON from response (handle markdown code blocks)
@@ -203,15 +213,15 @@ class OllamaDatasetGenerator:
                 asst_msg = generate_quest_response(self.spec, concept_str, scenario_name=scenario_name, retriever=self.retriever)
 
             if not user_msg or not asst_msg:
-                return await fallback_template_example()
+                return await fallback_template_example("parse_or_missing_fields")
 
             if _contains_prompt_leak(asst_msg):
                 logger.warning("Prompt leak detected in LLM response; falling back to deterministic template")
-                return await fallback_template_example()
+                return await fallback_template_example("parse_or_missing_fields")
 
             if len(asst_msg) > max_chars:
                 logger.warning(f"LLM response exceeded char limit ({len(asst_msg)} > {max_chars}); using fallback template")
-                return await fallback_template_example()
+                return await fallback_template_example("parse_or_missing_fields")
             
             # Validate with guardrail
             is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
@@ -223,9 +233,9 @@ class OllamaDatasetGenerator:
                     is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
                     if not is_valid:
                         logger.warning(f"Refusal fallback rejected: {reason}")
-                        return await fallback_template_example()
+                        return await fallback_template_example("parse_or_missing_fields")
                 else:
-                    return await fallback_template_example()
+                    return await fallback_template_example("parse_or_missing_fields")
             if category == "refusal":
                 boundary_hint = self._infer_refusal_boundary(user_msg, concept_str)
                 user_msg = _refusal_user_message(self.spec, boundary_hint)
@@ -235,7 +245,7 @@ class OllamaDatasetGenerator:
                 is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
                 if not is_valid:
                     logger.warning(f"Refusal fallback rejected: {reason}")
-                    return await fallback_template_example()
+                    return await fallback_template_example("parse_or_missing_fields")
             
             messages = [
                 {"role": "system", "content": system_prompt},
@@ -246,7 +256,7 @@ class OllamaDatasetGenerator:
                 is_valid2, reason2 = self.guardrail.validate(asst2_msg, [grounding], self.spec)
                 if not is_valid2:
                     logger.warning(f"Guardrail rejection: {reason2}")
-                    return await fallback_template_example()
+                    return await fallback_template_example("parse_or_missing_fields")
                 messages.extend([
                     {"role": "user", "content": user2_msg},
                     {"role": "assistant", "content": asst2_msg},
@@ -278,6 +288,8 @@ class OllamaDatasetGenerator:
             if boundary:
                 metadata["boundary"] = boundary
             
+            if self.hook_recorder:
+                self.hook_recorder.emit("generate_example", "complete", category=category, concept=concept_str, outcome="generated", multi_turn=bool(multi_turn and user2_msg and asst2_msg))
             return {
                 "messages": messages,
                 "metadata": metadata
@@ -285,7 +297,7 @@ class OllamaDatasetGenerator:
         
         except (json.JSONDecodeError, KeyError) as e:
             logger.warning(f"Failed to parse LLM response: {e}")
-            return await fallback_template_example()
+            return await fallback_template_example("json_decode_error")
     
     async def generate_dataset_async(self, examples_per_category: dict, 
                                     temperature: float = 0.6, max_workers: int = 4,
@@ -322,6 +334,7 @@ class OllamaDatasetGenerator:
                         self.progress.add_error(category, str(concept), "Generation returned None")
                 except Exception as e:
                     self.progress.add_error(category, "unknown", str(e))
+                    self._emit_hook("generate_example", "error", category=category, concept=str(concept), error=str(e))
         
         tasks = []
         for category, count in examples_per_category.items():
@@ -375,6 +388,7 @@ class OllamaDatasetGenerator:
                 tasks.append(gen_task(category, i, diff, dt, sn, bd))
         
         await asyncio.gather(*tasks)
+        self._emit_hook("generate_dataset", "complete", total_examples=len(all_examples), categories=list(examples_per_category.keys()))
         return all_examples
     
     def generate_dataset_sync(self, examples_per_category: dict, 

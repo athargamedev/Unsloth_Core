@@ -55,3 +55,6 @@ approval_mode = "approve"
 
 [mcp_servers.gladekit-unity.tools.get_session_summary]
 approval_mode = "approve"
+
+[mcp_servers.MCP_DOCKER]
+  startup_timeout_sec = 60
