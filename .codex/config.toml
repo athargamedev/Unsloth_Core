@@ -19,3 +19,39 @@ env = { UCORE_PROJECT_ROOT = "/home/athar/Projects/Unsloth_Core" }
 [mcp_servers.gladekit-unity]
 command = "uvx"
 args = ["gladekit-mcp"]
+
+[mcp_servers.gladekit-unity.tools.find_game_objects]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.get_gameobject_components]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.get_component_inspector_properties]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.find_scripts]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.list_children]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.list_assets]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.get_play_mode_state]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.remember_for_session]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.set_script_component_property]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.compile_scripts]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.save_scene]
+approval_mode = "approve"
+
+[mcp_servers.gladekit-unity.tools.get_session_summary]
+approval_mode = "approve"
