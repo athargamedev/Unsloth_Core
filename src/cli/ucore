@@ -157,6 +157,34 @@ def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
         print(f"[WATCH] Command failed with return code {returncode}. Logs: {watch_dir}", flush=True)
         sys.exit(returncode)
 
+def _new_npc_checklist_payload(npc_key: str, subject: str | None = None, name: str | None = None) -> dict:
+    return {
+        "npc_key": npc_key,
+        "name": name,
+        "subject": subject,
+        "steps": [
+            "1. validate-spec",
+            "2. compare-local-models if you need to choose a default local model",
+            "3. generate",
+            "4. sanitize",
+            "5. dataset-eval",
+            "6. fix shared pipeline issues if the gate fails",
+            "7. train only after the gate passes",
+            "8. evaluate and compare-canonical-runs",
+            "9. export",
+        ],
+        "json_issue_policy": {
+            "problem": "avoid a bunch of loose JSON files",
+            "rule": "treat .pipeline/runs/<run_id>/artifacts.json as the canonical run record and archive legacy scattered outputs",
+            "notes": [
+                "Use compare-local-models for model selection.",
+                "Use compare-canonical-runs for run comparison.",
+                "Keep stage outputs for compatibility, but rely on canonical artifacts for decisions.",
+            ],
+        },
+    }
+
+
 def create_parser():
     """Create and return the argument parser with all subcommands."""
     parser = argparse.ArgumentParser(description="Unsloth_Core Unified CLI")
@@ -641,6 +669,21 @@ def create_parser():
     init_p.add_argument("--force", action="store_true", help="Overwrite existing spec")
     init_p.add_argument("--skip-spec", action="store_true", help="Only create folders, skip spec file")
 
+    checklist_p = subparsers.add_parser("new-npc-checklist", help="Print the recommended checklist for creating a new NPC")
+    checklist_p.add_argument("npc_key", help="NPC key (snake_case)")
+    checklist_p.add_argument("--subject", help="Subject description")
+    checklist_p.add_argument("--name", help="NPC display name")
+    checklist_p.add_argument("--json", action="store_true", help="Output JSON")
+
+    bootstrap_p = subparsers.add_parser("new-npc-bootstrap", help="Scaffold a new NPC and print a canonical setup checklist")
+    bootstrap_p.add_argument("npc_key", help="NPC key (snake_case)")
+    bootstrap_p.add_argument("--subject", help="Subject description")
+    bootstrap_p.add_argument("--name", help="NPC display name")
+    bootstrap_p.add_argument("--force", action="store_true", help="Overwrite existing spec and stubs")
+    bootstrap_p.add_argument("--skip-spec", action="store_true", help="Only create folders, skip spec file")
+    bootstrap_p.add_argument("--json", action="store_true", help="Output JSON")
+    bootstrap_p.add_argument("--print-plan", action="store_true", help="Print the recommended pipeline plan after scaffolding")
+
     # Audit
     audit_p = subparsers.add_parser("audit", help="Health check and context audit")
     audit_subcmd = audit_p.add_subparsers(dest="audit_command", help="Audit subcommand")
@@ -675,6 +718,53 @@ def main():
         if args.force: cmd.append("--force")
         if args.skip_spec: cmd.append("--skip-spec")
         run_cmd(cmd)
+        sys.exit(0)
+
+    if args.command == "new-npc-checklist":
+        payload = _new_npc_checklist_payload(args.npc_key, args.subject, args.name)
+        if args.json:
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+        else:
+            print(f"New NPC checklist for {args.npc_key}")
+            if args.name:
+                print(f"Name: {args.name}")
+            if args.subject:
+                print(f"Subject: {args.subject}")
+            for step in payload["steps"]:
+                print(f"- {step}")
+            print("JSON issue policy:")
+            print("- avoid a bunch of loose JSON files")
+            print("- use .pipeline/runs/<run_id>/artifacts.json as the canonical run record")
+            print("- archive legacy scattered outputs")
+        sys.exit(0)
+
+    if args.command == "new-npc-bootstrap":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "scaffold_npc.py"), args.npc_key]
+        if args.subject:
+            cmd.extend(["--subject", args.subject])
+        if args.name:
+            cmd.extend(["--name", args.name])
+        if args.force:
+            cmd.append("--force")
+        if args.skip_spec:
+            cmd.append("--skip-spec")
+        if args.json:
+            result = subprocess.run(cmd, cwd=PROJECT_ROOT, check=True, capture_output=True, text=True)
+        else:
+            run_cmd(cmd)
+            result = None
+        payload = _new_npc_checklist_payload(args.npc_key, args.subject, args.name)
+        if args.json:
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+        else:
+            print(f"Bootstrapped NPC: {args.npc_key}")
+            if args.print_plan:
+                print("Recommended next steps:")
+                for step in payload["steps"]:
+                    print(f"- {step}")
+            print("Canonical JSON policy:")
+            print("- use .pipeline/runs/<run_id>/artifacts.json")
+            print("- avoid ad hoc JSON scatter for decisions")
         sys.exit(0)
 
     if args.command == "audit":
