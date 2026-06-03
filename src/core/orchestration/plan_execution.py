@@ -17,10 +17,16 @@ import argparse
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+for parent in [Path(__file__).resolve()] + list(Path(__file__).resolve().parents):
+    if (parent / "ucore").exists() and (parent / "src").exists():
+        sys.path.insert(0, str(parent))
+        break
 
 from src.config import paths
 from src.config.workflow_context import resolve_workflow_context
