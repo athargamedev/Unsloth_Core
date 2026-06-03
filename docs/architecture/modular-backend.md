@@ -2,7 +2,7 @@
 
 ## Overview
 
-The modular backend replaces the original monolithic `server.ts` (4,495 lines) with 27 files organized by concern. It lives under `frontend_control/unity-npc-llm-training-dashboard/src/backend/` and provides auth, job queue, audit logging, and all API routes for the dashboard.
+The modular backend replaces the original monolithic `server.ts` (4,495 lines) with 27 files organized by concern. It lives under `src/dashboard/unity-npc-llm-training-dashboard/src/backend/` and provides auth, job queue, audit logging, and all API routes for the dashboard.
 
 ```
 src/backend/

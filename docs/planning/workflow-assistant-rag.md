@@ -278,7 +278,7 @@ Indexing can still scan and hash files while GPU is busy, but embedding calls sh
 
 ### Services
 
-Add under `frontend_control/unity-npc-llm-training-dashboard/src/backend/services/`:
+Add under `src/dashboard/unity-npc-llm-training-dashboard/src/backend/services/`:
 
 - `assistant-embeddings.ts`
   - `embedText(text): Promise<number[]>`

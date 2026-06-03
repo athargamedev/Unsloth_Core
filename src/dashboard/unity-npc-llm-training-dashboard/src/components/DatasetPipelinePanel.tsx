@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'motion/react';
 import {
   FileText,
@@ -22,6 +22,7 @@ import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import type { AvailableCommand, Subject } from '../api';
 import { fetchOptionalJson } from '../api';
+import { DynamicCommandForm } from './DynamicCommandForm';
 
 // 1. Zod Schema Definitions
 const QualityMetricSchema = z.object({
@@ -76,6 +77,9 @@ interface DatasetPipelinePanelProps {
   subjects: Subject[];
   onTriggerCommand: (payload: Record<string, unknown>) => void;
   jobs: Array<{ id: string; name: string; status: string; type: string; command?: string[]; logs?: string[] }>;
+  generateOllamaSchema?: Record<string, any>;
+  sanitizeSchema?: Record<string, any>;
+  datasetEvalSchema?: Record<string, any>;
 }
 
 interface PipelineStep {
@@ -92,7 +96,7 @@ interface PipelineStep {
 const TECHNIQUES = ['template', 'docs', 'ollama', 'openai', 'anthropic'] as const;
 type Technique = (typeof TECHNIQUES)[number];
 
-export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCommand, jobs }: DatasetPipelinePanelProps) {
+export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCommand, jobs, generateOllamaSchema, sanitizeSchema, datasetEvalSchema }: DatasetPipelinePanelProps) {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedTechnique, setSelectedTechnique] = useState<Technique>('template');
   const [showFailures, setShowFailures] = useState(false);
@@ -138,6 +142,44 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
   });
   const [showEvalOptions, setShowEvalOptions] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // ── DynamicCommandForm change handlers ──────────────────────────────────
+
+  const handleOllamaChange = useCallback((fieldPath: string, value: any) => {
+    setOllamaConfig(prev => ({ ...prev, [fieldPath]: value }));
+  }, []);
+
+  const handleSanitizeChange = useCallback((fieldPath: string, value: any) => {
+    setSanitizeConfig(prev => ({ ...prev, [fieldPath]: value }));
+  }, []);
+
+  const configToSchemaEval: Record<string, string> = {
+    judgeModel: 'judgeModel',
+    judgePreset: 'judgePreset',
+    ollamaBaseUrl: 'ollamaBaseUrl',
+    judgeTemperature: 'judgeTemperature',
+    casesPerCategory: 'casesPerCategory',
+    categories: 'categories',
+    identifier: 'identifier',
+    display: 'display',
+    ignoreErrors: 'ignoreErrors',
+    softFail: 'softFail',
+  };
+
+  const evalSchemaValues = useMemo(() => {
+    const values: Record<string, any> = {};
+    for (const [configKey, schemaKey] of Object.entries(configToSchemaEval)) {
+      values[schemaKey] = (evalConfig as any)[configKey];
+    }
+    return values;
+  }, [evalConfig]);
+
+  const handleEvalFieldChange = useCallback((fieldPath: string, value: any) => {
+    const entry = Object.entries(configToSchemaEval).find(([, schemaKey]) => schemaKey === fieldPath);
+    if (entry) {
+      setEvalConfig(prev => ({ ...prev, [entry[0]]: value }));
+    }
+  }, []);
 
   const selectedSubject = subjects.find((s) => s.id === selectedSubjectId);
   const hasSelection = !!selectedSubject;
@@ -447,66 +489,17 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
               )}
             </button>
             {showOllamaOptions && (
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Model</label>
-                  <input
-                    type="text"
-                    value={ollamaConfig.model}
-                    onChange={(e) => setOllamaConfig({...ollamaConfig, model: e.target.value})}
-                    className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Batch Size</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={16}
-                    value={ollamaConfig.batchSize}
-                    onChange={(e) => setOllamaConfig({...ollamaConfig, batchSize: parseInt(e.target.value) || 4})}
-                    className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Temperature</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    value={ollamaConfig.temperature}
-                    onChange={(e) => setOllamaConfig({...ollamaConfig, temperature: parseFloat(e.target.value) || 0.7})}
-                    className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Multi-turn Ratio</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    value={ollamaConfig.multiTurnRatio}
-                    onChange={(e) => setOllamaConfig({...ollamaConfig, multiTurnRatio: parseFloat(e.target.value) || 0.25})}
-                    className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Seed</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={ollamaConfig.seed}
-                    onChange={(e) => setOllamaConfig({...ollamaConfig, seed: parseInt(e.target.value) || 42})}
-                    className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                  />
-                </div>
+              <div className="mt-3">
+                <DynamicCommandForm
+                  commandId="generate-ollama"
+                  fields={generateOllamaSchema || {}}
+                  values={ollamaConfig as unknown as Record<string, unknown>}
+                  onChange={handleOllamaChange}
+                  fieldKeys={["model", "batchSize", "temperature", "multiTurnRatio", "seed"]}
+                  hideCommandId
+                />
               </div>
             )}
-            <p className="mt-2 text-[9px] text-ink/30 italic">
-              These options control the optimized Ollama generator with advanced retry logic and concurrency.
-            </p>
           </div>
         )}
 
@@ -528,214 +521,15 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
               )}
             </button>
             {showSanitizeOptions && (
-              <div className="mt-3 space-y-4">
-                {/* Basic Limits */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Basic Limits</div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Min Length</label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={sanitizeConfig.minLength}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, minLength: parseInt(e.target.value) || 10})}
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Max Sentences</label>
-                      <input
-                        type="number"
-                        min={1}
-                        value={sanitizeConfig.maxSentences}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, maxSentences: parseInt(e.target.value) || 5})}
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* Quality Thresholds */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Quality Thresholds</div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Pass %</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={sanitizeConfig.qualityThresholdPass}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, qualityThresholdPass: parseInt(e.target.value) || 70})}
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Flag %</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={sanitizeConfig.qualityThresholdFlag}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, qualityThresholdFlag: parseInt(e.target.value) || 50})}
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Discard Below</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={sanitizeConfig.discardBelowScore}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, discardBelowScore: parseInt(e.target.value) || 0})}
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* Strictness */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Strictness</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10">
-                      <input
-                        type="checkbox"
-                        checked={sanitizeConfig.strictMode}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, strictMode: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Strict Mode</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10">
-                      <input
-                        type="checkbox"
-                        checked={sanitizeConfig.strictCanonical}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, strictCanonical: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Strict Canonical</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10">
-                      <input
-                        type="checkbox"
-                        checked={sanitizeConfig.requireCompleteMetadata}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, requireCompleteMetadata: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Require Complete Metadata</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10">
-                      <input
-                        type="checkbox"
-                        checked={sanitizeConfig.noFixMetadata}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, noFixMetadata: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">No Fix Metadata</span>
-                    </label>
-                  </div>
-                </div>
-                {/* Artifact Handling */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Artifact Handling</div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Artifact Check</label>
-                      <select
-                        value={sanitizeConfig.artifactCheck}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, artifactCheck: e.target.value})}
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      >
-                        <option value="strict">strict</option>
-                        <option value="warn">warn</option>
-                        <option value="off">off</option>
-                      </select>
-                    </div>
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10 self-end mb-0.5">
-                      <input
-                        type="checkbox"
-                        checked={sanitizeConfig.verboseArtifacts}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, verboseArtifacts: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Verbose Artifacts</span>
-                    </label>
-                  </div>
-                </div>
-                {/* Deduplication */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Deduplication</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10">
-                      <input
-                        type="checkbox"
-                        checked={sanitizeConfig.dedup}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, dedup: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Enable Dedup</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10">
-                      <input
-                        type="checkbox"
-                        checked={sanitizeConfig.dedupReport}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, dedupReport: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Dedup Report</span>
-                    </label>
-                  </div>
-                </div>
-                {/* Manifest */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Manifest</div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10 self-end mb-0.5">
-                      <input
-                        type="checkbox"
-                        checked={sanitizeConfig.writeManifest}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, writeManifest: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Write Manifest</span>
-                    </label>
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Manifest Path</label>
-                      <input
-                        type="text"
-                        value={sanitizeConfig.manifestPath}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, manifestPath: e.target.value})}
-                        placeholder="(auto)"
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* Debug */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Debug</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10">
-                      <input
-                        type="checkbox"
-                        checked={sanitizeConfig.verbose}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, verbose: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Verbose</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10">
-                      <input
-                        type="checkbox"
-                        checked={sanitizeConfig.debug}
-                        onChange={(e) => setSanitizeConfig({...sanitizeConfig, debug: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Debug</span>
-                    </label>
-                  </div>
-                </div>
+              <div className="mt-3">
+                <DynamicCommandForm
+                  commandId="dataset-sanitize"
+                  fields={sanitizeSchema || {}}
+                  values={sanitizeConfig as unknown as Record<string, unknown>}
+                  onChange={handleSanitizeChange}
+                  fieldKeys={["minLength", "maxSentences", "qualityThresholdPass", "qualityThresholdFlag", "discardBelowScore", "strictMode", "strictCanonical", "requireCompleteMetadata", "noFixMetadata", "artifactCheck", "verboseArtifacts", "dedup", "dedupReport", "writeManifest", "manifestPath", "verbose", "debug"]}
+                  hideCommandId
+                />
               </div>
             )}
           </div>
@@ -759,138 +553,15 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
               )}
             </button>
             {showEvalOptions && (
-              <div className="mt-3 space-y-4">
-                {/* Judge Selection */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Judge Selection</div>
-                  <p className="text-[9px] text-ink/30 italic mb-2">Preset overrides explicit model name when both are set.</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Judge Preset</label>
-                      <select
-                        value={evalConfig.judgePreset}
-                        onChange={(e) => setEvalConfig({...evalConfig, judgePreset: e.target.value})}
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      >
-                        <option value="">(none)</option>
-                        <option value="judge-qwen25">judge-qwen25</option>
-                        <option value="judge-llama31-exp">judge-llama31-exp</option>
-                        <option value="judge-qwen35-exp">judge-qwen35-exp</option>
-                        <option value="judge-qwen3-exp">judge-qwen3-exp</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Judge Model</label>
-                      <input
-                        type="text"
-                        value={evalConfig.judgeModel}
-                        onChange={(e) => setEvalConfig({...evalConfig, judgeModel: e.target.value})}
-                        placeholder="e.g. qwen3:latest"
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* Connection */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Connection</div>
-                  <div>
-                    <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Ollama Base URL</label>
-                    <input
-                      type="text"
-                      value={evalConfig.ollamaBaseUrl}
-                      onChange={(e) => setEvalConfig({...evalConfig, ollamaBaseUrl: e.target.value})}
-                      className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                    />
-                  </div>
-                </div>
-                {/* Evaluation Params */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Evaluation Parameters</div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Temperature</label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={2}
-                        step={0.1}
-                        value={evalConfig.judgeTemperature}
-                        onChange={(e) => setEvalConfig({...evalConfig, judgeTemperature: parseFloat(e.target.value) || 0})}
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Cases Per Category</label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={50}
-                        value={evalConfig.casesPerCategory}
-                        onChange={(e) => setEvalConfig({...evalConfig, casesPerCategory: parseInt(e.target.value) || 1})}
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Categories</label>
-                      <input
-                        type="text"
-                        value={evalConfig.categories}
-                        onChange={(e) => setEvalConfig({...evalConfig, categories: e.target.value})}
-                        placeholder="comma-separated"
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* Output Options */}
-                <div>
-                  <div className="text-[9px] font-bold text-ink/30 uppercase tracking-wider mb-2">Output Options</div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Display</label>
-                      <select
-                        value={evalConfig.display}
-                        onChange={(e) => setEvalConfig({...evalConfig, display: e.target.value})}
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      >
-                        <option value="all">all</option>
-                        <option value="failing">failing</option>
-                        <option value="passing">passing</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[9px] font-bold text-ink/40 uppercase tracking-wider mb-1">Identifier</label>
-                      <input
-                        type="text"
-                        value={evalConfig.identifier}
-                        onChange={(e) => setEvalConfig({...evalConfig, identifier: e.target.value})}
-                        placeholder="optional run label"
-                        className="w-full p-1.5 bg-bg border border-line rounded text-[11px] font-mono focus:outline-none focus:border-accent"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10">
-                      <input
-                        type="checkbox"
-                        checked={evalConfig.ignoreErrors}
-                        onChange={(e) => setEvalConfig({...evalConfig, ignoreErrors: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Ignore Errors</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer p-1.5 border border-line/20 rounded-sm hover:bg-line/10">
-                      <input
-                        type="checkbox"
-                        checked={evalConfig.softFail}
-                        onChange={(e) => setEvalConfig({...evalConfig, softFail: e.target.checked})}
-                        className="w-3 h-3 accent-accent"
-                      />
-                      <span className="text-[10px] text-ink/60">Soft Fail</span>
-                    </label>
-                  </div>
-                </div>
+              <div className="mt-3">
+                <DynamicCommandForm
+                  commandId="dataset-eval"
+                  fields={datasetEvalSchema || {}}
+                  values={evalSchemaValues}
+                  onChange={handleEvalFieldChange}
+                  fieldKeys={["judgePreset", "judgeModel", "ollamaBaseUrl", "judgeTemperature", "casesPerCategory", "categories", "display", "identifier", "ignoreErrors", "softFail"]}
+                  hideCommandId
+                />
               </div>
             )}
           </div>

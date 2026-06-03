@@ -27,7 +27,7 @@ source unsloth_env/bin/activate
 Dashboard:
 
 ```bash
-cd frontend_control/unity-npc-llm-training-dashboard
+cd src/dashboard/unity-npc-llm-training-dashboard
 npm run dev
 ```
 
@@ -100,12 +100,12 @@ supabase start
 
 Package path:
 
-`frontend_control/unity-npc-llm-training-dashboard/`
+`src/dashboard/unity-npc-llm-training-dashboard/`
 
 Dev:
 
 ```bash
-cd frontend_control/unity-npc-llm-training-dashboard
+cd src/dashboard/unity-npc-llm-training-dashboard
 npm run dev
 ```
 

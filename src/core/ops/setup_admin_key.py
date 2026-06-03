@@ -13,7 +13,7 @@ Usage:
 Dependencies:
     - Python 3.8+
     - `pip install bcrypt` (if not already installed; falls back to a Node.js subprocess)
-    - Node.js with `bcrypt` npm package installed in frontend_control/
+    - Node.js with `bcrypt` npm package installed in src/dashboard/unity-npc-llm-training-dashboard/
 
 The generated key is printed to stdout once. Save it securely — it cannot be
 retrieved from the database later (only the bcrypt hash is stored).
@@ -32,8 +32,7 @@ from datetime import datetime, timezone
 DEFAULT_DB_URL = "postgresql://postgres:postgres@localhost:15434/postgres"
 DASHBOARD_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "frontend_control",
-    "unity-npc-llm-training-dashboard",
+    "src", "dashboard", "unity-npc-llm-training-dashboard",
 )
 
 # ── Helpers ─────────────────────────────────────────────────────────────────

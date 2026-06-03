@@ -310,7 +310,7 @@ The `_db_emit()` method maps every hook event to the appropriate database operat
 - **Quality gates** — On `deepeval_run` completion, reads `quality_summary.json` and creates a `dataset_quality_gates` row.
 - **Eval sessions** — On `evaluate_pipeline` completion, reads feedback JSON and creates an `eval_sessions` row.
 
-#### Layer 3: Frontend DB Client (`frontend_control/unity-npc-llm-training-dashboard/src/backend/lib/db.ts`)
+#### Layer 3: Frontend DB Client (`src/dashboard/unity-npc-llm-training-dashboard/src/backend/lib/db.ts`)
 
 The dashboard backend connects to the same database via Node.js `pg.Pool`. It reads the same environment variables (`DATABASE_URL`, `SUPABASE_DB_URL`) and falls back to the same localhost defaults (`127.0.0.1:15434`, user `postgres`, password `postgres`).
 
@@ -514,7 +514,7 @@ python scripts/ops/setup_admin_key.py
 | `scripts/ops/pipeline_db.py` | Dual-mode PipelineDB client (1,838 lines) |
 | `scripts/ops/workflow_hooks.py` | Workflow hook recorder with DB integration |
 | `scripts/ops/setup_admin_key.py` | Bootstrap script for initial API key |
-| `frontend_control/.../src/backend/lib/db.ts` | Frontend DB client (pg.Pool) |
-| `frontend_control/.../src/backend/middleware/auth.ts` | Auth middleware (bcrypt validation) |
-| `frontend_control/.../src/backend/middleware/audit.ts` | Audit logging middleware |
-| `frontend_control/.../src/backend/services/job-queue.ts` | PostgreSQL-backed job queue (891 lines) |
+| `src/dashboard/unity-npc-llm-training-dashboard/.../src/backend/lib/db.ts` | Frontend DB client (pg.Pool) |
+| `src/dashboard/unity-npc-llm-training-dashboard/.../src/backend/middleware/auth.ts` | Auth middleware (bcrypt validation) |
+| `src/dashboard/unity-npc-llm-training-dashboard/.../src/backend/middleware/audit.ts` | Audit logging middleware |
+| `src/dashboard/unity-npc-llm-training-dashboard/.../src/backend/services/job-queue.ts` | PostgreSQL-backed job queue (891 lines) |

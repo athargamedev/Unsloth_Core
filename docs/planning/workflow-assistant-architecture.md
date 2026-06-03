@@ -24,7 +24,7 @@ This assistant is **not** another NPC dataset/model. It is an operational copilo
     - `subjects/workflow_assistant.json`
     - `docs/corpora/${selectedManifest}`
   - Current project state has the workflow assistant manifest under:
-    - `frontend_control/unity-npc-llm-training-dashboard/workflow_assistant/docs/workflow_assistant_docs.json`
+    - `src/dashboard/unity-npc-llm-training-dashboard/workflow_assistant/docs/workflow_assistant_docs.json`
 
 ### Existing Backend/Data APIs to Reuse
 
@@ -172,7 +172,7 @@ Before every assistant LLM call:
 
 Use a configurable profile file, e.g.:
 
-`frontend_control/unity-npc-llm-training-dashboard/workflow_assistant/assistant_config.json`
+`src/dashboard/unity-npc-llm-training-dashboard/workflow_assistant/assistant_config.json`
 
 Recommended profiles:
 

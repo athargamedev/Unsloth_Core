@@ -32,7 +32,7 @@ const DEFAULT_PROFILE: AssistantConfigProfile = {
 };
 
 export function loadAssistantProfile(repoRoot: string, requestedProfile?: string): AssistantConfigProfile {
-  const configPath = path.join(repoRoot, "frontend_control", "unity-npc-llm-training-dashboard", "workflow_assistant", "assistant_config.json");
+  const configPath = path.join(repoRoot, "src", "dashboard", "unity-npc-llm-training-dashboard", "workflow_assistant", "assistant_config.json");
   try {
     if (!fs.existsSync(configPath)) return DEFAULT_PROFILE;
     const config = JSON.parse(fs.readFileSync(configPath, "utf8")) as {

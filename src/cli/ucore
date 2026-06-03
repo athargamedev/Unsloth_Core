@@ -157,7 +157,8 @@ def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
         print(f"[WATCH] Command failed with return code {returncode}. Logs: {watch_dir}", flush=True)
         sys.exit(returncode)
 
-def main():
+def create_parser():
+    """Create and return the argument parser with all subcommands."""
     parser = argparse.ArgumentParser(description="Unsloth_Core Unified CLI")
     parser.add_argument("--workflow-hooks", default=None,
                         help="Path to a JSONL hook log for step tracing (used by workflow scripts)")
@@ -631,7 +632,12 @@ def main():
     audit_plan.add_argument("--artifact-index", default=None, help="ArtifactRegistry JSONL path override")
     audit_plan.add_argument("--write", default=None, help="Write plan JSON to this path")
     audit_subcmd.add_parser("resume", help="Recover session context (full audit)")
+    return parser
 
+
+def main():
+    """Entry point: build parser, parse args, dispatch."""
+    parser = create_parser()
     args = parser.parse_args()
 
     if args.workflow_hooks:

@@ -40,7 +40,7 @@ Run the audit command to ensure the environment is set up correctly.
 The project includes a web-based dashboard for monitoring.
 
 ```bash
-cd frontend_control/unity-npc-llm-training-dashboard
+cd src/dashboard/unity-npc-llm-training-dashboard
 npm install
 npm run dev
 ```

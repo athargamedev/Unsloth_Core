@@ -53,7 +53,7 @@ dataset_dir.mkdir(parents=True, exist_ok=True)
 
 ## 📘 TypeScript Backend & Frontend Review
 
-Given the architecture of the 27-file modular Express backend (`src/backend/`) and the React dashboard (`frontend_control/`), ensure the following senior-level patterns are strictly enforced.
+Given the architecture of the 27-file modular Express backend (`src/backend/`) and the React dashboard (`src/dashboard/unity-npc-llm-training-dashboard/`), ensure the following senior-level patterns are strictly enforced.
 
 ### 1. Zod for End-to-End Type Safety (Backend)
 Do not trust the `req.body` in your Express routes. You should be using **Zod** schemas to parse incoming data. This strips out malicious fields and guarantees type safety without writing redundant `if (!req.body.name)` statements.

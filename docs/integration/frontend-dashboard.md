@@ -226,7 +226,7 @@ The `JobQueue` and the in-memory `Registry` coexist — the registry tracks lega
 
 ```bash
 # Development (Vite dev server + modular backend)
-cd frontend_control/unity-npc-llm-training-dashboard
+cd src/dashboard/unity-npc-llm-training-dashboard
 npm run dev
 # → http://localhost:3100
 

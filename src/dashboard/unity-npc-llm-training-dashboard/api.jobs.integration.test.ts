@@ -2,7 +2,7 @@ import { test } from "node:test";
 import * as assert from "node:assert/strict";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 
-const DASHBOARD_DIR = "/home/athar/Projects/Unsloth_Core/frontend_control/unity-npc-llm-training-dashboard";
+const DASHBOARD_DIR = "/home/athar/Projects/Unsloth_Core/src/dashboard/unity-npc-llm-training-dashboard";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

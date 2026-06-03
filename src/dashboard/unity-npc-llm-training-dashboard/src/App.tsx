@@ -1614,6 +1614,9 @@ export default function App() {
                     await triggerCommand(payload);
                   }}
                   jobs={jobs}
+                  generateOllamaSchema={commandSchemas['generate-ollama']?.fields || {}}
+                  sanitizeSchema={commandSchemas['dataset-sanitize']?.fields || {}}
+                  datasetEvalSchema={commandSchemas['dataset-eval']?.fields || {}}
                 />
               </motion.div>
             )}
