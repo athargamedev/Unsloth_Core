@@ -1,5 +1,8 @@
 import json
 from pathlib import Path
+from src.config.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 # Paths
 history_path = Path("/home/athar/Projects/Unsloth_Core/data/datasets/history_guide/ollama/confident/conversational_goldens.jsonl")
@@ -130,7 +133,7 @@ for title, concept, diff, ans1, q2 in chef_topics:
 with open(history_path, "w", encoding="utf-8") as f:
     for g in history_goldens:
         f.write(json.dumps(g, ensure_ascii=False) + "\n")
-print(f"Successfully wrote {len(history_goldens)} conversational goldens to history_guide path.")
+logger.info(f"Successfully wrote {len(history_goldens)} conversational goldens to history_guide path.")
 
 # Read chef_assistant existing conversational goldens, append, and write back
 existing_chef = []
@@ -142,10 +145,11 @@ if chef_path.exists():
                 try:
                     existing_chef.append(json.loads(line))
                 except Exception as e:
-                    print(f"Skipping malformed existing chef line: {e}")
+                    logger.warning(f"Skipping malformed existing chef line: {e}")
 
 total_chef = existing_chef + chef_goldens_to_append
 with open(chef_path, "w", encoding="utf-8") as f:
     for g in total_chef:
         f.write(json.dumps(g, ensure_ascii=False) + "\n")
-print(f"Successfully wrote {len(total_chef)} conversational goldens to chef_assistant path (retained {len(existing_chef)} existing, appended {len(chef_goldens_to_append)}).")
+logger.info(f"Successfully wrote {len(total_chef)} conversational goldens to chef_assistant path (retained {len(existing_chef)} existing, appended {len(chef_goldens_to_append)}).")
+

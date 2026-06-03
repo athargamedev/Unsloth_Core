@@ -913,8 +913,8 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         lr = _json.loads(latest_run.read_text())
                         if "testRunLink" in lr:
                             manifest_metadata["confident_url"] = lr["testRunLink"]
-                except Exception:
-                    pass
+                except (json.JSONDecodeError, OSError) as e:
+                    logger.warning(f"Could not read latest test run for metadata: {e}")
                 record_pipeline_stage("dataset_eval", artifacts=manifest_artifacts, metadata=manifest_metadata)
                 from src.core.ops.artifact_registry import record_stage_artifacts_best_effort
                 record_stage_artifacts_best_effort(
@@ -925,8 +925,8 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     technique=technique,
                     metadata=manifest_metadata,
                 )
-            except Exception:
-                pass  # manifest is optional, never block pipeline
+            except Exception as e:
+                logger.warning(f"Failed to record pipeline stage or artifacts for {npc_key}: {e}", exc_info=True)
 
         finally:
             run.set_artifacts(summary_path=str(summary_path), failures_path=str(failures_path), report_path=str(report_path))

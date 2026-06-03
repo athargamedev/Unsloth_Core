@@ -19,6 +19,9 @@ from pathlib import Path
 from typing import Any
 
 from src.config import paths
+from src.config.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 @dataclass
@@ -342,8 +345,8 @@ class ConfidentGoldensConverter:
                     if loaded_spec.get("npc_key"):
                         npc_key = loaded_spec.get("npc_key")
                         self.spec = loaded_spec
-                except Exception:
-                    pass
+                except (json.JSONDecodeError, OSError) as e:
+                    logger.warning(f"Failed to load spec from {spec_path}: {e}")
 
             if not npc_key or npc_key == "unknown_npc":
                 raise ValueError("NPC key is missing from subject spec")
@@ -601,8 +604,11 @@ def main() -> None:
             output_dir=args.output_dir,
             technique=args.technique,
         )
-    except Exception as exc:
-        print(f"Error during projection: {exc}")
+    except (ValueError, FileNotFoundError, json.JSONDecodeError) as exc:
+        logger.error(f"Error during projection: {exc}")
+        sys.exit(1)
+    except Exception:
+        logger.exception("Unexpected error during projection")
         sys.exit(1)
 
     print(json.dumps(manifest, indent=2, ensure_ascii=False))

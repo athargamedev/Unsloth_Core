@@ -1847,49 +1847,54 @@ def main():
     parser.add_argument("--technique", default=None,
                         choices=["template", "ollama", "openai", "anthropic", "docs"],
                         help="Generation technique override (defaults to the resolved workflow context)")
-    parser.add_argument("--docs-manifest", default=None,
-                        help="Curated corpus manifest for --technique docs (defaults to spec dataset.corpus_manifest)")
-    parser.add_argument("--concept-focus", action="append", dest="concept_focus",
-                        help="Focus generation on specific categories (repeatable, e.g. --concept-focus teaching --concept-focus dialogue). Boosts example count for those categories.")
-    parser.add_argument("--telemetry-ipc", default=None,
-                        help="Path to JSON IPC file for real-time dashboard telemetry reporting")
-    parser.add_argument("--workflow-hooks", default=None,
-                        help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
-    parser.add_argument("--fresh", action="store_true",
-                        help="Ignore checkpoint recovery and regenerate the dataset from scratch")
-    parser.add_argument("--synthesize-goldens", action="store_true",
-                        help="Generate synthetic evaluation goldens using DeepEval Synthesizer")
-    parser.add_argument("--push-to-confident", action="store_true",
-                        help="Push generated dataset to Confident AI (requires CONFIDENT_API_KEY)")
-    args = parser.parse_args()
-
+def run_dataset_generation(
+    spec_path: str,
+    technique: str | None = None,
+    output_path: str | None = None,
+    model: str | None = None,
+    url: str | None = None,
+    seed: int = 42,
+    no_validation: bool = False,
+    val_split: float = 0.1,
+    multi_turn_ratio: float = 0.5,
+    temperature: float = 0.7,
+    concept_focus: list[str] | None = None,
+    telemetry_ipc: str | None = None,
+    workflow_hooks: str | None = None,
+    fresh: bool = False,
+    synthesize_goldens: bool = False,
+    push_to_confident: bool = False,
+    docs_manifest: str | None = None,
+) -> None:
     # Import re for JSON extraction
     import re
+    
+    # Import generators here to avoid circular imports if needed
+    from src.core.dataset.generators import OllamaGenerator, OpenAIGenerator, AnthropicGenerator
+    from src.core.ops.run_registry import PipelineRun
+    from src.config.log_setup import set_active_run, clear_active_run
+    
+    if technique == "ollama" and not model:
+        raise ValueError("Model is required for ollama technique")
 
-    if args.ollama:
-        args.technique = "ollama"
-
-
-    spec = load_subject_spec(args.spec)
-    workflow = resolve_workflow_context(args.spec, spec=spec, technique=args.technique)
+    spec = load_subject_spec(spec_path)
+    workflow = resolve_workflow_context(spec_path, spec=spec, technique=technique)
     npc_key = workflow.npc_key
     technique = workflow.technique
 
     generator = None
     if technique == "ollama":
-        print(f"Initializing Ollama generator ({args.model})...")
-        generator = OllamaGenerator(model=args.model, url=args.url)
+        print(f"Initializing Ollama generator ({model})...")
+        generator = OllamaGenerator(model=model, url=url)
     elif technique == "openai":
-        print(f"Initializing OpenAI generator ({args.model})...")
-        generator = OpenAIGenerator(model=args.model)
+        print(f"Initializing OpenAI generator ({model})...")
+        generator = OpenAIGenerator(model=model)
     elif technique == "anthropic":
-        print(f"Initializing Anthropic generator ({args.model})...")
-        generator = AnthropicGenerator(model=args.model)
+        print(f"Initializing Anthropic generator ({model})...")
+        generator = AnthropicGenerator(model=model)
 
-    if args.output:
-        output_path = args.output
-    else:
-        output_path = paths.dataset_train_path(npc_key, technique)
+    if not output_path:
+        output_path = str(paths.dataset_train_path(npc_key, technique))
 
     print(f"Generating dataset for: {spec['npc_name']}")
     print(f"  Subject: {spec['subject']}")
@@ -1899,46 +1904,45 @@ def main():
         npc_key=npc_key,
         stage="generate",
         technique=technique,
-        spec_path=args.spec,
+        spec_path=spec_path,
         entrypoint="cli",
     ) as run:
-        from src.config.log_setup import set_active_run, clear_active_run
         set_active_run(run.run_id, run.run_dir)
 
         try:
-            if args.synthesize_goldens:
+            if synthesize_goldens:
                 ref_doc = spec.get("reference_doc")
                 if ref_doc and (PROJECT_ROOT / ref_doc).exists():
                     golden_path = Path(output_path).parent / "synthetic_goldens.json"
                     generate_synthetic_goldens_from_primer(
                         str(PROJECT_ROOT / ref_doc), npc_key, str(golden_path),
-                        push_to_confident=args.push_to_confident,
+                        push_to_confident=push_to_confident,
                     )
                 else:
                     print(f"  [warn] No reference_doc found for {npc_key} or file missing. Skipping golden synthesis.")
 
             # ── Apply concept-focus boost ─────────────────────────────────────────
-            if args.concept_focus:
+            if concept_focus:
                 examples_per_category = spec.get("dataset", {}).get("examples_per_category", {})
                 if examples_per_category:
-                    print(f"  Concept focus enabled: {args.concept_focus}")
+                    print(f"  Concept focus enabled: {concept_focus}")
                     for cat in list(examples_per_category.keys()):
-                        if cat in args.concept_focus:
+                        if cat in concept_focus:
                             boost_factor = 2.0
                             original = examples_per_category[cat]
                             examples_per_category[cat] = max(original + 4, int(original * boost_factor))
                             print(f"    {cat}: {original} -> {examples_per_category[cat]} ({boost_factor}x boost)")
                     # Also add a focused note to the output path
                     focus_suffix = "_focused"
-                    if args.output and "_focused" not in str(args.output):
-                        output_path = str(args.output).replace(".jsonl", f"{focus_suffix}.jsonl")
+                    if "_focused" not in output_path:
+                        output_path = output_path.replace(".jsonl", f"{focus_suffix}.jsonl")
                         print(f"  Focused output path: {output_path}")
                 else:
                     print("  [warn] --concept-focus specified but spec has no examples_per_category")
 
             if technique == "docs":
                 manifest_path = (
-                    args.docs_manifest
+                    docs_manifest
                     or spec.get("dataset", {}).get("corpus_manifest")
                     or str(default_manifest_path())
                 )
@@ -1947,9 +1951,9 @@ def main():
                         spec,
                         manifest_path,
                         output_path,
-                        seed=args.seed,
-                        include_validation=not args.no_validation,
-                        val_split=args.val_split,
+                        seed=seed,
+                        include_validation=not no_validation,
+                        val_split=val_split,
                     )
                 except Exception as exc:
                     print(f"Error: docs manifest generation failed: {exc}")
@@ -1958,18 +1962,18 @@ def main():
                 result = generate_dataset(
                     spec,
                     output_path,
-                    seed=args.seed,
-                    include_validation=not args.no_validation,
-                    val_split=args.val_split,
+                    seed=seed,
+                    include_validation=not no_validation,
+                    val_split=val_split,
                     generator=generator,
-                    multi_turn_ratio=args.multi_turn_ratio,
-                    temperature=args.temperature,
+                    multi_turn_ratio=multi_turn_ratio,
+                    temperature=temperature,
                     technique=technique,
-                    spec_path=args.spec,
-                    telemetry_ipc=args.telemetry_ipc,
-                    workflow_hooks=args.workflow_hooks or str(run.hook_path),
+                    spec_path=spec_path,
+                    telemetry_ipc=telemetry_ipc,
+                    workflow_hooks=workflow_hooks or str(run.hook_path),
                     run_id=run.run_id,
-                    fresh=args.fresh,
+                    fresh=fresh,
                 )
 
             run.set_artifacts(
@@ -2023,7 +2027,7 @@ def main():
                 pass  # manifest is optional, never block pipeline
 
             # ── Push to Confident AI (opt-in) ─────────────────────────────────
-            if args.push_to_confident and result.get("train_path"):
+            if push_to_confident and result.get("train_path"):
                 alias = f"npc-dataset-{npc_key}-{technique}"
                 _push_dataset_to_confident(result["train_path"], alias)
 
@@ -2031,7 +2035,52 @@ def main():
             clear_active_run()
 
 
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate NPC training dataset")
+    parser.add_argument("spec", help="Path to subject spec JSON")
+    parser.add_argument("--technique", default="ollama", choices=["docs", "ollama", "template", "openai", "anthropic"])
+    parser.add_argument("--model", default="llama-3.2-3b-instruct", help="Generator model")
+    parser.add_argument("--url", default="http://localhost:11434", help="Generator API URL")
+    parser.add_argument("--output", default=None, help="Output JSONL path")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--no-validation", action="store_true")
+    parser.add_argument("--val-split", type=float, default=0.1)
+    parser.add_argument("--multi-turn-ratio", type=float, default=0.5)
+    parser.add_argument("--temperature", type=float, default=0.7)
+    parser.add_argument("--docs-manifest", default=None)
+    parser.add_argument("--concept-focus", action="append", dest="concept_focus")
+    parser.add_argument("--telemetry-ipc", default=None)
+    parser.add_argument("--workflow-hooks", default=None)
+    parser.add_argument("--fresh", action="store_true")
+    parser.add_argument("--synthesize-goldens", action="store_true")
+    parser.add_argument("--push-to-confident", action="store_true")
+    
+    # Import re for JSON extraction
+    import re
 
+    args = parser.parse_args()
 
-if __name__ == "__main__":
-    main()
+    # Backwards compatibility fix
+    if args.technique == "ollama" and args.model is None:
+        # Fallback or error? Assuming defaults in parser already handle it.
+        pass
+
+    run_dataset_generation(
+        spec_path=args.spec,
+        technique=args.technique,
+        output_path=args.output,
+        model=args.model,
+        url=args.url,
+        seed=args.seed,
+        no_validation=args.no_validation,
+        val_split=args.val_split,
+        multi_turn_ratio=args.multi_turn_ratio,
+        temperature=args.temperature,
+        concept_focus=args.concept_focus,
+        telemetry_ipc=args.telemetry_ipc,
+        workflow_hooks=args.workflow_hooks,
+        fresh=args.fresh,
+        synthesize_goldens=args.synthesize_goldens,
+        push_to_confident=args.push_to_confident,
+        docs_manifest=args.docs_manifest,
+    )
