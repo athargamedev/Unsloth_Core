@@ -4,8 +4,8 @@
   "sanitized": true,
   "sanitizer": {
     "version": "v2",
-    "date": "2026-06-01T12:09:49Z",
-    "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/history_guide/template/train.jsonl --output data/datasets/history_guide/template/train_clean.jsonl --strict-canonical --require-complete-metadata --dedup",
+    "date": "2026-06-03T08:06:40Z",
+    "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/history_guide/template/train.jsonl --output data/datasets/history_guide/template/train_clean.jsonl --strict-canonical --dedup",
     "artifact_check_mode": "strict",
     "strict_mode": false
   },
@@ -41,9 +41,9 @@
       "specified_boundary": 8
     },
     "quality_scores": {
-      "mean": 85.4,
+      "mean": 85.6,
       "median": 85.0,
-      "min": 78,
+      "min": 81,
       "max": 91,
       "std_dev": 3.4,
       "passed_threshold": 72,
@@ -56,9 +56,9 @@
         "40-49": 0,
         "50-59": 0,
         "60-69": 0,
-        "70-79": 1,
-        "80-89": 59,
-        "90-99": 12,
+        "70-79": 0,
+        "80-89": 58,
+        "90-99": 14,
         "100+": 0
       }
     }
