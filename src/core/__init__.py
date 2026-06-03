@@ -84,6 +84,7 @@ _LEGACY_MODULES = {
     "batch_export": "scripts.export.batch_export",
     "colab_notebook_generator": "scripts.ops.colab_notebook_generator",
     "compare_quality_gates": "scripts.dataset.compare_quality_gates",
+    "compare_local_models": "scripts.ops.compare_local_models",
     "compare_runs": "scripts.evaluation.compare_runs",
     "convert_lora_to_gguf": "scripts.export.convert_lora_to_gguf",
     "dataset_contracts": "scripts.dataset.dataset_contracts",

@@ -535,6 +535,22 @@ def create_parser():
     strategy_p.add_argument("--profile", default="npc-production-grounded", help="Strategy profile name")
     strategy_p.add_argument("--json", action="store_true", help="Output JSON")
 
+    # Local model comparison
+    cmp_models_p = subparsers.add_parser("compare-local-models", help="Benchmark and rank local Ollama models with a shared prompt suite")
+    cmp_models_p.add_argument("--host", default=os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434"), help="Ollama host URL")
+    cmp_models_p.add_argument("--model", action="append", help="Model to benchmark; may be supplied multiple times. Defaults to running models.")
+    cmp_models_p.add_argument("--all-tags", action="store_true", help="Benchmark all models listed by /api/tags instead of running models")
+    cmp_models_p.add_argument("--prompt", action="append", help="Prompt to benchmark; may be supplied multiple times.")
+    cmp_models_p.add_argument("--system-prompt", help="Optional system prompt for the benchmark suite")
+    cmp_models_p.add_argument("--output", help="Optional path to write the JSON report")
+
+    # Canonical run comparison
+    cmp_runs_p = subparsers.add_parser("compare-canonical-runs", help="Compare canonical run bundles in .pipeline/runs")
+    cmp_runs_p.add_argument("baseline_run_id", help="Baseline canonical run id")
+    cmp_runs_p.add_argument("candidate_run_id", help="Candidate canonical run id")
+    cmp_runs_p.add_argument("--output", help="Optional comparison report path")
+    cmp_runs_p.add_argument("--refresh-index", action="store_true", help="Refresh .pipeline/runs_index.jsonl before comparing")
+
     # Supabase integration check
     sb_p = subparsers.add_parser("supabase-check", help="Verify NPC profile + dialogue memory path in Supabase")
     sb_p.add_argument("--npc-key", required=True, help="NPC key")
@@ -1035,6 +1051,30 @@ def main():
     elif args.command == "strategy":
         from src.core.ops.npc_production_strategy import print_strategy_summary
         print_strategy_summary(args.profile, as_json=args.json)
+
+    elif args.command == "compare-local-models":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "compare_local_models.py"), "--host", args.host]
+        if args.model:
+            for model in args.model:
+                cmd.extend(["--model", model])
+        if args.all_tags:
+            cmd.append("--all-tags")
+        if args.prompt:
+            for prompt in args.prompt:
+                cmd.extend(["--prompt", prompt])
+        if args.system_prompt:
+            cmd.extend(["--system-prompt", args.system_prompt])
+        if args.output:
+            cmd.extend(["--output", args.output])
+        run_cmd(cmd)
+
+    elif args.command == "compare-canonical-runs":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "compare_canonical_runs.py"), args.baseline_run_id, args.candidate_run_id]
+        if args.output:
+            cmd.extend(["--output", args.output])
+        if args.refresh_index:
+            cmd.append("--refresh-index")
+        run_cmd(cmd)
 
     elif args.command == "supabase-check":
         cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "supabase_integration_check.py"), "--npc-key", args.npc_key]
