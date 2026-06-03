@@ -23,6 +23,7 @@ Environment variables:
 
 from __future__ import annotations
 
+import concurrent.futures
 import json
 import os
 import sys
@@ -184,19 +185,62 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError) as exc:
 # Tests
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("test_case", SINGLE_TURN_CASES, ids=lambda c: c.name)
-def test_npc_single_turn_response(test_case: LLMTestCase) -> None:
+def _case_name(test_case: LLMTestCase | ConversationalTestCase) -> str:
+    """Return a stable display name for failure aggregation."""
+    return str(getattr(test_case, "name", "unnamed"))
+
+
+def _evaluate_case(
+    test_case: LLMTestCase | ConversationalTestCase,
+    metrics: list,
+) -> tuple[str, str] | None:
+    """Run one DeepEval case and return failure details, if any."""
+    try:
+        assert_test(test_case=test_case, metrics=metrics)
+    except Exception as exc:
+        return _case_name(test_case), str(exc)
+    return None
+
+
+def _assert_cases_concurrently(
+    test_cases: list[LLMTestCase] | list[ConversationalTestCase],
+    metrics: list,
+    suite_name: str,
+) -> None:
+    """Evaluate DeepEval cases concurrently and fail with aggregated case details."""
+    if not test_cases:
+        pytest.skip(f"No {suite_name} test cases generated.")
+
+    def evaluate_case(test_case: LLMTestCase | ConversationalTestCase) -> tuple[str, str] | None:
+        return _evaluate_case(test_case, metrics)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        results = list(executor.map(evaluate_case, test_cases))
+
+    failures = [result for result in results if result is not None]
+    if not failures:
+        return
+
+    msg_parts = [f"{suite_name} evaluation failed with {len(failures)} error(s):"]
+    for name, error in failures:
+        msg_parts.append(f"\n--- Failure in case '{name}' ---")
+        msg_parts.append(error)
+    raise AssertionError("\n".join(msg_parts))
+
+
+def test_npc_single_turn_responses() -> None:
     """Evaluate single-turn NPC responses on quality, RAG faithfulness, and safety."""
-    assert_test(
-        test_case=test_case,
+    _assert_cases_concurrently(
+        test_cases=SINGLE_TURN_CASES,
         metrics=DATASET_QUALITY_METRICS + RAG_QUALITY_METRICS + SAFETY_METRICS,
+        suite_name="Single-turn NPC response",
     )
 
 
-@pytest.mark.parametrize("test_case", MULTI_TURN_CASES, ids=lambda c: c.name)
-def test_npc_conversational_response(test_case: ConversationalTestCase) -> None:
+def test_npc_conversational_responses() -> None:
     """Evaluate multi-turn NPC conversations on role adherence, knowledge retention, and completeness."""
-    assert_test(
-        test_case=test_case,
+    _assert_cases_concurrently(
+        test_cases=MULTI_TURN_CASES,
         metrics=CONVERSATIONAL_METRICS,
+        suite_name="Conversational NPC response",
     )
