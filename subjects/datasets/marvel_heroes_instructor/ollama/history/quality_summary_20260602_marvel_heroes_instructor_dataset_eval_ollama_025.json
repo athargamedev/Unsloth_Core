@@ -1,27 +1,27 @@
 {
-  "created_at": "2026-06-02T23:48:12.207425+00:00",
+  "created_at": "2026-06-02T23:46:59.543160+00:00",
   "npc_key": "marvel_heroes_instructor",
   "technique": "ollama",
   "judge_provider": "wandb",
   "judge_model": "meta-llama/Llama-3.1-70B-Instruct",
-  "deepeval_identifier": "dataset-quality-marvel-final2-1780444063",
-  "deepeval_result_identifier": "dataset-quality-marvel-final2-1780444063",
+  "deepeval_identifier": "dataset-quality-marvel-final-1780443992",
+  "deepeval_result_identifier": "dataset-quality-marvel-final-1780443992",
   "command": [
     "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
     "test",
     "run",
     "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
     "--identifier",
-    "dataset-quality-marvel-final2-1780444063",
+    "dataset-quality-marvel-final-1780443992",
     "--display",
     "failing",
     "--skip-on-missing-params",
     "--ignore-errors"
   ],
   "total": 15,
-  "passed": 15,
-  "failed": 0,
-  "pass_rate": 1.0,
+  "passed": 14,
+  "failed": 1,
+  "pass_rate": 0.9333,
   "metric_count": 45,
   "null_metric_count": 0,
   "null_metric_rate": 0.0,
@@ -29,12 +29,12 @@
   "metrics": {
     "Constraint Compliance [GEval]": {
       "count": 15,
-      "average_score": 1.0,
-      "pass_rate": 1.0
+      "average_score": 0.9667,
+      "pass_rate": 0.9333
     },
     "Persona and Category Fit [GEval]": {
       "count": 15,
-      "average_score": 0.9867,
+      "average_score": 0.98,
       "pass_rate": 1.0
     },
     "Training Usefulness and Specificity [GEval]": {
@@ -66,8 +66,8 @@
     },
     "teaching": {
       "total": 3,
-      "passed": 3,
-      "pass_rate": 1.0
+      "passed": 2,
+      "pass_rate": 0.6667
     }
   },
   "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/marvel_heroes_instructor/ollama/quality_failures.json",
@@ -76,7 +76,7 @@
   "dataset_summary": {
     "path": "/home/athar/Projects/Unsloth_Core/data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
     "exists": true,
-    "content_sha256": "sha256:8b005f10f9b3d6e48ce3f149ffb7823beef4262a6ca4fd47835c2c4450b1948d",
+    "content_sha256": "sha256:67250b1a5700e9edd1c855284f33a18c421f17fa4be8f4bc8e09e5d1aefd4c75",
     "total": 72,
     "by_category": {
       "dialogue": 16,
