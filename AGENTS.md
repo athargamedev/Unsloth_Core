@@ -25,6 +25,18 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 - Keep durable memory compact. Procedures belong in skills.
 - Use caveman reporting: Done/Changed/Ran/Result/Blocked/Next.
 
+## Strategy & anti-loop
+
+Production NPC strategy lives in `etc/npc-production-strategy.yaml`. The `npc-production-grounded` profile defines pipeline defaults: technique, dataset density targets, quality gate mode (release/wandb/Confident), training preset, and runtime eval. Use `./ucore strategy --profile npc-production-grounded` to inspect.
+
+The `classify_feedback_cycle()` function implements the anti-loop: after 1 exact Confident failure repair, 1 density repair, and 1 training preset variant per NPC, it escalates to `escalate_shared_strategy` — route the fix to shared pipeline/presets, not another per-NPC cycle.
+
+The `density_repair_needed()` function prevents endless concept patching by checking whether the candidate's avg words fall below 65% of baseline. If terse + weak, route to a bounded density repair profile rather than another concept-patch cycle.
+
+All feedback JSON from `./ucore evaluate --feedback-json` now carries `avg_candidate_words`, `avg_baseline_words`, `avg_candidate_sentences`, `avg_baseline_sentences` for density-aware decisions. `density_repair_needed()` also backward-computes these from per-example data when top-level fields are absent (older evals). Every `./ucore feedback --json` output includes `strategy_decision` (action + flags + counts) and `density_decision` (needed + candidate/baseline words + profile).
+
+Use `--strategy-profile` on `./ucore feedback` to set the profile.
+
 ## Quick start
 
 ```bash

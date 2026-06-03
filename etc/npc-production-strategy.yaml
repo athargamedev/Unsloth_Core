@@ -1,0 +1,117 @@
+profiles:
+  npc-production-grounded:
+    description: Production grounded NPC workflow for Unity LoRA GGUF adapters.
+    technique: ollama
+    dataset:
+      target_total_rows: 120
+      category_targets:
+        identity: 12
+        teaching: 80
+        dialogue: 32
+        quest: 16
+        refusal: 16
+      density:
+        identity: {min_words: 20, max_words: 40}
+        teaching: {min_words: 35, max_words: 55}
+        dialogue: {min_words: 35, max_words: 55}
+        quest: {min_words: 35, max_words: 55}
+        refusal: {min_words: 20, max_words: 40}
+      require_grounding: true
+      template_allowed: false
+    quality_gate:
+      mode: release
+      cases_per_category: 3
+      judge_provider: wandb
+      judge_model: meta-llama/Llama-3.1-70B-Instruct
+      confident: true
+      wandb: true
+      disable_cache: true
+      display: failing
+      ignore_errors: true
+      soft_fail: true
+    training:
+      preset: fast-3b
+      max_seq_len: 512
+      batch_size: 1
+      grad_accum: 8
+      lora_r: 16
+      lora_alpha: 32
+      packing: false
+      export_gguf: true
+      wandb: true
+    runtime_eval:
+      baseline: .models/llama-3.2-3b-instruct-q4_k_m.gguf
+      requires_base_model: true
+      report_html: true
+      wandb: true
+      candidate_win_rate_ready: 0.70
+      candidate_win_rate_inspect: 0.50
+    anti_loop:
+      max_exact_confident_failure_repairs: 1
+      max_density_repairs: 1
+      max_training_preset_variants: 1
+
+  npc-smoke-template:
+    description: Smoke/dev only template workflow. Never production-ready.
+    technique: template
+    dataset:
+      target_total_rows: 72
+      template_allowed: true
+      production_allowed: false
+    quality_gate:
+      mode: fast
+      cases_per_category: 1
+      judge_provider: ollama
+      judge_model: qwen2.5:7b
+      confident: false
+      wandb: false
+    training:
+      preset: smoke
+      export_gguf: true
+      wandb: false
+    runtime_eval:
+      requires_base_model: true
+      report_html: false
+    anti_loop:
+      max_exact_confident_failure_repairs: 0
+      max_density_repairs: 0
+      max_training_preset_variants: 0
+
+  npc-density-repair:
+    description: One bounded density repair after a passing gate but terse base+LoRA eval.
+    technique: ollama
+    dataset:
+      target_total_rows: 40
+      repair_only: true
+      density:
+        teaching: {min_words: 35, max_words: 55}
+        dialogue: {min_words: 35, max_words: 55}
+        quest: {min_words: 35, max_words: 55}
+      require_concrete_example: true
+      require_runtime_implication: true
+    quality_gate:
+      mode: release
+      cases_per_category: 3
+      judge_provider: wandb
+      judge_model: meta-llama/Llama-3.1-70B-Instruct
+      confident: true
+      wandb: true
+      disable_cache: true
+    training:
+      preset: fast-3b
+      max_seq_len: 512
+      batch_size: 1
+      grad_accum: 8
+      lora_r: 16
+      lora_alpha: 32
+      packing: false
+      export_gguf: true
+      wandb: true
+    runtime_eval:
+      requires_base_model: true
+      report_html: true
+      wandb: true
+    anti_loop:
+      max_exact_confident_failure_repairs: 0
+      max_density_repairs: 1
+      max_training_preset_variants: 0

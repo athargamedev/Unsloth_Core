@@ -1,0 +1,37 @@
+{
+    "mcpServers": {
+        "google-compute-engine": {
+            "serverUrl": "https://compute.googleapis.com/mcp",
+            "authProviderType": "google_credentials"
+        },
+        "notebooks": {
+            "command": "node",
+            "args": [
+                "/home/athar/.antigravity/extensions/googlecloudtools.datacloud-0.3.1-universal/mcp_servers/cli/mcp_proxy_bundle.js",
+                "notebooks-antigravity"
+            ]
+        },
+        "visualization": {
+            "command": "node",
+            "args": [
+                "/home/athar/.antigravity/extensions/googlecloudtools.datacloud-0.3.1-universal/mcp_servers/cli/mcp_proxy_bundle.js",
+                "visualization-antigravity"
+            ]
+        },
+        "sequential-thinking": {
+            "$typeName": "exa.cascade_plugins_pb.CascadePluginCommandTemplate",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ],
+            "env": {}
+        },
+        "gladekit-unity": {
+            "command": "uvx",
+            "args": [
+                "gladekit-mcp"
+            ]
+        }
+    }
+}

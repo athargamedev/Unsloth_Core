@@ -41,6 +41,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.config import paths
 from src.config.constants import DEFAULT_JUDGE_MODEL, DEFAULT_OLLAMA_MODEL
 from src.config.workflow_context import resolve_workflow_context
+from src.core.ops.npc_production_strategy import classify_feedback_cycle, density_repair_needed
 from src.core.ops.ollama_model_presets import resolve_ollama_model
 from src.core.ops.run_registry import make_pipeline_run_id
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
@@ -437,6 +438,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                       deepeval_soft_fail=False,
                       extra_examples=DEFAULT_EXTRA_EXAMPLES,
                       workflow_hooks=None,
+                      strategy_profile="npc-production-grounded",
                       wandb=False, wandb_project="unsloth-core", wandb_entity=None,
                       wandb_inference_project=None, wandb_inference_entity=None):
     """Full feedback loop: analyze → regenerate → optionally retrain."""
@@ -494,11 +496,20 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                 "weak_concepts": [],
                 "gap_results": [],
                 "regeneration": {"ok": False, "focus_categories": [], "technique": technique},
+                "strategy_decision": classify_feedback_cycle(feedback_data, profile=strategy_profile),
+                "density_decision": density_repair_needed(feedback_data),
                 "auto_retrain": None,
                 "pipeline_state": None,
             }
 
-            if not weak_concepts:
+            if result["strategy_decision"].get("action") == "escalate_shared_strategy":
+                print("\nStrategy anti-loop reached: stop per-NPC repair and improve shared pipeline/presets.")
+                result["status"] = "escalate_shared_strategy"
+                if json_output:
+                    print(json.dumps(result, indent=2))
+                completed_early = True
+
+            if not weak_concepts and not completed_early:
                 print("\nNothing to improve. Model is performing well across all areas.")
                 result["status"] = "no_weak_concepts"
                 update_pipeline_state(npc_key, {
@@ -804,6 +815,8 @@ def main():
     parser.add_argument("--skip-gap-detection", action="store_true", help="Skip knowledge coverage check")
     parser.add_argument("--save-gaps", help="Save gap analysis to JSON file")
     parser.add_argument("--json", action="store_true", help="Output machine-readable JSON summary")
+    parser.add_argument("--strategy-profile", default="npc-production-grounded",
+                        help="NPC production strategy profile for anti-loop decisions")
 
     # Auto-retrain
     parser.add_argument("--regeneration-technique", default=None,
@@ -902,6 +915,7 @@ def main():
         deepeval_soft_fail=args.deepeval_soft_fail,
         extra_examples=args.extra_examples,
         workflow_hooks=args.workflow_hooks,
+        strategy_profile=args.strategy_profile,
         wandb=args.wandb,
         wandb_project=args.wandb_project,
         wandb_entity=args.wandb_entity,

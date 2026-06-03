@@ -481,6 +481,8 @@ def create_parser():
     fb_p.add_argument("--save-gaps", help="Save knowledge gap report to JSON file")
     fb_p.add_argument("--json", action="store_true",
                        help="Output machine-readable JSON summary")
+    fb_p.add_argument("--strategy-profile", default="npc-production-grounded",
+                      help="NPC production strategy profile for anti-loop decisions")
 
     # Repair (Targeted Dataset Repair)
     rp_p = subparsers.add_parser("repair", help="Run the dataset repair loop using DeepEval failure reasons")
@@ -491,42 +493,47 @@ def create_parser():
     gr_p = subparsers.add_parser("grpo-train", help="Run GRPO training with DeepEval rewards")
     gr_p.add_argument("npc_key", help="NPC key")
     gr_p.add_argument("--steps", type=int, default=10, help="Max steps (default: 10)")
-    rp_p.add_argument("--auto-retrain", action="store_true",
+    fb_p.add_argument("--auto-retrain", action="store_true",
                        help="After regeneration, auto-retrain and re-evaluate")
-    rp_p.add_argument("--train-preset", default="fast-3b",
+    fb_p.add_argument("--train-preset", default="fast-3b",
                        help="Training preset for auto-retrain (default: fast-3b)")
-    rp_p.add_argument("--baseline", help="Baseline GGUF for auto-evaluation after retrain")
-    rp_p.add_argument("--regeneration-technique", default="template", choices=["template", "ollama"],
+    fb_p.add_argument("--baseline", help="Baseline GGUF for auto-evaluation after retrain")
+    fb_p.add_argument("--regeneration-technique", default="template", choices=["template", "ollama"],
                        help="Regeneration technique to use (default: template)")
-    rp_p.add_argument("--regeneration-preset", default=None,
+    fb_p.add_argument("--regeneration-preset", default=None,
                        choices=["generate-qwen25", "generate-llama31", "generate-qwen35-exp", "generate-qwen3-exp"],
                        help="Named Ollama regeneration preset (default: generate-qwen25)")
-    rp_p.add_argument("--regeneration-model", default="qwen2.5:7b",
+    fb_p.add_argument("--regeneration-model", default="qwen2.5:7b",
                        help="Exact Ollama regeneration model (wins over --regeneration-preset)")
-    rp_p.add_argument("--regeneration-url", default="http://localhost:11434",
+    fb_p.add_argument("--regeneration-url", default="http://localhost:11434",
                        help="Ollama base URL for regeneration")
-    rp_p.add_argument("--regeneration-batch-size", type=int, default=4,
+    fb_p.add_argument("--regeneration-batch-size", type=int, default=4,
                        help="Ollama batch size for regeneration")
-    rp_p.add_argument("--deepeval-judge-provider", default="ollama", choices=["ollama", "wandb"],
+    fb_p.add_argument("--deepeval-judge-provider", default="ollama", choices=["ollama", "wandb"],
                        help="Judge backend for DeepEval")
-    rp_p.add_argument("--deepeval-judge-preset", default=None,
+    fb_p.add_argument("--deepeval-judge-preset", default=None,
                        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
                        help="Named Ollama judge preset (default: judge-qwen25)")
-    rp_p.add_argument("--deepeval-judge-model", default=None,
+    fb_p.add_argument("--deepeval-judge-model", default=None,
                        help="Exact Ollama judge model (wins over --deepeval-judge-preset)")
-    rp_p.add_argument("--deepeval-ollama-url", default="http://localhost:11434",
+    fb_p.add_argument("--deepeval-ollama-url", default="http://localhost:11434",
                        help="Ollama base URL for DeepEval")
-    rp_p.add_argument("--deepeval-cases-per-category", type=int, default=1,
+    fb_p.add_argument("--deepeval-cases-per-category", type=int, default=1,
                        help="Cases per category for fast DeepEval")
-    rp_p.add_argument("--deepeval-soft-fail", action="store_true",
+    fb_p.add_argument("--deepeval-soft-fail", action="store_true",
                        help="Do not abort dataset evaluation on metric failure; continue training")
-    rp_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
-    rp_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
-    rp_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
-    rp_p.add_argument("--wandb-inference-project", default=None,
+    fb_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
+    fb_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    fb_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
+    fb_p.add_argument("--wandb-inference-project", default=None,
                       help="W&B project used for hosted DeepEval judge inference")
-    rp_p.add_argument("--wandb-inference-entity", default=None,
+    fb_p.add_argument("--wandb-inference-entity", default=None,
                       help="W&B entity/team used for hosted DeepEval judge inference")
+
+    # Strategy profiles
+    strategy_p = subparsers.add_parser("strategy", help="Show canonical NPC production strategy profiles")
+    strategy_p.add_argument("--profile", default="npc-production-grounded", help="Strategy profile name")
+    strategy_p.add_argument("--json", action="store_true", help="Output JSON")
 
     # Supabase integration check
     sb_p = subparsers.add_parser("supabase-check", help="Verify NPC profile + dialogue memory path in Supabase")
@@ -1025,6 +1032,10 @@ def main():
         if args.judge: cmd.append("--judge")
         run_cmd(cmd)
 
+    elif args.command == "strategy":
+        from src.core.ops.npc_production_strategy import print_strategy_summary
+        print_strategy_summary(args.profile, as_json=args.json)
+
     elif args.command == "supabase-check":
         cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "supabase_integration_check.py"), "--npc-key", args.npc_key]
         if args.player_id: cmd.extend(["--player-id", args.player_id])
@@ -1041,6 +1052,7 @@ def main():
         if args.skip_gap_detection: cmd.append("--skip-gap-detection")
         if args.save_gaps: cmd.extend(["--save-gaps", args.save_gaps])
         if args.json: cmd.append("--json")
+        if args.strategy_profile: cmd.extend(["--strategy-profile", args.strategy_profile])
         if args.auto_retrain: cmd.append("--auto-retrain")
         if args.train_preset: cmd.extend(["--train-preset", args.train_preset])
         if args.baseline: cmd.extend(["--baseline", args.baseline])

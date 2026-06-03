@@ -1669,6 +1669,8 @@ def main():
 
             wandb_url = None
             wandb_run = None
+            all_baseline_metrics = [c["baseline_metrics"] for c in comparison.get("comparisons", [])]
+            all_candidate_metrics = [c["candidate_metrics"] for c in comparison.get("comparisons", [])]
             feedback_data = {
                 "npc_key": npc_key,
                 "baseline": baseline_name,
@@ -1682,6 +1684,10 @@ def main():
                 "candidate_wins": comparison["candidate_wins"],
                 "ties": comparison["ties"],
                 "win_rate": comparison["candidate_wins"] / comparison["total"] if comparison["total"] > 0 else 0,
+                "avg_baseline_words": sum(m.get("length", 0) for m in all_baseline_metrics) / len(all_baseline_metrics) if all_baseline_metrics else 0,
+                "avg_candidate_words": sum(m.get("length", 0) for m in all_candidate_metrics) / len(all_candidate_metrics) if all_candidate_metrics else 0,
+                "avg_baseline_sentences": sum(m.get("sentences", 0) for m in all_baseline_metrics) / len(all_baseline_metrics) if all_baseline_metrics else 0,
+                "avg_candidate_sentences": sum(m.get("sentences", 0) for m in all_candidate_metrics) / len(all_candidate_metrics) if all_candidate_metrics else 0,
                 "per_concept": per_concept,
                 "weak_concepts": [
                     concept for concept, data in per_concept.items()

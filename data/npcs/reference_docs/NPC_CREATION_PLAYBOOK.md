@@ -1,5 +1,6 @@
 # NPC Creation Playbook
 
+> Legacy quick-start playbook. For production strategy, presets, gates, and anti-loop policy, use `docs/planning/npc-gguf-production-strategy.md` first.
 > Optimized for RTX 3060 6 GB | Qwen3-1.7B | Ollama technique
 > Production-ready NPC in ~5 minutes of active work
 
