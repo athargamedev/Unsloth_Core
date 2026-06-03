@@ -114,8 +114,9 @@ Then update in this order:
 1. Actual repo/tool state.
 2. `docs/project-state.md`.
 3. `AGENTS.md`.
-4. Project-local `.hermes/` memory/skills.
-5. Global Hermes memory only for stable facts.
+4. Project-local `.codex/` references, skills, and agents.
+5. Project-local `.hermes/` memory/skills only when explicitly needed.
+6. Global Hermes memory only for stable facts.
 
 ## Deprecated / avoid
 
@@ -130,6 +131,8 @@ Then update in this order:
 
 - `docs/project-state.md` — current canonical state.
 - `docs/training-workflow.md` — full pipeline details.
+- `.codex/skills/unsloth-core-pipeline-agent/SKILL.md` — Codex pipeline orchestrator and subagent router.
+- `.codex/agents/ucore-pipeline-chief.agent.md` — Codex main pipeline agent prompt.
 - `.hermes/README.md` — repo-local Hermes operating pack.
 - `.hermes/skills/unsloth-core-context-maintenance/SKILL.md` — context cleanup workflow.
 - `.hermes/skills/unsloth-core-operator/SKILL.md` — operator runbook.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unsloth Core Pipeline Agent"
+  short_description: "Operate and troubleshoot NPC pipeline"
+  default_prompt: "Use $unsloth-core-pipeline-agent to manage, test, review, and troubleshoot the active NPC pipeline end to end."
