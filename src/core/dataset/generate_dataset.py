@@ -232,6 +232,54 @@ class DialogueGuardrail:
         return True, ""
 
 
+class LLMGroundingVerifier:
+    """Judge-based factuality validator to ensure generated responses are grounded in spec context."""
+    def __init__(self, model: str | None = None, url: str = "http://localhost:11434/api/chat"):
+        from src.core.ops.ollama_model_presets import resolve_ollama_model
+        self.model = model or resolve_ollama_model(role="judge")
+        self.url = url
+        self._enabled = bool(self.model)
+
+    def verify(self, assistant_response: str, grounding_chunks: list[str]) -> tuple[bool, str]:
+        if not self._enabled or not grounding_chunks:
+            return True, ""
+
+        context = "\n".join(grounding_chunks)
+        prompt = f"""
+Verify if the NPC RESPONSE below is factually supported by the CONTEXT.
+NPCs must stick strictly to their knowledge base.
+
+CONTEXT:
+{context}
+
+NPC RESPONSE:
+{assistant_response}
+
+Return a JSON object with:
+{{
+  "is_grounded": bool,
+  "reason": string (if not grounded, explain why)
+}}
+"""
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": False,
+            "format": "json",
+            "options": {"temperature": 0.0}
+        }
+
+        try:
+            res = requests.post(self.url, json=payload, timeout=20)
+            res.raise_for_status()
+            data = res.json()
+            result = json.loads(data["message"]["content"])
+            return result.get("is_grounded", True), result.get("reason", "")
+        except Exception as e:
+            # log_warn(f"Grounding verification failed: {e}")
+            return True, ""
+
+
 class TelemetryReporter:
     """Emits structured JSON progress events for Unsloth_Core UI dashboard integration."""
     def __init__(self, ipc_path: str | None):

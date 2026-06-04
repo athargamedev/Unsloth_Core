@@ -11,7 +11,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from src.core.dataset.dataset_contracts import generation_request_counts_for_training_targets
-from src.core.dataset.generate_dataset import ConceptExtractor, ReferenceDocRetriever, generate_example_async, _refusal_user_message, compute_content_hash
+from src.core.dataset.generate_dataset import (
+    ConceptExtractor,
+    ReferenceDocRetriever,
+    LLMGroundingVerifier,
+    generate_example_async,
+    _refusal_user_message,
+    compute_content_hash
+)
 from src.core.dataset.generation_profiles import DialogueGuardrail, _is_history_subject, generate_dialogue_response, generate_identity_response, generate_quest_response, generate_refusal_response, generate_teaching_response
 from src.core.dataset.ollama_prompts import build_generation_prompt as _build_generation_prompt, clean_generic_filler, contains_prompt_leak as _contains_prompt_leak
 
@@ -35,6 +42,7 @@ class OllamaDatasetGenerator:
         self.concepts = ConceptExtractor(spec).extract()
         self.retriever = ReferenceDocRetriever(spec.get("reference_doc"))
         self.guardrail = DialogueGuardrail()
+        self.grounding_verifier = LLMGroundingVerifier()
         self.progress = None
         self.hook_recorder = hook_recorder
     
@@ -236,6 +244,13 @@ class OllamaDatasetGenerator:
                         return await fallback_template_example("parse_or_missing_fields")
                 else:
                     return await fallback_template_example("parse_or_missing_fields")
+            
+            # Grounding verification with judge model
+            if self.grounding_verifier._enabled and grounding:
+                is_grounded, grounding_reason = self.grounding_verifier.verify(asst_msg, [grounding])
+                if not is_grounded:
+                    logger.warning(f"Grounding verification FAILED: {grounding_reason}")
+                    return await fallback_template_example("grounding_failure")
             if category == "refusal":
                 boundary_hint = self._infer_refusal_boundary(user_msg, concept_str)
                 user_msg = _refusal_user_message(self.spec, boundary_hint)
@@ -273,6 +288,7 @@ class OllamaDatasetGenerator:
                 "difficulty": difficulty,
                 "safety_tags": ["boundary_enforcement"] if category == "refusal" else [],
                 "content_hash": content_hash,
+                "retrieval_context": grounding.replace("\nContext:\n", "").strip().split("\n") if grounding else [],
                 "generator_params": {
                     "temperature": temperature,
                     "model": self.generator.model,

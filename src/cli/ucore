@@ -248,10 +248,12 @@ def create_parser():
                        help="Require canonical dataset path")
     san_p.add_argument("--strict-mode", action="store_true",
                        help="Raise on structural validation errors instead of discarding")
-    san_p.add_argument("--artifact-check", default="strict", choices=["strict", "warn", "off"],
+    san_p.add_argument("--artifact-check", default="strict", choices=["strict", "warn", "off", "repair"],
                        help="How to handle AI artifacts (default: strict)")
     san_p.add_argument("--verbose-artifacts", action="store_true",
                        help="Show the exact artifact pattern matched")
+    san_p.add_argument("--llm-check", action="store_true", help="Run LLM-based quality check")
+    san_p.add_argument("--llm-model", help="Ollama model for quality check")
     san_p.add_argument("--quality-threshold-pass", type=int, default=70,
                        help="Minimum total score to pass (default: 70)")
     san_p.add_argument("--quality-threshold-flag", type=int, default=50,
@@ -331,7 +333,7 @@ def create_parser():
     train_p.add_argument("--preset", help="Training preset")
     train_p.add_argument("--technique", choices=["docs", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
     train_p.add_argument("--model", help="Base model ID/path override")
-    train_p.add_argument("--export-gguf", action="store_true", help="Export to GGUF after training (adapter mode for Unity)")
+    train_p.add_argument("--export-gguf", "--auto-export", action="store_true", help="Export to GGUF after training (adapter mode for Unity)")
     train_p.add_argument("--full-merge-export", action="store_true",
                          help="Full merge export after training (slower, standalone GGUF)")
     wandb_group = train_p.add_mutually_exclusive_group()
@@ -867,6 +869,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.quality_threshold_pass != 70: cmd.extend(["--quality-threshold-pass", str(args.quality_threshold_pass)])
         if args.quality_threshold_flag != 50: cmd.extend(["--quality-threshold-flag", str(args.quality_threshold_flag)])
         if args.quality_report: cmd.append("--quality-report")
+        if args.llm_check: cmd.append("--llm-check")
+        if args.llm_model: cmd.extend(["--llm-model", args.llm_model])
         if args.discard_below_score != 0: cmd.extend(["--discard-below-score", str(args.discard_below_score)])
         if args.no_fix_metadata: cmd.append("--no-fix-metadata")
         if args.require_complete_metadata: cmd.append("--require-complete-metadata")

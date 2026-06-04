@@ -20,6 +20,7 @@ import { registerRoutes as registerCommandsRoutes } from "./routes/commands";
 import { registerRoutes as registerWorkflowRoutes } from "./routes/workflow";
 import { registerRoutes as registerAssistantRoutes } from "./routes/assistant";
 import { registerRoutes as registerParametersRoutes } from "./routes/parameters";
+import { registerRoutes as registerConfidentRoutes } from "./routes/confident";
 
 /**
  * Creates the Express application with all middleware and route modules mounted.
@@ -58,6 +59,7 @@ export function createApp(deps: RouterDependencies): Express {
   registerWorkflowRoutes(app, deps);
   registerAssistantRoutes(app, deps);
   registerParametersRoutes(app, deps);
+  registerConfidentRoutes(app, deps);
 
   return app;
 }

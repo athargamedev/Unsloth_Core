@@ -1,0 +1,5 @@
+services:
+  confident-agent:
+    image: confidentai/confident-agent
+    restart: unless-stopped
+    env_file: .env.local

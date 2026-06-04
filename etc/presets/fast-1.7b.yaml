@@ -8,4 +8,4 @@ training:
   warmup_steps: 10
 lora:
   r: 16
-  alpha: 32
+  alpha: 16

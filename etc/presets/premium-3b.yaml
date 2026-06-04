@@ -7,5 +7,5 @@ training:
   warmup_steps: 20
 lora:
   r: 32
-  alpha: 64
+  alpha: 32
   dropout: 0.05

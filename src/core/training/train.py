@@ -900,12 +900,12 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
 
             if "<|im_start|>" in chat_template:
                 # ChatML format: Qwen, Phi, Mistral, etc.
-                instruction_part = "<|im_start|>user"
-                response_part = "<|im_start|>assistant"
+                instruction_part = "<|im_start|>user\n"
+                response_part = "<|im_start|>assistant\n"
             elif "<|start_header_id|>" in chat_template:
                 # Llama 3 / Llama 3.1 / Llama 3.2 format
-                instruction_part = "<|start_header_id|>user<|end_header_id|>"
-                response_part = "<|start_header_id|>assistant<|end_header_id|>"
+                instruction_part = "<|start_header_id|>user<|end_header_id|>\n\n"
+                response_part = "<|start_header_id|>assistant<|end_header_id|>\n\n"
             else:
                 # Try rendering one example to detect tokens
                 try:
@@ -916,12 +916,12 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                         ],
                         tokenize=False,
                     )
-                    if "<|im_start|>assistant" in example:
-                        instruction_part = "<|im_start|>user"
-                        response_part = "<|im_start|>assistant"
-                    elif "<|start_header_id|>assistant<|end_header_id|>" in example:
-                        instruction_part = "<|start_header_id|>user<|end_header_id|>"
-                        response_part = "<|start_header_id|>assistant<|end_header_id|>"
+                    if "<|im_start|>assistant\n" in example:
+                        instruction_part = "<|im_start|>user\n"
+                        response_part = "<|im_start|>assistant\n"
+                    elif "<|start_header_id|>assistant<|end_header_id|>\n\n" in example:
+                        instruction_part = "<|start_header_id|>user<|end_header_id|>\n\n"
+                        response_part = "<|start_header_id|>assistant<|end_header_id|>\n\n"
                 except Exception as e:
                     pass
 

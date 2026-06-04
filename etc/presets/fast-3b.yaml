@@ -5,4 +5,4 @@ training:
   neftune_noise_alpha: 5.0
 lora:
   r: 16
-  alpha: 32
+  alpha: 16

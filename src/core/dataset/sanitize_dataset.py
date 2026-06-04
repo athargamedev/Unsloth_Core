@@ -21,6 +21,7 @@ import os
 import re
 import sys
 import traceback
+import requests
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,6 +32,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.config import paths
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from src.core.ops.canonical_artifacts import record_canonical_bundle
+from src.core.ops.ollama_model_presets import resolve_ollama_model
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -126,6 +128,86 @@ QUALITY_WEIGHTS = {
     "engagement": 0.15,
     "uniqueness": 0.15,
 }
+
+# ── LLM Sanity Checker ────────────────────────────────────────────────────────
+
+LLM_JUDGE_PROMPT = """
+Classify the quality of this Non-Player Character (NPC) training response.
+Subject: {npc_key}
+Goal: This data will be used to fine-tune a LoRA for the NPC.
+
+CONTEXT/KNOWLEDGE:
+{context}
+
+USER QUESTION:
+{input}
+
+NPC RESPONSE:
+{actual_output}
+
+Return a JSON object with:
+{{
+  "is_high_quality": bool,
+  "failure_reason": string (if not high quality, else null),
+  "score": float (0-1.0)
+}}
+
+CRITERIA FOR LOW QUALITY (is_high_quality=false):
+1. Vague/Generic: Response uses filler or "textbook" language without concrete facts or NPC flavor.
+2. Out of Persona: Response sounds like a modern AI assistant or is too formal/robotic.
+3. Factually Weak: Response ignores the provided context or contradicts established NPC knowledge.
+4. Formatting: Response uses forbidden markdown (like bullets or bolding) if the persona forbids it.
+"""
+
+class LLMSanityChecker:
+    def __init__(self, model=None, url="http://localhost:11434/api/chat"):
+        self.model = model or resolve_ollama_model(role="judge")
+        self.url = url
+        self._enabled = bool(self.model)
+
+    def check(self, example, spec_data=None):
+        if not self._enabled:
+            return None
+
+        messages = example.get("messages", [])
+        if len(messages) < 3:
+            return None
+
+        user_input = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+        assistant_output = next((m["content"] for m in reversed(messages) if m["role"] == "assistant"), "")
+        npc_key = example.get("metadata", {}).get("npc_key", "unknown")
+        
+        # Build context from spec or metadata
+        context = ""
+        if spec_data and "reference_doc" in spec_data:
+            ref_path = PROJECT_ROOT / spec_data["reference_doc"]
+            if ref_path.exists():
+                context = ref_path.read_text()[:2000] # Limit context size
+        
+        prompt = LLM_JUDGE_PROMPT.format(
+            npc_key=npc_key,
+            context=context or "No context provided.",
+            input=user_input,
+            actual_output=assistant_output
+        )
+
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": False,
+            "format": "json",
+            "options": {"temperature": 0.1}
+        }
+
+        try:
+            res = requests.post(self.url, json=payload, timeout=30)
+            res.raise_for_status()
+            data = res.json()
+            content = data["message"]["content"]
+            return json.loads(content)
+        except Exception as e:
+            # log_warn(f"LLM Sanity Check failed: {e}")
+            return None
 
 # ── Sentence Counting (with abbreviation awareness) ──────────────────────────
 
@@ -857,7 +939,7 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
                      verbose_artifacts=False, fix_metadata_flag=True,
                      require_complete_metadata=False, discard_below_score=0,
                      quality_threshold_pass=70, quality_threshold_flag=50,
-                     seen_user_messages=None, spec_data=None):
+                     seen_user_messages=None, spec_data=None, llm_checker=None):
     """Run the full sanitization pipeline on a single example.
 
     Returns (clean_example, quality_score, meta_warnings, discard_reason).
@@ -960,7 +1042,17 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
         allow_formatting=allow_formatting,
     )
 
-    # 5. Discard below score threshold
+    # 5. LLM Sanity Check (Optional)
+    if llm_checker:
+        llm_result = llm_checker.check(example, spec_data)
+        if llm_result:
+            example.setdefault("quality", {})["llm_check"] = llm_result
+            if not llm_result.get("is_high_quality", True):
+                # Penalize total score
+                quality["total"] = max(0, quality["total"] - 30)
+                meta_warnings.append(f"LLM Sanity Check flagged row: {llm_result.get('failure_reason')}")
+
+    # 6. Discard below score threshold
     if quality["total"] < discard_below_score:
         return None, quality, meta_warnings, \
             f"Quality score {quality['total']} below threshold {discard_below_score}"
@@ -1221,6 +1313,10 @@ def main():
     parser.add_argument("--manifest-path",
                         help="Override manifest output path (default: <output_dir>/train_manifest.json)")
 
+    # 4a: LLM Sanity Check
+    parser.add_argument("--llm-check", action="store_true", help="Run LLM-based quality check")
+    parser.add_argument("--llm-model", help="Ollama model for quality check")
+
     # Debugging
     parser.add_argument("--debug", action="store_true",
                         help="Re-raise exceptions with traceback for debugging")
@@ -1232,6 +1328,15 @@ def main():
                         help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
 
     args = parser.parse_args()
+
+    # Initialize LLM checker if requested
+    llm_checker = None
+    if args.llm_check:
+        llm_checker = LLMSanityChecker(model=args.llm_model)
+        if llm_checker._enabled:
+            print(f"LLM Sanity Check enabled using: {llm_checker.model}")
+        else:
+            print("Warning: LLM Sanity Check requested but no judge model found.")
 
     input_path = Path(args.input)
     if not input_path.exists():
@@ -1270,6 +1375,15 @@ def main():
         print(f"Loaded spec: {spec_path}")
     elif args.spec:
         print(f"Warning: Spec file not found: {args.spec}")
+
+    # Initialize LLM checker if requested
+    llm_checker = None
+    if args.llm_check:
+        llm_checker = LLMSanityChecker(model=args.llm_model)
+        if llm_checker._enabled:
+            print(f"LLM Sanity Check enabled using: {llm_checker.model}")
+        else:
+            print("Warning: LLM Sanity Check requested but no judge model found.")
 
     from src.core.ops.run_registry import PipelineRun
     from src.config.log_setup import set_active_run, clear_active_run
@@ -1381,6 +1495,7 @@ def main():
                                 quality_threshold_flag=args.quality_threshold_flag,
                                 seen_user_messages=seen_user_messages,
                                 spec_data=spec_data,
+                                llm_checker=llm_checker,
                             )
 
                             if quality:
