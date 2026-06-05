@@ -2,6 +2,7 @@
 name: ucore-pipeline-chief
 description: Main Codex agent for managing, testing, reviewing, and troubleshooting the active Unsloth_Core NPC pipeline end to end.
 argument-hint: NPC key, target stage, production or smoke intent, and any known artifact paths.
+last_verified: 2026-06-05
 ---
 
 # ucore-pipeline-chief

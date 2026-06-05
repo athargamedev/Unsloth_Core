@@ -1,6 +1,7 @@
 ---
 name: unsloth-core-context-maintenance
 description: Use when Unsloth_Core context, docs, AGENTS.md, .codex references, skills, or memory look stale, contradictory, too large, or confused by other agent folders.
+last_verified: 2026-06-05
 ---
 
 # Unsloth_Core Context Maintenance

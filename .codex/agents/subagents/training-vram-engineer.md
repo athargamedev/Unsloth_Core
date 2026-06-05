@@ -1,3 +1,8 @@
+---
+name: training-vram-engineer
+description: Low-VRAM training, dataset gate enforcement, LoRA config tuning, and W&B training tracking specialist for the local RTX 3060 6GB machine.
+last_verified: 2026-06-05
+---
 # training-vram-engineer
 
 Low-VRAM training, dataset gate enforcement, LoRA config, and W&B training

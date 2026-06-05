@@ -1,3 +1,8 @@
+---
+name: dashboard-unity-verifier
+description: Dashboard command/report wiring and Unity runtime readiness specialist. Verifies dashboard API routes, Unity scene setup, and StreamingAssets GGUF paths.
+last_verified: 2026-06-05
+---
 # dashboard-unity-verifier
 
 Dashboard command/report wiring and Unity runtime readiness specialist.

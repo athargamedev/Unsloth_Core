@@ -65,5 +65,5 @@ docs/
 2. Read [AGENTS.md](../AGENTS.md) if you are an AI assistant.
 3. Read [training-workflow.md](training-workflow.md) for concise training-workflow context before making code or pipeline changes.
 4. For new architecture additions, read [modular-backend.md](architecture/modular-backend.md) and [pipeline-db.md](architecture/pipeline-db.md) first.
-5. Generate a dataset with `./ucore generate subjects/<npc>.json --technique docs`.
-6. Train with `./ucore train subjects/<npc>.json --preset fast-3b --export-gguf`.
+5. Generate a dataset with `./ucore generate data/npcs/specs/<npc>.json --technique docs`.
+6. Train with `./ucore train data/npcs/specs/<npc>.json --preset fast-3b --export-gguf`.

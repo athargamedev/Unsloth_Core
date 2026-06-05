@@ -1,3 +1,8 @@
+---
+name: regression-reviewer
+description: Final test selection, code review, and confidence gate specialist. Runs test suites, reviews diffs, and signs off on pipeline readiness.
+last_verified: 2026-06-05
+---
 # regression-reviewer
 
 Final test selection, code review, and confidence specialist.

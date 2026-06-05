@@ -170,6 +170,17 @@ class LLMSanityChecker:
         self.cache_enabled = bool(cache_enabled) and os.getenv("UCORE_JUDGE_CACHE_DISABLE", "").lower() not in {"1", "true", "yes"}
         self.cache = cache if cache is not None else (JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None) if self.cache_enabled else None)
         self.prompt_version = prompt_version
+        self.cache_hits = 0
+        self.cache_misses = 0
+
+    def manifest_stats(self):
+        return {
+            "enabled": bool(self._enabled),
+            "cache_hits": self.cache_hits,
+            "cache_misses": self.cache_misses,
+            "judge_model": self.model,
+            "cache_path": str(self.cache.db_path) if self.cache is not None else None,
+        }
 
     def check(self, example, spec_data=None):
         if not self._enabled:
@@ -210,8 +221,10 @@ class LLMSanityChecker:
             )
             cached = self.cache.get(cache_item)
             if cached is not None:
+                self.cache_hits += 1
                 print(f"  [judge-cache] Hit for {self.model}", flush=True)
                 return cached["result"]
+            self.cache_misses += 1
 
         payload = self._build_inference_payload(user_input, assistant_output, npc_key, context) if self.inference_server_url else {
             "model": self.model,
@@ -1187,6 +1200,7 @@ def build_sanitizer_manifest(
     content_hashes=None,
     sanitizer_args=None,
     generation_manifest_path=None,
+    llm_check=None,
 ):
     """Build an enriched manifest dictionary after sanitization.
 
@@ -1273,6 +1287,15 @@ def build_sanitizer_manifest(
         "content_hashes": hashes,
         "content_hash_prefix": HASH_PREFIX,
     }
+
+    if llm_check is not None:
+        manifest["llm_check"] = {
+            "enabled": bool((sanitizer_args or {}).get("llm_check", True)),
+            "cache_hits": int(llm_check.get("cache_hits", 0) or 0),
+            "cache_misses": int(llm_check.get("cache_misses", 0) or 0),
+            "judge_model": llm_check.get("judge_model") or (sanitizer_args or {}).get("llm_model"),
+            "cache_path": llm_check.get("cache_path"),
+        }
 
     # Carry forward generation provenance if available
     if generation_manifest_path and os.path.exists(generation_manifest_path):
@@ -1644,6 +1667,7 @@ def main():
                         content_hashes=content_hashes,
                         sanitizer_args=sanitizer_args,
                         generation_manifest_path=generation_manifest_path,
+                        llm_check=llm_checker.manifest_stats() if llm_checker else None,
                     )
 
                     # Attach spec info from --spec arg if generation manifest didn't carry it

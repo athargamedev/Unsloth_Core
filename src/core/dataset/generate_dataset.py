@@ -58,6 +58,7 @@ from src.core.dataset.generate_workflow_dataset import (
     generate_workflow_dataset_from_manifest,
 )
 from src.core.ops.env_loader import ensure_confident_api_key, confident_available
+from src.core.ops.judge_cache import JudgeCache, JudgeCacheInput
 
 try:
     from deepeval.dataset import EvaluationDataset
@@ -234,17 +235,37 @@ class DialogueGuardrail:
 
 class LLMGroundingVerifier:
     """Judge-based factuality validator to ensure generated responses are grounded in spec context."""
-    def __init__(self, model: str | None = None, url: str = "http://localhost:11434/api/chat"):
+    def __init__(self, model: str | None = None, url: str = "http://localhost:11434/api/chat", cache=None, cache_enabled: bool = True, prompt_version: str = "generation-grounding-v1"):
         from src.core.ops.ollama_model_presets import resolve_ollama_model
         self.model = model or resolve_ollama_model(role="judge")
         self.url = url
         self._enabled = bool(self.model)
+        self.prompt_version = prompt_version
+        self.cache_enabled = bool(cache_enabled) and os.getenv("UCORE_JUDGE_CACHE_DISABLE", "").strip().lower() not in {"1", "true", "yes", "on"}
+        self.cache = cache if cache is not None else (JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None) if self.cache_enabled else None)
+
+    def _cache_item(self, assistant_response: str, context: str) -> JudgeCacheInput:
+        return JudgeCacheInput(
+            row_input=assistant_response,
+            row_output=context,
+            reference_context=context,
+            rubric={"task": "generation_grounding"},
+            judge_provider="ollama",
+            judge_model=self.model,
+            prompt_version=self.prompt_version,
+        )
 
     def verify(self, assistant_response: str, grounding_chunks: list[str]) -> tuple[bool, str]:
         if not self._enabled or not grounding_chunks:
             return True, ""
 
         context = "\n".join(grounding_chunks)
+        cache_item = self._cache_item(assistant_response, context)
+        if self.cache is not None:
+            cached = self.cache.get(cache_item)
+            if cached is not None:
+                result = cached["result"]
+                return bool(result.get("is_grounded", True)), result.get("reason", "")
         prompt = f"""
 Verify if the NPC RESPONSE below is factually supported by the CONTEXT.
 NPCs must stick strictly to their knowledge base.
@@ -274,6 +295,8 @@ Return a JSON object with:
             res.raise_for_status()
             data = res.json()
             result = json.loads(data["message"]["content"])
+            if self.cache is not None:
+                self.cache.put(cache_item, result=result)
             return result.get("is_grounded", True), result.get("reason", "")
         except Exception as e:
             # log_warn(f"Grounding verification failed: {e}")

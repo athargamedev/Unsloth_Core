@@ -1,6 +1,7 @@
 ---
 name: unsloth-core-operator
 description: "Use when operating, debugging, or changing Unsloth_Core NPC workflows: specs, generation, sanitize, dataset-eval, train, export, evaluate, feedback, strategy, artifact paths, or Unity LoRA readiness."
+last_verified: 2026-06-05
 ---
 
 # Unsloth_Core Operator

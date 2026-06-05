@@ -4,6 +4,8 @@ import os
 import requests
 from typing import Optional, Tuple, Union
 
+from scripts.ops.judge_cache import JudgeCache, JudgeCacheInput
+
 from deepeval.metrics import (
     AnswerRelevancyMetric,
     BiasMetric,
@@ -58,10 +60,43 @@ class DatasetJudgeOllamaModel(OllamaModel):
             "think": self.think,
         }
 
+    def _cache_item(self, prompt: str, schema: Optional[type[BaseModel]]) -> JudgeCacheInput | None:
+        if not os.getenv("UCORE_JUDGE_CACHE_PATH"):
+            return None
+        if os.getenv("UCORE_JUDGE_CACHE_DISABLE", "").strip().lower() in {"1", "true", "yes", "on"}:
+            return None
+        return JudgeCacheInput(
+            row_input=prompt,
+            row_output="",
+            reference_context="",
+            rubric={"deepeval_schema": schema.model_json_schema() if schema else None},
+            judge_provider="ucore-inference-server" if self.inference_server_url else "ollama",
+            judge_model=self.name,
+            prompt_version="deepeval-local-judge-v1",
+        )
+
+    def _cached_result(self, prompt: str, schema: Optional[type[BaseModel]]):
+        item = self._cache_item(prompt, schema)
+        if item is None:
+            return None, None
+        cached = JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None).get(item)
+        if cached is None:
+            return item, None
+        content = cached["result"].get("content", "")
+        return item, schema.model_validate_json(content) if schema else content
+
+    def _store_result(self, item: JudgeCacheInput | None, content: str) -> None:
+        if item is not None:
+            JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None).put(item, result={"content": content})
+
     @retry_ollama
     def generate(
         self, prompt: str, schema: Optional[type[BaseModel]] = None
     ) -> Tuple[Union[str, BaseModel], float]:
+        cache_item, cached = self._cached_result(prompt, schema)
+        if cached is not None:
+            return cached, 0
+
         if self.inference_server_url:
             response = requests.post(
                 f"{self.inference_server_url}/chat",
@@ -70,13 +105,16 @@ class DatasetJudgeOllamaModel(OllamaModel):
             )
             response.raise_for_status()
             content = response.json().get("message", {}).get("content", "")
+            self._store_result(cache_item, content)
             return (schema.model_validate_json(content) if schema else content, 0)
 
         response = self.load_model().chat(**self._chat_kwargs(prompt, schema))
+        content = response.message.content
+        self._store_result(cache_item, content)
         return (
-            schema.model_validate_json(response.message.content)
+            schema.model_validate_json(content)
             if schema
-            else response.message.content,
+            else content,
             0,
         )
 
@@ -84,14 +122,19 @@ class DatasetJudgeOllamaModel(OllamaModel):
     async def a_generate(
         self, prompt: str, schema: Optional[type[BaseModel]] = None
     ) -> Tuple[Union[str, BaseModel], float]:
+        cache_item, cached = self._cached_result(prompt, schema)
+        if cached is not None:
+            return cached, 0
         if self.inference_server_url:
             return self.generate(prompt, schema)
 
         response = await self.load_model(async_mode=True).chat(**self._chat_kwargs(prompt, schema))
+        content = response.message.content
+        self._store_result(cache_item, content)
         return (
-            schema.model_validate_json(response.message.content)
+            schema.model_validate_json(content)
             if schema
-            else response.message.content,
+            else content,
             0,
         )
 

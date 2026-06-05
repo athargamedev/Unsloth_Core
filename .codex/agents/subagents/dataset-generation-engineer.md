@@ -1,3 +1,8 @@
+---
+name: dataset-generation-engineer
+description: Grounded ollama dataset generation and dataset top-up specialist. Generates training data from reference docs using the Ollama technique.
+last_verified: 2026-06-05
+---
 # dataset-generation-engineer
 
 Grounded `ollama` generation and dataset top-up specialist.

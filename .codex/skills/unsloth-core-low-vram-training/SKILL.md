@@ -1,6 +1,7 @@
 ---
 name: unsloth-core-low-vram-training
 description: Use when training, evaluating, benchmarking, or debugging Unsloth_Core on the local RTX 3060 6GB machine, especially when Ollama, llama.cpp, W&B, Triton, GCC, or VRAM pressure can affect success.
+last_verified: 2026-06-05
 ---
 
 # Unsloth_Core Low-VRAM Training

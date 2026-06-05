@@ -1,6 +1,6 @@
 # Unsloth_Core Project State
 
-Last verified: 2026-06-01
+Last verified: 2026-06-05
 
 ## Mission
 
@@ -19,9 +19,8 @@ If old docs mention other NPCs as active, treat that as deprecated unless the us
 
 - Template generation is smoke/dev only.
 - Never train production LoRA on template data.
-- Production data must use the approved grounded workflow. User preference is NotebookLM CLI for production dataset creation.
+- Production data must use the approved grounded workflow. NotebookLM is deprecated — do not use for production.
 - Current `./ucore generate` supports `docs`, `ollama`, `template`, `openai`, and `anthropic`; verify the intended production technique before training.
-- NotebookLM rate-limit rule from user memory: use small chunks, about 10-12 asks per batch, with 10s+ delays; expect 30-60+ minute blocks after ~15-20 asks.
 
 ## Canonical pipeline
 
@@ -29,7 +28,7 @@ If old docs mention other NPCs as active, treat that as deprecated unless the us
 source unsloth_env/bin/activate
 ./ucore audit check
 ./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
-# production: generate via NotebookLM/approved grounded path; template only for smoke
+# production: generate via approved grounded path; template only for smoke
 ./ucore sanitize data/datasets/<npc>/<technique>/train.jsonl \
   --output data/datasets/<npc>/<technique>/train_clean.jsonl \
   --strict-canonical --require-complete-metadata
@@ -87,3 +86,43 @@ source unsloth_env/bin/activate
 - Do not treat adapter GGUFs as standalone full merged models; evaluate with base + LoRA when needed.
 - Do not lower thresholds or delete rows to force a green gate.
 - Do not claim W&B/Confident upload unless local output or URL proves it.
+
+## Agent instructions-files strategy (active 2026-06-05)
+
+A 5-tier hierarchy ensures single-fact-single-place knowledge with automated freshness:
+
+| Tier | What | Where |
+|------|------|-------|
+| T0 Entrypoint | Hard rules & quickstart | `AGENTS.md`, `README.md` |
+| T1 Onboarding | Dev/AI setup guide | `CONTRIBUTING.md`, `SETUP.md` [planned] |
+| T2 Canonical Reference | State & workflow docs | `docs/project-state.md`, `docs/training-workflow.md` |
+| T3 Skills/Procedures | Reusable workflows | `.hermes/skills/`, `.codex/skills/` |
+| T4 Agent Briefs | Role-specific guides | `.hermes/agents/`, `.codex/agents/` |
+
+**Rules:**
+- Every skill/agent brief MUST have `last_verified: YYYY-MM-DD` in YAML frontmatter
+- Skills reference canonical files (T0/T2), never copy their content
+- Stale paths (`subjects/`, `outputs/`, `exports/`) are deprecated — use `data/`, `artifacts/` everywhere
+- Shared knowledge (e.g. context maintenance) lives in one skill, not duplicated across `.hermes` and `.codex`
+
+**Baseline cleanup (Phase 1 complete 2026-06-05):**
+- Patched legacy `subjects/` paths → `data/` and `artifacts/` in `.hermes/skills/unsloth-core-operator/SKILL.md` and `.hermes/memories/unsloth_core_project_memory.md`
+- Removed deprecated NotebookLM references
+- Added `last_verified: 2026-06-05` frontmatter to all 18 agent guidance files
+- Standardised YAML frontmatter format (name, description, last_verified) on all agent briefs
+- Fixed stale `docs/index.md` paths
+- Updated this file (last_verified date, NotebookLM deprecation, strategy section)
+
+**Files stamped with freshness (18 total):**
+- Hermes skills (5): unsloth-core-operator, unsloth-core-context-maintenance, unsloth-core-low-vram-training, unsloth-core-test-coherence, llmunity-runtime-deploy
+- Codex skills (6): unsloth-core-pipeline-agent, unsloth-core-operator, unsloth-core-context-maintenance, unsloth-core-low-vram-training, unsloth-core-dashboard, llmunity-runtime-deploy
+- Hermes agents (4): frontend-dashboard-agent, dataset-eval-repair-agent, training-export-eval-agent, unity-runtime-agent
+- Codex agents (1): ucore-pipeline-chief
+- Codex subagents (8): context-sentinel, dashboard-unity-verifier, dataset-generation-engineer, gguf-unity-exporter, regression-reviewer, runtime-eval-feedback-engineer, sanitizer-gate-engineer, spec-grounding-curator, training-vram-engineer
+
+**Next phases (planned):**
+- Create standard agent brief template
+- Create CONTRIBUTING.md, SETUP.md, proper README.md
+- Deduplicate split skills (`.hermes` vs `.codex` context-maintenance)
+- Extend `context_audit.py` for automated freshness scanning
+- Walk through SETUP.md from fresh clone

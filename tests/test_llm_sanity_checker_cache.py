@@ -76,3 +76,30 @@ def test_llm_sanity_checker_cache_key_includes_reference_context(tmp_path, monke
     assert first != second
     assert calls["count"] == 2
     assert cache.stats()["entries"] == 2
+
+
+def test_sanitizer_manifest_records_llm_judge_cache_stats(tmp_path):
+    from src.core.dataset.sanitize_dataset import build_sanitizer_manifest
+
+    cache_path = tmp_path / "judge-cache.sqlite3"
+    manifest = build_sanitizer_manifest(
+        npc_key="chef_assistant",
+        technique="ollama",
+        total_input=2,
+        total_output=2,
+        sanitizer_args={"llm_check": True, "llm_model": "qwen2.5:7b"},
+        llm_check={
+            "cache_hits": 1,
+            "cache_misses": 1,
+            "judge_model": "qwen2.5:7b",
+            "cache_path": str(cache_path),
+        },
+    )
+
+    assert manifest["llm_check"] == {
+        "enabled": True,
+        "cache_hits": 1,
+        "cache_misses": 1,
+        "judge_model": "qwen2.5:7b",
+        "cache_path": str(cache_path),
+    }

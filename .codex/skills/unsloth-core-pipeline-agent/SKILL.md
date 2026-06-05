@@ -1,6 +1,7 @@
 ---
 name: unsloth-core-pipeline-agent
 description: Use when managing, testing, reviewing, troubleshooting, or delegating work across the Unsloth_Core NPC pipeline from reference docs and specs through grounded dataset generation, sanitize, DeepEval/Confident/W&B gates, LoRA training, GGUF export, runtime evaluation, feedback repair, dashboard wiring, and Unity/LLMUnity deployment readiness.
+last_verified: 2026-06-05
 ---
 
 # Unsloth Core Pipeline Agent

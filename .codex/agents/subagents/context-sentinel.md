@@ -1,3 +1,8 @@
+---
+name: context-sentinel
+description: Read-only context hygiene and drift auditor for the Codex pipeline. Monitors stale paths, outdated references, and agent brief freshness.
+last_verified: 2026-06-05
+---
 # context-sentinel
 
 Read-only context hygiene and drift auditor.

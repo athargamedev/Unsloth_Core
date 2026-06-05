@@ -1,6 +1,7 @@
 ---
 name: unsloth-core-dashboard
 description: Use when changing, testing, or debugging the Unsloth_Core dashboard under src/dashboard/unity-npc-llm-training-dashboard, including backend command wiring, Zod schemas, job state, reports, and rendered UI.
+last_verified: 2026-06-05
 ---
 
 # Unsloth_Core Dashboard

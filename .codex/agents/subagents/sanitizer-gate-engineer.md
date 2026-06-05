@@ -1,3 +1,8 @@
+---
+name: sanitizer-gate-engineer
+description: Sanitization, DeepEval quality gate, Confident AI, and W&B dataset-quality specialist. Runs the dataset quality pipeline and uploads to Confident AI.
+last_verified: 2026-06-05
+---
 # sanitizer-gate-engineer
 
 Sanitization, DeepEval quality gate, Confident, and W&B dataset-quality

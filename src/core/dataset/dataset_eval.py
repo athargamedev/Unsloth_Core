@@ -489,6 +489,16 @@ def dataset_eval_exit_code(summary: dict, deepeval_returncode: int, mode: str, *
     return deepeval_returncode
 
 
+def dataset_eval_judge_cache_env(cache_path: str | Path | None, *, local_judge_cache: bool = True) -> dict[str, str]:
+    """Environment fragment for DeepEval subprocess local judge caching."""
+    env: dict[str, str] = {}
+    if cache_path:
+        env["UCORE_JUDGE_CACHE_PATH"] = str(cache_path)
+    if not local_judge_cache:
+        env["UCORE_JUDGE_CACHE_DISABLE"] = "1"
+    return env
+
+
 def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     workflow = resolve_workflow_context(spec_path=Path(spec.get("__path__", args.spec)), spec=spec, technique=args.technique)
     npc_key = workflow.npc_key
@@ -610,6 +620,10 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         "DEEPEVAL_OLLAMA_BASE_URL": ollama_base_url,
                         "DEEPEVAL_OLLAMA_TEMPERATURE": str(args.judge_temperature),
                         "UCORE_INFERENCE_SERVER_URL": inference_server_url,
+                        **dataset_eval_judge_cache_env(
+                            getattr(args, "judge_cache_path", None),
+                            local_judge_cache=getattr(args, "local_judge_cache", True),
+                        ),
                         "DEEPEVAL_WANDB_MODEL": resolved_judge_model,
                         "DEEPEVAL_WANDB_TEMPERATURE": str(args.judge_temperature),
                         "DEEPEVAL_WANDB_ENTITY": args.wandb_inference_entity or args.wandb_entity or os.getenv("WANDB_ENTITY", ""),
@@ -1043,6 +1057,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
     parser.add_argument("--inference-server-url", default=None, help="Route local Ollama judge calls through ucore inference-server /chat")
+    parser.add_argument("--judge-cache-path", default=None, help="SQLite cache path for local DeepEval judge calls")
+    parser.add_argument("--no-local-judge-cache", dest="local_judge_cache", action="store_false", default=True, help="Disable local judge-result cache for DeepEval judge calls")
     parser.add_argument("--judge-temperature", type=float, default=0.0)
     parser.add_argument("--mode", default=DEFAULT_DATASET_EVAL_MODE, choices=DATASET_EVAL_MODES,
                         help="Gate mode: fast is iteration-friendly; release is strict and fails on sampled metric failures")

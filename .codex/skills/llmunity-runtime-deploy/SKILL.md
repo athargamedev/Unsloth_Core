@@ -1,6 +1,7 @@
 ---
 name: llmunity-runtime-deploy
 description: Use when deploying Unsloth_Core GGUF LoRA adapters into the Unity LLMUnity project, checking base+LoRA runtime behavior, prompt contracts, Unity StreamingAssets paths, or Unity-side adapter switching.
+last_verified: 2026-06-05
 ---
 
 # LLMUnity Runtime Deploy

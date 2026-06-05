@@ -1,3 +1,8 @@
+---
+name: gguf-unity-exporter
+description: Adapter GGUF export and Unity copy readiness specialist. Handles GGUF conversion, Unity~ path copying, and StreamingAssets layout.
+last_verified: 2026-06-05
+---
 # gguf-unity-exporter
 
 Adapter GGUF export and Unity copy readiness specialist.

@@ -1,3 +1,8 @@
+---
+name: spec-grounding-curator
+description: Spec, primer, and grounding readiness specialist. Validates NPC spec JSONs, reference docs, and ensures the spec is ready for generation.
+last_verified: 2026-06-05
+---
 # spec-grounding-curator
 
 Spec, primer, and grounding readiness specialist.

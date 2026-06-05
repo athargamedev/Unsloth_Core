@@ -1,3 +1,8 @@
+---
+name: runtime-eval-feedback-engineer
+description: Base+LoRA side-by-side eval, feedback JSON generation, density repair, and anti-loop specialist for NPC dialogue quality.
+last_verified: 2026-06-05
+---
 # runtime-eval-feedback-engineer
 
 Base+LoRA side-by-side eval, feedback JSON, density repair, and anti-loop

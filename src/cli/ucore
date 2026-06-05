@@ -298,6 +298,9 @@ def create_parser():
                       help="Named Ollama judge preset (default: auto — resolves from configs/ollama-model-presets.yaml)")
     de_p.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
     de_p.add_argument("--inference-server-url", help="Route local Ollama judge calls through ucore inference-server /chat")
+    de_p.add_argument("--judge-cache-path", default=None, help="SQLite cache path for local DeepEval judge calls")
+    de_p.add_argument("--no-local-judge-cache", dest="local_judge_cache", action="store_false", default=True,
+                      help="Disable local judge-result cache for DeepEval judge calls")
     de_p.add_argument("--judge-temperature", type=float, default=0.0, help="Judge temperature")
     de_p.add_argument("--mode", default="fast", choices=["fast", "release"],
                       help="Quality gate mode (fast: iteration-friendly, release: strict)")
@@ -1086,6 +1089,10 @@ def main(argv: list[str] | None = None) -> int:
         cmd.extend(["--ollama-base-url", args.ollama_base_url])
         if args.inference_server_url:
             cmd.extend(["--inference-server-url", args.inference_server_url])
+        if args.judge_cache_path:
+            cmd.extend(["--judge-cache-path", args.judge_cache_path])
+        if getattr(args, "local_judge_cache", True) is False:
+            cmd.append("--no-local-judge-cache")
         cmd.extend(["--judge-temperature", str(args.judge_temperature)])
         cmd.extend(["--mode", args.mode])
         if args.cases_per_category is not None:
