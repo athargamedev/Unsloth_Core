@@ -5,6 +5,8 @@ training:
   gradient_accumulation_steps: 4
   learning_rate: 0.0002
   warmup_steps: 20
+  packing: false
+  train_on_responses_only: true
 lora:
   r: 32
   alpha: 32

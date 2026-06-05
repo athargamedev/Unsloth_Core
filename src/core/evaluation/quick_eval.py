@@ -33,7 +33,7 @@ def load_model(model_id, adapter_path):
         r=16,
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
                         "gate_proj", "up_proj", "down_proj"],
-        lora_alpha=32,
+        lora_alpha=16,
         use_gradient_checkpointing="unsloth",
     )
     # Load the adapter weights

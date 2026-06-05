@@ -3,6 +3,8 @@ training:
   batch_size: 1
   gradient_accumulation_steps: 8
   neftune_noise_alpha: 5.0
+  packing: false
+  train_on_responses_only: true
 lora:
   r: 16
   alpha: 16

@@ -716,6 +716,8 @@ def create_parser():
     audit_plan.add_argument("--target-stage", default="evaluate", choices=["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"], help="Stage to plan up to")
     audit_plan.add_argument("--artifact-index", default=None, help="ArtifactRegistry JSONL path override")
     audit_plan.add_argument("--write", default=None, help="Write plan JSON to this path")
+    audit_coherence = audit_subcmd.add_parser("config-coherence", help="Audit production config invariants")
+    audit_coherence.add_argument("--json", action="store_true", help="Output JSON")
     audit_subcmd.add_parser("resume", help="Recover session context (full audit)")
 
     # Target DAG runner
@@ -963,6 +965,16 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print(json.dumps(plan, indent=2, ensure_ascii=False))
             return 0
+
+        if args.audit_command == "config-coherence":
+            from src.core.ops.config_coherence import audit_config_coherence, format_audit_table
+
+            result = audit_config_coherence(PROJECT_ROOT)
+            if args.json:
+                print(json.dumps(result, indent=2, ensure_ascii=False))
+            else:
+                print(format_audit_table(result))
+            return 0 if result["ok"] else 1
 
         from src.core.ops.audit import ProjectAudit
         audit = ProjectAudit()
@@ -1683,8 +1695,8 @@ def main(argv: list[str] | None = None) -> int:
         db.close()
 
     elif args.command == "backup":
-        from src.core.ops.backup_cleanup import run_cleanup, PROJECT_ROOT
-        result = run_cleanup(PROJECT_ROOT, retain=args.retain, dry_run=args.dry_run)
+        from src.core.ops.backup_cleanup import PROJECT_ROOT as BACKUP_PROJECT_ROOT, run_cleanup
+        result = run_cleanup(BACKUP_PROJECT_ROOT, retain=args.retain, dry_run=args.dry_run)
         if args.json:
             print(_json_serialize(result))
         else:

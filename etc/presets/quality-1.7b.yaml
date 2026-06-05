@@ -9,9 +9,9 @@ training:
   lr_scheduler_type: cosine
   warmup_steps: 15
   weight_decay: 0.01
-  packing: true
+  packing: false
   train_on_responses_only: true
 lora:
   r: 32
-  alpha: 64
+  alpha: 32
   dropout: 0.05

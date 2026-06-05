@@ -78,3 +78,24 @@ def test_target_plan_reports_missing_first_stage_output(tmp_path):
     assert plan["steps"][0]["stage"] == "generate"
     assert plan["steps"][0]["status"] == "missing"
     assert plan["steps"][0]["action"] == "run"
+
+
+def test_target_plan_marks_existing_output_without_lineage_inconclusive(tmp_path):
+    from scripts.ops.artifact_registry import ArtifactRegistry
+    from scripts.ops.pipeline_dag import PipelineDAG
+
+    raw = tmp_path / "train.jsonl"
+    raw.write_text("raw\n", encoding="utf-8")
+    clean = tmp_path / "train_clean.jsonl"
+    clean.write_text("clean\n", encoding="utf-8")
+    registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
+    registry.record_artifact("run-1", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama")
+    registry.record_artifact("legacy-run", "chef_assistant", "sanitize", "dataset_clean", clean, technique="ollama")
+
+    plan = PipelineDAG(registry=registry).plan_target("sanitize", npc_key="chef_assistant", technique="ollama")
+
+    sanitize_step = plan["steps"][-1]
+    assert plan["ready"] is False
+    assert sanitize_step["status"] == "inconclusive"
+    assert sanitize_step["action"] == "run"
+    assert sanitize_step["reason"] == "lineage_missing"

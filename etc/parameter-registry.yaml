@@ -514,12 +514,12 @@ parameters:
 
   lora_alpha:
     type: int
-    default: 32
+    default: 16
     min: 2
     max: 128
     stage: training
     description: "LoRA alpha scaling"
-    tooltip: "LoRA alpha scaling. Usually 2x lora_r. Higher = stronger LoRA influence."
+    tooltip: "LoRA alpha scaling. Production default equals lora_r; higher values require an explicit experimental preset."
     resource_impact: none
     cli_flag: "--lora-alpha"
 

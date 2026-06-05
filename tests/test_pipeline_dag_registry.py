@@ -103,6 +103,37 @@ def test_record_stage_artifacts_maps_canonical_stage_outputs(tmp_path):
     assert registry.latest_artifact("history_guide", "eval_index", technique="notebooklm")["path"] == str(eval_index)
 
 
+def test_record_stage_artifacts_can_attach_input_lineage_metadata(tmp_path):
+    from scripts.ops.artifact_registry import ArtifactRegistry, record_stage_artifacts
+    from scripts.ops.pipeline_dag import stage_input_signature
+
+    raw = tmp_path / "train.jsonl"
+    raw.write_text("raw rows\n", encoding="utf-8")
+    clean = tmp_path / "train_clean.jsonl"
+    clean.write_text("clean rows\n", encoding="utf-8")
+    registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
+    raw_record = registry.record_artifact("run-1", "history_guide", "generate", "dataset_raw", raw, technique="ollama")
+
+    record_stage_artifacts(
+        registry,
+        "run-2",
+        "history_guide",
+        "sanitize",
+        {"output": clean},
+        technique="ollama",
+        input_records=[raw_record],
+        producer_command="./ucore sanitize train.jsonl --technique ollama",
+        profile="npc-production-grounded",
+    )
+
+    latest = registry.latest_artifact("history_guide", "dataset_clean", technique="ollama")
+    metadata = latest["metadata"]
+    assert metadata["input_hashes"] == {"dataset_raw": raw_record["sha256"]}
+    assert metadata["input_signature"] == stage_input_signature("sanitize", [raw_record])
+    assert metadata["producer_command"] == "./ucore sanitize train.jsonl --technique ollama"
+    assert metadata["profile"] == "npc-production-grounded"
+
+
 def test_pipeline_dag_writes_plan_with_ordered_blockers(tmp_path):
     from scripts.ops.artifact_registry import ArtifactRegistry
     from scripts.ops.pipeline_dag import PipelineDAG

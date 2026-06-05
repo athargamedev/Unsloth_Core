@@ -6,6 +6,8 @@ training:
   gradient_accumulation_steps: 4
   max_seq_length: 1024
   warmup_steps: 10
+  packing: false
+  train_on_responses_only: true
 lora:
   r: 16
   alpha: 16

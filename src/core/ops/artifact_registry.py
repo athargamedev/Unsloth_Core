@@ -27,7 +27,46 @@ def _sha256(path: Path) -> str | None:
     return h.hexdigest()
 
 
+def _stage_input_signature(stage: str, input_records: list[dict[str, Any]]) -> str:
+    payload = {
+        "stage": stage,
+        "inputs": [
+            {
+                "artifact_type": record.get("artifact_type"),
+                "sha256": record.get("sha256"),
+                "path": record.get("path") if record.get("sha256") is None else None,
+            }
+            for record in input_records
+        ],
+    }
+    blob = json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()
+
+
+def _lineage_metadata(
+    stage: str,
+    input_records: list[dict[str, Any]] | None,
+    *,
+    metadata: dict[str, Any] | None = None,
+    producer_command: str | None = None,
+    profile: str | None = None,
+) -> dict[str, Any]:
+    merged = dict(metadata or {})
+    if input_records is not None:
+        merged["input_hashes"] = {
+            str(record.get("artifact_type")): record.get("sha256")
+            for record in input_records
+            if record.get("artifact_type") and record.get("sha256")
+        }
+        merged["input_signature"] = _stage_input_signature(stage, input_records)
+    if producer_command:
+        merged["producer_command"] = producer_command
+    if profile:
+        merged["profile"] = profile
+    return merged
+
 class ArtifactRegistry:
+
     """Small JSONL index for stage outputs.
 
     Records enough context to answer: what artifact exists, from which run/stage,
@@ -127,6 +166,9 @@ def record_stage_artifacts(
     *,
     technique: str | None = None,
     metadata: dict[str, Any] | None = None,
+    input_records: list[dict[str, Any]] | None = None,
+    producer_command: str | None = None,
+    profile: str | None = None,
 ) -> list[dict[str, Any]]:
     """Record canonical ArtifactRegistry entries from legacy stage artifact maps."""
     stage_map: dict[str, list[tuple[str, str]]] = {
@@ -139,6 +181,13 @@ def record_stage_artifacts(
     }
     records: list[dict[str, Any]] = []
     seen_types: set[str] = set()
+    record_metadata = _lineage_metadata(
+        stage,
+        input_records,
+        metadata=metadata,
+        producer_command=producer_command,
+        profile=profile,
+    )
     for artifact_type, key in stage_map.get(stage, []):
         if artifact_type in seen_types:
             continue
@@ -155,7 +204,7 @@ def record_stage_artifacts(
                 artifact_type=artifact_type,
                 path=value,
                 technique=technique,
-                metadata=metadata,
+                metadata=record_metadata,
             )
         )
         seen_types.add(artifact_type)
@@ -170,6 +219,9 @@ def record_stage_artifacts_best_effort(
     *,
     technique: str | None = None,
     metadata: dict[str, Any] | None = None,
+    input_records: list[dict[str, Any]] | None = None,
+    producer_command: str | None = None,
+    profile: str | None = None,
 ) -> None:
     """Best-effort production wrapper; never blocks pipeline work."""
     try:
@@ -181,6 +233,9 @@ def record_stage_artifacts_best_effort(
             artifacts,
             technique=technique,
             metadata=metadata,
+            input_records=input_records,
+            producer_command=producer_command,
+            profile=profile,
         )
     except Exception:
         pass

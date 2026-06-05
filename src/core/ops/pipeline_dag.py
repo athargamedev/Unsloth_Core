@@ -179,6 +179,13 @@ class PipelineDAG:
                 action = "run"
                 reason = "output_missing"
             elif required_types and any(
+                "input_signature" not in (record.get("metadata") or {})
+                for record in concrete_outputs
+            ):
+                status = "inconclusive"
+                action = "run"
+                reason = "lineage_missing"
+            elif required_types and any(
                 (record.get("metadata") or {}).get("input_signature") != current_signature
                 for record in concrete_outputs
             ):

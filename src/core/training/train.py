@@ -422,6 +422,52 @@ def dataset_quality_gate_errors(dataset_path: str | Path) -> list[str]:
     return errors
 
 
+def training_readiness_errors(
+    dataset_path: str | Path,
+    *,
+    npc_key: str | None,
+    technique: str | None,
+    registry=None,
+    allow_ungated_dataset: bool = False,
+) -> list[str]:
+    """Validate that training has both a passing summary and fresh registry lineage."""
+    if allow_ungated_dataset:
+        return []
+
+    dataset_path = Path(dataset_path)
+    summary_path = dataset_path.parent / "quality_summary.json"
+    errors = dataset_quality_gate_errors(dataset_path)
+
+    if registry is None:
+        from src.core.ops.artifact_registry import ArtifactRegistry
+        registry = ArtifactRegistry()
+
+    clean_record = registry.latest_artifact(npc_key, "dataset_clean", technique=technique) if npc_key else None
+    quality_record = registry.latest_artifact(npc_key, "quality_summary", technique=technique) if npc_key else None
+    stale_hint = "Next: ./ucore dataset-eval"
+
+    if not clean_record or not quality_record:
+        errors.append(f"Blocked: no fresh passing dataset-eval artifact for {dataset_path}. {stale_hint}")
+        return errors
+
+    dataset_hash = file_sha256(dataset_path) if dataset_path.exists() else None
+    summary_hash = file_sha256(summary_path) if summary_path.exists() else None
+    dataset_hash = dataset_hash.split(":", 1)[-1] if dataset_hash else None
+    summary_hash = summary_hash.split(":", 1)[-1] if summary_hash else None
+    if clean_record.get("sha256") != dataset_hash:
+        errors.append(f"Blocked: registry dataset_clean does not match current train_clean.jsonl. {stale_hint}")
+    if quality_record.get("sha256") != summary_hash:
+        errors.append(f"Blocked: registry quality_summary does not match current quality_summary.json. {stale_hint}")
+
+    from src.core.ops.pipeline_dag import stage_input_signature
+    expected_signature = stage_input_signature("dataset_eval", [clean_record])
+    recorded_signature = (quality_record.get("metadata") or {}).get("input_signature")
+    if recorded_signature != expected_signature:
+        errors.append(f"Blocked: no fresh passing dataset-eval artifact for {dataset_path}. {stale_hint}")
+
+    return errors
+
+
 def estimate_vram(config: dict) -> tuple[float, str]:
     """Rough VRAM estimate based on model size and LoRA config.
 
@@ -1279,7 +1325,11 @@ def main():
     if args.from_spec and args.allow_ungated_dataset:
         log_warn("Training without verifying a fresh dataset-eval artifact for %s", dataset_path)
     elif args.from_spec:
-        quality_errors = dataset_quality_gate_errors(dataset_path)
+        quality_errors = training_readiness_errors(
+            dataset_path,
+            npc_key=npc_key,
+            technique=technique,
+        )
         if quality_errors:
             log_error("Dataset quality gate is not ready for training:")
             for error in quality_errors:

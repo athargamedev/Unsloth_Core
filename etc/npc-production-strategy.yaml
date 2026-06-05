@@ -35,8 +35,9 @@ profiles:
       batch_size: 1
       grad_accum: 8
       lora_r: 16
-      lora_alpha: 32
+      lora_alpha: 16
       packing: false
+      train_on_responses_only: true
       export_gguf: true
       wandb: true
     runtime_eval:
@@ -89,6 +90,7 @@ profiles:
         quest: {min_words: 35, max_words: 55}
       require_concrete_example: true
       require_runtime_implication: true
+      template_allowed: false
     quality_gate:
       mode: release
       cases_per_category: 3
@@ -103,8 +105,9 @@ profiles:
       batch_size: 1
       grad_accum: 8
       lora_r: 16
-      lora_alpha: 32
+      lora_alpha: 16
       packing: false
+      train_on_responses_only: true
       export_gguf: true
       wandb: true
     runtime_eval:

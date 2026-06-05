@@ -6,6 +6,8 @@ training:
   max_seq_length: 1024
   warmup_steps: 5
   learning_rate: 0.0003
+  packing: false
+  train_on_responses_only: true
 lora:
   r: 8
-  alpha: 16
+  alpha: 8
