@@ -95,7 +95,7 @@ Before training:
   --output data/datasets/{npc_key}/template/train_clean.jsonl \
   --strict-canonical \
   --require-complete-metadata
-./ucore dataset-eval data/npcs/specs/{npc_key}.json --technique template --judge-model qwen3:latest
+./ucore dataset-eval data/npcs/specs/{npc_key}.json --technique template --judge-model qwen2.5:7b
 ```
 
 Use `quality_failures.json` as the build-loop source of truth. Fix generation,

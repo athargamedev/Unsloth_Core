@@ -591,15 +591,15 @@ Defined in `configs/ollama-model-presets.yaml`, resolved by `scripts/ops/ollama_
 | `judge-qwen25` | `qwen2.5:7b` | 7B | Alternative judge |
 | `judge-llama31-exp` | `llama3.1:8b` | 8B | Experimental judge |
 | `judge-qwen35-exp` | `qwen3.5:latest` | ~8B | Experimental — latest Qwen 3.5 |
-| `judge-qwen3-exp` | `qwen3:latest` | 8.2B | **Default judge** (dataset-eval) |
+| `judge-qwen3-exp` | `qwen3:latest` | 8.2B | Experimental — Qwen 3 |
 
 ### Defaults & Resolution
 
 | Constant | Value |
 |----------|-------|
 | Default generation preset | `generate-qwen25` → `qwen2.5:7b` |
-| Default judge preset | `judge-qwen3-exp` → `qwen3:latest` |
-| Safety fallback (judge) | `qwen3:latest` |
+| Default judge preset | `judge-qwen25` → `qwen2.5:7b` |
+| Safety fallback (judge) | `qwen2.5:7b` |
 | Safety fallback (generation) | `qwen2.5:7b` |
 
 **Resolution priority** (`resolve_ollama_model()`):

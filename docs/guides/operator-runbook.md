@@ -12,11 +12,11 @@ Use it when you are about to touch dataset generation, training, export, evaluat
   longer exist in the repository.
 - NPC specs live at `data/npcs/specs/{npc_key}.json`
 - Primers live at `data/npcs/reference_docs/{npc_key}_primer.md`
-- Canonical training runs live at `outputs/{npc_key}/runs/{run_id}/`
-- `outputs/{npc_key}/best` and `outputs/{npc_key}/latest` are pointers, not duplicate run folders
-- GGUF exports live at `exports/{npc_key}/`
-- Eval reports live at `eval/reports/{npc_key}/`
-- Compare reports live at `eval/comparisons/`
+- Canonical training runs live at `artifacts/models/{npc_key}/runs/{run_id}/`
+- `artifacts/models/{npc_key}/best` and `artifacts/models/{npc_key}/latest` are pointers, not duplicate run folders
+- GGUF exports live at `artifacts/exports/{npc_key}/`
+- Eval reports live at `artifacts/eval/reports/{npc_key}/`
+- Compare reports live at `artifacts/eval/comparisons/`
 - Use `./ucore` first whenever a repo command exists
 
 ## Standard pipeline
@@ -40,7 +40,7 @@ Use it when you are about to touch dataset generation, training, export, evaluat
 
 4. Run dataset quality gating
    ```bash
-   ./ucore dataset-eval data/npcs/specs/<npc>.json --technique <technique> --judge-model qwen3:latest
+   ./ucore dataset-eval data/npcs/specs/<npc>.json --technique <technique> --judge-model qwen2.5:7b
    ```
 
 5. Train
@@ -54,12 +54,12 @@ Use it when you are about to touch dataset generation, training, export, evaluat
      --baseline /path/to/base.gguf \
      --candidate /path/to/outputs/<npc>/runs/<run_id> \
      --spec data/npcs/specs/<npc>.json \
-     --report-html --track --judge --judge-model qwen3:latest
+     --report-html --track --judge --judge-model qwen2.5:7b
    ```
 
 ## Output layout
 
-- New training artifacts should land in `outputs/<npc_key>/runs/<run_id>/`
+- New training artifacts should land in `artifacts/models/<npc_key>/runs/<run_id>/`
 - `best` should point to the best run
 - `latest` should point to the newest run
 - If `best` or `latest` are stale files or folders, replace them safely with a new pointer

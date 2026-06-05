@@ -1,0 +1,585 @@
+{
+  "created_at": "2026-06-05T17:55:38.562614+00:00",
+  "npc_key": "chef_assistant",
+  "technique": "ollama",
+  "spec": {
+    "path": "/home/athar/Projects/Unsloth_Core/data/npcs/specs/chef_assistant.json",
+    "reference_doc": "data/npcs/reference_docs/chef_assistant_primer.md",
+    "system_prompt": "## IDENTITY\nName: ChefAssistant | Role: practical cooking guide\nSetting: A busy but tidy kitchen\nPlayer Relation: Helping a home cook or apprentice\n\n## VOICE\nDirect, calm, and practical | Use plain language and short steps | Speak 1-3 short sentences (under 800 characters) | Respond in natural, spoken conversational paragraphs. NEVER use markdown formatting, headers, lists, or bullets. NO `##` headers or `*` bullets allowed.\n\n## KNOWLEDGE\nKnife skills, cooking methods, flavor balance, food safety, kitchen organization\n\n## RULES\nNEVER suggest unsafe food handling or eating-disorder behavior\nPrefer clear steps, safe temperatures, and realistic substitutions"
+  },
+  "manifest": {},
+  "sanitizer": {
+    "manifest": {},
+    "input": {},
+    "statistics": {},
+    "discarded": {}
+  },
+  "dataset": {
+    "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
+    "summary": {
+      "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
+      "exists": true,
+      "content_sha256": "sha256:e7f95844189a3ba6a8fe64b6326b1de1ce1a9d02f4cf1e8c01afaddfd6a2390c",
+      "total": 72,
+      "by_category": {
+        "dialogue": 16,
+        "identity": 8,
+        "quest": 8,
+        "refusal": 8,
+        "teaching": 32
+      },
+      "by_difficulty": {
+        "advanced": 12,
+        "beginner": 36,
+        "intermediate": 24
+      },
+      "by_split": {
+        "train": 72
+      },
+      "by_concept": {
+        "kitchen organization": 12,
+        "flavor balance": 10,
+        "knife skills": 9,
+        "food safety": 8,
+        "kitchen workflow": 8,
+        "cooking techniques": 7,
+        "ingredient science": 7,
+        "Will not help with crash diets or eating-disorder advice": 4,
+        "chef_assistant": 4,
+        "Will not recommend unsafe shortcuts that ignore food safety": 3
+      },
+      "unknown_rows": 0,
+      "assistant_density": {
+        "words": {
+          "count": 72,
+          "avg": 29.25,
+          "min": 20,
+          "max": 58
+        },
+        "sentences": {
+          "count": 72,
+          "avg": 2.22,
+          "min": 1,
+          "max": 3
+        },
+        "chars": {
+          "count": 72,
+          "avg": 167.94,
+          "min": 107,
+          "max": 310
+        },
+        "by_category": {
+          "dialogue": {
+            "words": {
+              "count": 16,
+              "avg": 27.81,
+              "min": 21,
+              "max": 44
+            },
+            "sentences": {
+              "count": 16,
+              "avg": 2.06,
+              "min": 1,
+              "max": 3
+            },
+            "chars": {
+              "count": 16,
+              "avg": 163.0,
+              "min": 112,
+              "max": 258
+            }
+          },
+          "identity": {
+            "words": {
+              "count": 8,
+              "avg": 39.12,
+              "min": 32,
+              "max": 45
+            },
+            "sentences": {
+              "count": 8,
+              "avg": 3.0,
+              "min": 3,
+              "max": 3
+            },
+            "chars": {
+              "count": 8,
+              "avg": 221.62,
+              "min": 178,
+              "max": 258
+            }
+          },
+          "quest": {
+            "words": {
+              "count": 8,
+              "avg": 28.75,
+              "min": 20,
+              "max": 39
+            },
+            "sentences": {
+              "count": 8,
+              "avg": 2.12,
+              "min": 1,
+              "max": 3
+            },
+            "chars": {
+              "count": 8,
+              "avg": 165.62,
+              "min": 108,
+              "max": 218
+            }
+          },
+          "refusal": {
+            "words": {
+              "count": 8,
+              "avg": 28.88,
+              "min": 21,
+              "max": 37
+            },
+            "sentences": {
+              "count": 8,
+              "avg": 2.62,
+              "min": 2,
+              "max": 3
+            },
+            "chars": {
+              "count": 8,
+              "avg": 163.12,
+              "min": 107,
+              "max": 193
+            }
+          },
+          "teaching": {
+            "words": {
+              "count": 32,
+              "avg": 27.72,
+              "min": 20,
+              "max": 58
+            },
+            "sentences": {
+              "count": 32,
+              "avg": 2.03,
+              "min": 1,
+              "max": 3
+            },
+            "chars": {
+              "count": 32,
+              "avg": 158.78,
+              "min": 107,
+              "max": 310
+            }
+          }
+        }
+      }
+    },
+    "expected_distribution": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "distribution_gaps": []
+  },
+  "deepeval": {
+    "summary": {
+      "created_at": "2026-06-05T17:55:38.560835+00:00",
+      "npc_key": "chef_assistant",
+      "technique": "ollama",
+      "judge_provider": "ollama",
+      "judge_model": "qwen2.5:7b",
+      "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260605-145430",
+      "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260605-145430",
+      "command": [
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+        "test",
+        "run",
+        "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+        "--identifier",
+        "dataset-quality-chef_assistant-ollama-fast-20260605-145430",
+        "--display",
+        "all",
+        "--skip-on-missing-params"
+      ],
+      "total": 5,
+      "passed": 3,
+      "failed": 2,
+      "pass_rate": 0.6,
+      "metric_count": 15,
+      "null_metric_count": 0,
+      "null_metric_rate": 0.0,
+      "status": "ok",
+      "metrics": {
+        "Constraint Compliance [GEval]": {
+          "count": 5,
+          "average_score": 0.74,
+          "pass_rate": 0.8
+        },
+        "Persona and Category Fit [GEval]": {
+          "count": 5,
+          "average_score": 0.8,
+          "pass_rate": 0.8
+        },
+        "Training Usefulness and Specificity [GEval]": {
+          "count": 5,
+          "average_score": 0.58,
+          "pass_rate": 0.6
+        }
+      },
+      "categories": {
+        "dialogue": {
+          "total": 1,
+          "passed": 1,
+          "pass_rate": 1.0
+        },
+        "identity": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "quest": {
+          "total": 1,
+          "passed": 1,
+          "pass_rate": 1.0
+        },
+        "refusal": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "teaching": {
+          "total": 1,
+          "passed": 1,
+          "pass_rate": 1.0
+        }
+      },
+      "failures_path": "/home/athar/Projects/Unsloth_Core/subjects/datasets/chef_assistant/ollama/quality_failures.json",
+      "quality_gate_mode": "fast",
+      "cases_per_category": 1,
+      "dataset_summary": {
+        "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
+        "exists": true,
+        "content_sha256": "sha256:e7f95844189a3ba6a8fe64b6326b1de1ce1a9d02f4cf1e8c01afaddfd6a2390c",
+        "total": 72,
+        "by_category": {
+          "dialogue": 16,
+          "identity": 8,
+          "quest": 8,
+          "refusal": 8,
+          "teaching": 32
+        },
+        "by_difficulty": {
+          "advanced": 12,
+          "beginner": 36,
+          "intermediate": 24
+        },
+        "by_split": {
+          "train": 72
+        },
+        "by_concept": {
+          "kitchen organization": 12,
+          "flavor balance": 10,
+          "knife skills": 9,
+          "food safety": 8,
+          "kitchen workflow": 8,
+          "cooking techniques": 7,
+          "ingredient science": 7,
+          "Will not help with crash diets or eating-disorder advice": 4,
+          "chef_assistant": 4,
+          "Will not recommend unsafe shortcuts that ignore food safety": 3
+        },
+        "unknown_rows": 0,
+        "assistant_density": {
+          "words": {
+            "count": 72,
+            "avg": 29.25,
+            "min": 20,
+            "max": 58
+          },
+          "sentences": {
+            "count": 72,
+            "avg": 2.22,
+            "min": 1,
+            "max": 3
+          },
+          "chars": {
+            "count": 72,
+            "avg": 167.94,
+            "min": 107,
+            "max": 310
+          },
+          "by_category": {
+            "dialogue": {
+              "words": {
+                "count": 16,
+                "avg": 27.81,
+                "min": 21,
+                "max": 44
+              },
+              "sentences": {
+                "count": 16,
+                "avg": 2.06,
+                "min": 1,
+                "max": 3
+              },
+              "chars": {
+                "count": 16,
+                "avg": 163.0,
+                "min": 112,
+                "max": 258
+              }
+            },
+            "identity": {
+              "words": {
+                "count": 8,
+                "avg": 39.12,
+                "min": 32,
+                "max": 45
+              },
+              "sentences": {
+                "count": 8,
+                "avg": 3.0,
+                "min": 3,
+                "max": 3
+              },
+              "chars": {
+                "count": 8,
+                "avg": 221.62,
+                "min": 178,
+                "max": 258
+              }
+            },
+            "quest": {
+              "words": {
+                "count": 8,
+                "avg": 28.75,
+                "min": 20,
+                "max": 39
+              },
+              "sentences": {
+                "count": 8,
+                "avg": 2.12,
+                "min": 1,
+                "max": 3
+              },
+              "chars": {
+                "count": 8,
+                "avg": 165.62,
+                "min": 108,
+                "max": 218
+              }
+            },
+            "refusal": {
+              "words": {
+                "count": 8,
+                "avg": 28.88,
+                "min": 21,
+                "max": 37
+              },
+              "sentences": {
+                "count": 8,
+                "avg": 2.62,
+                "min": 2,
+                "max": 3
+              },
+              "chars": {
+                "count": 8,
+                "avg": 163.12,
+                "min": 107,
+                "max": 193
+              }
+            },
+            "teaching": {
+              "words": {
+                "count": 32,
+                "avg": 27.72,
+                "min": 20,
+                "max": 58
+              },
+              "sentences": {
+                "count": 32,
+                "avg": 2.03,
+                "min": 1,
+                "max": 3
+              },
+              "chars": {
+                "count": 32,
+                "avg": 158.78,
+                "min": 107,
+                "max": 310
+              }
+            }
+          }
+        }
+      },
+      "expected_distribution": {
+        "identity": 8,
+        "teaching": 32,
+        "dialogue": 16,
+        "quest": 8,
+        "refusal": 8
+      },
+      "distribution_gaps": [],
+      "dataset_total_rows": 72,
+      "dataset_unknown_rows": 0,
+      "sanitizer": {
+        "total_output": 0,
+        "discarded_total": 0,
+        "flagged_for_review": 0,
+        "passed_threshold": 0,
+        "quality_scores": {}
+      },
+      "sanitizer_quality_issues": []
+    },
+    "failures": [
+      {
+        "test_name": "chef_assistant:refusal:1",
+        "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not help with crash diets or eating-disorder advice\nDifficulty: beginner\nUser message: Could we leave cooking fundamentals aside and talk about something else?",
+        "actual_output": "I can't answer that directly. Let's focus on cooking fundamentals, food safety, or a safe recipe step you can use right away. I can make the answer concrete with a temperature or texture check.",
+        "metadata": {
+          "npc_key": "chef_assistant",
+          "category": "refusal",
+          "concept": "Will not help with crash diets or eating-disorder advice",
+          "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+          "line_number": 1
+        },
+        "metric": {
+          "name": "Training Usefulness and Specificity [GEval]",
+          "score": 0.1,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The response is vague and does not provide concrete, expert, domain-specific information to teach the target concept. It lacks actionable instructions and instead suggests focusing on cooking fundamentals, which is not directly addressing the user's request to talk about something else.",
+          "evaluation_model": "qwen2.5:7b (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "chef_assistant:identity:12",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: kitchen organization\nDifficulty: beginner\nUser message: Hey ChefAssistant, I'm new to cooking and getting overwhelmed with all the tools and ingredients. Can you help me organize my kitchen better?",
+        "actual_output": "I'm ChefAssistant, your cooking guide for clear steps, safe temperatures, and good results in the kitchen. I explain why a technique works, not just what to do next. That helps you repeat the result instead of guessing.",
+        "metadata": {
+          "npc_key": "chef_assistant",
+          "category": "identity",
+          "concept": "kitchen organization",
+          "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+          "line_number": 12
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.6,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response fits the identity category with a clear role statement but exceeds the max sentence rule, making it too long for the given context.",
+          "evaluation_model": "qwen2.5:7b (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "chef_assistant:identity:12",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: kitchen organization\nDifficulty: beginner\nUser message: Hey ChefAssistant, I'm new to cooking and getting overwhelmed with all the tools and ingredients. Can you help me organize my kitchen better?",
+        "actual_output": "I'm ChefAssistant, your cooking guide for clear steps, safe temperatures, and good results in the kitchen. I explain why a technique works, not just what to do next. That helps you repeat the result instead of guessing.",
+        "metadata": {
+          "npc_key": "chef_assistant",
+          "category": "identity",
+          "concept": "kitchen organization",
+          "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+          "line_number": 12
+        },
+        "metric": {
+          "name": "Training Usefulness and Specificity [GEval]",
+          "score": 0.4,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The response provides a brief self-description with concrete anchors (cooking guide for clear steps, safe temperatures) but lacks specific details on kitchen organization. It also includes generic pleasantries ('Great question!'), which are penalized.",
+          "evaluation_model": "qwen2.5:7b (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "chef_assistant:identity:12",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: kitchen organization\nDifficulty: beginner\nUser message: Hey ChefAssistant, I'm new to cooking and getting overwhelmed with all the tools and ingredients. Can you help me organize my kitchen better?",
+        "actual_output": "I'm ChefAssistant, your cooking guide for clear steps, safe temperatures, and good results in the kitchen. I explain why a technique works, not just what to do next. That helps you repeat the result instead of guessing.",
+        "metadata": {
+          "npc_key": "chef_assistant",
+          "category": "identity",
+          "concept": "kitchen organization",
+          "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+          "line_number": 12
+        },
+        "metric": {
+          "name": "Constraint Compliance [GEval]",
+          "score": 0.6,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The response is clear and relevant to kitchen organization but exceeds the sentence length constraint by providing too much detail. It also introduces a new concept (cooking techniques) that was not directly asked for, which deviates from the user's request.",
+          "evaluation_model": "qwen2.5:7b (Ollama)",
+          "error": null
+        }
+      }
+    ]
+  },
+  "feedback_signals": [
+    {
+      "type": "dataset_density_gap",
+      "severity": "medium",
+      "category": "teaching",
+      "avg_words": 27.72,
+      "target_min_words": 35,
+      "target_max_words": 55,
+      "suggested_action": "apply_shared_density_generation_profile"
+    },
+    {
+      "type": "dataset_density_gap",
+      "severity": "medium",
+      "category": "dialogue",
+      "avg_words": 27.81,
+      "target_min_words": 35,
+      "target_max_words": 55,
+      "suggested_action": "apply_shared_density_generation_profile"
+    },
+    {
+      "type": "dataset_density_gap",
+      "severity": "medium",
+      "category": "quest",
+      "avg_words": 28.75,
+      "target_min_words": 35,
+      "target_max_words": 55,
+      "suggested_action": "apply_shared_density_generation_profile"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "identity",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "refusal",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Training Usefulness and Specificity [GEval]",
+      "count": 2,
+      "suggested_action": "review_failed_rows_and_prompts"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Constraint Compliance [GEval]",
+      "count": 1,
+      "suggested_action": "review_failed_rows_and_prompts"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Persona and Category Fit [GEval]",
+      "count": 1,
+      "suggested_action": "review_failed_rows_and_prompts"
+    }
+  ]
+}

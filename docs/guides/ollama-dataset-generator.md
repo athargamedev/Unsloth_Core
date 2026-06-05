@@ -13,10 +13,10 @@ High-performance, Ollama-optimized NPC dataset generator for Unsloth_Core. Desig
 ./ucore generate-ollama data/npcs/specs/chemistry_instructor.json --model llama3.1
 
 # Dry-run: see generation plan without generating
-./ucore generate-ollama data/npcs/specs/fitness_coach.json --dry-run
+./ucore generate-ollama data/npcs/specs/chef_assistant.json --dry-run
 
 # With health check and auto-pull model
-./ucore generate-ollama data/npcs/specs/astronomy_guide.json --check-health --pull-model --model mistral
+./ucore generate-ollama data/npcs/specs/history_guide.json --check-health --pull-model --model mistral
 ```
 
 ### Direct Script Usage
@@ -115,7 +115,7 @@ python scripts/dataset/generate_dataset_ollama.py data/npcs/specs/history_guide.
 ### Example 3: High-Volume Generation on RTX 3060
 ```bash
 # For 6GB VRAM systems, use smaller batches
-./ucore generate-ollama data/npcs/specs/fitness_coach.json \
+./ucore generate-ollama data/npcs/specs/history_guide.json \
   --model llama2 \
   --batch-size 2 \
 ```
@@ -158,7 +158,7 @@ CUDA_VISIBLE_DEVICES=-1 ollama serve
 ### Example 4: Production Run with Full Validation
 ```bash
 # Generate with custom validation split
-./ucore generate-ollama data/npcs/specs/astronomy_guide.json \
+./ucore generate-ollama data/npcs/specs/chef_assistant.json \
   --model mistral \
   --temperature 0.65 \
   --val-split 0.15 \

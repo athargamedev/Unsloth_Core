@@ -123,6 +123,15 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
 - Codex agents (1): ucore-pipeline-chief
 - Codex subagents (8): context-sentinel, dashboard-unity-verifier, dataset-generation-engineer, gguf-unity-exporter, regression-reviewer, runtime-eval-feedback-engineer, sanitizer-gate-engineer, spec-grounding-curator, training-vram-engineer
 
+**Completed phases (P1–P8):**
+- P1 Config coherence — `./ucore audit config-coherence --json` green
+- P3 Judge cache integration — manifest stats, dataset-eval flags
+- P4 Inference/GPU lifecycle — GpuLeaseManager, lease/release endpoints
+- P5 Target runner — plan schema + dry-run/resume execution
+- P6 Experiment/run registry — local JSONL registry, hook capture, compare+promote CLI
+- P7 Dashboard truthfulness — artifact-registry-backed status, command schema parity
+- P8 NPC component contracts — Pydantic Identity/Tone/Grounding/Refusal/Runtime/Distribution
+
 **Next phases (planned):**
 - Create standard agent brief template
 - Create CONTRIBUTING.md, SETUP.md, proper README.md

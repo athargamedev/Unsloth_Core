@@ -114,7 +114,7 @@ Track all generated files — datasets, adapters, GGUF exports.
 ### `dataset_quality_gates`
 DeepEval quality gate results — one row per evaluation run.
 - `id` (UUID PK), `npc_key`, `technique`, `job_id` (FK → pipeline_jobs).
-- `dataset_path`, `judge_model` (default: qwen3:latest).
+- `dataset_path`, `judge_model` (default: qwen2.5:7b).
 - `total_samples`, `passed`, `failed`, `pass_rate`.
 - `metrics` (JSONB), `categories` (JSONB), `failures` (JSONB), `failures_path`.
 

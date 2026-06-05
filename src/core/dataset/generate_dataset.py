@@ -627,10 +627,10 @@ class RetryableAPIClient:
 
 class OllamaGenerator(RetryableAPIClient):
     def __init__(
-        self, model="llama3.1:latest", url="http://localhost:11434/api/chat", max_retries: int = 3
+        self, model="qwen2.5:7b", url="http://localhost:11434/api/chat", max_retries: int = 3
     ):
         self.model = model
-        self.url = url
+        self.url = url or "http://localhost:11434/api/chat"
         self.max_retries = max_retries
 
     def _build_payload(self, system_prompt, user_prompt, temperature, json_format):
@@ -686,20 +686,22 @@ class OllamaGenerator(RetryableAPIClient):
         session=None,
         executor=None,
     ):
+        # Try aiohttp path first; fall back to sync thread pool if it fails
         if session and aiohttp:
             payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
-            return await self._retry_async(
+            result = await self._retry_async(
                 "Ollama",
                 self.max_retries,
                 lambda: self._post_async(payload, session),
                 self._extract_ollama_content,
                 initial_delay=2.0,
             )
-        else:
-            loop = asyncio.get_running_loop()
-            return await loop.run_in_executor(
-                executor, self.generate, system_prompt, user_prompt, temperature, json_format
-            )
+            if result is not None:
+                return result
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            executor, self.generate, system_prompt, user_prompt, temperature, json_format
+        )
 
 
 # DEPRECATED: OpenAIGenerator is not reachable from any ucore subcommand.
@@ -2408,7 +2410,7 @@ def main():
         help="Validation split fraction (default: C.DEFAULT_VAL_SPLIT)",
     )
     parser.add_argument("--ollama", action="store_true", help="Use local Ollama for generation")
-    parser.add_argument("--model", default="llama3.1:latest", help="Ollama model to use")
+    parser.add_argument("--model", default="qwen2.5:7b", help="Ollama model to use")
     parser.add_argument("--url", default="http://localhost:11434/api/chat", help="Ollama API URL")
     parser.add_argument(
         "--multi-turn-ratio",
@@ -2448,7 +2450,11 @@ def run_dataset_generation(
 
     # Import generators here to avoid circular imports if needed
     from src.config.log_setup import clear_active_run, set_active_run
-    from src.core.dataset.generators import AnthropicGenerator, OllamaGenerator, OpenAIGenerator
+    from src.core.dataset.generate_dataset import (
+        AnthropicGenerator,
+        OllamaGenerator,
+        OpenAIGenerator,
+    )
 
     if technique == "ollama" and not model:
         raise ValueError("Model is required for ollama technique")

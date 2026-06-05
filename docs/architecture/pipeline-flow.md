@@ -72,11 +72,11 @@ Standard output: `.../{technique}/train_clean.jsonl`
 **Inputs**: `train_clean.jsonl`
 **Outputs**: `quality_summary.json` + `quality_failures.json`
 
-Uses **DeepEval** with a local Ollama judge (`qwen3:latest`, 8.2B params at Q4_K_M) to evaluate dataset quality before training:
+Uses **DeepEval** with a local Ollama judge (`qwen2.5:7b`, 7B params) to evaluate dataset quality before training:
 
 ```bash
 ./ucore dataset-eval data/npcs/specs/history_guide.json \
-  --technique template --judge-model qwen3:latest
+  --technique template --judge-model qwen2.5:7b
 ```
 
 - Metrics check persona/category fit and training usefulness/specificity

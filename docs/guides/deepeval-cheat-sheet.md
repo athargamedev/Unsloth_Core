@@ -3,7 +3,7 @@
 > **Working reference** for DeepEval 4.x local evaluation and Confident AI cloud integration.
 > Covers all metrics, config objects, CLI commands, env vars, and NPC pipeline integration patterns.
 >
-> **Judge stack:** Ollama `qwen3:latest` (8.2B, Q4_K_M, ~4.9 GB) on RTX 3060 6 GB.
+> **Judge stack:** Ollama `qwen2.5:7b` (7B, verified default) — `qwen3:latest` (8.2B, Q4_K_M, ~4.9 GB) available as optional experiment on RTX 3060 6 GB.
 >
 > *Last updated: 2026-05-31 | DeepEval 4.x*
 
