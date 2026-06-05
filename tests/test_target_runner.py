@@ -275,6 +275,24 @@ class TestTargetRunner:
             if cmd["stage"] != "generate":
                 assert "depends_on" in cmd
 
+    def test_runner_dry_run_uses_real_top_level_ucore_commands(self, tmp_path):
+        from src.core.orchestration.target_runner import TargetRunner
+
+        runner = TargetRunner(artifact_index=tmp_path / "artifacts.jsonl")
+        plan = runner.plan(
+            npc_key="chef_assistant",
+            profile="npc-production-grounded",
+            technique="ollama",
+            target_stage="sanitize",
+        )
+
+        dry = runner.dry_run(plan)
+        commands = [entry["command"] for entry in dry]
+        assert ["./ucore", "generate-ollama"] in [cmd[:2] for cmd in commands]
+        assert ["./ucore", "sanitize"] in [cmd[:2] for cmd in commands]
+        assert all(len(cmd) > 2 and cmd[1] != "dataset" for cmd in commands)
+        assert any("data/datasets/chef_assistant/ollama/train.jsonl" in cmd for cmd in commands)
+
     def test_runner_dry_run_no_commands_when_ready(self, tmp_path):
         from src.core.orchestration.target_runner import TargetRunner
 

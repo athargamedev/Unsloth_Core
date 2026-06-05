@@ -30,6 +30,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_FILES: list[str] = [
     "AGENTS.md",
     "README.md",
+    "SETUP.md",
+    "CONTRIBUTING.md",
     "docs/project-state.md",
     "docs/training-workflow.md",
     "MIGRATION_NOTES.md",
@@ -37,6 +39,11 @@ DEFAULT_FILES: list[str] = [
 
 # Regex, severity, message for legacy paths migrated in Phases 3-5.
 LEGACY_PATTERNS: list[tuple[str, str, str]] = [
+    (
+        r"from scripts\b|import scripts\b",
+        "error",
+        "legacy scripts/ import used; should use canonical src.core paths",
+    ),
     (
         r"\bconfigs/presets\b|\bconfigs/base_configs\b",
         "warn",

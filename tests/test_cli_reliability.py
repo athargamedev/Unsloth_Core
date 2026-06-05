@@ -50,6 +50,47 @@ def test_ucore_rejects_conflicting_generate_modes():
     assert "not allowed with argument" in result.stderr
 
 
+def test_ucore_generate_ollama_default_model_is_current_project_default():
+    result = subprocess.run(
+        [sys.executable, "./ucore", "generate-ollama", "--help"],
+        cwd=PROJECT_ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    assert "qwen2.5:7b" in result.stdout
+    assert "llama3.1-3060-chat" not in result.stdout
+
+
+def test_ucore_pipeline_ollama_uses_optimized_generator(monkeypatch):
+    ucore = load_ucore()
+    captured: list[list[str]] = []
+
+    def fake_run_cmd(cmd, **kwargs):
+        captured.append(cmd)
+
+    monkeypatch.setattr(ucore, "run_cmd", fake_run_cmd)
+
+    ucore.main(
+        [
+            "pipeline",
+            "data/npcs/specs/history_guide.json",
+            "--ollama",
+            "--skip-spec-validate",
+            "--skip-dataset-eval",
+            "--skip-smoke",
+            "--skip-eval",
+        ]
+    )
+
+    rendered = [" ".join(cmd) for cmd in captured]
+    assert any("generate_dataset_ollama.py" in cmd for cmd in rendered)
+    assert not any(
+        "generate_dataset.py" in cmd and "generate_dataset_ollama.py" not in cmd for cmd in rendered
+    )
+
+
 def test_ucore_generate_ollama_preserves_zero_values(monkeypatch):
     ucore = load_ucore()
     captured: list[list[str]] = []

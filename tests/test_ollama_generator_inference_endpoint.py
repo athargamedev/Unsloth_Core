@@ -13,7 +13,7 @@ class _FakeResponse:
 
 
 def test_ollama_generator_can_route_chat_through_inference_server(monkeypatch):
-    import scripts.dataset.generate_dataset_ollama as gdo
+    import src.core.dataset.generate_dataset_ollama as gdo
 
     posts = []
 
