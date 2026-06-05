@@ -495,6 +495,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     technique = workflow.technique
     clean_path = workflow.dataset_path if workflow.dataset_path.name == "train_clean.jsonl" else workflow.dataset_clean_path
     ollama_base_url = _normalize_ollama_base_url(args.ollama_base_url)
+    inference_server_url = (getattr(args, "inference_server_url", None) or os.getenv("UCORE_INFERENCE_SERVER_URL", "")).rstrip("/")
     is_pull = bool(getattr(args, "pull_alias", None))
     if not is_pull and not clean_path.exists():
         raise SystemExit(
@@ -549,7 +550,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
             )
             with hook_recorder.step("deepeval_run", identifier=identifier, judge_provider=judge_provider, judge_model=resolved_judge_model, cases_per_category=cases_per_category, mode=args.mode):
                 preflight = None
-                if judge_provider == "ollama" and not getattr(args, 'remote_eval', False):
+                if judge_provider == "ollama" and not getattr(args, 'remote_eval', False) and not inference_server_url:
                     preflight = run_preflight(
                         phase="dataset_eval",
                         preset=None,
@@ -608,6 +609,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                         "DEEPEVAL_OLLAMA_MODEL": resolved_judge_model,
                         "DEEPEVAL_OLLAMA_BASE_URL": ollama_base_url,
                         "DEEPEVAL_OLLAMA_TEMPERATURE": str(args.judge_temperature),
+                        "UCORE_INFERENCE_SERVER_URL": inference_server_url,
                         "DEEPEVAL_WANDB_MODEL": resolved_judge_model,
                         "DEEPEVAL_WANDB_TEMPERATURE": str(args.judge_temperature),
                         "DEEPEVAL_WANDB_ENTITY": args.wandb_inference_entity or args.wandb_entity or os.getenv("WANDB_ENTITY", ""),
@@ -1040,6 +1042,7 @@ def parse_args() -> argparse.Namespace:
         help="Exact Ollama judge model override (wins over --judge-preset)",
     )
     parser.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
+    parser.add_argument("--inference-server-url", default=None, help="Route local Ollama judge calls through ucore inference-server /chat")
     parser.add_argument("--judge-temperature", type=float, default=0.0)
     parser.add_argument("--mode", default=DEFAULT_DATASET_EVAL_MODE, choices=DATASET_EVAL_MODES,
                         help="Gate mode: fast is iteration-friendly; release is strict and fails on sampled metric failures")

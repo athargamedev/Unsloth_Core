@@ -1,6 +1,7 @@
 """Shared DeepEval metrics for generated NPC training datasets."""
 
 import os
+import requests
 from typing import Optional, Tuple, Union
 
 from deepeval.metrics import (
@@ -29,12 +30,21 @@ def _ollama_think_enabled() -> bool:
     return os.getenv("DEEPEVAL_OLLAMA_THINK", "false").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _normalize_inference_server_url(url: str | None) -> str | None:
+    if not url:
+        return None
+    return url.rstrip("/")
+
+
 class DatasetJudgeOllamaModel(OllamaModel):
     """DeepEval Ollama judge with explicit control over thinking models."""
 
-    def __init__(self, *args, think: bool = False, **kwargs):
+    def __init__(self, *args, think: bool = False, inference_server_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.think = think
+        self.inference_server_url = _normalize_inference_server_url(
+            inference_server_url or os.getenv("UCORE_INFERENCE_SERVER_URL")
+        )
 
     def _chat_kwargs(self, prompt: str, schema: Optional[type[BaseModel]]) -> dict:
         return {
@@ -52,6 +62,16 @@ class DatasetJudgeOllamaModel(OllamaModel):
     def generate(
         self, prompt: str, schema: Optional[type[BaseModel]] = None
     ) -> Tuple[Union[str, BaseModel], float]:
+        if self.inference_server_url:
+            response = requests.post(
+                f"{self.inference_server_url}/chat",
+                json=self._chat_kwargs(prompt, schema),
+                timeout=120,
+            )
+            response.raise_for_status()
+            content = response.json().get("message", {}).get("content", "")
+            return (schema.model_validate_json(content) if schema else content, 0)
+
         response = self.load_model().chat(**self._chat_kwargs(prompt, schema))
         return (
             schema.model_validate_json(response.message.content)
@@ -64,6 +84,9 @@ class DatasetJudgeOllamaModel(OllamaModel):
     async def a_generate(
         self, prompt: str, schema: Optional[type[BaseModel]] = None
     ) -> Tuple[Union[str, BaseModel], float]:
+        if self.inference_server_url:
+            return self.generate(prompt, schema)
+
         response = await self.load_model(async_mode=True).chat(**self._chat_kwargs(prompt, schema))
         return (
             schema.model_validate_json(response.message.content)
@@ -78,6 +101,7 @@ def _ollama_judge() -> DatasetJudgeOllamaModel:
         model=os.getenv("DEEPEVAL_OLLAMA_MODEL", "qwen2.5:7b"),
         base_url=os.getenv("DEEPEVAL_OLLAMA_BASE_URL", "http://localhost:11434"),
         temperature=float(os.getenv("DEEPEVAL_OLLAMA_TEMPERATURE", "0")),
+        inference_server_url=os.getenv("UCORE_INFERENCE_SERVER_URL"),
         think=_ollama_think_enabled(),
     )
 

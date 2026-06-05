@@ -65,6 +65,9 @@ _TABLE_EVAL_SESSIONS = "eval_sessions"
 _TABLE_CONFIG_SNAPSHOTS = "pipeline_config_snapshots"
 _TABLE_API_KEYS = "api_keys"
 _TABLE_AUDIT_LOG = "api_audit_log"
+_TABLE_MODEL_REGISTRY = "model_registry"
+_TABLE_DATASET_VERSIONS = "dataset_versions"
+_TABLE_METRIC_COLLECTIONS = "metric_collections"
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -196,6 +199,25 @@ class PipelineDB:
         "total_examples", "baseline_wins", "candidate_wins", "ties", "win_rate",
         "per_concept", "weak_concepts", "feedback_json_path", "report_html_path",
         "loss",
+        "comparison_id", "baseline_model", "candidate_model",
+        "dataset_hash", "baseline_eval_run_id", "candidate_eval_run_id",
+        "created_at",
+
+        # model_registry
+        "model_name", "training_run_id", "parent_model_id",
+        "lora_config", "training_params", "eval_session_id",
+        "quality_gate_pass_rate", "adapter_artifact_id", "gguf_artifact_id",
+        "gguf_quantization", "tags", "deployed_at",
+
+        # dataset_versions
+        "version", "content_hash", "row_count", "size_bytes",
+        "split_info", "concept_coverage", "parent_hash", "parent_id",
+        "generation_params", "change_log", "quality_gate_id",
+
+        # metric_collections
+        "job_id", "model_registry_id", "epoch",
+        "grad_norm", "learning_rate", "tokens_per_second",
+        "gpu_memory_mb", "gpu_utilization", "extra_metrics",
     }
 
     @staticmethod
@@ -1824,6 +1846,311 @@ class PipelineDB:
             counts["runs"],
         )
         return counts
+
+    # ── Query helpers for CLI dashboard ─────────────────────────────────
+    
+    def query_eval_sessions(self, npc_key: str | None = None, limit: int = 10) -> list[dict]:
+        """Fetch eval sessions, optionally filtered by NPC, newest first."""
+        if self._mode == "direct":
+            try:
+                self._ensure_direct_connected()
+                cur = self._conn.cursor()
+                if npc_key:
+                    cur.execute(
+                        "SELECT * FROM eval_sessions WHERE npc_key = %s ORDER BY created_at DESC LIMIT %s",
+                        (npc_key, limit),
+                    )
+                else:
+                    cur.execute(
+                        "SELECT * FROM eval_sessions ORDER BY created_at DESC LIMIT %s",
+                        (limit,),
+                    )
+                rows = self._row_to_dict(cur)
+                cur.close()
+                return rows
+            except Exception as exc:
+                logger.warning("Failed to query eval sessions: %s", exc)
+                return []
+        elif self._mode == "rest":
+            params: dict[str, str] = {"order": "created_at.desc", "limit": str(limit)}
+            if npc_key:
+                params["npc_key"] = f"eq.{npc_key}"
+            result = self._rest_request("GET", _TABLE_EVAL_SESSIONS, params=params)
+            return result if isinstance(result, list) else []
+        return []
+
+    def query_quality_gates(self, npc_key: str | None = None, limit: int = 20) -> list[dict]:
+        """Fetch dataset quality gates, optionally filtered by NPC, newest first."""
+        if self._mode == "direct":
+            try:
+                self._ensure_direct_connected()
+                cur = self._conn.cursor()
+                if npc_key:
+                    cur.execute(
+                        "SELECT * FROM dataset_quality_gates WHERE npc_key = %s ORDER BY created_at DESC LIMIT %s",
+                        (npc_key, limit),
+                    )
+                else:
+                    cur.execute(
+                        "SELECT * FROM dataset_quality_gates ORDER BY created_at DESC LIMIT %s",
+                        (limit,),
+                    )
+                rows = self._row_to_dict(cur)
+                cur.close()
+                return rows
+            except Exception as exc:
+                logger.warning("Failed to query quality gates: %s", exc)
+                return []
+        elif self._mode == "rest":
+            params: dict[str, str] = {"order": "created_at.desc", "limit": str(limit)}
+            if npc_key:
+                params["npc_key"] = f"eq.{npc_key}"
+            result = self._rest_request("GET", _TABLE_QUALITY_GATES, params=params)
+            return result if isinstance(result, list) else []
+        return []
+
+    def query_datasets(self, npc_key: str, limit: int = 20) -> list[dict]:
+        """Fetch dataset versions for a given NPC, newest first."""
+        if self._mode == "direct":
+            try:
+                self._ensure_direct_connected()
+                cur = self._conn.cursor()
+                cur.execute(
+                    "SELECT * FROM dataset_versions WHERE npc_key = %s ORDER BY created_at DESC LIMIT %s",
+                    (npc_key, limit),
+                )
+                rows = self._row_to_dict(cur)
+                cur.close()
+                return rows
+            except Exception as exc:
+                logger.warning("Failed to query datasets for %s: %s", npc_key, exc)
+                return []
+        elif self._mode == "rest":
+            params = {"npc_key": f"eq.{npc_key}", "order": "created_at.desc", "limit": str(limit)}
+            result = self._rest_request("GET", _TABLE_DATASET_VERSIONS, params=params)
+            return result if isinstance(result, list) else []
+        return []
+
+    # ── Experiment registry operations ──────────────────────────────────
+
+    def create_model_registry(
+        self,
+        npc_key: str,
+        model_name: str,
+        base_model: str,
+        technique: str,
+        **kwargs: Any,
+    ) -> dict:
+        """Insert a model_registry row and return it as a dict."""
+        entry_id = str(uuid.uuid4())
+        now = _iso_now()
+        extra = _sanitize_kwargs(**kwargs)
+
+        if self._mode == "direct":
+            return self._direct_create_model_registry(entry_id, npc_key, model_name, base_model, technique, now, extra)
+        elif self._mode == "rest":
+            return self._rest_create_model_registry(entry_id, npc_key, model_name, base_model, technique, now, extra)
+
+        logger.warning("PipelineDB not connected; cannot create model registry entry")
+        return {}
+
+    def _direct_create_model_registry(
+        self, entry_id: str, npc_key: str, model_name: str,
+        base_model: str, technique: str, now: str, extra: dict[str, Any],
+    ) -> dict:
+        try:
+            self._ensure_direct_connected()
+            cur = self._conn.cursor()
+            columns = ["id", "npc_key", "model_name", "base_model", "technique", "created_at", "updated_at"]
+            placeholders = ["%s"] * len(columns)
+            values: list[Any] = [entry_id, npc_key, model_name, base_model, technique, now, now]
+            for key, val in self._filter_extra(extra).items():
+                if key in {"lora_config", "training_params"} and isinstance(val, dict):
+                    val = json.dumps(val)
+                if key == "tags" and isinstance(val, list):
+                    # PostgreSQL TEXT[] requires {a,b,c} syntax, not JSON
+                    val = "{" + ",".join(v.replace("{","\\{").replace("}","\\}").replace(",","\\,") for v in val) + "}"
+                columns.append(key)
+                placeholders.append("%s")
+                values.append(val)
+            query = f"INSERT INTO model_registry ({', '.join(columns)}) VALUES ({', '.join(placeholders)}) RETURNING *"
+            cur.execute(query, values)
+            rows = self._row_to_dict(cur)
+            cur.close()
+            if rows:
+                logger.info("Created model registry entry %s (%s)", model_name, entry_id)
+                return rows[0]
+            return {}
+        except Exception as exc:
+            logger.warning("Failed to create model registry entry %s: %s", model_name, exc)
+            return {}
+
+    def _rest_create_model_registry(
+        self, entry_id: str, npc_key: str, model_name: str,
+        base_model: str, technique: str, now: str, extra: dict[str, Any],
+    ) -> dict:
+        payload: dict[str, Any] = {
+            "id": entry_id, "npc_key": npc_key, "model_name": model_name,
+            "base_model": base_model, "technique": technique,
+            "created_at": now, "updated_at": now,
+        }
+        payload.update(extra)
+        result = self._rest_request("POST", _TABLE_MODEL_REGISTRY, data=payload)
+        if result:
+            logger.info("REST: Created model registry entry %s", model_name)
+            return result[0] if isinstance(result, list) else result
+        return {}
+
+    def get_model_registry(self, npc_key: str) -> list[dict]:
+        """List all model registry entries for an NPC, newest first."""
+        if self._mode == "direct":
+            try:
+                self._ensure_direct_connected()
+                cur = self._conn.cursor()
+                cur.execute(
+                    "SELECT * FROM model_registry WHERE npc_key = %s ORDER BY created_at DESC",
+                    (npc_key,),
+                )
+                rows = self._row_to_dict(cur)
+                cur.close()
+                return rows
+            except Exception as exc:
+                logger.warning("Failed to get model registry for NPC %s: %s", npc_key, exc)
+                return []
+        elif self._mode == "rest":
+            params = {"npc_key": f"eq.{npc_key}", "order": "created_at.desc"}
+            result = self._rest_request("GET", _TABLE_MODEL_REGISTRY, params=params)
+            return result if isinstance(result, list) else []
+        return []
+
+    def create_dataset_version(self, npc_key: str, technique: str, **kwargs: Any) -> dict:
+        """Insert a dataset_versions row."""
+        entry_id = str(uuid.uuid4())
+        now = _iso_now()
+        extra = _sanitize_kwargs(**kwargs)
+
+        if self._mode == "direct":
+            return self._direct_create_dataset_version(entry_id, npc_key, technique, now, extra)
+        elif self._mode == "rest":
+            return self._rest_create_dataset_version(entry_id, npc_key, technique, now, extra)
+
+        logger.warning("PipelineDB not connected; cannot create dataset version")
+        return {}
+
+    def _direct_create_dataset_version(
+        self, entry_id: str, npc_key: str, technique: str, now: str, extra: dict[str, Any],
+    ) -> dict:
+        try:
+            self._ensure_direct_connected()
+            cur = self._conn.cursor()
+            columns = ["id", "npc_key", "technique", "created_at", "updated_at"]
+            placeholders = ["%s"] * len(columns)
+            values: list[Any] = [entry_id, npc_key, technique, now, now]
+            for key, val in self._filter_extra(extra).items():
+                if key in {"split_info", "concept_coverage", "generation_params"} and isinstance(val, (dict, list)):
+                    val = json.dumps(val)
+                columns.append(key)
+                placeholders.append("%s")
+                values.append(val)
+            query = f"INSERT INTO dataset_versions ({', '.join(columns)}) VALUES ({', '.join(placeholders)}) RETURNING *"
+            cur.execute(query, values)
+            rows = self._row_to_dict(cur)
+            cur.close()
+            if rows:
+                logger.info("Created dataset version %s for NPC %s", entry_id, npc_key)
+                return rows[0]
+            return {}
+        except Exception as exc:
+            logger.warning("Failed to create dataset version for NPC %s: %s", npc_key, exc)
+            return {}
+
+    def _rest_create_dataset_version(
+        self, entry_id: str, npc_key: str, technique: str, now: str, extra: dict[str, Any],
+    ) -> dict:
+        payload: dict[str, Any] = {
+            "id": entry_id, "npc_key": npc_key, "technique": technique,
+            "created_at": now, "updated_at": now,
+        }
+        payload.update(extra)
+        result = self._rest_request("POST", _TABLE_DATASET_VERSIONS, data=payload)
+        if result:
+            logger.info("REST: Created dataset version for NPC %s", npc_key)
+            return result[0] if isinstance(result, list) else result
+        return {}
+
+    def insert_metric(self, run_id: str, npc_key: str, step: int, **kwargs: Any) -> bool:
+        """Insert a single metric_collections row. Returns True on success."""
+        entry_id = str(uuid.uuid4())
+        now = _iso_now()
+        extra = _sanitize_kwargs(**kwargs)
+
+        if self._mode == "direct":
+            return self._direct_insert_metric(entry_id, run_id, npc_key, step, now, extra)
+        elif self._mode == "rest":
+            return self._rest_insert_metric(entry_id, run_id, npc_key, step, now, extra)
+
+        logger.warning("PipelineDB not connected; cannot insert metric")
+        return False
+
+    def _direct_insert_metric(
+        self, entry_id: str, run_id: str, npc_key: str, step: int, now: str, extra: dict[str, Any],
+    ) -> bool:
+        try:
+            self._ensure_direct_connected()
+            cur = self._conn.cursor()
+            columns = ["id", "run_id", "npc_key", "step", "created_at"]
+            placeholders = ["%s"] * len(columns)
+            values: list[Any] = [entry_id, run_id, npc_key, step, now]
+            for key, val in self._filter_extra(extra).items():
+                if key == "extra_metrics" and isinstance(val, dict):
+                    val = json.dumps(val)
+                columns.append(key)
+                placeholders.append("%s")
+                values.append(val)
+            query = f"INSERT INTO metric_collections ({', '.join(columns)}) VALUES ({', '.join(placeholders)})"
+            cur.execute(query, values)
+            cur.close()
+            return True
+        except Exception as exc:
+            logger.warning("Failed to insert metric for run %s step %d: %s", run_id, step, exc)
+            return False
+
+    def _rest_insert_metric(
+        self, entry_id: str, run_id: str, npc_key: str, step: int, now: str, extra: dict[str, Any],
+    ) -> bool:
+        payload: dict[str, Any] = {
+            "id": entry_id, "run_id": run_id, "npc_key": npc_key,
+            "step": step, "created_at": now,
+        }
+        payload.update(extra)
+        result = self._rest_request("POST", _TABLE_METRIC_COLLECTIONS, data=payload)
+        return result is not None
+
+    def get_metrics(self, run_id: str, limit: int = 100) -> list[dict]:
+        """Get step-level metrics for a training run, ordered by step."""
+        if self._mode == "direct":
+            try:
+                self._ensure_direct_connected()
+                cur = self._conn.cursor()
+                cur.execute(
+                    "SELECT * FROM metric_collections WHERE run_id = %s ORDER BY step ASC LIMIT %s",
+                    (run_id, limit),
+                )
+                rows = self._row_to_dict(cur)
+                cur.close()
+                return rows
+            except Exception as exc:
+                logger.warning("Failed to get metrics for run %s: %s", run_id, exc)
+                return []
+        elif self._mode == "rest":
+            params = {
+                "run_id": f"eq.{run_id}",
+                "order": "step.asc",
+                "limit": str(limit),
+            }
+            result = self._rest_request("GET", _TABLE_METRIC_COLLECTIONS, params=params)
+            return result if isinstance(result, list) else []
+        return []
 
     # ── Connection lifecycle ──────────────────────────────────────────
 

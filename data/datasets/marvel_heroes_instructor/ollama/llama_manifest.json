@@ -1,0 +1,74 @@
+{
+  "npc_key": "marvel_heroes_instructor",
+  "technique": "ollama",
+  "sanitized": true,
+  "sanitizer": {
+    "version": "v2",
+    "date": "2026-06-04T07:13:44Z",
+    "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/marvel_heroes_instructor/ollama/train_comp.jsonl --output data/datasets/marvel_heroes_instructor/ollama/train_llama_comp.jsonl --quality-report --llm-check --llm-model llama3.1:8b --dedup",
+    "artifact_check_mode": "strict",
+    "strict_mode": false
+  },
+  "spec": {
+    "file": null,
+    "ref_doc": "data/npcs/reference_docs/marvel_heroes_instructor_primer.md"
+  },
+  "input": {
+    "file": "data/datasets/marvel_heroes_instructor/ollama/train_comp.jsonl",
+    "hash": "sha256:af91612b8864c5be6fefcd7a94d0914c8dce906305abfc0e7368d1a7b97b08de",
+    "total_examples": 6
+  },
+  "statistics": {
+    "total_input": 6,
+    "total_output": 6,
+    "total_train": 6,
+    "total_validation": 0,
+    "by_category": {
+      "identity": 1,
+      "quest": 1,
+      "teaching": 2,
+      "dialogue": 2
+    },
+    "by_difficulty": {
+      "beginner": 3,
+      "intermediate": 2,
+      "advanced": 1
+    },
+    "by_safety_tag": {},
+    "quality_scores": {
+      "mean": 81.7,
+      "median": 81.0,
+      "min": 81,
+      "max": 85,
+      "std_dev": 1.5,
+      "passed_threshold": 6,
+      "flagged_for_review": 0,
+      "distribution": {
+        "0-9": 0,
+        "10-19": 0,
+        "20-29": 0,
+        "30-39": 0,
+        "40-49": 0,
+        "50-59": 0,
+        "60-69": 0,
+        "70-79": 0,
+        "80-89": 6,
+        "90-99": 0,
+        "100+": 0
+      }
+    }
+  },
+  "discarded": {
+    "total": 0,
+    "by_reason": {}
+  },
+  "content_hashes": [
+    "7b9099e874629a66c9d3f43af0b8eed1d491f878e134a69eda6701b632922e7e",
+    "738863ccab22e44871734f1653b2334269312b7c3996baf53f01bb7c6142ea65",
+    "899a56e7e6e720756907b80f0054184e8e0b782586c613221a23e9a9df42f46b",
+    "a769a0ad33ae85a3ce43d8f92a61fb4f280cce53dabf47654d42aac9fccbc315",
+    "48c04ff47e4e800e915db75916bf6284712511139d964f55faf9508198abde59",
+    "9b4a6d538f7b2709c3bf634fea4f00623285be9825ecaaef00af234ae4da653e"
+  ],
+  "content_hash_prefix": "sha256:"
+}

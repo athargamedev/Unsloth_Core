@@ -20,6 +20,7 @@ import json
 import os
 import re
 import sys
+import time
 import traceback
 import requests
 from collections import Counter
@@ -33,6 +34,7 @@ from src.config import paths
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from src.core.ops.canonical_artifacts import record_canonical_bundle
 from src.core.ops.ollama_model_presets import resolve_ollama_model
+from src.core.ops.judge_cache import JudgeCache, JudgeCacheInput
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -160,10 +162,14 @@ CRITERIA FOR LOW QUALITY (is_high_quality=false):
 """
 
 class LLMSanityChecker:
-    def __init__(self, model=None, url="http://localhost:11434/api/chat"):
+    def __init__(self, model=None, url="http://localhost:11434/api/chat", cache=None, cache_enabled=True, prompt_version="llm-sanity-v1", inference_server_url=None):
         self.model = model or resolve_ollama_model(role="judge")
         self.url = url
+        self.inference_server_url = (inference_server_url or os.getenv("UCORE_INFERENCE_SERVER_URL") or "").rstrip("/") or None
         self._enabled = bool(self.model)
+        self.cache_enabled = bool(cache_enabled) and os.getenv("UCORE_JUDGE_CACHE_DISABLE", "").lower() not in {"1", "true", "yes"}
+        self.cache = cache if cache is not None else (JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None) if self.cache_enabled else None)
+        self.prompt_version = prompt_version
 
     def check(self, example, spec_data=None):
         if not self._enabled:
@@ -191,7 +197,23 @@ class LLMSanityChecker:
             actual_output=assistant_output
         )
 
-        payload = {
+        cache_item = None
+        if self.cache_enabled and self.cache is not None:
+            cache_item = JudgeCacheInput(
+                row_input=user_input,
+                row_output=assistant_output,
+                reference_context=context or "No context provided.",
+                rubric=LLM_JUDGE_PROMPT,
+                judge_provider="ucore-inference-server" if self.inference_server_url else "ollama",
+                judge_model=self.model,
+                prompt_version=self.prompt_version,
+            )
+            cached = self.cache.get(cache_item)
+            if cached is not None:
+                print(f"  [judge-cache] Hit for {self.model}", flush=True)
+                return cached["result"]
+
+        payload = self._build_inference_payload(user_input, assistant_output, npc_key, context) if self.inference_server_url else {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "stream": False,
@@ -200,14 +222,38 @@ class LLMSanityChecker:
         }
 
         try:
-            res = requests.post(self.url, json=payload, timeout=30)
+            print(f"  [judge] Requesting evaluation from {self.model}...", flush=True)
+            started = time.perf_counter()
+            res = requests.post(self._judge_url(), json=payload, timeout=180)
             res.raise_for_status()
             data = res.json()
-            content = data["message"]["content"]
-            return json.loads(content)
+            result = data.get("result") if self.inference_server_url else None
+            if result is None:
+                content = data["message"]["content"]
+                print(f"  [judge] Raw content: {content}", flush=True)
+                result = json.loads(content)
+            if cache_item is not None and isinstance(result, dict) and self.cache is not None:
+                latency_ms = int((time.perf_counter() - started) * 1000)
+                self.cache.put(cache_item, result=result, latency_ms=latency_ms)
+            # if result.get("failure_reason"):
+            #    log_info(f"  [judge] Flagged: {result.get('failure_reason')}")
+            return result
         except Exception as e:
-            # log_warn(f"LLM Sanity Check failed: {e}")
+            print(f"  [judge] Error: {e}", flush=True)
             return None
+
+    def _judge_url(self):
+        return f"{self.inference_server_url}/judge" if self.inference_server_url else self.url
+
+    def _build_inference_payload(self, user_input, assistant_output, npc_key, context):
+        rubric = LLM_JUDGE_PROMPT.replace("Subject: {npc_key}", f"Subject: {npc_key}")
+        return {
+            "model": self.model,
+            "input": user_input,
+            "actual_output": assistant_output,
+            "context": [context or "No context provided."],
+            "rubric": rubric,
+        }
 
 # ── Sentence Counting (with abbreviation awareness) ──────────────────────────
 
@@ -1046,7 +1092,11 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
     if llm_checker:
         llm_result = llm_checker.check(example, spec_data)
         if llm_result:
-            example.setdefault("quality", {})["llm_check"] = llm_result
+            # Store LLM check results in metadata for persistence
+            if "metadata" not in example:
+                example["metadata"] = {}
+            example["metadata"]["llm_check"] = llm_result
+            
             if not llm_result.get("is_high_quality", True):
                 # Penalize total score
                 quality["total"] = max(0, quality["total"] - 30)
@@ -1316,6 +1366,9 @@ def main():
     # 4a: LLM Sanity Check
     parser.add_argument("--llm-check", action="store_true", help="Run LLM-based quality check")
     parser.add_argument("--llm-model", help="Ollama model for quality check")
+    parser.add_argument("--judge-cache-path", help="SQLite judge cache path for --llm-check (default: .pipeline/judge_cache.sqlite3)")
+    parser.add_argument("--no-judge-cache", action="store_true", help="Disable judge-result cache for --llm-check")
+    parser.add_argument("--inference-server-url", help="Use ucore inference-server /judge endpoint instead of direct Ollama for --llm-check")
 
     # Debugging
     parser.add_argument("--debug", action="store_true",
@@ -1328,15 +1381,6 @@ def main():
                         help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
 
     args = parser.parse_args()
-
-    # Initialize LLM checker if requested
-    llm_checker = None
-    if args.llm_check:
-        llm_checker = LLMSanityChecker(model=args.llm_model)
-        if llm_checker._enabled:
-            print(f"LLM Sanity Check enabled using: {llm_checker.model}")
-        else:
-            print("Warning: LLM Sanity Check requested but no judge model found.")
 
     input_path = Path(args.input)
     if not input_path.exists():
@@ -1379,9 +1423,17 @@ def main():
     # Initialize LLM checker if requested
     llm_checker = None
     if args.llm_check:
-        llm_checker = LLMSanityChecker(model=args.llm_model)
+        judge_cache = JudgeCache(args.judge_cache_path) if args.judge_cache_path and not args.no_judge_cache else None
+        llm_checker = LLMSanityChecker(
+            model=args.llm_model,
+            cache=judge_cache,
+            cache_enabled=not args.no_judge_cache,
+            inference_server_url=args.inference_server_url,
+        )
         if llm_checker._enabled:
             print(f"LLM Sanity Check enabled using: {llm_checker.model}")
+            if llm_checker.cache_enabled and llm_checker.cache is not None:
+                print(f"Judge cache enabled: {llm_checker.cache.db_path}")
         else:
             print("Warning: LLM Sanity Check requested but no judge model found.")
 

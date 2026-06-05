@@ -364,13 +364,22 @@ class OllamaHealthCheck:
             return False
 
 
+def _normalize_inference_server_url(url: str | None) -> str | None:
+    if not url:
+        return None
+    return url.rstrip("/")
+
+
 class OllamaGeneratorV2:
     """Enhanced Ollama generator with retry logic, batching, and progress tracking."""
     
     def __init__(self, model="llama2", url="http://localhost:11434/api/chat", 
-                 max_retries=3, batch_size=4, health_check=None):
+                 max_retries=3, batch_size=4, health_check=None, inference_server_url: str | None = None):
         self.model = model
         self.url = url
+        self.inference_server_url = _normalize_inference_server_url(
+            inference_server_url or os.getenv("UCORE_INFERENCE_SERVER_URL")
+        )
         self.max_retries = max_retries
         self.batch_size = batch_size
         self.health_check = health_check or OllamaHealthCheck(url.rsplit("/api", 1)[0])
@@ -429,12 +438,14 @@ class OllamaGeneratorV2:
         return tuple(errors)
 
     def _post_chat(self, payload: dict) -> dict:
-        response = requests.post(self.url, json=payload, timeout=120)
+        target_url = f"{self.inference_server_url}/chat" if self.inference_server_url else self.url
+        response = requests.post(target_url, json=payload, timeout=120)
         response.raise_for_status()
         return response.json()
 
     async def _post_chat_async(self, payload: dict, session):
-        async with session.post(self.url, json=payload, timeout=120) as response:
+        target_url = f"{self.inference_server_url}/chat" if self.inference_server_url else self.url
+        async with session.post(target_url, json=payload, timeout=120) as response:
             response.raise_for_status()
             return await response.json()
 
@@ -593,6 +604,8 @@ Examples:
     )
     parser.add_argument("--url", default="http://localhost:11434",
                        help="Ollama server URL (default: http://localhost:11434)")
+    parser.add_argument("--inference-server-url", default=None,
+                       help="Route generation through ucore inference-server /chat instead of direct Ollama")
     parser.add_argument("--output", "-o", default=None,
                        help="Output JSONL path")
     parser.add_argument("--batch-size", type=int, default=1,
@@ -698,7 +711,7 @@ Examples:
                 include_validation=not args.no_validation,
             )
             total = sum(examples_per_category.values())
-            logger.info(f"\n[DRY-RUN] Would generate {total} examples with model '{args.model}':")
+            logger.info(f"\n[DRY-RUN] Would generate {total} examples with model '{resolved_model}':")
             for cat, count in examples_per_category.items():
                 logger.info(f"  {cat:12s}: {count:3d} examples")
             if args.concept_focus:
@@ -710,13 +723,14 @@ Examples:
             return
         # ── Generate dataset ──────────────────────────────────────────────────
         logger.info("Initializing generator...")
-        with hook_recorder.step("model_health", model=args.model):
+        with hook_recorder.step("model_health", model=resolved_model):
             generator = OllamaGeneratorV2(
-                model=args.model,
+                model=resolved_model,
                 url=f"{args.url}/api/chat",
                 max_retries=args.max_retries,
                 batch_size=args.batch_size,
-                health_check=health_checker
+                health_check=health_checker,
+                inference_server_url=args.inference_server_url,
             )
             dataset_gen = OllamaDatasetGenerator(spec, generator, batch_size=args.batch_size)
         
@@ -730,7 +744,7 @@ Examples:
         )
 
         total_to_gen = sum(examples_per_category.values())
-        logger.info(f"Generating {total_to_gen} examples with model '{args.model}'...")
+        logger.info(f"Generating {total_to_gen} examples with model '{resolved_model}'...")
         if args.concept_focus:
             logger.info(f"Focused on categories: {', '.join(args.concept_focus)}")
         logger.info(f"This may take several minutes depending on hardware and model size\n")

@@ -64,7 +64,12 @@ def _line_is_early_alert(line: str) -> bool:
 
 def _write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False, default=str) + "\n", encoding="utf-8")
+
+
+def _json_serialize(obj: object) -> str:
+    """JSON stringify with datetime support, for CLI --json output."""
+    return json.dumps(obj, indent=2, ensure_ascii=False, default=str)
 
 
 def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
@@ -216,6 +221,7 @@ def create_parser():
     gen_ollama_p.add_argument("spec", help="Path to subject spec JSON")
     gen_ollama_p.add_argument("--model", default="llama3.1-3060-chat:latest", help="Ollama model (default: llama3.1-3060-chat:latest)")
     gen_ollama_p.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
+    gen_ollama_p.add_argument("--inference-server-url", help="Route generation through ucore inference-server /chat")
     gen_ollama_p.add_argument("--batch-size", type=int, default=4, help="Concurrent generation tasks")
     gen_ollama_p.add_argument("--max-retries", type=int, default=3, help="Max retries per generation")
     gen_ollama_p.add_argument("--temperature", type=float, default=0.6, help="Generation temperature")
@@ -254,6 +260,9 @@ def create_parser():
                        help="Show the exact artifact pattern matched")
     san_p.add_argument("--llm-check", action="store_true", help="Run LLM-based quality check")
     san_p.add_argument("--llm-model", help="Ollama model for quality check")
+    san_p.add_argument("--judge-cache-path", help="SQLite judge cache path for --llm-check")
+    san_p.add_argument("--no-judge-cache", action="store_true", help="Disable judge-result cache for --llm-check")
+    san_p.add_argument("--inference-server-url", help="Use ucore inference-server /judge endpoint for --llm-check")
     san_p.add_argument("--quality-threshold-pass", type=int, default=70,
                        help="Minimum total score to pass (default: 70)")
     san_p.add_argument("--quality-threshold-flag", type=int, default=50,
@@ -288,6 +297,7 @@ def create_parser():
                       choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
                       help="Named Ollama judge preset (default: auto — resolves from configs/ollama-model-presets.yaml)")
     de_p.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
+    de_p.add_argument("--inference-server-url", help="Route local Ollama judge calls through ucore inference-server /chat")
     de_p.add_argument("--judge-temperature", type=float, default=0.0, help="Judge temperature")
     de_p.add_argument("--mode", default="fast", choices=["fast", "release"],
                       help="Quality gate mode (fast: iteration-friendly, release: strict)")
@@ -707,6 +717,112 @@ def create_parser():
     audit_plan.add_argument("--artifact-index", default=None, help="ArtifactRegistry JSONL path override")
     audit_plan.add_argument("--write", default=None, help="Write plan JSON to this path")
     audit_subcmd.add_parser("resume", help="Recover session context (full audit)")
+
+    # Target DAG runner
+    target_p = subparsers.add_parser("target", help="Plan/cache-check canonical pipeline targets")
+    target_sub = target_p.add_subparsers(dest="target_command", help="Target subcommand", required=True)
+    target_plan = target_sub.add_parser("plan", help="Show cache-aware target DAG plan")
+    target_plan.add_argument("--npc-key", required=True, help="NPC key to plan")
+    target_plan.add_argument("--technique", default=None, help="Dataset technique/artifact lane")
+    target_plan.add_argument(
+        "--target-stage",
+        default="evaluate",
+        choices=["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"],
+        help="Stage to plan up to",
+    )
+    target_plan.add_argument("--artifact-index", default=None, help="ArtifactRegistry JSONL path override")
+    target_plan.add_argument("--json", action="store_true", help="Output JSON")
+
+    # Judge cache
+    judge_cache_p = subparsers.add_parser("judge-cache", help="Inspect durable LLM judge-result cache")
+    judge_cache_sub = judge_cache_p.add_subparsers(dest="judge_cache_command", help="Judge cache subcommand", required=True)
+    judge_cache_stats = judge_cache_sub.add_parser("stats", help="Show judge cache stats")
+    judge_cache_stats.add_argument("--db-path", default=None, help="Judge cache SQLite path override")
+    judge_cache_stats.add_argument("--json", action="store_true", help="Output JSON")
+
+    # Inference server
+    infer_p = subparsers.add_parser("inference-server", help="Local Ollama inference control plane")
+    infer_sub = infer_p.add_subparsers(dest="inference_command", help="Inference server subcommand", required=True)
+
+    def _add_infer_common(p):
+        p.add_argument("--ollama-host", default="http://localhost:11434", help="Ollama host URL")
+        p.add_argument("--model", default=None, help="Model override")
+        p.add_argument("--timeout", type=int, default=180, help="Request timeout seconds")
+
+    infer_serve = infer_sub.add_parser("serve", help="Serve /status /warm /judge /unload")
+    infer_serve.add_argument("--host", default="127.0.0.1", help="Bind host")
+    infer_serve.add_argument("--port", type=int, default=8765, help="Bind port")
+    _add_infer_common(infer_serve)
+
+    infer_status = infer_sub.add_parser("status", help="Print backend/model status as JSON")
+    _add_infer_common(infer_status)
+
+    infer_warm = infer_sub.add_parser("warm", help="Warm selected model")
+    _add_infer_common(infer_warm)
+    infer_warm.add_argument("--keep-alive", default="30m", help="Ollama keep_alive duration")
+    infer_warm.add_argument("--prompt", default="ping", help="Tiny warmup prompt")
+
+    infer_judge = infer_sub.add_parser("judge", help="Run one JSON judge call")
+    _add_infer_common(infer_judge)
+    infer_judge.add_argument("--input", required=True, help="User/input text")
+    infer_judge.add_argument("--actual-output", required=True, help="Model output to judge")
+    infer_judge.add_argument("--context", action="append", default=[], help="Reference context chunk")
+
+    infer_unload = infer_sub.add_parser("unload", help="Unload selected model or all running Ollama models")
+    _add_infer_common(infer_unload)
+
+    # ── History (experiment dashboard) ──────────────────────────────
+    hist_p = subparsers.add_parser(
+        "history",
+        help="Query experiment history: win rates, quality trends, training metrics",
+    )
+    hist_sub = hist_p.add_subparsers(dest="history_command", help="History subcommand", required=True)
+
+    hist_wins = hist_sub.add_parser("wins", help="Win-rate trends for comparison runs")
+    hist_wins.add_argument("--npc-key", help="Filter by NPC key")
+    hist_wins.add_argument("--limit", type=int, default=10, help="Max results (default: 10)")
+    hist_wins.add_argument("--json", action="store_true", help="Output JSON")
+
+    hist_quality = hist_sub.add_parser("quality", help="Quality gate score trends")
+    hist_quality.add_argument("--npc-key", help="Filter by NPC key")
+    hist_quality.add_argument("--limit", type=int, default=20, help="Max results (default: 20)")
+    hist_quality.add_argument("--json", action="store_true", help="Output JSON")
+
+    hist_metrics = hist_sub.add_parser("metrics", help="Training step metrics for a run")
+    hist_metrics.add_argument("--run-id", required=True, help="Run ID to query")
+    hist_metrics.add_argument("--limit", type=int, default=50, help="Max metric rows (default: 50)")
+    hist_metrics.add_argument("--json", action="store_true", help="Output JSON")
+
+    hist_backup = hist_sub.add_parser(
+        "backup",
+        help="Move .pre_* backup debris to .pipeline/backups/ with retention",
+    )
+    hist_backup.add_argument("--retain", type=int, default=10, help="Max backups per pattern (default: 10)")
+    hist_backup.add_argument("--dry-run", action="store_true", help="Preview without moving")
+
+    # ── Registry (model + dataset catalog) ──────────────────────────
+    reg_p = subparsers.add_parser(
+        "registry",
+        help="Manage model registry and dataset version catalog",
+    )
+    reg_sub = reg_p.add_subparsers(dest="registry_command", help="Registry subcommand", required=True)
+
+    reg_models = reg_sub.add_parser("models", help="List registered models for an NPC")
+    reg_models.add_argument("--npc-key", required=True, help="NPC key")
+    reg_models.add_argument("--json", action="store_true", help="Output JSON")
+
+    reg_datasets = reg_sub.add_parser("datasets", help="List dataset versions for an NPC")
+    reg_datasets.add_argument("--npc-key", required=True, help="NPC key")
+    reg_datasets.add_argument("--json", action="store_true", help="Output JSON")
+
+    reg_register = reg_sub.add_parser("register-model", help="Register a trained model")
+    reg_register.add_argument("--npc-key", required=True, help="NPC key")
+    reg_register.add_argument("--model-name", required=True, help="Model display name")
+    reg_register.add_argument("--base-model", required=True, help="Base model (e.g. qwen2.5:7b)")
+    reg_register.add_argument("--technique", required=True, choices=["lora", "qlora", "full", "grpo"], help="Training technique")
+    reg_register.add_argument("--tags", nargs="*", help="Tags (e.g. candidate production)")
+    reg_register.add_argument("--status", default="draft", help="Status (default: draft)")
+
     return parser
 
 
@@ -776,6 +892,63 @@ def main(argv: list[str] | None = None) -> int:
             print("- avoid ad hoc JSON scatter for decisions")
         return 0
 
+    if args.command == "target":
+        from src.core.ops.artifact_registry import ArtifactRegistry
+        from src.core.ops.pipeline_dag import PipelineDAG
+
+        registry = ArtifactRegistry(args.artifact_index) if args.artifact_index else ArtifactRegistry()
+        dag = PipelineDAG(registry=registry)
+        plan = dag.plan_target(args.target_stage, npc_key=args.npc_key, technique=args.technique)
+        if args.json:
+            print(_json_serialize(plan))
+        else:
+            print(f"Target plan: npc={args.npc_key} target={args.target_stage} technique={args.technique or '-'}")
+            print(f"{'stage':<14} {'status':<10} {'action':<6} {'reason':<26} {'missing'}")
+            print("-" * 88)
+            for step in plan["steps"]:
+                missing = ",".join(step.get("missing_inputs") or step.get("missing_outputs") or []) or "-"
+                print(
+                    f"{step['stage']:<14} {step['status']:<10} {step['action']:<6} "
+                    f"{step['reason']:<26} {missing}"
+                )
+        return 0
+
+    if args.command == "judge-cache":
+        from src.core.ops.judge_cache import JudgeCache
+
+        cache = JudgeCache(args.db_path)
+        stats = cache.stats()
+        if args.json:
+            print(_json_serialize(stats))
+        else:
+            print("Judge cache")
+            print(f"  db_path: {stats['db_path']}")
+            print(f"  entries: {stats['entries']}")
+            print(f"  total_hits: {stats['total_hits']}")
+            if stats["by_judge"]:
+                print("  by_judge:")
+                for judge, count in stats["by_judge"].items():
+                    print(f"    {judge}: {count}")
+        return 0
+
+    if args.command == "inference-server":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "inference_server.py"), args.inference_command]
+        if args.inference_command == "serve":
+            cmd.extend(["--host", args.host, "--port", str(args.port)])
+        cmd.extend(["--ollama-host", args.ollama_host])
+        if args.model:
+            cmd.extend(["--model", args.model])
+        if args.timeout != 180:
+            cmd.extend(["--timeout", str(args.timeout)])
+        if args.inference_command == "warm":
+            cmd.extend(["--keep-alive", args.keep_alive, "--prompt", args.prompt])
+        elif args.inference_command == "judge":
+            cmd.extend(["--input", args.input, "--actual-output", args.actual_output])
+            for context in args.context:
+                cmd.extend(["--context", context])
+        run_cmd(cmd)
+        return 0
+
     if args.command == "audit":
         if args.audit_command == "pipeline-plan":
             from src.core.ops.artifact_registry import ArtifactRegistry
@@ -826,6 +999,8 @@ def main(argv: list[str] | None = None) -> int:
             cmd.extend(["--model", args.model])
         if args.url and args.url != "http://localhost:11434":
             cmd.extend(["--url", args.url])
+        if args.inference_server_url:
+            cmd.extend(["--inference-server-url", args.inference_server_url])
         if args.batch_size != 4:
             cmd.extend(["--batch-size", str(args.batch_size)])
         if args.max_retries != 3:
@@ -871,6 +1046,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.quality_report: cmd.append("--quality-report")
         if args.llm_check: cmd.append("--llm-check")
         if args.llm_model: cmd.extend(["--llm-model", args.llm_model])
+        if args.judge_cache_path: cmd.extend(["--judge-cache-path", args.judge_cache_path])
+        if args.no_judge_cache: cmd.append("--no-judge-cache")
+        if args.inference_server_url: cmd.extend(["--inference-server-url", args.inference_server_url])
         if args.discard_below_score != 0: cmd.extend(["--discard-below-score", str(args.discard_below_score)])
         if args.no_fix_metadata: cmd.append("--no-fix-metadata")
         if args.require_complete_metadata: cmd.append("--require-complete-metadata")
@@ -894,6 +1072,8 @@ def main(argv: list[str] | None = None) -> int:
             cmd.extend(["--judge-model", args.judge_model])
         if args.judge_preset: cmd.extend(["--judge-preset", args.judge_preset])
         cmd.extend(["--ollama-base-url", args.ollama_base_url])
+        if args.inference_server_url:
+            cmd.extend(["--inference-server-url", args.inference_server_url])
         cmd.extend(["--judge-temperature", str(args.judge_temperature)])
         cmd.extend(["--mode", args.mode])
         if args.cases_per_category is not None:
@@ -1432,6 +1612,137 @@ def main(argv: list[str] | None = None) -> int:
             cmd.extend(["--drive-repo-dir", args.drive_repo_dir])
 
         run_cmd(cmd)
+
+    elif args.command == "history":
+        from src.core.ops.pipeline_db import PipelineDB
+        db = PipelineDB()
+        if not db.ensure_connected():
+            print("Error: PipelineDB not connected", file=sys.stderr)
+            return 1
+        
+        if args.history_command == "wins":
+            rows = db.query_eval_sessions(npc_key=args.npc_key, limit=args.limit)
+            if args.json:
+                print(_json_serialize(rows))
+            else:
+                if not rows:
+                    print(f"No eval sessions found{' for ' + args.npc_key if args.npc_key else ''}")
+                else:
+                    print(f"{'npc_key':<22} {'comparison_id':<35} {'baseline':<22} {'candidate':<22} {'win_rate':>8} {'judge':<20}")
+                    print("-" * 130)
+                    for r in rows:
+                        wr = r.get("win_rate", "?")
+                        if wr is not None:
+                            wr = f"{float(wr)*100:>6.0f}%"
+                        else:
+                            wr = "   N/A"
+                        print(
+                            f"{r.get('npc_key','?'):<22} "
+                            f"{(r.get('comparison_id') or '(no id)'):<35} "
+                            f"{(r.get('baseline_model') or '?'):<22} "
+                            f"{(r.get('candidate_model') or '?'):<22} "
+                            f"{wr:>8} "
+                            f"{(r.get('judge_model') or '?'):<20}"
+                        )
+        
+        elif args.history_command == "quality":
+            rows = db.query_quality_gates(npc_key=args.npc_key, limit=args.limit)
+            if args.json:
+                print(_json_serialize(rows))
+            else:
+                if not rows:
+                    print(f"No quality gates found{' for ' + args.npc_key if args.npc_key else ''}")
+                else:
+                    print(f"{'npc_key':<22} {'pass_rate':>10} {'pass_count':>6} {'/total':>6}  {'judge':<30}")
+                    print("-" * 76)
+                    for r in rows:
+                        pr = r.get("pass_rate", "?")
+                        if pr is not None:
+                            pr = f"{float(pr)*100:>6.0f}%"
+                        print(
+                            f"{r.get('npc_key','?'):<22} "
+                            f"{pr:>10} "
+                            f"{r.get('pass_count', 0):>6} "
+                            f"/{str(r.get('total_examples',0)):>4}  "
+                            f"{(r.get('judge_model') or '?'):<30}"
+                        )
+        
+        elif args.history_command == "metrics":
+            rows = db.get_metrics(run_id=args.run_id, limit=args.limit)
+            if args.json:
+                print(_json_serialize(rows))
+            else:
+                if not rows:
+                    print(f"No metrics found for run {args.run_id}")
+                else:
+                    for m in rows:
+                        print(f"  step={m['step']:>5}  loss={m.get('loss','?'):>8}  "
+                              f"lr={m.get('learning_rate','?'):>10}  "
+                              f"tokens/s={m.get('tokens_per_second','?'):>8}")
+        
+        db.close()
+
+    elif args.command == "backup":
+        from src.core.ops.backup_cleanup import run_cleanup, PROJECT_ROOT
+        result = run_cleanup(PROJECT_ROOT, retain=args.retain, dry_run=args.dry_run)
+        if args.json:
+            print(_json_serialize(result))
+        else:
+            print(f"\nBackup cleanup: {result['moved']} moved, {result['pruned']} pruned, {result['errors']} errors")
+            for p, c in sorted(result.get("by_pattern", {}).items()):
+                print(f"  {p}: {c}")
+
+    elif args.command == "registry":
+        from src.core.ops.pipeline_db import PipelineDB
+        db = PipelineDB()
+        if not db.ensure_connected():
+            print("Error: PipelineDB not connected", file=sys.stderr)
+            return 1
+        
+        if args.registry_command == "models":
+            rows = db.get_model_registry(npc_key=args.npc_key)
+            if args.json:
+                print(_json_serialize(rows))
+            else:
+                if not rows:
+                    print(f"No registered models for NPC '{args.npc_key}'")
+                else:
+                    for r in rows:
+                        print(f"  {r.get('model_name'):<40} {r.get('base_model'):<20} "
+                              f"{r.get('technique'):<8} [{r.get('status','?')}] "
+                              f"tags={r.get('tags', [])}")
+        
+        elif args.registry_command == "datasets":
+            rows = db.query_datasets(npc_key=args.npc_key, limit=20)
+            if args.json:
+                print(_json_serialize(rows))
+            else:
+                if not rows:
+                    print(f"No dataset versions for NPC '{args.npc_key}'")
+                else:
+                    for r in rows:
+                        print(f"  v{r.get('version','?'):<8} "
+                              f"hash={r.get('content_hash','?'):<20} "
+                              f"technique={r.get('technique','?'):<10} "
+                              f"rows={r.get('row_count','?'):>6} "
+                              f"size={r.get('size_bytes','?'):>8}")
+        
+        elif args.registry_command == "register-model":
+            result = db.create_model_registry(
+                npc_key=args.npc_key,
+                model_name=args.model_name,
+                base_model=args.base_model,
+                technique=args.technique,
+                tags=args.tags or [],
+                status=args.status,
+            )
+            if result:
+                print(f"Registered model '{args.model_name}' for NPC '{args.npc_key}' (id={result['id'][:12]}...)")
+            else:
+                print("Error: Failed to register model", file=sys.stderr)
+                return 1
+        
+        db.close()
 
     else:
         parser.print_help()

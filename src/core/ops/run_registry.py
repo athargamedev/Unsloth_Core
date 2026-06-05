@@ -56,7 +56,8 @@ _DEFAULT_INDEX = PROJECT_ROOT / ".pipeline" / "runs.jsonl"
 
 # Pipeline stages (canonical labels)
 STAGES = frozenset(
-    ["generate", "sanitize", "dataset_eval", "train", "export", "evaluate", "feedback"]
+    ["generate", "sanitize", "dataset_eval", "train", "export",
+     "evaluate", "feedback", "compare"]
 )
 
 # File-level lock so that concurrent imports share the same lock instance

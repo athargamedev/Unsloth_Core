@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Canonical pipeline DAG and prerequisite audit helpers."""
+"""Canonical pipeline DAG, target cache planning, and prerequisite audit helpers."""
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -36,6 +37,28 @@ TECHNIQUE_SCOPED_ARTIFACTS = {
     "quality_summary",
     "adapter_checkpoint",
 }
+
+
+def stage_input_signature(stage: str, input_records: list[dict[str, Any]]) -> str:
+    """Return a stable content signature for a stage's current inputs.
+
+    The signature keys on artifact type + content hash, not run_id, so a
+    re-recorded artifact with identical bytes remains cache-equivalent while a
+    changed upstream file invalidates downstream stages.
+    """
+    payload = {
+        "stage": stage,
+        "inputs": [
+            {
+                "artifact_type": record.get("artifact_type"),
+                "sha256": record.get("sha256"),
+                "path": record.get("path") if record.get("sha256") is None else None,
+            }
+            for record in input_records
+        ],
+    }
+    blob = json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -109,6 +132,87 @@ class PipelineDAG:
             "steps": steps,
         }
 
+    def plan_target(self, target_stage: str, *, npc_key: str, technique: str | None = None) -> dict[str, Any]:
+        """Plan whether the target artifact chain is cached, stale, or missing.
+
+        Unlike :meth:`plan_to_stage`, which answers "can this stage run?", this
+        answers "is the target already achieved?" and marks stages as:
+        - cached: output exists and its stored input_signature matches current inputs
+        - stale: output exists but current upstream signatures changed
+        - missing: output does not exist
+        - blocked: required input artifacts are absent
+        """
+        self._assert_known_stage(target_stage)
+        target_index = CANONICAL_STAGE_ORDER.index(target_stage)
+        steps: list[dict[str, Any]] = []
+
+        for stage in CANONICAL_STAGE_ORDER[: target_index + 1]:
+            required_types = STAGE_REQUIRED_ARTIFACTS[stage]
+            input_records: list[dict[str, Any]] = []
+            missing_inputs: list[str] = []
+            for artifact_type in required_types:
+                record = self._latest_for_artifact(npc_key, artifact_type, technique=technique)
+                if record is None:
+                    missing_inputs.append(artifact_type)
+                else:
+                    input_records.append(record)
+
+            output_types = STAGE_OUTPUT_ARTIFACTS.get(stage, [])
+            output_records = [
+                self._latest_for_artifact(npc_key, artifact_type, technique=technique)
+                for artifact_type in output_types
+            ]
+            missing_outputs = [
+                artifact_type
+                for artifact_type, record in zip(output_types, output_records)
+                if record is None
+            ]
+            concrete_outputs = [record for record in output_records if record is not None]
+            current_signature = stage_input_signature(stage, input_records)
+
+            if missing_inputs:
+                status = "blocked"
+                action = "wait"
+                reason = "missing_inputs"
+            elif missing_outputs:
+                status = "missing"
+                action = "run"
+                reason = "output_missing"
+            elif required_types and any(
+                (record.get("metadata") or {}).get("input_signature") != current_signature
+                for record in concrete_outputs
+            ):
+                status = "stale"
+                action = "run"
+                reason = "input_signature_changed"
+            else:
+                status = "cached"
+                action = "skip"
+                reason = "cache_hit"
+
+            steps.append(
+                {
+                    "stage": stage,
+                    "status": status,
+                    "action": action,
+                    "reason": reason,
+                    "input_signature": current_signature,
+                    "requires": required_types,
+                    "produces": output_types,
+                    "missing_inputs": missing_inputs,
+                    "missing_outputs": missing_outputs,
+                    "outputs": concrete_outputs,
+                }
+            )
+
+        return {
+            "npc_key": npc_key,
+            "technique": technique,
+            "target_stage": target_stage,
+            "ready": all(step["status"] == "cached" for step in steps),
+            "steps": steps,
+        }
+
     def write_plan(self, path: str | Path, target_stage: str, *, npc_key: str, technique: str | None = None) -> Path:
         output = Path(path)
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -129,6 +233,13 @@ class PipelineDAG:
                 ) is None:
                     return stage
         return None
+
+    def _latest_for_artifact(self, npc_key: str, artifact_type: str, *, technique: str | None = None) -> dict[str, Any] | None:
+        return self.registry.latest_artifact(
+            npc_key,
+            artifact_type,
+            technique=technique if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS else None,
+        )
 
     @staticmethod
     def _producer_for(artifact_type: str) -> str | None:

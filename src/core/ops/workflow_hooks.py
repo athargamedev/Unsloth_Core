@@ -38,8 +38,12 @@ _ARTIFACT_TYPE_MAP: dict[str, str] = {
     "deepeval_run": "quality_report",
     "evaluate_pipeline": "eval_report",
     "compare_models": "eval_report",
-    "compare_runs": "eval_report",
-    "write_report": "eval_report",
+    "compare": "comparison_report",
+}
+
+_ARTIFACT_TYPE_CHECK: set[str] = {
+    "dataset_raw", "dataset_clean", "adapter", "gguf_adapter", "gguf_full",
+    "eval_report", "feedback_json", "config_snapshot", "comparison_report", "other",
 }
 
 
@@ -357,6 +361,74 @@ class WorkflowHookRecorder:
                     pass
 
             self._db_eval_session_created = True
+
+        # ── COMPARE lifecycle ────────────────────────────────────────────
+        if step == "compare" and status == "complete" and not getattr(self, "_db_compare_created", False):
+            # Use the ComparisonRun schema to create a structured eval session
+            # in Supabase with all model identity fields (baseline_model,
+            # candidate_model, judge_model, dataset_hash, etc.).
+            _run_id = fields.get("run_id") or self.base_event.get("run_id") or ""
+            _dataset_hash = fields.get("dataset_hash", "")
+            _baseline_model = fields.get("baseline_model", "")
+            _candidate_model = fields.get("candidate_model", "")
+            _judge_model = fields.get("judge_model", "")
+            _total = fields.get("total_examples", 0)
+            _bw = fields.get("baseline_wins", 0)
+            _cw = fields.get("candidate_wins", 0)
+            _ties = fields.get("ties", 0)
+            _wr = fields.get("win_rate")
+            _per_concept = fields.get("per_concept", {})
+            _weak = fields.get("weak_concepts", [])
+            _fb_path = fields.get("feedback_json")
+            _report_path = fields.get("report_path")
+            _dataset_path = fields.get("dataset_path")
+
+            try:
+                self.db.create_artifact(
+                    npc_key=npc_key,
+                    artifact_type="comparison_report",
+                    file_path=_fb_path or _report_path or "",
+                    technique=technique_val or "compare",
+                    run_id=_run_id,
+                )
+            except Exception as _exc:
+                logger.debug("Failed to create compare artifact: %s", _exc)
+
+            try:
+                self.db.create_eval_session(
+                    npc_key=npc_key,
+                    comparison_id=_run_id or None,
+                    baseline_model=_baseline_model or None,
+                    candidate_model=_candidate_model or None,
+                    judge_model=_judge_model or None,
+                    dataset_hash=_dataset_hash or None,
+                    dataset_path=_dataset_path or None,
+                    total_examples=_total,
+                    baseline_wins=_bw,
+                    candidate_wins=_cw,
+                    ties=_ties,
+                    win_rate=_wr,
+                    per_concept=_per_concept if isinstance(_per_concept, dict) else {},
+                    weak_concepts=list(_weak) if isinstance(_weak, (list, tuple)) else [],
+                    feedback_json_path=_fb_path,
+                    report_html_path=_report_path,
+                    metadata={
+                        "comparison_run_id": _run_id,
+                        "baseline_eval_run_id": fields.get("baseline_eval_run_id"),
+                        "candidate_eval_run_id": fields.get("candidate_eval_run_id"),
+                    },
+                )
+            except Exception as _exc:
+                logger.debug("Failed to create compare eval session: %s", _exc)
+
+            # Update pipeline_jobs.loss with the win_rate
+            if _wr is not None and self._db_job_uuid:
+                try:
+                    self.db.update_job_status(self._db_job_uuid, loss=float(_wr))
+                except Exception as _e:
+                    pass
+
+            self._db_compare_created = True
 
     def _db_emit_run(
         self,

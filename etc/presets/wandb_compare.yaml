@@ -1,0 +1,40 @@
+# W&B configuration for model comparison runs
+# Used by `ucore compare` and any script that performs model-vs-model evaluation.
+# Override path: --config etc/presets/wandb_compare.yaml or merge with wandb.yaml
+wandb:
+  enabled: true
+  entity: andreabenathar-twl-games
+  project: unsloth-core
+  notes: "Model comparison — structured win/loss tracking per NPC concept"
+
+  # Default sweep configuration for model comparisons
+  # Activated with: --wandb-sweep or WANDB_SWEEP=1
+  sweep:
+    enabled: false
+    method: bayes                      # Options: grid, random, bayes
+    metric:
+      name: candidate_win_rate
+      goal: maximize
+    parameters:
+      judge_model:
+        values: ["qwen2.5:7b", "llama3.1:8b"]
+      temperature:
+        min: 0.1
+        max: 0.9
+      rows_per_concept:
+        min: 5
+        max: 25
+
+  # Table columns logged to W&B for every comparison run
+  table_columns:
+    - concept
+    - baseline_win_rate
+    - candidate_win_rate
+    - total_examples
+    - ties
+    - judge_model
+
+  # Metric tags for filtering in W&B dashboard
+  tags:
+    - comparison
+    - npc-eval
