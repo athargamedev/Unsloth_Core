@@ -1,0 +1,4 @@
+[submodule "CLI-Anything"]
+	ignore = all
+	path = CLI-Anything
+	url = https://github.com/HKUDS/CLI-Anything.git
