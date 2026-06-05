@@ -79,9 +79,10 @@ npm run dev
 ./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
 
 # 3. generation
-# Production: current approved grounded workflow; do not use NotebookLM.
-# Smoke only:
-./ucore generate data/npcs/specs/<npc>.json --technique template
+# Production: use generate-ollama (NOT generate --technique ollama — legacy path)
+./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b --fresh
+# Smoke/dev only (template):
+# ./ucore generate data/npcs/specs/<npc>.json --technique template
 
 # 4. sanitize
 ./ucore sanitize data/datasets/<npc>/<technique>/train.jsonl \
@@ -122,6 +123,7 @@ Then update in this order:
 
 - Deprecated inactive NPCs: `astronomy_guide`, `fitness_coach`.
 - Template datasets as production data.
+- **`./ucore generate --technique ollama` — this hits the legacy `generate_dataset.py` path. Use `./ucore generate-ollama` instead.**
 - Deprecated judge refs: do not use `qwen3:latest` as confirmed local default without re-verification.
 - Standalone evaluation of adapter GGUFs when base+LoRA is required.
 - `--allow-ungated-dataset` for production.
@@ -141,3 +143,4 @@ Then update in this order:
 - `.hermes/skills/unsloth-core-operator/SKILL.md` — operator runbook.
 - `.hermes/skills/unsloth-core-low-vram-training/SKILL.md` — 6GB VRAM training/eval survival.
 - `.hermes/skills/llmunity-runtime-deploy/SKILL.md` — Unity deployment checks.
+- `.hermes/skills/unsloth-core-generation-workflow/SKILL.md` — production generation workflow (use generate-ollama, not legacy path)

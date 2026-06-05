@@ -23,7 +23,8 @@ If old docs mention other NPCs as active, treat that as deprecated unless the us
 - Template generation is smoke/dev only.
 - Never train production LoRA on template data.
 - Production data must use the approved grounded workflow. NotebookLM is deprecated — do not use for production.
-- Current `./ucore generate` supports `docs`, `ollama`, `template`, `openai`, and `anthropic`; verify the intended production technique before training.
+- **Use `./ucore generate-ollama` for production generation.** `./ucore generate --technique ollama` hits the legacy `generate_dataset.py` path (documented as fallback in its own header) and has known bugs fixed in the current commit.
+- The legacy `generate_dataset.py` module header states: *"Active production generation should use scripts/dataset/generate_dataset_ollama.py."*
 
 ## Canonical pipeline
 
@@ -31,7 +32,10 @@ If old docs mention other NPCs as active, treat that as deprecated unless the us
 source unsloth_env/bin/activate
 ./ucore audit check
 ./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
-# production: generate via approved grounded path; template only for smoke
+# Production generation (use generate-ollama, NOT generate --technique ollama)
+./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b --fresh
+# Template is smoke/dev only:
+# ./ucore generate data/npcs/specs/<npc>.json --technique template
 ./ucore sanitize data/datasets/<npc>/<technique>/train.jsonl \
   --output data/datasets/<npc>/<technique>/train_clean.jsonl \
   --strict-canonical --require-complete-metadata
@@ -97,7 +101,7 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
 | Tier | What | Where |
 |------|------|-------|
 | T0 Entrypoint | Hard rules & quickstart | `AGENTS.md`, `README.md` |
-| T1 Onboarding | Dev/AI setup guide | `CONTRIBUTING.md`, `SETUP.md` [planned] |
+| T1 Onboarding | Dev/AI setup guide | `CONTRIBUTING.md`, `SETUP.md` |
 | T2 Canonical Reference | State & workflow docs | `docs/project-state.md`, `docs/training-workflow.md` |
 | T3 Skills/Procedures | Reusable workflows | `.hermes/skills/`, `.codex/skills/` |
 | T4 Agent Briefs | Role-specific guides | `.hermes/agents/`, `.codex/agents/` |
@@ -123,7 +127,7 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
 - Codex agents (1): ucore-pipeline-chief
 - Codex subagents (8): context-sentinel, dashboard-unity-verifier, dataset-generation-engineer, gguf-unity-exporter, regression-reviewer, runtime-eval-feedback-engineer, sanitizer-gate-engineer, spec-grounding-curator, training-vram-engineer
 
-**Completed phases (P1–P8):**
+**Completed phases (P1–P10):**
 - P1 Config coherence — `./ucore audit config-coherence --json` green
 - P3 Judge cache integration — manifest stats, dataset-eval flags
 - P4 Inference/GPU lifecycle — GpuLeaseManager, lease/release endpoints
@@ -131,10 +135,23 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
 - P6 Experiment/run registry — local JSONL registry, hook capture, compare+promote CLI
 - P7 Dashboard truthfulness — artifact-registry-backed status, command schema parity
 - P8 NPC component contracts — Pydantic Identity/Tone/Grounding/Refusal/Runtime/Distribution
+- P9 Docs/context cleanup — qwen3→qwen2.5 defaults across 7 docs, inactive NPC examples replaced, stale paths fixed, operator-runbook path corrections
+- P10 Production pilot (in progress) — chef_assistant:
+  - 170 fresh examples generated (156 clean, 100% sanitized)
+  - 3 bugs fixed in legacy generate_dataset.py (import error, url=None crash, async fallback)
+  - Corrected generation tool: `./ucore generate-ollama` is production path; `generate --technique ollama` is legacy
+  - DAG shows lineage_missing for pre-metadata runs — train blocked pending approval
+  - All changes committed (976638c, e295612)
+  - Generation workflow saved as Hermes skill (unsloth-core-generation-workflow)
+  - subjects/ path deprecated — added to .gitignore
 
-**Next phases (planned):**
+**Completed phases (Context):**
 - Create standard agent brief template
 - Create CONTRIBUTING.md, SETUP.md, proper README.md
 - Deduplicate split skills (`.hermes` vs `.codex` context-maintenance)
-- Extend `context_audit.py` for automated freshness scanning
+
+**Remaining work:**
+- P2 Train-gate hardening — make ArtifactRegistry lineage properly block on stale/missing input signatures
+- P10 Production pilot — train chef_assistant (approval needed), export GGUF, evaluate adapter
 - Walk through SETUP.md from fresh clone
+- Regenerate history_guide dataset via proper `./ucore generate-ollama` path
