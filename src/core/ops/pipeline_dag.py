@@ -218,7 +218,73 @@ class PipelineDAG:
             "target_stage": target_stage,
             "ready": all(step["status"] == "cached" for step in steps),
             "steps": steps,
+            "blockers": self._compute_blockers(steps, npc_key=npc_key, technique=technique),
+            "cache_hits": self._compute_cache_hits(steps),
+            "gpu_policy": self._compute_gpu_policy(target_stage),
+            "next_required_stage": self._next_required_stage(
+                target_stage, npc_key=npc_key, technique=technique
+            ),
         }
+
+    @staticmethod
+    def _compute_blockers(
+        steps: list[dict[str, Any]],
+        *,
+        npc_key: str,
+        technique: str | None,
+    ) -> list[str]:
+        blockers: list[str] = []
+        for step in steps:
+            if step["status"] == "blocked":
+                inputs = step.get("missing_inputs") or []
+                for artifact in inputs:
+                    blockers.append(
+                        f"{step['stage']}: missing input '{artifact}'"
+                    )
+            elif step["status"] == "stale":
+                blockers.append(
+                    f"{step['stage']}: upstream inputs changed, needs rerun"
+                )
+        return blockers
+
+    @staticmethod
+    def _compute_cache_hits(steps: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+        hits: dict[str, dict[str, Any]] = {}
+        for step in steps:
+            if step["status"] == "cached" and step.get("outputs"):
+                outputs = step["outputs"]
+                if outputs:
+                    hits[step["stage"]] = {
+                        "artifact_type": outputs[0].get("artifact_type"),
+                        "sha256": outputs[0].get("sha256"),
+                        "run_id": outputs[0].get("run_id"),
+                    }
+        return hits
+
+    @staticmethod
+    def _compute_gpu_policy(target_stage: str) -> dict[str, dict[str, bool | str]]:
+        policy: dict[str, dict[str, bool | str]] = {}
+        target_idx = CANONICAL_STAGE_ORDER.index(target_stage)
+        for stage in CANONICAL_STAGE_ORDER[: target_idx + 1]:
+            if stage == "train":
+                policy[stage] = {
+                    "lease_required": True,
+                    "lease_mode": "train_exclusive",
+                    "reason": "Training requires exclusive GPU access",
+                }
+            elif stage in ("export", "evaluate"):
+                policy[stage] = {
+                    "lease_required": True,
+                    "lease_mode": "judge_shared",
+                    "reason": f"{stage.capitalize()} runs judge inference",
+                }
+            else:
+                policy[stage] = {
+                    "lease_required": False,
+                    "lease_mode": None,
+                    "reason": "No GPU lease needed",
+                }
+        return policy
 
     def write_plan(self, path: str | Path, target_stage: str, *, npc_key: str, technique: str | None = None) -> Path:
         output = Path(path)

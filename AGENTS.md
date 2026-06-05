@@ -127,10 +127,13 @@ Then update in this order:
 - `--allow-ungated-dataset` for production.
 - Long historical status dumps in `AGENTS.md`.
 
-## Detailed docs
+## Detail docs
 
 - `docs/project-state.md` — current canonical state.
-- `docs/training-workflow.md` — full pipeline details.
+- `docs/training-workflow.md` — detailed pipeline details.
+- `docs/INDEX.md` — full documentation navigation hub with staleness map.
+- `CONTRIBUTING.md` — contribution guide, PR process, agent context guidelines.
+- `SETUP.md` — full dev environment setup.
 - `.codex/skills/unsloth-core-pipeline-agent/SKILL.md` — Codex pipeline orchestrator and subagent router.
 - `.codex/agents/ucore-pipeline-chief.agent.md` — Codex main pipeline agent prompt.
 - `.hermes/README.md` — repo-local Hermes operating pack.

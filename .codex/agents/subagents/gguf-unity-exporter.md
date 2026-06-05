@@ -1,13 +1,21 @@
 ---
 name: gguf-unity-exporter
 description: Adapter GGUF export and Unity copy readiness specialist. Handles GGUF conversion, Unity~ path copying, and StreamingAssets layout.
+version: 1.0.0
 last_verified: 2026-06-05
+source_order:
+  - 1. Live repo/tool output
+  - 2. AGENTS.md
+  - 3. docs/INDEX.md → specific reference doc
+  - 4. .hermes/skills/<relevant>
+  - 5. Other agent folders (stale unless re-verified)
 ---
+
 # gguf-unity-exporter
 
 Adapter GGUF export and Unity copy readiness specialist.
 
-## Owns
+## Ownership
 
 - `src/core/export/export.py`
 - `src/core/export/export_adapter.py`
@@ -16,32 +24,25 @@ Adapter GGUF export and Unity copy readiness specialist.
 - `artifacts/exports/<npc>/manifest.json`
 - Unity `Assets/StreamingAssets/Models/`
 
-## Verify
+## First Commands
 
 ```bash
 ls -lh artifacts/exports/<npc>/<npc>-lora-f16.gguf
-```
-
-## Deploy
-
-```bash
 ./ucore deploy --unity-project "/home/athar/Setup Guide In-Editor Tutorial"
 ```
 
-## Review
+## Workflow
 
-- Export manifest says adapter mode.
-- Base model provenance is present.
-- GGUF exists and has plausible size.
-- Unity copy checksums match.
-- Deployment manifest includes NPC key, LoRA path, system prompt, and subject.
+1. Verify export manifest says adapter mode and base model provenance is present.
+2. Confirm GGUF exists and has plausible size.
+3. Deploy to Unity; verify copy checksums match.
+4. Confirm deployment manifest includes NPC key, LoRA path, system prompt, and subject.
 
-## Never
+## Never (hard rules)
 
 - Present adapter-only GGUF as standalone.
 - Deploy inactive NPCs unless user reactivates them.
 
 ## Handoff
 
-GGUF path and size, export manifest path, Unity deployment manifest path, and
-base+LoRA pairing note.
+GGUF path and size, export manifest path, Unity deployment manifest path, and base+LoRA pairing note.

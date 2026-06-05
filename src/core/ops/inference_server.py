@@ -29,6 +29,7 @@ from src.core.ops.ollama_lifecycle import (  # noqa: E402
     stop_running_models,
 )
 from src.core.ops.ollama_model_presets import resolve_ollama_model  # noqa: E402
+from src.core.ops.gpu_lease import GpuLeaseManager, LeaseConflictError  # noqa: E402
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
@@ -134,10 +135,11 @@ class OllamaHTTPClient:
 
 
 class InferenceService:
-    def __init__(self, *, client: Any | None = None, default_model: str | None = None, timeout: int = 180) -> None:
+    def __init__(self, *, client: Any | None = None, default_model: str | None = None, timeout: int = 180, lease_manager: GpuLeaseManager | None = None) -> None:
         self.client = client or OllamaHTTPClient(timeout=timeout)
         self.default_model = default_model or resolve_ollama_model(role="judge")
         self.timeout = timeout
+        self.lease_manager = lease_manager or GpuLeaseManager()
 
     def status(self) -> dict[str, Any]:
         backend_status = self.client.status()
@@ -147,7 +149,21 @@ class InferenceService:
             "default_model": self.default_model,
             "models": backend_status.get("models", []),
             "running_models": backend_status.get("running_models", []),
+            "gpu_lease": self.lease_manager.status(),
         }
+
+    def lease(self, payload: dict[str, Any]) -> dict[str, Any]:
+        mode = payload.get("mode", "")
+        ttl = int(payload.get("ttl", 300))
+        try:
+            lease = self.lease_manager.request_lease(mode, ttl=ttl)
+            return {"ok": True, "lease": lease.as_dict()}
+        except (ValueError, LeaseConflictError) as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def release(self, payload: dict[str, Any]) -> dict[str, Any]:
+        lease_id = payload.get("lease_id", "")
+        return {"ok": True, "released": self.lease_manager.release_lease(lease_id)}
 
     def warm(self, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         payload = payload or {}
@@ -256,6 +272,10 @@ def make_handler(service: InferenceService) -> type[BaseHTTPRequestHandler]:
                 self._handle(lambda: service.judge(payload))
             elif self.path == "/unload":
                 self._handle(lambda: service.unload(payload))
+            elif self.path == "/lease":
+                self._handle(lambda: service.lease(payload))
+            elif self.path == "/release":
+                self._handle(lambda: service.release(payload))
             else:
                 self._write_json(404, {"ok": False, "error": "not_found"})
 
@@ -336,6 +356,16 @@ def create_parser() -> argparse.ArgumentParser:
     judge_p.add_argument("--actual-output", required=True)
     judge_p.add_argument("--context", action="append", default=[])
 
+    lease_p = sub.add_parser("lease", help="Acquire GPU lease for exclusive training access")
+    add_common(lease_p)
+    lease_p.add_argument("--mode", default="judge_shared",
+                         choices=["judge_shared", "generation_shared", "train_exclusive"])
+    lease_p.add_argument("--ttl", type=int, default=300, help="Lease TTL in seconds")
+
+    release_p = sub.add_parser("release", help="Release a GPU lease by ID")
+    add_common(release_p)
+    release_p.add_argument("--lease-id", required=True, help="Lease ID to release")
+
     unload_p = sub.add_parser("unload", help="Unload one model or all running Ollama models")
     add_common(unload_p)
 
@@ -375,6 +405,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.command == "unload":
         _print_json(service.unload({"model": args.model}))
+    elif args.command == "lease":
+        _print_json(service.lease({"mode": args.mode, "ttl": args.ttl}))
+    elif args.command == "release":
+        _print_json(service.release({"lease_id": args.lease_id}))
     return 0
 
 

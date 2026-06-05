@@ -1,61 +1,23 @@
 ---
 name: unsloth-core-low-vram-training
-description: Use when training, evaluating, benchmarking, or debugging Unsloth_Core on the local RTX 3060 6GB machine, especially when Ollama, llama.cpp, W&B, Triton, GCC, or VRAM pressure can affect success.
+description: "Codex low-VRAM shim — canonical version lives at .hermes/skills/. This file adds Codex-specific context precedence on top of the Hermes master."
 last_verified: 2026-06-05
+version: 1.0.0
+master: .hermes/skills/unsloth-core-low-vram-training/SKILL.md
 ---
 
-# Unsloth_Core Low-VRAM Training
+# Unsloth_Core Low-VRAM Training (Codex shim)
+
+**This skill is canonical at `.hermes/skills/unsloth-core-low-vram-training/SKILL.md`.** Codex agents always load it from there for the full content (defaults, command patterns, failures).
+
+This file adds Codex-specific context precedence:
+
+## Codex Context Order
 
 Read `.codex/references/project-context.md` and `.codex/references/current-commands.md` before expensive train/eval work.
 
-## Local Stance
-
-Target host is RTX 3060-class with 6 GB VRAM. Treat VRAM as scarce. Do not run Ollama generation/judging, llama-server eval, and Unsloth training concurrently unless the user explicitly accepts the risk.
-
-## Preflight
-
-```bash
-nvidia-smi
-ollama ps
-./ucore audit check
-```
-
-If Ollama holds VRAM, unload/stop the competing model and verify again before training or llama-server eval.
-
-## Defaults
-
-- Local judge/default: `qwen2.5:7b`.
-- Production-ish local train preset: `fast-3b`, with preflight downgrade if the repo chooses it.
-- LoRA defaults from strategy: r16, alpha32, batch size 1, grad accumulation 8, seq 512 for production profile.
-- Use `PATH=/usr/bin:/bin:$PATH` around training when Triton/GCC toolchain resolution is suspect.
-
-## Training
-
-```bash
-PATH=/usr/bin:/bin:$PATH ./ucore train data/npcs/specs/<npc>.json \
-  --technique ollama --preset fast-3b --export-gguf
-```
-
-Do not claim W&B/Confident success unless output or artifacts prove it.
-
-## Evaluation
-
-Adapter GGUFs require base-model mode:
-
-```bash
-./ucore evaluate --baseline <baseline> --candidate <adapter.gguf> \
-  --base-model <llama3.2_3b_base.gguf> \
-  --spec data/npcs/specs/<npc>.json --report-html --judge --judge-model qwen2.5:7b
-```
-
-## Failure Rules
-
-- CUDA OOM: unload Ollama, reduce concurrent work, use preflight-selected preset.
-- llama-server timeout: inspect GPU and orphan ports before changing eval settings.
-- DeepEval null-heavy output: inconclusive; inspect artifacts and rerun/debug judge.
-- Export stalls on full merge: prefer adapter export plus base+LoRA evaluation.
+If `.hermes`, `.agents`, or older docs conflict, verify current repo/tool output and follow the newer verified source.
 
 ## Done Evidence
 
 Report concrete artifact paths: run dir, GGUF path, eval report, feedback JSON, and GPU/model checks used.
-

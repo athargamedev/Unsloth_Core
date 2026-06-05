@@ -1,3 +1,9 @@
+---
+name: pipeline-subagents-reference
+description: Reference document describing all pipeline subagent roles, ownership, and handoff contracts for the Unsloth_Core Codex chief agent.
+last_verified: 2026-06-05
+---
+
 # Pipeline Subagents
 
 Use these as role contracts when delegating pipeline work. Each subagent should

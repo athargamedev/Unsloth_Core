@@ -46,6 +46,8 @@ class PreflightReport:
     recommendation: dict[str, Any] = field(default_factory=dict)
     confident_available: bool = False
     confident_warning: str | None = None
+    gpu_lease_state: dict[str, Any] | None = None
+    gpu_lease_id: str | None = None
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
@@ -73,6 +75,8 @@ class PreflightReport:
             "recommendation": self.recommendation,
             "confident_available": self.confident_available,
             "confident_warning": self.confident_warning,
+            "gpu_lease_state": self.gpu_lease_state,
+            "gpu_lease_id": self.gpu_lease_id,
             "warnings": self.warnings,
             "errors": self.errors,
         }
@@ -225,8 +229,13 @@ def run_preflight(
     ollama_url: str = "http://localhost:11434",
     auto_unload_ollama: bool = True,
     require_gcc: bool | None = None,
+    lease_manager: Any | None = None,
 ) -> PreflightReport:
-    """Run a stage-appropriate preflight check and return a structured report."""
+    """Run a stage-appropriate preflight check and return a structured report.
+
+    If *lease_manager* is provided and *phase* is ``"train"``, a
+    ``train_exclusive`` GPU lease is acquired.  If the lease is blocked
+    (another exclusive lease is active), a block error is recorded."""
     report = PreflightReport(
         phase=phase,
         preset_requested=preset,
@@ -268,6 +277,26 @@ def run_preflight(
     report.confident_warning = confident_msg
     if not confident_ok and confident_msg:
         report.warnings.append(confident_msg)
+
+    # ── Acquire GPU lease (train exclusive) ─────────────────────────
+    if lease_manager is not None:
+        if phase == "train":
+            try:
+                lease = lease_manager.request_lease("train_exclusive", ttl=3600)
+                report.gpu_lease_state = lease_manager.status()
+                report.gpu_lease_id = lease.id
+            except Exception as exc:
+                if hasattr(exc, "args") and exc.args:
+                    error_msg = str(exc.args[0])
+                else:
+                    error_msg = str(exc)
+                report.gpu_lease_state = lease_manager.status()
+                report.errors.append(
+                    f"Cannot acquire training GPU lease: {error_msg}. "
+                    "Another process holds the GPU exclusively."
+                )
+        else:
+            report.gpu_lease_state = lease_manager.status()
 
     effective_preset, recommendation = _maybe_recommend_preset(
         spec_path=Path(spec_path) if spec_path else None,
@@ -317,6 +346,7 @@ def _format_text_report(report: PreflightReport) -> str:
         f"VRAM free/total:  {report.free_vram_gb if report.free_vram_gb is not None else '?'} / {report.total_vram_gb if report.total_vram_gb is not None else '?'} GiB",
         f"gcc:              {report.gcc_path or '-'} ({'ok' if report.gcc_ok else 'missing'})",
         f"Confident AI:     {'ok' if report.confident_available else 'missing'}",
+        f"GPU Lease:        {report.gpu_lease_state['state'] if report.gpu_lease_state else 'none'} ({report.gpu_lease_id or '-'})",
         f"Running Ollama:   {', '.join(report.running_ollama_models) if report.running_ollama_models else '-'}",
         f"Stopped Ollama:   {', '.join(report.stopped_ollama_models) if report.stopped_ollama_models else '-'}",
     ]
@@ -342,8 +372,14 @@ def main() -> int:
     parser.add_argument("--ollama-url", default="http://localhost:11434", help="Ollama server URL")
     parser.add_argument("--no-auto-unload-ollama", action="store_true", help="Do not stop running Ollama models")
     parser.add_argument("--no-gcc-check", action="store_true", help="Skip gcc validation even for training")
+    parser.add_argument("--lease", action="store_true", default=True, help="Acquire GPU lease (default: True)")
+    parser.add_argument("--no-lease", action="store_false", dest="lease", help="Skip GPU lease acquisition")
     parser.add_argument("--json", action="store_true", help="Print JSON only")
     args = parser.parse_args()
+
+    import src.core.ops.gpu_lease as gl
+
+    lease_manager = gl.GpuLeaseManager() if args.lease else None
 
     report = run_preflight(
         phase=args.phase,
@@ -353,6 +389,7 @@ def main() -> int:
         ollama_url=args.ollama_url,
         auto_unload_ollama=not args.no_auto_unload_ollama,
         require_gcc=False if args.no_gcc_check else None,
+        lease_manager=lease_manager,
     )
 
     if args.json:

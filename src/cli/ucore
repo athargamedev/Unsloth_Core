@@ -736,7 +736,23 @@ def create_parser():
         help="Stage to plan up to",
     )
     target_plan.add_argument("--artifact-index", default=None, help="ArtifactRegistry JSONL path override")
+    target_plan.add_argument("--profile", default="npc-production-grounded", help="NPC profile label")
     target_plan.add_argument("--json", action="store_true", help="Output JSON")
+
+    target_run = target_sub.add_parser("run", help="Execute (or preview) a target plan")
+    target_run.add_argument("--npc-key", required=True, help="NPC key to run")
+    target_run.add_argument("--technique", default=None, help="Dataset technique/artifact lane")
+    target_run.add_argument(
+        "--target-stage",
+        default="evaluate",
+        choices=["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"],
+        help="Stage to run up to",
+    )
+    target_run.add_argument("--profile", default="npc-production-grounded", help="NPC profile label")
+    target_run.add_argument("--dry-run", action="store_true", help="Preview commands without executing")
+    target_run.add_argument("--resume", action="store_true", help="Skip already-completed stages")
+    target_run.add_argument("--force-stage", default=None, help="Force re-run a specific stage")
+    target_run.add_argument("--artifact-index", default=None, help="ArtifactRegistry JSONL path override")
 
     # Judge cache
     judge_cache_p = subparsers.add_parser("judge-cache", help="Inspect durable LLM judge-result cache")
@@ -898,24 +914,77 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "target":
-        from src.core.ops.artifact_registry import ArtifactRegistry
-        from src.core.ops.pipeline_dag import PipelineDAG
+        from src.core.orchestration.target_runner import TargetRunner
 
-        registry = ArtifactRegistry(args.artifact_index) if args.artifact_index else ArtifactRegistry()
-        dag = PipelineDAG(registry=registry)
-        plan = dag.plan_target(args.target_stage, npc_key=args.npc_key, technique=args.technique)
-        if args.json:
-            print(_json_serialize(plan))
-        else:
-            print(f"Target plan: npc={args.npc_key} target={args.target_stage} technique={args.technique or '-'}")
-            print(f"{'stage':<14} {'status':<10} {'action':<6} {'reason':<26} {'missing'}")
-            print("-" * 88)
-            for step in plan["steps"]:
-                missing = ",".join(step.get("missing_inputs") or step.get("missing_outputs") or []) or "-"
-                print(
-                    f"{step['stage']:<14} {step['status']:<10} {step['action']:<6} "
-                    f"{step['reason']:<26} {missing}"
-                )
+        runner = TargetRunner(artifact_index=args.artifact_index if hasattr(args, 'artifact_index') else None)
+
+        if args.target_command == "plan":
+            plan = runner.plan(
+                npc_key=args.npc_key,
+                profile=args.profile if hasattr(args, 'profile') else "npc-production-grounded",
+                technique=args.technique,
+                target_stage=args.target_stage,
+            )
+            if args.json if hasattr(args, 'json') else False:
+                print(_json_serialize(plan))
+            else:
+                print(f"Target plan: npc={args.npc_key} target={args.target_stage} technique={args.technique or '-'}")
+                print(f"  ready: {plan.get('ready')}  profile: {plan.get('profile', '-')}")
+                if plan.get('blockers'):
+                    for b in plan['blockers']:
+                        print(f"  blocker: {b}")
+                if plan.get('cache_hits'):
+                    print(f"  cached: {', '.join(plan['cache_hits'].keys())}")
+                print(f"{'stage':<14} {'status':<12} {'action':<6} {'reason':<26} {'missing'}")
+                print("-" * 88)
+                for step in plan["steps"]:
+                    missing = ",".join(step.get("missing_inputs") or []) or "-"
+                    print(
+                        f"{step['stage']:<14} {step['status']:<12} {step['action']:<6} "
+                        f"{step['reason']:<26} {missing}"
+                    )
+            return 0
+
+        if args.target_command == "run":
+            plan = runner.plan(
+                npc_key=args.npc_key,
+                profile=args.profile if hasattr(args, 'profile') else "npc-production-grounded",
+                technique=args.technique,
+                target_stage=args.target_stage,
+            )
+
+            # For dry-run, just show commands
+            dry_run = args.dry_run if hasattr(args, 'dry_run') else False
+
+            if dry_run:
+                cmds = runner.dry_run(plan)
+                if not cmds:
+                    print("✓ All stages cached. Nothing to do.")
+                    return 0
+                print(f"Target dry-run: npc={args.npc_key} target={args.target_stage}")
+                for cmd in cmds:
+                    display = " ".join(str(c) for c in cmd["command"])
+                    print(f"  [{cmd['stage']}] {cmd['reason']}: {display}")
+                return 0
+
+            # Real execution
+            print(f"Target run: npc={args.npc_key} target={args.target_stage} resume={args.resume or False}")
+            results = runner.run(
+                plan,
+                dry_run=False,
+                resume=args.resume if hasattr(args, 'resume') else False,
+                force_stage=args.force_stage if hasattr(args, 'force_stage') else None,
+            )
+
+            # Report results
+            failed = [r for r in results if r.get("exit_code", 0) != 0]
+            if failed:
+                for r in failed:
+                    print(f"  [FAIL] {r['stage']} (exit {r.get('exit_code')})")
+                return 1
+            print(f"  ✓ All stages completed ({len(results)} steps)")
+            return 0
+
         return 0
 
     if args.command == "judge-cache":

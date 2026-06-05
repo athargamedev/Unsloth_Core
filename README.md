@@ -1,8 +1,27 @@
 # Unsloth_Core
 
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Agent-first pipeline for building GGUF LoRA adapters for `llama-3.2-3b-instruct`, so Unity NPCs can load adapters at runtime through LLMUnity and store dialogue/session state in local Supabase.
 
-Current canonical state: `docs/project-state.md`
+Current canonical state: [`docs/project-state.md`](docs/project-state.md)
+
+---
+
+## Contents
+
+- [Quick Start](#quick-start)
+- [North Star](#north-star)
+- [Active NPCs](#active-npcs)
+- [Dataset Policy](#dataset-policy)
+- [Pipeline Shape](#pipeline-shape)
+- [Infrastructure](#infrastructure)
+- [Canonical Paths](#canonical-paths)
+- [Context Hygiene](#context-hygiene)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## North Star
 
@@ -114,7 +133,11 @@ npm run dev
 ```text
 AGENTS.md                                  agent entrypoint
 README.md                                  human overview
+CONTRIBUTING.md                            contribution guide
+SETUP.md                                   dev environment setup
+docs/INDEX.md                              documentation navigation hub
 docs/project-state.md                      current state
+docs/training-workflow.md                  pipeline reference
 ucore                                      unified CLI
 data/npcs/specs/<npc>.json                 NPC specs
 data/npcs/reference_docs/<npc>_primer.md   primers
@@ -137,13 +160,27 @@ python src/core/ops/context_audit.py
 
 Do not put long historical status dumps in `AGENTS.md`. Put current facts in `docs/project-state.md`; put procedures in `.hermes/skills/`; keep memory compact.
 
+All agent guidance files carry `last_verified` in YAML frontmatter. If you touch a file, update its date.
+
 ## Documentation
 
-- `AGENTS.md` — concise agent entrypoint
-- `docs/project-state.md` — current operational truth
-- `docs/training-workflow.md` — detailed training pipeline
-- `.hermes/README.md` — repo-local Hermes operating pack
+- [`AGENTS.md`](AGENTS.md) — concise agent entrypoint (T0)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to contribute, PR process, agent context guidelines (T1)
+- [`SETUP.md`](SETUP.md) — full dev environment setup (T1)
+- [`docs/project-state.md`](docs/project-state.md) — current operational truth (T2)
+- [`docs/training-workflow.md`](docs/training-workflow.md) — detailed training pipeline (T2)
+- [`docs/INDEX.md`](docs/INDEX.md) — full documentation navigation hub
+- [`.hermes/README.md`](.hermes/README.md) — repo-local Hermes operating pack
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Code style
+- PR process
+- How to add a new NPC
+- How to run tests
+- Agent context contribution guidelines
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [`LICENSE`](LICENSE).
