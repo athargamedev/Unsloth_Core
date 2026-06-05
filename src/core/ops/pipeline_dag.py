@@ -85,7 +85,9 @@ class PipelineDAG:
     def __init__(self, registry: ArtifactRegistry | None = None) -> None:
         self.registry = registry or ArtifactRegistry()
 
-    def validate_stage(self, stage: str, *, npc_key: str, technique: str | None = None) -> StageValidation:
+    def validate_stage(
+        self, stage: str, *, npc_key: str, technique: str | None = None
+    ) -> StageValidation:
         self._assert_known_stage(stage)
         required = STAGE_REQUIRED_ARTIFACTS[stage]
         missing_artifacts = [
@@ -109,7 +111,9 @@ class PipelineDAG:
             next_required_stage=next_required_stage,
         )
 
-    def plan_to_stage(self, target_stage: str, *, npc_key: str, technique: str | None = None) -> dict[str, Any]:
+    def plan_to_stage(
+        self, target_stage: str, *, npc_key: str, technique: str | None = None
+    ) -> dict[str, Any]:
         self._assert_known_stage(target_stage)
         target_index = CANONICAL_STAGE_ORDER.index(target_stage)
         steps = []
@@ -132,7 +136,9 @@ class PipelineDAG:
             "steps": steps,
         }
 
-    def plan_target(self, target_stage: str, *, npc_key: str, technique: str | None = None) -> dict[str, Any]:
+    def plan_target(
+        self, target_stage: str, *, npc_key: str, technique: str | None = None
+    ) -> dict[str, Any]:
         """Plan whether the target artifact chain is cached, stale, or missing.
 
         Unlike :meth:`plan_to_stage`, which answers "can this stage run?", this
@@ -164,7 +170,7 @@ class PipelineDAG:
             ]
             missing_outputs = [
                 artifact_type
-                for artifact_type, record in zip(output_types, output_records)
+                for artifact_type, record in zip(output_types, output_records, strict=False)
                 if record is None
             ]
             concrete_outputs = [record for record in output_records if record is not None]
@@ -238,13 +244,9 @@ class PipelineDAG:
             if step["status"] == "blocked":
                 inputs = step.get("missing_inputs") or []
                 for artifact in inputs:
-                    blockers.append(
-                        f"{step['stage']}: missing input '{artifact}'"
-                    )
+                    blockers.append(f"{step['stage']}: missing input '{artifact}'")
             elif step["status"] == "stale":
-                blockers.append(
-                    f"{step['stage']}: upstream inputs changed, needs rerun"
-                )
+                blockers.append(f"{step['stage']}: upstream inputs changed, needs rerun")
         return blockers
 
     @staticmethod
@@ -286,28 +288,44 @@ class PipelineDAG:
                 }
         return policy
 
-    def write_plan(self, path: str | Path, target_stage: str, *, npc_key: str, technique: str | None = None) -> Path:
+    def write_plan(
+        self, path: str | Path, target_stage: str, *, npc_key: str, technique: str | None = None
+    ) -> Path:
         output = Path(path)
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(
-            json.dumps(self.plan_to_stage(target_stage, npc_key=npc_key, technique=technique), indent=2, ensure_ascii=False) + "\n",
+            json.dumps(
+                self.plan_to_stage(target_stage, npc_key=npc_key, technique=technique),
+                indent=2,
+                ensure_ascii=False,
+            )
+            + "\n",
             encoding="utf-8",
         )
         return output
 
-    def _next_required_stage(self, target_stage: str, *, npc_key: str, technique: str | None = None) -> str | None:
+    def _next_required_stage(
+        self, target_stage: str, *, npc_key: str, technique: str | None = None
+    ) -> str | None:
         target_index = CANONICAL_STAGE_ORDER.index(target_stage)
         for stage in CANONICAL_STAGE_ORDER[:target_index]:
             for artifact_type in STAGE_OUTPUT_ARTIFACTS.get(stage, []):
-                if self.registry.latest_artifact(
-                    npc_key,
-                    artifact_type,
-                    technique=technique if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS else None,
-                ) is None:
+                if (
+                    self.registry.latest_artifact(
+                        npc_key,
+                        artifact_type,
+                        technique=technique
+                        if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS
+                        else None,
+                    )
+                    is None
+                ):
                     return stage
         return None
 
-    def _latest_for_artifact(self, npc_key: str, artifact_type: str, *, technique: str | None = None) -> dict[str, Any] | None:
+    def _latest_for_artifact(
+        self, npc_key: str, artifact_type: str, *, technique: str | None = None
+    ) -> dict[str, Any] | None:
         return self.registry.latest_artifact(
             npc_key,
             artifact_type,

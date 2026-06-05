@@ -1,6 +1,3 @@
-from pathlib import Path
-
-
 def test_legacy_cleanup_identifies_subjects_mirror_and_stale_snapshots(monkeypatch, tmp_path):
     from src.core.ops import legacy_data_cleanup as ldc
 

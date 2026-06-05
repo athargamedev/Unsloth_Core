@@ -29,7 +29,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -43,9 +43,9 @@ def log_run_config(
     stage: str,
     output_dir: str | Path,
     resolved_params: dict[str, Any],
-    preflight_report: Optional[dict[str, Any]] = None,
-    technique: Optional[str] = None,
-    preset: Optional[str] = None,
+    preflight_report: dict[str, Any] | None = None,
+    technique: str | None = None,
+    preset: str | None = None,
 ) -> Path:
     """Write resolved parameters to run_config.yaml + run_config.json + DB snapshot.
 
@@ -122,8 +122,8 @@ def log_run_config(
 def _save_db_snapshot(
     npc_key: str,
     resolved_params: dict[str, Any],
-    preset: Optional[str],
-    technique: Optional[str],
+    preset: str | None,
+    technique: str | None,
     file_path: str,
 ) -> None:
     """Best-effort DB snapshot via PipelineDB.save_config_snapshot()."""

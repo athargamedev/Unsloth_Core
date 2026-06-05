@@ -19,8 +19,10 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-from src.config import paths, constants as C
+from src.config import constants as C
+from src.config import paths
 from src.config.workflow_context import resolve_workflow_context
+
 DEFAULT_MANIFEST = PROJECT_ROOT / "docs" / "corpora" / "workflow_assistant_docs.json"
 
 WORKFLOW_SYSTEM_PROMPT = (
@@ -122,10 +124,32 @@ def extract_bullets(text: str) -> list[str]:
 
 def extract_table_facts(text: str) -> list[str]:
     facts: list[str] = []
-    generic_headers = {"field", "type", "description", "stage", "script", "input", "output", "function", "returns", "technique", "quality", "speed", "dependencies", "best for", "command", "flag", "short"}
+    generic_headers = {
+        "field",
+        "type",
+        "description",
+        "stage",
+        "script",
+        "input",
+        "output",
+        "function",
+        "returns",
+        "technique",
+        "quality",
+        "speed",
+        "dependencies",
+        "best for",
+        "command",
+        "flag",
+        "short",
+    }
     for line in text.splitlines():
         stripped = line.strip()
-        if not stripped.startswith("|") or set(stripped.replace("|", "").strip()) <= {":", "-", " "}:
+        if not stripped.startswith("|") or set(stripped.replace("|", "").strip()) <= {
+            ":",
+            "-",
+            " ",
+        }:
             continue
         cells = [cell.strip() for cell in stripped.strip("|").split("|")]
         if len(cells) < 2:
@@ -133,7 +157,10 @@ def extract_table_facts(text: str) -> list[str]:
         lowered_cells = [cell.lower() for cell in cells]
         if all(cell in generic_headers for cell in lowered_cells if cell):
             continue
-        if cells[0].lower() in {"field", "function", "stage", "technique", "preset", "flag"} and len(cells) >= 3:
+        if (
+            cells[0].lower() in {"field", "function", "stage", "technique", "preset", "flag"}
+            and len(cells) >= 3
+        ):
             facts.append(normalize_sentence(f"{cells[0]} `{cells[1]}`: {cells[2]}"))
             continue
         if len(cells) >= 3 and cells[0] and cells[2]:
@@ -171,7 +198,9 @@ def dedupe(items: list[str]) -> list[str]:
     return result
 
 
-def select_sections(sections: list[tuple[str, str]], section_hints: list[str] | None) -> list[tuple[str, str]]:
+def select_sections(
+    sections: list[tuple[str, str]], section_hints: list[str] | None
+) -> list[tuple[str, str]]:
     if not section_hints:
         return sections
     lowered_hints = [hint.lower() for hint in section_hints]
@@ -183,16 +212,34 @@ def select_sections(sections: list[tuple[str, str]], section_hints: list[str] | 
     return matched or sections
 
 
-def build_answer(source_path: str, sections: list[tuple[str, str]], question_config: dict, fallback_max_sentences: int = 5) -> str:
+def build_answer(
+    source_path: str,
+    sections: list[tuple[str, str]],
+    question_config: dict,
+    fallback_max_sentences: int = 5,
+) -> str:
     max_sentences = int(question_config.get("max_sentences") or fallback_max_sentences)
-    summary_budget = 1 if question_config.get("include_commands") else min(2, max(1, max_sentences - 2))
+    summary_budget = (
+        1 if question_config.get("include_commands") else min(2, max(1, max_sentences - 2))
+    )
     joined_text = "\n\n".join(body for _, body in sections)
     prompt = str(question_config.get("prompt", "")).lower()
 
     prose = extract_prose_sentences(joined_text)
     bullets = extract_bullets(joined_text)
     tables = extract_table_facts(joined_text)
-    if any(token in prompt for token in ["field", "schema", "examples_per_category", "path", "directory", "layout", "record"]):
+    if any(
+        token in prompt
+        for token in [
+            "field",
+            "schema",
+            "examples_per_category",
+            "path",
+            "directory",
+            "layout",
+            "record",
+        ]
+    ):
         facts = tables + bullets + prose
     elif question_config.get("include_commands"):
         facts = prose + bullets + tables
@@ -202,7 +249,9 @@ def build_answer(source_path: str, sections: list[tuple[str, str]], question_con
     summary_parts = facts[:summary_budget]
 
     if not summary_parts:
-        section_names = ", ".join(heading for heading, _ in sections[:3]) or "the matched documentation"
+        section_names = (
+            ", ".join(heading for heading, _ in sections[:3]) or "the matched documentation"
+        )
         summary_parts = [normalize_sentence(f"The answer is documented under {section_names}")]
 
     answer = " ".join(summary_parts)
@@ -224,21 +273,34 @@ def build_manual_examples(spec: dict) -> list[dict]:
                 {"role": "user", "content": "Who are you in this repository?"},
                 {
                     "role": "assistant",
-                    "content": "I am WorkflowAssistant for Unsloth_Core. I help with checked-in docs, CLI workflows, dataset generation, sanitization, training, export, evaluation, and the frontend dashboard. I prefer exact file paths and `./ucore` commands over vague advice."
+                    "content": "I am WorkflowAssistant for Unsloth_Core. I help with checked-in docs, CLI workflows, dataset generation, sanitization, training, export, evaluation, and the frontend dashboard. I prefer exact file paths and `./ucore` commands over vague advice.",
                 },
             ],
-            "metadata": {"npc_key": npc_key, "category": "identity", "source": "docs_manifest", "source_path": "subjects/NPC_specs/workflow_assistant.json"},
+            "metadata": {
+                "npc_key": npc_key,
+                "category": "identity",
+                "source": "docs_manifest",
+                "source_path": "subjects/NPC_specs/workflow_assistant.json",
+            },
         },
         {
             "messages": [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": "Can you execute commands or inspect my machine for me?"},
+                {
+                    "role": "user",
+                    "content": "Can you execute commands or inspect my machine for me?",
+                },
                 {
                     "role": "assistant",
-                    "content": "No. I can recommend the next safe `./ucore` or repo command, but I should not pretend I already ran it or saw your runtime state. If you share output, I can help interpret it."
+                    "content": "No. I can recommend the next safe `./ucore` or repo command, but I should not pretend I already ran it or saw your runtime state. If you share output, I can help interpret it.",
                 },
             ],
-            "metadata": {"npc_key": npc_key, "category": "refusal", "source": "docs_manifest", "source_path": "subjects/NPC_specs/workflow_assistant.json"},
+            "metadata": {
+                "npc_key": npc_key,
+                "category": "refusal",
+                "source": "docs_manifest",
+                "source_path": "subjects/NPC_specs/workflow_assistant.json",
+            },
         },
         {
             "messages": [
@@ -246,10 +308,15 @@ def build_manual_examples(spec: dict) -> list[dict]:
                 {"role": "user", "content": "What sources are safe for your training corpus?"},
                 {
                     "role": "assistant",
-                    "content": "Use checked-in docs and structured reports only. Avoid runtime logs, outputs, exports, registry state, secrets, and machine-local noise for this assistant path. The corpus manifest lives in `docs/corpora/workflow_assistant_docs.json`."
+                    "content": "Use checked-in docs and structured reports only. Avoid runtime logs, outputs, exports, registry state, secrets, and machine-local noise for this assistant path. The corpus manifest lives in `docs/corpora/workflow_assistant_docs.json`.",
                 },
             ],
-            "metadata": {"npc_key": npc_key, "category": "refusal", "source": "docs_manifest", "source_path": "docs/corpora/workflow_assistant_docs.json"},
+            "metadata": {
+                "npc_key": npc_key,
+                "category": "refusal",
+                "source": "docs_manifest",
+                "source_path": "docs/corpora/workflow_assistant_docs.json",
+            },
         },
         {
             "messages": [
@@ -257,10 +324,15 @@ def build_manual_examples(spec: dict) -> list[dict]:
                 {"role": "user", "content": "Where should I look first if I am lost in the repo?"},
                 {
                     "role": "assistant",
-                    "content": "Start with `README.md` for the quick workflow, then `AGENTS.md` for the repo logic map, and `docs/MAP.md` for deeper references. After that, jump to the exact workflow doc for the stage you are working on."
+                    "content": "Start with `README.md` for the quick workflow, then `AGENTS.md` for the repo logic map, and `docs/MAP.md` for deeper references. After that, jump to the exact workflow doc for the stage you are working on.",
                 },
             ],
-            "metadata": {"npc_key": npc_key, "category": "dialogue", "source": "docs_manifest", "source_path": "docs/MAP.md"},
+            "metadata": {
+                "npc_key": npc_key,
+                "category": "dialogue",
+                "source": "docs_manifest",
+                "source_path": "docs/MAP.md",
+            },
         },
     ]
     return rows
@@ -309,14 +381,21 @@ def generate_workflow_dataset_from_manifest(
             elif isinstance(question_entry, dict):
                 question_config = question_entry
             else:
-                raise ValueError(f"Unsupported question entry in {relative_path}: {question_entry!r}")
+                raise ValueError(
+                    f"Unsupported question entry in {relative_path}: {question_entry!r}"
+                )
 
             prompt = question_config.get("prompt")
             if not isinstance(prompt, str) or not prompt.strip():
                 raise ValueError(f"Question prompt missing in {relative_path}")
 
             target_sections = select_sections(sections, question_config.get("target_headings"))
-            answer = build_answer(relative_path, target_sections, question_config, spec.get("dialogue", {}).get("max_sentences", 5))
+            answer = build_answer(
+                relative_path,
+                target_sections,
+                question_config,
+                spec.get("dialogue", {}).get("max_sentences", 5),
+            )
             rows.append(
                 {
                     "messages": [
@@ -371,9 +450,17 @@ def generate_workflow_dataset_from_manifest(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate WorkflowAssistant dataset from a curated corpus manifest")
-    parser.add_argument("--spec", default=str(paths.subjects_root() / "workflow_assistant.json"), help="Path to workflow assistant subject spec")
-    parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST), help="Path to corpus manifest JSON")
+    parser = argparse.ArgumentParser(
+        description="Generate WorkflowAssistant dataset from a curated corpus manifest"
+    )
+    parser.add_argument(
+        "--spec",
+        default=str(paths.subjects_root() / "workflow_assistant.json"),
+        help="Path to workflow assistant subject spec",
+    )
+    parser.add_argument(
+        "--manifest", default=str(DEFAULT_MANIFEST), help="Path to corpus manifest JSON"
+    )
     parser.add_argument("--output", default=None, help="Output train.jsonl path")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--no-validation", action="store_true", help="Skip validation split")

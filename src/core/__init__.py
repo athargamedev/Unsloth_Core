@@ -9,9 +9,9 @@ like `from scripts import smoke_test` or `from scripts.generate_dataset
 import generate_dataset`.
 """
 
+import sys
 from importlib import import_module
 from types import ModuleType
-import sys
 
 
 class _LazyAliasModule(ModuleType):

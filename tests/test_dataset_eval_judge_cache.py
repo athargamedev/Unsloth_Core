@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -59,7 +58,7 @@ def test_dataset_judge_ollama_model_uses_local_cache_for_repeated_prompt(tmp_pat
     calls = {"count": 0}
 
     class _Message:
-        content = "{\"verdict\": \"ok\"}"
+        content = '{"verdict": "ok"}'
 
     class _Response:
         message = _Message()
@@ -76,5 +75,5 @@ def test_dataset_judge_ollama_model_uses_local_cache_for_repeated_prompt(tmp_pat
     first, _ = model.generate("same metric prompt")
     second, _ = model.generate("same metric prompt")
 
-    assert first == second == "{\"verdict\": \"ok\"}"
+    assert first == second == '{"verdict": "ok"}'
     assert calls["count"] == 1

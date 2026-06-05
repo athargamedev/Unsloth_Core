@@ -41,13 +41,15 @@ Return ONLY a JSON object with integer scores, e.g.:
 
 
 def ollama_generate(model: str, prompt: str, system: str, max_tokens: int = 256) -> str:
-    payload = json.dumps({
-        "model": model,
-        "prompt": prompt,
-        "system": system,
-        "stream": False,
-        "options": {"num_predict": max_tokens, "temperature": 0.0},
-    }).encode()
+    payload = json.dumps(
+        {
+            "model": model,
+            "prompt": prompt,
+            "system": system,
+            "stream": False,
+            "options": {"num_predict": max_tokens, "temperature": 0.0},
+        }
+    ).encode()
     req = Request(OLLAMA_URL, data=payload, headers={"Content-Type": "application/json"})
     with urlopen(req, timeout=120) as resp:
         result = json.loads(resp.read())
@@ -70,7 +72,7 @@ def cohens_kappa(r1: list[int], r2: list[int]) -> float:
     n = len(r1)
     if n == 0:
         return 0.0
-    observed = sum(1 for a, b in zip(r1, r2) if a == b) / n
+    observed = sum(1 for a, b in zip(r1, r2, strict=False) if a == b) / n
     c1 = Counter(r1)
     c2 = Counter(r2)
     all_scores = set(list(c1.keys()) + list(c2.keys()))
@@ -88,14 +90,17 @@ def main():
     parser.add_argument("--technique", default="ollama", help="Dataset technique subdirectory")
     parser.add_argument("--dataset", default="train_clean.jsonl", help="Dataset filename")
     parser.add_argument("--rows", type=int, default=50, help="Number of rows to evaluate")
-    parser.add_argument("--judges", nargs="+", default=["qwen2.5:7b", "llama3.1:8b"],
-                        help="Judge models to compare")
+    parser.add_argument(
+        "--judges", nargs="+", default=["qwen2.5:7b", "llama3.1:8b"], help="Judge models to compare"
+    )
     parser.add_argument("--output", help="Output JSON path (optional)")
     args = parser.parse_args()
 
     dataset_path = Path("data/datasets") / args.npc_key / args.technique / args.dataset
     if not dataset_path.exists():
-        dataset_path = Path("data/datasets") / args.npc_key / args.technique / "latest" / args.dataset
+        dataset_path = (
+            Path("data/datasets") / args.npc_key / args.technique / "latest" / args.dataset
+        )
     if not dataset_path.exists():
         print(f"Dataset not found: {dataset_path}", file=sys.stderr)
         return 1
@@ -129,7 +134,7 @@ def main():
 
             eval_prompt = f"USER REQUEST:\n{prompt_text[:1500]}\n\nASSISTANT RESPONSE:\n{assistant_reply[:1500]}"
 
-            print(f"  [{i+1}/{sample_size}] rating...", end=" ", flush=True)
+            print(f"  [{i + 1}/{sample_size}] rating...", end=" ", flush=True)
             try:
                 response = ollama_generate(judge, eval_prompt, JUDGE_SYSTEM_PROMPT)
                 scores = parse_scores(response)
@@ -143,9 +148,9 @@ def main():
 
         print(f"  Judge {judge}: {len(all_scores[judge])}/{sample_size} valid ratings")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("AGREEMENT ANALYSIS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     results = {
         "dataset": str(dataset_path),
@@ -173,7 +178,7 @@ def main():
             print(f"  {d:30s} avg={avg:.2f}  dist={dict(sorted(Counter(vals).items()))}")
 
     for i, j1 in enumerate(args.judges):
-        for j2 in args.judges[i + 1:]:
+        for j2 in args.judges[i + 1 :]:
             paired = min(len(all_scores[j1]), len(all_scores[j2]))
             print(f"\n── {j1} vs {j2} (n={paired}) ──")
             pair_key = f"{j1} vs {j2}"
@@ -193,11 +198,14 @@ def main():
                 else:
                     strength = "Slight or worse"
                 print(f"  {d:30s} κ={kappa:.3f}  ({strength})")
-                results["pairwise_agreement"][pair_key][d] = {"kappa": round(kappa, 3), "strength": strength}
+                results["pairwise_agreement"][pair_key][d] = {
+                    "kappa": round(kappa, 3),
+                    "strength": strength,
+                }
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("RECOMMENDATION")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for pair, dims in results["pairwise_agreement"].items():
         avg_k = sum(d["kappa"] for d in dims.values()) / len(dims)
         if avg_k >= 0.7:

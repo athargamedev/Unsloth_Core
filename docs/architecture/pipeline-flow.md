@@ -23,8 +23,8 @@ graph TD
 ## Stage 1: Generation
 
 **Script**: `scripts/dataset/generate_dataset.py`
-**Inputs**: `subjects/NPC_specs/{npc_key}.json` + `subjects/reference_docs/{npc_key}_primer.md`
-**Outputs**: `subjects/datasets/{npc_key}/{technique}/train.jsonl`
+**Inputs**: `data/npcs/specs/{npc_key}.json` + `data/npcs/reference_docs/{npc_key}_primer.md`
+**Outputs**: `data/datasets/{npc_key}/{technique}/train.jsonl`
 
 Generates 72 training examples (ChatML format) across 5 categories:
 - **identity** (8): Who the NPC is — personality, background, mannerisms
@@ -75,7 +75,7 @@ Standard output: `.../{technique}/train_clean.jsonl`
 Uses **DeepEval** with a local Ollama judge (`qwen3:latest`, 8.2B params at Q4_K_M) to evaluate dataset quality before training:
 
 ```bash
-./ucore dataset-eval subjects/NPC_specs/history_guide.json \
+./ucore dataset-eval data/npcs/specs/history_guide.json \
   --technique template --judge-model qwen3:latest
 ```
 
@@ -161,12 +161,12 @@ Supports two modes:
 ./ucore evaluate --baseline exports/old-lora-f16.gguf \
   --candidate exports/new-lora-f16.gguf \
   --base-model ~/.unsloth/models/llama-3.2-3b-instruct-q4_k_m.gguf \
-  --spec subjects/NPC_specs/npc.json \
+  --spec data/npcs/specs/npc.json \
   --report-html
 
 # With feedback JSON for the feedback loop
 ./ucore evaluate --baseline old.gguf --candidate new.gguf \
-  --spec subjects/NPC_specs/npc.json \
+  --spec data/npcs/specs/npc.json \
   --feedback-json eval/results/feedback/npc.json
 ```
 
@@ -251,12 +251,12 @@ All writes are **best-effort** — a missing database never blocks the pipeline.
 ## Quick Reference CLI
 
 ```bash
-./ucore validate-spec subjects/NPC_specs/npc.json --generation-ready
-./ucore generate subjects/NPC_specs/npc.json --technique template
-./ucore sanitize subjects/datasets/npc/template/train.jsonl --strict-canonical
-./ucore dataset-eval subjects/NPC_specs/npc.json --technique template
-./ucore train subjects/NPC_specs/npc.json --preset fast-3b --export-gguf
+./ucore validate-spec data/npcs/specs/npc.json --generation-ready
+./ucore generate data/npcs/specs/npc.json --technique template
+./ucore sanitize data/datasets/npc/template/train.jsonl --strict-canonical
+./ucore dataset-eval data/npcs/specs/npc.json --technique template
+./ucore train data/npcs/specs/npc.json --preset fast-3b --export-gguf
 ./ucore smoke exports/npc/npc-lora-f16.gguf
-./ucore evaluate --baseline old.gguf --candidate new.gguf --spec subjects/NPC_specs/npc.json
+./ucore evaluate --baseline old.gguf --candidate new.gguf --spec data/npcs/specs/npc.json
 ./ucore feedback eval/results/feedback/npc.json --auto
 ```

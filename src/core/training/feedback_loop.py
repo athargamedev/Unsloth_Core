@@ -30,22 +30,19 @@ import json
 import os
 import subprocess
 import sys
-import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import paths
-from src.config.constants import DEFAULT_JUDGE_MODEL, DEFAULT_OLLAMA_MODEL
+from src.config.constants import DEFAULT_JUDGE_MODEL
 from src.config.workflow_context import resolve_workflow_context
 from src.core.ops.npc_production_strategy import classify_feedback_cycle, density_repair_needed
 from src.core.ops.ollama_model_presets import resolve_ollama_model
-from src.core.ops.run_registry import make_pipeline_run_id
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
-
 
 # ── Default thresholds ──────────────────────────────────────────────────────
 
@@ -62,8 +59,10 @@ DEFAULT_REGENERATION_BATCH_SIZE = 4
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
+
 class Tee:
     """Capture printed output while also printing it, for --json mode."""
+
     def __init__(self):
         self.lines = []
 
@@ -82,8 +81,11 @@ def run_cmd(cmd, cwd=None, timeout=600, capture=True):
     """Run a subprocess and return (ok, stdout, stderr)."""
     try:
         result = subprocess.run(
-            cmd, cwd=str(cwd or PROJECT_ROOT),
-            capture_output=True, text=True, timeout=timeout,
+            cmd,
+            cwd=str(cwd or PROJECT_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
         )
         ok = result.returncode == 0
         return ok, result.stdout, result.stderr
@@ -95,13 +97,19 @@ def run_cmd(cmd, cwd=None, timeout=600, capture=True):
 
 # ── Analysis ────────────────────────────────────────────────────────────────
 
+
 def load_feedback_json(path):
     with open(path) as f:
         return json.load(f)
 
 
-def identify_weak_concepts(feedback_data, win_rate_threshold, quality_threshold,
-                           violation_threshold, extra_examples=DEFAULT_EXTRA_EXAMPLES):
+def identify_weak_concepts(
+    feedback_data,
+    win_rate_threshold,
+    quality_threshold,
+    violation_threshold,
+    extra_examples=DEFAULT_EXTRA_EXAMPLES,
+):
     weak = []
     per_concept = feedback_data.get("per_concept", {})
 
@@ -117,32 +125,40 @@ def identify_weak_concepts(feedback_data, win_rate_threshold, quality_threshold,
         if violations > violation_threshold:
             reasons.append(f"violations={violations}")
         if reasons:
-            weak.append({
-                "concept": concept,
-                "reasons": reasons,
-                "data": data,
-                "action": {
-                    "category": concept.split("/")[0] if "/" in concept else "teaching",
-                    "concept_focus": concept.split("/")[1] if "/" in concept else concept,
-                    "extra_examples": extra_examples,
+            weak.append(
+                {
+                    "concept": concept,
+                    "reasons": reasons,
+                    "data": data,
+                    "action": {
+                        "category": concept.split("/")[0] if "/" in concept else "teaching",
+                        "concept_focus": concept.split("/")[1] if "/" in concept else concept,
+                        "extra_examples": extra_examples,
+                    },
                 }
-            })
+            )
 
     for gap in feedback_data.get("distribution_gaps", []) or []:
         category = gap.get("category")
         shortfall = gap.get("shortfall", 0)
         if not category or shortfall <= 0:
             continue
-        weak.append({
-            "concept": f"distribution/{category}",
-            "reasons": [f"shortfall={shortfall}", f"target={gap.get('target', 0)}", f"actual={gap.get('actual', 0)}"],
-            "data": gap,
-            "action": {
-                "category": category,
-                "concept_focus": category,
-                "extra_examples": max(extra_examples, int(shortfall)),
-            },
-        })
+        weak.append(
+            {
+                "concept": f"distribution/{category}",
+                "reasons": [
+                    f"shortfall={shortfall}",
+                    f"target={gap.get('target', 0)}",
+                    f"actual={gap.get('actual', 0)}",
+                ],
+                "data": gap,
+                "action": {
+                    "category": category,
+                    "concept_focus": category,
+                    "extra_examples": max(extra_examples, int(shortfall)),
+                },
+            }
+        )
     return weak
 
 
@@ -164,17 +180,28 @@ class LocalGapDetector:
         except Exception:
             self.spec_path = PROJECT_ROOT / "data" / "npcs" / "specs" / f"{self.npc_key}.json"
 
-        self.primer_path = PROJECT_ROOT / "data" / "npcs" / "reference_docs" / f"{self.npc_key}_primer.md"
+        self.primer_path = (
+            PROJECT_ROOT / "data" / "npcs" / "reference_docs" / f"{self.npc_key}_primer.md"
+        )
 
         try:
-            self.train_clean_path = paths.dataset_dir(self.npc_key) / self.technique / "train_clean.jsonl"
+            self.train_clean_path = (
+                paths.dataset_dir(self.npc_key) / self.technique / "train_clean.jsonl"
+            )
         except Exception:
-            self.train_clean_path = PROJECT_ROOT / "data" / "datasets" / self.npc_key / self.technique / "train_clean.jsonl"
+            self.train_clean_path = (
+                PROJECT_ROOT
+                / "data"
+                / "datasets"
+                / self.npc_key
+                / self.technique
+                / "train_clean.jsonl"
+            )
 
         # Load NPC spec
         if self.spec_path and self.spec_path.exists():
             try:
-                with open(self.spec_path, "r", encoding="utf-8") as f:
+                with open(self.spec_path, encoding="utf-8") as f:
                     spec_data = json.load(f)
                     self.spec_concepts = spec_data.get("concepts", [])
             except Exception as e:
@@ -185,7 +212,7 @@ class LocalGapDetector:
         # Load reference primer
         if self.primer_path and self.primer_path.exists():
             try:
-                with open(self.primer_path, "r", encoding="utf-8") as f:
+                with open(self.primer_path, encoding="utf-8") as f:
                     self.primer_text = f.read()
             except Exception as e:
                 print(f"  [LocalGapDetector] Warning: failed to load primer markdown: {e}")
@@ -207,7 +234,7 @@ class LocalGapDetector:
         count = 0
         target_concept = concept_name.lower().strip()
         try:
-            with open(self.train_clean_path, "r", encoding="utf-8") as f:
+            with open(self.train_clean_path, encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue
@@ -276,27 +303,31 @@ class LocalGapDetector:
                 gap_type = "model_capacity_gap"
                 rec = "The model failed to acquire the concept; upgrade training preset, increase epochs, or check format."
 
-            gap_results.append({
-                "concept": concept_key,
-                "gap_type": gap_type,
-                "primer_occurrences": primer_occurrences,
-                "training_examples_count": training_examples_count,
-                "action_recommendation": rec,
-                "reasons": reasons,
-            })
+            gap_results.append(
+                {
+                    "concept": concept_key,
+                    "gap_type": gap_type,
+                    "primer_occurrences": primer_occurrences,
+                    "training_examples_count": training_examples_count,
+                    "action_recommendation": rec,
+                    "reasons": reasons,
+                }
+            )
         return gap_results
 
 
 def print_analysis(feedback_data, weak_concepts):
     print("=" * 60)
-    print(f"  FEEDBACK LOOP ANALYSIS")
+    print("  FEEDBACK LOOP ANALYSIS")
     print(f"  NPC: {feedback_data.get('npc_key', 'unknown')}")
     print("=" * 60)
-    print(f"\nOverall: {feedback_data['candidate_wins']}/{feedback_data['total_examples']} wins "
-          f"(win rate: {feedback_data['win_rate']:.0%})")
+    print(
+        f"\nOverall: {feedback_data['candidate_wins']}/{feedback_data['total_examples']} wins "
+        f"(win rate: {feedback_data['win_rate']:.0%})"
+    )
     print(f"Baseline: {feedback_data.get('baseline', '?')}")
     print(f"Candidate: {feedback_data.get('candidate', '?')}")
-    print(f"\nPer-concept breakdown:")
+    print("\nPer-concept breakdown:")
     per_concept = feedback_data.get("per_concept", {})
     for concept, data in sorted(per_concept.items()):
         win_rate = data.get("win_rate", 0)
@@ -309,29 +340,32 @@ def print_analysis(feedback_data, weak_concepts):
             flag = "  ← WEAK"
         elif violations > DEFAULT_VIOLATION_THRESHOLD:
             flag = "  ← WEAK"
-        print(f"  {concept:40s} wins={data['candidate_wins']}/{data['total']} "
-              f"qual={quality:.0f} viol={violations}{flag}")
+        print(
+            f"  {concept:40s} wins={data['candidate_wins']}/{data['total']} "
+            f"qual={quality:.0f} viol={violations}{flag}"
+        )
     if weak_concepts:
         print(f"\nWeak concepts requiring regeneration ({len(weak_concepts)}):")
         for wc in weak_concepts:
             print(f"  - {wc['concept']}: {', '.join(wc['reasons'])}")
     else:
-        print(f"\nNo weak concepts found. Model is performing well across all areas.")
-
-
-
-
-
+        print("\nNo weak concepts found. Model is performing well across all areas.")
 
 
 # ── Regeneration ────────────────────────────────────────────────────────────
 
-def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_path=None,
-                                technique=DEFAULT_REGENERATION_TECHNIQUE,
-                                model=DEFAULT_REGENERATION_MODEL,
-                                url=DEFAULT_REGENERATION_URL,
-                                batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
-                                extra_examples=DEFAULT_EXTRA_EXAMPLES):
+
+def generate_targeted_dataset(
+    npc_key,
+    focus_categories,
+    dry_run=False,
+    spec_path=None,
+    technique=DEFAULT_REGENERATION_TECHNIQUE,
+    model=DEFAULT_REGENERATION_MODEL,
+    url=DEFAULT_REGENERATION_URL,
+    batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
+    extra_examples=DEFAULT_EXTRA_EXAMPLES,
+):
     if not spec_path:
         spec_path = paths.spec_path(npc_key)
     if not Path(spec_path).exists():
@@ -344,8 +378,10 @@ def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_pat
             sys.executable,
             str(script_path),
             str(spec_path),
-            "--model", model,
-            "--url", url,
+            "--model",
+            model,
+            "--url",
+            url,
         ]
         if batch_size is not None:
             cmd.extend(["--batch-size", str(batch_size)])
@@ -355,9 +391,12 @@ def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_pat
             sys.executable,
             str(script_path),
             str(spec_path),
-            "--technique", technique,
-            "--model", model,
-            "--url", url,
+            "--technique",
+            technique,
+            "--model",
+            model,
+            "--url",
+            url,
         ]
 
     for cat in sorted(focus_categories):
@@ -373,20 +412,21 @@ def generate_targeted_dataset(npc_key, focus_categories, dry_run=False, spec_pat
         print(f"  [dry-run] Would execute: {' '.join(cmd)}")
         return True
 
-    print(f"  Running generation with concept focus...")
+    print("  Running generation with concept focus...")
     ok, stdout, stderr = run_cmd(cmd, timeout=1800)
     if ok:
-        print(f"  Done!")
+        print("  Done!")
         for line in stdout.strip().split("\n")[-4:]:
             print(f"    {line}")
         return True
     else:
-        print(f"  [error] Generation failed (exit code != 0)")
+        print("  [error] Generation failed (exit code != 0)")
         print(f"  {stderr[:500]}")
         return False
 
 
 # ── Auto-Retrain ────────────────────────────────────────────────────────────
+
 
 def run_sanitize(npc_key, technique="template", dry_run=False):
     """Sanitize the regenerated dataset."""
@@ -397,12 +437,18 @@ def run_sanitize(npc_key, technique="template", dry_run=False):
         return True
     print(f"  Sanitizing: {dataset_path}")
     ok, stdout, stderr = run_cmd(
-        [sys.executable, str(PROJECT_ROOT / "scripts" / "dataset" / "sanitize_dataset.py"),
-         dataset_path, "--output", clean_path, "--strict-canonical"],
+        [
+            sys.executable,
+            str(PROJECT_ROOT / "scripts" / "dataset" / "sanitize_dataset.py"),
+            dataset_path,
+            "--output",
+            clean_path,
+            "--strict-canonical",
+        ],
         timeout=60,
     )
     if ok:
-        print(f"  Sanitize done.")
+        print("  Sanitize done.")
         return True
     else:
         print(f"  [warn] Sanitize non-fatal: {stderr[:200]}")
@@ -422,8 +468,10 @@ def run_training(npc_key, preset, technique="template", dry_run=False, allow_ung
         str(PROJECT_ROOT / "scripts" / "training" / "train.py"),
         str(spec_path),
         "--from-spec",
-        "--technique", technique,
-        "--preset", preset,
+        "--technique",
+        technique,
+        "--preset",
+        preset,
         "--export-gguf",
     ]
     if allow_ungated_dataset:
@@ -440,7 +488,11 @@ def run_training(npc_key, preset, technique="template", dry_run=False, allow_ung
 
     # Find the newest GGUF
     export_dir = PROJECT_ROOT / "exports" / npc_key
-    ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True) if export_dir.exists() else []
+    ggufs = (
+        sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
+        if export_dir.exists()
+        else []
+    )
     if ggufs:
         print(f"  Model exported: {ggufs[0]}")
         return str(ggufs[0])
@@ -448,10 +500,18 @@ def run_training(npc_key, preset, technique="template", dry_run=False, allow_ung
     return None
 
 
-def run_dataset_eval(npc_key, technique="template", judge_model=DEFAULT_JUDGE_MODEL,
-                     ollama_base_url="http://localhost:11434",
-                     cases_per_category=1, dry_run=False, soft_fail=False,
-                     judge_provider="ollama", wandb_inference_project=None, wandb_inference_entity=None):
+def run_dataset_eval(
+    npc_key,
+    technique="template",
+    judge_model=DEFAULT_JUDGE_MODEL,
+    ollama_base_url="http://localhost:11434",
+    cases_per_category=1,
+    dry_run=False,
+    soft_fail=False,
+    judge_provider="ollama",
+    wandb_inference_project=None,
+    wandb_inference_entity=None,
+):
     """Run the dataset quality gate on the sanitized dataset."""
     spec_path = paths.spec_path(npc_key)
     if not spec_path.exists():
@@ -462,11 +522,16 @@ def run_dataset_eval(npc_key, technique="template", judge_model=DEFAULT_JUDGE_MO
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "dataset" / "dataset_eval.py"),
         str(spec_path),
-        "--technique", technique,
-        "--judge-provider", judge_provider,
-        "--judge-model", judge_model,
-        "--ollama-base-url", ollama_base_url,
-        "--cases-per-category", str(cases_per_category),
+        "--technique",
+        technique,
+        "--judge-provider",
+        judge_provider,
+        "--judge-model",
+        judge_model,
+        "--ollama-base-url",
+        ollama_base_url,
+        "--cases-per-category",
+        str(cases_per_category),
     ]
     if soft_fail:
         cmd.append("--soft-fail")
@@ -482,9 +547,9 @@ def run_dataset_eval(npc_key, technique="template", judge_model=DEFAULT_JUDGE_MO
     print(f"  Running dataset evaluation for {npc_key} ({technique})...")
     ok, stdout, stderr = run_cmd(cmd, timeout=1800)
     if ok:
-        print(f"  Dataset evaluation passed.")
+        print("  Dataset evaluation passed.")
         return True
-    print(f"  [error] Dataset evaluation failed or had failing metrics.")
+    print("  [error] Dataset evaluation failed or had failing metrics.")
     print(stderr[:500])
     return False
 
@@ -504,18 +569,28 @@ def run_evaluate(npc_key, baseline_gguf, candidate_gguf, feedback_output_dir, dr
     cmd = [
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "evaluation" / "evaluate.py"),
-        "--baseline", str(baseline_gguf),
-        "--candidate", str(candidate_gguf),
-        "--spec", str(spec_path),
-        "--feedback-json", str(feedback_path),
-        "--num-questions", "10",
+        "--baseline",
+        str(baseline_gguf),
+        "--candidate",
+        str(candidate_gguf),
+        "--spec",
+        str(spec_path),
+        "--feedback-json",
+        str(feedback_path),
+        "--num-questions",
+        "10",
     ]
-    print(f"  Evaluating against baseline...")
+    print("  Evaluating against baseline...")
     ok, stdout, stderr = run_cmd(cmd, timeout=600)
     if ok:
         # Print the last few lines of eval output (win rate summary)
         for line in stdout.strip().split("\n")[-5:]:
-            if "win" in line.lower() or "wins" in line.lower() or "rate" in line.lower() or "Summary" in line:
+            if (
+                "win" in line.lower()
+                or "wins" in line.lower()
+                or "rate" in line.lower()
+                or "Summary" in line
+            ):
                 print(f"    {line.strip()}")
         print(f"  Eval results: {feedback_path}")
         return str(feedback_path)
@@ -539,12 +614,12 @@ def update_pipeline_state(npc_key, state_update):
         try:
             with open(PIPELINE_STATE_PATH) as f:
                 state = json.load(f)
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             state = {}
     state[npc_key] = {
         **state.get(npc_key, {}),
         **state_update,
-        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "last_updated": datetime.now(UTC).isoformat(),
     }
     PIPELINE_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(PIPELINE_STATE_PATH, "w") as f:
@@ -557,34 +632,45 @@ def update_pipeline_state(npc_key, state_update):
 
 class FeedbackLoopExit(Exception):
     """Raised to signal an error exit from the feedback loop so step() records 'error'."""
+
     pass
 
 
-def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHOLD,
-                      quality_threshold=DEFAULT_QUALITY_THRESHOLD,
-                      violation_threshold=DEFAULT_VIOLATION_THRESHOLD,
-                      dry_run=False, auto_yes=False, skip_gap_detection=False,
-                      save_gaps=None, json_output=False,
-                      auto_retrain=False, train_preset=DEFAULT_TRAIN_PRESET,
-                      baseline_gguf=None,
-                      technique=None,
-                      model=DEFAULT_REGENERATION_MODEL,
-                      url=DEFAULT_REGENERATION_URL,
-                      batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
-                      skip_dataset_eval=False,
-                       deepeval_judge_provider="ollama",
-                       deepeval_judge_model=DEFAULT_JUDGE_MODEL,
-                      deepeval_ollama_url="http://localhost:11434",
-                      deepeval_cases_per_category=5,
-                      deepeval_soft_fail=False,
-                      extra_examples=DEFAULT_EXTRA_EXAMPLES,
-                      workflow_hooks=None,
-                      strategy_profile="npc-production-grounded",
-                      wandb=False, wandb_project="unsloth-core", wandb_entity=None,
-                      wandb_inference_project=None, wandb_inference_entity=None):
+def run_feedback_loop(
+    feedback_path,
+    win_rate_threshold=DEFAULT_WIN_RATE_THRESHOLD,
+    quality_threshold=DEFAULT_QUALITY_THRESHOLD,
+    violation_threshold=DEFAULT_VIOLATION_THRESHOLD,
+    dry_run=False,
+    auto_yes=False,
+    skip_gap_detection=False,
+    save_gaps=None,
+    json_output=False,
+    auto_retrain=False,
+    train_preset=DEFAULT_TRAIN_PRESET,
+    baseline_gguf=None,
+    technique=None,
+    model=DEFAULT_REGENERATION_MODEL,
+    url=DEFAULT_REGENERATION_URL,
+    batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
+    skip_dataset_eval=False,
+    deepeval_judge_provider="ollama",
+    deepeval_judge_model=DEFAULT_JUDGE_MODEL,
+    deepeval_ollama_url="http://localhost:11434",
+    deepeval_cases_per_category=5,
+    deepeval_soft_fail=False,
+    extra_examples=DEFAULT_EXTRA_EXAMPLES,
+    workflow_hooks=None,
+    strategy_profile="npc-production-grounded",
+    wandb=False,
+    wandb_project="unsloth-core",
+    wandb_entity=None,
+    wandb_inference_project=None,
+    wandb_inference_entity=None,
+):
     """Full feedback loop: analyze → regenerate → optionally retrain."""
     # Capture human-readable output for --json mode
-    tee = Tee() if json_output else None
+    Tee() if json_output else None
 
     # ── 1. Load ────────────────────────────────────────────────────────
     # Load feedback data first to resolve npc_key before constructing hook_recorder
@@ -600,13 +686,15 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
     if not resolved_technique and resolved_spec_path:
         try:
             resolved_technique = resolve_workflow_context(resolved_spec_path).technique
-        except Exception as e:
+        except Exception:
             resolved_technique = None
     technique = resolved_technique or DEFAULT_REGENERATION_TECHNIQUE
 
     VALID_TECHNIQUES = ["template", "ollama", "docs"]
     if technique not in VALID_TECHNIQUES:
-        print(f"  [warn] Unknown technique '{technique}', defaulting to '{DEFAULT_REGENERATION_TECHNIQUE}'")
+        print(
+            f"  [warn] Unknown technique '{technique}', defaulting to '{DEFAULT_REGENERATION_TECHNIQUE}'"
+        )
         technique = DEFAULT_REGENERATION_TECHNIQUE
 
     hook_recorder = WorkflowHookRecorder(
@@ -616,17 +704,27 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
         technique=technique,
         spec_path=resolved_spec_path,
     )
-    feedback_run_id = f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{resolved_npc_key}_feedback_{technique}_{uuid.uuid4().hex[:8]}"
+    feedback_run_id = f"{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{resolved_npc_key}_feedback_{technique}_{uuid.uuid4().hex[:8]}"
     exit_code = 1
     try:
-        with hook_recorder.step("feedback_loop", run_id=feedback_run_id, feedback_path=str(feedback_path), auto_retrain=auto_retrain, dry_run=dry_run):
+        with hook_recorder.step(
+            "feedback_loop",
+            run_id=feedback_run_id,
+            feedback_path=str(feedback_path),
+            auto_retrain=auto_retrain,
+            dry_run=dry_run,
+        ):
             completed_early = False
             npc_key = resolved_npc_key
-            candidate_model = feedback_data.get("candidate", "")
+            feedback_data.get("candidate", "")
 
             # ── 2. Analyze ─────────────────────────────────────────────────────
             weak_concepts = identify_weak_concepts(
-                feedback_data, win_rate_threshold, quality_threshold, violation_threshold, extra_examples
+                feedback_data,
+                win_rate_threshold,
+                quality_threshold,
+                violation_threshold,
+                extra_examples,
             )
             print_analysis(feedback_data, weak_concepts)
 
@@ -637,14 +735,18 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                 "weak_concepts": [],
                 "gap_results": [],
                 "regeneration": {"ok": False, "focus_categories": [], "technique": technique},
-                "strategy_decision": classify_feedback_cycle(feedback_data, profile=strategy_profile),
+                "strategy_decision": classify_feedback_cycle(
+                    feedback_data, profile=strategy_profile
+                ),
                 "density_decision": density_repair_needed(feedback_data),
                 "auto_retrain": None,
                 "pipeline_state": None,
             }
 
             if result["strategy_decision"].get("action") == "escalate_shared_strategy":
-                print("\nStrategy anti-loop reached: stop per-NPC repair and improve shared pipeline/presets.")
+                print(
+                    "\nStrategy anti-loop reached: stop per-NPC repair and improve shared pipeline/presets."
+                )
                 result["status"] = "escalate_shared_strategy"
                 if json_output:
                     print(json.dumps(result, indent=2))
@@ -653,19 +755,21 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
             if not weak_concepts and not completed_early:
                 print("\nNothing to improve. Model is performing well across all areas.")
                 result["status"] = "no_weak_concepts"
-                update_pipeline_state(npc_key, {
-                    "status": "healthy",
-                    "weak_concepts_count": 0,
-                    "last_feedback": datetime.now(timezone.utc).isoformat(),
-                })
+                update_pipeline_state(
+                    npc_key,
+                    {
+                        "status": "healthy",
+                        "weak_concepts_count": 0,
+                        "last_feedback": datetime.now(UTC).isoformat(),
+                    },
+                )
                 if json_output:
                     print(json.dumps(result, indent=2))
                 completed_early = True
 
             if not completed_early:
                 result["weak_concepts"] = [
-                    {"concept": wc["concept"], "reasons": wc["reasons"]}
-                    for wc in weak_concepts
+                    {"concept": wc["concept"], "reasons": wc["reasons"]} for wc in weak_concepts
                 ]
 
                 # ── 3. Knowledge gap detection ─────────────────────────────────────
@@ -699,9 +803,22 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                 if wandb:
                     try:
                         import wandb as _wandb
-                        total_knowledge_gaps = sum(1 for g in gap_results if g["gap_type"] == "knowledge_gap") if gap_results else 0
-                        total_density_gaps = sum(1 for g in gap_results if g["gap_type"] == "training_density_gap") if gap_results else 0
-                        total_capacity_gaps = sum(1 for g in gap_results if g["gap_type"] == "model_capacity_gap") if gap_results else 0
+
+                        total_knowledge_gaps = (
+                            sum(1 for g in gap_results if g["gap_type"] == "knowledge_gap")
+                            if gap_results
+                            else 0
+                        )
+                        total_density_gaps = (
+                            sum(1 for g in gap_results if g["gap_type"] == "training_density_gap")
+                            if gap_results
+                            else 0
+                        )
+                        total_capacity_gaps = (
+                            sum(1 for g in gap_results if g["gap_type"] == "model_capacity_gap")
+                            if gap_results
+                            else 0
+                        )
 
                         _wandb_run = _wandb.init(
                             project=wandb_project or "unsloth-core",
@@ -723,12 +840,14 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                         if _wandb_run and getattr(_wandb_run, "url", None):
                             print(f"  [wandb] Run URL: {_wandb_run.url}")
 
-                        _wandb.log({
-                            "feedback/total_weak_concepts": len(weak_concepts),
-                            "feedback/knowledge_gaps": total_knowledge_gaps,
-                            "feedback/training_density_gaps": total_density_gaps,
-                            "feedback/model_capacity_gaps": total_capacity_gaps,
-                        })
+                        _wandb.log(
+                            {
+                                "feedback/total_weak_concepts": len(weak_concepts),
+                                "feedback/knowledge_gaps": total_knowledge_gaps,
+                                "feedback/training_density_gaps": total_density_gaps,
+                                "feedback/model_capacity_gaps": total_capacity_gaps,
+                            }
+                        )
 
                         # Log per-concept metrics
                         for wc in weak_concepts:
@@ -736,12 +855,18 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                             data = wc.get("data", {})
                             diag = next((g for g in gap_results if g["concept"] == concept), None)
                             diag_gap_type = diag["gap_type"] if diag else "unknown"
-                            _wandb.log({
-                                f"feedback/{concept}/win_rate": data.get("win_rate", 0),
-                                f"feedback/{concept}/avg_quality": data.get("avg_candidate_quality", 0),
-                                f"feedback/{concept}/violations": data.get("constraint_violations", 0),
-                                f"feedback/{concept}/gap_type": diag_gap_type,
-                            })
+                            _wandb.log(
+                                {
+                                    f"feedback/{concept}/win_rate": data.get("win_rate", 0),
+                                    f"feedback/{concept}/avg_quality": data.get(
+                                        "avg_candidate_quality", 0
+                                    ),
+                                    f"feedback/{concept}/violations": data.get(
+                                        "constraint_violations", 0
+                                    ),
+                                    f"feedback/{concept}/gap_type": diag_gap_type,
+                                }
+                            )
 
                         # Log gap analysis as artifact if saved
                         if save_gaps and Path(save_gaps).exists():
@@ -753,31 +878,33 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                                     metadata={
                                         "npc_key": resolved_npc_key,
                                         "weak_concepts": len(weak_concepts),
-                                    }
+                                    },
                                 )
                                 gap_artifact.add_file(save_gaps)
                                 _wandb.log_artifact(gap_artifact)
-                            except Exception as e:
+                            except Exception:
                                 pass
 
                         _wandb.finish()
-                    except Exception as e:
+                    except Exception:
                         print("  [wandb] Feedback loop W&B logging failed (non-fatal)")
 
                 # ── 4. Plan regeneration ───────────────────────────────────────────
                 print(f"\n{'=' * 60}")
-                print(f"  REGENERATION PLAN")
+                print("  REGENERATION PLAN")
                 print(f"{'=' * 60}")
                 focus_categories = sorted(set(wc["action"]["category"] for wc in weak_concepts))
                 for wc in weak_concepts:
                     print(f"  {wc['concept']}: {', '.join(wc['reasons'])}")
                 print(f"\n  Unique categories to boost: {', '.join(focus_categories)}")
                 if auto_retrain:
-                    print(f"  Auto-retrain enabled: preset={train_preset}, baseline={baseline_gguf}")
+                    print(
+                        f"  Auto-retrain enabled: preset={train_preset}, baseline={baseline_gguf}"
+                    )
 
                 # ── 5. Confirm ─────────────────────────────────────────────────────
                 if not auto_yes and not dry_run:
-                    print(f"\nProceed with targeted regeneration? [Y/n] ", end="", flush=True)
+                    print("\nProceed with targeted regeneration? [Y/n] ", end="", flush=True)
                     try:
                         response = input().strip().lower()
                     except (EOFError, KeyboardInterrupt):
@@ -801,18 +928,25 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                     batch_size=batch_size,
                     extra_examples=extra_examples,
                 )
-                result["regeneration"] = {"ok": ok, "focus_categories": focus_categories, "technique": technique}
+                result["regeneration"] = {
+                    "ok": ok,
+                    "focus_categories": focus_categories,
+                    "technique": technique,
+                }
 
                 if not ok:
-                    print(f"\n  Regeneration failed.")
+                    print("\n  Regeneration failed.")
                     result["status"] = "regeneration_failed"
                     if json_output:
                         print(json.dumps(result, indent=2))
-                    update_pipeline_state(npc_key, {
-                        "status": "regeneration_failed",
-                        "weak_concepts_count": len(weak_concepts),
-                        "last_feedback": datetime.now(timezone.utc).isoformat(),
-                    })
+                    update_pipeline_state(
+                        npc_key,
+                        {
+                            "status": "regeneration_failed",
+                            "weak_concepts_count": len(weak_concepts),
+                            "last_feedback": datetime.now(UTC).isoformat(),
+                        },
+                    )
                     raise FeedbackLoopExit(1)
 
                 # ── 7. Auto-retrain ────────────────────────────────────────────────
@@ -823,22 +957,25 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                     print(f"{'─' * 40}")
 
                     # Sanitize
-                    print(f"\n  Step 1: Sanitize dataset...")
+                    print("\n  Step 1: Sanitize dataset...")
                     if not run_sanitize(npc_key, technique=technique, dry_run=dry_run):
                         print("  [error] Sanitization failed; aborting auto-retrain.")
                         result["status"] = "sanitize_failed"
-                        update_pipeline_state(npc_key, {
-                            "status": "sanitize_failed",
-                            "weak_concepts_count": len(weak_concepts),
-                            "last_feedback": datetime.now(timezone.utc).isoformat(),
-                        })
+                        update_pipeline_state(
+                            npc_key,
+                            {
+                                "status": "sanitize_failed",
+                                "weak_concepts_count": len(weak_concepts),
+                                "last_feedback": datetime.now(UTC).isoformat(),
+                            },
+                        )
                         if json_output:
                             print(json.dumps(result, indent=2))
                         raise FeedbackLoopExit(1)
 
                     # Dataset quality gate
                     if not skip_dataset_eval:
-                        print(f"\n  Step 1b: Evaluate cleaned dataset before training...")
+                        print("\n  Step 1b: Evaluate cleaned dataset before training...")
                         if not run_dataset_eval(
                             npc_key,
                             technique=technique,
@@ -853,11 +990,14 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                         ):
                             print("  [error] Dataset evaluation failed; aborting auto-retrain.")
                             result["status"] = "dataset_eval_failed"
-                            update_pipeline_state(npc_key, {
-                                "status": "dataset_eval_failed",
-                                "weak_concepts_count": len(weak_concepts),
-                                "last_feedback": datetime.now(timezone.utc).isoformat(),
-                            })
+                            update_pipeline_state(
+                                npc_key,
+                                {
+                                    "status": "dataset_eval_failed",
+                                    "weak_concepts_count": len(weak_concepts),
+                                    "last_feedback": datetime.now(UTC).isoformat(),
+                                },
+                            )
                             if json_output:
                                 print(json.dumps(result, indent=2))
                             raise FeedbackLoopExit(1)
@@ -865,7 +1005,7 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                         print("  Skipping dataset evaluation before training.")
 
                     # Train
-                    print(f"\n  Step 2: Train new model...")
+                    print("\n  Step 2: Train new model...")
                     trained_gguf = run_training(
                         npc_key,
                         train_preset,
@@ -877,10 +1017,14 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
 
                     if trained_gguf and baseline_gguf:
                         # Evaluate
-                        print(f"\n  Step 3: Evaluate against baseline...")
-                        eval_feedback_path = run_evaluate(npc_key, baseline_gguf, trained_gguf,
-                                                           PROJECT_ROOT / "eval" / "results" / "feedback",
-                                                           dry_run=dry_run)
+                        print("\n  Step 3: Evaluate against baseline...")
+                        eval_feedback_path = run_evaluate(
+                            npc_key,
+                            baseline_gguf,
+                            trained_gguf,
+                            PROJECT_ROOT / "eval" / "results" / "feedback",
+                            dry_run=dry_run,
+                        )
                         result["auto_retrain"]["eval_feedback_path"] = eval_feedback_path
 
                         if eval_feedback_path and Path(eval_feedback_path).exists():
@@ -888,12 +1032,16 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                             try:
                                 post_eval = load_feedback_json(eval_feedback_path)
                                 result["auto_retrain"]["win_rate"] = post_eval.get("win_rate")
-                                result["auto_retrain"]["candidate_wins"] = post_eval.get("candidate_wins")
-                                result["auto_retrain"]["total_examples"] = post_eval.get("total_examples")
-                            except Exception as e:
+                                result["auto_retrain"]["candidate_wins"] = post_eval.get(
+                                    "candidate_wins"
+                                )
+                                result["auto_retrain"]["total_examples"] = post_eval.get(
+                                    "total_examples"
+                                )
+                            except Exception:
                                 pass
                     elif trained_gguf:
-                        print(f"  (skipping eval: no --baseline provided)")
+                        print("  (skipping eval: no --baseline provided)")
                 elif auto_retrain and dry_run:
                     print(f"\n  [dry-run] Would auto-retrain with preset '{train_preset}'")
                     result["auto_retrain"] = {
@@ -910,30 +1058,37 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
                     "weak_concepts_count": len(weak_concepts),
                     "focus_categories": focus_categories,
                     "regeneration_technique": technique,
-                    "last_feedback": datetime.now(timezone.utc).isoformat(),
+                    "last_feedback": datetime.now(UTC).isoformat(),
                     "auto_retrain_complete": auto_retrain and trained_gguf is not None,
                 }
                 if trained_gguf:
                     state_update["latest_gguf"] = trained_gguf
-                if result.get("auto_retrain") and result["auto_retrain"].get("win_rate") is not None:
+                if (
+                    result.get("auto_retrain")
+                    and result["auto_retrain"].get("win_rate") is not None
+                ):
                     state_update["latest_win_rate"] = result["auto_retrain"]["win_rate"]
                 update_pipeline_state(npc_key, state_update)
                 result["pipeline_state"] = state_update
 
                 # ── 9. Summary ─────────────────────────────────────────────────────
                 print(f"\n{'=' * 60}")
-                print(f"  FEEDBACK LOOP COMPLETE")
+                print("  FEEDBACK LOOP COMPLETE")
                 print(f"{'=' * 60}")
                 print(f"  Regenerated dataset with focus on: {', '.join(focus_categories)}")
                 if auto_retrain and trained_gguf:
                     print(f"  Retrained model: {trained_gguf}")
                 if dry_run:
-                    print(f"  (dry-run mode — no changes made)")
+                    print("  (dry-run mode — no changes made)")
                 if not auto_retrain and not dry_run:
-                    print(f"\n  Next step: train and re-evaluate:")
-                    print(f"    ./ucore train subjects/NPC_specs/{npc_key}.json --preset {train_preset}")
-                    print(f"    ./ucore evaluate --baseline <old.gguf> --candidate <new.gguf>"
-                          f" --spec subjects/NPC_specs/{npc_key}.json --feedback-json eval/results/feedback/{npc_key}_round2.json")
+                    print("\n  Next step: train and re-evaluate:")
+                    print(
+                        f"    ./ucore train subjects/NPC_specs/{npc_key}.json --preset {train_preset}"
+                    )
+                    print(
+                        f"    ./ucore evaluate --baseline <old.gguf> --candidate <new.gguf>"
+                        f" --spec subjects/NPC_specs/{npc_key}.json --feedback-json eval/results/feedback/{npc_key}_round2.json"
+                    )
                 print(f"  Pipeline state: {PIPELINE_STATE_PATH}")
 
                 if json_output:
@@ -949,13 +1104,16 @@ def run_feedback_loop(feedback_path, win_rate_threshold=DEFAULT_WIN_RATE_THRESHO
 
 # ── CLI ─────────────────────────────────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Self-Improving Feedback Loop",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument("feedback_json", help="Path to feedback JSON from evaluate.py --feedback-json")
+    parser.add_argument(
+        "feedback_json", help="Path to feedback JSON from evaluate.py --feedback-json"
+    )
 
     # Thresholds
     parser.add_argument("--win-rate-threshold", type=float, default=DEFAULT_WIN_RATE_THRESHOLD)
@@ -965,57 +1123,121 @@ def main():
     # Behavior
     parser.add_argument("--dry-run", action="store_true", help="Analyze and plan without executing")
     parser.add_argument("--auto", "-y", action="store_true", help="Auto-accept all suggestions")
-    parser.add_argument("--skip-gap-detection", action="store_true", help="Skip knowledge coverage check")
+    parser.add_argument(
+        "--skip-gap-detection", action="store_true", help="Skip knowledge coverage check"
+    )
     parser.add_argument("--save-gaps", help="Save gap analysis to JSON file")
     parser.add_argument("--json", action="store_true", help="Output machine-readable JSON summary")
-    parser.add_argument("--strategy-profile", default="npc-production-grounded",
-                        help="NPC production strategy profile for anti-loop decisions")
+    parser.add_argument(
+        "--strategy-profile",
+        default="npc-production-grounded",
+        help="NPC production strategy profile for anti-loop decisions",
+    )
 
     # Auto-retrain
-    parser.add_argument("--regeneration-technique", default=None,
-                        choices=["template", "ollama"],
-                        help=f"Regeneration technique to use (defaults to the resolved workflow context; final fallback: {DEFAULT_REGENERATION_TECHNIQUE})")
-    parser.add_argument("--regeneration-preset",
-                        default=None,
-                        choices=["generate-qwen25", "generate-llama31", "generate-qwen35-exp", "generate-qwen3-exp"],
-                        help="Named Ollama regeneration preset (default: generate-qwen25)")
-    parser.add_argument("--regeneration-model", default=DEFAULT_REGENERATION_MODEL,
-                        help=f"Exact Ollama model to use when --regeneration-technique=ollama (wins over --regeneration-preset; default: {DEFAULT_REGENERATION_MODEL})")
-    parser.add_argument("--regeneration-url", default=DEFAULT_REGENERATION_URL,
-                        help=f"Ollama server URL when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_URL})")
-    parser.add_argument("--regeneration-batch-size", type=int, default=DEFAULT_REGENERATION_BATCH_SIZE,
-                        help=f"Ollama batch size when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_BATCH_SIZE})")
-    parser.add_argument("--auto-retrain", action="store_true",
-                        help="After regeneration, auto-retrain and re-evaluate")
-    parser.add_argument("--train-preset", default=DEFAULT_TRAIN_PRESET,
-                        help=f"Training preset (default: {DEFAULT_TRAIN_PRESET})")
+    parser.add_argument(
+        "--regeneration-technique",
+        default=None,
+        choices=["template", "ollama"],
+        help=f"Regeneration technique to use (defaults to the resolved workflow context; final fallback: {DEFAULT_REGENERATION_TECHNIQUE})",
+    )
+    parser.add_argument(
+        "--regeneration-preset",
+        default=None,
+        choices=[
+            "generate-qwen25",
+            "generate-llama31",
+            "generate-qwen35-exp",
+            "generate-qwen3-exp",
+        ],
+        help="Named Ollama regeneration preset (default: generate-qwen25)",
+    )
+    parser.add_argument(
+        "--regeneration-model",
+        default=DEFAULT_REGENERATION_MODEL,
+        help=f"Exact Ollama model to use when --regeneration-technique=ollama (wins over --regeneration-preset; default: {DEFAULT_REGENERATION_MODEL})",
+    )
+    parser.add_argument(
+        "--regeneration-url",
+        default=DEFAULT_REGENERATION_URL,
+        help=f"Ollama server URL when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_URL})",
+    )
+    parser.add_argument(
+        "--regeneration-batch-size",
+        type=int,
+        default=DEFAULT_REGENERATION_BATCH_SIZE,
+        help=f"Ollama batch size when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_BATCH_SIZE})",
+    )
+    parser.add_argument(
+        "--auto-retrain",
+        action="store_true",
+        help="After regeneration, auto-retrain and re-evaluate",
+    )
+    parser.add_argument(
+        "--train-preset",
+        default=DEFAULT_TRAIN_PRESET,
+        help=f"Training preset (default: {DEFAULT_TRAIN_PRESET})",
+    )
     parser.add_argument("--baseline", help="Baseline GGUF for auto-evaluation after retrain")
-    parser.add_argument("--extra-examples", type=int, default=DEFAULT_EXTRA_EXAMPLES,
-                       help=f"Target extra examples per weak concept (default: {DEFAULT_EXTRA_EXAMPLES})")
-    parser.add_argument("--skip-dataset-eval", action="store_true",
-                        help="Skip dataset quality evaluation before training during auto-retrain")
-    parser.add_argument("--deepeval-judge-provider", default="ollama", choices=["ollama", "wandb"],
-                        help="Judge backend for dataset evaluation during auto-retrain")
-    parser.add_argument("--deepeval-judge-preset",
-                        default=None,
-                        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
-                        help="Named Ollama judge preset (default: judge-qwen3-exp)")
-    parser.add_argument("--deepeval-judge-model", default=None,
-                        help="Exact Ollama judge model to use for dataset evaluation (wins over --deepeval-judge-preset)")
-    parser.add_argument("--deepeval-ollama-url", default="http://localhost:11434",
-                        help="Ollama base URL for dataset evaluation (default: http://localhost:11434)")
-    parser.add_argument("--deepeval-cases-per-category", type=int, default=1,
-                        help="Cases per category for fast DeepEval dataset gating (default: 1)")
-    parser.add_argument("--deepeval-soft-fail", action="store_true",
-                        help="Do not abort dataset evaluation on metric failure; continue training")
-    parser.add_argument("--wandb-inference-project", default=None,
-                        help="W&B project used for hosted DeepEval judge inference")
-    parser.add_argument("--wandb-inference-entity", default=None,
-                        help="W&B entity/team used for hosted DeepEval judge inference")
-    parser.add_argument("--workflow-hooks", default=None,
-                        help="Path to workflow hooks JSONL")
+    parser.add_argument(
+        "--extra-examples",
+        type=int,
+        default=DEFAULT_EXTRA_EXAMPLES,
+        help=f"Target extra examples per weak concept (default: {DEFAULT_EXTRA_EXAMPLES})",
+    )
+    parser.add_argument(
+        "--skip-dataset-eval",
+        action="store_true",
+        help="Skip dataset quality evaluation before training during auto-retrain",
+    )
+    parser.add_argument(
+        "--deepeval-judge-provider",
+        default="ollama",
+        choices=["ollama", "wandb"],
+        help="Judge backend for dataset evaluation during auto-retrain",
+    )
+    parser.add_argument(
+        "--deepeval-judge-preset",
+        default=None,
+        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
+        help="Named Ollama judge preset (default: judge-qwen3-exp)",
+    )
+    parser.add_argument(
+        "--deepeval-judge-model",
+        default=None,
+        help="Exact Ollama judge model to use for dataset evaluation (wins over --deepeval-judge-preset)",
+    )
+    parser.add_argument(
+        "--deepeval-ollama-url",
+        default="http://localhost:11434",
+        help="Ollama base URL for dataset evaluation (default: http://localhost:11434)",
+    )
+    parser.add_argument(
+        "--deepeval-cases-per-category",
+        type=int,
+        default=1,
+        help="Cases per category for fast DeepEval dataset gating (default: 1)",
+    )
+    parser.add_argument(
+        "--deepeval-soft-fail",
+        action="store_true",
+        help="Do not abort dataset evaluation on metric failure; continue training",
+    )
+    parser.add_argument(
+        "--wandb-inference-project",
+        default=None,
+        help="W&B project used for hosted DeepEval judge inference",
+    )
+    parser.add_argument(
+        "--wandb-inference-entity",
+        default=None,
+        help="W&B entity/team used for hosted DeepEval judge inference",
+    )
+    parser.add_argument("--workflow-hooks", default=None, help="Path to workflow hooks JSONL")
     parser.add_argument("--wandb", action="store_true", help="Enable W&B logging")
-    parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    parser.add_argument(
+        "--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)"
+    )
     parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
 
     args = parser.parse_args()
@@ -1043,38 +1265,40 @@ def main():
             role="judge",
         )
 
-    sys.exit(run_feedback_loop(
-        args.feedback_json,
-        win_rate_threshold=args.win_rate_threshold,
-        quality_threshold=args.quality_threshold,
-        violation_threshold=args.violation_threshold,
-        dry_run=args.dry_run,
-        auto_yes=args.auto,
-        skip_gap_detection=args.skip_gap_detection,
-        save_gaps=args.save_gaps,
-        json_output=args.json,
-        auto_retrain=args.auto_retrain,
-        train_preset=args.train_preset,
-        baseline_gguf=args.baseline,
-        technique=args.regeneration_technique,
-        model=regeneration_model,
-        url=args.regeneration_url,
-        batch_size=args.regeneration_batch_size,
-        skip_dataset_eval=args.skip_dataset_eval,
-        deepeval_judge_provider=args.deepeval_judge_provider,
-        deepeval_judge_model=deepeval_judge_model,
-        deepeval_ollama_url=args.deepeval_ollama_url,
-        deepeval_cases_per_category=args.deepeval_cases_per_category,
-        deepeval_soft_fail=args.deepeval_soft_fail,
-        extra_examples=args.extra_examples,
-        workflow_hooks=args.workflow_hooks,
-        strategy_profile=args.strategy_profile,
-        wandb=args.wandb,
-        wandb_project=args.wandb_project,
-        wandb_entity=args.wandb_entity,
-        wandb_inference_project=args.wandb_inference_project or args.wandb_project,
-        wandb_inference_entity=args.wandb_inference_entity or args.wandb_entity,
-    ))
+    sys.exit(
+        run_feedback_loop(
+            args.feedback_json,
+            win_rate_threshold=args.win_rate_threshold,
+            quality_threshold=args.quality_threshold,
+            violation_threshold=args.violation_threshold,
+            dry_run=args.dry_run,
+            auto_yes=args.auto,
+            skip_gap_detection=args.skip_gap_detection,
+            save_gaps=args.save_gaps,
+            json_output=args.json,
+            auto_retrain=args.auto_retrain,
+            train_preset=args.train_preset,
+            baseline_gguf=args.baseline,
+            technique=args.regeneration_technique,
+            model=regeneration_model,
+            url=args.regeneration_url,
+            batch_size=args.regeneration_batch_size,
+            skip_dataset_eval=args.skip_dataset_eval,
+            deepeval_judge_provider=args.deepeval_judge_provider,
+            deepeval_judge_model=deepeval_judge_model,
+            deepeval_ollama_url=args.deepeval_ollama_url,
+            deepeval_cases_per_category=args.deepeval_cases_per_category,
+            deepeval_soft_fail=args.deepeval_soft_fail,
+            extra_examples=args.extra_examples,
+            workflow_hooks=args.workflow_hooks,
+            strategy_profile=args.strategy_profile,
+            wandb=args.wandb,
+            wandb_project=args.wandb_project,
+            wandb_entity=args.wandb_entity,
+            wandb_inference_project=args.wandb_inference_project or args.wandb_project,
+            wandb_inference_entity=args.wandb_inference_entity or args.wandb_entity,
+        )
+    )
 
 
 if __name__ == "__main__":

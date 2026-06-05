@@ -59,7 +59,7 @@ def test_ucore_generate_ollama_preserves_zero_values(monkeypatch):
 
     monkeypatch.setattr(ucore, "run_cmd", fake_run_cmd)
 
-    rc = ucore.main(
+    ucore.main(
         [
             "generate-ollama",
             "data/npcs/specs/history_guide.json",

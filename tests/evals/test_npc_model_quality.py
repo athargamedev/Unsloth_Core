@@ -60,7 +60,9 @@ os.environ.setdefault("DEEPEVAL_OLLAMA_BASE_URL", _LIVE_URL)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 GOLDEN_TECHNIQUE = os.getenv("DEEPEVAL_GOLDEN_TECHNIQUE", "template").strip() or "template"
-GOLDENS_PATH = PROJECT_ROOT / "tests" / "evals" / ".dataset" / f"npc_goldens_{GOLDEN_TECHNIQUE}.json"
+GOLDENS_PATH = (
+    PROJECT_ROOT / "tests" / "evals" / ".dataset" / f"npc_goldens_{GOLDEN_TECHNIQUE}.json"
+)
 LEGACY_GOLDENS_PATH = PROJECT_ROOT / "tests" / "evals" / ".dataset" / "npc_goldens.json"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -83,6 +85,7 @@ ALL_CATEGORIES = ("identity", "teaching", "dialogue", "quest", "refusal")
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _csv_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
     """Parse a comma-separated env var into a tuple of non-empty strings."""
@@ -153,10 +156,7 @@ def _to_llm_test_case(golden: dict) -> LLMTestCase:
 def _to_conversational_test_case(golden: dict) -> ConversationalTestCase:
     """Convert a multi-turn golden dict into a ConversationalTestCase."""
     meta = golden.get("metadata", {})
-    turns = [
-        Turn(role=t["role"], content=t["content"])
-        for t in golden.get("conversation", [])
-    ]
+    turns = [Turn(role=t["role"], content=t["content"]) for t in golden.get("conversation", [])]
     return ConversationalTestCase(
         name=f"{meta['npc_key']}:conv:{meta['category']}:{meta.get('concept', 'unknown')}",
         turns=turns,
@@ -210,6 +210,7 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError) as exc:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 def _case_name(test_case: LLMTestCase | ConversationalTestCase) -> str:
     """Return a stable display name for failure aggregation."""

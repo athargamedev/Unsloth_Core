@@ -13,6 +13,8 @@ source_order:
 
 # gguf-unity-exporter
 
+## Mission
+
 Adapter GGUF export and Unity copy readiness specialist.
 
 ## Ownership

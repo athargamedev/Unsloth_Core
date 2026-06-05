@@ -3,8 +3,6 @@ import os
 import sys
 from pathlib import Path
 
-import pytest
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -43,7 +41,6 @@ def test_dataset_technique_priority_order(monkeypatch, tmp_path):
     assert val_path == paths.dataset_val_path("demo_npc", "ollama")
 
 
-
 def test_ollama_generator_output_shape_is_chatml(tmp_path):
     from scripts.generate_dataset import generate_dataset
 
@@ -54,13 +51,14 @@ def test_ollama_generator_output_shape_is_chatml(tmp_path):
             return json.dumps({"user": "What is demo?", "assistant": "Demo is a test."})
 
     result_path = tmp_path / "train.jsonl"
-    result = generate_dataset(minimal_spec(), result_path, include_validation=False, generator=FakeGenerator())
+    result = generate_dataset(
+        minimal_spec(), result_path, include_validation=False, generator=FakeGenerator()
+    )
     first = json.loads(result_path.read_text().splitlines()[0])
 
     assert result["train"] == 1
     assert [m["role"] for m in first["messages"]] == ["system", "user", "assistant"]
     assert first["metadata"]["source"].startswith("ollama:")
-
 
 
 def test_concept_extractor_uses_explicit_concepts_and_metadata():
@@ -90,8 +88,6 @@ def test_concept_extractor_uses_explicit_concepts_and_metadata():
     assert "specialized topic" in explicit[0].aliases
 
 
-
-
 def test_concept_extractor_ignores_meta_reference_headings():
     from scripts.generate_dataset import ConceptExtractor
 
@@ -107,7 +103,6 @@ def test_concept_extractor_ignores_meta_reference_headings():
 
     assert "scope and use" not in concepts
     assert "misconceptions and refusals" not in concepts
-
 
 
 def test_smoke_custom_prompts_and_tracking_timestamp(monkeypatch, tmp_path, capsys):
@@ -146,8 +141,9 @@ def test_tracking_local_fallback_shape(tmp_path):
 
 def test_sanitizer_infers_relative_technique_and_counts_sibling_validation(monkeypatch, tmp_path):
     from _config import paths
-    from src.config import paths as src_paths
     from scripts import sanitize_dataset
+
+    from src.config import paths as src_paths
 
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     monkeypatch.setattr(src_paths, "PROJECT_ROOT", tmp_path)
@@ -166,8 +162,12 @@ def test_sanitizer_infers_relative_technique_and_counts_sibling_validation(monke
 def test_refusal_structural_check_requires_boundary_or_redirect():
     from scripts.sanitize_dataset import refusal_response_has_boundary
 
-    assert refusal_response_has_boundary("I can't confirm that claim, but I can help with evidence from astronomy.")
-    assert not refusal_response_has_boundary("The possibility is exciting, so let's explore moons and asteroids that might support life.")
+    assert refusal_response_has_boundary(
+        "I can't confirm that claim, but I can help with evidence from astronomy."
+    )
+    assert not refusal_response_has_boundary(
+        "The possibility is exciting, so let's explore moons and asteroids that might support life."
+    )
 
 
 def test_refusal_boundary_markers_catch_safety_refusals():
@@ -183,8 +183,9 @@ def test_refusal_boundary_markers_catch_safety_refusals():
         "Nope. Letting meat sit out risks bacteria growth. Refrigerate within two hours.",
     ]
     for i, text in enumerate(patterns):
-        assert refusal_response_has_boundary(text), \
-            f"Safety refusal pattern {i+1} should be recognized: {text[:60]}..."
+        assert refusal_response_has_boundary(text), (
+            f"Safety refusal pattern {i + 1} should be recognized: {text[:60]}..."
+        )
 
     # Mix of markers across patterns must all pass
     assert refusal_response_has_boundary("Nope. I won't endorse unsafe kitchen practices.")
@@ -207,8 +208,9 @@ def test_refusal_boundary_markers_dont_falsely_match_teaching():
         "The first safety rule in the kitchen is to wash your hands thoroughly.",
     ]
     for i, text in enumerate(non_refusals):
-        assert not refusal_response_has_boundary(text), \
-            f"Non-refusal {i+1} should not match: {text[:60]}..."
+        assert not refusal_response_has_boundary(text), (
+            f"Non-refusal {i + 1} should not match: {text[:60]}..."
+        )
 
 
 def test_refusal_response_includes_boundary_and_redirect():
@@ -224,8 +226,20 @@ def test_refusal_response_includes_boundary_and_redirect():
     response = gd.generate_refusal_response(spec, boundary="misinformation or conspiracy")
 
     lower = response.lower()
-    assert any(marker in lower for marker in ["i can't", "i cannot", "outside my scope", "evidence-based", "not supported by evidence"])
-    assert any(marker in lower for marker in ["instead", "let's focus", "i can help with", "what i can do", "a safer way"])
+    assert any(
+        marker in lower
+        for marker in [
+            "i can't",
+            "i cannot",
+            "outside my scope",
+            "evidence-based",
+            "not supported by evidence",
+        ]
+    )
+    assert any(
+        marker in lower
+        for marker in ["instead", "let's focus", "i can help with", "what i can do", "a safer way"]
+    )
     assert any(marker in lower for marker in ["world history", "chronology", "sources", "evidence"])
 
 
@@ -249,7 +263,9 @@ def test_ollama_category_prompts_remain_short_and_specific():
     assert "do not add an unrelated fact" in refusal.lower()
     assert "drift to another topic" in refusal.lower()
     assert "Instead, I can help with" in refusal
-    assert "one concrete in-scope topic related to history, such as chronology or sources" in refusal
+    assert (
+        "one concrete in-scope topic related to history, such as chronology or sources" in refusal
+    )
 
 
 def test_ollama_multi_turn_selection_is_deterministic():
@@ -264,16 +280,28 @@ def test_ollama_multi_turn_selection_is_deterministic():
 
 
 def test_template_generation_avoids_duplicate_refusal_rows(tmp_path):
+    from scripts.dataset.dataset_contracts import (
+        calculate_distribution_gaps,
+        expected_examples_per_category,
+        summarize_jsonl_dataset,
+    )
     from scripts.dataset.generate_dataset import generate_dataset
-    from scripts.dataset.dataset_contracts import calculate_distribution_gaps, expected_examples_per_category, summarize_jsonl_dataset
 
     spec = {
         "npc_key": "history_guide",
         "npc_name": "HistoryGuide",
         "subject": "World history: ancient civilizations and historical thinking",
         "system_prompt": "## IDENTITY\nName: HistoryGuide\n## VOICE\nConcise\n## KNOWLEDGE\nWorld history\n## RULES\nUse evidence.",
-        "identity": {"personality": "Careful", "background": "History tutor", "mannerisms": "Uses sources"},
-        "dialogue": {"max_sentences": 3, "max_characters": 220, "example_topics": ["What caused the fall of Rome?"]},
+        "identity": {
+            "personality": "Careful",
+            "background": "History tutor",
+            "mannerisms": "Uses sources",
+        },
+        "dialogue": {
+            "max_sentences": 3,
+            "max_characters": 220,
+            "example_topics": ["What caused the fall of Rome?"],
+        },
         "teaching": {"difficulty_levels": ["beginner", "intermediate"]},
         "quest": {"scenarios": [{"name": "timeline_analysis", "description": "Practice sequence"}]},
         "refusal": {
@@ -287,7 +315,15 @@ def test_template_generation_avoids_duplicate_refusal_rows(tmp_path):
             {"name": "historical thinking", "category": "dialogue", "difficulty": "intermediate"},
             {"name": "timeline analysis", "category": "quest", "difficulty": "intermediate"},
         ],
-        "dataset": {"examples_per_category": {"identity": 2, "teaching": 4, "dialogue": 4, "quest": 3, "refusal": 8}},
+        "dataset": {
+            "examples_per_category": {
+                "identity": 2,
+                "teaching": 4,
+                "dialogue": 4,
+                "quest": 3,
+                "refusal": 8,
+            }
+        },
     }
 
     output_path = tmp_path / "train.jsonl"
@@ -310,7 +346,10 @@ def test_template_generation_avoids_duplicate_refusal_rows(tmp_path):
     assert result["total"] == 21
     assert summary["by_category"]["refusal"] == 8
     assert len(hashes) == summary["total"]
-    assert calculate_distribution_gaps(expected_examples_per_category(spec), summary["by_category"]) == []
+    assert (
+        calculate_distribution_gaps(expected_examples_per_category(spec), summary["by_category"])
+        == []
+    )
 
 
 def test_export_resolution_keeps_npc_key(monkeypatch, tmp_path):
@@ -319,7 +358,9 @@ def test_export_resolution_keeps_npc_key(monkeypatch, tmp_path):
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     run_dir = paths.run_dir("demo_npc", "20260512_fast_001")
     run_dir.mkdir(parents=True)
-    (run_dir / "adapter_config.json").write_text(json.dumps({"base_model_name_or_path": "unsloth/Test"}))
+    (run_dir / "adapter_config.json").write_text(
+        json.dumps({"base_model_name_or_path": "unsloth/Test"})
+    )
     latest = paths.output_dir("demo_npc") / "latest"
     latest.symlink_to("runs/20260512_fast_001", target_is_directory=True)
 
@@ -337,8 +378,12 @@ def test_export_resolution_falls_back_to_newest_run_without_symlinks(monkeypatch
     newer = paths.run_dir("demo_npc", "20260512_fast_002")
     older.mkdir(parents=True)
     newer.mkdir(parents=True)
-    (older / "adapter_config.json").write_text(json.dumps({"base_model_name_or_path": "unsloth/Test"}))
-    (newer / "adapter_config.json").write_text(json.dumps({"base_model_name_or_path": "unsloth/Test"}))
+    (older / "adapter_config.json").write_text(
+        json.dumps({"base_model_name_or_path": "unsloth/Test"})
+    )
+    (newer / "adapter_config.json").write_text(
+        json.dumps({"base_model_name_or_path": "unsloth/Test"})
+    )
     os.utime(older, (1_700_000_000, 1_700_000_000))
     os.utime(newer, (1_700_000_100, 1_700_000_100))
 
@@ -348,18 +393,36 @@ def test_export_resolution_falls_back_to_newest_run_without_symlinks(monkeypatch
     assert adapter_dir == newer.resolve()
 
 
-
 def test_validate_spec_generation_ready_requires_reference_contract(monkeypatch, tmp_path):
     from scripts import validate_subject_spec as validator
 
     spec = minimal_spec()
-    spec["identity"] = {"personality": "patient", "background": "demo expert", "mannerisms": "clear"}
-    spec["teaching"] = {"expertise": ["demo concepts"], "approach": "explain simply", "difficulty_levels": ["beginner"]}
+    spec["identity"] = {
+        "personality": "patient",
+        "background": "demo expert",
+        "mannerisms": "clear",
+    }
+    spec["teaching"] = {
+        "expertise": ["demo concepts"],
+        "approach": "explain simply",
+        "difficulty_levels": ["beginner"],
+    }
     spec["dialogue"] = {"max_sentences": 3, "example_topics": ["What is demo?"]}
     spec["quest"] = {"scenarios": [{"name": "demo", "description": "demo task"}]}
-    spec["refusal"] = {"boundaries": ["unsafe demo claims"], "redirect_policy": "redirect to evidence"}
+    spec["refusal"] = {
+        "boundaries": ["unsafe demo claims"],
+        "redirect_policy": "redirect to evidence",
+    }
     spec["research_queries"] = [{"query": "demo facts", "mode": "fast"}]
-    spec["dataset"] = {"examples_per_category": {"identity": 1, "teaching": 1, "dialogue": 1, "quest": 1, "refusal": 1}}
+    spec["dataset"] = {
+        "examples_per_category": {
+            "identity": 1,
+            "teaching": 1,
+            "dialogue": 1,
+            "quest": 1,
+            "refusal": 1,
+        }
+    }
     spec["reference_doc"] = "data/npcs/reference_docs/demo_primer.md"
 
     root = tmp_path
@@ -407,7 +470,7 @@ def test_trim_to_max_sentences():
 
     assert trim_to_max_sentences("", 2) == ""
     assert trim_to_max_sentences("Hello.", 0) == ""
-    
+
     # Simple trim
     text1 = "Sentence one. Sentence two. Sentence three."
     assert trim_to_max_sentences(text1, 2) == "Sentence one. Sentence two."
@@ -447,21 +510,25 @@ def test_artifact_check_repair_mode():
         "messages": [
             {"role": "system", "content": "You are a guide."},
             {"role": "user", "content": "Tell me a story."},
-            {"role": "assistant", "content": "Sure. As an AI language model, I love stories. Once upon a time, a hero saved the day."}
+            {
+                "role": "assistant",
+                "content": "Sure. As an AI language model, I love stories. Once upon a time, a hero saved the day.",
+            },
         ],
-        "metadata": {
-            "npc_key": "history_guide",
-            "category": "dialogue"
-        }
+        "metadata": {"npc_key": "history_guide", "category": "dialogue"},
     }
 
     # Under strict check, it gets discarded/refused
-    clean, score, warnings, reason = sanitize_example(example, "data/npcs/history_guide/train.jsonl", artifact_check="strict")
+    clean, score, warnings, reason = sanitize_example(
+        example, "data/npcs/history_guide/train.jsonl", artifact_check="strict"
+    )
     assert clean is None
     assert "Contains AI artifact" in reason
 
     # Under repair check, it is cleaned and kept
-    clean, score, warnings, reason = sanitize_example(example, "data/npcs/history_guide/train.jsonl", artifact_check="repair")
+    clean, score, warnings, reason = sanitize_example(
+        example, "data/npcs/history_guide/train.jsonl", artifact_check="repair"
+    )
     assert clean is not None
     assert reason is None
     # Verify the middle sentence with artifact was filtered
@@ -481,7 +548,7 @@ def test_score_rule_compliance_sliding_scale_and_command_verbs():
     example1 = {
         "messages": [
             {"role": "user", "content": "Is this a test?"},
-            {"role": "assistant", "content": "One. Two. Three."}
+            {"role": "assistant", "content": "One. Two. Three."},
         ]
     }
     score1 = score_rule_compliance(example1, max_sentences=2)
@@ -497,7 +564,7 @@ def test_score_rule_compliance_sliding_scale_and_command_verbs():
     example2 = {
         "messages": [
             {"role": "user", "content": "Is this a test?"},
-            {"role": "assistant", "content": "One. Two. Three. Four."}
+            {"role": "assistant", "content": "One. Two. Three. Four."},
         ]
     }
     score3 = score_rule_compliance(example2, max_sentences=1)
@@ -508,7 +575,7 @@ def test_score_rule_compliance_sliding_scale_and_command_verbs():
     example3 = {
         "messages": [
             {"role": "user", "content": "You should check this"},
-            {"role": "assistant", "content": "Sure, I will do that."}
+            {"role": "assistant", "content": "Sure, I will do that."},
         ]
     }
     assert score_rule_compliance(example3) == 9
@@ -517,7 +584,7 @@ def test_score_rule_compliance_sliding_scale_and_command_verbs():
     example4 = {
         "messages": [
             {"role": "user", "content": "Introduce yourself to me"},
-            {"role": "assistant", "content": "Sure, I will do that."}
+            {"role": "assistant", "content": "Sure, I will do that."},
         ]
     }
     assert score_rule_compliance(example4) == 10
@@ -526,15 +593,16 @@ def test_score_rule_compliance_sliding_scale_and_command_verbs():
     example5 = {
         "messages": [
             {"role": "user", "content": "tell me a story"},
-            {"role": "assistant", "content": "Sure, I will do that."}
+            {"role": "assistant", "content": "Sure, I will do that."},
         ]
     }
     assert score_rule_compliance(example5) == 10
 
 
 def test_local_gap_detector(tmp_path, monkeypatch):
-    from src.core.training.feedback_loop import LocalGapDetector
     from _config import paths
+
+    from src.core.training.feedback_loop import LocalGapDetector
 
     # Set up mock spec, primer, and train_clean files
     npc_key = "test_npc"
@@ -546,21 +614,9 @@ def test_local_gap_detector(tmp_path, monkeypatch):
 
     spec_data = {
         "concepts": [
-            {
-                "name": "Swordplay",
-                "category": "teaching",
-                "aliases": ["fencing", "blade"]
-            },
-            {
-                "name": "Archery",
-                "category": "teaching",
-                "aliases": ["bow", "arrows"]
-            },
-            {
-                "name": "Magic",
-                "category": "teaching",
-                "aliases": ["spells", "alchemy"]
-            }
+            {"name": "Swordplay", "category": "teaching", "aliases": ["fencing", "blade"]},
+            {"name": "Archery", "category": "teaching", "aliases": ["bow", "arrows"]},
+            {"name": "Magic", "category": "teaching", "aliases": ["spells", "alchemy"]},
         ]
     }
     spec_file.write_text(json.dumps(spec_data))
@@ -592,8 +648,10 @@ def test_local_gap_detector(tmp_path, monkeypatch):
     # Patch the PROJECT_ROOT to our tmp_path
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     from src.config import paths as src_paths
+
     monkeypatch.setattr(src_paths, "PROJECT_ROOT", tmp_path)
     import src.core.training.feedback_loop as fb_module
+
     monkeypatch.setattr(fb_module, "PROJECT_ROOT", tmp_path)
 
     # Initialize detector
@@ -607,7 +665,7 @@ def test_local_gap_detector(tmp_path, monkeypatch):
     weak_concepts = [
         {"concept": "teaching/Archery", "reasons": ["low quality"]},
         {"concept": "teaching/Swordplay", "reasons": ["low win rate"]},
-        {"concept": "teaching/Magic", "reasons": ["high violations"]}
+        {"concept": "teaching/Magic", "reasons": ["high violations"]},
     ]
 
     gaps = detector.detect_gaps(weak_concepts)

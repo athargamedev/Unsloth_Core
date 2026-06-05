@@ -13,7 +13,9 @@ source_order:
 
 # sanitizer-gate-engineer
 
-Sanitization, DeepEval quality gate, Confident, and W&B dataset-quality specialist.
+## Mission
+
+Sanitization, DeepEval quality gate, Confident AI, and W&B dataset-quality specialist.
 
 ## Ownership
 

@@ -7,22 +7,22 @@ High-performance, Ollama-optimized NPC dataset generator for Unsloth_Core. Desig
 ### Basic Usage
 ```bash
 # Generate dataset for history_guide with default Ollama model (llama2)
-./ucore generate-ollama subjects/NPC_specs/history_guide.json
+./ucore generate-ollama data/npcs/specs/history_guide.json
 
 # With custom model
-./ucore generate-ollama subjects/NPC_specs/chemistry_instructor.json --model llama3.1
+./ucore generate-ollama data/npcs/specs/chemistry_instructor.json --model llama3.1
 
 # Dry-run: see generation plan without generating
-./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --dry-run
+./ucore generate-ollama data/npcs/specs/fitness_coach.json --dry-run
 
 # With health check and auto-pull model
-./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json --check-health --pull-model --model mistral
+./ucore generate-ollama data/npcs/specs/astronomy_guide.json --check-health --pull-model --model mistral
 ```
 
 ### Direct Script Usage
 ```bash
-python scripts/dataset/generate_dataset_ollama.py subjects/NPC_specs/history_guide.json
-python scripts/dataset/generate_dataset_ollama.py subjects/NPC_specs/history_guide.json --model llama3.1 --batch-size 2
+python scripts/dataset/generate_dataset_ollama.py data/npcs/specs/history_guide.json
+python scripts/dataset/generate_dataset_ollama.py data/npcs/specs/history_guide.json --model llama3.1 --batch-size 2
 ```
 
 ## Features
@@ -51,13 +51,13 @@ python scripts/dataset/generate_dataset_ollama.py subjects/NPC_specs/history_gui
 ### Arguments
 
 #### Required
-- `spec`: Path to subject spec JSON (e.g., `subjects/NPC_specs/history_guide.json`)
+- `spec`: Path to subject spec JSON (e.g., `data/npcs/specs/history_guide.json`)
 
 #### Optional - Model Selection
 - `--model MODEL`: Ollama model name (default: `llama2`)
   - Common options: `llama2`, `llama3.1`, `mistral`, `neural-chat`, `qwen`
   - Use `ollama list` to see available models
-  
+
 - `--url URL`: Ollama server URL (default: `http://localhost:11434`)
   - For remote servers: `http://192.168.1.100:11434`
 
@@ -65,23 +65,23 @@ python scripts/dataset/generate_dataset_ollama.py subjects/NPC_specs/history_gui
 - `--temperature TEMP`: Generation temperature (default: 0.7)
   - Lower (0.0-0.5): More factual, less varied
   - Higher (0.7-1.0): More creative, more varied
-  
+
 - `--batch-size N`: Concurrent generation tasks (default: 4)
   - Increase for faster generation on high-end GPUs
   - Decrease (1-2) if Ollama crashes or runs out of memory
-  
+
 - `--max-retries N`: Max retries per generation (default: 3)
   - Higher values = more resilient but slower
-  
+
 - `--seed SEED`: Random seed (default: 42)
 
 #### Optional - Output Control
 - `--output PATH`: Custom output JSONL path
-  - Default: `subjects/datasets/{npc_key}/ollama/train.jsonl`
-  
+  - Default: `data/datasets/{npc_key}/ollama/train.jsonl`
+
 - `--no-validation`: Skip validation split
   - Generates only training set
-  
+
 - `--val-split RATIO`: Validation split ratio (default: 0.12)
   - Use 0.15 for 15% validation, 85% training
 
@@ -95,16 +95,16 @@ python scripts/dataset/generate_dataset_ollama.py subjects/NPC_specs/history_gui
 ### Example 1: Quick Generation with Local Model
 ```bash
 # Generate with fastest local model (llama2)
-./ucore generate-ollama subjects/NPC_specs/history_guide.json --temperature 0.6
+./ucore generate-ollama data/npcs/specs/history_guide.json --temperature 0.6
 
-# Results in: subjects/datasets/history_guide/ollama/train.jsonl
+# Results in: data/datasets/history_guide/ollama/train.jsonl
 # With: 8 identity + 32 teaching + 16 dialogue + 8 quest + 8 refusal = 72 total
 ```
 
 ### Example 2: Generation with Health Check & Auto-Pull
 ```bash
 # Ensure Ollama is running and model is available
-./ucore generate-ollama subjects/NPC_specs/chemistry_instructor.json \
+./ucore generate-ollama data/npcs/specs/chemistry_instructor.json \
   --model llama3.1 \
   --check-health \
   --pull-model
@@ -115,7 +115,7 @@ python scripts/dataset/generate_dataset_ollama.py subjects/NPC_specs/history_gui
 ### Example 3: High-Volume Generation on RTX 3060
 ```bash
 # For 6GB VRAM systems, use smaller batches
-./ucore generate-ollama subjects/NPC_specs/fitness_coach.json \
+./ucore generate-ollama data/npcs/specs/fitness_coach.json \
   --model llama2 \
   --batch-size 2 \
 ```
@@ -158,7 +158,7 @@ CUDA_VISIBLE_DEVICES=-1 ollama serve
 ### Example 4: Production Run with Full Validation
 ```bash
 # Generate with custom validation split
-./ucore generate-ollama subjects/NPC_specs/astronomy_guide.json \
+./ucore generate-ollama data/npcs/specs/astronomy_guide.json \
   --model mistral \
   --temperature 0.65 \
   --val-split 0.15 \
@@ -170,7 +170,7 @@ CUDA_VISIBLE_DEVICES=-1 ollama serve
 ### Example 5: Dry-Run Planning
 ```bash
 # Preview without generation
-./ucore generate-ollama subjects/NPC_specs/history_guide.json --dry-run
+./ucore generate-ollama data/npcs/specs/history_guide.json --dry-run
 
 # Output shows:
 # [DRY-RUN] Would generate 72 examples:
@@ -186,7 +186,7 @@ CUDA_VISIBLE_DEVICES=-1 ollama serve
 ### Generated Files
 
 ```
-subjects/datasets/{npc_key}/ollama/
+data/datasets/{npc_key}/ollama/
 ├── train.jsonl              # Training examples (80-90% of total)
 ├── validation.jsonl         # Validation examples (10-20% of total)
 ├── train_manifest.json      # Generation metadata & statistics
@@ -237,7 +237,7 @@ subjects/datasets/{npc_key}/ollama/
 
 #### RTX 3060 (6GB VRAM)
 ```bash
-./ucore generate-ollama subjects/NPC_specs/history_guide.json \
+./ucore generate-ollama data/npcs/specs/history_guide.json \
   --model llama2 \
   --batch-size 2 \
   --temperature 0.6
@@ -247,7 +247,7 @@ subjects/datasets/{npc_key}/ollama/
 
 #### RTX 4090 (24GB VRAM)
 ```bash
-./ucore generate-ollama subjects/NPC_specs/history_guide.json \
+./ucore generate-ollama data/npcs/specs/history_guide.json \
   --model llama3.1 \
   --batch-size 8 \
   --temperature 0.7
@@ -257,7 +257,7 @@ subjects/datasets/{npc_key}/ollama/
 
 #### CPU Only
 ```bash
-./ucore generate-ollama subjects/NPC_specs/history_guide.json \
+./ucore generate-ollama data/npcs/specs/history_guide.json \
   --model qwen:4b \
   --batch-size 1 \
   --temperature 0.5
@@ -290,42 +290,42 @@ curl http://localhost:11434/api/tags
 ### Error: "Model 'llama2' not found"
 ```bash
 # Option 1: Auto-pull during generation
-./ucore generate-ollama subjects/NPC_specs/history_guide.json --pull-model
+./ucore generate-ollama data/npcs/specs/history_guide.json --pull-model
 
 # Option 2: Pull manually
 ollama pull llama2
 
 # Option 3: Use --check-health to verify
-./ucore generate-ollama subjects/NPC_specs/history_guide.json --check-health
+./ucore generate-ollama data/npcs/specs/history_guide.json --check-health
 ```
 
 ### Generation is very slow
 ```bash
 # Try smaller model or reduce batch size
-./ucore generate-ollama subjects/NPC_specs/history_guide.json \
+./ucore generate-ollama data/npcs/specs/history_guide.json \
   --model llama2 \
   --batch-size 1
 
 # Or lower temperature for simpler generation
-./ucore generate-ollama subjects/NPC_specs/history_guide.json --temperature 0.5
+./ucore generate-ollama data/npcs/specs/history_guide.json --temperature 0.5
 ```
 
 ### Out of memory errors
 ```bash
 # Reduce batch size to 1-2
-./ucore generate-ollama subjects/NPC_specs/history_guide.json --batch-size 1
+./ucore generate-ollama data/npcs/specs/history_guide.json --batch-size 1
 
 # Or use smaller model
-./ucore generate-ollama subjects/NPC_specs/history_guide.json --model qwen:4b
+./ucore generate-ollama data/npcs/specs/history_guide.json --model qwen:4b
 ```
 
 ### Empty or low-quality generation_errors.json
 ```bash
 # Check the main output logs
-tail -50 subjects/datasets/{npc_key}/ollama/generation_errors.json
+tail -50 data/datasets/{npc_key}/ollama/generation_errors.json
 
 # Increase max-retries for temporary network issues
-./ucore generate-ollama subjects/NPC_specs/history_guide.json --max-retries 5
+./ucore generate-ollama data/npcs/specs/history_guide.json --max-retries 5
 ```
 
 ## Integration with Pipeline
@@ -334,17 +334,17 @@ tail -50 subjects/datasets/{npc_key}/ollama/generation_errors.json
 
 ```bash
 # 1. Generate dataset with Ollama (new!)
-./ucore generate-ollama subjects/NPC_specs/history_guide.json --model llama3.1
+./ucore generate-ollama data/npcs/specs/history_guide.json --model llama3.1
 
 # 2. Sanitize (if needed)
-./ucore sanitize subjects/datasets/history_guide/ollama/train.jsonl \
-  --output subjects/datasets/history_guide/ollama/train_clean.jsonl
+./ucore sanitize data/datasets/history_guide/ollama/train.jsonl \
+  --output data/datasets/history_guide/ollama/train_clean.jsonl
 
 # 3. Run dataset quality gate
-./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama
+./ucore dataset-eval data/npcs/specs/history_guide.json --technique ollama
 
 # 4. Train model
-./ucore train subjects/NPC_specs/history_guide.json \
+./ucore train data/npcs/specs/history_guide.json \
   --from-spec \
   --technique ollama \
   --preset fast-3b \
@@ -353,7 +353,7 @@ tail -50 subjects/datasets/{npc_key}/ollama/generation_errors.json
 # 5. Evaluate
 ./ucore evaluate \
   --baseline exports/history_guide/history_guide-lora-f16.gguf \
-  --spec subjects/NPC_specs/history_guide.json
+  --spec data/npcs/specs/history_guide.json
 ```
 
 ## Implementation Details
@@ -387,7 +387,7 @@ tail -50 subjects/datasets/{npc_key}/ollama/generation_errors.json
 A: Yes! Use `--url http://<server-ip>:11434`
 
 **Q: How do I compare Ollama vs. template generation?**
-A: Compare datasets in `subjects/datasets/{npc_key}/ollama/` vs `subjects/datasets/{npc_key}/template/`
+A: Compare datasets in `data/datasets/{npc_key}/ollama/` vs `data/datasets/{npc_key}/template/`
 
 **Q: Can I generate a subset of categories?**
 A: Modify the `examples_per_category` in your spec JSON, or edit after generation
@@ -402,18 +402,18 @@ A: This script is optimized for local Ollama with better health checks, retry lo
 
 ```bash
 # Compare generation techniques
-./ucore generate subjects/NPC_specs/history_guide.json --technique template  # Fast, deterministic
-./ucore generate-ollama subjects/NPC_specs/history_guide.json                # Quality, LLM-based
+./ucore generate data/npcs/specs/history_guide.json --technique template  # Fast, deterministic
+./ucore generate-ollama data/npcs/specs/history_guide.json                # Quality, LLM-based
 
 # Quality evaluation
-./ucore dataset-eval subjects/NPC_specs/history_guide.json --technique ollama
+./ucore dataset-eval data/npcs/specs/history_guide.json --technique ollama
 
 # Training after generation
-./ucore train subjects/NPC_specs/history_guide.json --from-spec --technique ollama
+./ucore train data/npcs/specs/history_guide.json --from-spec --technique ollama
 ```
 
 ---
 
-**Version**: ollama-v2  
-**Author**: Unsloth_Core Team  
+**Version**: ollama-v2
+**Author**: Unsloth_Core Team
 **Last Updated**: 2025-05-18

@@ -16,7 +16,6 @@ import argparse
 import json
 import os
 import subprocess
-import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -108,7 +107,9 @@ def get_gpu_usage() -> dict[str, Any]:
     return {"returncode": code, "stdout": stdout, "stderr": stderr, "gpus": usage}
 
 
-def benchmark_chat(host: str, model: str, prompt: str, system_prompt: str | None = None) -> ChatBenchmarkResult:
+def benchmark_chat(
+    host: str, model: str, prompt: str, system_prompt: str | None = None
+) -> ChatBenchmarkResult:
     url = host.rstrip("/") + "/api/chat"
     messages = []
     if system_prompt:
@@ -136,17 +137,29 @@ def benchmark_chat(host: str, model: str, prompt: str, system_prompt: str | None
         prompt_eval_count = data.get("prompt_eval_count")
         prompt_eval_duration_ns = data.get("prompt_eval_duration")
         tokens_per_second = None
-        if isinstance(eval_count, (int, float)) and isinstance(eval_duration_ns, (int, float)) and eval_duration_ns > 0:
+        if (
+            isinstance(eval_count, (int, float))
+            and isinstance(eval_duration_ns, (int, float))
+            and eval_duration_ns > 0
+        ):
             tokens_per_second = float(eval_count) / (float(eval_duration_ns) / 1_000_000_000.0)
         return ChatBenchmarkResult(
             model=model,
             prompt=prompt,
             latency_ms=round(elapsed_ms, 2),
             eval_count=int(eval_count) if isinstance(eval_count, (int, float)) else None,
-            eval_duration_ms=round(float(eval_duration_ns) / 1_000_000.0, 2) if isinstance(eval_duration_ns, (int, float)) else None,
-            prompt_eval_count=int(prompt_eval_count) if isinstance(prompt_eval_count, (int, float)) else None,
-            prompt_eval_duration_ms=round(float(prompt_eval_duration_ns) / 1_000_000.0, 2) if isinstance(prompt_eval_duration_ns, (int, float)) else None,
-            tokens_per_second=round(tokens_per_second, 2) if tokens_per_second is not None else None,
+            eval_duration_ms=round(float(eval_duration_ns) / 1_000_000.0, 2)
+            if isinstance(eval_duration_ns, (int, float))
+            else None,
+            prompt_eval_count=int(prompt_eval_count)
+            if isinstance(prompt_eval_count, (int, float))
+            else None,
+            prompt_eval_duration_ms=round(float(prompt_eval_duration_ns) / 1_000_000.0, 2)
+            if isinstance(prompt_eval_duration_ns, (int, float))
+            else None,
+            tokens_per_second=round(tokens_per_second, 2)
+            if tokens_per_second is not None
+            else None,
         )
     except Exception as exc:
         return ChatBenchmarkResult(
@@ -167,14 +180,20 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     api_tags = get_api_tags(args.host)
     gpu_usage = get_gpu_usage()
 
-    selected_model = args.model or (running_models["models"][0] if running_models["models"] else None)
+    selected_model = args.model or (
+        running_models["models"][0] if running_models["models"] else None
+    )
     if selected_model:
         register_ollama_unload(selected_model, args.host)
     chat_results: list[dict[str, Any]] = []
     if selected_model:
-        prompts = args.prompt if args.prompt else [
-            "Reply in one concise sentence: what is the main idea of this benchmark?",
-        ]
+        prompts = (
+            args.prompt
+            if args.prompt
+            else [
+                "Reply in one concise sentence: what is the main idea of this benchmark?",
+            ]
+        )
         for prompt in prompts:
             result = benchmark_chat(args.host, selected_model, prompt, args.system_prompt)
             chat_results.append(result.__dict__)
@@ -192,12 +211,24 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Benchmark local Ollama performance")
-    parser.add_argument("--host", default=os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434"), help="Ollama host URL")
-    parser.add_argument("--model", help="Model name to benchmark. Defaults to the first running model.")
-    parser.add_argument("--prompt", action="append", help="Prompt to benchmark; may be supplied multiple times.")
-    parser.add_argument("--system-prompt", help="Optional system prompt used for benchmark requests.")
+    parser.add_argument(
+        "--host", default=os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434"), help="Ollama host URL"
+    )
+    parser.add_argument(
+        "--model", help="Model name to benchmark. Defaults to the first running model."
+    )
+    parser.add_argument(
+        "--prompt", action="append", help="Prompt to benchmark; may be supplied multiple times."
+    )
+    parser.add_argument(
+        "--system-prompt", help="Optional system prompt used for benchmark requests."
+    )
     parser.add_argument("--output", help="Optional path to write the JSON report.")
-    parser.add_argument("--quick", action="store_true", help="Run a single short prompt if no custom prompts are supplied.")
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="Run a single short prompt if no custom prompts are supplied.",
+    )
     args = parser.parse_args()
 
     if args.quick and not args.prompt:

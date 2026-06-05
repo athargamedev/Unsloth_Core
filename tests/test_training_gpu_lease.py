@@ -1,10 +1,12 @@
 """Tests for train preflight GPU lease acquisition/release."""
+
 from __future__ import annotations
 
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 import sys
+
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
@@ -74,7 +76,7 @@ def test_preflight_lease_released_on_completion():
     from src.core.ops.preflight import run_preflight
 
     mgr = GpuLeaseManager()
-    report = run_preflight(phase="train", lease_manager=mgr, auto_unload_ollama=False)
+    run_preflight(phase="train", lease_manager=mgr, auto_unload_ollama=False)
 
     # The lease manager should have 1 active lease
     status = mgr.status()

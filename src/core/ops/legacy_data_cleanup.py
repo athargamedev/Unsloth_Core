@@ -9,10 +9,10 @@ Policy:
   versioned manifests, duplicate history snapshots) unless explicitly retained.
 """
 
+import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
-import re
 
 from src.config.paths import PROJECT_ROOT, dataset_root
 
@@ -38,7 +38,7 @@ class CleanupTarget:
 
 def iter_legacy_dataset_artifacts(root: Path | None = None) -> Iterable[CleanupTarget]:
     root = root or PROJECT_ROOT
-    canonical = dataset_root().resolve()
+    dataset_root().resolve()
 
     # Legacy dataset root mirror.
     subjects_root = root / "subjects" / "datasets"
@@ -56,7 +56,9 @@ def iter_legacy_dataset_artifacts(root: Path | None = None) -> Iterable[CleanupT
             name = path.name
             if any(p.search(name) for p in STALE_PATTERNS):
                 yield CleanupTarget(path=path, reason="stale backup/snapshot artifact")
-            elif path.parent.name == "history" and name.startswith(("quality_", "confident_insights")):
+            elif path.parent.name == "history" and name.startswith(
+                ("quality_", "confident_insights")
+            ):
                 # Retain only the latest canonical files in history when explicitly needed.
                 yield CleanupTarget(path=path, reason="historical quality snapshot")
 

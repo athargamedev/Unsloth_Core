@@ -56,7 +56,7 @@ Dataset row format currently used for training:
       "seed": 42,
       "temperature": 0.6,
       "multi_turn": false,
-      "reference_doc": "subjects/reference_docs/chef_assistant_primer.md"
+      "reference_doc": "data/npcs/reference_docs/chef_assistant_primer.md"
     },
     "content_hash": "..."
   }
@@ -123,7 +123,7 @@ For each 3-message ChatML row:
     "technique": "ollama",
     "content_hash": "...",
     "system_prompt_hash": "...",
-    "reference_doc": "subjects/reference_docs/chef_assistant_primer.md",
+    "reference_doc": "data/npcs/reference_docs/chef_assistant_primer.md",
     "reference_doc_hash": "...",
     "generator": "ollama:OllamaGenerator",
     "generator_params": {...},

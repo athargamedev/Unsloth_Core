@@ -25,10 +25,9 @@ import json
 import logging
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
-
-import numpy as np
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -231,9 +230,8 @@ class SupabaseVectorDB:
         self.table = table
 
         if not self.url or not self.key:
-            raise EnvironmentError(
-                "SUPABASE_URL and SUPABASE_KEY required. "
-                "Set via env vars or pass to __init__."
+            raise OSError(
+                "SUPABASE_URL and SUPABASE_KEY required. Set via env vars or pass to __init__."
             )
 
         try:
@@ -269,9 +267,7 @@ class SupabaseVectorDB:
             # Generate embedding if not provided
             if doc.embedding is None:
                 if embedding_fn is None:
-                    raise ValueError(
-                        "embedding_fn required when Document.embedding is None"
-                    )
+                    raise ValueError("embedding_fn required when Document.embedding is None")
                 doc.embedding = embedding_fn(doc.content)
 
             rows.append(

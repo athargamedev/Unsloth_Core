@@ -13,7 +13,9 @@ source_order:
 
 # runtime-eval-feedback-engineer
 
-Base+LoRA side-by-side eval, feedback JSON, density repair, and anti-loop specialist.
+## Mission
+
+Base+LoRA runtime eval, feedback JSON, density repair, and anti-loop specialist.
 
 ## Ownership
 

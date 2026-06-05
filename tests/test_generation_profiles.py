@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -7,11 +7,10 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from scripts.dataset.generation_profiles import (
     DialogueGuardrail,
     _concept_anchor,
-    _is_history_subject,
     _is_cooking_subject,
+    _is_history_subject,
     _topic_to_anchor,
     generate_dialogue_response,
-    generate_identity_response,
     generate_quest_response,
     generate_refusal_response,
     generate_teaching_response,
@@ -55,17 +54,17 @@ def test_history_core_timeline_anchor_is_domain_specific():
 
 
 def test_history_primary_source_quest_mentions_citation():
-    response = generate_quest_response(history_spec(), "core timeline anchors", scenario_name="primary_source")
+    response = generate_quest_response(
+        history_spec(), "core timeline anchors", scenario_name="primary_source"
+    )
     assert "cite one source" in response.lower()
-
-
-
-
 
 
 def test_is_cooking_subject_detects_chef_specs():
     assert _is_cooking_subject(chef_spec())
     assert not _is_cooking_subject(history_spec())
+
+
 def test_cooking_kitchen_organization_anchor_is_specific():
     anchor = _concept_anchor("kitchen organization", chef_spec())
     assert "clean station" in anchor.lower() or "workflow" in anchor.lower()
@@ -82,9 +81,12 @@ def test_cooking_teaching_mentions_safety_heat_and_texture(monkeypatch):
 
 def test_cooking_dialogue_mentions_result_change(monkeypatch):
     monkeypatch.setattr("scripts.dataset.generation_profiles.random.choice", lambda seq: seq[0])
-    response = generate_dialogue_response(chef_spec(), "kitchen organization", dialogue_type="clarification")
+    response = generate_dialogue_response(
+        chef_spec(), "kitchen organization", dialogue_type="clarification"
+    )
     lowered = response.lower()
     assert "texture" in lowered or "safety" in lowered or "result" in lowered
+
 
 def test_topic_to_anchor_strips_question_prefixes():
     assert _topic_to_anchor("What caused the fall of Rome?", "history") == "The fall of Rome"
@@ -97,6 +99,7 @@ def test_history_teaching_uses_source_date_and_consequence(monkeypatch):
     assert "source" in lowered
     assert "date" in lowered
     assert "consequence" in lowered
+
 
 def test_history_refusal_labels_speculation():
     response = generate_refusal_response(history_spec(), "Will not present speculation as fact")

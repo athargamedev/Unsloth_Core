@@ -121,7 +121,7 @@ source unsloth_env/bin/activate
 ./ucore validate-spec data/npcs/specs/history_guide.json --generation-ready
 
 # Quick train test (smoke, 3 steps)
-./ucore train data/npcs/specs/history_guide.json --technique template --preset test-readiness --dry-run
+./ucore train data/npcs/specs/history_guide.json --technique ollama --preset smoke --export-gguf
 ```
 
 If `./ucore` is not found, you may need to make it executable:

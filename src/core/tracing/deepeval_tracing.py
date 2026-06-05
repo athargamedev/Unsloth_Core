@@ -19,16 +19,21 @@ Usage:
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from contextlib import contextmanager
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 try:
     from deepeval.tracing import (
         current_trace_context,
-        observe as deepeval_observe,
-        trace as deepeval_trace,
         update_current_span,
+    )
+    from deepeval.tracing import (
+        observe as deepeval_observe,
+    )
+    from deepeval.tracing import (
+        trace as deepeval_trace,
     )
 except ImportError:
     current_trace_context = None  # type: ignore
@@ -63,7 +68,9 @@ def build_span_metadata(
 
 
 @contextmanager
-def trace_type(span_type: str, metrics: list[str] | None = None, name: str | None = None, **metadata: Any):
+def trace_type(
+    span_type: str, metrics: list[str] | None = None, name: str | None = None, **metadata: Any
+):
     """Trace a block with the current DeepEval/Confident AI context API."""
     normalized_type = _normalize_span_type(span_type)
     span_name = name or normalized_type
@@ -166,7 +173,9 @@ def trace_agent_node(
             if update_current_span is not None:
                 update_current_span(
                     output=result,
-                    metadata=build_span_metadata(span_type="agent", span_name=span_name, metrics=metric_list),
+                    metadata=build_span_metadata(
+                        span_type="agent", span_name=span_name, metrics=metric_list
+                    ),
                     name=span_name,
                     metric_collection="agent",
                 )
@@ -211,7 +220,9 @@ def trace_tool(
             if update_current_span is not None:
                 update_current_span(
                     output=result,
-                    metadata=build_span_metadata(span_type="tool", span_name=tool_name, metrics=metric_list),
+                    metadata=build_span_metadata(
+                        span_type="tool", span_name=tool_name, metrics=metric_list
+                    ),
                     name=tool_name,
                     metric_collection="tool",
                 )
@@ -253,12 +264,16 @@ def trace_retrieval(
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             result = func(*args, **kwargs)
-            retrieval_context = [str(item) for item in result] if isinstance(result, list) else [str(result)]
+            retrieval_context = (
+                [str(item) for item in result] if isinstance(result, list) else [str(result)]
+            )
             if update_current_span is not None:
                 update_current_span(
                     output=result,
                     retrieval_context=retrieval_context,
-                    metadata=build_span_metadata(span_type="retriever", span_name=op_name, metrics=metric_list),
+                    metadata=build_span_metadata(
+                        span_type="retriever", span_name=op_name, metrics=metric_list
+                    ),
                     name=op_name,
                     metric_collection="retriever",
                 )
@@ -299,7 +314,7 @@ def configure_tracing() -> None:
                 "Set CONFIDENT_API_KEY to enable cloud tracing.",
                 stacklevel=2,
             )
-    except EnvironmentError as exc:
+    except OSError as exc:
         import warnings
 
         warnings.warn(str(exc), stacklevel=2)

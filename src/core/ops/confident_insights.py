@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +37,9 @@ _COMPONENT_ACTIONS = {
 }
 
 
-def classify_failure_component(failure: dict[str, Any], summary: dict[str, Any] | None = None) -> str:
+def classify_failure_component(
+    failure: dict[str, Any], summary: dict[str, Any] | None = None
+) -> str:
     """Map one dataset/eval failure to the project component that should act."""
     summary = summary or {}
     metric = failure.get("metric") or {}
@@ -47,19 +49,45 @@ def classify_failure_component(failure: dict[str, Any], summary: dict[str, Any] 
     reason = str(metric.get("reason") or failure.get("reason") or "").lower()
     score = metric.get("score", failure.get("score"))
 
-    if score is None or summary.get("status") == "inconclusive" or "timeout" in reason or "null" in reason:
+    if (
+        score is None
+        or summary.get("status") == "inconclusive"
+        or "timeout" in reason
+        or "null" in reason
+    ):
         return "judge_runner"
-    if "knowledge" in metric_name or "retention" in metric_name or "remember" in reason or "recall" in reason or "forgot" in reason:
+    if (
+        "knowledge" in metric_name
+        or "retention" in metric_name
+        or "remember" in reason
+        or "recall" in reason
+        or "forgot" in reason
+    ):
         return "memory_retention"
     if summary.get("distribution_gaps") or "distribution" in reason or "missing category" in reason:
         return "dataset_distribution"
     if "metadata" in reason or "source" in reason or category in {"", "unknown"}:
         return "sanitizer_metadata"
-    if category in {"identity", "refusal"} or "persona" in metric_name or "identity" in reason or "refusal" in reason:
+    if (
+        category in {"identity", "refusal"}
+        or "persona" in metric_name
+        or "identity" in reason
+        or "refusal" in reason
+    ):
         return "spec_contract"
-    if "brevity" in reason or "too long" in reason or "sentence" in reason or "constraint" in metric_name:
+    if (
+        "brevity" in reason
+        or "too long" in reason
+        or "sentence" in reason
+        or "constraint" in metric_name
+    ):
         return "runtime_constraints"
-    if "generic" in reason or "ground" in reason or "specific" in reason or "usefulness" in metric_name:
+    if (
+        "generic" in reason
+        or "ground" in reason
+        or "specific" in reason
+        or "usefulness" in metric_name
+    ):
         return "generator_grounding"
     if "parse" in reason or "json" in reason:
         return "evaluation_parser"
@@ -98,9 +126,12 @@ def _to_confident_case(
         "reason": metric.get("reason") or failure.get("reason"),
     }
     return {
-        "name": failure.get("name") or f"{npc_key}:{metadata.get('category', 'unknown')}:{metadata.get('line_number', 'na')}",
+        "name": failure.get("name")
+        or f"{npc_key}:{metadata.get('category', 'unknown')}:{metadata.get('line_number', 'na')}",
         "input": _failure_text(failure, "input", "prompt") or failure.get("user", ""),
-        "actualOutput": _failure_text(failure, "actualOutput", "actual_output", "output", "assistant"),
+        "actualOutput": _failure_text(
+            failure, "actualOutput", "actual_output", "output", "assistant"
+        ),
         "expectedOutput": metadata.get("expected_output") or metadata.get("reference_answer") or "",
         "context": metadata.get("context") or metadata.get("retrieval_context") or [],
         "customColumnKeyValues": {k: v for k, v in custom_columns.items() if v is not None},
@@ -146,12 +177,12 @@ def build_dataset_quality_insights(
     component_counts: Counter[str] = Counter(
         case["customColumnKeyValues"]["component"] for case in cases
     )
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     identifier = f"dataset-quality:{npc_key}:{technique}:{timestamp}"
     return {
         "project": PROJECT_NAME,
         "kind": "dataset_quality_insights",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "npc_key": npc_key,
         "technique": technique,
         "status": summary.get("status"),

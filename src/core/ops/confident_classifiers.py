@@ -15,7 +15,6 @@ from typing import Any
 
 from src.config import paths
 
-
 TRACE_CLASSIFIERS: list[dict[str, Any]] = [
     {
         "name": "NPC Dataset Failure Mode",
@@ -65,12 +64,30 @@ TRACE_CLASSIFIERS: list[dict[str, Any]] = [
         "type": "trace",
         "description": "Classify the main strength of a strong NPC response or dataset row. Choose one label only when the strength is clearly present.",
         "labels": [
-            {"name": "Concrete Teaching", "description": "Gives useful facts, examples, steps, dates, temperatures, concepts, or causal explanation."},
-            {"name": "Strong Persona Fit", "description": "Clearly matches NPC identity, tone, and role while still answering naturally."},
-            {"name": "Good Refusal / Safe Redirect", "description": "Sets a safe boundary and redirects to helpful allowed guidance."},
-            {"name": "Good Runtime Fit", "description": "Short, natural, follows sentence/format limits, and would fit Unity dialogue."},
-            {"name": "Good Memory Use", "description": "Correctly uses a prior user fact/preference/constraint in a later response."},
-            {"name": "Needs Review", "description": "No clear strength yet; keep as candidate until reviewed or improved."},
+            {
+                "name": "Concrete Teaching",
+                "description": "Gives useful facts, examples, steps, dates, temperatures, concepts, or causal explanation.",
+            },
+            {
+                "name": "Strong Persona Fit",
+                "description": "Clearly matches NPC identity, tone, and role while still answering naturally.",
+            },
+            {
+                "name": "Good Refusal / Safe Redirect",
+                "description": "Sets a safe boundary and redirects to helpful allowed guidance.",
+            },
+            {
+                "name": "Good Runtime Fit",
+                "description": "Short, natural, follows sentence/format limits, and would fit Unity dialogue.",
+            },
+            {
+                "name": "Good Memory Use",
+                "description": "Correctly uses a prior user fact/preference/constraint in a later response.",
+            },
+            {
+                "name": "Needs Review",
+                "description": "No clear strength yet; keep as candidate until reviewed or improved.",
+            },
         ],
     },
     {
@@ -78,9 +95,18 @@ TRACE_CLASSIFIERS: list[dict[str, Any]] = [
         "type": "trace",
         "description": "Classify how urgently a trace/dataset row needs repair for production SFT quality.",
         "labels": [
-            {"name": "P0 Safety/Factual Risk", "description": "Unsafe, misinformation, harmful refusal failure, or severe hallucination."},
-            {"name": "P1 Training Harmful", "description": "Would teach the model bad behavior: vague, wrong style, wrong role, or poor answer fit."},
-            {"name": "P2 Improve Later", "description": "Usable but could be more specific, balanced, or better phrased."},
+            {
+                "name": "P0 Safety/Factual Risk",
+                "description": "Unsafe, misinformation, harmful refusal failure, or severe hallucination.",
+            },
+            {
+                "name": "P1 Training Harmful",
+                "description": "Would teach the model bad behavior: vague, wrong style, wrong role, or poor answer fit.",
+            },
+            {
+                "name": "P2 Improve Later",
+                "description": "Usable but could be more specific, balanced, or better phrased.",
+            },
             {"name": "No Repair Needed", "description": "Strong enough for current dataset goals."},
         ],
     },
@@ -92,11 +118,26 @@ THREAD_CLASSIFIERS: list[dict[str, Any]] = [
         "type": "thread",
         "description": "Classify the outcome of a multi-turn NPC conversation after the thread is idle. Focus on goal completion, role, safety, and memory.",
         "labels": [
-            {"name": "Resolved Helpful", "description": "User goal is answered or completed clearly."},
-            {"name": "Unresolved / User Still Confused", "description": "User repeats the question, expresses confusion, or the conversation ends without a useful answer."},
-            {"name": "Memory Retained", "description": "NPC correctly uses prior user facts/preferences/constraints later in the conversation."},
-            {"name": "Memory Lost", "description": "NPC ignores or contradicts a prior user fact/preference/constraint."},
-            {"name": "Escalated Safety Boundary", "description": "Conversation required refusal/safety redirect and the NPC handled it."},
+            {
+                "name": "Resolved Helpful",
+                "description": "User goal is answered or completed clearly.",
+            },
+            {
+                "name": "Unresolved / User Still Confused",
+                "description": "User repeats the question, expresses confusion, or the conversation ends without a useful answer.",
+            },
+            {
+                "name": "Memory Retained",
+                "description": "NPC correctly uses prior user facts/preferences/constraints later in the conversation.",
+            },
+            {
+                "name": "Memory Lost",
+                "description": "NPC ignores or contradicts a prior user fact/preference/constraint.",
+            },
+            {
+                "name": "Escalated Safety Boundary",
+                "description": "Conversation required refusal/safety redirect and the NPC handled it.",
+            },
         ],
     },
     {
@@ -104,12 +145,30 @@ THREAD_CLASSIFIERS: list[dict[str, Any]] = [
         "type": "thread",
         "description": "Classify the main conversation-level weakness. Return no label if no weakness is visible.",
         "labels": [
-            {"name": "Lost Context", "description": "The NPC loses prior user facts, preferences, constraints, or conversation state."},
-            {"name": "Too Generic", "description": "The conversation remains vague instead of giving concrete/helpful NPC guidance."},
-            {"name": "Too Long / Not Game-Ready", "description": "Responses are too verbose or unnatural for Unity/NPC dialogue."},
-            {"name": "Unsafe or Unverified Advice", "description": "The NPC gives unsafe, unsupported, or unverified advice."},
-            {"name": "Role Inconsistent", "description": "The NPC identity, persona, or boundaries drift across turns."},
-            {"name": "Did Not Complete Task", "description": "The user goal remains incomplete by the end of the conversation."},
+            {
+                "name": "Lost Context",
+                "description": "The NPC loses prior user facts, preferences, constraints, or conversation state.",
+            },
+            {
+                "name": "Too Generic",
+                "description": "The conversation remains vague instead of giving concrete/helpful NPC guidance.",
+            },
+            {
+                "name": "Too Long / Not Game-Ready",
+                "description": "Responses are too verbose or unnatural for Unity/NPC dialogue.",
+            },
+            {
+                "name": "Unsafe or Unverified Advice",
+                "description": "The NPC gives unsafe, unsupported, or unverified advice.",
+            },
+            {
+                "name": "Role Inconsistent",
+                "description": "The NPC identity, persona, or boundaries drift across turns.",
+            },
+            {
+                "name": "Did Not Complete Task",
+                "description": "The user goal remains incomplete by the end of the conversation.",
+            },
         ],
     },
 ]
@@ -165,22 +224,30 @@ def render_markdown(setup: dict[str, Any] | None = None) -> str:
         "## Trace classifiers",
     ]
     for classifier in setup["trace_classifiers"]:
-        lines.extend(["", f"### {classifier['name']}", "", classifier["description"], "", "Labels:"])
+        lines.extend(
+            ["", f"### {classifier['name']}", "", classifier["description"], "", "Labels:"]
+        )
         for label in classifier["labels"]:
             lines.append(f"- {label['name']}: {label['description']}")
-    lines.extend(["", "## Thread classifiers", "", "Create after trace/thread ingestion is working."])
+    lines.extend(
+        ["", "## Thread classifiers", "", "Create after trace/thread ingestion is working."]
+    )
     for classifier in setup["thread_classifiers"]:
-        lines.extend(["", f"### {classifier['name']}", "", classifier["description"], "", "Labels:"])
+        lines.extend(
+            ["", f"### {classifier['name']}", "", classifier["description"], "", "Labels:"]
+        )
         for label in classifier["labels"]:
             lines.append(f"- {label['name']}: {label['description']}")
-    lines.extend([
-        "",
-        "## Future Confident Agent",
-        "",
-        "Use Confident Agent only for AI Connections that call local/private NPC runtime endpoints.",
-        f"Compose file: {setup['confident_agent_future']['compose_file']}",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Future Confident Agent",
+            "",
+            "Use Confident Agent only for AI Connections that call local/private NPC runtime endpoints.",
+            f"Compose file: {setup['confident_agent_future']['compose_file']}",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -200,11 +267,17 @@ def write_classifier_setup(
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Print/write Confident AI classifier manual setup specs")
-    parser.add_argument("--write", action="store_true", help="Write configs/confident/classifiers_setup.{json,md}")
+    parser = argparse.ArgumentParser(
+        description="Print/write Confident AI classifier manual setup specs"
+    )
+    parser.add_argument(
+        "--write", action="store_true", help="Write configs/confident/classifiers_setup.{json,md}"
+    )
     parser.add_argument("--json-path", help="Override JSON output path")
     parser.add_argument("--markdown-path", help="Override Markdown output path")
-    parser.add_argument("--format", choices=["json", "markdown"], default="markdown", help="Print format")
+    parser.add_argument(
+        "--format", choices=["json", "markdown"], default="markdown", help="Print format"
+    )
     return parser.parse_args()
 
 

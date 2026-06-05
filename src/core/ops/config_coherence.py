@@ -66,12 +66,22 @@ def format_audit_table(result: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _audit_strategy_profiles(project_root: Path, failures: list[dict[str, Any]], warnings: list[dict[str, Any]]) -> None:
+def _audit_strategy_profiles(
+    project_root: Path, failures: list[dict[str, Any]], warnings: list[dict[str, Any]]
+) -> None:
     path = project_root / "etc" / "npc-production-strategy.yaml"
     data = _read_yaml(path)
     profiles = data.get("profiles") if isinstance(data, dict) else None
     if not isinstance(profiles, dict):
-        warnings.append(_issue(path, "profiles", "npc production strategy missing profiles map", expected="mapping", actual=type(profiles).__name__))
+        warnings.append(
+            _issue(
+                path,
+                "profiles",
+                "npc production strategy missing profiles map",
+                expected="mapping",
+                actual=type(profiles).__name__,
+            )
+        )
         return
 
     for profile_name, profile in profiles.items():
@@ -107,7 +117,9 @@ def _audit_strategy_profiles(project_root: Path, failures: list[dict[str, Any]],
         _audit_training_block(path, f"profiles.{profile_name}.training", training, failures)
 
 
-def _audit_parameter_registry(project_root: Path, failures: list[dict[str, Any]], warnings: list[dict[str, Any]]) -> None:
+def _audit_parameter_registry(
+    project_root: Path, failures: list[dict[str, Any]], warnings: list[dict[str, Any]]
+) -> None:
     path = project_root / "etc" / "parameter-registry.yaml"
     data = _read_yaml(path)
     params = data.get("parameters") if isinstance(data, dict) else {}
@@ -141,7 +153,9 @@ def _audit_parameter_registry(project_root: Path, failures: list[dict[str, Any]]
         )
 
 
-def _audit_presets(project_root: Path, failures: list[dict[str, Any]], warnings: list[dict[str, Any]]) -> None:
+def _audit_presets(
+    project_root: Path, failures: list[dict[str, Any]], warnings: list[dict[str, Any]]
+) -> None:
     presets_dir = project_root / "etc" / "presets"
     if not presets_dir.exists():
         return
@@ -187,7 +201,9 @@ def _audit_presets(project_root: Path, failures: list[dict[str, Any]], warnings:
                 )
 
 
-def _audit_quick_eval(project_root: Path, failures: list[dict[str, Any]], warnings: list[dict[str, Any]]) -> None:
+def _audit_quick_eval(
+    project_root: Path, failures: list[dict[str, Any]], warnings: list[dict[str, Any]]
+) -> None:
     path = project_root / "src" / "core" / "evaluation" / "quick_eval.py"
     if not path.exists():
         return
@@ -206,10 +222,17 @@ def _audit_quick_eval(project_root: Path, failures: list[dict[str, Any]], warnin
         )
 
 
-def _audit_training_block(path: Path, prefix: str, training: dict[str, Any], failures: list[dict[str, Any]]) -> None:
+def _audit_training_block(
+    path: Path, prefix: str, training: dict[str, Any], failures: list[dict[str, Any]]
+) -> None:
     r = training.get("lora_r")
     alpha = training.get("lora_alpha")
-    if r is not None and alpha is not None and alpha != r and not _has_experimental_lora_override(training):
+    if (
+        r is not None
+        and alpha is not None
+        and alpha != r
+        and not _has_experimental_lora_override(training)
+    ):
         failures.append(
             _issue(
                 path,

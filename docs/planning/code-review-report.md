@@ -42,7 +42,7 @@ As a senior engineer reviewing the `Unsloth_Core` repository, I have analyzed th
 
 #### 3. Redundant Path Manipulations
 **The Issue:** Many scripts still use `os.path.join`.
-**The Fix:** Modern Python (3.6+) heavily favors `pathlib`. It makes file checking and directory creation much cleaner, especially when dealing with the complex `subjects/datasets/{npc}/{technique}/` trees.
+**The Fix:** Modern Python (3.6+) heavily favors `pathlib`. It makes file checking and directory creation much cleaner, especially when dealing with the complex `data/datasets/{npc}/{technique}/` trees.
 ```python
 from pathlib import Path
 dataset_dir = Path("subjects/datasets") / npc_key / technique
@@ -90,7 +90,7 @@ router.post('/generate', asyncHandler(async (req, res) => {
 Your `app-store.ts` handles UI state. **Never subscribe to the entire store in your React components**, as it causes redundant re-renders whenever *any* state changes.
 ```typescript
 // ❌ BAD: Re-renders when ANY store value changes
-const store = useAppStore(); 
+const store = useAppStore();
 const activeTab = store.activeTab;
 
 // ✅ GOOD: Only re-renders when activeTab changes

@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import type { RouterDependencies, StartCommandPayload, Job, CommandFieldSchema } from "../types";
+import type { RouterDependencies, StartCommandPayload, Job, CommandFieldSchema, CommandDefinition } from "../types";
 import { launchJob, stopJob, updateStagesFromTruth, makeId, isoNow } from "../services/job-runner";
 import { validateRequiredFields } from "../lib/validation";
 import { validate, startCommandSchema, stopJobSchema } from "../middleware/validation";
@@ -30,10 +30,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
   // ── GET /api/available-commands ─────────────────────────────────────────
   app.get("/api/available-commands", (_req: Request, res: Response) => {
-    const defs = Array.from(commandMap.values()).map(
-      ({ build, ...rest }) => rest,
-    );
-    res.json(defs);
+    res.json(buildAvailableCommandPayloads(commandMap));
   });
 
   // ── GET /api/command-schemas ────────────────────────────────────────────
@@ -42,42 +39,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
       String(req.query.npcKey || "history_guide").trim() ||
       "history_guide";
 
-    const schemas: Record<
-      string,
-      { fields: Record<string, CommandFieldSchema> }
-    > = {};
-
-    for (const [id, def] of commandMap.entries()) {
-      const fields: Record<string, CommandFieldSchema> = {};
-
-      for (const requiredField of def.requiredFields) {
-        fields[requiredField] = {
-          type: "string",
-          required: true,
-          description: `Required by ${id}`,
-        };
-      }
-
-      const schema = def.schema;
-      if (schema) {
-        for (const [k, v] of Object.entries(schema)) {
-          fields[k] = { ...fields[k], ...v };
-        }
-      }
-
-      fields.commandId = {
-        type: "string",
-        required: true,
-        default: id,
-        description: "Backend command identifier",
-      };
-
-      schemas[id] = { fields };
-    }
-
-    // Resolve {npcKey} templates
-    const resolved = resolveTemplateDefaults(schemas, npcKey);
-    res.json(resolved);
+    res.json(buildCommandSchemaPayload(commandMap, npcKey));
   });
 
   // ── POST /api/commands/start ────────────────────────────────────────────
@@ -195,6 +157,47 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+
+export function buildAvailableCommandPayloads(commandMap: Map<string, CommandDefinition>) {
+  return Array.from(commandMap.values()).map(({ build: _build, ...rest }) => rest);
+}
+
+export function buildCommandSchemaPayload(commandMap: Map<string, CommandDefinition>, npcKey: string) {
+  const schemas: Record<
+    string,
+    { fields: Record<string, CommandFieldSchema>; cli?: CommandDefinition["cli"] }
+  > = {};
+
+  for (const [id, def] of commandMap.entries()) {
+    const fields: Record<string, CommandFieldSchema> = {};
+
+    for (const requiredField of def.requiredFields) {
+      fields[requiredField] = {
+        type: "string",
+        required: true,
+        description: `Required by ${id}`,
+      };
+    }
+
+    const schema = def.schema;
+    if (schema) {
+      for (const [k, v] of Object.entries(schema)) {
+        fields[k] = { ...fields[k], ...v };
+      }
+    }
+
+    fields.commandId = {
+      type: "string",
+      required: true,
+      default: id,
+      description: "Backend command identifier",
+    };
+
+    schemas[id] = { fields, cli: def.cli };
+  }
+
+  return resolveTemplateDefaults(schemas, npcKey);
+}
 
 function resolveTemplateDefaults<T>(obj: T, npcKey: string): T {
   if (typeof obj === "string") {

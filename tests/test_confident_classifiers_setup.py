@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from src.core.ops.confident_classifiers import build_classifier_setup, write_classifier_setup
 from src.core.dataset.confident_goldens import project_chatml_rows_to_confident
+from src.core.ops.confident_classifiers import build_classifier_setup, write_classifier_setup
 
 
 def _write_jsonl(path: Path, rows: list[dict]) -> None:
@@ -20,7 +20,9 @@ def test_classifier_setup_contains_manual_ui_specs_and_agent_plan(tmp_path):
     assert setup["agent_required_for_classifiers"] is False
     assert setup["confident_agent_future"]["compose_file"] == "infra/confident-agent/compose.yaml"
 
-    failure_mode = next(item for item in setup["trace_classifiers"] if item["name"] == "NPC Dataset Failure Mode")
+    failure_mode = next(
+        item for item in setup["trace_classifiers"] if item["name"] == "NPC Dataset Failure Mode"
+    )
     labels = {label["name"] for label in failure_mode["labels"]}
     assert "Vague / Low Specificity" in labels
     assert "Safety Boundary Weakness" in labels

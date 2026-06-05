@@ -127,8 +127,9 @@ class TestEvaluate:
         mock = _mock_response({"success": True})
 
         with patch("urllib.request.urlopen", return_value=mock) as mock_urlopen:
-            client.evaluate([{"input": "Hi", "actualOutput": "Hello"}],
-                            {"name": "t", "include": []})
+            client.evaluate(
+                [{"input": "Hi", "actualOutput": "Hello"}], {"name": "t", "include": []}
+            )
 
         body = json.loads(mock_urlopen.call_args[0][0].data)
         assert "identifier" not in body
@@ -147,9 +148,7 @@ class TestEvaluateConversational:
         mock = _mock_response({"success": True, "data": {"testRunId": "conv-run-1"}})
 
         with patch("urllib.request.urlopen", return_value=mock) as mock_urlopen:
-            result = client.evaluate_conversational(
-                test_cases, metrics, identifier="conv-eval"
-            )
+            result = client.evaluate_conversational(test_cases, metrics, identifier="conv-eval")
 
         assert result["success"] is True
 
@@ -174,7 +173,9 @@ class TestEvaluateConversational:
         hparams = {"temperature": "0.3", "judge_model": "qwen2.5:7b"}
 
         with patch("urllib.request.urlopen", return_value=mock) as mock_urlopen:
-            client.evaluate_conversational(test_cases, metrics, identifier="conv-eval", hyperparameters=hparams)
+            client.evaluate_conversational(
+                test_cases, metrics, identifier="conv-eval", hyperparameters=hparams
+            )
 
         body = json.loads(mock_urlopen.call_args[0][0].data)
         assert body["hyperparameters"] == hparams
@@ -210,8 +211,7 @@ class TestPushDataset:
         mock = _mock_response({"success": True})
 
         with patch("urllib.request.urlopen", return_value=mock) as mock_urlopen:
-            result = client.push_dataset("my-dataset", goldens,
-                                         version="1.0.0", finalized=True)
+            result = client.push_dataset("my-dataset", goldens, version="1.0.0", finalized=True)
 
         assert result["success"] is True
 
@@ -519,44 +519,49 @@ class TestRaiseForStatus:
 
     def test_400_raises_value_error(self):
         from scripts.ops.confident_api import ConfidentAPIClient
+
         with pytest.raises(ValueError, match="Bad request"):
             ConfidentAPIClient._raise_for_status(400, '{"error":"bad"}', "/evaluate")
 
     def test_401_raises_permission_error(self):
         from scripts.ops.confident_api import ConfidentAPIClient
+
         with pytest.raises(PermissionError, match="API key invalid"):
             ConfidentAPIClient._raise_for_status(401, "unauthorized", "/evaluate")
 
     def test_403_raises_permission_error(self):
         from scripts.ops.confident_api import ConfidentAPIClient
+
         with pytest.raises(PermissionError, match="Access forbidden"):
             ConfidentAPIClient._raise_for_status(403, "forbidden", "/evaluate")
 
     def test_404_raises_file_not_found_error(self):
         from scripts.ops.confident_api import ConfidentAPIClient
+
         with pytest.raises(FileNotFoundError, match="Resource not found"):
-            ConfidentAPIClient._raise_for_status(404, "not found",
-                                                 "/datasets/unknown")
+            ConfidentAPIClient._raise_for_status(404, "not found", "/datasets/unknown")
 
     def test_409_raises_runtime_error(self):
         from scripts.ops.confident_api import ConfidentAPIClient
+
         with pytest.raises(RuntimeError, match="Conflict"):
-            ConfidentAPIClient._raise_for_status(409, '{"error":"conflict"}',
-                                                 "/datasets/ds")
+            ConfidentAPIClient._raise_for_status(409, '{"error":"conflict"}', "/datasets/ds")
 
     def test_422_raises_value_error(self):
         from scripts.ops.confident_api import ConfidentAPIClient
+
         with pytest.raises(ValueError, match="Unprocessable"):
             ConfidentAPIClient._raise_for_status(422, "bad data", "/evaluate")
 
     def test_500_raises_runtime_error(self):
         from scripts.ops.confident_api import ConfidentAPIClient
+
         with pytest.raises(RuntimeError, match="Server error"):
-            ConfidentAPIClient._raise_for_status(500, "internal error",
-                                                 "/evaluate")
+            ConfidentAPIClient._raise_for_status(500, "internal error", "/evaluate")
 
     def test_unknown_status_raises_runtime_error(self):
         from scripts.ops.confident_api import ConfidentAPIClient
+
         with pytest.raises(RuntimeError, match="HTTP 418"):
             ConfidentAPIClient._raise_for_status(418, "teapot", "/evaluate")
 
@@ -574,8 +579,9 @@ class TestRequestNetworkErrors:
 
         with patch("urllib.request.urlopen", mock_urlopen):
             with pytest.raises(RuntimeError, match="Network error"):
-                client.evaluate([{"input": "Hi", "actualOutput": "Hello"}],
-                                {"name": "t", "include": []})
+                client.evaluate(
+                    [{"input": "Hi", "actualOutput": "Hello"}], {"name": "t", "include": []}
+                )
 
     def test_http_error_through_request_raises_mapped_exception(self):
         """``HTTPError`` in ``_request`` triggers the ``_raise_for_status`` path."""
@@ -584,8 +590,7 @@ class TestRequestNetworkErrors:
         client = ConfidentAPIClient(api_key="test-key")
         headers = {}
         fp = BytesIO(b'{"error":"not found"}')
-        http_error = urllib.error.HTTPError("/test-runs/nonexistent", 404,
-                                            "Not Found", headers, fp)
+        http_error = urllib.error.HTTPError("/test-runs/nonexistent", 404, "Not Found", headers, fp)
 
         with patch("urllib.request.urlopen", side_effect=http_error):
             with pytest.raises(FileNotFoundError, match="Resource not found"):
@@ -603,8 +608,9 @@ class TestRequestNetworkErrors:
 
         with patch("urllib.request.urlopen", return_value=mock_resp):
             with pytest.raises(json.JSONDecodeError):
-                client.evaluate([{"input": "Hi", "actualOutput": "Hello"}],
-                                {"name": "t", "include": []})
+                client.evaluate(
+                    [{"input": "Hi", "actualOutput": "Hello"}], {"name": "t", "include": []}
+                )
 
 
 # ===================================================================
@@ -632,8 +638,7 @@ class TestPipelineManifestConfidentUrl:
 
         saved = json.loads(manifest_path.read_text())
         stage = saved["stages"][0]
-        assert stage["metadata"]["confident_url"] == \
-            "https://app.confident-ai.com/run/abc123"
+        assert stage["metadata"]["confident_url"] == "https://app.confident-ai.com/run/abc123"
 
     def test_metadata_without_confident_url(self, monkeypatch, tmp_path):
         """Other metadata keys are preserved; ``confident_url`` is optional."""

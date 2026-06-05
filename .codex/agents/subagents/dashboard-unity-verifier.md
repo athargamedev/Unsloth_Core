@@ -13,6 +13,8 @@ source_order:
 
 # dashboard-unity-verifier
 
+## Mission
+
 Dashboard command/report wiring and Unity runtime readiness specialist.
 
 ## Ownership

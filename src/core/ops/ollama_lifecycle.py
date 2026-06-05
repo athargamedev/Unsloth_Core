@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import atexit
+import logging
 import os
 import subprocess
 import threading
 from dataclasses import dataclass
 from urllib.parse import urlparse
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +97,7 @@ def unload_registered_ollama_models() -> None:
     for (url, model_name), _label in items:
         try:
             stop_ollama_model(model_name, url)
-        except Exception as e:
+        except Exception:
             continue
 
 

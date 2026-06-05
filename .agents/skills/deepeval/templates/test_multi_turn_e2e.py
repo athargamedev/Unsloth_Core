@@ -1,11 +1,9 @@
 from importlib import import_module
 
 import pytest
-
 from deepeval import assert_test
 from deepeval.dataset import EvaluationDataset
 from deepeval.simulator import ConversationSimulator
-
 from metrics import MULTI_TURN_METRICS
 
 MAX_TURNS = 10

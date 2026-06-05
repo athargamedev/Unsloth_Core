@@ -10,7 +10,6 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import List
 
 OUTER_FENCE_REGEX = re.compile(
     r"\A\s*(`{3,}|~{3,})[^\n]*\n(.*)\n\1\s*\Z", re.DOTALL
@@ -120,7 +119,7 @@ TEXT:
 """
 
 
-def build_fix_prompt(original: str, compressed: str, errors: List[str]) -> str:
+def build_fix_prompt(original: str, compressed: str, errors: list[str]) -> str:
     errors_str = "\n".join(f"- {e}" for e in errors)
     return f"""You are fixing a caveman-compressed markdown file. Specific validation errors were found.
 

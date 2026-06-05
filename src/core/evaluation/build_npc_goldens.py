@@ -19,6 +19,7 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from src.config import paths
+
 DEFAULT_NPC_KEYS = ("history_guide", "chef_assistant", "astronomy_guide", "fitness_coach")
 DEFAULT_CATEGORIES = ("identity", "teaching", "dialogue", "quest", "refusal")
 GOLDENS_OUTPUT_DIR = PROJECT_ROOT / "tests" / "evals" / ".dataset"
@@ -33,6 +34,7 @@ def _default_output_path(technique: str) -> Path:
 # Input validation
 # ---------------------------------------------------------------------------
 
+
 def _validate_npc_key(key: str) -> str:
     """Validate npc_key matches ``^[a-z][a-z0-9_]*$``. Returns key on success."""
     if not re.match(r"^[a-z][a-z0-9_]*$", key):
@@ -43,6 +45,7 @@ def _validate_npc_key(key: str) -> str:
 # ---------------------------------------------------------------------------
 # File I/O helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_spec(npc_key: str) -> dict:
     """Load the NPC spec JSON, returning empty dict on failure."""
@@ -73,13 +76,14 @@ def _load_reference_doc(spec: dict) -> str:
 # Dataset row iteration
 # ---------------------------------------------------------------------------
 
+
 def _find_dataset(npc_key: str, technique: str | None = None) -> Path | None:
     """Find the best matching dataset JSONL for an NPC and technique."""
     if technique is None:
         detected = paths.autodetect_dataset(npc_key)
         return detected[1] if detected else None
     base = PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique
-    train = base / "train.jsonl"
+    base / "train.jsonl"
     clean = base / "train_clean.jsonl"
     if clean.exists():
         return clean
@@ -116,6 +120,7 @@ def _iter_rows(path: Path) -> list[dict]:
 # Message extraction
 # ---------------------------------------------------------------------------
 
+
 def _system_prompt(messages: list[dict]) -> str:
     """Return the system message content, or empty string."""
     for msg in messages:
@@ -142,6 +147,7 @@ def _is_multi_turn(messages: list[dict]) -> bool:
 # Golden construction
 # ---------------------------------------------------------------------------
 
+
 def _build_multi_turn_golden(
     turns: list[dict],
     context: list[str],
@@ -163,7 +169,9 @@ def _build_multi_turn_golden(
     }
 
 
-def _row_to_goldens(row: dict, spec: dict, reference_doc: str, npc_key: str, technique: str) -> list[dict]:
+def _row_to_goldens(
+    row: dict, spec: dict, reference_doc: str, npc_key: str, technique: str
+) -> list[dict]:
     """Convert one ChatML row into zero or more golden entries."""
     messages = row.get("messages", [])
     if not messages:
@@ -204,23 +212,26 @@ def _row_to_goldens(row: dict, spec: dict, reference_doc: str, npc_key: str, tec
         if not user_msg or not assistant_msg:
             return []
 
-        return [{
-            "input": user_msg,
-            "actual_output": assistant_msg,
-            "context": context,
-            "metadata": {
-                "npc_key": npc_key,
-                "category": category,
-                "concept": concept,
-                "technique": technique,
-            },
-            "tags": tags,
-        }]
+        return [
+            {
+                "input": user_msg,
+                "actual_output": assistant_msg,
+                "context": context,
+                "metadata": {
+                    "npc_key": npc_key,
+                    "category": category,
+                    "concept": concept,
+                    "technique": technique,
+                },
+                "tags": tags,
+            }
+        ]
 
 
 # ---------------------------------------------------------------------------
 # Category-balanced selection
 # ---------------------------------------------------------------------------
+
 
 def _select_balanced(
     single_turn: list[dict],
@@ -256,6 +267,7 @@ def _select_balanced(
 # ---------------------------------------------------------------------------
 # Public entrypoint
 # ---------------------------------------------------------------------------
+
 
 def build(
     npc_keys: tuple[str, ...] = DEFAULT_NPC_KEYS,
@@ -304,7 +316,12 @@ def build(
         dataset_path = _find_dataset(npc_key, technique=resolved_technique)
         if dataset_path is None:
             print(f"[warn] No dataset found for NPC '{npc_key}' — skipping", file=sys.stderr)
-            stats[npc_key] = {"rows": 0, "single_candidates": 0, "multi_candidates": 0, "selected": 0}
+            stats[npc_key] = {
+                "rows": 0,
+                "single_candidates": 0,
+                "multi_candidates": 0,
+                "selected": 0,
+            }
             continue
 
         spec = _load_spec(npc_key)
@@ -347,12 +364,18 @@ def build(
         json.dump(all_goldens, f, indent=2, ensure_ascii=False)
         f.write("\n")
 
-    return {"total_goldens": len(all_goldens), "per_npc": stats, "technique": resolved_technique, "output_path": str(output)}
+    return {
+        "total_goldens": len(all_goldens),
+        "per_npc": stats,
+        "technique": resolved_technique,
+        "output_path": str(output),
+    }
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
@@ -425,7 +448,8 @@ def main() -> None:
     if getattr(args, "push_to_confident", False):
         print("\nPushing to Confident AI...")
         try:
-            from src.core.ops.confident_push import push_goldens_if_confident, is_confident_enabled
+            from src.core.ops.confident_push import is_confident_enabled, push_goldens_if_confident
+
             if not is_confident_enabled():
                 print("  [error] CONFIDENT_API_KEY not set. Skipping push.")
             else:

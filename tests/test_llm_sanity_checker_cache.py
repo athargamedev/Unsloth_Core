@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-
 
 def _example() -> dict:
     return {
@@ -59,7 +57,11 @@ def test_llm_sanity_checker_cache_key_includes_reference_context(tmp_path, monke
 
     def fake_post(url, json, timeout):
         calls["count"] += 1
-        result = {"is_high_quality": True, "failure_reason": None, "score": 0.8 + calls["count"] / 100}
+        result = {
+            "is_high_quality": True,
+            "failure_reason": None,
+            "score": 0.8 + calls["count"] / 100,
+        }
         return _FakeResponse({"message": {"content": __import__("json").dumps(result)}})
 
     monkeypatch.setattr(sanitize_dataset.requests, "post", fake_post)

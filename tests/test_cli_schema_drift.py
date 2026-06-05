@@ -50,14 +50,14 @@ CLI_TO_TS: dict[str, str] = {
     "export-adapter": "export-adapter",
     "export-resume": "export-resume",
     "feedback": "feedback",
-    "generate": "dataset-generate",          # CLI cmd ≠ schema id
+    "generate": "dataset-generate",  # CLI cmd ≠ schema id
     "generate-ollama": "generate-ollama",
     "init": "init",
     "pipeline": "pipeline",
     "plan-batch": "plan-batch",
     "plan-execution": "plan-execution",
     "quick-eval": "quick-eval",
-    "sanitize": "dataset-sanitize",          # CLI cmd ≠ schema id
+    "sanitize": "dataset-sanitize",  # CLI cmd ≠ schema id
     "smoke": "smoke",
     "supabase-check": "supabase-check",
     "tb-reader": "tb-reader",
@@ -167,46 +167,96 @@ EXPECTED_CLI_ONLY: dict[str, set[str]] = {
     "export-adapter": {"all", "outfile", "outtype", "adapter-path"},
     "export-resume": {"skip-f16", "timeout-seconds", "model"},
     "feedback": {
-        "dry-run", "auto", "skip-gap-detection", "save-gaps",
-        "win-rate-threshold", "quality-threshold", "violation-threshold",
+        "dry-run",
+        "auto",
+        "skip-gap-detection",
+        "save-gaps",
+        "win-rate-threshold",
+        "quality-threshold",
+        "violation-threshold",
     },
     "generate": {"ollama", "concept-focus", "docs-manifest", "fresh"},
     "generate-ollama": {
-        "check-health", "concept-focus", "dry-run", "fresh",
-        "no-validation", "output", "pull-model", "val-split",
+        "check-health",
+        "concept-focus",
+        "dry-run",
+        "fresh",
+        "no-validation",
+        "output",
+        "pull-model",
+        "val-split",
     },
     "init": {"force", "skip-spec"},
     "pipeline": {"confident", "remote-eval", "docs-manifest"},
     "plan-batch": {
-        "colab-output-dir", "drive-repo-dir", "generate-colab-notebooks",
-        "json", "local-vram-gb", "spec", "write-plan",
+        "colab-output-dir",
+        "drive-repo-dir",
+        "generate-colab-notebooks",
+        "json",
+        "local-vram-gb",
+        "spec",
+        "write-plan",
     },
     "plan-execution": {"json"},
     "quick-eval": {"feedback-json", "output", "wandb", "wandb-project", "wandb-entity", "adapter"},
     "sanitize": {
-        "input", "min-length", "max-sentences", "verbose",
-        "strict-canonical", "strict-mode", "artifact-check",
+        "input",
+        "min-length",
+        "max-sentences",
+        "verbose",
+        "strict-canonical",
+        "strict-mode",
+        "artifact-check",
     },
     "smoke": {"check-integrity", "track", "model"},
     "supabase-check": {"skip-probe"},
     "tb-reader": set(),
     "track": set(),
     "train": {
-        "config-or-spec", "from-spec", "lr", "batch-size", "epochs",
-        "grad-accum", "max-seq-len", "lora-r", "lora-alpha", "lora-dropout",
-        "neftune", "weight-decay", "warmup", "lr-scheduler", "packing",
-        "train-on-responses", "quantization", "allow-ungated-dataset",
-        "model", "no-wandb", "wandb-project", "wandb-entity",
-        "export-gguf", "full-merge-export",
+        "config-or-spec",
+        "from-spec",
+        "lr",
+        "batch-size",
+        "epochs",
+        "grad-accum",
+        "max-seq-len",
+        "lora-r",
+        "lora-alpha",
+        "lora-dropout",
+        "neftune",
+        "weight-decay",
+        "warmup",
+        "lr-scheduler",
+        "packing",
+        "train-on-responses",
+        "quantization",
+        "allow-ungated-dataset",
+        "model",
+        "no-wandb",
+        "wandb-project",
+        "wandb-entity",
+        "export-gguf",
+        "full-merge-export",
     },
     "validate-config": {
-        "config", "data", "format", "model", "npc-key",
-        "output", "require-canonical", "strict",
+        "config",
+        "data",
+        "format",
+        "model",
+        "npc-key",
+        "output",
+        "require-canonical",
+        "strict",
     },
     "validate-spec": {
-        "all", "generation-ready", "json", "require-all-categories",
-        "require-dataset-minimums", "require-reference-contract",
-        "require-reference-docs", "strict",
+        "all",
+        "generation-ready",
+        "json",
+        "require-all-categories",
+        "require-dataset-minimums",
+        "require-reference-contract",
+        "require-reference-docs",
+        "strict",
     },
 }
 
@@ -214,6 +264,7 @@ EXPECTED_CLI_ONLY: dict[str, set[str]] = {
 # ═════════════════════════════════════════════════════════════════════════════
 #  Helpers
 # ═════════════════════════════════════════════════════════════════════════════
+
 
 def camel_to_kebab(name: str) -> str:
     """Convert camelCase → kebab-case."""
@@ -256,6 +307,7 @@ def get_ts_schemas() -> dict[str, Any]:
 
 # We disable pytest's capsys in this test because we print a multi-section
 # drift report that must reach stdout even on success.
+
 
 def test_cli_schema_drift(capsys):
     """Compare CLI flags against TS schema entries.  Always passes —
@@ -335,7 +387,7 @@ def test_cli_schema_drift(capsys):
 
     with capsys.disabled():
         print(f"\n{'=' * 68}")
-        print(f"   CLI ↔ Schema Drift Report")
+        print("   CLI ↔ Schema Drift Report")
         print(f"{'=' * 68}")
         print(f"   CLI commands found:         {len(cli_commands)}")
         print(f"   Matched to TS schemas:      {matched}")
@@ -353,8 +405,10 @@ def test_cli_schema_drift(capsys):
             print(f"   ── [{cmd}] ──")
 
             if entry["only_in_cli"]:
-                tag = " (expected)" if not entry["unexpected_cli"] else (
-                    "" if not entry["only_in_schema"] else ""
+                tag = (
+                    " (expected)"
+                    if not entry["unexpected_cli"]
+                    else ("" if not entry["only_in_schema"] else "")
                 )
                 print(f"    CLI-only flags{tag}:")
                 for fl in entry["only_in_cli"]:
@@ -362,7 +416,7 @@ def test_cli_schema_drift(capsys):
                     print(f"      {expect} {fl}")
 
             if entry["only_in_schema"]:
-                print(f"    Schema-only fields:")
+                print("    Schema-only fields:")
                 known_s = EXPECTED_SCHEMA_ONLY.get(entry["ts_cmd"], {})
                 for fl in entry["only_in_schema"]:
                     reason = known_s.get(fl, "UNEXPECTED — no CLI equivalent")
@@ -370,16 +424,20 @@ def test_cli_schema_drift(capsys):
                     print(f"      {expect} {fl}  ← {reason}")
 
         print()
-        print(f"   ── Summary ──")
-        print(f"   CLI-only: {len(cli_only_unexpected)} unexpected "
-              f"(out of {sum(len(e['only_in_cli']) for e in all_entries)} total)")
-        print(f"   Schema-only: {len(schema_only_unexpected)} unexpected "
-              f"(out of {sum(len(e['only_in_schema']) for e in all_entries)} total)")
+        print("   ── Summary ──")
+        print(
+            f"   CLI-only: {len(cli_only_unexpected)} unexpected "
+            f"(out of {sum(len(e['only_in_cli']) for e in all_entries)} total)"
+        )
+        print(
+            f"   Schema-only: {len(schema_only_unexpected)} unexpected "
+            f"(out of {sum(len(e['only_in_schema']) for e in all_entries)} total)"
+        )
 
         if not cli_only_unexpected and not schema_only_unexpected:
-            print(f"   ✓ All drift accounted for in known-exception catalogs.")
+            print("   ✓ All drift accounted for in known-exception catalogs.")
         else:
-            print(f"   ⚠ Unexplained drift — review entries marked ⚠ above.")
+            print("   ⚠ Unexplained drift — review entries marked ⚠ above.")
 
     # ── Fail?  YES, but only on UNEXPECTED drift ──────────────────────
     msg_parts: list[str] = []
@@ -395,7 +453,4 @@ def test_cli_schema_drift(capsys):
         )
 
     if msg_parts:
-        pytest.fail(
-            f"Unexpected CLI↔Schema drift detected.\n\n"
-            + "\n\n".join(msg_parts)
-        )
+        pytest.fail("Unexpected CLI↔Schema drift detected.\n\n" + "\n\n".join(msg_parts))

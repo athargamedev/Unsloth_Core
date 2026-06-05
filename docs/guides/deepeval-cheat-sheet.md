@@ -321,16 +321,16 @@ class MyCustomMetric(BaseMetric):
     def __init__(self, threshold=0.5):
         self.threshold = threshold
         self.name = "My Custom Metric"
-    
+
     def measure(self, test_case) -> float:
         # Custom scoring logic
         score = ...
         self.success = score >= self.threshold
         return score
-    
+
     async def a_measure(self, test_case) -> float:
         return self.measure(test_case)
-    
+
     def is_successful(self) -> bool:
         return self.success
 ```
@@ -537,7 +537,7 @@ deepeval test run tests/evals/test_npc_model_quality.py \
 deepeval generate \
   --method docs \
   --variation single-turn \
-  --documents ./subjects/reference_docs/ \
+  --documents ./data/npcs/reference_docs/ \
   --output-dir ./tests/evals/.dataset \
   --file-name .dataset
 ```
@@ -576,7 +576,7 @@ from deepeval.synthesizer import Synthesizer
 synthesizer = Synthesizer(model=judge_model)
 goldens = synthesizer.generate_goldens(
     method="docs",
-    documents=["subjects/reference_docs/history_guide_primer.md"],
+    documents=["data/npcs/reference_docs/history_guide_primer.md"],
     num_goldens=10,
     max_concurrent=4,
 )
@@ -690,7 +690,7 @@ for golden in dataset.evals_iterator(metrics=DATASET_QUALITY_METRICS):
 ```
 Generate → Sanitize → [Dataset Quality Gate] → Train → Export → [Model Eval]
                           ↓                          ↓             ↓
-                   DeepEval metrics            Dataset & GGUF   DeepEval + 
+                   DeepEval metrics            Dataset & GGUF   DeepEval +
                    (Faithfulness,             artifacts pushed  Confident AI
                     AnswerRelevancy,           to Confident      (RoleAdherence,
                     GEval persona)              (opt-in)         ConversationComplete)
@@ -760,18 +760,18 @@ export DEEPEVAL_OLLAMA_MODEL="qwen3:latest"
 export DEEPEVAL_OLLAMA_BASE_URL="http://localhost:11434"
 
 # 2. Run dataset gate (fast mode)
-./ucore dataset-eval subjects/NPC_specs/history_guide.json \
+./ucore dataset-eval data/npcs/specs/history_guide.json \
   --technique template \
   --mode fast
 
 # 3. Train (bypass gate for iteration)
-./ucore train subjects/NPC_specs/history_guide.json \
+./ucore train data/npcs/specs/history_guide.json \
   --technique template \
   --preset fast-3b
 
 # 4. Evaluate with DeepEval
 ./ucore evaluate --baseline exports/history_guide/history_guide-lora-f16.gguf \
-  --spec subjects/NPC_specs/history_guide.json \
+  --spec data/npcs/specs/history_guide.json \
   --deepeval \
   --deepeval-judge-model qwen3:latest
 ```
@@ -946,7 +946,7 @@ from deepeval.dataset import EvaluationDataset
 import json
 
 # Load from file
-with open("subjects/datasets/history_guide/template/train_clean.jsonl") as f:
+with open("data/datasets/history_guide/template/train_clean.jsonl") as f:
     goldens = []
     for line in f:
         row = json.loads(line)

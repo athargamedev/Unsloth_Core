@@ -1,11 +1,8 @@
 """Shared DeepEval metrics for generated NPC training datasets."""
 
 import os
+
 import requests
-from typing import Optional, Tuple, Union
-
-from scripts.ops.judge_cache import JudgeCache, JudgeCacheInput
-
 from deepeval.metrics import (
     AnswerRelevancyMetric,
     BiasMetric,
@@ -21,11 +18,11 @@ from deepeval.metrics import (
 from deepeval.metrics.g_eval import Rubric
 from deepeval.models import DeepEvalBaseLLM, OllamaModel
 from deepeval.models.llms.ollama_model import retry_ollama
-
-from scripts.ops.ollama_lifecycle import register_ollama_unload
-from scripts.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient
 from deepeval.test_case import SingleTurnParams
 from pydantic import BaseModel
+from scripts.ops.judge_cache import JudgeCache, JudgeCacheInput
+from scripts.ops.ollama_lifecycle import register_ollama_unload
+from scripts.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient
 
 
 def _ollama_think_enabled() -> bool:
@@ -41,14 +38,16 @@ def _normalize_inference_server_url(url: str | None) -> str | None:
 class DatasetJudgeOllamaModel(OllamaModel):
     """DeepEval Ollama judge with explicit control over thinking models."""
 
-    def __init__(self, *args, think: bool = False, inference_server_url: str | None = None, **kwargs):
+    def __init__(
+        self, *args, think: bool = False, inference_server_url: str | None = None, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.think = think
         self.inference_server_url = _normalize_inference_server_url(
             inference_server_url or os.getenv("UCORE_INFERENCE_SERVER_URL")
         )
 
-    def _chat_kwargs(self, prompt: str, schema: Optional[type[BaseModel]]) -> dict:
+    def _chat_kwargs(self, prompt: str, schema: type[BaseModel] | None) -> dict:
         return {
             "model": self.name,
             "messages": [{"role": "user", "content": prompt}],
@@ -60,7 +59,7 @@ class DatasetJudgeOllamaModel(OllamaModel):
             "think": self.think,
         }
 
-    def _cache_item(self, prompt: str, schema: Optional[type[BaseModel]]) -> JudgeCacheInput | None:
+    def _cache_item(self, prompt: str, schema: type[BaseModel] | None) -> JudgeCacheInput | None:
         if not os.getenv("UCORE_JUDGE_CACHE_PATH"):
             return None
         if os.getenv("UCORE_JUDGE_CACHE_DISABLE", "").strip().lower() in {"1", "true", "yes", "on"}:
@@ -75,7 +74,7 @@ class DatasetJudgeOllamaModel(OllamaModel):
             prompt_version="deepeval-local-judge-v1",
         )
 
-    def _cached_result(self, prompt: str, schema: Optional[type[BaseModel]]):
+    def _cached_result(self, prompt: str, schema: type[BaseModel] | None):
         item = self._cache_item(prompt, schema)
         if item is None:
             return None, None
@@ -87,12 +86,14 @@ class DatasetJudgeOllamaModel(OllamaModel):
 
     def _store_result(self, item: JudgeCacheInput | None, content: str) -> None:
         if item is not None:
-            JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None).put(item, result={"content": content})
+            JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None).put(
+                item, result={"content": content}
+            )
 
     @retry_ollama
     def generate(
-        self, prompt: str, schema: Optional[type[BaseModel]] = None
-    ) -> Tuple[Union[str, BaseModel], float]:
+        self, prompt: str, schema: type[BaseModel] | None = None
+    ) -> tuple[str | BaseModel, float]:
         cache_item, cached = self._cached_result(prompt, schema)
         if cached is not None:
             return cached, 0
@@ -112,16 +113,14 @@ class DatasetJudgeOllamaModel(OllamaModel):
         content = response.message.content
         self._store_result(cache_item, content)
         return (
-            schema.model_validate_json(content)
-            if schema
-            else content,
+            schema.model_validate_json(content) if schema else content,
             0,
         )
 
     @retry_ollama
     async def a_generate(
-        self, prompt: str, schema: Optional[type[BaseModel]] = None
-    ) -> Tuple[Union[str, BaseModel], float]:
+        self, prompt: str, schema: type[BaseModel] | None = None
+    ) -> tuple[str | BaseModel, float]:
         cache_item, cached = self._cached_result(prompt, schema)
         if cached is not None:
             return cached, 0
@@ -132,9 +131,7 @@ class DatasetJudgeOllamaModel(OllamaModel):
         content = response.message.content
         self._store_result(cache_item, content)
         return (
-            schema.model_validate_json(content)
-            if schema
-            else content,
+            schema.model_validate_json(content) if schema else content,
             0,
         )
 
@@ -167,7 +164,7 @@ class DatasetJudgeWandbInferenceModel(DeepEvalBaseLLM):
     def get_model_name(self, *args, **kwargs) -> str:
         return f"wandb-inference:{self.name}"
 
-    def _messages(self, prompt: str, schema: Optional[type[BaseModel]] = None) -> list[dict[str, str]]:
+    def _messages(self, prompt: str, schema: type[BaseModel] | None = None) -> list[dict[str, str]]:
         if schema is None:
             return [{"role": "user", "content": prompt}]
         return [
@@ -178,14 +175,14 @@ class DatasetJudgeWandbInferenceModel(DeepEvalBaseLLM):
             {"role": "user", "content": f"{prompt}\n\nJSON schema:\n{schema.model_json_schema()}"},
         ]
 
-    def generate(self, prompt: str, schema: Optional[type[BaseModel]] = None):
+    def generate(self, prompt: str, schema: type[BaseModel] | None = None):
         content = self.model.chat(
             self._messages(prompt, schema),
             response_format={"type": "json_object"} if schema else None,
         )
         return (schema.model_validate_json(content) if schema else content, 0)
 
-    async def a_generate(self, prompt: str, schema: Optional[type[BaseModel]] = None):
+    async def a_generate(self, prompt: str, schema: type[BaseModel] | None = None):
         content = await self.model.achat(
             self._messages(prompt, schema),
             response_format={"type": "json_object"} if schema else None,
@@ -246,10 +243,22 @@ DATASET_QUALITY_METRICS = [
             SingleTurnParams.CONTEXT,
         ],
         rubric=[
-            Rubric(score_range=(0, 3), expected_outcome="Fails persona, category, or strict format rules."),
-            Rubric(score_range=(4, 6), expected_outcome="Partially fits persona or category; minor issues or slight format slip."),
-            Rubric(score_range=(7, 8), expected_outcome="Good persona and category fit with small gaps; clean format."),
-            Rubric(score_range=(9, 10), expected_outcome="Perfect persona and category fit; no violations; game-ready format."),
+            Rubric(
+                score_range=(0, 3),
+                expected_outcome="Fails persona, category, or strict format rules.",
+            ),
+            Rubric(
+                score_range=(4, 6),
+                expected_outcome="Partially fits persona or category; minor issues or slight format slip.",
+            ),
+            Rubric(
+                score_range=(7, 8),
+                expected_outcome="Good persona and category fit with small gaps; clean format.",
+            ),
+            Rubric(
+                score_range=(9, 10),
+                expected_outcome="Perfect persona and category fit; no violations; game-ready format.",
+            ),
         ],
         model=JUDGE_MODEL,
         threshold=0.75,
@@ -281,10 +290,18 @@ DATASET_QUALITY_METRICS = [
             SingleTurnParams.CONTEXT,
         ],
         rubric=[
-            Rubric(score_range=(0, 3), expected_outcome="Vague, generic, or useless as training data."),
-            Rubric(score_range=(4, 6), expected_outcome="Partially useful; some specifics but filler present."),
+            Rubric(
+                score_range=(0, 3), expected_outcome="Vague, generic, or useless as training data."
+            ),
+            Rubric(
+                score_range=(4, 6),
+                expected_outcome="Partially useful; some specifics but filler present.",
+            ),
             Rubric(score_range=(7, 8), expected_outcome="Domain-specific and useful; minor gaps."),
-            Rubric(score_range=(9, 10), expected_outcome="Highly specific, actionable, expert-quality training data."),
+            Rubric(
+                score_range=(9, 10),
+                expected_outcome="Highly specific, actionable, expert-quality training data.",
+            ),
         ],
         model=JUDGE_MODEL,
         threshold=0.70,
@@ -313,10 +330,19 @@ DATASET_QUALITY_METRICS = [
             SingleTurnParams.CONTEXT,
         ],
         rubric=[
-            Rubric(score_range=(0, 3), expected_outcome="Violates constraint, refuses incorrectly, or uses forbidden AI phrasing."),
-            Rubric(score_range=(4, 6), expected_outcome="Mostly compliant but with minor violations or slight wordiness."),
+            Rubric(
+                score_range=(0, 3),
+                expected_outcome="Violates constraint, refuses incorrectly, or uses forbidden AI phrasing.",
+            ),
+            Rubric(
+                score_range=(4, 6),
+                expected_outcome="Mostly compliant but with minor violations or slight wordiness.",
+            ),
             Rubric(score_range=(7, 8), expected_outcome="Compliant with small stylistic gaps."),
-            Rubric(score_range=(9, 10), expected_outcome="Fully compliant, natural, game-ready response."),
+            Rubric(
+                score_range=(9, 10),
+                expected_outcome="Fully compliant, natural, game-ready response.",
+            ),
         ],
         model=JUDGE_MODEL,
         threshold=0.70,

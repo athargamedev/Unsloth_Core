@@ -6,13 +6,17 @@ from pathlib import Path
 
 import yaml
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.core.ops import model_presets, ollama_model_presets
 from src.core.training import train as train_module
-from src.core.training.train import PRESETS_DIR, get_available_presets, load_config, load_preset, resolve_preset_path
+from src.core.training.train import (
+    PRESETS_DIR,
+    get_available_presets,
+    load_preset,
+    resolve_preset_path,
+)
 
 ALLOWED_PRESET_TOP_LEVEL_KEYS = {"model", "training", "lora", "wandb", "logging"}
 ALLOWED_TRAINING_KEYS = {
@@ -58,7 +62,9 @@ def test_all_canonical_training_presets_use_supported_override_shape():
     for preset_path in preset_paths:
         preset = yaml.safe_load(preset_path.read_text(encoding="utf-8")) or {}
         assert set(preset) <= ALLOWED_PRESET_TOP_LEVEL_KEYS, preset_path.name
-        assert any(key in preset for key in ("model", "training", "lora", "wandb")), preset_path.name
+        assert any(key in preset for key in ("model", "training", "lora", "wandb")), (
+            preset_path.name
+        )
 
         training = preset.get("training")
         if training is not None:
@@ -73,8 +79,13 @@ def test_all_canonical_training_presets_use_supported_override_shape():
 
 def test_model_and_ollama_preset_maps_resolve_from_canonical_etc_files():
     assert model_presets.resolve_model_presets_path() == PROJECT_ROOT / "etc" / "model-presets.yaml"
-    assert ollama_model_presets.resolve_ollama_model_presets_path() == PROJECT_ROOT / "etc" / "ollama-model-presets.yaml"
-    assert model_presets.resolve_training_preset("unsloth/Llama-3.2-3B-Instruct-bnb-4bit") == "fast-3b"
+    assert (
+        ollama_model_presets.resolve_ollama_model_presets_path()
+        == PROJECT_ROOT / "etc" / "ollama-model-presets.yaml"
+    )
+    assert (
+        model_presets.resolve_training_preset("unsloth/Llama-3.2-3B-Instruct-bnb-4bit") == "fast-3b"
+    )
     assert ollama_model_presets.resolve_ollama_model(role="judge") == "qwen2.5:7b"
 
 
@@ -83,7 +94,9 @@ def test_canonical_preset_wins_over_legacy_duplicate(monkeypatch, tmp_path):
     legacy_presets = tmp_path / "configs" / "presets"
     canonical_presets.mkdir(parents=True)
     legacy_presets.mkdir(parents=True)
-    (canonical_presets / "duplicate.yaml").write_text("training:\n  batch_size: 2\n", encoding="utf-8")
+    (canonical_presets / "duplicate.yaml").write_text(
+        "training:\n  batch_size: 2\n", encoding="utf-8"
+    )
     (legacy_presets / "duplicate.yaml").write_text("training:\n  batch_size: 1\n", encoding="utf-8")
     monkeypatch.setattr(train_module, "PRESETS_DIR", canonical_presets)
     monkeypatch.setattr(train_module, "LEGACY_PRESETS_DIR", legacy_presets)
@@ -99,7 +112,9 @@ def test_legacy_only_preset_fallback_loads(monkeypatch, tmp_path):
     legacy_presets = tmp_path / "configs" / "presets"
     canonical_presets.mkdir(parents=True)
     legacy_presets.mkdir(parents=True)
-    (legacy_presets / "legacy-only.yaml").write_text("training:\n  batch_size: 3\n", encoding="utf-8")
+    (legacy_presets / "legacy-only.yaml").write_text(
+        "training:\n  batch_size: 3\n", encoding="utf-8"
+    )
     monkeypatch.setattr(train_module, "PRESETS_DIR", canonical_presets)
     monkeypatch.setattr(train_module, "LEGACY_PRESETS_DIR", legacy_presets)
 
@@ -136,7 +151,9 @@ def test_effective_config_merge_includes_preset_neftune(monkeypatch, tmp_path):
         encoding="utf-8",
     )
     config_path = tmp_path / "config.yaml"
-    config_path.write_text(yaml.safe_dump({"model": "test-model", "training": {}}), encoding="utf-8")
+    config_path.write_text(
+        yaml.safe_dump({"model": "test-model", "training": {}}), encoding="utf-8"
+    )
     monkeypatch.setattr(train_module, "PRESETS_DIR", canonical_presets)
     monkeypatch.setattr(train_module, "LEGACY_PRESETS_DIR", legacy_presets)
 

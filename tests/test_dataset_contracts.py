@@ -64,8 +64,24 @@ def test_generation_requests_leave_room_for_stratified_validation_split():
 def test_summarize_jsonl_dataset_counts_rows(tmp_path: Path):
     dataset_path = tmp_path / "train_clean.jsonl"
     rows = [
-        {"messages": [{"role": "user", "content": "u"}, {"role": "assistant", "content": "a"}], "metadata": {"category": "identity", "difficulty": "beginner", "split": "train", "concept": "intro"}},
-        {"messages": [{"role": "user", "content": "u2"}, {"role": "assistant", "content": "a2"}], "metadata": {"category": "teaching", "difficulty": "intermediate", "split": "validation", "concept": "concept"}},
+        {
+            "messages": [{"role": "user", "content": "u"}, {"role": "assistant", "content": "a"}],
+            "metadata": {
+                "category": "identity",
+                "difficulty": "beginner",
+                "split": "train",
+                "concept": "intro",
+            },
+        },
+        {
+            "messages": [{"role": "user", "content": "u2"}, {"role": "assistant", "content": "a2"}],
+            "metadata": {
+                "category": "teaching",
+                "difficulty": "intermediate",
+                "split": "validation",
+                "concept": "concept",
+            },
+        },
     ]
     dataset_path.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
 

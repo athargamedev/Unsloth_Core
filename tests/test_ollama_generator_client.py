@@ -51,7 +51,9 @@ class AsyncDummySession:
 
 
 def test_ollama_generator_retries_connection_error_then_succeeds(monkeypatch):
-    generator = gdo.OllamaGeneratorV2(model="test-model", url="http://localhost:11434/api/chat", max_retries=3)
+    generator = gdo.OllamaGeneratorV2(
+        model="test-model", url="http://localhost:11434/api/chat", max_retries=3
+    )
     calls = []
     sleeps = []
 
@@ -76,7 +78,9 @@ def test_ollama_generator_async_retries_timeout_then_succeeds(monkeypatch):
     if gdo.aiohttp is None:
         return
 
-    generator = gdo.OllamaGeneratorV2(model="test-model", url="http://localhost:11434/api/chat", max_retries=3)
+    generator = gdo.OllamaGeneratorV2(
+        model="test-model", url="http://localhost:11434/api/chat", max_retries=3
+    )
     sleeps = []
 
     async def fake_sleep(seconds):
@@ -84,10 +88,12 @@ def test_ollama_generator_async_retries_timeout_then_succeeds(monkeypatch):
 
     monkeypatch.setattr(gdo.asyncio, "sleep", fake_sleep)
 
-    session = AsyncDummySession([
-        asyncio.TimeoutError(),
-        AsyncDummyResponse({"message": {"content": "done"}}),
-    ])
+    session = AsyncDummySession(
+        [
+            TimeoutError(),
+            AsyncDummyResponse({"message": {"content": "done"}}),
+        ]
+    )
 
     result = asyncio.run(
         generator.generate_async(

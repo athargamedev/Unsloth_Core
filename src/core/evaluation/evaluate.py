@@ -23,26 +23,30 @@ import os
 import re
 import subprocess
 import sys
-import tempfile
 import time
-import requests
-import urllib.request
 import urllib.error
+import urllib.request
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
+import requests
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import constants, paths
 from src.config.workflow_context import load_subject_spec as load_shared_subject_spec
-from src.config.log_setup import log_info, log_warn, log_error, log_state
 from src.core.ops.confident_api import ConfidentAPIClient
-from src.core.ops.env_loader import ensure_confident_api_key, confident_available
+from src.core.ops.env_loader import confident_available, ensure_confident_api_key
+from src.core.ops.wandb_inference import (
+    DEFAULT_WANDB_INFERENCE_MODEL,
+    WandbInferenceClient,
+    extract_json_object,
+)
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
-from src.core.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient, extract_json_object
 from src.core.tracing.deepeval_tracing import configure_tracing, trace_type
+
 
 def _resolve_deepeval_bin() -> str:
     """Resolve deepeval binary from active venv first, fall back to PATH."""
@@ -58,9 +62,10 @@ def _resolve_deepeval_bin() -> str:
 
 # ── Constraint checking ─────────────────────────────────────────────────────
 
+
 def check_sentence_count(text, max_sentences=3):
     """Check if response obeys the max sentence rule."""
-    sentences = [s.strip() for s in re.split(r'[.!?]+', text) if s.strip()]
+    sentences = [s.strip() for s in re.split(r"[.!?]+", text) if s.strip()]
     return len(sentences) <= max_sentences, len(sentences)
 
 
@@ -147,7 +152,8 @@ def response_specificity_score(text: str, spec=None, expected: str | None = None
 
     if expected:
         expected_terms = {
-            t for t in re.findall(r"[a-z][a-z0-9'-]{4,}", expected.lower())
+            t
+            for t in re.findall(r"[a-z][a-z0-9'-]{4,}", expected.lower())
             if t not in {"about", "there", "their", "would", "could", "should"}
         }
         overlap = sum(1 for term in expected_terms if term in normalized)
@@ -155,7 +161,10 @@ def response_specificity_score(text: str, spec=None, expected: str | None = None
 
     if re.search(r"\b\d+(?:\.\d+)?\b", normalized):
         score += 1
-    if any(marker in normalized for marker in ["because", "for example", "means", "causes", "allows", "helps"]):
+    if any(
+        marker in normalized
+        for marker in ["because", "for example", "means", "causes", "allows", "helps"]
+    ):
         score += 1
     for filler in GENERIC_FILLER_PATTERNS:
         if filler in normalized:
@@ -200,7 +209,7 @@ def diversity_score(text):
         return {"ttr": 0, "repetition": 0, "length": 0}
     unique = len(set(tokens))
     ttr = unique / len(tokens)
-    bigrams = [f"{tokens[i]}_{tokens[i+1]}" for i in range(len(tokens) - 1)]
+    bigrams = [f"{tokens[i]}_{tokens[i + 1]}" for i in range(len(tokens) - 1)]
     repeats = sum(1 for v in Counter(bigrams).values() if v > 1)
     rep_rate = repeats / len(bigrams) if bigrams else 0
     return {"ttr": round(ttr, 4), "repetition": round(rep_rate, 4), "length": len(tokens)}
@@ -221,10 +230,21 @@ def quality_estimate(text):
 
 # ── llama.cpp server management ─────────────────────────────────────────────
 
+
 class LlamaServer:
     """Manage a llama.cpp server subprocess for model inference."""
 
-    def __init__(self, gguf_path, port=8888, host="127.0.0.1", lora_path=None, lora_weight=1.0, gpu_layers=99, max_tokens=256, log_dir=None):
+    def __init__(
+        self,
+        gguf_path,
+        port=8888,
+        host="127.0.0.1",
+        lora_path=None,
+        lora_weight=1.0,
+        gpu_layers=99,
+        max_tokens=256,
+        log_dir=None,
+    ):
         self.gguf_path = Path(gguf_path)
         self.lora_path = Path(lora_path) if lora_path else None
         self.lora_weight = lora_weight
@@ -240,11 +260,11 @@ class LlamaServer:
         """Start the llama.cpp server and wait until it's ready."""
         # Port-binding preflight check
         import socket
-        
+
         original_port = self.port
         checked_ports = 0
         max_port_attempts = 20
-        
+
         while checked_ports < max_port_attempts:
             try:
                 # Attempt to temporarily bind a socket to (self.host, self.port)
@@ -253,13 +273,17 @@ class LlamaServer:
                     s.bind((self.host, self.port))
                 # If successfully bound, port is free!
                 break
-            except (OSError, socket.error) as e:
-                print(f"[server] Warning: Port {self.port} is already in use (error: {e}). Trying next port...")
+            except OSError as e:
+                print(
+                    f"[server] Warning: Port {self.port} is already in use (error: {e}). Trying next port..."
+                )
                 self.port += 1
                 checked_ports += 1
         else:
-            raise RuntimeError(f"Could not find a free port in range {original_port} - {original_port + max_port_attempts - 1}")
-        
+            raise RuntimeError(
+                f"Could not find a free port in range {original_port} - {original_port + max_port_attempts - 1}"
+            )
+
         # Once a free port is found, update self.port and self.api_url before launching the server
         self.api_url = f"http://{self.host}:{self.port}/v1/chat/completions"
 
@@ -278,12 +302,15 @@ class LlamaServer:
         if not llama_server:
             # Try PATH
             import shutil
+
             llama_server = shutil.which("llama-server")
             if not llama_server:
                 # Fall back: try to find it
                 search = subprocess.run(
                     ["find", str(Path.home()), "-name", "llama-server", "-type", "f"],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
                 )
                 if search.stdout.strip():
                     llama_server = search.stdout.strip().split("\n")[0]
@@ -295,11 +322,16 @@ class LlamaServer:
 
         cmd = [
             str(llama_server),
-            "-m", str(self.gguf_path),
-            "--host", self.host,
-            "--port", str(self.port),
-            "-ngl", str(self.gpu_layers),  # GPU layers to offload (0 = CPU-only)
-            "-c", "4096",   # Context size
+            "-m",
+            str(self.gguf_path),
+            "--host",
+            self.host,
+            "--port",
+            str(self.port),
+            "-ngl",
+            str(self.gpu_layers),  # GPU layers to offload (0 = CPU-only)
+            "-c",
+            "4096",  # Context size
         ]
 
         if self.lora_path:
@@ -327,6 +359,7 @@ class LlamaServer:
         # Wait for server to be ready — probe HTTP endpoint, not just TCP
         import socket
         import urllib.request
+
         start = time.time()
         health_url = f"http://{self.host}:{self.port}/v1/models"
         while time.time() - start < timeout:
@@ -360,12 +393,14 @@ class LlamaServer:
         """Send a chat completion request to the running server."""
         if max_tokens is None:
             max_tokens = self.max_tokens
-        payload = json.dumps({
-            "model": "default",
-            "messages": messages,
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-        }).encode()
+        payload = json.dumps(
+            {
+                "model": "default",
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            }
+        ).encode()
 
         req = urllib.request.Request(
             self.api_url,
@@ -398,10 +433,13 @@ class LlamaServer:
 
 # ── LLM Judges ───────────────────────────────────────────────────────────────
 
+
 class WandbInferenceJudge:
     def __init__(self, model=DEFAULT_WANDB_INFERENCE_MODEL, entity=None, project=None):
         self.model = model
-        self.client = WandbInferenceClient(model=model, entity=entity, project=project, temperature=0.2)
+        self.client = WandbInferenceClient(
+            model=model, entity=entity, project=project, temperature=0.2
+        )
 
     def judge(self, question, baseline, candidate, spec=None):
         npc_name = spec.get("npc_name", "the NPC") if spec else "the NPC"
@@ -449,6 +487,7 @@ FORMAT: Return ONLY a JSON object with:
 }}
 """
 
+
 class OllamaJudge:
     def __init__(self, model=constants.DEFAULT_JUDGE_MODEL, url="http://localhost:11434/api/chat"):
         self.model = model
@@ -458,20 +497,20 @@ class OllamaJudge:
         """Use an LLM to judge which response is better."""
         npc_name = spec.get("npc_name", "the NPC") if spec else "the NPC"
         system_prompt = spec.get("system_prompt", "") if spec else ""
-        
+
         prompt = build_judge_prompt(question, baseline, candidate, npc_name, system_prompt)
         payload = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "stream": False,
-            "options": {"temperature": 0.2}
+            "options": {"temperature": 0.2},
         }
         try:
             res = requests.post(self.url, json=payload, timeout=60)
             data = res.json()
             raw_content = data["message"]["content"].strip()
             # Extract JSON
-            json_match = re.search(r'\{.*\}', raw_content, re.DOTALL)
+            json_match = re.search(r"\{.*\}", raw_content, re.DOTALL)
             if json_match:
                 return json.loads(json_match.group(0))
         except Exception as e:
@@ -480,6 +519,7 @@ class OllamaJudge:
 
 
 # ── Evaluation logic ────────────────────────────────────────────────────────
+
 
 def load_subject_spec(spec_path):
     """Load a subject spec JSON file."""
@@ -503,11 +543,13 @@ def load_validation_set(val_path):
                     elif msg["role"] == "assistant":
                         assistant_msg = msg["content"]
                 if user_msg and assistant_msg:
-                    questions.append({
-                        "question": user_msg,
-                        "expected": assistant_msg,
-                        "metadata": example.get("metadata", {}),
-                    })
+                    questions.append(
+                        {
+                            "question": user_msg,
+                            "expected": assistant_msg,
+                            "metadata": example.get("metadata", {}),
+                        }
+                    )
     return questions
 
 
@@ -542,7 +584,7 @@ def evaluate_model(server, questions, spec=None):
     """Run a model through a set of eval questions and score the responses."""
     results = []
     npc_key = spec.get("npc_key", "unknown") if spec else "unknown"
-    
+
     with trace_type("agent", name=f"Evaluate Model: {npc_key}", npc_key=npc_key):
         for i, q in enumerate(questions):
             question = q["question"] if isinstance(q, dict) else q
@@ -555,7 +597,7 @@ def evaluate_model(server, questions, spec=None):
                     {"role": "user", "content": question},
                 ]
 
-            with trace_type("llm", name=f"Eval Question {i+1}", input=question):
+            with trace_type("llm", name=f"Eval Question {i + 1}", input=question):
                 response, latency = server.query(messages)
 
             metrics = diversity_score(response)
@@ -581,13 +623,15 @@ def evaluate_model(server, questions, spec=None):
 
             metrics["has_think_tags"] = not check_no_think_tags(response)
 
-            results.append({
-                "question": question,
-                "expected": expected,
-                "response": response,
-                "metrics": metrics,
-                "metadata": q.get("metadata", {}) if isinstance(q, dict) else {},
-            })
+            results.append(
+                {
+                    "question": question,
+                    "expected": expected,
+                    "response": response,
+                    "metrics": metrics,
+                    "metadata": q.get("metadata", {}) if isinstance(q, dict) else {},
+                }
+            )
 
     return results
 
@@ -599,7 +643,7 @@ def compare_models(baseline_results, candidate_results, spec=None, judge=None):
     candidate_wins = 0
     ties = 0
 
-    for b, c in zip(baseline_results, candidate_results):
+    for b, c in zip(baseline_results, candidate_results, strict=False):
         question = b["question"]
         comparison = {
             "question": question,
@@ -609,7 +653,7 @@ def compare_models(baseline_results, candidate_results, spec=None, judge=None):
             "candidate_metrics": c["metrics"],
             "metadata": b.get("metadata", {}),
             "winner": "tie",
-            "reasoning": "Heuristic match"
+            "reasoning": "Heuristic match",
         }
         expected = b.get("expected") or c.get("expected")
 
@@ -628,7 +672,7 @@ def compare_models(baseline_results, candidate_results, spec=None, judge=None):
                     comparison["winner"] = "candidate"
                 else:
                     comparison["winner"] = "tie"
-        
+
         # ── Heuristic fallback/override if no judge or tie ──────────────────
         if comparison["winner"] == "tie":
             # Determine winner based on hard constraints and subject specificity.
@@ -636,19 +680,30 @@ def compare_models(baseline_results, candidate_results, spec=None, judge=None):
             # penalized for omitting the NPC name.
             b_score = 0
             c_score = 0
-            
-            if b["metrics"].get("sentences_ok", True): b_score += 1
-            if c["metrics"].get("sentences_ok", True): c_score += 1
-            if b["metrics"].get("name_ok", True): b_score += 1
-            if c["metrics"].get("name_ok", True): c_score += 1
-            if b["metrics"].get("no_ai_disclaimer", True): b_score += 1
-            if c["metrics"].get("no_ai_disclaimer", True): c_score += 1
-            if not b["metrics"].get("has_think_tags", False): b_score += 1
-            if not c["metrics"].get("has_think_tags", False): c_score += 1
+
+            if b["metrics"].get("sentences_ok", True):
+                b_score += 1
+            if c["metrics"].get("sentences_ok", True):
+                c_score += 1
+            if b["metrics"].get("name_ok", True):
+                b_score += 1
+            if c["metrics"].get("name_ok", True):
+                c_score += 1
+            if b["metrics"].get("no_ai_disclaimer", True):
+                b_score += 1
+            if c["metrics"].get("no_ai_disclaimer", True):
+                c_score += 1
+            if not b["metrics"].get("has_think_tags", False):
+                b_score += 1
+            if not c["metrics"].get("has_think_tags", False):
+                c_score += 1
 
             b_specificity = response_specificity_score(b["response"], spec=spec, expected=expected)
             c_specificity = response_specificity_score(c["response"], spec=spec, expected=expected)
-            comparison["specificity_scores"] = {"baseline": b_specificity, "candidate": c_specificity}
+            comparison["specificity_scores"] = {
+                "baseline": b_specificity,
+                "candidate": c_specificity,
+            }
             if b_specificity - c_specificity >= 3:
                 b_score += 2
             elif c_specificity - b_specificity >= 3:
@@ -703,7 +758,9 @@ def _slice_stats(comparisons):
     ties = sum(1 for comp in comparisons if comp.get("winner") == "tie")
     candidate_metrics = [comp.get("candidate_metrics", {}) for comp in comparisons]
     baseline_metrics = [comp.get("baseline_metrics", {}) for comp in comparisons]
-    constraint_violations = sum(_constraint_violation_count(metrics) for metrics in candidate_metrics)
+    constraint_violations = sum(
+        _constraint_violation_count(metrics) for metrics in candidate_metrics
+    )
     return {
         "total": total,
         "candidate_wins": candidate_wins,
@@ -711,10 +768,18 @@ def _slice_stats(comparisons):
         "ties": ties,
         "candidate_win_rate": round(candidate_wins / total, 4) if total else 0.0,
         "baseline_win_rate": round(baseline_wins / total, 4) if total else 0.0,
-        "avg_candidate_quality": _average([float(m.get("quality", 0) or 0) for m in candidate_metrics]),
-        "avg_baseline_quality": _average([float(m.get("quality", 0) or 0) for m in baseline_metrics]),
-        "avg_candidate_words": _average([float(m.get("length", 0) or 0) for m in candidate_metrics]),
-        "avg_candidate_sentences": _average([float(m.get("sentences", 0) or 0) for m in candidate_metrics]),
+        "avg_candidate_quality": _average(
+            [float(m.get("quality", 0) or 0) for m in candidate_metrics]
+        ),
+        "avg_baseline_quality": _average(
+            [float(m.get("quality", 0) or 0) for m in baseline_metrics]
+        ),
+        "avg_candidate_words": _average(
+            [float(m.get("length", 0) or 0) for m in candidate_metrics]
+        ),
+        "avg_candidate_sentences": _average(
+            [float(m.get("sentences", 0) or 0) for m in candidate_metrics]
+        ),
         "constraint_violations": constraint_violations,
     }
 
@@ -744,7 +809,12 @@ def build_eval_report_index(
         metadata = comp.get("metadata") or {}
         category = metadata.get("category") or "unknown"
         concept = metadata.get("concept") or "general"
-        fmt = metadata.get("format") or metadata.get("data_format") or run_metadata.get("format") or "unknown"
+        fmt = (
+            metadata.get("format")
+            or metadata.get("data_format")
+            or run_metadata.get("format")
+            or "unknown"
+        )
         difficulty = metadata.get("difficulty") or "unknown"
         by_category.setdefault(category, []).append(comp)
         by_concept.setdefault(f"{category}/{concept}", []).append(comp)
@@ -757,9 +827,20 @@ def build_eval_report_index(
     difficulties = {name: _slice_stats(items) for name, items in sorted(by_difficulty.items())}
     weak_slices = []
     for name, stats in categories.items():
-        if stats["candidate_win_rate"] < 0.5 or stats["constraint_violations"] > 0 or stats["avg_candidate_quality"] < 20:
+        if (
+            stats["candidate_win_rate"] < 0.5
+            or stats["constraint_violations"] > 0
+            or stats["avg_candidate_quality"] < 20
+        ):
             weak_slices.append({"slice_type": "category", "slice": name, **stats})
-    weak_slices.sort(key=lambda item: (item["candidate_win_rate"], -item["constraint_violations"], item["avg_candidate_quality"], item["slice"]))
+    weak_slices.sort(
+        key=lambda item: (
+            item["candidate_win_rate"],
+            -item["constraint_violations"],
+            item["avg_candidate_quality"],
+            item["slice"],
+        )
+    )
 
     confident = run_metadata.get("confident") or {}
     if run_metadata.get("confident_test_run_id") and not confident.get("test_run_id"):
@@ -770,7 +851,7 @@ def build_eval_report_index(
     total = comparison_result.get("total", len(comparisons))
     return {
         "schema_version": "eval_report_index.v1",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "run": {
             "run_id": run_metadata.get("run_id"),
             "npc_key": spec.get("npc_key") or run_metadata.get("npc_key"),
@@ -782,15 +863,19 @@ def build_eval_report_index(
             "candidate": candidate_name,
             "base_model": run_metadata.get("base_model"),
             "candidate_model": run_metadata.get("candidate_model", candidate_name),
-            "candidate_format": run_metadata.get("candidate_format") or run_metadata.get("format") or "unknown",
-            "judge_model": run_metadata.get("judge_model") or run_metadata.get("deepeval_judge_model"),
+            "candidate_format": run_metadata.get("candidate_format")
+            or run_metadata.get("format")
+            or "unknown",
+            "judge_model": run_metadata.get("judge_model")
+            or run_metadata.get("deepeval_judge_model"),
             "judge_provider": run_metadata.get("judge_provider"),
         },
         "parameters": run_metadata.get("parameters") or {},
         "logic": {
             "version": run_metadata.get("logic_version") or "heuristic+optional-judge-v1",
             "comparison_mode": "side-by-side",
-            "scoring_sources": run_metadata.get("scoring_sources") or ["heuristics", "optional_llm_judge"],
+            "scoring_sources": run_metadata.get("scoring_sources")
+            or ["heuristics", "optional_llm_judge"],
         },
         "confident": confident,
         "summary": {
@@ -798,7 +883,9 @@ def build_eval_report_index(
             "baseline_wins": comparison_result.get("baseline_wins", 0),
             "candidate_wins": comparison_result.get("candidate_wins", 0),
             "ties": comparison_result.get("ties", 0),
-            "candidate_win_rate": round((comparison_result.get("candidate_wins", 0) / total), 4) if total else 0.0,
+            "candidate_win_rate": round((comparison_result.get("candidate_wins", 0) / total), 4)
+            if total
+            else 0.0,
         },
         "categories": categories,
         "concepts": concepts,
@@ -818,16 +905,21 @@ def _report_index_for(comparison_result, baseline_name, candidate_name, spec):
     )
 
 
-def generate_report(comparison_result, baseline_name="baseline", candidate_name="candidate",
-                    spec=None, output_path=None):
+def generate_report(
+    comparison_result,
+    baseline_name="baseline",
+    candidate_name="candidate",
+    spec=None,
+    output_path=None,
+):
     """Generate a markdown evaluation report."""
     output = []
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     report_index = _report_index_for(comparison_result, baseline_name, candidate_name, spec or {})
 
     output.append("# NPC Evaluation Report\n")
     output.append(f"- **Date:** {now}")
-    output.append(f"- **Mode:** side-by-side")
+    output.append("- **Mode:** side-by-side")
     if spec:
         output.append(f"- **NPC:** {spec.get('npc_name', 'Unknown')}")
     output.append(f"- **Baseline:** {baseline_name}")
@@ -837,7 +929,9 @@ def generate_report(comparison_result, baseline_name="baseline", candidate_name=
     output.append("## Run/Model/Parameter/Logic Index\n")
     output.append(f"- Run ID: `{report_index['run'].get('run_id') or 'unknown'}`")
     output.append(f"- Candidate format: `{report_index['model'].get('candidate_format')}`")
-    output.append(f"- Judge: `{report_index['model'].get('judge_provider') or 'unknown'}` / `{report_index['model'].get('judge_model') or 'unknown'}`")
+    output.append(
+        f"- Judge: `{report_index['model'].get('judge_provider') or 'unknown'}` / `{report_index['model'].get('judge_model') or 'unknown'}`"
+    )
     output.append(f"- Logic: `{report_index['logic'].get('version')}`")
     if report_index.get("parameters"):
         output.append(f"- Parameters: `{json.dumps(report_index['parameters'], sort_keys=True)}`")
@@ -846,7 +940,9 @@ def generate_report(comparison_result, baseline_name="baseline", candidate_name=
     output.append("")
 
     output.append("## Category Breakdown\n")
-    output.append("| Category | Total | Cand wins | Base wins | Ties | Cand win rate | Cand quality | Violations |")
+    output.append(
+        "| Category | Total | Cand wins | Base wins | Ties | Cand win rate | Cand quality | Violations |"
+    )
     output.append("|---|---:|---:|---:|---:|---:|---:|---:|")
     for category, stats in report_index.get("categories", {}).items():
         output.append(
@@ -882,16 +978,20 @@ def generate_report(comparison_result, baseline_name="baseline", candidate_name=
         if constraints:
             output.append(f"**Constraint violations:** {', '.join(constraints)}\n")
 
-        output.append(f"**Metrics:**")
-        output.append(f"  - B: words={bm['length']}, sent={bm['sentences']}, "
-                      f"name={'Y' if bm.get('name_ok') else 'N'}, "
-                      f"think={'Y' if bm.get('has_think_tags') else 'N'}, "
-                      f"qual={bm['quality']}")
-        output.append(f"  - C: words={cm['length']}, sent={cm['sentences']}, "
-                      f"name={'Y' if cm.get('name_ok') else 'N'}, "
-                      f"think={'Y' if cm.get('has_think_tags') else 'N'}, "
-                      f"qual={cm['quality']}")
-        output.append(f"")
+        output.append("**Metrics:**")
+        output.append(
+            f"  - B: words={bm['length']}, sent={bm['sentences']}, "
+            f"name={'Y' if bm.get('name_ok') else 'N'}, "
+            f"think={'Y' if bm.get('has_think_tags') else 'N'}, "
+            f"qual={bm['quality']}"
+        )
+        output.append(
+            f"  - C: words={cm['length']}, sent={cm['sentences']}, "
+            f"name={'Y' if cm.get('name_ok') else 'N'}, "
+            f"think={'Y' if cm.get('has_think_tags') else 'N'}, "
+            f"qual={cm['quality']}"
+        )
+        output.append("")
         output.append(f"**Winner:** {winner}\n")
         if comp.get("reasoning"):
             output.append(f"**Reasoning:** {comp['reasoning']}\n")
@@ -903,18 +1003,20 @@ def generate_report(comparison_result, baseline_name="baseline", candidate_name=
     ties = comparison_result["ties"]
 
     output.append("## Summary\n")
-    output.append(f"| Metric | Value |")
-    output.append(f"| ------ | ----- |")
+    output.append("| Metric | Value |")
+    output.append("| ------ | ----- |")
     output.append(f"| Total examples | {total} |")
     output.append(f"| Baseline wins | {bw} |")
     output.append(f"| Candidate wins | {cw} |")
     output.append(f"| Ties | {ties} |")
-    output.append(f"| Failure count | 0 |")
-    output.append(f"| Candidate win rate | {cw/total*100:.0f}% |\n")
+    output.append("| Failure count | 0 |")
+    output.append(f"| Candidate win rate | {cw / total * 100:.0f}% |\n")
 
     # Overall comparison table
     output.append("## Overall Comparison Table\n")
-    header = f"| # | Question | Baseline ({baseline_name}) | Candidate ({candidate_name}) | Winner |"
+    header = (
+        f"| # | Question | Baseline ({baseline_name}) | Candidate ({candidate_name}) | Winner |"
+    )
     sep = "|---|----------|-------------------------|---------------------------|--------|"
     output.append(header)
     output.append(sep)
@@ -957,28 +1059,33 @@ def generate_report(comparison_result, baseline_name="baseline", candidate_name=
     return report
 
 
-def generate_html_report(comparison_result, baseline_name="baseline", candidate_name="candidate",
-                         spec=None, output_path=None):
+def generate_html_report(
+    comparison_result,
+    baseline_name="baseline",
+    candidate_name="candidate",
+    spec=None,
+    output_path=None,
+):
     """Generate an HTML evaluation report with embedded loss curves."""
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     npc_name = spec.get("npc_name", "Unknown") if spec else "Unknown"
     report_index = _report_index_for(comparison_result, baseline_name, candidate_name, spec or {})
-    
+
     # Aggregate metrics
     total = comparison_result["total"]
-    bw = comparison_result["baseline_wins"]
+    comparison_result["baseline_wins"]
     cw = comparison_result["candidate_wins"]
     ties = comparison_result["ties"]
     win_rate = cw / total * 100 if total > 0 else 0
-    
+
     b_metrics = [c["baseline_metrics"] for c in comparison_result["comparisons"]]
     c_metrics = [c["candidate_metrics"] for c in comparison_result["comparisons"]]
-    
+
     avg_b_qual = sum(m["quality"] for m in b_metrics) / len(b_metrics) if b_metrics else 0
     avg_c_qual = sum(m["quality"] for m in c_metrics) / len(c_metrics) if c_metrics else 0
     avg_b_words = sum(m["length"] for m in b_metrics) / len(b_metrics) if b_metrics else 0
     avg_c_words = sum(m["length"] for m in c_metrics) / len(c_metrics) if c_metrics else 0
-    
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1019,11 +1126,11 @@ def generate_html_report(comparison_result, baseline_name="baseline", candidate_
   </div>
   <div class="card">
     <h3>Candidate Wins</h3>
-    <div class="value {'winner' if win_rate >= 50 else 'loser'}">{cw}/{total}</div>
+    <div class="value {"winner" if win_rate >= 50 else "loser"}">{cw}/{total}</div>
   </div>
   <div class="card">
     <h3>Win Rate</h3>
-    <div class="value {'winner' if win_rate >= 50 else 'loser'}">{win_rate:.0f}%</div>
+    <div class="value {"winner" if win_rate >= 50 else "loser"}">{win_rate:.0f}%</div>
   </div>
   <div class="card">
     <h3>Ties</h3>
@@ -1033,16 +1140,16 @@ def generate_html_report(comparison_result, baseline_name="baseline", candidate_
 
 <h2>Run/Model/Parameter/Logic Index</h2>
 <div class="index-grid">
-  <div class="card"><h3>Run</h3><div class="mono">{json.dumps(report_index.get('run', {}), sort_keys=True)}</div></div>
-  <div class="card"><h3>Model</h3><div class="mono">{json.dumps(report_index.get('model', {}), sort_keys=True)}</div></div>
-  <div class="card"><h3>Parameters</h3><div class="mono">{json.dumps(report_index.get('parameters', {}), sort_keys=True)}</div></div>
-  <div class="card"><h3>Logic</h3><div class="mono">{json.dumps(report_index.get('logic', {}), sort_keys=True)}</div></div>
+  <div class="card"><h3>Run</h3><div class="mono">{json.dumps(report_index.get("run", {}), sort_keys=True)}</div></div>
+  <div class="card"><h3>Model</h3><div class="mono">{json.dumps(report_index.get("model", {}), sort_keys=True)}</div></div>
+  <div class="card"><h3>Parameters</h3><div class="mono">{json.dumps(report_index.get("parameters", {}), sort_keys=True)}</div></div>
+  <div class="card"><h3>Logic</h3><div class="mono">{json.dumps(report_index.get("logic", {}), sort_keys=True)}</div></div>
 </div>
 
 <h2>Category Breakdown</h2>
 <table>
 <tr><th>Category</th><th>Total</th><th>Candidate wins</th><th>Baseline wins</th><th>Ties</th><th>Candidate win rate</th><th>Candidate quality</th><th>Violations</th></tr>
-{''.join(f"<tr><td>{cat}</td><td>{stats['total']}</td><td>{stats['candidate_wins']}</td><td>{stats['baseline_wins']}</td><td>{stats['ties']}</td><td>{stats['candidate_win_rate']:.0%}</td><td>{stats['avg_candidate_quality']:.1f}</td><td>{stats['constraint_violations']}</td></tr>" for cat, stats in report_index.get('categories', {}).items())}
+{"".join(f"<tr><td>{cat}</td><td>{stats['total']}</td><td>{stats['candidate_wins']}</td><td>{stats['baseline_wins']}</td><td>{stats['ties']}</td><td>{stats['candidate_win_rate']:.0%}</td><td>{stats['avg_candidate_quality']:.1f}</td><td>{stats['constraint_violations']}</td></tr>" for cat, stats in report_index.get("categories", {}).items())}
 </table>
 
 <h2>Metrics Comparison</h2>
@@ -1065,21 +1172,25 @@ def generate_html_report(comparison_result, baseline_name="baseline", candidate_
   <th>Winner</th>
 </tr>
 """
-    
+
     for i, comp in enumerate(comparison_result["comparisons"], 1):
         q = comp["question"][:80]
         bm = comp["baseline_metrics"]
         cm = comp["candidate_metrics"]
-        winner_class = "winner" if comp["winner"] == "candidate" else ("loser" if comp["winner"] == "baseline" else "")
+        winner_class = (
+            "winner"
+            if comp["winner"] == "candidate"
+            else ("loser" if comp["winner"] == "baseline" else "")
+        )
         html += f"""<tr>
   <td>{i}</td>
   <td>{q}</td>
-  <td>{bm.get('quality', 'N/A')}</td>
-  <td>{cm.get('quality', 'N/A')}</td>
-  <td class="{winner_class}">{comp['winner']}</td>
+  <td>{bm.get("quality", "N/A")}</td>
+  <td>{cm.get("quality", "N/A")}</td>
+  <td class="{winner_class}">{comp["winner"]}</td>
 </tr>
 """
-    
+
     html += """</table>
 
 <script>
@@ -1107,7 +1218,7 @@ new Chart(document.getElementById('metricsChart'), {
         borderWidth: 1
       }}
 """
-    
+
     html += """    ]
   },
   options: {
@@ -1125,9 +1236,9 @@ new Chart(document.getElementById('qualityChart'), {
   data: {
     datasets: [
 """
-    b_qual_data = [(i+1, m["quality"]) for i, m in enumerate(b_metrics)]
-    c_qual_data = [(i+1, m["quality"]) for i, m in enumerate(c_metrics)]
-    
+    b_qual_data = [(i + 1, m["quality"]) for i, m in enumerate(b_metrics)]
+    c_qual_data = [(i + 1, m["quality"]) for i, m in enumerate(c_metrics)]
+
     html += f"""      {{
         label: 'Baseline',
         data: {json.dumps(b_qual_data)},
@@ -1139,7 +1250,7 @@ new Chart(document.getElementById('qualityChart'), {
         backgroundColor: 'rgba(255, 99, 132, 0.5)',
       }}
 """
-    
+
     html += """    ]
   },
   options: {
@@ -1157,14 +1268,14 @@ new Chart(document.getElementById('qualityChart'), {
 </script>
 </body>
 </html>"""
-    
+
     if output_path:
         output = Path(output_path)
         output.parent.mkdir(parents=True, exist_ok=True)
         with open(output, "w") as f:
             f.write(html)
         print(f"HTML report saved to: {output}")
-    
+
     return html
 
 
@@ -1195,7 +1306,7 @@ def extract_training_metrics(runs_dir=None, npc_key=None):
     import glob
 
     print(f"\n{'=' * 60}")
-    print(f"  TRAINING METRICS")
+    print("  TRAINING METRICS")
     print(f"{'=' * 60}")
 
     for run_path in sorted(glob.glob(f"{runs_dir}/*/")):
@@ -1232,7 +1343,7 @@ def extract_training_metrics(runs_dir=None, npc_key=None):
             print("Warning: pyyaml not installed, skipping structured YAML output")
             print("Install with: pip install pyyaml")
             return
-        
+
         metrics_yaml = {"runs": {}}
         for run_path in sorted(glob.glob(f"{runs_dir}/*/")):
             name = Path(run_path.rstrip("/")).name
@@ -1253,7 +1364,7 @@ def extract_training_metrics(runs_dir=None, npc_key=None):
                         }
             except Exception as e:
                 metrics_yaml["runs"][name]["_error"] = str(e)
-        
+
         metrics_path = paths.eval_training_metrics_path(npc_key)
         metrics_path.parent.mkdir(parents=True, exist_ok=True)
         with open(metrics_path, "w") as f:
@@ -1268,7 +1379,7 @@ def interactive_eval(gguf_path):
         print("Failed to start llama-server.")
         return
 
-    print(f"\nInteractive evaluation. Type your prompts. Ctrl+C to exit.\n")
+    print("\nInteractive evaluation. Type your prompts. Ctrl+C to exit.\n")
     try:
         while True:
             prompt = input("> ").strip()
@@ -1279,7 +1390,9 @@ def interactive_eval(gguf_path):
             print(f"\n{response}\n")
             div = diversity_score(response)
             qual = quality_estimate(response)
-            print(f"  [len={div['length']} | {latency:.1f}s | ttr={div['ttr']:.1%} | qual={qual:.1f}]\n")
+            print(
+                f"  [len={div['length']} | {latency:.1f}s | ttr={div['ttr']:.1%} | qual={qual:.1f}]\n"
+            )
     except KeyboardInterrupt:
         print()
     finally:
@@ -1297,66 +1410,117 @@ def main():
     # Data
     parser.add_argument("--spec", "-s", help="Subject spec JSON (for eval questions)")
     parser.add_argument("--val-data", help="Validation JSONL (held-out questions)")
-    parser.add_argument("--num-questions", type=int, default=10,
-                        help="Number of eval questions (default: 10)")
+    parser.add_argument(
+        "--num-questions", type=int, default=10, help="Number of eval questions (default: 10)"
+    )
 
     # Output
     parser.add_argument("--output", "-o", help="Output report path")
-    parser.add_argument("--report-html", action="store_true",
-                        help="Generate HTML report with loss curves")
-    parser.add_argument("--track", action="store_true",
-                        help="Save results to eval/results/eval_results.jsonl")
+    parser.add_argument(
+        "--report-html", action="store_true", help="Generate HTML report with loss curves"
+    )
+    parser.add_argument(
+        "--track", action="store_true", help="Save results to eval/results/eval_results.jsonl"
+    )
 
     # Modes
-    parser.add_argument("--interactive", "-i", action="store_true",
-                        help="Interactive chat mode")
-    parser.add_argument("--training-metrics", nargs="?", const="",
-                        help="Show training metrics from TensorBoard logs")
+    parser.add_argument("--interactive", "-i", action="store_true", help="Interactive chat mode")
+    parser.add_argument(
+        "--training-metrics",
+        nargs="?",
+        const="",
+        help="Show training metrics from TensorBoard logs",
+    )
     parser.add_argument("--npc-key", help="NPC key for per-model TensorBoard runs lookup")
 
     # Server
-    parser.add_argument("--port", type=int, default=8888,
-                        help="llama-server port (default: 8888)")
-    parser.add_argument("--host", default="127.0.0.1",
-                        help="llama-server host (default: 127.0.0.1)")
-    parser.add_argument("--gpu-layers", type=int, default=99,
-                        help="Number of model layers to offload to GPU for llama-server; use 0 for CPU-only fallback (default: 99)")
-    parser.add_argument("--max-tokens", type=int, default=256,
-                        help="Maximum generated tokens per eval answer (default: 256)")
-    
+    parser.add_argument("--port", type=int, default=8888, help="llama-server port (default: 8888)")
+    parser.add_argument(
+        "--host", default="127.0.0.1", help="llama-server host (default: 127.0.0.1)"
+    )
+    parser.add_argument(
+        "--gpu-layers",
+        type=int,
+        default=99,
+        help="Number of model layers to offload to GPU for llama-server; use 0 for CPU-only fallback (default: 99)",
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=256,
+        help="Maximum generated tokens per eval answer (default: 256)",
+    )
+
     # Judge
     parser.add_argument("--judge", action="store_true", help="Use an LLM judge")
-    parser.add_argument("--judge-provider", default="ollama", choices=["ollama", "wandb"], help="Judge backend")
+    parser.add_argument(
+        "--judge-provider", default="ollama", choices=["ollama", "wandb"], help="Judge backend"
+    )
     parser.add_argument("--judge-model", default=constants.DEFAULT_JUDGE_MODEL, help="Judge model")
-    parser.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference")
-    parser.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference")
+    parser.add_argument(
+        "--wandb-inference-project",
+        default=None,
+        help="W&B project used for hosted judge inference",
+    )
+    parser.add_argument(
+        "--wandb-inference-entity",
+        default=None,
+        help="W&B entity/team used for hosted judge inference",
+    )
 
     # W&B
     parser.add_argument("--wandb", action="store_true", help="Enable W&B evaluation tracking")
-    parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    parser.add_argument(
+        "--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)"
+    )
     parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
 
     # Feedback loop
-    parser.add_argument("--feedback-json", help="Save structured per-concept eval results to this JSON file for the feedback loop")
-    parser.add_argument("--workflow-hooks", default=None,
-                        help="Path to a JSONL hook log for step tracing (default: <report-dir>/workflow_hooks.jsonl)")
+    parser.add_argument(
+        "--feedback-json",
+        help="Save structured per-concept eval results to this JSON file for the feedback loop",
+    )
+    parser.add_argument(
+        "--workflow-hooks",
+        default=None,
+        help="Path to a JSONL hook log for step tracing (default: <report-dir>/workflow_hooks.jsonl)",
+    )
 
     # DeepEval
-    parser.add_argument("--deepeval", action="store_true", default=False,
-                        help="Also run DeepEval model quality evaluation and push results to Confident AI")
-    parser.add_argument("--deepeval-judge-model", default=constants.DEFAULT_JUDGE_MODEL,
-                        help="DeepEval judge model for model evaluation")
-    parser.add_argument("--deepeval-identifier", default=None,
-                        help="Identifier for the DeepEval test run")
-    parser.add_argument("--confident", action="store_true", default=False,
-                        help="Initialize DeepEval tracing for observability")
-    parser.add_argument("--remote-eval", action="store_true", default=False,
-                        help="Evaluate on Confident AI infrastructure instead of locally. Requires --deepeval or --confident.")
+    parser.add_argument(
+        "--deepeval",
+        action="store_true",
+        default=False,
+        help="Also run DeepEval model quality evaluation and push results to Confident AI",
+    )
+    parser.add_argument(
+        "--deepeval-judge-model",
+        default=constants.DEFAULT_JUDGE_MODEL,
+        help="DeepEval judge model for model evaluation",
+    )
+    parser.add_argument(
+        "--deepeval-identifier", default=None, help="Identifier for the DeepEval test run"
+    )
+    parser.add_argument(
+        "--confident",
+        action="store_true",
+        default=False,
+        help="Initialize DeepEval tracing for observability",
+    )
+    parser.add_argument(
+        "--remote-eval",
+        action="store_true",
+        default=False,
+        help="Evaluate on Confident AI infrastructure instead of locally. Requires --deepeval or --confident.",
+    )
 
     # LoRA mode (evaluate adapter GGUFs without full-merge)
-    parser.add_argument("--base-model", help="Base GGUF model path (required when --candidate is a LoRA adapter)")
-    parser.add_argument("--lora-weight", type=float, default=1.0,
-                        help="LoRA adapter weight (default: 1.0)")
+    parser.add_argument(
+        "--base-model", help="Base GGUF model path (required when --candidate is a LoRA adapter)"
+    )
+    parser.add_argument(
+        "--lora-weight", type=float, default=1.0, help="LoRA adapter weight (default: 1.0)"
+    )
 
     args = parser.parse_args()
 
@@ -1385,8 +1549,12 @@ def main():
         sys.exit(1)
 
     # Resolve GGUF paths (support glob patterns)
-    baseline_paths = list(Path.cwd().glob(args.baseline)) if "*" in args.baseline else [Path(args.baseline)]
-    candidate_paths = list(Path.cwd().glob(args.candidate)) if "*" in args.candidate else [Path(args.candidate)]
+    baseline_paths = (
+        list(Path.cwd().glob(args.baseline)) if "*" in args.baseline else [Path(args.baseline)]
+    )
+    candidate_paths = (
+        list(Path.cwd().glob(args.candidate)) if "*" in args.candidate else [Path(args.candidate)]
+    )
 
     if not baseline_paths:
         print(f"Error: Baseline not found: {args.baseline}")
@@ -1407,25 +1575,42 @@ def main():
 
     if args.spec:
         spec = load_subject_spec(args.spec)
-        npc_key = spec['npc_key']
+        npc_key = spec["npc_key"]
         val_path = autodetect_validation_path(npc_key)
         questions = extract_questions_from_spec(spec, val_path=str(val_path) if val_path else None)
         print(f"Loaded {len(questions)} eval questions from spec validation set")
 
         # Default report path to eval/reports/{npc_key}/ if not specified
         if not args.output and spec:
-            report_dir = paths.eval_report_dir(spec['npc_key'])
+            report_dir = paths.eval_report_dir(spec["npc_key"])
             report_dir.mkdir(parents=True, exist_ok=True)
             report_stamp = paths.eval_timestamp()
-            args.output = str(paths.eval_report_path(spec['npc_key'], timestamp=report_stamp))
+            args.output = str(paths.eval_report_path(spec["npc_key"], timestamp=report_stamp))
             args._report_stamp = report_stamp
         if not args.feedback_json and spec:
-            args.feedback_json = str(paths.eval_feedback_path(spec['npc_key']))
+            args.feedback_json = str(paths.eval_feedback_path(spec["npc_key"]))
 
-    hook_root = Path(args.output).parent if args.output else (paths.eval_report_dir(spec['npc_key']) if spec else PROJECT_ROOT / "eval" / "reports")
-    hook_recorder = WorkflowHookRecorder(args.workflow_hooks or default_hook_path(hook_root), tool="evaluate", npc_key=spec["npc_key"] if spec else None, spec_path=args.spec)
-    with hook_recorder.step("evaluate_pipeline", technique="evaluation", baseline=str(baseline_gguf), candidate=str(candidate_gguf), report_path=args.output, html=bool(args.report_html), track=bool(args.track), feedback_json=args.feedback_json):
-
+    hook_root = (
+        Path(args.output).parent
+        if args.output
+        else (paths.eval_report_dir(spec["npc_key"]) if spec else PROJECT_ROOT / "eval" / "reports")
+    )
+    hook_recorder = WorkflowHookRecorder(
+        args.workflow_hooks or default_hook_path(hook_root),
+        tool="evaluate",
+        npc_key=spec["npc_key"] if spec else None,
+        spec_path=args.spec,
+    )
+    with hook_recorder.step(
+        "evaluate_pipeline",
+        technique="evaluation",
+        baseline=str(baseline_gguf),
+        candidate=str(candidate_gguf),
+        report_path=args.output,
+        html=bool(args.report_html),
+        track=bool(args.track),
+        feedback_json=args.feedback_json,
+    ):
         if not questions and args.val_data:
             val_set = load_validation_set(args.val_data)
             questions = val_set
@@ -1437,11 +1622,16 @@ def main():
             questions = generic_eval_questions(spec)
 
         # Limit questions
-        questions = questions[:args.num_questions]
+        questions = questions[: args.num_questions]
 
         # Start baseline server
         print("\n[1/4] Starting baseline server...")
-        baseline_kwargs = dict(port=args.port, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens, log_dir=report_dir / "logs")
+        baseline_kwargs = dict(
+            port=args.port,
+            gpu_layers=args.gpu_layers,
+            max_tokens=args.max_tokens,
+            log_dir=report_dir / "logs",
+        )
         if args.base_model:
             base_model_path = Path(args.base_model)
             if not base_model_path.exists():
@@ -1452,8 +1642,10 @@ def main():
                 print(f"  (LoRA mode: baseline is base-only: {base_model_path})")
             else:
                 baseline_server = LlamaServer(
-                    base_model_path, lora_path=baseline_gguf,
-                    lora_weight=args.lora_weight, **baseline_kwargs
+                    base_model_path,
+                    lora_path=baseline_gguf,
+                    lora_weight=args.lora_weight,
+                    **baseline_kwargs,
                 )
                 print(f"  (LoRA mode: base={base_model_path}, adapter={baseline_gguf})")
         else:
@@ -1469,7 +1661,12 @@ def main():
 
         # Start candidate server
         print("\n[3/4] Starting candidate server...")
-        candidate_kwargs = dict(port=args.port + 1, gpu_layers=args.gpu_layers, max_tokens=args.max_tokens, log_dir=report_dir / "logs")
+        candidate_kwargs = dict(
+            port=args.port + 1,
+            gpu_layers=args.gpu_layers,
+            max_tokens=args.max_tokens,
+            log_dir=report_dir / "logs",
+        )
         if args.base_model:
             # LoRA mode: candidate is an adapter, start server with base model + --lora
             base_model_path = Path(args.base_model)
@@ -1477,8 +1674,10 @@ def main():
                 print(f"Error: Base model not found: {args.base_model}")
                 sys.exit(1)
             candidate_server = LlamaServer(
-                base_model_path, lora_path=candidate_gguf,
-                lora_weight=args.lora_weight, **candidate_kwargs
+                base_model_path,
+                lora_path=candidate_gguf,
+                lora_weight=args.lora_weight,
+                **candidate_kwargs,
             )
             print(f"  (LoRA mode: base={base_model_path}, adapter={candidate_gguf})")
         else:
@@ -1512,13 +1711,13 @@ def main():
                     judge = OllamaJudge(model=args.judge_model)
             comparison = compare_models(baseline_results, candidate_results, spec, judge=judge)
 
-        if not "*" in args.baseline:
+        if "*" not in args.baseline:
             baseline_path = Path(args.baseline)
             baseline_name = f"{baseline_path.parent.name}/{baseline_path.stem}"
         else:
             baseline_path = Path(str(baseline_gguf))
             baseline_name = f"{baseline_path.parent.name}/{baseline_path.stem}"
-        if not "*" in args.candidate:
+        if "*" not in args.candidate:
             candidate_path = Path(args.candidate)
             candidate_name = f"{candidate_path.parent.name}/{candidate_path.stem}"
         else:
@@ -1526,7 +1725,8 @@ def main():
             candidate_name = f"{candidate_path.parent.name}/{candidate_path.stem}"
 
         run_metadata = {
-            "run_id": getattr(args, "deepeval_identifier", None) or getattr(args, "_report_stamp", None),
+            "run_id": getattr(args, "deepeval_identifier", None)
+            or getattr(args, "_report_stamp", None),
             "npc_key": spec.get("npc_key") if spec else None,
             "technique": getattr(args, "technique", None),
             "base_model": args.base_model,
@@ -1567,8 +1767,12 @@ def main():
                 print(f"Report index saved to: {index_path}")
                 try:
                     from src.core.ops.artifact_registry import record_stage_artifacts_best_effort
+
                     npc_key = spec.get("npc_key", "unknown") if spec else "unknown"
-                    run_id = comparison.get("run_metadata", {}).get("run_id") or f"evaluate-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+                    run_id = (
+                        comparison.get("run_metadata", {}).get("run_id")
+                        or f"evaluate-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
+                    )
                     record_stage_artifacts_best_effort(
                         run_id,
                         npc_key,
@@ -1587,7 +1791,9 @@ def main():
             html_path = Path(args.output).with_suffix(".html") if args.output else None
             if html_path is None and spec:
                 html_path = paths.eval_report_path(spec["npc_key"], fmt="html")
-            with hook_recorder.step("write_html_report", html_path=str(html_path) if html_path else None):
+            with hook_recorder.step(
+                "write_html_report", html_path=str(html_path) if html_path else None
+            ):
                 generate_html_report(
                     comparison,
                     baseline_name=baseline_name,
@@ -1598,17 +1804,24 @@ def main():
 
         # Track results if requested
         if args.track and spec:
-            from src.core.evaluation.track_eval_results import track_result, track_per_example_result
-            
+            from src.core.evaluation.track_eval_results import (
+                track_per_example_result,
+                track_result,
+            )
+
             npc_key = spec.get("npc_key", "unknown")
             cw = comparison["candidate_wins"]
             total = comparison["total"]
             ties = comparison["ties"]
-            
+
             c_metrics_agg = [c["candidate_metrics"] for c in comparison.get("comparisons", [])]
-            avg_candidate_quality = sum(m.get("quality", 0) for m in c_metrics_agg) / len(c_metrics_agg) if c_metrics_agg else 0
-            
-            print(f"\n[track] Storing summary in Supabase/local...")
+            avg_candidate_quality = (
+                sum(m.get("quality", 0) for m in c_metrics_agg) / len(c_metrics_agg)
+                if c_metrics_agg
+                else 0
+            )
+
+            print("\n[track] Storing summary in Supabase/local...")
             track_result(
                 npc_key=npc_key,
                 model_path=str(candidate_gguf),
@@ -1620,11 +1833,11 @@ def main():
                     "candidate_model": candidate_name,
                     "total_examples": total,
                     "wins": cw,
-                    "ties": ties
-                }
+                    "ties": ties,
+                },
             )
 
-            print(f"[track] Storing per-example results in Supabase...")
+            print("[track] Storing per-example results in Supabase...")
             test_run_name = f"Compare_{npc_key}_{datetime.now().strftime('%Y%m%d_%H%M')}"
             for comp in comparison.get("comparisons", []):
                 track_per_example_result(
@@ -1633,13 +1846,15 @@ def main():
                     prompt=comp["question"],
                     response=comp["candidate"],
                     expected=None,
-                    score=1.0 if comp["winner"] == "candidate" else (0.5 if comp["winner"] == "tie" else 0.0),
+                    score=1.0
+                    if comp["winner"] == "candidate"
+                    else (0.5 if comp["winner"] == "tie" else 0.0),
                     metrics=comp["candidate_metrics"],
                     metadata={
                         "baseline_response": comp["baseline"],
                         "winner": comp["winner"],
-                        "reasoning": comp.get("reasoning")
-                    }
+                        "reasoning": comp.get("reasoning"),
+                    },
                 )
 
         # ── Feedback JSON output ────────────────────────────────────────────
@@ -1650,6 +1865,7 @@ def main():
 
             # Group comparisons by concept (extracted from question or use generic)
             from collections import defaultdict
+
             by_concept = defaultdict(list)
             for comp in comparison.get("comparisons", []):
                 concept = "general"
@@ -1674,28 +1890,44 @@ def main():
                     "candidate_wins": candidate_wins,
                     "ties": ties,
                     "win_rate": candidate_wins / len(comps) if comps else 0,
-                    "avg_baseline_quality": sum(m.get("quality", 0) for m in b_metrics) / len(b_metrics) if b_metrics else 0,
-                    "avg_candidate_quality": sum(m.get("quality", 0) for m in c_metrics) / len(c_metrics) if c_metrics else 0,
+                    "avg_baseline_quality": sum(m.get("quality", 0) for m in b_metrics)
+                    / len(b_metrics)
+                    if b_metrics
+                    else 0,
+                    "avg_candidate_quality": sum(m.get("quality", 0) for m in c_metrics)
+                    / len(c_metrics)
+                    if c_metrics
+                    else 0,
                     "constraint_violations": sum(
-                        1 for c in comps
+                        1
+                        for c in comps
                         if not c["candidate_metrics"].get("sentences_ok", True)
                         or not c["candidate_metrics"].get("no_ai_disclaimer", True)
                         or c["candidate_metrics"].get("has_think_tags", False)
                     ),
-                    "examples": [{
-                        "question": c["question"],
-                        "winner": c["winner"],
-                        "candidate_quality": c["candidate_metrics"].get("quality", 0),
-                        "candidate_words": c["candidate_metrics"].get("length", 0),
-                        "sentences_ok": c["candidate_metrics"].get("sentences_ok", True),
-                        "no_ai_disclaimer": c["candidate_metrics"].get("no_ai_disclaimer", True),
-                    } for c in comps],
+                    "examples": [
+                        {
+                            "question": c["question"],
+                            "winner": c["winner"],
+                            "candidate_quality": c["candidate_metrics"].get("quality", 0),
+                            "candidate_words": c["candidate_metrics"].get("length", 0),
+                            "sentences_ok": c["candidate_metrics"].get("sentences_ok", True),
+                            "no_ai_disclaimer": c["candidate_metrics"].get(
+                                "no_ai_disclaimer", True
+                            ),
+                        }
+                        for c in comps
+                    ],
                 }
 
             wandb_url = None
             wandb_run = None
-            all_baseline_metrics = [c["baseline_metrics"] for c in comparison.get("comparisons", [])]
-            all_candidate_metrics = [c["candidate_metrics"] for c in comparison.get("comparisons", [])]
+            all_baseline_metrics = [
+                c["baseline_metrics"] for c in comparison.get("comparisons", [])
+            ]
+            all_candidate_metrics = [
+                c["candidate_metrics"] for c in comparison.get("comparisons", [])
+            ]
             feedback_data = {
                 "npc_key": npc_key,
                 "baseline": baseline_name,
@@ -1708,17 +1940,34 @@ def main():
                 "baseline_wins": comparison["baseline_wins"],
                 "candidate_wins": comparison["candidate_wins"],
                 "ties": comparison["ties"],
-                "win_rate": comparison["candidate_wins"] / comparison["total"] if comparison["total"] > 0 else 0,
-                "avg_baseline_words": sum(m.get("length", 0) for m in all_baseline_metrics) / len(all_baseline_metrics) if all_baseline_metrics else 0,
-                "avg_candidate_words": sum(m.get("length", 0) for m in all_candidate_metrics) / len(all_candidate_metrics) if all_candidate_metrics else 0,
-                "avg_baseline_sentences": sum(m.get("sentences", 0) for m in all_baseline_metrics) / len(all_baseline_metrics) if all_baseline_metrics else 0,
-                "avg_candidate_sentences": sum(m.get("sentences", 0) for m in all_candidate_metrics) / len(all_candidate_metrics) if all_candidate_metrics else 0,
+                "win_rate": comparison["candidate_wins"] / comparison["total"]
+                if comparison["total"] > 0
+                else 0,
+                "avg_baseline_words": sum(m.get("length", 0) for m in all_baseline_metrics)
+                / len(all_baseline_metrics)
+                if all_baseline_metrics
+                else 0,
+                "avg_candidate_words": sum(m.get("length", 0) for m in all_candidate_metrics)
+                / len(all_candidate_metrics)
+                if all_candidate_metrics
+                else 0,
+                "avg_baseline_sentences": sum(m.get("sentences", 0) for m in all_baseline_metrics)
+                / len(all_baseline_metrics)
+                if all_baseline_metrics
+                else 0,
+                "avg_candidate_sentences": sum(m.get("sentences", 0) for m in all_candidate_metrics)
+                / len(all_candidate_metrics)
+                if all_candidate_metrics
+                else 0,
                 "per_concept": per_concept,
                 "weak_concepts": [
-                    concept for concept, data in per_concept.items()
-                    if data["win_rate"] < 0.5 or data["avg_candidate_quality"] < 20 or data["constraint_violations"] > 0
+                    concept
+                    for concept, data in per_concept.items()
+                    if data["win_rate"] < 0.5
+                    or data["avg_candidate_quality"] < 20
+                    or data["constraint_violations"] > 0
                 ],
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
             with open(feedback_path, "w") as f:
@@ -1727,11 +1976,14 @@ def main():
             print(f"[feedback] Weak concepts identified: {len(feedback_data['weak_concepts'])}")
             for wc in feedback_data["weak_concepts"]:
                 info = per_concept[wc]
-                print(f"  - {wc}: win_rate={info['win_rate']:.0%}, avg_quality={info['avg_candidate_quality']:.1f}, violations={info['constraint_violations']}")
+                print(
+                    f"  - {wc}: win_rate={info['win_rate']:.0%}, avg_quality={info['avg_candidate_quality']:.1f}, violations={info['constraint_violations']}"
+                )
 
         # ── W&B Evaluation Tracking ─────────────────────────────────────────
         if args.wandb and spec:
             import wandb
+
             npc_key = spec.get("npc_key", "unknown")
             cw = comparison["candidate_wins"]
             bw = comparison["baseline_wins"]
@@ -1755,10 +2007,9 @@ def main():
                 "gpu_layers": args.gpu_layers,
                 "max_tokens": args.max_tokens,
                 "report_html": args.report_html,
-                "categories": list(set(
-                    q.get("metadata", {}).get("category", "general")
-                    for q in questions
-                )),
+                "categories": list(
+                    set(q.get("metadata", {}).get("category", "general") for q in questions)
+                ),
             }
             if wandb_group_env:
                 config["wandb_group"] = wandb_group_env
@@ -1776,56 +2027,69 @@ def main():
                 print(f"  [wandb] Run URL: {wandb_url}")
             if feedback_path and os.path.exists(feedback_path):
                 try:
-                    with open(feedback_path, "r") as f:
+                    with open(feedback_path) as f:
                         existing_feedback = json.load(f)
-                    existing_feedback.update({
-                        "wandb_url": wandb_url,
-                        "wandb_run_id": wandb_run.id if wandb_run else None,
-                        "wandb_project": args.wandb_project or "unsloth-core",
-                        "wandb_entity": args.wandb_entity,
-                    })
+                    existing_feedback.update(
+                        {
+                            "wandb_url": wandb_url,
+                            "wandb_run_id": wandb_run.id if wandb_run else None,
+                            "wandb_project": args.wandb_project or "unsloth-core",
+                            "wandb_entity": args.wandb_entity,
+                        }
+                    )
                     with open(feedback_path, "w") as f:
                         json.dump(existing_feedback, f, indent=2)
                 except Exception as exc:
                     print(f"  [wandb] Could not update feedback JSON with run metadata: {exc}")
             # Log comparison summary
-            wandb.log({
-                "eval/baseline_wins": bw,
-                "eval/candidate_wins": cw,
-                "eval/ties": ties,
-                "eval/total": total,
-                "eval/win_rate": win_rate,
-            })
+            wandb.log(
+                {
+                    "eval/baseline_wins": bw,
+                    "eval/candidate_wins": cw,
+                    "eval/ties": ties,
+                    "eval/total": total,
+                    "eval/win_rate": win_rate,
+                }
+            )
             # Build a W&B Table for structured per-question results
             table_data = []
             for comp in comparison.get("comparisons", []):
                 meta = comp.get("metadata", {})
                 category = meta.get("category", "general")
                 concept = meta.get("concept", "general")
-                table_data.append([
-                    comp["question"],
-                    category,
-                    concept,
-                    comp["baseline_metrics"].get("quality", 0),
-                    comp["candidate_metrics"].get("quality", 0),
-                    comp["baseline_metrics"].get("length", 0),
-                    comp["candidate_metrics"].get("length", 0),
-                    comp["baseline_metrics"].get("sentences", 0),
-                    comp["candidate_metrics"].get("sentences", 0),
-                    comp["baseline_metrics"].get("sentences_ok", True),
-                    comp["candidate_metrics"].get("sentences_ok", True),
-                    comp["baseline_metrics"].get("no_ai_disclaimer", True),
-                    comp["candidate_metrics"].get("no_ai_disclaimer", True),
-                    comp["winner"],
-                ])
+                table_data.append(
+                    [
+                        comp["question"],
+                        category,
+                        concept,
+                        comp["baseline_metrics"].get("quality", 0),
+                        comp["candidate_metrics"].get("quality", 0),
+                        comp["baseline_metrics"].get("length", 0),
+                        comp["candidate_metrics"].get("length", 0),
+                        comp["baseline_metrics"].get("sentences", 0),
+                        comp["candidate_metrics"].get("sentences", 0),
+                        comp["baseline_metrics"].get("sentences_ok", True),
+                        comp["candidate_metrics"].get("sentences_ok", True),
+                        comp["baseline_metrics"].get("no_ai_disclaimer", True),
+                        comp["candidate_metrics"].get("no_ai_disclaimer", True),
+                        comp["winner"],
+                    ]
+                )
             eval_table = wandb.Table(
                 columns=[
-                    "question", "category", "concept",
-                    "baseline_quality", "candidate_quality",
-                    "baseline_words", "candidate_words",
-                    "baseline_sentences", "candidate_sentences",
-                    "baseline_sentences_ok", "candidate_sentences_ok",
-                    "baseline_no_ai", "candidate_no_ai",
+                    "question",
+                    "category",
+                    "concept",
+                    "baseline_quality",
+                    "candidate_quality",
+                    "baseline_words",
+                    "candidate_words",
+                    "baseline_sentences",
+                    "candidate_sentences",
+                    "baseline_sentences_ok",
+                    "candidate_sentences_ok",
+                    "baseline_no_ai",
+                    "candidate_no_ai",
                     "winner",
                 ],
                 data=table_data,
@@ -1833,17 +2097,22 @@ def main():
             wandb.log({"eval/comparison_table": eval_table})
             # Aggregate metrics per category
             from collections import defaultdict
+
             by_category = defaultdict(list)
             for row in table_data:
                 by_category[row[1]].append(row)  # row[1] = category
             for cat, rows in by_category.items():
                 cat_wins = sum(1 for r in rows if r[-1] == "candidate")
                 cat_total = len(rows)
-                wandb.log({
-                    f"eval/category/{cat}/win_rate": cat_wins / cat_total if cat_total > 0 else 0,
-                    f"eval/category/{cat}/total": cat_total,
-                    f"eval/category/{cat}/wins": cat_wins,
-                })
+                wandb.log(
+                    {
+                        f"eval/category/{cat}/win_rate": cat_wins / cat_total
+                        if cat_total > 0
+                        else 0,
+                        f"eval/category/{cat}/total": cat_total,
+                        f"eval/category/{cat}/wins": cat_wins,
+                    }
+                )
             # Log report as artifact
             if args.output and os.path.exists(args.output):
                 try:
@@ -1873,6 +2142,7 @@ def main():
         # ── Record pipeline manifest stage ─────────────────────────────────
         try:
             from src.core.ops.pipeline_manifest import record_pipeline_stage
+
             os.environ.setdefault("NPC_KEY", npc_key)
             os.environ.setdefault("TECHNIQUE", getattr(args, "technique", None) or "template")
             manifest_artifacts = {}
@@ -1900,20 +2170,22 @@ def _build_eval_test_cases(spec_data: dict) -> list[dict]:
     questions = spec_data.get("evaluation", []) or spec_data.get("eval_questions", [])
     for raw in questions:
         q = {"question": raw} if isinstance(raw, str) else raw
-        test_cases.append({
-            "input": q.get("question", ""),
-            "actualOutput": "",
-            "expectedOutput": q.get("expected_output", q.get("answer", "")),
-            "context": [spec_data.get("system_prompt", "")],
-            "name": q.get("name", q.get("question", ""))[:50],
-            "additionalMetadata": {
-                "npc_key": spec_data.get("npc_key", "unknown"),
-                "category": q.get("category", "general"),
-                "concept": q.get("concept", "general"),
-                "difficulty": q.get("difficulty", "unknown"),
-                "format": q.get("format", q.get("data_format", "eval_question")),
-            },
-        })
+        test_cases.append(
+            {
+                "input": q.get("question", ""),
+                "actualOutput": "",
+                "expectedOutput": q.get("expected_output", q.get("answer", "")),
+                "context": [spec_data.get("system_prompt", "")],
+                "name": q.get("name", q.get("question", ""))[:50],
+                "additionalMetadata": {
+                    "npc_key": spec_data.get("npc_key", "unknown"),
+                    "category": q.get("category", "general"),
+                    "concept": q.get("concept", "general"),
+                    "difficulty": q.get("difficulty", "unknown"),
+                    "format": q.get("format", q.get("data_format", "eval_question")),
+                },
+            }
+        )
     return test_cases
 
 
@@ -1935,6 +2207,7 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
 
     # Verify model files before starting server
     from src.core.ops.stage_gate import verify_inputs
+
     model_files = [candidate_path]
     if baseline_path:
         model_files.append(baseline_path)
@@ -1946,7 +2219,7 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
     # ── Fail fast: must have Confident API key ───────────────────────────
     try:
         ensure_confident_api_key()
-    except EnvironmentError as exc:
+    except OSError as exc:
         print(f"  [deepeval] {exc}")
         print("  [deepeval] Skipping DeepEval evaluation.")
         return
@@ -1959,9 +2232,7 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
 
     os.environ["DEEPEVAL_LIVE_MODEL_URL"] = ollama_url
     os.environ["DEEPEVAL_OLLAMA_MODEL"] = args.deepeval_judge_model
-    os.environ["DEEPEVAL_GOLDEN_TECHNIQUE"] = (
-        getattr(args, "technique", None) or "template"
-    )
+    os.environ["DEEPEVAL_GOLDEN_TECHNIQUE"] = getattr(args, "technique", None) or "template"
     os.environ["DEEPEVAL_GOLDEN_NPC_KEYS"] = npc_key
 
     identifier = (
@@ -1970,8 +2241,8 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
     )
 
     # ── Remote eval path (Confident AI infrastructure) ──────────────────
-    if getattr(args, 'remote_eval', False):
-        print(f"\n[Remote Eval] Evaluating model on Confident AI infrastructure...")
+    if getattr(args, "remote_eval", False):
+        print("\n[Remote Eval] Evaluating model on Confident AI infrastructure...")
         client = ConfidentAPIClient()
 
         spec_for_tc = spec_data or {}
@@ -1982,39 +2253,48 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
         }
 
         print(f"  Test cases: {len(test_cases)}")
-        print(f"  Metrics: answer_relevancy, faithfulness")
+        print("  Metrics: answer_relevancy, faithfulness")
 
         result = client.evaluate(test_cases, metric_collection, identifier=identifier)
         test_run_id = result.get("data", {}).get("testRunId")
 
         if test_run_id:
             dashboard_url = f"https://app.confident-ai.com/test-runs/{test_run_id}"
-            print(f"\n[Remote Eval] Submitted successfully!")
+            print("\n[Remote Eval] Submitted successfully!")
             print(f"  Test Run ID: {test_run_id}")
             print(f"  Dashboard: {dashboard_url}")
         else:
-            print(f"\n[Remote Eval] Submitted but no testRunId in response.")
+            print("\n[Remote Eval] Submitted but no testRunId in response.")
             dashboard_url = "https://app.confident-ai.com"
 
         # Record in pipeline manifest
         try:
             from src.core.ops.pipeline_manifest import record_pipeline_stage
+
             os.environ.setdefault("NPC_KEY", npc_key)
             os.environ.setdefault("TECHNIQUE", getattr(args, "technique", None) or "template")
-            record_pipeline_stage("evaluate", "completed",
-                artifacts={"candidate_path": str(candidate_path),
-                           "baseline_path": str(baseline_path) if baseline_path else ""},
-                metadata={"deepeval_identifier": identifier,
-                          "confident_url": dashboard_url,
-                          "remote_eval": True,
-                          "test_run_id": test_run_id or "",
-                           "judge_model": getattr(args, 'deepeval_judge_model', constants.DEFAULT_JUDGE_MODEL)},
+            record_pipeline_stage(
+                "evaluate",
+                "completed",
+                artifacts={
+                    "candidate_path": str(candidate_path),
+                    "baseline_path": str(baseline_path) if baseline_path else "",
+                },
+                metadata={
+                    "deepeval_identifier": identifier,
+                    "confident_url": dashboard_url,
+                    "remote_eval": True,
+                    "test_run_id": test_run_id or "",
+                    "judge_model": getattr(
+                        args, "deepeval_judge_model", constants.DEFAULT_JUDGE_MODEL
+                    ),
+                },
             )
         except Exception:
             pass
         return
 
-    print(f"\n[deepeval] Running DeepEval model quality evaluation...")
+    print("\n[deepeval] Running DeepEval model quality evaluation...")
     print(f"  Identifier:  {identifier}")
     print(f"  Judge model: {args.deepeval_judge_model}")
     print(f"  NPC key:     {npc_key}")
@@ -2029,11 +2309,9 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
     result = subprocess.run(cmd)
 
     if result.returncode != 0:
-        print(
-            f"\n  [deepeval] Test run finished with exit code {result.returncode}."
-        )
+        print(f"\n  [deepeval] Test run finished with exit code {result.returncode}.")
     else:
-        print(f"\n  [deepeval] Test run completed successfully.")
+        print("\n  [deepeval] Test run completed successfully.")
 
     # ── Open Confident AI dashboard (best-effort) ───────────────────────
     if confident_available():
@@ -2051,6 +2329,7 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
     # ── Record pipeline manifest stage ─────────────────────────────────
     try:
         from src.core.ops.pipeline_manifest import record_pipeline_stage
+
         os.environ.setdefault("NPC_KEY", npc_key)
         os.environ.setdefault("TECHNIQUE", getattr(args, "technique", None) or "template")
         manifest_artifacts = {
@@ -2065,9 +2344,11 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
         # Read confident URL from .deepeval/.latest_test_run.json
         try:
             from pathlib import Path
+
             latest_run = Path(".deepeval") / ".latest_test_run.json"
             if latest_run.exists():
                 import json as _json
+
                 lr = _json.loads(latest_run.read_text())
                 if "testRunLink" in lr:
                     manifest_metadata["confident_url"] = lr["testRunLink"]
@@ -2077,7 +2358,7 @@ def _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=None)
     except Exception:
         pass  # manifest is optional, never block pipeline
 
-    print(f"\n  [deepeval] Results available at: https://app.confident-ai.com")
+    print("\n  [deepeval] Results available at: https://app.confident-ai.com")
 
 
 if __name__ == "__main__":

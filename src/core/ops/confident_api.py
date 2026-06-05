@@ -32,8 +32,11 @@ def _metric_collection_name(metric_collection: str | dict[str, Any]) -> str:
         return metric_collection
     name = metric_collection.get("name")
     if not isinstance(name, str) or not name.strip():
-        raise ValueError("metric_collection must be a name string or a dict with a non-empty 'name'")
+        raise ValueError(
+            "metric_collection must be a name string or a dict with a non-empty 'name'"
+        )
     return name
+
 
 # ---------------------------------------------------------------------------
 # Client
@@ -221,9 +224,7 @@ class ConfidentAPIClient:
         self._request("DELETE", f"/datasets/{alias}")
         return True
 
-    def create_dataset_version(
-        self, alias: str, goldens: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def create_dataset_version(self, alias: str, goldens: list[dict[str, Any]]) -> dict[str, Any]:
         """Create a new version of an existing dataset.
 
         Parameters
@@ -249,9 +250,7 @@ class ConfidentAPIClient:
         list[dict]
             Version metadata for each version.
         """
-        result: dict[str, Any] = self._request(
-            "GET", f"/datasets/{alias}/versions"
-        )
+        result: dict[str, Any] = self._request("GET", f"/datasets/{alias}/versions")
         return result.get("versions", result.get("data", result))
 
     # ------------------------------------------------------------------
@@ -284,9 +283,7 @@ class ConfidentAPIClient:
         result: dict[str, Any] = self._request("GET", "/test-runs")
         return result.get("data", result.get("testRuns", result))
 
-    def list_test_runs_paginated(
-        self, page: int = 1, page_size: int = 20
-    ) -> dict[str, Any]:
+    def list_test_runs_paginated(self, page: int = 1, page_size: int = 20) -> dict[str, Any]:
         """List test runs with pagination.
 
         Parameters
@@ -302,9 +299,7 @@ class ConfidentAPIClient:
             Paginated response containing ``items`` (or ``data``) and
             ``total`` count.
         """
-        return self._request(
-            "GET", f"/test-runs?page={page}&pageSize={page_size}"
-        )
+        return self._request("GET", f"/test-runs?page={page}&pageSize={page_size}")
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -325,7 +320,7 @@ class ConfidentAPIClient:
         env_loader.ensure_confident_api_key(strict=False)
         key = os.environ.get("CONFIDENT_API_KEY")
         if not key or not key.strip():
-            raise EnvironmentError(
+            raise OSError(
                 "CONFIDENT_API_KEY environment variable is not set.\n"
                 "  Export it:  export CONFIDENT_API_KEY='your-key-here'\n"
                 "  Or log in:  deepeval login\n"
@@ -333,9 +328,7 @@ class ConfidentAPIClient:
             )
         return key.strip()
 
-    def _request(
-        self, method: str, path: str, body: dict[str, Any] | None = None
-    ) -> Any:
+    def _request(self, method: str, path: str, body: dict[str, Any] | None = None) -> Any:
         """Execute an HTTP request against the Confident AI API.
 
         Parameters
@@ -390,8 +383,7 @@ class ConfidentAPIClient:
             self._raise_for_status(status, body_text, path)
         except urllib.error.URLError as exc:
             raise RuntimeError(
-                f"Network error connecting to Confident AI API at {url}: "
-                f"{exc.reason}"
+                f"Network error connecting to Confident AI API at {url}: {exc.reason}"
             ) from exc
 
     @staticmethod
@@ -416,9 +408,7 @@ class ConfidentAPIClient:
                 "Run `deepeval login` or check CONFIDENT_API_KEY."
             )
         if status == 403:
-            raise PermissionError(
-                "Access forbidden. Check API key permissions."
-            )
+            raise PermissionError("Access forbidden. Check API key permissions.")
         if status == 404:
             raise FileNotFoundError(f"Resource not found: {path}")
         if status == 409:

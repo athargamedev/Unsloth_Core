@@ -5,11 +5,12 @@ import logging
 import os
 import time
 import uuid
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterator, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.config.constants import DEFAULT_JUDGE_MODEL
 
@@ -42,8 +43,16 @@ _ARTIFACT_TYPE_MAP: dict[str, str] = {
 }
 
 _ARTIFACT_TYPE_CHECK: set[str] = {
-    "dataset_raw", "dataset_clean", "adapter", "gguf_adapter", "gguf_full",
-    "eval_report", "feedback_json", "config_snapshot", "comparison_report", "other",
+    "dataset_raw",
+    "dataset_clean",
+    "adapter",
+    "gguf_adapter",
+    "gguf_full",
+    "eval_report",
+    "feedback_json",
+    "config_snapshot",
+    "comparison_report",
+    "other",
 }
 
 
@@ -76,7 +85,7 @@ class WorkflowHookRecorder:
         technique: str | None = None,
         spec_path: str | None = None,
         run_id: str | None = None,
-        db: PipelineDB | None = None,                    # NEW: optional DB client
+        db: PipelineDB | None = None,  # NEW: optional DB client
     ) -> None:
         env_path = os.getenv("WORKFLOW_HOOKS_PATH")
         path = hook_path or env_path
@@ -93,26 +102,25 @@ class WorkflowHookRecorder:
         self.next_action: str | None = os.getenv("WORKFLOW_NEXT_ACTION")
         self.next_artifact: str | None = os.getenv("WORKFLOW_NEXT_ARTIFACT")
         _await_conf = os.getenv("WORKFLOW_AWAIT_CONFIRMATION", "")
-        self.await_confirmation_stages: set[str] = {
-            s.strip() for s in _await_conf.split(";") if s
-        }
+        self.await_confirmation_stages: set[str] = {s.strip() for s in _await_conf.split(";") if s}
 
         # ── PipelineDB state ──────────────────────────────────────────
-        self.db = db or create_pipeline_db()              # Auto-connect if caller didn't provide one
-        self._db_run_created: bool = False                # NEW
-        self._db_job_created: bool = False                # NEW
-        self._db_job_uuid: str | None = None               # UUID of created job
-        self._db_config_saved: bool = False                # pipeline_config_snapshots
-        self._db_quality_gate_created: bool = False        # dataset_quality_gates
-        self._db_eval_session_created: bool = False        # eval_sessions
-        self._db_ephemeral_run_id: str | None = None       # evaluate_pipeline fallback run_id
-        self._db_terminal_status: str | None = None        # cached terminal status for log-flush updates
+        self.db = db or create_pipeline_db()  # Auto-connect if caller didn't provide one
+        self._db_run_created: bool = False  # NEW
+        self._db_job_created: bool = False  # NEW
+        self._db_job_uuid: str | None = None  # UUID of created job
+        self._db_config_saved: bool = False  # pipeline_config_snapshots
+        self._db_quality_gate_created: bool = False  # dataset_quality_gates
+        self._db_eval_session_created: bool = False  # eval_sessions
+        self._db_ephemeral_run_id: str | None = None  # evaluate_pipeline fallback run_id
+        self._db_terminal_status: str | None = None  # cached terminal status for log-flush updates
+        self._experiment_registry_path: str | None = os.getenv("EXPERIMENT_REGISTRY_PATH")
 
     def emit(self, step: str, status: str, **fields: Any) -> None:
         if not self.path:
             return
         event = {
-            "ts": datetime.now(timezone.utc).isoformat(),
+            "ts": datetime.now(UTC).isoformat(),
             "step": step,
             "status": status,
             **{k: v for k, v in self.base_event.items() if v is not None},
@@ -134,21 +142,25 @@ class WorkflowHookRecorder:
             with self.path.open("a", encoding="utf-8") as f:
                 json.dump(event, f, ensure_ascii=False)
                 f.write("\n")
-        except Exception as e:
+        except Exception:
             # Hooks must never break the workflow; ignore all write errors.
             return
+
+        self._emit_experiment_run(step, status, fields, event)
 
         # NEW: Also write to DB if a PipelineDB client is available
         if self.db is not None:
             try:
                 if self.db.ensure_connected():
                     self._db_emit(step, status, fields)
-            except Exception as e:
+            except Exception:
                 # DB writes are best-effort — never break the pipeline
                 logger.debug("DB emit failed for step=%s status=%s", step, status)
 
     @contextmanager
-    def step(self, step: str, *, next_action: str | None = None, **fields: Any) -> Iterator[StepContext]:
+    def step(
+        self, step: str, *, next_action: str | None = None, **fields: Any
+    ) -> Iterator[StepContext]:
         """Context manager for pipeline step lifecycle.
 
         Args:
@@ -169,7 +181,14 @@ class WorkflowHookRecorder:
             yield ctx
         except (Exception, SystemExit) as exc:
             duration_s = time.monotonic() - _start_time
-            self.emit(step, "error", error=type(exc).__name__, message=str(exc), duration_s=duration_s, **fields)
+            self.emit(
+                step,
+                "error",
+                error=type(exc).__name__,
+                message=str(exc),
+                duration_s=duration_s,
+                **fields,
+            )
             flush_logs = getattr(self, "_db_flush_logs", None)
             if callable(flush_logs):
                 flush_logs(ctx.messages)
@@ -183,6 +202,76 @@ class WorkflowHookRecorder:
         finally:
             if next_action is not None:
                 self.next_action = _prev_next_action
+
+    # ── ExperimentRegistry integration ────────────────────────────────
+
+    def _emit_experiment_run(
+        self,
+        step: str,
+        status: str,
+        fields: dict[str, Any],
+        event: dict[str, Any],
+    ) -> None:
+        """Best-effort append to local canonical experiment registry.
+
+        Triggered only for terminal events so the registry records durable run
+        outcomes, not every transient step start.
+        """
+        if status not in {"complete", "error"}:
+            return
+        if not self._experiment_registry_path:
+            return
+        try:
+            from src.core.ops.experiment_registry import ExperimentRegistry, ExperimentRun
+
+            run_id = fields.get("run_id") or self.base_event.get("run_id") or event.get("run_id")
+            npc_key = fields.get("npc_key") or self.base_event.get("npc_key") or "unknown"
+            technique = fields.get("technique") or self.base_event.get("technique") or "unknown"
+            artifacts = {
+                key: val
+                for key, val in {
+                    "output_path": fields.get("output_path"),
+                    "output_dir": fields.get("output_dir"),
+                    "report_path": fields.get("report_path"),
+                    "feedback_json": fields.get("feedback_json"),
+                }.items()
+                if val is not None
+            }
+            external_refs = {
+                key: fields[key]
+                for key in (
+                    "wandb_run_id",
+                    "wandb_url",
+                    "confident_trace_id",
+                    "confident_test_run_id",
+                )
+                if key in fields and fields[key] is not None
+            }
+            ExperimentRegistry(self._experiment_registry_path).record_run(
+                ExperimentRun(
+                    run_id=str(run_id or f"{step}_{uuid.uuid4().hex}"),
+                    npc_key=str(npc_key),
+                    stage=step,
+                    technique=str(technique),
+                    status="failed" if status == "error" else "complete",
+                    profile=fields.get("profile"),
+                    dataset_hash=fields.get("dataset_hash"),
+                    model_name=fields.get("model_name"),
+                    base_model=fields.get("base_model"),
+                    metrics=fields.get("metrics")
+                    if isinstance(fields.get("metrics"), dict)
+                    else {},
+                    artifacts=artifacts,
+                    external_refs=external_refs,
+                    metadata={
+                        "tool": self.base_event.get("tool"),
+                        "spec_path": self.base_event.get("spec_path"),
+                        "duration_s": fields.get("duration_s"),
+                    },
+                )
+            )
+        except Exception:
+            logger.debug("ExperimentRegistry emit failed for step=%s status=%s", step, status)
 
     # ── PipelineDB integration ─────────────────────────────────────────
 
@@ -226,7 +315,7 @@ class WorkflowHookRecorder:
                     technique=technique_val,
                     run_id=run_id,
                 )
- 
+
         # ── CONFIG SNAPSHOT lifecycle ─────────────────────────────────
         if step == "training_pipeline" and status == "start" and not self._db_config_saved:
             full_config = {
@@ -244,15 +333,17 @@ class WorkflowHookRecorder:
                 file_path=fields.get("output_dir"),
             )
             self._db_config_saved = True
- 
+
         # ── QUALITY GATE lifecycle ────────────────────────────────────
         if step == "deepeval_run" and status == "complete" and not self._db_quality_gate_created:
             # Try to read quality_summary.json from well-known path
             import json as _json
             from pathlib import Path as _Path
+
             qa_path = (
                 _Path(f"subjects/datasets/{npc_key}/{technique_val}/quality_summary.json")
-                if npc_key and technique_val else None
+                if npc_key and technique_val
+                else None
             )
             if qa_path and qa_path.exists():
                 try:
@@ -268,7 +359,9 @@ class WorkflowHookRecorder:
                         metrics=qa_data.get("metrics"),
                         categories=qa_data.get("categories"),
                         failures=qa_data.get("failures"),
-                        judge_model=qa_data.get("judge_model", fields.get("judge_model", DEFAULT_JUDGE_MODEL)),
+                        judge_model=qa_data.get(
+                            "judge_model", fields.get("judge_model", DEFAULT_JUDGE_MODEL)
+                        ),
                         dataset_path=str(qa_path),
                     )
                 except Exception as _exc:
@@ -285,9 +378,13 @@ class WorkflowHookRecorder:
                     judge_model=fields.get("judge_model", DEFAULT_JUDGE_MODEL),
                 )
             self._db_quality_gate_created = True
- 
+
         # ── EVAL SESSION lifecycle ────────────────────────────────────
-        if step == "evaluate_pipeline" and status == "complete" and not self._db_eval_session_created:
+        if (
+            step == "evaluate_pipeline"
+            and status == "complete"
+            and not self._db_eval_session_created
+        ):
             # Read structured eval data from the feedback JSON file (written by evaluate.py)
             # rather than relying on step fields, which don't contain the comparison results.
             import json as _json
@@ -357,13 +454,17 @@ class WorkflowHookRecorder:
             if win_rate is not None and self._db_job_uuid:
                 try:
                     self.db.update_job_status(self._db_job_uuid, loss=float(win_rate))
-                except Exception as e:
+                except Exception:
                     pass
 
             self._db_eval_session_created = True
 
         # ── COMPARE lifecycle ────────────────────────────────────────────
-        if step == "compare" and status == "complete" and not getattr(self, "_db_compare_created", False):
+        if (
+            step == "compare"
+            and status == "complete"
+            and not getattr(self, "_db_compare_created", False)
+        ):
             # Use the ComparisonRun schema to create a structured eval session
             # in Supabase with all model identity fields (baseline_model,
             # candidate_model, judge_model, dataset_hash, etc.).
@@ -489,9 +590,22 @@ class WorkflowHookRecorder:
             job_type = "Pipeline"
             if "training" in step or step in ("run_training", "training_pipeline"):
                 job_type = "Training"
-            elif "dataset" in step or step in ("generate_examples", "prepare", "write_artifacts", "sanitize", "deepeval_run", "sanitize_dataset"):
+            elif "dataset" in step or step in (
+                "generate_examples",
+                "prepare",
+                "write_artifacts",
+                "sanitize",
+                "deepeval_run",
+                "sanitize_dataset",
+            ):
                 job_type = "Dataset"
-            elif "eval" in step or step in ("evaluate_pipeline", "compare_runs", "quick_eval", "evaluate_baseline", "evaluate_candidate"):
+            elif "eval" in step or step in (
+                "evaluate_pipeline",
+                "compare_runs",
+                "quick_eval",
+                "evaluate_baseline",
+                "evaluate_candidate",
+            ):
                 job_type = "Evaluation"
             elif "export" in step:
                 job_type = "Export"
@@ -541,7 +655,7 @@ class WorkflowHookRecorder:
                 status=self._resolve_log_status(),
                 logs=messages,
             )
-        except Exception as e:
+        except Exception:
             # Best-effort — never break the pipeline
             pass
 
@@ -557,7 +671,7 @@ class WorkflowHookRecorder:
 def default_hook_path(
     output_dir: str | Path,
     filename: str = "workflow_hooks.jsonl",
-    run_dir: str | Path | None = None
+    run_dir: str | Path | None = None,
 ) -> Path:
     """Return the path to the workflow hooks JSONL file.
 
@@ -682,15 +796,19 @@ class WorkflowHookReader:
             except (ValueError, TypeError):
                 pass
 
-            step_list.append({
-                "step": step_name,
-                "status": "complete" if complete_event else ("error" if error_event else "started"),
-                "ts": step_start_ts or step_end_ts,
-                "duration_s": step_duration_s,
-                "has_start": bool(start_event),
-                "has_complete": bool(complete_event),
-                "has_error": bool(error_event),
-            })
+            step_list.append(
+                {
+                    "step": step_name,
+                    "status": "complete"
+                    if complete_event
+                    else ("error" if error_event else "started"),
+                    "ts": step_start_ts or step_end_ts,
+                    "duration_s": step_duration_s,
+                    "has_start": bool(start_event),
+                    "has_complete": bool(complete_event),
+                    "has_error": bool(error_event),
+                }
+            )
 
         completed = sum(1 for s in step_list if s["status"] == "complete")
         failed = sum(1 for s in step_list if s["status"] == "error")
@@ -766,17 +884,17 @@ class WorkflowHookReader:
         stages: list[dict] = []
         for step_name, event in step_map.items():
             artifact_path = (
-                event.get("next_artifact")
-                or event.get("output_path")
-                or event.get("output_dir")
+                event.get("next_artifact") or event.get("output_path") or event.get("output_dir")
             )
-            stages.append({
-                "step": step_name,
-                "status": event.get("status", "?"),
-                "duration_s": event.get("duration_s"),
-                "next_action": event.get("next_action"),
-                "artifact_path": artifact_path,
-            })
+            stages.append(
+                {
+                    "step": step_name,
+                    "status": event.get("status", "?"),
+                    "duration_s": event.get("duration_s"),
+                    "next_action": event.get("next_action"),
+                    "artifact_path": artifact_path,
+                }
+            )
 
         # Sort stages chronologically by their first event timestamp
         step_order: dict[str, str] = {}
@@ -791,15 +909,13 @@ class WorkflowHookReader:
         # next_action hasn't been fulfilled yet.
         next_expected: str | None = None
         completed_with_next = [
-            s for s in stages
+            s
+            for s in stages
             if s["status"] == "complete" and s.get("next_action") and s["next_action"] != "NONE"
         ]
         for step_info in reversed(completed_with_next):
             expected = step_info["next_action"]
-            already_done = any(
-                s["step"] == expected and s["status"] == "complete"
-                for s in stages
-            )
+            already_done = any(s["step"] == expected and s["status"] == "complete" for s in stages)
             if not already_done:
                 next_expected = expected
                 break
@@ -813,14 +929,14 @@ class WorkflowHookReader:
 
         # Collect artifact paths from completed steps
         artifacts_ready: list[str] = [
-            s["artifact_path"] for s in stages
+            s["artifact_path"]
+            for s in stages
             if s["status"] == "complete" and s.get("artifact_path")
         ]
 
         # Check for confirmation gate signal
         awaiting_confirmation = any(
-            e.get("await_confirmation") for e in pipeline_events
-            if e.get("status") == "complete"
+            e.get("await_confirmation") for e in pipeline_events if e.get("status") == "complete"
         )
 
         return {

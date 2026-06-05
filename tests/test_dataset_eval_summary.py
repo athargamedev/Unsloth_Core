@@ -89,7 +89,14 @@ def test_dataset_eval_summary_accepts_latest_test_run_payload():
         {
             "testRunData": {
                 "identifier": "unit-run",
-                "testCases": [{"name": "case", "success": True, "metadata": {"category": "identity"}, "metricsData": []}],
+                "testCases": [
+                    {
+                        "name": "case",
+                        "success": True,
+                        "metadata": {"category": "identity"},
+                        "metricsData": [],
+                    }
+                ],
             }
         }.get("testRunData"),
         npc_key="history_guide",

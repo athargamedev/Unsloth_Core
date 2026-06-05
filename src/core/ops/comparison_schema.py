@@ -7,7 +7,7 @@ This is written to Supabase eval_sessions, logged to W&B, and archived locally.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def make_comparison_id(
@@ -30,7 +30,7 @@ def make_comparison_id(
 
     Inverse of parse_comparison_id().
     """
-    today = datetime.now(timezone.utc).strftime("%Y%m%d")
+    today = datetime.now(UTC).strftime("%Y%m%d")
     safe_baseline = baseline_model.replace(":", "-").replace("/", "-")
     safe_candidate = candidate_model.replace(":", "-").replace("/", "-")
     return f"{today}_{npc_key}_{safe_baseline}-vs-{safe_candidate}_{sequence_number:03d}"
@@ -64,10 +64,19 @@ class ComparisonRun(BaseModel):
     rows_evaluated: int = Field(default=0, ge=0, description="Number of rows evaluated")
 
     # Win/loss counts
-    baseline_wins: int = Field(default=0, ge=0, description="Rows where baseline output was preferred")
-    candidate_wins: int = Field(default=0, ge=0, description="Rows where candidate output was preferred")
+    baseline_wins: int = Field(
+        default=0, ge=0, description="Rows where baseline output was preferred"
+    )
+    candidate_wins: int = Field(
+        default=0, ge=0, description="Rows where candidate output was preferred"
+    )
     ties: int = Field(default=0, ge=0, description="Rows where judge called it a tie")
-    win_rate: float | None = Field(default=None, ge=0.0, le=1.0, description="Candidate win rate (candidate_wins / rows_evaluated)")
+    win_rate: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Candidate win rate (candidate_wins / rows_evaluated)",
+    )
 
     # Structured breakdowns
     per_concept: dict[str, float] = Field(
@@ -90,7 +99,9 @@ class ComparisonRun(BaseModel):
     )
 
     # Artifacts produced
-    feedback_json_path: str | None = Field(default=None, description="Path to the structured feedback JSON")
+    feedback_json_path: str | None = Field(
+        default=None, description="Path to the structured feedback JSON"
+    )
     report_html_path: str | None = Field(default=None, description="Path to the HTML report")
 
     # Metadata
@@ -129,12 +140,19 @@ class ComparisonRun(BaseModel):
         data = self.model_dump()
         data.pop("npc_key", None)
         data.pop("comparison_id", None)  # re-include only if you want comparison_id in the row
-        data.pop("created_at", None)     # DB auto-sets NOW()
+        data.pop("created_at", None)  # DB auto-sets NOW()
         data["total_examples"] = data.pop("rows_evaluated", 0)
         return data
 
     @classmethod
-    def from_feedback_json(cls, path: str | Path, npc_key: str, baseline_model: str, candidate_model: str, **overrides: Any) -> ComparisonRun:
+    def from_feedback_json(
+        cls,
+        path: str | Path,
+        npc_key: str,
+        baseline_model: str,
+        candidate_model: str,
+        **overrides: Any,
+    ) -> ComparisonRun:
         """Build a ComparisonRun from a structured feedback JSON file.
 
         Expected JSON shape:

@@ -1,4 +1,3 @@
-import os
 import re
 import shutil
 from pathlib import Path
@@ -35,7 +34,7 @@ file_map = {
     "NPC_Math_And_Balancing.html": "visuals/npc-math-and-balancing.html",
     "NPC_Pipeline_Visuals.html": "visuals/npc-pipeline-visuals.html",
     "workflow_dataflow_graph.html": "visuals/workflow-dataflow-graph.html",
-    "dataflow_graph.html": "visuals/legacy-dataflow-graph.html"
+    "dataflow_graph.html": "visuals/legacy-dataflow-graph.html",
 }
 
 # Add the old reference/CLI_REFERENCE.md to delete or move
@@ -61,27 +60,32 @@ for old_rel, new_rel in file_map.items():
 
 print(f"Moved {len(moved_files)} files.")
 
+
 # 3. Update links in all markdown and html files
 def get_depth(rel_path: str) -> int:
-    return rel_path.count('/')
+    return rel_path.count("/")
+
 
 def compute_relative_link(source_rel: str, target_rel: str) -> str:
     # Compute relative path from docs/source_rel to docs/target_rel
-    source_parts = source_rel.split('/')[:-1] # dir parts
-    target_parts = target_rel.split('/')
-    
+    source_parts = source_rel.split("/")[:-1]  # dir parts
+    target_parts = target_rel.split("/")
+
     # Find common prefix
     i = 0
-    while i < len(source_parts) and i < len(target_parts) - 1 and source_parts[i] == target_parts[i]:
+    while (
+        i < len(source_parts) and i < len(target_parts) - 1 and source_parts[i] == target_parts[i]
+    ):
         i += 1
-        
+
     ups = len(source_parts) - i
     downs = target_parts[i:]
-    
+
     if ups == 0:
         return "./" + "/".join(downs) if not downs[0] else "/".join(downs)
     else:
         return "../" * ups + "/".join(downs)
+
 
 # Let's read all files in docs + AGENTS.md + README.md
 targets = list(docs_dir.rglob("*.md")) + list(docs_dir.rglob("*.html"))
@@ -91,10 +95,10 @@ targets.append(repo_root / "README.md")
 for fpath in targets:
     if not fpath.exists():
         continue
-        
+
     content = fpath.read_text(encoding="utf-8")
     original_content = content
-    
+
     # Is it inside docs/?
     try:
         f_rel_to_docs = fpath.relative_to(docs_dir).as_posix()
@@ -108,31 +112,33 @@ for fpath in targets:
             content = content.replace(f"docs/{old_path_key}", f"docs/{new_path_key}")
             # Also replace bare old name just in case
             # But only if it's explicitly referenced like `OLD_NAME.md`
-            old_name_only = old_path_key.split('/')[-1]
-            new_name_only = new_path_key.split('/')[-1]
+            old_name_only = old_path_key.split("/")[-1]
+            new_name_only = new_path_key.split("/")[-1]
             if old_name_only != new_name_only:
-                content = re.sub(r'\b' + re.escape(old_name_only) + r'\b', new_name_only, content)
+                content = re.sub(r"\b" + re.escape(old_name_only) + r"\b", new_name_only, content)
         else:
             # Inside docs, it's trickier.
             # Replace absolute-like references or bare names
-            old_name = old_path_key.split('/')[-1]
-            new_name = new_path_key.split('/')[-1]
-            
+            old_name = old_path_key.split("/")[-1]
+            new_name = new_path_key.split("/")[-1]
+
             # calculate relative path
             correct_rel_link = compute_relative_link(f_rel_to_docs, new_path_key)
-            
+
             # Simple replace of the old filename with the correct relative path if it looks like a link
             # E.g. [Link](OLD_NAME.md) -> [Link](correct_rel_link)
             # or `OLD_NAME.md` -> `correct_rel_link`
             # This regex looks for the old filename and replaces it.
             # It's a bit naive, but works for most cases
-            
+
             # Replace markdown links: ](old_path) or ](../old_path) or ](docs/old_path)
-            content = re.sub(r'\]\([^)]*' + re.escape(old_name) + r'\)', f']({correct_rel_link})', content)
-            
+            content = re.sub(
+                r"\]\([^)]*" + re.escape(old_name) + r"\)", f"]({correct_rel_link})", content
+            )
+
             # Replace raw mentions like `OLD_NAME.md`
-            content = re.sub(r'\b' + re.escape(old_name) + r'\b', new_name, content)
-            
+            content = re.sub(r"\b" + re.escape(old_name) + r"\b", new_name, content)
+
             # Replace docs/OLD_NAME
             content = content.replace(f"docs/{old_path_key}", f"docs/{new_path_key}")
 

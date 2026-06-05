@@ -45,7 +45,9 @@ def _score_prompt(result: dict[str, Any]) -> float:
     return score
 
 
-def compare_models(host: str, models: list[str], prompts: list[str], system_prompt: str | None = None) -> list[ModelComparisonResult]:
+def compare_models(
+    host: str, models: list[str], prompts: list[str], system_prompt: str | None = None
+) -> list[ModelComparisonResult]:
     results: list[ModelComparisonResult] = []
     for model in models:
         prompt_results: list[dict[str, Any]] = []
@@ -55,8 +57,14 @@ def compare_models(host: str, models: list[str], prompts: list[str], system_prom
             payload = asdict(result)
             prompt_results.append(payload)
             scores.append(_score_prompt(payload))
-        latencies = [r["latency_ms"] for r in prompt_results if isinstance(r.get("latency_ms"), (int, float))]
-        tps_values = [r["tokens_per_second"] for r in prompt_results if isinstance(r.get("tokens_per_second"), (int, float))]
+        latencies = [
+            r["latency_ms"] for r in prompt_results if isinstance(r.get("latency_ms"), (int, float))
+        ]
+        tps_values = [
+            r["tokens_per_second"]
+            for r in prompt_results
+            if isinstance(r.get("tokens_per_second"), (int, float))
+        ]
         successes = sum(1 for r in prompt_results if not r.get("error"))
         failures = len(prompt_results) - successes
         results.append(
@@ -66,7 +74,9 @@ def compare_models(host: str, models: list[str], prompts: list[str], system_prom
                 total_latency_ms=round(sum(latencies), 2) if latencies else None,
                 avg_latency_ms=round(sum(latencies) / len(latencies), 2) if latencies else None,
                 total_tokens_per_second=round(sum(tps_values), 2) if tps_values else None,
-                avg_tokens_per_second=round(sum(tps_values) / len(tps_values), 2) if tps_values else None,
+                avg_tokens_per_second=round(sum(tps_values) / len(tps_values), 2)
+                if tps_values
+                else None,
                 successes=successes,
                 failures=failures,
                 score=round(sum(scores), 2),
@@ -84,7 +94,13 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         models = [tag.get("name") for tag in tags if tag.get("name")]
     models = [m for m in models if m]
     if not models:
-        return {"host": args.host, "models": [], "error": "no_models_found", "running_models": running, "api_tags": api_tags}
+        return {
+            "host": args.host,
+            "models": [],
+            "error": "no_models_found",
+            "running_models": running,
+            "api_tags": api_tags,
+        }
     prompts = args.prompt or [
         "Reply in one short sentence about the project's main goal.",
         "Give one practical improvement you would make to dataset quality.",
@@ -103,11 +119,25 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Compare all local Ollama models with a shared prompt suite")
-    parser.add_argument("--host", default=os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434"), help="Ollama host URL")
-    parser.add_argument("--model", action="append", help="Model to benchmark; may be supplied multiple times. Defaults to running models.")
-    parser.add_argument("--all-tags", action="store_true", help="Benchmark all models listed by /api/tags instead of running models")
-    parser.add_argument("--prompt", action="append", help="Prompt to benchmark; may be supplied multiple times.")
+    parser = argparse.ArgumentParser(
+        description="Compare all local Ollama models with a shared prompt suite"
+    )
+    parser.add_argument(
+        "--host", default=os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434"), help="Ollama host URL"
+    )
+    parser.add_argument(
+        "--model",
+        action="append",
+        help="Model to benchmark; may be supplied multiple times. Defaults to running models.",
+    )
+    parser.add_argument(
+        "--all-tags",
+        action="store_true",
+        help="Benchmark all models listed by /api/tags instead of running models",
+    )
+    parser.add_argument(
+        "--prompt", action="append", help="Prompt to benchmark; may be supplied multiple times."
+    )
     parser.add_argument("--system-prompt", help="Optional system prompt for the benchmark suite")
     parser.add_argument("--output", help="Optional path to write the JSON report")
     args = parser.parse_args()

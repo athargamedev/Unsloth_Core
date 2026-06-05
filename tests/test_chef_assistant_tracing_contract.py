@@ -33,8 +33,12 @@ def test_run_chef_assistant_updates_trace_and_invokes_model(monkeypatch):
 
     monkeypatch.setattr(agent, "ChatOllama", FakeModel)
     monkeypatch.setattr(agent, "configure_tracing", lambda: calls.setdefault("configured", True))
-    monkeypatch.setattr(agent, "update_current_span", lambda **kwargs: calls.setdefault("span", kwargs))
-    monkeypatch.setattr(agent, "update_current_trace", lambda **kwargs: calls.setdefault("trace", kwargs))
+    monkeypatch.setattr(
+        agent, "update_current_span", lambda **kwargs: calls.setdefault("span", kwargs)
+    )
+    monkeypatch.setattr(
+        agent, "update_current_trace", lambda **kwargs: calls.setdefault("trace", kwargs)
+    )
 
     result = agent.run_chef_assistant("How do I dice an onion safely?", dialogue_id="chef-thread-1")
 

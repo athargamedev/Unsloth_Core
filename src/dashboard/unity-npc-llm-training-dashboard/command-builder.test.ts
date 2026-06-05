@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { buildCommandDefinitions } from "./src/backend/services/command-builder";
 
-const repoRoot = path.resolve(process.cwd(), "../..");
+const repoRoot = path.resolve(process.cwd(), "../../..");
 const command = (id: string) => {
   const found = buildCommandDefinitions(repoRoot).find((definition) => definition.id === id);
   assert.ok(found, `command ${id} not found`);

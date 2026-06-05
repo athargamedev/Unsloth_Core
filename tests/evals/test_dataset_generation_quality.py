@@ -14,13 +14,12 @@ import os
 import sys
 from pathlib import Path
 
-import pytest
 import deepeval
+import pytest
 from deepeval import assert_test
-from deepeval.test_run import global_test_run_manager
-from deepeval.test_case import LLMTestCase
 from deepeval.dataset import EvaluationDataset
-
+from deepeval.test_case import LLMTestCase
+from deepeval.test_run import global_test_run_manager
 
 PULLED_DATASET: EvaluationDataset | None = None
 
@@ -41,7 +40,12 @@ if not _DATASET_LIVE:
         allow_module_level=True,
     )
 
-if os.getenv("DEEPEVAL_DISABLE_CONFIDENT_UPLOAD", "1").strip().lower() not in {"0", "false", "no", "off"}:
+if os.getenv("DEEPEVAL_DISABLE_CONFIDENT_UPLOAD", "1").strip().lower() not in {
+    "0",
+    "false",
+    "no",
+    "off",
+}:
     global_test_run_manager.disable_request = True
 
 DEFAULT_NPCS = ("history_guide", "chef_assistant")
@@ -91,7 +95,9 @@ def _load_spec(npc_key: str) -> dict:
         if path.exists():
             with path.open() as f:
                 return json.load(f)
-    raise FileNotFoundError(f"No spec found for {npc_key}; checked: {', '.join(str(p) for p in candidates)}")
+    raise FileNotFoundError(
+        f"No spec found for {npc_key}; checked: {', '.join(str(p) for p in candidates)}"
+    )
 
 
 def _load_reference_doc(spec: dict) -> str:
@@ -132,15 +138,20 @@ def _build_cases() -> list[LLMTestCase]:
     if pull_alias:
         api_key = os.getenv("CONFIDENT_API_KEY", "").strip()
         if not api_key:
-            raise ValueError("CONFIDENT_API_KEY environment variable is not set. Cannot run pull-based evaluation.")
+            raise ValueError(
+                "CONFIDENT_API_KEY environment variable is not set. Cannot run pull-based evaluation."
+            )
 
         global PULLED_DATASET
         from deepeval.dataset import EvaluationDataset
+
         dataset = EvaluationDataset()
         try:
             dataset.pull(alias=pull_alias)
         except Exception as exc:
-            raise ValueError(f"Failed to pull dataset '{pull_alias}' from Confident AI: {exc}") from exc
+            raise ValueError(
+                f"Failed to pull dataset '{pull_alias}' from Confident AI: {exc}"
+            ) from exc
 
         if not dataset.goldens:
             raise ValueError(f"Pulled dataset '{pull_alias}' is empty or contains no goldens.")
@@ -177,7 +188,7 @@ def _build_cases() -> list[LLMTestCase]:
     for npc_key in npc_keys:
         spec = _load_spec(npc_key)
         reference_doc = _load_reference_doc(spec)
-        selected_by_category = {category: 0 for category in categories}
+        selected_by_category = dict.fromkeys(categories, 0)
 
         for row in _iter_rows(npc_key, technique):
             metadata = row.get("metadata", {})

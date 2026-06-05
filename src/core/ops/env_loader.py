@@ -146,7 +146,7 @@ def ensure_confident_api_key(strict: bool = False) -> bool:
 
     available = confident_available()
     if not available and strict:
-        raise EnvironmentError(
+        raise OSError(
             "CONFIDENT_API_KEY environment variable is not set.\n"
             "  Export it:  export CONFIDENT_API_KEY='your-key-here'\n"
             "  Or log in:  deepeval login\n"

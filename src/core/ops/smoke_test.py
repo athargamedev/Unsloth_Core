@@ -17,7 +17,6 @@ Technical Details:
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 from datetime import datetime
@@ -26,6 +25,7 @@ from pathlib import Path
 # Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
 
 def run_llama_cli(model_path, prompt, system_prompt=None, max_tokens=128):
     """Run inference using llama.cpp CLI or server."""
@@ -61,13 +61,19 @@ def run_llama_cli(model_path, prompt, system_prompt=None, max_tokens=128):
 
     cmd = [
         llama_bin,
-        "-m", str(model_path),
-        "-p", full_prompt,
-        "-n", str(max_tokens),
-        "--temp", "0.7",
-        "--repeat-penalty", "1.1",
-        "-ngl", "99", # GPU offload
-        "--log-disable"
+        "-m",
+        str(model_path),
+        "-p",
+        full_prompt,
+        "-n",
+        str(max_tokens),
+        "--temp",
+        "0.7",
+        "--repeat-penalty",
+        "1.1",
+        "-ngl",
+        "99",  # GPU offload
+        "--log-disable",
     ]
 
     try:
@@ -77,7 +83,7 @@ def run_llama_cli(model_path, prompt, system_prompt=None, max_tokens=128):
         if "<|im_start|>assistant\n" in output:
             output = output.split("<|im_start|>assistant\n")[-1]
         elif "assistant\n" in output:
-             output = output.split("assistant\n")[-1]
+            output = output.split("assistant\n")[-1]
 
         # Clean up tags
         output = output.split("<|im_end|>")[0].strip()
@@ -88,9 +94,10 @@ def run_llama_cli(model_path, prompt, system_prompt=None, max_tokens=128):
 
 def _run_via_server(server_bin, model_path, prompt, system_prompt=None, max_tokens=128):
     """Run inference by briefly starting llama-server and calling its HTTP API."""
-    import requests
     import socket
     import time
+
+    import requests
 
     # Find a free port
     with socket.socket() as s:
@@ -101,14 +108,26 @@ def _run_via_server(server_bin, model_path, prompt, system_prompt=None, max_toke
     if system_prompt:
         messages.insert(0, {"role": "system", "content": system_prompt})
 
-    base_model_path = PROJECT_ROOT / "Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf"
+    base_model_path = (
+        PROJECT_ROOT / "Assets/StreamingAssets/Models/llama-3.2-3b-instruct-q4_k_m.gguf"
+    )
     if not base_model_path.exists():
         return f"[ERROR] Base model not found at {base_model_path}"
 
     proc = subprocess.Popen(
-        [server_bin, "-m", str(base_model_path), "--lora", str(model_path),
-         "--port", str(port), "-ngl", "99"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        [
+            server_bin,
+            "-m",
+            str(base_model_path),
+            "--lora",
+            str(model_path),
+            "--port",
+            str(port),
+            "-ngl",
+            "99",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
     try:
@@ -141,12 +160,14 @@ def _run_via_server(server_bin, model_path, prompt, system_prompt=None, max_toke
         proc.kill()
         proc.wait(timeout=5)
 
+
 def check_gguf_integrity(model_path: Path) -> bool:
     """Quick integrity check: verify GGUF magic bytes and read header fields.
-    
+
     Returns True if valid, False otherwise.
     """
     import struct
+
     try:
         with open(model_path, "rb") as f:
             magic = f.read(4)
@@ -170,14 +191,21 @@ def main():
     parser = argparse.ArgumentParser(description="Smoke test a GGUF model")
     parser.add_argument("model", help="Path to GGUF model")
     parser.add_argument("--spec", help="Path to subject spec JSON")
-    parser.add_argument("--prompt", dest="prompts", action="append",
-                        help="Custom prompt to test; may be provided multiple times")
+    parser.add_argument(
+        "--prompt",
+        dest="prompts",
+        action="append",
+        help="Custom prompt to test; may be provided multiple times",
+    )
     parser.add_argument("--track", action="store_true", help="Track results in Supabase")
-    parser.add_argument("--check-integrity", action="store_true",
-                        help="Validate GGUF file structure (no inference required)")
-    
+    parser.add_argument(
+        "--check-integrity",
+        action="store_true",
+        help="Validate GGUF file structure (no inference required)",
+    )
+
     args = parser.parse_args()
-    
+
     model_path = Path(args.model)
     if not model_path.exists():
         print(f"Error: Model {model_path} not found")
@@ -190,18 +218,18 @@ def main():
     npc_key = "unknown"
     system_prompt = None
     test_prompts = ["Who are you?", "Tell me something interesting about your subject."]
-    
+
     if args.spec:
         with open(args.spec) as f:
             spec = json.load(f)
             npc_key = spec.get("npc_key", "unknown")
             system_prompt = spec.get("system_prompt")
-            npc_name = spec.get("npc_name", "the NPC")
+            spec.get("npc_name", "the NPC")
             # Use some templates from the spec categories if available
             test_prompts = [
-                f"Who are you?",
-                f"What is your name?",
-                f"Can you explain the basics of {spec.get('subject', 'your subject')}?"
+                "Who are you?",
+                "What is your name?",
+                f"Can you explain the basics of {spec.get('subject', 'your subject')}?",
             ]
 
     if args.prompts:
@@ -209,7 +237,7 @@ def main():
 
     print(f"Smoke testing: {model_path.name}")
     if system_prompt:
-        print(f"System prompt loaded from spec")
+        print("System prompt loaded from spec")
     print("-" * 40)
 
     results = []
@@ -218,7 +246,7 @@ def main():
         print(f"User: {prompt}")
         response = run_llama_cli(model_path, prompt, system_prompt)
         print(f"NPC:  {response}")
-        
+
         # Basic sanity checks
         is_sane = True
         reason = None
@@ -232,32 +260,32 @@ def main():
             print("  [WARN] AI disclaimer detected!")
             is_sane = False
             reason = "AI disclaimer"
-            
+
         if is_sane:
             success_count += 1
-        
-        results.append({
-            "prompt": prompt,
-            "response": response,
-            "is_sane": is_sane,
-            "reason": reason
-        })
+
+        results.append(
+            {"prompt": prompt, "response": response, "is_sane": is_sane, "reason": reason}
+        )
         print("-" * 40)
 
-    print(f"Smoke test complete: {success_count}/{len(test_prompts)} prompts passed basic sanity check.")
+    print(
+        f"Smoke test complete: {success_count}/{len(test_prompts)} prompts passed basic sanity check."
+    )
 
     if args.track:
-        from src.core.evaluation.track_eval_results import track_result, track_per_example_result
-        print(f"[track] Storing smoke test results in Supabase...")
-        
+        from src.core.evaluation.track_eval_results import track_per_example_result, track_result
+
+        print("[track] Storing smoke test results in Supabase...")
+
         track_result(
             npc_key=npc_key,
             model_path=str(model_path),
             win_rate=success_count / len(test_prompts) if test_prompts else 0,
             notes=f"Smoke test: {success_count}/{len(test_prompts)} passed",
-            metadata={"test_type": "smoke_test"}
+            metadata={"test_type": "smoke_test"},
         )
-        
+
         test_run_name = f"Smoke_{npc_key}_{datetime.now().strftime('%Y%m%d_%H%M')}"
         for res in results:
             track_per_example_result(
@@ -266,8 +294,9 @@ def main():
                 prompt=res["prompt"],
                 response=res["response"],
                 score=1.0 if res["is_sane"] else 0.0,
-                metadata={"reason": res["reason"]}
+                metadata={"reason": res["reason"]},
             )
+
 
 if __name__ == "__main__":
     main()

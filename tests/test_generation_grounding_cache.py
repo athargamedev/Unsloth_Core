@@ -43,7 +43,9 @@ def test_generation_grounding_verifier_reuses_local_judge_cache(tmp_path, monkey
     assert calls["count"] == 1
 
 
-def test_generation_grounding_cache_key_uses_prompt_version_not_deepeval_entries(tmp_path, monkeypatch):
+def test_generation_grounding_cache_key_uses_prompt_version_not_deepeval_entries(
+    tmp_path, monkeypatch
+):
     from src.core.dataset.generate_dataset import LLMGroundingVerifier
     from src.core.ops.judge_cache import JudgeCache, JudgeCacheInput
 
@@ -70,5 +72,8 @@ def test_generation_grounding_cache_key_uses_prompt_version_not_deepeval_entries
     monkeypatch.setattr("src.core.dataset.generate_dataset.requests.post", fake_post)
 
     verifier = LLMGroundingVerifier(model="qwen2.5:7b")
-    assert verifier.verify("A grounded answer", ["Reference context"]) == (True, "fresh generation grounding")
+    assert verifier.verify("A grounded answer", ["Reference context"]) == (
+        True,
+        "fresh generation grounding",
+    )
     assert calls["count"] == 1

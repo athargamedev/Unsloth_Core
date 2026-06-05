@@ -50,7 +50,7 @@ DEFAULT_SPEC: dict = {
             "name": "core concepts",
             "category": "teaching",
             "difficulty": "beginner",
-            "aliases": ["fundamentals"]
+            "aliases": ["fundamentals"],
         }
     ],
     "dialogue": {
@@ -197,9 +197,7 @@ def scaffold(
                 json.dump(spec, f, indent=2, ensure_ascii=False)
             created_files.append(f"subjects/NPC_specs/{npc_key}.json")
         else:
-            skipped_files.append(
-                f"subjects/NPC_specs/{npc_key}.json (use --force to overwrite)"
-            )
+            skipped_files.append(f"subjects/NPC_specs/{npc_key}.json (use --force to overwrite)")
     else:
         skipped_files.append("subjects/NPC_specs/ (--skip-spec)")
 
@@ -208,9 +206,7 @@ def scaffold(
     primer_dir.mkdir(parents=True, exist_ok=True)
     primer_path = primer_dir / f"{npc_key}_primer.md"
     if force or not primer_path.exists():
-        content = PRIMER_TEMPLATE.format(
-            npc_name=npc_name, subject=subject_text
-        )
+        content = PRIMER_TEMPLATE.format(npc_name=npc_name, subject=subject_text)
         with open(primer_path, "w", encoding="utf-8") as f:
             f.write(content.lstrip("\n"))
         created_files.append(f"subjects/reference_docs/{npc_key}_primer.md")
@@ -227,9 +223,7 @@ def scaffold(
             (tech_dir / ".gitkeep").touch()
             created_dirs.append(f"subjects/datasets/{npc_key}/{tech}/")
         else:
-            skipped_dirs.append(
-                f"subjects/datasets/{npc_key}/{tech}/ (already exists)"
-            )
+            skipped_dirs.append(f"subjects/datasets/{npc_key}/{tech}/ (already exists)")
 
     # ── 4. Outputs dir (training) ───────────────────────────────────────────
     output_dir = paths.output_dir(npc_key)
@@ -259,7 +253,6 @@ def scaffold(
     else:
         skipped_dirs.append(f"eval/reports/{npc_key}/ (already exists)")
 
-
     # ── Summary ─────────────────────────────────────────────────────────────
     print(f"\nNPC '{npc_key}' scaffolded successfully.\n")
 
@@ -288,39 +281,44 @@ def scaffold(
         )
     else:
         print("  Next steps:")
-    print(f"    1. Edit subjects/reference_docs/{npc_key}_primer.md"
-          f" with actual domain content")
-    print(f"    2. Validate spec:  ./ucore validate-spec subjects/NPC_specs/{npc_key}.json"
-          f" --generation-ready")
-    print(f"    3. Generate:       ./ucore generate subjects/NPC_specs/{npc_key}.json"
-          f" --technique <chosen-technique>")
-    print(f"    4. Sanitize:       ./ucore sanitize"
-          f" subjects/datasets/{npc_key}/<chosen-technique>/train.jsonl"
-          f" --output subjects/datasets/{npc_key}/<chosen-technique>/train_clean.jsonl"
-          f" --strict-canonical --require-complete-metadata")
-    print(f"    5. Dataset Eval:   ./ucore dataset-eval subjects/NPC_specs/{npc_key}.json"
-          f" --technique <chosen-technique> --mode fast")
-    print(f"    6. Train & export: ./ucore train subjects/NPC_specs/{npc_key}.json"
-          f" --technique <chosen-technique> --preset fast-3b --export-gguf")
-    print(f"    7. Evaluate:       ./ucore evaluate"
-          f" --baseline exports/{npc_key}/{npc_key}-lora-f16.gguf"
-          f" --spec subjects/NPC_specs/{npc_key}.json --report-html")
+    print(f"    1. Edit subjects/reference_docs/{npc_key}_primer.md with actual domain content")
+    print(
+        f"    2. Validate spec:  ./ucore validate-spec subjects/NPC_specs/{npc_key}.json"
+        f" --generation-ready"
+    )
+    print(
+        f"    3. Generate:       ./ucore generate subjects/NPC_specs/{npc_key}.json"
+        f" --technique <chosen-technique>"
+    )
+    print(
+        f"    4. Sanitize:       ./ucore sanitize"
+        f" subjects/datasets/{npc_key}/<chosen-technique>/train.jsonl"
+        f" --output subjects/datasets/{npc_key}/<chosen-technique>/train_clean.jsonl"
+        f" --strict-canonical --require-complete-metadata"
+    )
+    print(
+        f"    5. Dataset Eval:   ./ucore dataset-eval subjects/NPC_specs/{npc_key}.json"
+        f" --technique <chosen-technique> --mode fast"
+    )
+    print(
+        f"    6. Train & export: ./ucore train subjects/NPC_specs/{npc_key}.json"
+        f" --technique <chosen-technique> --preset fast-3b --export-gguf"
+    )
+    print(
+        f"    7. Evaluate:       ./ucore evaluate"
+        f" --baseline exports/{npc_key}/{npc_key}-lora-f16.gguf"
+        f" --spec subjects/NPC_specs/{npc_key}.json --report-html"
+    )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Scaffold a new NPC (folders + spec template)"
-    )
+    parser = argparse.ArgumentParser(description="Scaffold a new NPC (folders + spec template)")
     parser.add_argument("npc_key", help="NPC key (snake_case)")
     parser.add_argument(
         "--subject", help="Subject description (default: auto-derived from npc_key)"
     )
-    parser.add_argument(
-        "--name", help="NPC display name (default: auto-derived from npc_key)"
-    )
-    parser.add_argument(
-        "--force", action="store_true", help="Overwrite existing spec"
-    )
+    parser.add_argument("--name", help="NPC display name (default: auto-derived from npc_key)")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing spec")
     parser.add_argument(
         "--skip-spec",
         action="store_true",

@@ -9,7 +9,6 @@ params can be referenced in many ways (argparse, env vars, YAML config keys).
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -60,9 +59,7 @@ def validate_params(registry_path: Path, project_root: Path) -> list[str]:
                 except (OSError, UnicodeDecodeError):
                     continue
             if not found:
-                issues.append(
-                    f"CLI flag '{cli_flag}' (param '{name}') not found in any script"
-                )
+                issues.append(f"CLI flag '{cli_flag}' (param '{name}') not found in any script")
 
     # Check env vars
     for name, ev in env_vars.items():
@@ -76,9 +73,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Validate parameter-registry.yaml against codebase"
     )
-    parser.add_argument(
-        "--registry", default=None, help="Path to parameter-registry.yaml"
-    )
+    parser.add_argument("--registry", default=None, help="Path to parameter-registry.yaml")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     args = parser.parse_args()
 
@@ -97,12 +92,8 @@ def main():
 
     if args.json:
         output = {
-            "total_params": len(
-                yaml.safe_load(open(registry_path)).get("parameters", {})
-            ),
-            "total_env_vars": len(
-                yaml.safe_load(open(registry_path)).get("env_vars", {})
-            ),
+            "total_params": len(yaml.safe_load(open(registry_path)).get("parameters", {})),
+            "total_env_vars": len(yaml.safe_load(open(registry_path)).get("env_vars", {})),
             "issues": issues,
             "status": "pass" if not issues else "fail",
         }
@@ -111,9 +102,7 @@ def main():
         data = yaml.safe_load(open(registry_path))
         params = data.get("parameters", {})
         env_vars = data.get("env_vars", {})
-        print(
-            f"Parameter Registry: {len(params)} params, {len(env_vars)} env vars"
-        )
+        print(f"Parameter Registry: {len(params)} params, {len(env_vars)} env vars")
         print(f"Issues found: {len(issues)}")
         for issue in issues:
             print(f"  ⚠ {issue}")

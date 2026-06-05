@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Audit pytest files and map them to Unsloth_Core process owners."""
+
 from __future__ import annotations
 
 import argparse
@@ -13,10 +14,35 @@ TEST_ROOT = PROJECT_ROOT / "tests"
 
 OWNER_RULES: list[tuple[str, tuple[str, ...]]] = [
     ("dataset-eval", ("dataset_eval", "quality", "deepeval")),
-    ("dataset", ("generate_dataset", "generation", "dataset_contract", "sanitize", "schema", "llm_generator", "ollama_generator", "ollama_prompts", "ollama_orchestrator")),
+    (
+        "dataset",
+        (
+            "generate_dataset",
+            "generation",
+            "dataset_contract",
+            "sanitize",
+            "schema",
+            "llm_generator",
+            "ollama_generator",
+            "ollama_prompts",
+            "ollama_orchestrator",
+        ),
+    ),
     ("training", ("training", "train", "preflight", "model_preset", "wandb")),
     ("export", ("export", "smoke")),
-    ("evaluation", ("evaluate", "eval_", "npc_model", "judge", "scoring", "reporting", "metrics", "compare_local_models")),
+    (
+        "evaluation",
+        (
+            "evaluate",
+            "eval_",
+            "npc_model",
+            "judge",
+            "scoring",
+            "reporting",
+            "metrics",
+            "compare_local_models",
+        ),
+    ),
     ("orchestration", ("workflow", "pipeline", "ucore", "track", "db", "alias", "legacy")),
     ("contract", ("contract", "coherence", "boundary", "path", "reference")),
 ]
@@ -46,7 +72,8 @@ def _extract_tests(tree: ast.AST) -> list[str]:
     return sorted(
         node.name
         for node in ast.walk(tree)
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test_")
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name.startswith("test_")
     )
 
 
@@ -82,9 +109,16 @@ def detect_risks(path: Path, text: str, imports: list[str], markers: list[str]) 
     rel = _repo_rel(path)
     if any(imp.startswith("scripts.") and imp.count(".") == 1 for imp in imports):
         risks.append("legacy-root-script-import")
-    if any(token in text for token in ("subjects/", "outputs/", "exports/", "eval/")) and "tmp_path" not in text:
+    if (
+        any(token in text for token in ("subjects/", "outputs/", "exports/", "eval/"))
+        and "tmp_path" not in text
+    ):
         risks.append("real-artifact-path-without-tmp-fixture")
-    if "template" in text and "smoke_template_only" not in markers and "test_generation_profiles.py" not in rel:
+    if (
+        "template" in text
+        and "smoke_template_only" not in markers
+        and "test_generation_profiles.py" not in rel
+    ):
         risks.append("template-mentioned-without-smoke-marker")
     for pattern in DEPRECATED_PATTERNS:
         if pattern in text:
@@ -109,7 +143,9 @@ def audit_tests() -> dict[str, Any]:
                 "owner": owner,
                 "test_count": len(tests),
                 "tests": tests,
-                "repo_imports": [imp for imp in imports if imp.startswith(("scripts", "_config", "tests"))],
+                "repo_imports": [
+                    imp for imp in imports if imp.startswith(("scripts", "_config", "tests"))
+                ],
                 "markers": markers,
                 "risks": detect_risks(path, text, imports, markers),
             }
@@ -138,7 +174,9 @@ def render_markdown(payload: dict[str, Any]) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Audit pytest files against process owners and stale references")
+    parser = argparse.ArgumentParser(
+        description="Audit pytest files against process owners and stale references"
+    )
     parser.add_argument("--write", help="Write JSON matrix to path")
     parser.add_argument("--markdown", help="Write Markdown matrix to path")
     args = parser.parse_args()

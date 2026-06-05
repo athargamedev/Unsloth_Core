@@ -76,6 +76,12 @@ export interface StartCommandPayload {
 import type { CommandFieldSchema, FieldType, FlagType, NargsValue } from "../schemas/command-field";
 export type { CommandFieldSchema, FieldType, FlagType, NargsValue };
 
+export interface CommandCliMetadata {
+  source: "ucore";
+  command: string;
+  subcommand?: string;
+}
+
 export interface CommandDefinition {
   id: string;
   label: string;
@@ -84,6 +90,7 @@ export interface CommandDefinition {
   type: string;
   requiredFields: string[];
   build: (payload: StartCommandPayload) => string[];
+  cli?: CommandCliMetadata;
   /** Optional field schemas for dynamic form generation.
    *  Keys are CLI flag names (e.g., "spec", "options.technique").
    *  Commands without schema fall back to hardcoded forms. */

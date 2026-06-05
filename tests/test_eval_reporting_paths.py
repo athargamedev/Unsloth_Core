@@ -6,7 +6,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
-from scripts.evaluation.evaluate import build_eval_report_index, generate_html_report, generate_report
+from scripts.evaluation.evaluate import (
+    build_eval_report_index,
+    generate_html_report,
+    generate_report,
+)
 from scripts.training.feedback_loop import identify_weak_concepts
 
 
@@ -33,7 +37,9 @@ def _comparison_result():
 
 def test_eval_paths_resolve_under_project_eval_root():
     report_path = paths.eval_report_path("history_guide", timestamp="20260521T123456_123456Z")
-    html_path = paths.eval_report_path("history_guide", fmt="html", timestamp="20260521T123456_123456Z")
+    html_path = paths.eval_report_path(
+        "history_guide", fmt="html", timestamp="20260521T123456_123456Z"
+    )
     comparison_path = paths.eval_comparison_path(
         "history_guide",
         "baseline_vs_candidate",
@@ -41,9 +47,20 @@ def test_eval_paths_resolve_under_project_eval_root():
     )
     feedback_path = paths.eval_feedback_path("history_guide")
 
-    assert report_path == paths.eval_root() / "reports" / "history_guide" / "eval_20260521T123456_123456Z.md"
-    assert html_path == paths.eval_root() / "reports" / "history_guide" / "eval_20260521T123456_123456Z.html"
-    assert comparison_path == paths.eval_root() / "comparisons" / "history_guide_vs_baseline_vs_candidate_20260521T123456_123456Z.md"
+    assert (
+        report_path
+        == paths.eval_root() / "reports" / "history_guide" / "eval_20260521T123456_123456Z.md"
+    )
+    assert (
+        html_path
+        == paths.eval_root() / "reports" / "history_guide" / "eval_20260521T123456_123456Z.html"
+    )
+    assert (
+        comparison_path
+        == paths.eval_root()
+        / "comparisons"
+        / "history_guide_vs_baseline_vs_candidate_20260521T123456_123456Z.md"
+    )
     assert feedback_path == paths.eval_root() / "results" / "feedback" / "history_guide.json"
 
 
@@ -64,7 +81,9 @@ def test_feedback_loop_flags_low_quality_not_high_quality():
         "distribution_gaps": [],
     }
 
-    weak = identify_weak_concepts(low_quality, win_rate_threshold=0.5, quality_threshold=20, violation_threshold=1)
+    weak = identify_weak_concepts(
+        low_quality, win_rate_threshold=0.5, quality_threshold=20, violation_threshold=1
+    )
 
     concepts = [item["concept"] for item in weak]
     assert "teaching/telescopes" in concepts
@@ -76,8 +95,20 @@ def test_markdown_and_html_reports_create_parent_dirs(tmp_path):
     md_path = tmp_path / "eval" / "reports" / "history_guide" / "eval_test.md"
     html_path = tmp_path / "eval" / "reports" / "history_guide" / "eval_test.html"
 
-    markdown = generate_report(comparison, baseline_name="baseline", candidate_name="candidate", spec={"npc_name": "History Guide"}, output_path=md_path)
-    generate_html_report(comparison, baseline_name="baseline", candidate_name="candidate", spec={"npc_name": "History Guide"}, output_path=html_path)
+    markdown = generate_report(
+        comparison,
+        baseline_name="baseline",
+        candidate_name="candidate",
+        spec={"npc_name": "History Guide"},
+        output_path=md_path,
+    )
+    generate_html_report(
+        comparison,
+        baseline_name="baseline",
+        candidate_name="candidate",
+        spec={"npc_name": "History Guide"},
+        output_path=html_path,
+    )
 
     assert md_path.exists()
     assert html_path.exists()
@@ -95,23 +126,86 @@ def test_eval_report_index_categorizes_run_model_format_params_logic():
             {
                 "question": "Who are you?",
                 "winner": "candidate",
-                "baseline_metrics": {"quality": 12, "length": 44, "sentences": 4, "sentences_ok": False, "name_ok": False, "no_ai_disclaimer": True, "has_think_tags": False},
-                "candidate_metrics": {"quality": 28, "length": 24, "sentences": 2, "sentences_ok": True, "name_ok": True, "no_ai_disclaimer": True, "has_think_tags": False},
-                "metadata": {"category": "identity", "concept": "intro", "difficulty": "beginner", "format": "chatml"},
+                "baseline_metrics": {
+                    "quality": 12,
+                    "length": 44,
+                    "sentences": 4,
+                    "sentences_ok": False,
+                    "name_ok": False,
+                    "no_ai_disclaimer": True,
+                    "has_think_tags": False,
+                },
+                "candidate_metrics": {
+                    "quality": 28,
+                    "length": 24,
+                    "sentences": 2,
+                    "sentences_ok": True,
+                    "name_ok": True,
+                    "no_ai_disclaimer": True,
+                    "has_think_tags": False,
+                },
+                "metadata": {
+                    "category": "identity",
+                    "concept": "intro",
+                    "difficulty": "beginner",
+                    "format": "chatml",
+                },
             },
             {
                 "question": "Explain telescope evidence.",
                 "winner": "baseline",
-                "baseline_metrics": {"quality": 30, "length": 30, "sentences": 2, "sentences_ok": True, "name_ok": True, "no_ai_disclaimer": True, "has_think_tags": False},
-                "candidate_metrics": {"quality": 15, "length": 90, "sentences": 5, "sentences_ok": False, "name_ok": True, "no_ai_disclaimer": True, "has_think_tags": True},
-                "metadata": {"category": "teaching", "concept": "evidence", "difficulty": "advanced", "format": "chatml"},
+                "baseline_metrics": {
+                    "quality": 30,
+                    "length": 30,
+                    "sentences": 2,
+                    "sentences_ok": True,
+                    "name_ok": True,
+                    "no_ai_disclaimer": True,
+                    "has_think_tags": False,
+                },
+                "candidate_metrics": {
+                    "quality": 15,
+                    "length": 90,
+                    "sentences": 5,
+                    "sentences_ok": False,
+                    "name_ok": True,
+                    "no_ai_disclaimer": True,
+                    "has_think_tags": True,
+                },
+                "metadata": {
+                    "category": "teaching",
+                    "concept": "evidence",
+                    "difficulty": "advanced",
+                    "format": "chatml",
+                },
             },
             {
                 "question": "Tell me stock tips.",
                 "winner": "tie",
-                "baseline_metrics": {"quality": 20, "length": 30, "sentences": 2, "sentences_ok": True, "name_ok": True, "no_ai_disclaimer": True, "has_think_tags": False},
-                "candidate_metrics": {"quality": 20, "length": 30, "sentences": 2, "sentences_ok": True, "name_ok": True, "no_ai_disclaimer": False, "has_think_tags": False},
-                "metadata": {"category": "refusal", "concept": "boundary", "difficulty": "beginner", "format": "completion"},
+                "baseline_metrics": {
+                    "quality": 20,
+                    "length": 30,
+                    "sentences": 2,
+                    "sentences_ok": True,
+                    "name_ok": True,
+                    "no_ai_disclaimer": True,
+                    "has_think_tags": False,
+                },
+                "candidate_metrics": {
+                    "quality": 20,
+                    "length": 30,
+                    "sentences": 2,
+                    "sentences_ok": True,
+                    "name_ok": True,
+                    "no_ai_disclaimer": False,
+                    "has_think_tags": False,
+                },
+                "metadata": {
+                    "category": "refusal",
+                    "concept": "boundary",
+                    "difficulty": "beginner",
+                    "format": "completion",
+                },
             },
         ],
     }
@@ -129,7 +223,10 @@ def test_eval_report_index_categorizes_run_model_format_params_logic():
             "judge_model": "qwen2.5:7b",
             "parameters": {"temperature": 0.0, "lora_weight": 1.0, "max_tokens": 256},
             "logic_version": "heuristic+ollama-judge-v1",
-            "confident": {"test_run_id": "tr_123", "url": "https://app.confident-ai.com/test-runs/tr_123"},
+            "confident": {
+                "test_run_id": "tr_123",
+                "url": "https://app.confident-ai.com/test-runs/tr_123",
+            },
         },
     )
 
@@ -156,8 +253,18 @@ def test_reports_render_categorized_comparison_sections():
     )
     comparison["report_index"] = index
 
-    markdown = generate_report(comparison, baseline_name="baseline", candidate_name="candidate", spec={"npc_name": "History Guide"})
-    html = generate_html_report(comparison, baseline_name="baseline", candidate_name="candidate", spec={"npc_name": "History Guide"})
+    markdown = generate_report(
+        comparison,
+        baseline_name="baseline",
+        candidate_name="candidate",
+        spec={"npc_name": "History Guide"},
+    )
+    html = generate_html_report(
+        comparison,
+        baseline_name="baseline",
+        candidate_name="candidate",
+        spec={"npc_name": "History Guide"},
+    )
 
     assert "## Category Breakdown" in markdown
     assert "teaching" in markdown

@@ -5,16 +5,17 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from collections.abc import Mapping
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 DEFAULT_ARTIFACT_INDEX = PROJECT_ROOT / ".pipeline" / "artifacts.jsonl"
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _sha256(path: Path) -> str | None:
@@ -65,8 +66,8 @@ def _lineage_metadata(
         merged["profile"] = profile
     return merged
 
-class ArtifactRegistry:
 
+class ArtifactRegistry:
     """Small JSONL index for stage outputs.
 
     Records enough context to answer: what artifact exists, from which run/stage,
@@ -98,13 +99,22 @@ class ArtifactRegistry:
             "path": str(artifact_path),
             "technique": technique,
             "exists": exists,
-            "size_bytes": artifact_path.stat().st_size if exists and artifact_path.is_file() else None,
+            "size_bytes": artifact_path.stat().st_size
+            if exists and artifact_path.is_file()
+            else None,
             "sha256": _sha256(artifact_path),
             "metadata": metadata or {},
         }
         self.index_path.parent.mkdir(parents=True, exist_ok=True)
         with self.index_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps({k: v for k, v in record.items() if v is not None}, ensure_ascii=False, default=str) + "\n")
+            f.write(
+                json.dumps(
+                    {k: v for k, v in record.items() if v is not None},
+                    ensure_ascii=False,
+                    default=str,
+                )
+                + "\n"
+            )
         return record
 
     def query(
@@ -135,7 +145,11 @@ class ArtifactRegistry:
         technique: str | None = None,
         must_exist: bool = True,
     ) -> dict[str, Any] | None:
-        for record in reversed(self.query(npc_key=npc_key, artifact_type=artifact_type, technique=technique, limit=10_000)):
+        for record in reversed(
+            self.query(
+                npc_key=npc_key, artifact_type=artifact_type, technique=technique, limit=10_000
+            )
+        ):
             if must_exist and not Path(str(record.get("path", ""))).exists():
                 continue
             return record
@@ -174,9 +188,17 @@ def record_stage_artifacts(
     stage_map: dict[str, list[tuple[str, str]]] = {
         "generate": [("dataset_raw", "train"), ("dataset_raw", "train_path")],
         "sanitize": [("dataset_clean", "output"), ("dataset_clean", "clean_path")],
-        "dataset_eval": [("quality_summary", "quality_summary"), ("quality_summary", "summary_path")],
+        "dataset_eval": [
+            ("quality_summary", "quality_summary"),
+            ("quality_summary", "summary_path"),
+        ],
         "train": [("adapter_checkpoint", "run_dir"), ("adapter_checkpoint", "output_dir")],
-        "export": [("gguf_adapter", "gguf"), ("gguf_adapter", "gguf_path"), ("gguf_adapter", "output"), ("gguf_adapter", "gguf_files")],
+        "export": [
+            ("gguf_adapter", "gguf"),
+            ("gguf_adapter", "gguf_path"),
+            ("gguf_adapter", "output"),
+            ("gguf_adapter", "gguf_files"),
+        ],
         "evaluate": [("eval_index", "eval_index"), ("eval_index", "index_path")],
     }
     records: list[dict[str, Any]] = []

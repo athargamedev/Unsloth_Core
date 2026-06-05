@@ -18,15 +18,10 @@ Technical Details:
 import argparse
 import hashlib
 import json
-import math
 import os
-import re
 import shutil
 import subprocess
 import sys
-import tempfile
-import time
-from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -36,12 +31,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import paths
+from src.config.log_setup import log_error, log_info, log_state, log_warn
 from src.config.workflow_context import resolve_workflow_context
-from src.config.log_setup import log_info, log_warn, log_error, log_state
 from src.core.dataset.dataset_contracts import file_sha256
-from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
-from src.core.ops.preflight import query_gpu_memory, run_preflight
 from src.core.ops.model_presets import resolve_training_preset
+from src.core.ops.preflight import query_gpu_memory, run_preflight
+from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 # ── Model-size-aware presets ────────────────────────────────────────────────
 # Each preset overrides the base YAML config for specific model sizes.
@@ -165,18 +160,31 @@ def ensure_wandb_noninteractive(config: dict) -> None:
         return
 
     os.environ["WANDB_MODE"] = "offline"
-    print("  [WARN] W&B enabled but no WANDB_API_KEY or ~/.netrc was found; using WANDB_MODE=offline so training will not crash.")
+    print(
+        "  [WARN] W&B enabled but no WANDB_API_KEY or ~/.netrc was found; using WANDB_MODE=offline so training will not crash."
+    )
 
 
-def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_name: str, run_id: str, output_dir: str,
-                        project: str | None = None, entity: str | None = None):
+def init_wandb_tracking(
+    config: dict,
+    *,
+    npc_key: str,
+    technique: str,
+    preset_name: str,
+    run_id: str,
+    output_dir: str,
+    project: str | None = None,
+    entity: str | None = None,
+):
     """Initialize W&B with a consistent training naming/tagging scheme."""
     if not config.get("wandb", {}).get("enabled", False):
         return None
 
     import wandb
 
-    training_cfg = config.get("training", {}) if isinstance(config.get("training", {}), dict) else {}
+    training_cfg = (
+        config.get("training", {}) if isinstance(config.get("training", {}), dict) else {}
+    )
     lora_cfg = config.get("lora", {}) if isinstance(config.get("lora", {}), dict) else {}
     dataset_path = config.get("dataset_path")
     dataset_sha256 = None
@@ -184,7 +192,7 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
     if dataset_path and os.path.isfile(dataset_path):
         try:
             dataset_sha256 = file_sha256(dataset_path)
-        except Exception as e:
+        except Exception:
             dataset_sha256 = None
         summary_path = Path(dataset_path).parent / "quality_summary.json"
         if summary_path.exists():
@@ -198,17 +206,19 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
                     "pass_rate": raw_summary.get("pass_rate"),
                     "total": raw_summary.get("total"),
                     "failed": raw_summary.get("failed"),
-                    "dataset_hash": (raw_summary.get("dataset_summary") or {}).get("content_sha256"),
+                    "dataset_hash": (raw_summary.get("dataset_summary") or {}).get(
+                        "content_sha256"
+                    ),
                     "distribution_gaps": raw_summary.get("distribution_gaps"),
                 }
-            except Exception as e:
+            except Exception:
                 quality_summary = {"path": str(summary_path), "status": "unreadable"}
 
     try:
         config_hash = hashlib.sha256(
             json.dumps(config, sort_keys=True, default=str).encode("utf-8")
         ).hexdigest()
-    except Exception as e:
+    except Exception:
         config_hash = None
 
     batch_size = training_cfg.get("batch_size")
@@ -216,7 +226,7 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
     effective_batch_size = None
     try:
         effective_batch_size = int(batch_size or 0) * int(grad_accum or 0)
-    except Exception as e:
+    except Exception:
         pass
 
     wandb_cfg = {
@@ -268,12 +278,14 @@ def init_wandb_tracking(config: dict, *, npc_key: str, technique: str, preset_na
     if callable(define_metric):
         try:
             define_metric("train/final_loss", summary="min")
-        except Exception as e:
+        except Exception:
             pass
     return run
 
 
-def check_promotion_rules(training_loss: float, config: dict, num_train_examples: int) -> tuple[bool, list[str]]:
+def check_promotion_rules(
+    training_loss: float, config: dict, num_train_examples: int
+) -> tuple[bool, list[str]]:
     """Check if the model meets minimum quality thresholds for promotion to 'best'.
 
     Reads thresholds from configs/promotion-rules.yaml.
@@ -406,7 +418,10 @@ def dataset_quality_gate_errors(dataset_path: str | Path) -> list[str]:
         errors.append("quality summary reports category distribution gaps")
     sanitizer_issues = summary.get("sanitizer_quality_issues") or []
     if sanitizer_issues:
-        errors.append("quality summary reports sanitizer quality issues: " + "; ".join(str(issue) for issue in sanitizer_issues))
+        errors.append(
+            "quality summary reports sanitizer quality issues: "
+            + "; ".join(str(issue) for issue in sanitizer_issues)
+        )
     unknown_rows = summary.get("dataset_unknown_rows")
     if unknown_rows is None:
         unknown_rows = (summary.get("dataset_summary") or {}).get("unknown_rows", 0)
@@ -440,14 +455,23 @@ def training_readiness_errors(
 
     if registry is None:
         from src.core.ops.artifact_registry import ArtifactRegistry
+
         registry = ArtifactRegistry()
 
-    clean_record = registry.latest_artifact(npc_key, "dataset_clean", technique=technique) if npc_key else None
-    quality_record = registry.latest_artifact(npc_key, "quality_summary", technique=technique) if npc_key else None
+    clean_record = (
+        registry.latest_artifact(npc_key, "dataset_clean", technique=technique) if npc_key else None
+    )
+    quality_record = (
+        registry.latest_artifact(npc_key, "quality_summary", technique=technique)
+        if npc_key
+        else None
+    )
     stale_hint = "Next: ./ucore dataset-eval"
 
     if not clean_record or not quality_record:
-        errors.append(f"Blocked: no fresh passing dataset-eval artifact for {dataset_path}. {stale_hint}")
+        errors.append(
+            f"Blocked: no fresh passing dataset-eval artifact for {dataset_path}. {stale_hint}"
+        )
         return errors
 
     dataset_hash = file_sha256(dataset_path) if dataset_path.exists() else None
@@ -455,15 +479,22 @@ def training_readiness_errors(
     dataset_hash = dataset_hash.split(":", 1)[-1] if dataset_hash else None
     summary_hash = summary_hash.split(":", 1)[-1] if summary_hash else None
     if clean_record.get("sha256") != dataset_hash:
-        errors.append(f"Blocked: registry dataset_clean does not match current train_clean.jsonl. {stale_hint}")
+        errors.append(
+            f"Blocked: registry dataset_clean does not match current train_clean.jsonl. {stale_hint}"
+        )
     if quality_record.get("sha256") != summary_hash:
-        errors.append(f"Blocked: registry quality_summary does not match current quality_summary.json. {stale_hint}")
+        errors.append(
+            f"Blocked: registry quality_summary does not match current quality_summary.json. {stale_hint}"
+        )
 
     from src.core.ops.pipeline_dag import stage_input_signature
+
     expected_signature = stage_input_signature("dataset_eval", [clean_record])
     recorded_signature = (quality_record.get("metadata") or {}).get("input_signature")
     if recorded_signature != expected_signature:
-        errors.append(f"Blocked: no fresh passing dataset-eval artifact for {dataset_path}. {stale_hint}")
+        errors.append(
+            f"Blocked: no fresh passing dataset-eval artifact for {dataset_path}. {stale_hint}"
+        )
 
     return errors
 
@@ -528,7 +559,6 @@ def get_config_from_spec(spec_path, preset=None, overrides=None):
         sys.exit(1)
 
     ctx = resolve_workflow_context(spec_path, preset=preset)
-    spec = ctx.spec
     npc_key = ctx.npc_key
     technique = ctx.technique
     train_path = ctx.dataset_path
@@ -542,7 +572,7 @@ def get_config_from_spec(spec_path, preset=None, overrides=None):
             train_path = clean_candidate
     if not train_path.exists():
         _, train_path, _ = paths.resolve_dataset_context(npc_key, technique)
-    
+
     # Try versioned dataset path first
     versioned = paths.dataset_latest_train_path(npc_key, technique)
     if versioned and versioned.exists():
@@ -550,6 +580,7 @@ def get_config_from_spec(spec_path, preset=None, overrides=None):
 
     # Verify dataset integrity before training
     from src.core.ops.stage_gate import verify_inputs
+
     missing = verify_inputs("train", [train_path] if train_path else [])
     if missing:
         print(f"  [error] Dataset not found for training: {missing[0]}")
@@ -661,8 +692,13 @@ def load_config(config_path, preset=None, overrides=None):
                     config["model"] = value
                 elif key == "output_dir":
                     config["output_dir"] = value
-                elif key in ("batch_size", "gradient_accumulation_steps", "num_epochs", "learning_rate",
-                             "max_seq_length"):
+                elif key in (
+                    "batch_size",
+                    "gradient_accumulation_steps",
+                    "num_epochs",
+                    "learning_rate",
+                    "max_seq_length",
+                ):
                     config.setdefault("training", {})
                     config["training"][key] = value
                 elif key in ("lora_r", "lora_alpha", "lora_dropout"):
@@ -697,11 +733,9 @@ def count_training_examples(path):
     if not os.path.exists(path):
         return 0
     try:
-        result = subprocess.run(
-            ["wc", "-l", path], capture_output=True, text=True, timeout=10
-        )
+        result = subprocess.run(["wc", "-l", path], capture_output=True, text=True, timeout=10)
         return int(result.stdout.strip().split()[0])
-    except Exception as e:
+    except Exception:
         return 0
 
 
@@ -712,14 +746,15 @@ def get_run_output_path(output_dir, preset_name="default", model_name=None):
     {YYYYMMDD}_{preset}_{model_short}_{sequential_number} format.
     """
     from src.config.paths import generate_run_id, model_short_name
+
     output_dir = Path(output_dir)
     npc_key = output_dir.name
-    
+
     track_name = preset_name
     if model_name:
         short = model_short_name(model_name)
         track_name = f"{preset_name}_{short}"
-        
+
     run_id = generate_run_id(npc_key, track_name)
     run_dir = output_dir / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -728,18 +763,19 @@ def get_run_output_path(output_dir, preset_name="default", model_name=None):
 
 def get_model_and_tokenizer(config):
     """Load the base model and tokenizer via Unsloth."""
-    from unsloth import FastLanguageModel
-    from src.config.workflow_context import LOCAL_MODEL_PATH
-    from transformers import BitsAndBytesConfig
     import torch
+    from transformers import BitsAndBytesConfig
+    from unsloth import FastLanguageModel
+
+    from src.config.workflow_context import LOCAL_MODEL_PATH
 
     model_name = config.get("model", "unsloth/Llama-3.2-3B-Instruct-bnb-4bit")
     # If the default model name is used, prefer the local GGUF if it exists and we're looking for GGUF
     # For now, just ensure we handle the path correctly.
     if model_name == "unsloth/Llama-3.2-3B-Instruct-bnb-4bit" and LOCAL_MODEL_PATH.exists():
         print(f"  Using local base model: {LOCAL_MODEL_PATH}")
-        # Note: Unsloth's from_pretrained usually expects HF IDs, 
-        # but if we need to support local pathing for GGUF base, 
+        # Note: Unsloth's from_pretrained usually expects HF IDs,
+        # but if we need to support local pathing for GGUF base,
         # we may need to adjust the loader logic here.
         # Keeping model_name for now but logging the local preference.
 
@@ -751,7 +787,9 @@ def get_model_and_tokenizer(config):
     print(f"  Max seq length: {max_seq_length}")
     if use_lora:
         print(f"  LoRA rank: {lora_config.get('r', 16)}, alpha: {lora_config.get('alpha', 32)}")
-    print(f"  GPU memory utilization: {config.get('training', {}).get('gpu_memory_utilization', 0.9)}")
+    print(
+        f"  GPU memory utilization: {config.get('training', {}).get('gpu_memory_utilization', 0.9)}"
+    )
 
     gpu_memory_utilization = float(config.get("training", {}).get("gpu_memory_utilization", 0.9))
 
@@ -782,8 +820,13 @@ def get_model_and_tokenizer(config):
             model,
             r=lora_config.get("r", 16),
             target_modules=[
-                "q_proj", "k_proj", "v_proj", "o_proj",
-                "gate_proj", "up_proj", "down_proj",
+                "q_proj",
+                "k_proj",
+                "v_proj",
+                "o_proj",
+                "gate_proj",
+                "up_proj",
+                "down_proj",
             ],
             lora_alpha=lora_config.get("alpha", 32),
             lora_dropout=lora_config.get("dropout", 0),
@@ -801,8 +844,8 @@ def load_dataset_from_jsonl(path, tokenizer, config, label="training"):
     """Load and tokenize a JSONL dataset."""
     from datasets import Dataset
 
-    max_seq_length = config.get("training", {}).get("max_seq_length", 2048)
-    packing = config.get("training", {}).get("packing", True)
+    config.get("training", {}).get("max_seq_length", 2048)
+    config.get("training", {}).get("packing", True)
 
     log_info("Loading dataset from: %s", path)
     if not os.path.exists(path):
@@ -852,8 +895,8 @@ def load_dataset_from_jsonl(path, tokenizer, config, label="training"):
 
 def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: str = "default"):
     """Run the SFT training loop."""
-    from trl import SFTTrainer, SFTConfig
     import torch
+    from trl import SFTConfig, SFTTrainer
 
     training = config.get("training", {})
     output_dir = training.get("output_dir", str(paths.output_dir("default")))
@@ -936,7 +979,9 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
             from unsloth import train_on_responses_only as _unsloth_response_only
         except ImportError:
             _unsloth_response_only = None
-            print("  [WARN] unsloth.train_on_responses_only not available; continuing without response-only masking")
+            print(
+                "  [WARN] unsloth.train_on_responses_only not available; continuing without response-only masking"
+            )
 
         if _unsloth_response_only is not None:
             # Detect instruction/response markers from the model's chat template.
@@ -968,11 +1013,13 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                     elif "<|start_header_id|>assistant<|end_header_id|>\n\n" in example:
                         instruction_part = "<|start_header_id|>user<|end_header_id|>\n\n"
                         response_part = "<|start_header_id|>assistant<|end_header_id|>\n\n"
-                except Exception as e:
+                except Exception:
                     pass
 
             if response_part is not None and instruction_part is not None:
-                print(f"  [INFO] Applying train_on_responses_only (response marker: {response_part!r})")
+                print(
+                    f"  [INFO] Applying train_on_responses_only (response marker: {response_part!r})"
+                )
                 try:
                     _unsloth_response_only(
                         trainer,
@@ -981,11 +1028,17 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                         tokenizer=tokenizer,
                     )
                 except Exception as e:
-                    print(f"  [WARN] train_on_responses_only failed: {e}; continuing without response-only masking")
+                    print(
+                        f"  [WARN] train_on_responses_only failed: {e}; continuing without response-only masking"
+                    )
             else:
-                print("  [WARN] train_on_responses_only requested, but could not detect chat template format; continuing without response-only masking")
+                print(
+                    "  [WARN] train_on_responses_only requested, but could not detect chat template format; continuing without response-only masking"
+                )
 
-    print(f"  Starting training ({training.get('num_epochs', 3)} epochs, {training.get('batch_size', 1)} batch)...")
+    print(
+        f"  Starting training ({training.get('num_epochs', 3)} epochs, {training.get('batch_size', 1)} batch)..."
+    )
     try:
         train_result = trainer.train()
 
@@ -1000,7 +1053,9 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
             metrics = train_result.metrics
         wandb_url = None
         if wandb_run is not None:
-            wandb_url = getattr(wandb_run, "url", None) or getattr(getattr(wandb_module, "run", None), "url", None)
+            wandb_url = getattr(wandb_run, "url", None) or getattr(
+                getattr(wandb_module, "run", None), "url", None
+            )
             if wandb_url:
                 print(f"  [wandb] Logged run: {wandb_url}")
                 if wandb_module is not None and getattr(wandb_module, "run", None) is not None:
@@ -1018,9 +1073,9 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                                     "train/num_examples": num_examples,
                                 }
                             )
-                        except Exception as e:
+                        except Exception:
                             pass
-                    except Exception as e:
+                    except Exception:
                         pass
         metrics["wandb_url"] = wandb_url
         with open(os.path.join(output_dir, "training_metrics.json"), "w") as f:
@@ -1041,7 +1096,7 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                             "technique": config.get("technique", "unknown"),
                             "num_examples": len(dataset),
                             "dataset_sha256": file_sha256(dataset_path),
-                        }
+                        },
                     )
                     dataset_artifact.add_file(dataset_path)
                     wandb_module.log_artifact(dataset_artifact)
@@ -1054,11 +1109,11 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                             "npc_key": config.get("npc_key", "unknown"),
                             "technique": config.get("technique", "unknown"),
                             "num_examples": len(dataset),
-                        }
+                        },
                     )
                     dataset_artifact.add_dir(dataset_path)
                     wandb_module.log_artifact(dataset_artifact)
-            except Exception as e:
+            except Exception:
                 pass
 
             try:
@@ -1073,11 +1128,11 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                             "npc_key": config.get("npc_key", "unknown"),
                             "preset": preset_name,
                             "run_id": config.get("run_id"),
-                        }
+                        },
                     )
                     cfg_artifact.add_file(snapshot_path)
                     wandb_module.log_artifact(cfg_artifact)
-            except Exception as e:
+            except Exception:
                 pass
 
             try:
@@ -1096,11 +1151,11 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
                             "final_loss": final_loss_val,
                             "num_examples": len(dataset),
                             "dataset_path": config.get("dataset_path"),
-                        }
+                        },
                     )
                     lora_artifact.add_dir(output_dir)
                     wandb_module.log_artifact(lora_artifact)
-            except Exception as e:
+            except Exception:
                 pass
 
         return trainer, metrics
@@ -1108,19 +1163,24 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
         if wandb_module is not None:
             try:
                 wandb_module.finish()
-            except Exception as e:
+            except Exception:
                 pass
 
 
 def main():
     parser = argparse.ArgumentParser(description="Unsloth training launcher")
     # Mode
-    parser.add_argument("config_or_spec", nargs="?",
-                        help="Path to YAML config or subject spec (with --from-spec)")
-    parser.add_argument("--from-spec", action="store_true",
-                        help="Interpret config_or_spec as a subject spec JSON")
-    parser.add_argument("--technique", choices=["docs", "ollama", "template", "openai", "anthropic"],
-                        help="Override dataset technique when training from spec")
+    parser.add_argument(
+        "config_or_spec", nargs="?", help="Path to YAML config or subject spec (with --from-spec)"
+    )
+    parser.add_argument(
+        "--from-spec", action="store_true", help="Interpret config_or_spec as a subject spec JSON"
+    )
+    parser.add_argument(
+        "--technique",
+        choices=["docs", "ollama", "template", "openai", "anthropic"],
+        help="Override dataset technique when training from spec",
+    )
 
     # Logging / output
     parser.add_argument("--debug", action="store_true", help="Enable debug output")
@@ -1128,8 +1188,11 @@ def main():
 
     # Preset
     available_presets = get_available_presets()
-    parser.add_argument("--preset", choices=available_presets if available_presets else None,
-                        help="Training preset (overrides YAML defaults)")
+    parser.add_argument(
+        "--preset",
+        choices=available_presets if available_presets else None,
+        help="Training preset (overrides YAML defaults)",
+    )
 
     # Training overrides
     parser.add_argument("--output", "-o", help="Output directory")
@@ -1137,46 +1200,83 @@ def main():
     parser.add_argument("--lr", type=float, dest="learning_rate", help="Learning rate")
     parser.add_argument("--epochs", type=int, dest="num_epochs", help="Number of epochs")
     parser.add_argument("--batch-size", type=int, dest="batch_size", help="Per-device batch size")
-    parser.add_argument("--grad-accum", type=int, dest="gradient_accumulation_steps",
-                        help="Gradient accumulation steps")
-    parser.add_argument("--max-seq-len", type=int, dest="max_seq_length",
-                        help="Max sequence length")
+    parser.add_argument(
+        "--grad-accum",
+        type=int,
+        dest="gradient_accumulation_steps",
+        help="Gradient accumulation steps",
+    )
+    parser.add_argument(
+        "--max-seq-len", type=int, dest="max_seq_length", help="Max sequence length"
+    )
     parser.add_argument("--lora-r", type=int, help="LoRA rank")
     parser.add_argument("--lora-alpha", type=int, help="LoRA alpha")
     parser.add_argument("--lora-dropout", type=float, help="LoRA dropout")
-    parser.add_argument("--neftune", "--neftune-noise-alpha", type=float, dest="neftune_noise_alpha", default=None, help="NEFTune noise alpha")
+    parser.add_argument(
+        "--neftune",
+        "--neftune-noise-alpha",
+        type=float,
+        dest="neftune_noise_alpha",
+        default=None,
+        help="NEFTune noise alpha",
+    )
     parser.add_argument("--weight-decay", type=float, dest="weight_decay", help="Weight decay")
     parser.add_argument("--warmup", type=int, dest="warmup_steps", help="Warmup steps")
-    parser.add_argument("--lr-scheduler", dest="lr_scheduler_type",
-                        choices=["cosine", "linear", "constant"],
-                        help="Learning rate scheduler type")
+    parser.add_argument(
+        "--lr-scheduler",
+        dest="lr_scheduler_type",
+        choices=["cosine", "linear", "constant"],
+        help="Learning rate scheduler type",
+    )
 
     # Features
-    parser.add_argument("--packing", type=lambda x: x.lower() == "true",
-                        help="Enable packing (True/False)")
-    parser.add_argument("--train-on-responses", type=lambda x: x.lower() == "true",
-                        dest="train_on_responses_only",
-                        help="Train on responses only (True/False)")
-    parser.add_argument("--no-tensorboard", action="store_true",
-                        help="Disable TensorBoard logging")
-    parser.add_argument("--wandb", action="store_true", default=None,
-                        help="Enable W&B logging (overrides config)")
-    parser.add_argument("--no-wandb", action="store_true", default=None,
-                        dest="disable_wandb", help="Disable W&B logging (overrides config)")
-    parser.add_argument("--wandb-project", default=None,
-                        help="W&B project name (default: unsloth-core)")
-    parser.add_argument("--wandb-entity", default=None,
-                        help="W&B entity name (default: auto-detect)")
-    parser.add_argument("--workflow-hooks", default=None,
-                        help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
-    parser.add_argument("--allow-ungated-dataset", action="store_true",
-                        help="Allow training without a fresh passing dataset-eval artifact")
+    parser.add_argument(
+        "--packing", type=lambda x: x.lower() == "true", help="Enable packing (True/False)"
+    )
+    parser.add_argument(
+        "--train-on-responses",
+        type=lambda x: x.lower() == "true",
+        dest="train_on_responses_only",
+        help="Train on responses only (True/False)",
+    )
+    parser.add_argument("--no-tensorboard", action="store_true", help="Disable TensorBoard logging")
+    parser.add_argument(
+        "--wandb", action="store_true", default=None, help="Enable W&B logging (overrides config)"
+    )
+    parser.add_argument(
+        "--no-wandb",
+        action="store_true",
+        default=None,
+        dest="disable_wandb",
+        help="Disable W&B logging (overrides config)",
+    )
+    parser.add_argument(
+        "--wandb-project", default=None, help="W&B project name (default: unsloth-core)"
+    )
+    parser.add_argument(
+        "--wandb-entity", default=None, help="W&B entity name (default: auto-detect)"
+    )
+    parser.add_argument(
+        "--workflow-hooks",
+        default=None,
+        help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)",
+    )
+    parser.add_argument(
+        "--allow-ungated-dataset",
+        action="store_true",
+        help="Allow training without a fresh passing dataset-eval artifact",
+    )
 
     # Export
-    parser.add_argument("--export-gguf", action="store_true",
-                        help="Export trained model to GGUF after training")
-    parser.add_argument("--quantization", default=None, choices=["q4_k_m", "q5_k_m", "q8_0", "f16"],
-                        help="GGUF quantization type (default: q4_k_m)")
+    parser.add_argument(
+        "--export-gguf", action="store_true", help="Export trained model to GGUF after training"
+    )
+    parser.add_argument(
+        "--quantization",
+        default=None,
+        choices=["q4_k_m", "q5_k_m", "q8_0", "f16"],
+        help="GGUF quantization type (default: q4_k_m)",
+    )
 
     args = parser.parse_args()
 
@@ -1192,7 +1292,7 @@ def main():
     # Determine technique if --from-spec is used (also used for dataset path decisions)
     # Build cli_overrides for get_config_from_spec
     cli_overrides = {
-        "model": args.model if hasattr(args, 'model') else None,
+        "model": args.model if hasattr(args, "model") else None,
         "batch_size": args.batch_size,
         "gradient_accumulation_steps": args.gradient_accumulation_steps,
         "num_epochs": args.num_epochs,
@@ -1283,10 +1383,13 @@ def main():
     technique = config.get("technique", "unknown")
     preset_name = config.get("preset") or args.preset or "default"
     lora_r = config.get("lora", {}).get("r", config.get("training", {}).get("lora_r", "?"))
-    lora_alpha_val = config.get("lora", {}).get("alpha", config.get("training", {}).get("lora_alpha", "?"))
+    lora_alpha_val = config.get("lora", {}).get(
+        "alpha", config.get("training", {}).get("lora_alpha", "?")
+    )
     vram_gb, vram_notes = estimate_vram(config)
     hook_recorder = WorkflowHookRecorder(
-        args.workflow_hooks or default_hook_path(Path(config.get("output_dir") or paths.output_dir(npc_key))),
+        args.workflow_hooks
+        or default_hook_path(Path(config.get("output_dir") or paths.output_dir(npc_key))),
         tool="train",
         npc_key=npc_key,
         technique=technique,
@@ -1305,7 +1408,9 @@ def main():
     print(f"  LR Scheduler:   {config.get('training', {}).get('lr_scheduler_type', 'cosine')}")
     print(f"  Estimated VRAM: {vram_gb}GB ({vram_notes})")
     print(f"  Preset:         {preset_name}")
-    print(f"  W&B:            {'enabled' if config.get('wandb', {}).get('enabled') else 'disabled'}")
+    print(
+        f"  W&B:            {'enabled' if config.get('wandb', {}).get('enabled') else 'disabled'}"
+    )
     print(f"  Export GGUF:    {'yes' if args.export_gguf else 'no'}")
     print("=" * 60)
     print()
@@ -1313,9 +1418,13 @@ def main():
     # ── Resolve output paths ───────────────────────────────────────────
     output_dir = config.get("output_dir")
     if output_dir:
-        run_dir, run_id = get_run_output_path(output_dir, preset_name=preset_name, model_name=model_name)
+        run_dir, run_id = get_run_output_path(
+            output_dir, preset_name=preset_name, model_name=model_name
+        )
     else:
-        run_dir, run_id = get_run_output_path(str(paths.output_dir(npc_key)), preset_name=preset_name, model_name=model_name)
+        run_dir, run_id = get_run_output_path(
+            str(paths.output_dir(npc_key)), preset_name=preset_name, model_name=model_name
+        )
 
     config.setdefault("training", {})["output_dir"] = run_dir
     config["run_id"] = run_id
@@ -1342,7 +1451,9 @@ def main():
 
     # Write config snapshot
     log_config_snapshot(config, run_dir)
-    log_state("training_start", npc_key=npc_key, run_id=run_id, model=model_name, preset=preset_name)
+    log_state(
+        "training_start", npc_key=npc_key, run_id=run_id, model=model_name, preset=preset_name
+    )
     training_loss = None  # initialize early so it always exists in manifest scope
 
     # ── VRAM pre-flight check ───────────────────────────────────────────────
@@ -1353,18 +1464,28 @@ def main():
             log_warn(
                 "VRAM check: %.1fGB free / %.1fGB total — estimated need: %.1fGB (threshold: %.1fGB). "
                 "Training may OOM. Consider a smaller preset, model, or lowering max_seq_length.",
-                free_vram_gb, total_vram_gb or 0.0, vram_gb, threshold,
+                free_vram_gb,
+                total_vram_gb or 0.0,
+                vram_gb,
+                threshold,
             )
         else:
             log_info(
                 "VRAM check: %.1fGB free / %.1fGB total — estimated need: %.1fGB ✓",
-                free_vram_gb, total_vram_gb or 0.0, vram_gb,
+                free_vram_gb,
+                total_vram_gb or 0.0,
+                vram_gb,
             )
     else:
         log_warn("VRAM check: could not query GPU memory (nvidia-smi not available)")
 
-    with hook_recorder.step("training_pipeline", run_id=run_id, output_dir=run_dir, export_gguf=bool(args.export_gguf), preset=preset_name):
-
+    with hook_recorder.step(
+        "training_pipeline",
+        run_id=run_id,
+        output_dir=run_dir,
+        export_gguf=bool(args.export_gguf),
+        preset=preset_name,
+    ):
         # ── Load model ─────────────────────────────────────────────────────
         log_info("[1/4] Loading model and tokenizer...")
         with hook_recorder.step("load_model", model=model_name, preset=preset_name):
@@ -1378,24 +1499,38 @@ def main():
             eval_dataset = None
             validation_path = validation_dataset_path(dataset_path)
             if validation_path:
-                eval_dataset = load_dataset_from_jsonl(validation_path, tokenizer, config, label="validation")
+                eval_dataset = load_dataset_from_jsonl(
+                    validation_path, tokenizer, config, label="validation"
+                )
                 log_info("Validation dataset loaded from: %s", validation_path)
             num_examples = len(dataset)
         log_info("Dataset loaded: %d examples", num_examples)
 
         # ── Training ───────────────────────────────────────────────────────
         log_info("[3/4] Running training...")
-        with hook_recorder.step("run_training", dataset_path=dataset_path, num_examples=num_examples):
-            trainer, metrics = run_training(model, tokenizer, dataset, eval_dataset, config, preset_name=preset_name)
+        with hook_recorder.step(
+            "run_training", dataset_path=dataset_path, num_examples=num_examples
+        ):
+            trainer, metrics = run_training(
+                model, tokenizer, dataset, eval_dataset, config, preset_name=preset_name
+            )
         training_loss = metrics.get("train_loss", 0.0)
         wandb_url = metrics.get("wandb_url")
         if wandb_url:
             log_info("W&B run: %s", wandb_url)
         log_info("Training complete: loss=%.4f", training_loss)
-        log_state("training_complete", npc_key=npc_key, run_id=run_id, loss=training_loss, examples=num_examples)
+        log_state(
+            "training_complete",
+            npc_key=npc_key,
+            run_id=run_id,
+            loss=training_loss,
+            examples=num_examples,
+        )
 
         # ── Promotion check ────────────────────────────────────────────────
-        with hook_recorder.step("promotion_check", training_loss=training_loss, num_examples=num_examples):
+        with hook_recorder.step(
+            "promotion_check", training_loss=training_loss, num_examples=num_examples
+        ):
             promotion_passed, promotion_failures = check_promotion_rules(
                 training_loss, config, num_examples
             )
@@ -1424,7 +1559,7 @@ def main():
             # Use the unified export.py in adapter mode (fast, no base model loading)
             export_script = PROJECT_ROOT / "scripts" / "export" / "export.py"
             export_cmd = [sys.executable, str(export_script), str(output_dir)]
-            if getattr(args, 'full_merge_export', False):
+            if getattr(args, "full_merge_export", False):
                 export_cmd.append("--full-merge")
                 quant = args.quantization or config.get("export", {}).get("quantization", "q4_k_m")
                 export_cmd.extend(["--quantization", quant])
@@ -1450,7 +1585,7 @@ def main():
                 "num_examples": num_examples,
                 "wandb_url": wandb_url,
                 "created_at": datetime.now().isoformat(),
-                "mode": "full_merge" if getattr(args, 'full_merge_export', False) else "adapter",
+                "mode": "full_merge" if getattr(args, "full_merge_export", False) else "adapter",
                 "gguf_files": [str(gf) for gf in gguf_files],
             }
             manifest_path = exports_dir / "manifest.json"
@@ -1462,10 +1597,13 @@ def main():
             if config.get("wandb", {}).get("enabled", False) and gguf_files:
                 try:
                     import wandb as _wandb
+
                     export_run = _wandb.init(
                         project=config.get("wandb", {}).get("project", "unsloth-core"),
                         entity=config.get("wandb", {}).get("entity"),
-                        group=os.environ.get("WANDB_RUN_GROUP") or os.environ.get("WANDB_GROUP") or npc_key,
+                        group=os.environ.get("WANDB_RUN_GROUP")
+                        or os.environ.get("WANDB_GROUP")
+                        or npc_key,
                         job_type="export",
                         name=f"export-{npc_key}-{run_id}",
                         tags=["export", npc_key, technique, preset_name],
@@ -1477,7 +1615,9 @@ def main():
                             "training_wandb_url": wandb_url,
                             "training_loss": training_loss,
                             "num_examples": num_examples,
-                            "mode": "full_merge" if getattr(args, 'full_merge_export', False) else "adapter",
+                            "mode": "full_merge"
+                            if getattr(args, "full_merge_export", False)
+                            else "adapter",
                             "gguf_files": [str(gf) for gf in gguf_files],
                         },
                     )
@@ -1491,11 +1631,13 @@ def main():
                             "preset": preset_name,
                             "training_loss": training_loss,
                             "num_examples": num_examples,
-                            "mode": "full_merge" if getattr(args, 'full_merge_export', False) else "adapter",
+                            "mode": "full_merge"
+                            if getattr(args, "full_merge_export", False)
+                            else "adapter",
                             "run_id": run_id,
                             "training_wandb_url": wandb_url,
                             "wandb_url": getattr(export_run, "url", None),
-                        }
+                        },
                     )
                     for gf in gguf_files:
                         gguf_artifact.add_file(str(gf))
@@ -1507,20 +1649,27 @@ def main():
         else:
             log_info("[4/4] Skipping GGUF export (use --export-gguf to enable)")
 
-    log_state("training_finished", npc_key=npc_key, run_id=run_id, loss=training_loss,
-              export=bool(args.export_gguf), promoted=promotion_passed)
-    print(f"\n{'='*60}")
-    print(f"  Training complete!")
+    log_state(
+        "training_finished",
+        npc_key=npc_key,
+        run_id=run_id,
+        loss=training_loss,
+        export=bool(args.export_gguf),
+        promoted=promotion_passed,
+    )
+    print(f"\n{'=' * 60}")
+    print("  Training complete!")
     print(f"  Run ID:  {run_id}")
     print(f"  Output:  {run_dir}")
     if args.export_gguf:
         exports_dir = paths.export_dir(npc_key)
         print(f"  Exports: {exports_dir}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # ── Record pipeline manifest stage ─────────────────────────────────
     try:
         from src.core.ops.pipeline_manifest import record_pipeline_stage
+
         os.environ.setdefault("NPC_KEY", npc_key)
         os.environ.setdefault("TECHNIQUE", technique)
         manifest_artifacts = {}
@@ -1533,6 +1682,7 @@ def main():
             manifest_metadata["training_loss"] = training_loss
         record_pipeline_stage("train", artifacts=manifest_artifacts, metadata=manifest_metadata)
         from src.core.ops.artifact_registry import record_stage_artifacts_best_effort
+
         record_stage_artifacts_best_effort(
             run_id,
             npc_key,

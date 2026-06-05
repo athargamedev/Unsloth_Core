@@ -16,7 +16,13 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-SUPPORTED_DATASET_CATEGORIES: tuple[str, ...] = ("identity", "teaching", "dialogue", "quest", "refusal")
+SUPPORTED_DATASET_CATEGORIES: tuple[str, ...] = (
+    "identity",
+    "teaching",
+    "dialogue",
+    "quest",
+    "refusal",
+)
 MIN_DATASET_EXAMPLES_PER_CATEGORY: dict[str, int] = {
     "identity": 8,
     "teaching": 32,
@@ -69,7 +75,9 @@ def _assistant_text(record: dict[str, Any]) -> str:
     return "\n".join(
         str(message.get("content") or "")
         for message in messages
-        if isinstance(message, dict) and message.get("role") == "assistant" and message.get("content")
+        if isinstance(message, dict)
+        and message.get("role") == "assistant"
+        and message.get("content")
     ).strip()
 
 
@@ -151,7 +159,9 @@ def summarize_jsonl_dataset(jsonl_path: str | Path) -> dict[str, Any]:
     density_words: list[int] = []
     density_sentences: list[int] = []
     density_chars: list[int] = []
-    density_by_category: dict[str, dict[str, list[int]]] = defaultdict(lambda: {"words": [], "sentences": [], "chars": []})
+    density_by_category: dict[str, dict[str, list[int]]] = defaultdict(
+        lambda: {"words": [], "sentences": [], "chars": []}
+    )
     unknown_rows = 0
 
     with path.open(encoding="utf-8") as handle:
@@ -186,7 +196,9 @@ def summarize_jsonl_dataset(jsonl_path: str | Path) -> dict[str, Any]:
             density_chars.append(assistant_density["chars"])
             density_category = category if isinstance(category, str) and category else "unknown"
             density_by_category[density_category]["words"].append(assistant_density["words"])
-            density_by_category[density_category]["sentences"].append(assistant_density["sentences"])
+            density_by_category[density_category]["sentences"].append(
+                assistant_density["sentences"]
+            )
             density_by_category[density_category]["chars"].append(assistant_density["chars"])
             summary["total"] += 1
 

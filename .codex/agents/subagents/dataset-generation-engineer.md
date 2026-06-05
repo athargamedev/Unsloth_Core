@@ -13,7 +13,9 @@ source_order:
 
 # dataset-generation-engineer
 
-Grounded `ollama` generation and dataset top-up specialist.
+## Mission
+
+Grounded ollama dataset generation and dataset top-up specialist.
 
 ## Ownership
 

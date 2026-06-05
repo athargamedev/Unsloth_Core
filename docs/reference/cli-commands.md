@@ -203,7 +203,7 @@ Validate subject specs before generation/training.
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `spec` (positional, optional) | `str` | — | Path to subject spec JSON |
-| `--all` | `bool` | `False` | Validate every `subjects/NPC_specs/*.json` spec |
+| `--all` | `bool` | `False` | Validate every `data/npcs/specs/*.json` spec |
 | `--json` | `bool` | `False` | Output JSON |
 | `--strict` | `bool` | `False` | Treat warnings as errors |
 | `--require-reference-docs` | `bool` | `False` | Fail if `reference_doc` missing/unreadable |
@@ -419,7 +419,7 @@ Batch plan local vs remote queues and generate Colab notebooks.
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--spec-glob GLOB` | `str` | `subjects/NPC_specs/*.json` | Spec glob under project root |
+| `--spec-glob GLOB` | `str` | `data/npcs/specs/*.json` | Spec glob under project root |
 | `--spec PATH` (repeatable) | `str[]` | — | Explicit spec path (repeatable) |
 | `--presets PRESETS` | `str` | `fast-3b` | Comma-separated presets |
 | `--local-vram-gb GB` | `float` | — | Override detected local VRAM |
@@ -534,7 +534,7 @@ Defined in `scripts/dataset/dataset_contracts.py`.
 | Technique | Description | Backend |
 |-----------|-------------|---------|
 | `template` | Fast deterministic generation from curated prompt templates | Built-in Jinja-like templates (`generation_profiles.py`) |
-| `docs` | Grounded generation from curated reference-doc manifests | Reference docs in `subjects/reference_docs/` |
+| `docs` | Grounded generation from curated reference-doc manifests | Reference docs in `data/npcs/reference_docs/` |
 | `ollama` | LLM-driven synthetic data via local Ollama | Ollama API (`http://localhost:11434`) |
 | `openai` | LLM-driven synthetic data via OpenAI API | OpenAI chat completions |
 | `anthropic` | LLM-driven synthetic data via Anthropic API | Anthropic messages API |

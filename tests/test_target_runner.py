@@ -1,4 +1,5 @@
 """Tests for enhanced target plan schema (P5.1) and TargetRunner (P5.2, P5.3)."""
+
 from __future__ import annotations
 
 import json
@@ -8,8 +9,6 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
-import pytest
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -25,52 +24,111 @@ def _populated_registry(tmp_path):
     # generate -> dataset_raw (no inputs)
     r1 = tmp_path / "raw.jsonl"
     r1.write_text("{}", encoding="utf-8")
-    registry.record_artifact("r-gen", "chef_assistant", "generate", "dataset_raw", r1,
-                             technique="ollama", metadata={"input_signature": "gen-init"})
+    registry.record_artifact(
+        "r-gen",
+        "chef_assistant",
+        "generate",
+        "dataset_raw",
+        r1,
+        technique="ollama",
+        metadata={"input_signature": "gen-init"},
+    )
 
     # sanitize -> dataset_clean (input: dataset_raw)
     r2 = tmp_path / "clean.jsonl"
     r2.write_text("{}", encoding="utf-8")
-    registry.record_artifact("r-san", "chef_assistant", "sanitize", "dataset_clean", r2,
-                             technique="ollama",
-                             metadata={"input_signature": _sig_for("sanitize", [{"artifact_type": "dataset_raw", "sha256": _sha(r1)}])})
+    registry.record_artifact(
+        "r-san",
+        "chef_assistant",
+        "sanitize",
+        "dataset_clean",
+        r2,
+        technique="ollama",
+        metadata={
+            "input_signature": _sig_for(
+                "sanitize", [{"artifact_type": "dataset_raw", "sha256": _sha(r1)}]
+            )
+        },
+    )
 
     # dataset_eval -> quality_summary (input: dataset_clean)
     r3 = tmp_path / "quality.json"
     r3.write_text(json.dumps({"score": 0.85}), encoding="utf-8")
-    registry.record_artifact("r-eval", "chef_assistant", "dataset_eval", "quality_summary", r3,
-                             technique="ollama",
-                             metadata={"input_signature": _sig_for("dataset_eval", [{"artifact_type": "dataset_clean", "sha256": _sha(r2)}])})
+    registry.record_artifact(
+        "r-eval",
+        "chef_assistant",
+        "dataset_eval",
+        "quality_summary",
+        r3,
+        technique="ollama",
+        metadata={
+            "input_signature": _sig_for(
+                "dataset_eval", [{"artifact_type": "dataset_clean", "sha256": _sha(r2)}]
+            )
+        },
+    )
 
     # train -> adapter_checkpoint (input: dataset_clean, quality_summary)
     r4 = tmp_path / "checkpoint.json"
     r4.write_text(json.dumps({"adapter": "config"}), encoding="utf-8")
-    registry.record_artifact("r-train", "chef_assistant", "train", "adapter_checkpoint", r4,
-                             technique="ollama",
-                             metadata={"input_signature": _sig_for("train", [
-                                 {"artifact_type": "dataset_clean", "sha256": _sha(r2)},
-                                 {"artifact_type": "quality_summary", "sha256": _sha(r3)},
-                             ])})
+    registry.record_artifact(
+        "r-train",
+        "chef_assistant",
+        "train",
+        "adapter_checkpoint",
+        r4,
+        technique="ollama",
+        metadata={
+            "input_signature": _sig_for(
+                "train",
+                [
+                    {"artifact_type": "dataset_clean", "sha256": _sha(r2)},
+                    {"artifact_type": "quality_summary", "sha256": _sha(r3)},
+                ],
+            )
+        },
+    )
 
     # export -> gguf_adapter (input: adapter_checkpoint)
     r5 = tmp_path / "model.gguf"
     r5.write_bytes(b"\x00\x01\x02")
-    registry.record_artifact("r-export", "chef_assistant", "export", "gguf_adapter", r5,
-                             technique="ollama",
-                             metadata={"input_signature": _sig_for("export", [{"artifact_type": "adapter_checkpoint", "sha256": _sha(r4)}])})
+    registry.record_artifact(
+        "r-export",
+        "chef_assistant",
+        "export",
+        "gguf_adapter",
+        r5,
+        technique="ollama",
+        metadata={
+            "input_signature": _sig_for(
+                "export", [{"artifact_type": "adapter_checkpoint", "sha256": _sha(r4)}]
+            )
+        },
+    )
 
     # evaluate -> eval_index (input: gguf_adapter)
     r6 = tmp_path / "eval.index.json"
     r6.write_text(json.dumps({"schema_version": "v1"}), encoding="utf-8")
-    registry.record_artifact("r-eval", "chef_assistant", "evaluate", "eval_index", r6,
-                             technique="ollama",
-                             metadata={"input_signature": _sig_for("evaluate", [{"artifact_type": "gguf_adapter", "sha256": _sha(r5)}])})
+    registry.record_artifact(
+        "r-eval",
+        "chef_assistant",
+        "evaluate",
+        "eval_index",
+        r6,
+        technique="ollama",
+        metadata={
+            "input_signature": _sig_for(
+                "evaluate", [{"artifact_type": "gguf_adapter", "sha256": _sha(r5)}]
+            )
+        },
+    )
 
     return registry
 
 
 def _sha(path: Path) -> str:
     import hashlib
+
     h = hashlib.sha256()
     with path.open("rb") as f:
         for chunk in iter(lambda: f.read(65536), b""):
@@ -80,6 +138,7 @@ def _sha(path: Path) -> str:
 
 def _sig_for(stage: str, inputs: list[dict]) -> str:
     import hashlib
+
     # Must match the exact format in stage_input_signature (pipeline_dag.py)
     payload = {
         "stage": stage,
@@ -219,7 +278,7 @@ class TestTargetRunner:
     def test_runner_dry_run_no_commands_when_ready(self, tmp_path):
         from src.core.orchestration.target_runner import TargetRunner
 
-        registry = _populated_registry(tmp_path)
+        _populated_registry(tmp_path)
         runner = TargetRunner(artifact_index=tmp_path / "artifacts.jsonl")
         plan = runner.plan(
             npc_key="chef_assistant",
@@ -232,15 +291,16 @@ class TestTargetRunner:
         assert len(dry) == 0
 
     def test_runner_run_creates_registry_entries(self, tmp_path):
-        from src.core.orchestration.target_runner import TargetRunner
-
         # Create just one artifact (generate) so it tries to run sanitize
         from src.core.ops.artifact_registry import ArtifactRegistry
+        from src.core.orchestration.target_runner import TargetRunner
 
         registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
         r1 = tmp_path / "raw.jsonl"
         r1.write_text("{}", encoding="utf-8")
-        registry.record_artifact("r-gen", "chef_assistant", "generate", "dataset_raw", r1, technique="ollama")
+        registry.record_artifact(
+            "r-gen", "chef_assistant", "generate", "dataset_raw", r1, technique="ollama"
+        )
 
         runner = TargetRunner(
             artifact_index=tmp_path / "artifacts.jsonl",
@@ -260,7 +320,7 @@ class TestTargetRunner:
     def test_runner_run_with_resume_skips_completed_stages(self, tmp_path):
         from src.core.orchestration.target_runner import TargetRunner
 
-        registry = _populated_registry(tmp_path)
+        _populated_registry(tmp_path)
         runner = TargetRunner(
             artifact_index=tmp_path / "artifacts.jsonl",
             run_index=tmp_path / "runs.jsonl",

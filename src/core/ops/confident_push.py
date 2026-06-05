@@ -23,9 +23,7 @@ from pathlib import Path
 
 from src.core.ops.confident_api import (
     ConfidentAPIClient,
-    confident_available as api_key_available,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -134,10 +132,7 @@ def push_goldens_if_confident(
     # ---- Push via API client ------------------------------------------------
     try:
         client = get_client()
-        print(
-            f"[confident_push] Pushing {len(goldens)} goldens "
-            f"\u2192 alias='{alias}' ..."
-        )
+        print(f"[confident_push] Pushing {len(goldens)} goldens \u2192 alias='{alias}' ...")
         if turn_type in {"conversation", "conversational", "multi"}:
             client.push_dataset(
                 alias,
@@ -174,16 +169,13 @@ def pull_goldens(alias: str) -> list[dict]:
     """
     if not is_confident_enabled():
         raise RuntimeError(
-            "CONFIDENT_API_KEY is not set. "
-            "Set it in .env.local or export CONFIDENT_API_KEY=..."
+            "CONFIDENT_API_KEY is not set. Set it in .env.local or export CONFIDENT_API_KEY=..."
         )
 
     try:
         client = get_client()
         goldens = client.pull_dataset(alias)
-        print(
-            f"[confident_push] Pulled {len(goldens)} goldens from '{alias}'."
-        )
+        print(f"[confident_push] Pulled {len(goldens)} goldens from '{alias}'.")
         return goldens
     except Exception as exc:
         print(f"[confident_push] Pull failed: {exc}")
@@ -211,12 +203,7 @@ def list_datasets() -> list[dict]:
                 "golden_count",
                 ds.get("goldens_count", ds.get("total_goldens", 0)),
             )
-            print(
-                f"{str(name)[:38]:<40} "
-                f"{str(alias)[:38]:<40} "
-                f"{str(version)[:10]:<12} "
-                f"{count:<8}"
-            )
+            print(f"{str(name)[:38]:<40} {str(alias)[:38]:<40} {str(version)[:10]:<12} {count:<8}")
         return datasets
     except Exception as exc:
         print(f"[confident_push] Failed to list datasets: {exc}")
@@ -241,17 +228,11 @@ def list_test_runs(page: int = 1, page_size: int = 20) -> list[dict]:
     try:
         client = get_client()
         result = client.list_test_runs_paginated(page, page_size)
-        items = result.get(
-            "items", result.get("data", result.get("testRuns", []))
-        )
+        items = result.get("items", result.get("data", result.get("testRuns", [])))
         total = result.get("total", len(items))
-        print(
-            f"Test Runs (page {page}, "
-            f"{page_size} per page, {total} total):"
-        )
+        print(f"Test Runs (page {page}, {page_size} per page, {total} total):")
         header = (
-            f"{'ID':<40} {'Identifier':<50} {'Pass':<8} "
-            f"{'Total':<8} {'Status':<12} {'Date':<20}"
+            f"{'ID':<40} {'Identifier':<50} {'Pass':<8} {'Total':<8} {'Status':<12} {'Date':<20}"
         )
         print(header)
         print("-" * len(header))
@@ -261,9 +242,7 @@ def list_test_runs(page: int = 1, page_size: int = 20) -> list[dict]:
             passed = run.get("passed_count", run.get("passed", 0))
             total_count = run.get("total_count", run.get("total", 0))
             status = run.get("status", run.get("state", "-"))
-            date = (
-                run.get("created_at", run.get("date", run.get("timestamp", "")))
-            )[:19]
+            date = (run.get("created_at", run.get("date", run.get("timestamp", ""))))[:19]
             print(
                 f"{str(run_id)[:38]:<40} "
                 f"{str(identifier)[:48]:<50} "
@@ -298,10 +277,7 @@ def get_test_run(test_run_id: str) -> dict:
         print(json.dumps(run, indent=2, default=str))
         return run
     except Exception as exc:
-        print(
-            f"[confident_push] Failed to get test run "
-            f"'{test_run_id}': {exc}"
-        )
+        print(f"[confident_push] Failed to get test run '{test_run_id}': {exc}")
         return {}
 
 
@@ -316,7 +292,11 @@ def _build_alias(
     """Build a standardised Confident AI dataset alias from NPC metadata."""
     if prefix == "ucore":
         npc_slug = npc_key.replace("_", "-")
-        suffix = "conversation-v1" if turn_type in {"conversation", "conversational", "multi"} else "single-v1"
+        suffix = (
+            "conversation-v1"
+            if turn_type in {"conversation", "conversational", "multi"}
+            else "single-v1"
+        )
         return f"ucore-{npc_slug}-{technique}-{suffix}"
     return f"{prefix}-{npc_key}-{technique}"
 
@@ -332,20 +312,14 @@ def _parse_args() -> argparse.Namespace:
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    push_p = sub.add_parser(
-        "push", help="Push a local goldens file to Confident AI"
-    )
-    push_p.add_argument(
-        "jsonl_path", help="Path to JSONL/JSON goldens file"
-    )
+    push_p = sub.add_parser("push", help="Push a local goldens file to Confident AI")
+    push_p.add_argument("jsonl_path", help="Path to JSONL/JSON goldens file")
     push_p.add_argument(
         "--alias",
         default=None,
         help="Dataset alias (derived from filename if omitted)",
     )
-    push_p.add_argument(
-        "--version", default=None, help="Optional semantic version string"
-    )
+    push_p.add_argument("--version", default=None, help="Optional semantic version string")
     push_p.add_argument(
         "--turn-type",
         choices=["single", "conversation"],
@@ -353,32 +327,31 @@ def _parse_args() -> argparse.Namespace:
         help="Confident payload type: single -> goldens, conversation -> conversationalGoldens",
     )
     final_group = push_p.add_mutually_exclusive_group()
-    final_group.add_argument("--finalized", dest="finalized", action="store_true", default=True, help="Mark pushed goldens finalized/eval-ready")
-    final_group.add_argument("--unfinalized", dest="finalized", action="store_false", help="Queue pushed goldens for Confident review")
-
-    pull_p = sub.add_parser(
-        "pull", help="Pull a dataset from Confident AI"
+    final_group.add_argument(
+        "--finalized",
+        dest="finalized",
+        action="store_true",
+        default=True,
+        help="Mark pushed goldens finalized/eval-ready",
     )
+    final_group.add_argument(
+        "--unfinalized",
+        dest="finalized",
+        action="store_false",
+        help="Queue pushed goldens for Confident review",
+    )
+
+    pull_p = sub.add_parser("pull", help="Pull a dataset from Confident AI")
     pull_p.add_argument("alias", help="Confident AI dataset alias")
 
-    list_ds_p = sub.add_parser(
-        "list-datasets", help="List all datasets on Confident AI"
-    )
+    list_ds_p = sub.add_parser("list-datasets", help="List all datasets on Confident AI")
     _ = list_ds_p  # no extra args needed
 
-    list_tr_p = sub.add_parser(
-        "list-test-runs", help="List test runs from Confident AI"
-    )
-    list_tr_p.add_argument(
-        "--page", type=int, default=1, help="Page number (1-indexed)"
-    )
-    list_tr_p.add_argument(
-        "--page-size", type=int, default=20, help="Items per page"
-    )
+    list_tr_p = sub.add_parser("list-test-runs", help="List test runs from Confident AI")
+    list_tr_p.add_argument("--page", type=int, default=1, help="Page number (1-indexed)")
+    list_tr_p.add_argument("--page-size", type=int, default=20, help="Items per page")
 
-    get_tr_p = sub.add_parser(
-        "get-test-run", help="Get a test run by ID"
-    )
+    get_tr_p = sub.add_parser("get-test-run", help="Get a test run by ID")
     get_tr_p.add_argument("test_run_id", help="Test run UUID")
 
     return parser.parse_args()

@@ -13,28 +13,26 @@ RunRegistry for run lifecycle events, and GpuLeaseManager for GPU arbitration.
 
 from __future__ import annotations
 
-import json
 import shlex
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
 from src.core.ops.artifact_registry import ArtifactRegistry
 from src.core.ops.gpu_lease import GpuLeaseManager
-from src.core.ops.pipeline_dag import CANONICAL_STAGE_ORDER, PipelineDAG
+from src.core.ops.pipeline_dag import PipelineDAG
 from src.core.ops.run_registry import RunRegistry, make_pipeline_run_id
 
 UCORE_CLI = Path(__file__).resolve().parent.parent.parent / "cli" / "ucore"
 
 # Map pipeline stages to the CLI command that runs them
 STAGE_COMMANDS: dict[str, list[str]] = {
-    "generate":    [str(UCORE_CLI), "dataset", "generate"],
-    "sanitize":    [str(UCORE_CLI), "dataset", "sanitize"],
+    "generate": [str(UCORE_CLI), "dataset", "generate"],
+    "sanitize": [str(UCORE_CLI), "dataset", "sanitize"],
     "dataset_eval": [str(UCORE_CLI), "dataset", "eval"],
-    "train":       [str(UCORE_CLI), "train"],
-    "export":      [str(UCORE_CLI), "export"],
-    "evaluate":    [str(UCORE_CLI), "evaluate"],
+    "train": [str(UCORE_CLI), "train"],
+    "export": [str(UCORE_CLI), "export"],
+    "evaluate": [str(UCORE_CLI), "evaluate"],
 }
 
 

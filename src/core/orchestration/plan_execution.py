@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -65,12 +64,12 @@ def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]
 
 
 def parse_json(path: Path) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
 def parse_yaml(path: Path) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
 
 
@@ -92,7 +91,7 @@ def detect_local_vram_gb() -> float | None:
             return None
         # Multi-GPU: use largest card for single-run planning.
         return round(max(values) / 1024.0, 1)
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -158,12 +157,14 @@ def sum_examples(spec: dict[str, Any]) -> int:
     for v in cats.values():
         try:
             total += int(v)
-        except Exception as e:
+        except Exception:
             pass
     return total
 
 
-def recommend(spec: dict[str, Any], preset: str | None, local_vram_gb: float | None) -> dict[str, Any]:
+def recommend(
+    spec: dict[str, Any], preset: str | None, local_vram_gb: float | None
+) -> dict[str, Any]:
     policy = parse_yaml(first_existing_path(POLICY_PATH, LEGACY_POLICY_PATH))
     config = load_resolved_config(spec, preset)
 
@@ -211,10 +212,16 @@ def recommend(spec: dict[str, Any], preset: str | None, local_vram_gb: float | N
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Plan local vs remote execution for dataset generation + training")
+    ap = argparse.ArgumentParser(
+        description="Plan local vs remote execution for dataset generation + training"
+    )
     ap.add_argument("--spec", required=True, help="Path to subject spec JSON")
     ap.add_argument("--preset", help="Preset name from configs/presets")
-    ap.add_argument("--local-vram-gb", type=float, help="Override local VRAM GB (if omitted, auto-detect nvidia-smi)")
+    ap.add_argument(
+        "--local-vram-gb",
+        type=float,
+        help="Override local VRAM GB (if omitted, auto-detect nvidia-smi)",
+    )
     ap.add_argument("--json", action="store_true", help="Print JSON only")
     args = ap.parse_args()
 

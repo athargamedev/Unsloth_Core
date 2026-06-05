@@ -12,7 +12,16 @@ from scripts.evaluate import (
 )
 
 
-def metrics(*, sentences_ok=True, name_ok=True, no_ai_disclaimer=True, has_think_tags=False, length=20, quality=30, sentences=2):
+def metrics(
+    *,
+    sentences_ok=True,
+    name_ok=True,
+    no_ai_disclaimer=True,
+    has_think_tags=False,
+    length=20,
+    quality=30,
+    sentences=2,
+):
     return {
         "sentences_ok": sentences_ok,
         "name_ok": name_ok,
@@ -41,7 +50,9 @@ def test_response_specificity_penalizes_generic_filler_and_rewards_domain_terms(
     generic = "Great question. Once you understand this, everything falls into place naturally."
     specific = "Telescopes gather light so we can see faint planets, galaxies, and details in the solar system."
 
-    assert response_specificity_score(specific, spec=spec) > response_specificity_score(generic, spec=spec)
+    assert response_specificity_score(specific, spec=spec) > response_specificity_score(
+        generic, spec=spec
+    )
 
 
 def test_think_tag_check_catches_common_reasoning_delimiters():

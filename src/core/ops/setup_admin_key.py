@@ -25,14 +25,15 @@ import secrets
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
 
 # ── Config ──────────────────────────────────────────────────────────────────
 
 DEFAULT_DB_URL = "postgresql://postgres:postgres@localhost:15434/postgres"
 DASHBOARD_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "src", "dashboard", "unity-npc-llm-training-dashboard",
+    "src",
+    "dashboard",
+    "unity-npc-llm-training-dashboard",
 )
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -133,10 +134,7 @@ def hash_with_bcrypt_node(key: str) -> str:
             msg = f"Dashboard directory does not exist: {DASHBOARD_DIR}"
         else:
             msg = f"Subprocess failed to start: {e}"
-        raise RuntimeError(
-            f"{msg} "
-            "Install Node.js or run:  pip install bcrypt"
-        ) from None
+        raise RuntimeError(f"{msg} Install Node.js or run:  pip install bcrypt") from None
 
 
 def hash_api_key(key: str) -> str:

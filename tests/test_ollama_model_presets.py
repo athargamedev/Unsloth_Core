@@ -13,4 +13,7 @@ def test_judge_presets_resolve_expected_models():
 
 
 def test_explicit_model_overrides_preset():
-    assert resolve_ollama_model(preset="generate-qwen25", model="llama3.1:8b", role="generation") == "llama3.1:8b"
+    assert (
+        resolve_ollama_model(preset="generate-qwen25", model="llama3.1:8b", role="generation")
+        == "llama3.1:8b"
+    )

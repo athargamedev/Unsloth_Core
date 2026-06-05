@@ -35,10 +35,16 @@ def test_pipeline_dag_allows_stage_after_prerequisite_artifacts_exist(tmp_path):
     quality.write_text('{"passed": true}\n', encoding="utf-8")
 
     registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
-    registry.record_artifact("run-1", "history_guide", "sanitize", "dataset_clean", clean, technique="notebooklm")
-    registry.record_artifact("run-1", "history_guide", "dataset_eval", "quality_summary", quality, technique="notebooklm")
+    registry.record_artifact(
+        "run-1", "history_guide", "sanitize", "dataset_clean", clean, technique="notebooklm"
+    )
+    registry.record_artifact(
+        "run-1", "history_guide", "dataset_eval", "quality_summary", quality, technique="notebooklm"
+    )
 
-    result = PipelineDAG(registry=registry).validate_stage("train", npc_key="history_guide", technique="notebooklm")
+    result = PipelineDAG(registry=registry).validate_stage(
+        "train", npc_key="history_guide", technique="notebooklm"
+    )
 
     assert result.ok is True
     assert result.missing_stages == []
@@ -88,19 +94,53 @@ def test_record_stage_artifacts_maps_canonical_stage_outputs(tmp_path):
     eval_index.write_text("{}", encoding="utf-8")
 
     registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
-    record_stage_artifacts(registry, "run-1", "history_guide", "generate", {"train": raw}, technique="notebooklm")
-    record_stage_artifacts(registry, "run-1", "history_guide", "sanitize", {"output": clean}, technique="notebooklm")
-    record_stage_artifacts(registry, "run-1", "history_guide", "dataset_eval", {"quality_summary": quality}, technique="notebooklm")
-    record_stage_artifacts(registry, "run-1", "history_guide", "train", {"run_dir": run_dir}, technique="notebooklm")
-    record_stage_artifacts(registry, "run-1", "history_guide", "export", {"gguf": gguf}, technique="notebooklm")
-    record_stage_artifacts(registry, "run-1", "history_guide", "evaluate", {"eval_index": eval_index}, technique="notebooklm")
+    record_stage_artifacts(
+        registry, "run-1", "history_guide", "generate", {"train": raw}, technique="notebooklm"
+    )
+    record_stage_artifacts(
+        registry, "run-1", "history_guide", "sanitize", {"output": clean}, technique="notebooklm"
+    )
+    record_stage_artifacts(
+        registry,
+        "run-1",
+        "history_guide",
+        "dataset_eval",
+        {"quality_summary": quality},
+        technique="notebooklm",
+    )
+    record_stage_artifacts(
+        registry, "run-1", "history_guide", "train", {"run_dir": run_dir}, technique="notebooklm"
+    )
+    record_stage_artifacts(
+        registry, "run-1", "history_guide", "export", {"gguf": gguf}, technique="notebooklm"
+    )
+    record_stage_artifacts(
+        registry,
+        "run-1",
+        "history_guide",
+        "evaluate",
+        {"eval_index": eval_index},
+        technique="notebooklm",
+    )
 
-    assert registry.latest_artifact("history_guide", "dataset_raw", technique="notebooklm")["path"] == str(raw)
-    assert registry.latest_artifact("history_guide", "dataset_clean", technique="notebooklm")["path"] == str(clean)
-    assert registry.latest_artifact("history_guide", "quality_summary", technique="notebooklm")["path"] == str(quality)
-    assert registry.latest_artifact("history_guide", "adapter_checkpoint", technique="notebooklm")["path"] == str(run_dir)
-    assert registry.latest_artifact("history_guide", "gguf_adapter", technique="notebooklm")["path"] == str(gguf)
-    assert registry.latest_artifact("history_guide", "eval_index", technique="notebooklm")["path"] == str(eval_index)
+    assert registry.latest_artifact("history_guide", "dataset_raw", technique="notebooklm")[
+        "path"
+    ] == str(raw)
+    assert registry.latest_artifact("history_guide", "dataset_clean", technique="notebooklm")[
+        "path"
+    ] == str(clean)
+    assert registry.latest_artifact("history_guide", "quality_summary", technique="notebooklm")[
+        "path"
+    ] == str(quality)
+    assert registry.latest_artifact("history_guide", "adapter_checkpoint", technique="notebooklm")[
+        "path"
+    ] == str(run_dir)
+    assert registry.latest_artifact("history_guide", "gguf_adapter", technique="notebooklm")[
+        "path"
+    ] == str(gguf)
+    assert registry.latest_artifact("history_guide", "eval_index", technique="notebooklm")[
+        "path"
+    ] == str(eval_index)
 
 
 def test_record_stage_artifacts_can_attach_input_lineage_metadata(tmp_path):
@@ -112,7 +152,9 @@ def test_record_stage_artifacts_can_attach_input_lineage_metadata(tmp_path):
     clean = tmp_path / "train_clean.jsonl"
     clean.write_text("clean rows\n", encoding="utf-8")
     registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
-    raw_record = registry.record_artifact("run-1", "history_guide", "generate", "dataset_raw", raw, technique="ollama")
+    raw_record = registry.record_artifact(
+        "run-1", "history_guide", "generate", "dataset_raw", raw, technique="ollama"
+    )
 
     record_stage_artifacts(
         registry,

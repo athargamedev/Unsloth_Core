@@ -2,11 +2,11 @@ from __future__ import annotations
 
 """Canonical run index helpers for .pipeline/runs and legacy compatibility."""
 
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone
+import json
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-import json
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 CANONICAL_RUNS_ROOT = PROJECT_ROOT / ".pipeline" / "runs"
@@ -27,7 +27,7 @@ class RunIndexEntry:
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def iter_canonical_run_bundle_paths(root: Path | None = None) -> list[Path]:
@@ -55,7 +55,9 @@ def build_index_entry(bundle: dict[str, Any], bundle_path: Path) -> RunIndexEntr
     )
 
 
-def refresh_run_index(root: Path | None = None, index_path: Path | None = None) -> list[RunIndexEntry]:
+def refresh_run_index(
+    root: Path | None = None, index_path: Path | None = None
+) -> list[RunIndexEntry]:
     entries: list[RunIndexEntry] = []
     for bundle_path in iter_canonical_run_bundle_paths(root=root):
         try:

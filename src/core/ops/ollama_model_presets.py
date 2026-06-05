@@ -31,7 +31,9 @@ def load_ollama_model_preset_map() -> dict[str, Any]:
         return yaml.safe_load(handle) or {}
 
 
-def resolve_ollama_model(*, preset: str | None = None, model: str | None = None, role: str = "generation") -> str:
+def resolve_ollama_model(
+    *, preset: str | None = None, model: str | None = None, role: str = "generation"
+) -> str:
     """Resolve the effective Ollama model for generation or judging.
 
     Priority order:

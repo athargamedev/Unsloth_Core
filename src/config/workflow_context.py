@@ -40,11 +40,19 @@ class WorkflowContext:
 
     @property
     def dataset_clean_path(self) -> Path:
-        return self.dataset_train_path if self.dataset_train_path.name == "train_clean.jsonl" else self.dataset_train_path.with_name("train_clean.jsonl")
+        return (
+            self.dataset_train_path
+            if self.dataset_train_path.name == "train_clean.jsonl"
+            else self.dataset_train_path.with_name("train_clean.jsonl")
+        )
 
     @property
     def dataset_raw_path(self) -> Path:
-        return self.dataset_train_path if self.dataset_train_path.name == "train.jsonl" else self.dataset_train_path.with_name("train.jsonl")
+        return (
+            self.dataset_train_path
+            if self.dataset_train_path.name == "train.jsonl"
+            else self.dataset_train_path.with_name("train.jsonl")
+        )
 
     @property
     def dataset_path(self) -> Path:
@@ -53,7 +61,6 @@ class WorkflowContext:
     @property
     def spec_text(self) -> str:
         return json.dumps(self.spec, indent=2, ensure_ascii=False)
-
 
 
 def load_subject_spec(spec_path: str | Path) -> dict[str, Any]:
@@ -68,7 +75,6 @@ def load_subject_spec(spec_path: str | Path) -> dict[str, Any]:
     return spec
 
 
-
 def infer_npc_key(spec: dict[str, Any], spec_path: str | Path | None = None) -> str:
     npc_key = str(spec.get("npc_key") or "").strip()
     if npc_key:
@@ -80,14 +86,12 @@ def infer_npc_key(spec: dict[str, Any], spec_path: str | Path | None = None) -> 
     return "unknown"
 
 
-
 def infer_spec_technique(spec: dict[str, Any]) -> str | None:
     technique = spec.get("technique") or spec.get("dataset", {}).get("technique")
     if technique is None:
         return None
     technique = str(technique).strip()
     return technique or None
-
 
 
 def infer_model_id(spec: dict[str, Any], model_override: str | None = None) -> str:
@@ -100,7 +104,6 @@ def infer_model_id(spec: dict[str, Any], model_override: str | None = None) -> s
         or spec.get("llm", {}).get("base_model")
         or DEFAULT_MODEL_ID
     )
-
 
 
 def resolve_workflow_context(
@@ -119,7 +122,9 @@ def resolve_workflow_context(
 
     resolved_npc_key = npc_key or infer_npc_key(loaded_spec, resolved_spec_path)
     preferred_technique = technique or infer_spec_technique(loaded_spec)
-    resolved_technique, train_path, val_path = paths.resolve_dataset_context(resolved_npc_key, preferred_technique)
+    resolved_technique, train_path, val_path = paths.resolve_dataset_context(
+        resolved_npc_key, preferred_technique
+    )
 
     if train_path.name != "train_clean.jsonl":
         clean_candidate = train_path.with_name("train_clean.jsonl")
@@ -128,7 +133,9 @@ def resolve_workflow_context(
 
     resolved_model_id = infer_model_id(loaded_spec, model_override=model_override)
     spec_preset = loaded_spec.get("preset") or loaded_spec.get("training", {}).get("preset")
-    resolved_preset = resolve_training_preset(resolved_model_id, preset=preset, spec_preset=spec_preset)
+    resolved_preset = resolve_training_preset(
+        resolved_model_id, preset=preset, spec_preset=spec_preset
+    )
 
     return WorkflowContext(
         spec_path=resolved_spec_path,

@@ -18,7 +18,12 @@ def _write_clean_dataset(path: Path) -> dict:
                     {"role": "user", "content": "Who are you?"},
                     {"role": "assistant", "content": "I am the guide."},
                 ],
-                "metadata": {"category": "identity", "difficulty": "beginner", "split": "train", "concept": "intro"},
+                "metadata": {
+                    "category": "identity",
+                    "difficulty": "beginner",
+                    "split": "train",
+                    "concept": "intro",
+                },
             }
         )
         + "\n",
@@ -27,7 +32,9 @@ def _write_clean_dataset(path: Path) -> dict:
     return summarize_jsonl_dataset(path)
 
 
-def _write_quality_summary(path: Path, dataset_summary: dict, *, gate_mode: str = "release", failed: int = 0) -> None:
+def _write_quality_summary(
+    path: Path, dataset_summary: dict, *, gate_mode: str = "release", failed: int = 0
+) -> None:
     path.write_text(
         json.dumps(
             {
@@ -67,7 +74,9 @@ def test_dataset_quality_gate_rejects_stale_summary_hash(tmp_path: Path):
 def test_dataset_quality_gate_accepts_fast_gate_with_metric_failures(tmp_path: Path):
     clean_path = tmp_path / "train_clean.jsonl"
     dataset_summary = _write_clean_dataset(clean_path)
-    _write_quality_summary(tmp_path / "quality_summary.json", dataset_summary, gate_mode="fast", failed=2)
+    _write_quality_summary(
+        tmp_path / "quality_summary.json", dataset_summary, gate_mode="fast", failed=2
+    )
 
     assert dataset_quality_gate_errors(clean_path) == []
 
@@ -75,7 +84,9 @@ def test_dataset_quality_gate_accepts_fast_gate_with_metric_failures(tmp_path: P
 def test_dataset_quality_gate_rejects_release_gate_metric_failures(tmp_path: Path):
     clean_path = tmp_path / "train_clean.jsonl"
     dataset_summary = _write_clean_dataset(clean_path)
-    _write_quality_summary(tmp_path / "quality_summary.json", dataset_summary, gate_mode="release", failed=1)
+    _write_quality_summary(
+        tmp_path / "quality_summary.json", dataset_summary, gate_mode="release", failed=1
+    )
 
     errors = dataset_quality_gate_errors(clean_path)
 
@@ -85,7 +96,9 @@ def test_dataset_quality_gate_rejects_release_gate_metric_failures(tmp_path: Pat
 def test_dataset_quality_gate_rejects_fast_gate_sanitizer_issues(tmp_path: Path):
     clean_path = tmp_path / "train_clean.jsonl"
     dataset_summary = _write_clean_dataset(clean_path)
-    _write_quality_summary(tmp_path / "quality_summary.json", dataset_summary, gate_mode="fast", failed=0)
+    _write_quality_summary(
+        tmp_path / "quality_summary.json", dataset_summary, gate_mode="fast", failed=0
+    )
     summary_path = tmp_path / "quality_summary.json"
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     summary["sanitizer_quality_issues"] = ["sanitizer flagged 1 row(s) for review"]

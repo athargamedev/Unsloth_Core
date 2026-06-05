@@ -2,10 +2,10 @@ from __future__ import annotations
 
 """Compare canonical run bundles and emit a concise decision report."""
 
-from dataclasses import dataclass, asdict
+import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
-import json
 
 from src.core.ops.run_index import load_bundle
 
@@ -45,21 +45,36 @@ def compare_runs(baseline_path: Path, candidate_path: Path) -> RunComparison:
     candidate = load_bundle(candidate_path)
     baseline_score = _score(baseline)
     candidate_score = _score(candidate)
-    winner = "candidate" if candidate_score > baseline_score else "baseline" if baseline_score > candidate_score else "tie"
+    winner = (
+        "candidate"
+        if candidate_score > baseline_score
+        else "baseline"
+        if baseline_score > candidate_score
+        else "tie"
+    )
     return RunComparison(
         baseline_run_id=str(baseline.get("run_id", baseline_path.parent.name)),
         candidate_run_id=str(candidate.get("run_id", candidate_path.parent.name)),
         baseline_path=str(baseline_path),
         candidate_path=str(candidate_path),
         winner=winner,
-        metrics_delta={"baseline_score": baseline_score, "candidate_score": candidate_score, "delta": candidate_score - baseline_score},
+        metrics_delta={
+            "baseline_score": baseline_score,
+            "candidate_score": candidate_score,
+            "delta": candidate_score - baseline_score,
+        },
         baseline=baseline,
         candidate=candidate,
     )
 
 
 def write_comparison_report(comparison: RunComparison, output_path: Path | None = None) -> Path:
-    path = output_path or (COMPARISON_ROOT / f"{comparison.baseline_run_id}_vs_{comparison.candidate_run_id}.json")
+    path = output_path or (
+        COMPARISON_ROOT / f"{comparison.baseline_run_id}_vs_{comparison.candidate_run_id}.json"
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(asdict(comparison), indent=2, ensure_ascii=False, default=str) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(asdict(comparison), indent=2, ensure_ascii=False, default=str) + "\n",
+        encoding="utf-8",
+    )
     return path

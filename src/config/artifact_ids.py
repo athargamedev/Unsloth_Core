@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 _SAFE_RE = re.compile(r"[^a-z0-9]+")
@@ -31,7 +31,7 @@ def params_hash(params: dict[str, Any] | None, length: int = 6) -> str:
 
 
 def artifact_timestamp() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def _slugify_npc_key(value: str, max_length: int = 40) -> str:

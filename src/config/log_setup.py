@@ -26,7 +26,7 @@ Usage:
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -75,7 +75,7 @@ def log_state(event: str, **kwargs) -> None:
     permanent structured storage — the unified source of truth for run events.
     """
     payload = {
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": datetime.now(UTC).isoformat(),
         "event": event,
         **kwargs,
     }

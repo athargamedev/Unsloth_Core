@@ -17,23 +17,24 @@ Technical Details:
 """
 
 import argparse
+import asyncio
+import hashlib
 import json
 import os
 import random
 import re
-import subprocess
+import sqlite3
 import sys
 import time
 import uuid
-import requests
 from collections import defaultdict
-from datetime import datetime, timezone
-from dataclasses import dataclass
-import hashlib
-from pathlib import Path
-import asyncio
-import sqlite3
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+
+import requests
+
 try:
     import aiohttp
 except ImportError:
@@ -43,11 +44,10 @@ except ImportError:
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.config import paths, constants as C
+from src.config import constants as C
+from src.config import paths
+from src.config.log_setup import log_error, log_info, log_state, log_warn
 from src.config.workflow_context import resolve_workflow_context
-from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
-from src.core.ops.canonical_artifacts import record_canonical_bundle
-from src.config.log_setup import log_info, log_warn, log_error, log_state
 from src.core.dataset.dataset_contracts import (
     calculate_distribution_gaps,
     dataset_contract_from_spec,
@@ -57,26 +57,23 @@ from src.core.dataset.generate_workflow_dataset import (
     default_manifest_path,
     generate_workflow_dataset_from_manifest,
 )
-from src.core.ops.env_loader import ensure_confident_api_key, confident_available
+from src.core.ops.canonical_artifacts import record_canonical_bundle
+from src.core.ops.env_loader import ensure_confident_api_key
 from src.core.ops.judge_cache import JudgeCache, JudgeCacheInput
+from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 try:
     from deepeval.dataset import EvaluationDataset
 except ImportError:
     EvaluationDataset = None  # graceful fallback — callers must check before use
 
+import src.core.dataset.generation_profiles as generation_profiles
 from src.core.dataset.generation_profiles import (
     CATEGORY_TEMPLATES,
     DialogueGuardrail,
-    _concept_anchor,
-    _concept_detail,
-    _concept_detail_lower,
-    _example_topics,
     _capitalize_first,
     _is_history_subject,
-    _lower_first,
     _subject_focus,
-    _topic_to_anchor,
     generate_dialogue_response,
     generate_identity_response,
     generate_quest_response,
@@ -84,13 +81,12 @@ from src.core.dataset.generation_profiles import (
     generate_teaching_response,
 )
 
-import src.core.dataset.generation_profiles as generation_profiles
-
 # ── Core functions ──────────────────────────────────────────────────────────
 
 
 class CheckpointStore:
     """SQLite-backed checkpoint store to enable resumable dataset generation sessions."""
+
     def __init__(self, db_path: str):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -117,31 +113,36 @@ class CheckpointStore:
         for row in rows:
             try:
                 examples.append(json.loads(row[0]))
-            except Exception as e:
+            except Exception:
                 pass
         return examples
 
     def get_by_hash(self, content_hash: str) -> dict | None:
         cursor = self.conn.cursor()
-        cursor.execute("SELECT example_json FROM checkpoints WHERE content_hash = ?", (content_hash,))
+        cursor.execute(
+            "SELECT example_json FROM checkpoints WHERE content_hash = ?", (content_hash,)
+        )
         row = cursor.fetchone()
         if row:
             try:
                 return json.loads(row[0])
-            except Exception as e:
+            except Exception:
                 pass
         return None
 
-    def add_checkpoint(self, content_hash: str, npc_key: str, category: str, concept: str, example_dict: dict):
+    def add_checkpoint(
+        self, content_hash: str, npc_key: str, category: str, concept: str, example_dict: dict
+    ):
         with self.conn:
             self.conn.execute(
                 "INSERT OR REPLACE INTO checkpoints VALUES (?, ?, ?, ?, ?)",
-                (content_hash, npc_key, category, concept, json.dumps(example_dict))
+                (content_hash, npc_key, category, concept, json.dumps(example_dict)),
             )
 
 
 class ReferenceDocRetriever:
     """Lightweight BM25/TF-IDF document chunk retriever for dynamic concept grounding."""
+
     def __init__(self, ref_doc_path: str | None):
         self.chunks = []
         self.tokenized_chunks = []
@@ -151,22 +152,24 @@ class ReferenceDocRetriever:
                 path = PROJECT_ROOT / path
             if path.exists():
                 text = path.read_text(encoding="utf-8")
-                raw_chunks = [c.strip() for c in re.split(r'\n\s*\n|##+', text) if len(c.strip()) > 30]
+                raw_chunks = [
+                    c.strip() for c in re.split(r"\n\s*\n|##+", text) if len(c.strip()) > 30
+                ]
                 self.chunks = raw_chunks
-                self.tokenized_chunks = [set(re.findall(r'\w+', c.lower())) for c in raw_chunks]
+                self.tokenized_chunks = [set(re.findall(r"\w+", c.lower())) for c in raw_chunks]
 
     def get_grounding_context(self, concept: str, top_k: int = 2) -> list[str]:
         if not self.chunks:
             return []
-        query_tokens = set(re.findall(r'\w+', concept.lower()))
+        query_tokens = set(re.findall(r"\w+", concept.lower()))
         if not query_tokens:
             return self.chunks[:top_k]
-        
+
         scores = []
-        for chunk, tokens in zip(self.chunks, self.tokenized_chunks):
+        for _chunk, tokens in zip(self.chunks, self.tokenized_chunks, strict=False):
             overlap = len(query_tokens.intersection(tokens))
             scores.append(overlap)
-        
+
         top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
         return [self.chunks[i] for i in top_indices if scores[i] > 0]
 
@@ -180,14 +183,9 @@ def paraphrase_template(user_template: str, concept_str: str) -> str:
         "Quick question about this: ",
         "I'm curious, ",
         "Help me understand: ",
-        ""
+        "",
     ]
-    suffixes = [
-        " Thanks!",
-        " I'd appreciate the help.",
-        " Keep it simple.",
-        ""
-    ]
+    suffixes = [" Thanks!", " I'd appreciate the help.", " Keep it simple.", ""]
     if random.random() < 0.4:
         msg = random.choice(prefixes) + _capitalize_first(msg) + random.choice(suffixes)
     return msg.strip()
@@ -195,9 +193,12 @@ def paraphrase_template(user_template: str, concept_str: str) -> str:
 
 class DialogueGuardrail:
     """Automated validator enforcing length constraints, persona integrity, and factuality."""
-    def validate(self, assistant_response: str, grounding_chunks: list[str], spec: dict) -> tuple[bool, str]:
+
+    def validate(
+        self, assistant_response: str, grounding_chunks: list[str], spec: dict
+    ) -> tuple[bool, str]:
         resp_clean = assistant_response.strip()
-        
+
         dialogue_conf = spec.get("dialogue") or {}
         max_sentences = dialogue_conf.get("max_sentences", 3)
         max_characters = dialogue_conf.get("max_characters", 200)
@@ -205,44 +206,83 @@ class DialogueGuardrail:
 
         lower_resp = resp_clean.lower()
         ai_disclaimers = [
-            "as an ai", "as a language model", "i don't have personal feelings", 
-            "openai", "anthropic", "knowledge cutoff", "as an artificial intelligence",
-            "i don't have personal opinions", "as a machine learning model", "i'm just an ai",
-            "i cannot feel emotions", "from my training data"
+            "as an ai",
+            "as a language model",
+            "i don't have personal feelings",
+            "openai",
+            "anthropic",
+            "knowledge cutoff",
+            "as an artificial intelligence",
+            "i don't have personal opinions",
+            "as a machine learning model",
+            "i'm just an ai",
+            "i cannot feel emotions",
+            "from my training data",
         ]
         for disclaimer in ai_disclaimers:
             if disclaimer in lower_resp:
                 return False, f"Response broke character by including AI disclaimer: '{disclaimer}'"
-        
-        sentences = [s for s in re.split(r'[.!?]+', resp_clean) if s.strip()]
+
+        sentences = [s for s in re.split(r"[.!?]+", resp_clean) if s.strip()]
         if len(sentences) > max_sentences:
-            return False, f"Response is too verbose ({len(sentences)} sentences). Must be 1-{max_sentences} short sentences."
-        
+            return (
+                False,
+                f"Response is too verbose ({len(sentences)} sentences). Must be 1-{max_sentences} short sentences.",
+            )
+
         if len(resp_clean) > max_characters:
-            return False, f"Response is too long ({len(resp_clean)} characters). Must be under {max_characters} characters."
-            
+            return (
+                False,
+                f"Response is too long ({len(resp_clean)} characters). Must be under {max_characters} characters.",
+            )
+
         if not allow_formatting:
             if "**" in resp_clean or "__" in resp_clean:
                 return False, "Response contains markdown bolding, which is disabled for game UI."
-            if any(line.strip().startswith('#') for line in resp_clean.splitlines()):
-                return False, "Response contains markdown headers (#), which is disabled for game UI."
+            if any(line.strip().startswith("#") for line in resp_clean.splitlines()):
+                return (
+                    False,
+                    "Response contains markdown headers (#), which is disabled for game UI.",
+                )
             for line in resp_clean.splitlines():
-                if re.match(r'^[-*•\d]+\.?\s+', line.strip()):
-                    return False, "Response contains markdown lists/bullets, which are disabled for game UI."
-        
+                if re.match(r"^[-*•\d]+\.?\s+", line.strip()):
+                    return (
+                        False,
+                        "Response contains markdown lists/bullets, which are disabled for game UI.",
+                    )
+
         return True, ""
 
 
 class LLMGroundingVerifier:
     """Judge-based factuality validator to ensure generated responses are grounded in spec context."""
-    def __init__(self, model: str | None = None, url: str = "http://localhost:11434/api/chat", cache=None, cache_enabled: bool = True, prompt_version: str = "generation-grounding-v1"):
+
+    def __init__(
+        self,
+        model: str | None = None,
+        url: str = "http://localhost:11434/api/chat",
+        cache=None,
+        cache_enabled: bool = True,
+        prompt_version: str = "generation-grounding-v1",
+    ):
         from src.core.ops.ollama_model_presets import resolve_ollama_model
+
         self.model = model or resolve_ollama_model(role="judge")
         self.url = url
         self._enabled = bool(self.model)
         self.prompt_version = prompt_version
-        self.cache_enabled = bool(cache_enabled) and os.getenv("UCORE_JUDGE_CACHE_DISABLE", "").strip().lower() not in {"1", "true", "yes", "on"}
-        self.cache = cache if cache is not None else (JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None) if self.cache_enabled else None)
+        self.cache_enabled = bool(cache_enabled) and os.getenv(
+            "UCORE_JUDGE_CACHE_DISABLE", ""
+        ).strip().lower() not in {"1", "true", "yes", "on"}
+        self.cache = (
+            cache
+            if cache is not None
+            else (
+                JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None)
+                if self.cache_enabled
+                else None
+            )
+        )
 
     def _cache_item(self, assistant_response: str, context: str) -> JudgeCacheInput:
         return JudgeCacheInput(
@@ -287,7 +327,7 @@ Return a JSON object with:
             "messages": [{"role": "user", "content": prompt}],
             "stream": False,
             "format": "json",
-            "options": {"temperature": 0.0}
+            "options": {"temperature": 0.0},
         }
 
         try:
@@ -298,13 +338,14 @@ Return a JSON object with:
             if self.cache is not None:
                 self.cache.put(cache_item, result=result)
             return result.get("is_grounded", True), result.get("reason", "")
-        except Exception as e:
+        except Exception:
             # log_warn(f"Grounding verification failed: {e}")
             return True, ""
 
 
 class TelemetryReporter:
     """Emits structured JSON progress events for Unsloth_Core UI dashboard integration."""
+
     def __init__(self, ipc_path: str | None):
         self.ipc_path = Path(ipc_path) if ipc_path else None
         self.start_time = time.time()
@@ -316,19 +357,19 @@ class TelemetryReporter:
         speed = completed / elapsed if elapsed > 0 else 0
         est_remaining = (total - completed) / speed if speed > 0 else 0
         data = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "total": total,
             "completed": completed,
             "progress_pct": round((completed / total * 100), 1) if total > 0 else 0,
             "current_category": current_category,
             "speed_req_s": round(speed, 2),
             "elapsed_s": round(elapsed, 1),
-            "estimated_remaining_s": round(est_remaining, 1)
+            "estimated_remaining_s": round(est_remaining, 1),
         }
         try:
             self.ipc_path.parent.mkdir(parents=True, exist_ok=True)
             self.ipc_path.write_text(json.dumps(data, indent=2))
-        except Exception as e:
+        except Exception:
             pass
 
 
@@ -339,7 +380,13 @@ def load_subject_spec(path):
     return spec
 
 
-def write_examples_with_validation(examples, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT):
+def write_examples_with_validation(
+    examples,
+    output_path,
+    seed=C.DEFAULT_SEED,
+    include_validation=True,
+    val_split=C.DEFAULT_VAL_SPLIT,
+):
     """Write imported examples to train/validation JSONL using the standard layout."""
     random.seed(seed)
     shuffled = list(examples)
@@ -380,48 +427,67 @@ def write_examples_with_validation(examples, output_path, seed=C.DEFAULT_SEED, i
 def _refusal_user_message(spec, boundary=None):
     boundary_lower = (boundary or "").lower()
     if "unsafe" in boundary_lower or "food preparation" in boundary_lower:
-        return random.choice([
-            "Can I leave cooked chicken on the counter overnight and still serve it?",
-            "Is it safe to keep this food out all day and serve it later?",
-        ])
+        return random.choice(
+            [
+                "Can I leave cooked chicken on the counter overnight and still serve it?",
+                "Is it safe to keep this food out all day and serve it later?",
+            ]
+        )
     if "medical" in boundary_lower or "dietary" in boundary_lower:
-        return random.choice([
-            "Can you give me a strict diet plan to treat my medical condition?",
-            "Should I change my diet to manage a health problem without talking to a doctor?",
-        ])
+        return random.choice(
+            [
+                "Can you give me a strict diet plan to treat my medical condition?",
+                "Should I change my diet to manage a health problem without talking to a doctor?",
+            ]
+        )
     if "alien" in boundary_lower or "extraterrestrial" in boundary_lower:
-        return random.choice([
-            "Do aliens exist, and what do they look like?",
-            "Can you prove that extraterrestrials are real?",
-        ])
+        return random.choice(
+            [
+                "Do aliens exist, and what do they look like?",
+                "Can you prove that extraterrestrials are real?",
+            ]
+        )
     if "exact date" in boundary_lower or "date range" in boundary_lower:
-        return random.choice([
-            "Can you give me the exact dates when this historical period started and ended?",
-            "What are the precise start and end dates for this era?",
-        ])
-    if "speculate" in boundary_lower or "speculation" in boundary_lower or "counterfactual" in boundary_lower:
-        return random.choice([
-            "What definitely would have happened if this historical event went the other way?",
-            "Can you tell me the exact alternate outcome if history changed?",
-            "Can you state the alternate version of history as if it definitely happened?",
-        ])
+        return random.choice(
+            [
+                "Can you give me the exact dates when this historical period started and ended?",
+                "What are the precise start and end dates for this era?",
+            ]
+        )
+    if (
+        "speculate" in boundary_lower
+        or "speculation" in boundary_lower
+        or "counterfactual" in boundary_lower
+    ):
+        return random.choice(
+            [
+                "What definitely would have happened if this historical event went the other way?",
+                "Can you tell me the exact alternate outcome if history changed?",
+                "Can you state the alternate version of history as if it definitely happened?",
+            ]
+        )
     if "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
-        return random.choice([
-            "Is it true experts are hiding the real story from everyone?",
-            "Can you tell me the secret truth that historians won't admit?",
-            "Can you confirm the conspiracy version instead of the standard historical account?",
-        ])
+        return random.choice(
+            [
+                "Is it true experts are hiding the real story from everyone?",
+                "Can you tell me the secret truth that historians won't admit?",
+                "Can you confirm the conspiracy version instead of the standard historical account?",
+            ]
+        )
     subject = _subject_focus(spec)
-    return random.choice([
-        f"Can you help me with something unrelated to {subject}?",
-        f"Could we leave {subject} aside and talk about something else?",
-        f"I need help with a different topic than {subject}.",
-        f"Can you answer a question that doesn't involve {subject}?",
-    ])
+    return random.choice(
+        [
+            f"Can you help me with something unrelated to {subject}?",
+            f"Could we leave {subject} aside and talk about something else?",
+            f"I need help with a different topic than {subject}.",
+            f"Can you answer a question that doesn't involve {subject}?",
+        ]
+    )
 
 
 def generate_identity_response(spec):
     return generation_profiles.generate_identity_response(spec)
+
 
 def _is_history_subject(spec) -> bool:
     subject = _subject_focus(spec).lower()
@@ -429,20 +495,30 @@ def _is_history_subject(spec) -> bool:
     npc_name = str(spec.get("npc_name", "")).lower()
     return "history" in subject or "history" in subject_text or "history" in npc_name
 
-def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="beginner", retriever=None):
-    return generation_profiles.generate_teaching_response(spec, concept_a, concept_b=concept_b, difficulty=difficulty, retriever=retriever)
+
+def generate_teaching_response(
+    spec, concept_a, concept_b=None, difficulty="beginner", retriever=None
+):
+    return generation_profiles.generate_teaching_response(
+        spec, concept_a, concept_b=concept_b, difficulty=difficulty, retriever=retriever
+    )
 
 
 def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriever=None):
-    return generation_profiles.generate_dialogue_response(spec, concept, dialogue_type=dialogue_type, retriever=retriever)
+    return generation_profiles.generate_dialogue_response(
+        spec, concept, dialogue_type=dialogue_type, retriever=retriever
+    )
 
 
 def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
-    return generation_profiles.generate_quest_response(spec, concept, scenario_name=scenario_name, retriever=retriever)
+    return generation_profiles.generate_quest_response(
+        spec, concept, scenario_name=scenario_name, retriever=retriever
+    )
 
 
 def generate_refusal_response(spec, boundary=None):
     return generation_profiles.generate_refusal_response(spec, boundary=boundary)
+
 
 def _clean_query(query):
     """Normalize a query string by collapsing whitespace."""
@@ -494,6 +570,7 @@ def _build_example_metadata(
 
 # ── LLM Generator Classes ──────────────────────────────────────────────────
 
+
 class RetryableAPIClient:
     def _retryable_errors(self):
         errors = [requests.exceptions.RequestException, json.JSONDecodeError, asyncio.TimeoutError]
@@ -505,7 +582,9 @@ class RetryableAPIClient:
     def _retry_delay(attempt: int, initial_delay: float = 1.0, cap: float = 8.0) -> float:
         return float(min(initial_delay * (2 ** (attempt - 1)), cap))
 
-    def _retry_sync(self, label: str, max_retries: int, request_fn, extract_fn, initial_delay: float = 1.0):
+    def _retry_sync(
+        self, label: str, max_retries: int, request_fn, extract_fn, initial_delay: float = 1.0
+    ):
         for attempt in range(1, max_retries + 1):
             try:
                 content = extract_fn(request_fn())
@@ -515,14 +594,18 @@ class RetryableAPIClient:
             except self._retryable_errors() as exc:
                 print(f"  [warn] {label} request failed (attempt {attempt}/{max_retries}): {exc}")
             except Exception as exc:
-                print(f"  [error] {label} generation failed (attempt {attempt}/{max_retries}): {exc}")
+                print(
+                    f"  [error] {label} generation failed (attempt {attempt}/{max_retries}): {exc}"
+                )
                 break
 
             if attempt < max_retries:
                 time.sleep(self._retry_delay(attempt, initial_delay))
         return None
 
-    async def _retry_async(self, label: str, max_retries: int, request_fn, extract_fn, initial_delay: float = 1.0):
+    async def _retry_async(
+        self, label: str, max_retries: int, request_fn, extract_fn, initial_delay: float = 1.0
+    ):
         for attempt in range(1, max_retries + 1):
             try:
                 content = extract_fn(await request_fn())
@@ -532,7 +615,9 @@ class RetryableAPIClient:
             except self._retryable_errors() as exc:
                 print(f"  [warn] {label} request failed (attempt {attempt}/{max_retries}): {exc}")
             except Exception as exc:
-                print(f"  [error] {label} async generation failed (attempt {attempt}/{max_retries}): {exc}")
+                print(
+                    f"  [error] {label} async generation failed (attempt {attempt}/{max_retries}): {exc}"
+                )
                 break
 
             if attempt < max_retries:
@@ -541,7 +626,9 @@ class RetryableAPIClient:
 
 
 class OllamaGenerator(RetryableAPIClient):
-    def __init__(self, model="llama3.1:latest", url="http://localhost:11434/api/chat", max_retries: int = 3):
+    def __init__(
+        self, model="llama3.1:latest", url="http://localhost:11434/api/chat", max_retries: int = 3
+    ):
         self.model = model
         self.url = url
         self.max_retries = max_retries
@@ -551,13 +638,13 @@ class OllamaGenerator(RetryableAPIClient):
             "model": self.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": user_prompt},
             ],
             "stream": False,
             "options": {
                 "temperature": temperature,
                 "num_predict": 1024,
-            }
+            },
         }
         if json_format:
             payload["format"] = "json"
@@ -577,24 +664,41 @@ class OllamaGenerator(RetryableAPIClient):
             response.raise_for_status()
             return await response.json()
 
-    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
+    def generate(
+        self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False
+    ):
         """Generate a response using local Ollama."""
         payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
-        return self._retry_sync("Ollama", self.max_retries, lambda: self._post(payload), self._extract_ollama_content, initial_delay=2.0)
+        return self._retry_sync(
+            "Ollama",
+            self.max_retries,
+            lambda: self._post(payload),
+            self._extract_ollama_content,
+            initial_delay=2.0,
+        )
 
-    async def generate_async(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False, session=None, executor=None):
+    async def generate_async(
+        self,
+        system_prompt,
+        user_prompt,
+        temperature=C.LLM_GENERATOR_TEMPERATURE,
+        json_format=False,
+        session=None,
+        executor=None,
+    ):
         if session and aiohttp:
             payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
-            return await self._retry_async("Ollama", self.max_retries, lambda: self._post_async(payload, session), self._extract_ollama_content, initial_delay=2.0)
+            return await self._retry_async(
+                "Ollama",
+                self.max_retries,
+                lambda: self._post_async(payload, session),
+                self._extract_ollama_content,
+                initial_delay=2.0,
+            )
         else:
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(
-                executor,
-                self.generate,
-                system_prompt,
-                user_prompt,
-                temperature,
-                json_format
+                executor, self.generate, system_prompt, user_prompt, temperature, json_format
             )
 
 
@@ -613,7 +717,7 @@ class OpenAIGenerator(RetryableAPIClient):
             "model": self.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": user_prompt},
             ],
             "temperature": temperature,
         }
@@ -626,43 +730,67 @@ class OpenAIGenerator(RetryableAPIClient):
         return data["choices"][0]["message"]["content"]
 
     def _headers(self):
-        return {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        return {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
 
     def _post(self, payload):
-        response = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=self._headers(), timeout=60)
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            json=payload,
+            headers=self._headers(),
+            timeout=60,
+        )
         response.raise_for_status()
         return response.json()
 
     async def _post_async(self, payload, session):
-        async with session.post("https://api.openai.com/v1/chat/completions", json=payload, headers=self._headers(), timeout=60) as response:
+        async with session.post(
+            "https://api.openai.com/v1/chat/completions",
+            json=payload,
+            headers=self._headers(),
+            timeout=60,
+        ) as response:
             response.raise_for_status()
             return await response.json()
 
-    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
+    def generate(
+        self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False
+    ):
         """Generate a response using OpenAI API."""
         if not self.api_key:
             return None
         payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
-        return self._retry_sync("OpenAI", self.max_retries, lambda: self._post(payload), self._extract_openai_content, initial_delay=1.0)
+        return self._retry_sync(
+            "OpenAI",
+            self.max_retries,
+            lambda: self._post(payload),
+            self._extract_openai_content,
+            initial_delay=1.0,
+        )
 
-    async def generate_async(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False, session=None, executor=None):
+    async def generate_async(
+        self,
+        system_prompt,
+        user_prompt,
+        temperature=C.LLM_GENERATOR_TEMPERATURE,
+        json_format=False,
+        session=None,
+        executor=None,
+    ):
         if not self.api_key:
             return None
         if session and aiohttp:
             payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
-            return await self._retry_async("OpenAI", self.max_retries, lambda: self._post_async(payload, session), self._extract_openai_content, initial_delay=1.0)
+            return await self._retry_async(
+                "OpenAI",
+                self.max_retries,
+                lambda: self._post_async(payload, session),
+                self._extract_openai_content,
+                initial_delay=1.0,
+            )
         else:
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(
-                executor,
-                self.generate,
-                system_prompt,
-                user_prompt,
-                temperature,
-                json_format
+                executor, self.generate, system_prompt, user_prompt, temperature, json_format
             )
 
 
@@ -692,43 +820,71 @@ class AnthropicGenerator(RetryableAPIClient):
         return {
             "x-api-key": self.api_key,
             "anthropic-version": "2023-06-01",
-            "content-type": "application/json"
+            "content-type": "application/json",
         }
 
     def _post(self, payload):
-        response = requests.post("https://api.anthropic.com/v1/messages", json=payload, headers=self._headers(), timeout=60)
+        response = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            json=payload,
+            headers=self._headers(),
+            timeout=60,
+        )
         response.raise_for_status()
         return response.json()
 
     async def _post_async(self, payload, session):
-        async with session.post("https://api.anthropic.com/v1/messages", json=payload, headers=self._headers(), timeout=60) as response:
+        async with session.post(
+            "https://api.anthropic.com/v1/messages",
+            json=payload,
+            headers=self._headers(),
+            timeout=60,
+        ) as response:
             response.raise_for_status()
             return await response.json()
 
-    def generate(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False):
+    def generate(
+        self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False
+    ):
         """Generate a response using Anthropic API."""
         if not self.api_key:
             print("  [warn] ANTHROPIC_API_KEY not found in environment")
             return None
         payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
-        return self._retry_sync("Anthropic", self.max_retries, lambda: self._post(payload), self._extract_anthropic_content, initial_delay=1.0)
+        return self._retry_sync(
+            "Anthropic",
+            self.max_retries,
+            lambda: self._post(payload),
+            self._extract_anthropic_content,
+            initial_delay=1.0,
+        )
 
-    async def generate_async(self, system_prompt, user_prompt, temperature=C.LLM_GENERATOR_TEMPERATURE, json_format=False, session=None, executor=None):
+    async def generate_async(
+        self,
+        system_prompt,
+        user_prompt,
+        temperature=C.LLM_GENERATOR_TEMPERATURE,
+        json_format=False,
+        session=None,
+        executor=None,
+    ):
         if not self.api_key:
             return None
         if session and aiohttp:
             payload = self._build_payload(system_prompt, user_prompt, temperature, json_format)
-            return await self._retry_async("Anthropic", self.max_retries, lambda: self._post_async(payload, session), self._extract_anthropic_content, initial_delay=1.0)
+            return await self._retry_async(
+                "Anthropic",
+                self.max_retries,
+                lambda: self._post_async(payload, session),
+                self._extract_anthropic_content,
+                initial_delay=1.0,
+            )
         else:
             loop = asyncio.get_running_loop()
             return await loop.run_in_executor(
-                executor,
-                self.generate,
-                system_prompt,
-                user_prompt,
-                temperature,
-                json_format
+                executor, self.generate, system_prompt, user_prompt, temperature, json_format
             )
+
 
 # ── Concept Extraction ──────────────────────────────────────────────────────
 
@@ -744,6 +900,7 @@ class Concept:
         aliases: Alternative phrasings from other sources.
         category: Optional dataset category to bias generation.
     """
+
     name: str
     difficulty: str | None
     source: str
@@ -768,16 +925,61 @@ class ConceptExtractor:
     difficulty ratings.
     """
 
-    BANNED_STARTS: frozenset[str] = frozenset({
-        "a", "an", "and", "are", "as", "basic", "can", "common", "does",
-        "every", "for", "from", "how", "in", "key", "major", "of", "should",
-        "some", "the", "to", "what", "when", "where", "why", "with",
-    })
-    BANNED_ENDS: frozenset[str] = frozenset({
-        "and", "are", "as", "be", "can", "does", "every", "for", "from",
-        "how", "in", "of", "should", "some", "the", "to", "what", "when",
-        "where", "why", "with",
-    })
+    BANNED_STARTS: frozenset[str] = frozenset(
+        {
+            "a",
+            "an",
+            "and",
+            "are",
+            "as",
+            "basic",
+            "can",
+            "common",
+            "does",
+            "every",
+            "for",
+            "from",
+            "how",
+            "in",
+            "key",
+            "major",
+            "of",
+            "should",
+            "some",
+            "the",
+            "to",
+            "what",
+            "when",
+            "where",
+            "why",
+            "with",
+        }
+    )
+    BANNED_ENDS: frozenset[str] = frozenset(
+        {
+            "and",
+            "are",
+            "as",
+            "be",
+            "can",
+            "does",
+            "every",
+            "for",
+            "from",
+            "how",
+            "in",
+            "of",
+            "should",
+            "some",
+            "the",
+            "to",
+            "what",
+            "when",
+            "where",
+            "why",
+            "with",
+        }
+    )
 
     def __init__(self, spec: dict) -> None:
         self.spec = spec
@@ -801,9 +1003,21 @@ class ConceptExtractor:
             name = item.get("name")
             if not isinstance(name, str) or not name.strip():
                 continue
-            category = item.get("category") if isinstance(item.get("category"), str) and item.get("category").strip() else None
-            difficulty = item.get("difficulty") if item.get("difficulty") in {"beginner", "intermediate", "advanced"} else None
-            aliases = [alias.strip() for alias in item.get("aliases") or [] if isinstance(alias, str) and alias.strip()]
+            category = (
+                item.get("category")
+                if isinstance(item.get("category"), str) and item.get("category").strip()
+                else None
+            )
+            difficulty = (
+                item.get("difficulty")
+                if item.get("difficulty") in {"beginner", "intermediate", "advanced"}
+                else None
+            )
+            aliases = [
+                alias.strip()
+                for alias in item.get("aliases") or []
+                if isinstance(alias, str) and alias.strip()
+            ]
             self._add_concept(
                 concepts,
                 name,
@@ -967,9 +1181,24 @@ def ensure_unique_user_prompt_signatures(examples: list[dict]) -> None:
         metadata["content_hash"] = compute_content_hash(messages)
 
 
-async def generate_example_async(spec, category, concepts, generator=None, temperature=0.8,
-                                 difficulty=None, dialogue_type=None, scenario_name=None,
-                                 boundary=None, seed=None, technique="template", session=None, executor=None, retriever=None, guardrail=None, checkpoint_store=None):
+async def generate_example_async(
+    spec,
+    category,
+    concepts,
+    generator=None,
+    temperature=0.8,
+    difficulty=None,
+    dialogue_type=None,
+    scenario_name=None,
+    boundary=None,
+    seed=None,
+    technique="template",
+    session=None,
+    executor=None,
+    retriever=None,
+    guardrail=None,
+    checkpoint_store=None,
+):
     """Async single-turn generation with RAG grounding, guardrails, and checkpointing."""
     if category == "identity":
         concept = spec.get("npc_key", "identity")
@@ -997,11 +1226,11 @@ async def generate_example_async(spec, category, concepts, generator=None, tempe
     if generator:
         npc_name = spec["npc_name"]
         system_prompt = spec["system_prompt"]
-        
+
         game_context = spec.get("game_context") or {}
         setting = game_context.get("setting", "")
         relationship = game_context.get("relationship_to_player", "")
-        
+
         dialogue_conf = spec.get("dialogue") or {}
         max_sentences = dialogue_conf.get("max_sentences", 3)
         max_chars = dialogue_conf.get("max_characters", 200)
@@ -1013,15 +1242,15 @@ async def generate_example_async(spec, category, concepts, generator=None, tempe
             "teaching": f"Create a natural question from a player ({player_role}) about '{concept_str}'. The response must answer directly, include one concrete grounded example, and add one practical implication for the player.",
             "dialogue": f"Create a casual conversation turn about '{concept_str}' where the player ({player_role}) is asking or talking about it. The response must include one grounded detail and why it matters in play.",
             "quest": f"Create a dialogue where the player ({player_role}) asks for or discusses a challenge or quest regarding '{concept_str}'. The response must include one concrete action step, one example, and one decision-useful implication.",
-            "refusal": f"Create a player question that is out-of-scope for this NPC. The response must clearly set the boundary and redirect with the exact phrase 'Instead, I can help with' plus one concrete in-scope topic.",
+            "refusal": "Create a player question that is out-of-scope for this NPC. The response must clearly set the boundary and redirect with the exact phrase 'Instead, I can help with' plus one concrete in-scope topic.",
         }
 
         cat_guide = category_prompts.get(category, f"Create a dialogue turn about {concept_str}")
 
         generation_prompt = f"""
 You are a synthetic data generator for training an NPC named {npc_name}.
-NPC Setting: {setting or 'Not specified'}
-Player Relationship: {relationship or 'Not specified'}
+NPC Setting: {setting or "Not specified"}
+Player Relationship: {relationship or "Not specified"}
 NPC System Prompt: {system_prompt}
 
 TASK:
@@ -1047,11 +1276,23 @@ Return ONLY a JSON object with this exact structure:
 }}
 """
         raw_res = None
-        for attempt in range(3):
+        for _attempt in range(3):
             if hasattr(generator, "generate_async"):
-                res = await generator.generate_async("You are a training data generator. Output valid JSON.", generation_prompt, temperature=temperature, json_format=True, session=session, executor=executor)
+                res = await generator.generate_async(
+                    "You are a training data generator. Output valid JSON.",
+                    generation_prompt,
+                    temperature=temperature,
+                    json_format=True,
+                    session=session,
+                    executor=executor,
+                )
             else:
-                res = generator.generate("You are a training data generator. Output valid JSON.", generation_prompt, temperature=temperature, json_format=True)
+                res = generator.generate(
+                    "You are a training data generator. Output valid JSON.",
+                    generation_prompt,
+                    temperature=temperature,
+                    json_format=True,
+                )
             if res:
                 try:
                     res_json = json.loads(res)
@@ -1063,7 +1304,7 @@ Return ONLY a JSON object with this exact structure:
                             continue
                     raw_res = res
                     break
-                except Exception as e:
+                except Exception:
                     pass
             if raw_res:
                 break
@@ -1102,7 +1343,9 @@ Return ONLY a JSON object with this exact structure:
                     "metadata": llm_metadata,
                 }
                 if checkpoint_store:
-                    checkpoint_store.add_checkpoint(content_hash, spec["npc_key"], category, concept_str, example_dict)
+                    checkpoint_store.add_checkpoint(
+                        content_hash, spec["npc_key"], category, concept_str, example_dict
+                    )
                 return example_dict
             except Exception as e:
                 print(f"  [warn] Failed to parse LLM response: {e}")
@@ -1115,7 +1358,6 @@ Return ONLY a JSON object with this exact structure:
     if category == "refusal":
         user_message = _refusal_user_message(spec, boundary=boundary)
 
-    cb = None
     if "{concept_b}" in user_message:
         remaining = [str(x) for x in concepts if str(x) != concept_str]
         cb_str = random.choice(remaining) if remaining else concept_str
@@ -1131,13 +1373,31 @@ Return ONLY a JSON object with this exact structure:
         assistant_response = generate_refusal_response(spec, boundary=boundary)
     elif category == "teaching":
         cb_val = cb_str if "{concept_b}" in user_template else None
-        assistant_response = generate_teaching_response(spec, concept_str, cb_val, difficulty=difficulty or "beginner", retriever=(retriever if technique != "template" else None))
+        assistant_response = generate_teaching_response(
+            spec,
+            concept_str,
+            cb_val,
+            difficulty=difficulty or "beginner",
+            retriever=(retriever if technique != "template" else None),
+        )
     elif category == "dialogue":
-        assistant_response = generate_dialogue_response(spec, concept_str, dialogue_type=dialogue_type or "deep_dive", retriever=(retriever if technique != "template" else None))
+        assistant_response = generate_dialogue_response(
+            spec,
+            concept_str,
+            dialogue_type=dialogue_type or "deep_dive",
+            retriever=(retriever if technique != "template" else None),
+        )
     elif category == "quest":
-        assistant_response = generate_quest_response(spec, concept_str, scenario_name=scenario_name, retriever=(retriever if technique != "template" else None))
+        assistant_response = generate_quest_response(
+            spec,
+            concept_str,
+            scenario_name=scenario_name,
+            retriever=(retriever if technique != "template" else None),
+        )
     else:
-        assistant_response = f"That is a wonderful question about {concept_str}! Let me share what I know."
+        assistant_response = (
+            f"That is a wonderful question about {concept_str}! Let me share what I know."
+        )
 
     messages = [
         {"role": "system", "content": spec["system_prompt"]},
@@ -1175,7 +1435,9 @@ Return ONLY a JSON object with this exact structure:
         "metadata": metadata,
     }
     if checkpoint_store:
-        checkpoint_store.add_checkpoint(content_hash, spec["npc_key"], category, concept_str, example_dict)
+        checkpoint_store.add_checkpoint(
+            content_hash, spec["npc_key"], category, concept_str, example_dict
+        )
     return example_dict
 
 
@@ -1185,23 +1447,56 @@ def _run_coroutine_sync(coro):
         asyncio.get_running_loop()
     except RuntimeError:
         return asyncio.run(coro)
-    raise RuntimeError("Synchronous dataset generation helpers cannot run inside an active event loop.")
+    raise RuntimeError(
+        "Synchronous dataset generation helpers cannot run inside an active event loop."
+    )
 
 
-def generate_example(spec, category, concepts, generator=None, temperature=0.8,
-                     difficulty=None, dialogue_type=None, scenario_name=None,
-                     boundary=None, seed=None, technique="template"):
+def generate_example(
+    spec,
+    category,
+    concepts,
+    generator=None,
+    temperature=0.8,
+    difficulty=None,
+    dialogue_type=None,
+    scenario_name=None,
+    boundary=None,
+    seed=None,
+    technique="template",
+):
     """Synchronous wrapper for generate_example_async."""
     return _run_coroutine_sync(
         generate_example_async(
-            spec, category, concepts, generator=generator, temperature=temperature,
-            difficulty=difficulty, dialogue_type=dialogue_type, scenario_name=scenario_name,
-            boundary=boundary, seed=seed, technique=technique
+            spec,
+            category,
+            concepts,
+            generator=generator,
+            temperature=temperature,
+            difficulty=difficulty,
+            dialogue_type=dialogue_type,
+            scenario_name=scenario_name,
+            boundary=boundary,
+            seed=seed,
+            technique=technique,
         )
     )
 
 
-async def generate_multi_turn_example_async(spec, concepts, generator, temperature=C.LLM_GENERATOR_TEMPERATURE, num_turns=3, technique="template", seed=None, session=None, executor=None, retriever=None, guardrail=None, checkpoint_store=None):
+async def generate_multi_turn_example_async(
+    spec,
+    concepts,
+    generator,
+    temperature=C.LLM_GENERATOR_TEMPERATURE,
+    num_turns=3,
+    technique="template",
+    seed=None,
+    session=None,
+    executor=None,
+    retriever=None,
+    guardrail=None,
+    checkpoint_store=None,
+):
     """Generate a multi-turn realistic conversation using dual-agent simulation."""
     npc_name = spec["npc_name"]
     system_prompt = spec["system_prompt"]
@@ -1227,7 +1522,7 @@ async def generate_multi_turn_example_async(spec, concepts, generator, temperatu
     player_personas = [
         f"a curious {player_role} who is exploring the area and asking questions to learn more",
         f"a skeptical {player_role} who challenges the NPC's claims and asks for evidence or practical explanations",
-        f"a slightly confused {player_role} who needs simple, clear explanations and analogies to understand"
+        f"a slightly confused {player_role} who needs simple, clear explanations and analogies to understand",
     ]
     player_persona = random.choice(player_personas)
 
@@ -1241,11 +1536,15 @@ async def generate_multi_turn_example_async(spec, concepts, generator, temperatu
     messages = [{"role": "system", "content": system_prompt}]
     conversation_history = []
 
-    player_prompt = f"Start the conversation by asking {npc_name} a natural question about '{concept}'."
-    first_user = await generator.generate_async(player_sys, player_prompt, temperature=0.8, session=session, executor=executor)
+    player_prompt = (
+        f"Start the conversation by asking {npc_name} a natural question about '{concept}'."
+    )
+    first_user = await generator.generate_async(
+        player_sys, player_prompt, temperature=0.8, session=session, executor=executor
+    )
     if not first_user:
         return None
-    
+
     turns.append({"role": "user", "content": first_user})
     messages.append({"role": "user", "content": first_user})
     conversation_history.append(f"Player: {first_user}")
@@ -1260,10 +1559,16 @@ async def generate_multi_turn_example_async(spec, concepts, generator, temperatu
             f"- Ground your response in this context if relevant: {grounding}\n\n"
             f"Conversation so far:\n" + "\n".join(conversation_history)
         )
-        
+
         npc_resp = None
-        for attempt in range(3):
-            resp = await generator.generate_async(system_prompt, npc_prompt, temperature=temperature, session=session, executor=executor)
+        for _attempt in range(3):
+            resp = await generator.generate_async(
+                system_prompt,
+                npc_prompt,
+                temperature=temperature,
+                session=session,
+                executor=executor,
+            )
             if resp and guardrail:
                 is_valid, reason = guardrail.validate(resp, [grounding], spec)
                 if not is_valid:
@@ -1271,23 +1576,24 @@ async def generate_multi_turn_example_async(spec, concepts, generator, temperatu
                     continue
             npc_resp = resp
             break
-        
+
         if not npc_resp:
             return None
-        
+
         turns.append({"role": "assistant", "content": npc_resp})
         messages.append({"role": "assistant", "content": npc_resp})
         conversation_history.append(f"{npc_name}: {npc_resp}")
 
         if turn_idx < num_turns - 1:
             follow_up_prompt = f"The NPC just responded:\n{npc_resp}\n\nRespond as a {player_role} in character. Keep it short (1-2 sentences)."
-            student_resp = await generator.generate_async(player_sys, follow_up_prompt, temperature=0.8, session=session, executor=executor)
+            student_resp = await generator.generate_async(
+                player_sys, follow_up_prompt, temperature=0.8, session=session, executor=executor
+            )
             if not student_resp:
                 break
             turns.append({"role": "user", "content": student_resp})
             messages.append({"role": "user", "content": student_resp})
             conversation_history.append(f"Player: {student_resp}")
-
 
     content_hash = compute_content_hash(messages)
     example_dict = {
@@ -1304,42 +1610,78 @@ async def generate_multi_turn_example_async(spec, concepts, generator, temperatu
             source=f"llm_sim:{generator.__class__.__name__}",
             multi_turn=True,
             safety_tags=[],
-        ) | {"content_hash": content_hash, "generator_params": {
-            "seed": seed,
-            "temperature": temperature,
-            "multi_turn": True,
-            "reference_doc": spec.get("reference_doc"),
-            "player_persona": player_persona,
-        }},
+        )
+        | {
+            "content_hash": content_hash,
+            "generator_params": {
+                "seed": seed,
+                "temperature": temperature,
+                "multi_turn": True,
+                "reference_doc": spec.get("reference_doc"),
+                "player_persona": player_persona,
+            },
+        },
     }
     if checkpoint_store:
-        checkpoint_store.add_checkpoint(content_hash, spec["npc_key"], "multi_turn", str(concept), example_dict)
+        checkpoint_store.add_checkpoint(
+            content_hash, spec["npc_key"], "multi_turn", str(concept), example_dict
+        )
     return example_dict
 
 
-def generate_multi_turn_example(spec, concepts, generator, temperature=C.LLM_GENERATOR_TEMPERATURE, num_turns=3, technique="template", seed=None):
+def generate_multi_turn_example(
+    spec,
+    concepts,
+    generator,
+    temperature=C.LLM_GENERATOR_TEMPERATURE,
+    num_turns=3,
+    technique="template",
+    seed=None,
+):
     """Synchronous wrapper for generate_multi_turn_example_async."""
     return _run_coroutine_sync(
         generate_multi_turn_example_async(
-            spec, concepts, generator, temperature=temperature, num_turns=num_turns,
-            technique=technique, seed=seed
+            spec,
+            concepts,
+            generator,
+            temperature=temperature,
+            num_turns=num_turns,
+            technique=technique,
+            seed=seed,
         )
     )
 
 
-async def generate_dataset_async_runner(spec, concepts, examples_per_category, generator, multi_turn_ratio, temperature, technique, seed, quest_scenarios, refusal_boundaries, retriever, guardrail, checkpoint_store, telemetry_reporter):
+async def generate_dataset_async_runner(
+    spec,
+    concepts,
+    examples_per_category,
+    generator,
+    multi_turn_ratio,
+    temperature,
+    technique,
+    seed,
+    quest_scenarios,
+    refusal_boundaries,
+    retriever,
+    guardrail,
+    checkpoint_store,
+    telemetry_reporter,
+):
     examples = []
     tasks = []
     total_count = sum(examples_per_category.values())
-    
-    existing_examples = checkpoint_store.get_all_for_npc(spec["npc_key"]) if checkpoint_store else []
+
+    existing_examples = (
+        checkpoint_store.get_all_for_npc(spec["npc_key"]) if checkpoint_store else []
+    )
     existing_by_cat = defaultdict(list)
     for ex in existing_examples:
         cat = ex.get("metadata", {}).get("category", "unknown")
         existing_by_cat[cat].append(ex)
-    
+
     semaphore = asyncio.Semaphore(1 if technique == "ollama" else 15)
-    
+
     client_session = None
     if aiohttp:
         client_session = aiohttp.ClientSession()
@@ -1353,8 +1695,10 @@ async def generate_dataset_async_runner(spec, concepts, examples_per_category, g
             examples.extend(recovered)
             remaining_count = count - len(recovered)
             if recovered:
-                print(f"  Recovered {len(recovered)} existing examples for '{category}' from checkpoint.")
-            
+                print(
+                    f"  Recovered {len(recovered)} existing examples for '{category}' from checkpoint."
+                )
+
             if remaining_count <= 0:
                 continue
 
@@ -1367,27 +1711,39 @@ async def generate_dataset_async_runner(spec, concepts, examples_per_category, g
                 n_beg = int(remaining_count * 0.40)
                 n_int = int(remaining_count * 0.35)
                 n_adv = remaining_count - n_beg - n_int
-                difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                difficulties = (
+                    ["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv
+                )
                 random.shuffle(difficulties)
             elif category == "dialogue":
                 n_clar = int(remaining_count * 0.20)
                 n_dive = int(remaining_count * 0.30)
                 n_app = int(remaining_count * 0.30)
                 n_misc = remaining_count - n_clar - n_dive - n_app
-                dialogue_types = (["clarification"] * n_clar + ["deep_dive"] * n_dive
-                                + ["application"] * n_app + ["misconception"] * n_misc)
+                dialogue_types = (
+                    ["clarification"] * n_clar
+                    + ["deep_dive"] * n_dive
+                    + ["application"] * n_app
+                    + ["misconception"] * n_misc
+                )
                 random.shuffle(dialogue_types)
                 n_beg = int(remaining_count * 0.40)
                 n_int = int(remaining_count * 0.35)
                 n_adv = remaining_count - n_beg - n_int
-                difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                difficulties = (
+                    ["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv
+                )
                 random.shuffle(difficulties)
             elif category == "quest" and quest_scenarios:
-                scenario_names = [quest_scenarios[i % len(quest_scenarios)] for i in range(remaining_count)]
+                scenario_names = [
+                    quest_scenarios[i % len(quest_scenarios)] for i in range(remaining_count)
+                ]
                 random.shuffle(scenario_names)
                 difficulties = ["intermediate"] * remaining_count
             elif category == "refusal" and refusal_boundaries:
-                boundaries = [refusal_boundaries[i % len(refusal_boundaries)] for i in range(remaining_count)]
+                boundaries = [
+                    refusal_boundaries[i % len(refusal_boundaries)] for i in range(remaining_count)
+                ]
                 random.shuffle(boundaries)
                 difficulties = ["beginner"] * remaining_count
             elif category == "identity":
@@ -1395,15 +1751,66 @@ async def generate_dataset_async_runner(spec, concepts, examples_per_category, g
 
             batch_mode = "sequential" if technique == "ollama" else "async batching"
             print(f"  Generating {remaining_count} new examples for '{category}' ({batch_mode})...")
-            
+
             async def gen_task(cat, diff, dt, sn, bd):
                 async with semaphore:
-                    if generator and multi_turn_ratio > 0 and cat in ["teaching", "dialogue"] and random.random() < multi_turn_ratio:
-                        ex = await generate_multi_turn_example_async(spec, concepts, generator, temperature=temperature, technique=technique, seed=seed, session=client_session, executor=executor, retriever=retriever, guardrail=guardrail, checkpoint_store=checkpoint_store)
+                    if (
+                        generator
+                        and multi_turn_ratio > 0
+                        and cat in ["teaching", "dialogue"]
+                        and random.random() < multi_turn_ratio
+                    ):
+                        ex = await generate_multi_turn_example_async(
+                            spec,
+                            concepts,
+                            generator,
+                            temperature=temperature,
+                            technique=technique,
+                            seed=seed,
+                            session=client_session,
+                            executor=executor,
+                            retriever=retriever,
+                            guardrail=guardrail,
+                            checkpoint_store=checkpoint_store,
+                        )
                         if not ex:
-                            ex = await generate_example_async(spec, cat, concepts, generator=generator, temperature=temperature, difficulty=diff, dialogue_type=dt, scenario_name=sn, boundary=bd, seed=seed, technique=technique, session=client_session, executor=executor, retriever=retriever, guardrail=guardrail, checkpoint_store=checkpoint_store)
+                            ex = await generate_example_async(
+                                spec,
+                                cat,
+                                concepts,
+                                generator=generator,
+                                temperature=temperature,
+                                difficulty=diff,
+                                dialogue_type=dt,
+                                scenario_name=sn,
+                                boundary=bd,
+                                seed=seed,
+                                technique=technique,
+                                session=client_session,
+                                executor=executor,
+                                retriever=retriever,
+                                guardrail=guardrail,
+                                checkpoint_store=checkpoint_store,
+                            )
                     else:
-                        ex = await generate_example_async(spec, cat, concepts, generator=generator, temperature=temperature, difficulty=diff, dialogue_type=dt, scenario_name=sn, boundary=bd, seed=seed, technique=technique, session=client_session, executor=executor, retriever=retriever, guardrail=guardrail, checkpoint_store=checkpoint_store)
+                        ex = await generate_example_async(
+                            spec,
+                            cat,
+                            concepts,
+                            generator=generator,
+                            temperature=temperature,
+                            difficulty=diff,
+                            dialogue_type=dt,
+                            scenario_name=sn,
+                            boundary=bd,
+                            seed=seed,
+                            technique=technique,
+                            session=client_session,
+                            executor=executor,
+                            retriever=retriever,
+                            guardrail=guardrail,
+                            checkpoint_store=checkpoint_store,
+                        )
                     if ex:
                         ex["metadata"]["category"] = cat
                         examples.append(ex)
@@ -1430,7 +1837,7 @@ async def generate_dataset_async_runner(spec, concepts, examples_per_category, g
 
 
 def fallback_generation_run_id(npc_key: str | None, technique: str) -> str:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     return f"{stamp}_{npc_key or 'unknown'}_generate_{technique}_{uuid.uuid4().hex[:8]}"
 
 
@@ -1456,37 +1863,41 @@ def validate_generated_dataset(train_path, val_path=None):
         line = line.strip()
         if not line:
             errors += 1
-            log_warn(f"Dataset validation: empty line {i+1} in {train_path}")
+            log_warn(f"Dataset validation: empty line {i + 1} in {train_path}")
             continue
         try:
             obj = json.loads(line)
         except json.JSONDecodeError as e:
-            log_error(f"Dataset validation FAILED: line {i+1} is not valid JSON: {e}")
+            log_error(f"Dataset validation FAILED: line {i + 1} is not valid JSON: {e}")
             errors += 1
             continue
 
         # Check required fields
         if "messages" not in obj:
-            log_error(f"Dataset validation FAILED: line {i+1} missing 'messages' field")
+            log_error(f"Dataset validation FAILED: line {i + 1} missing 'messages' field")
             errors += 1
             continue
 
         if not isinstance(obj["messages"], list) or len(obj["messages"]) == 0:
-            log_error(f"Dataset validation FAILED: line {i+1} 'messages' is empty or not a list")
+            log_error(f"Dataset validation FAILED: line {i + 1} 'messages' is empty or not a list")
             errors += 1
             continue
 
         # Check each message has role and content
         for j, msg in enumerate(obj["messages"]):
             if not isinstance(msg, dict):
-                log_error(f"Dataset validation FAILED: line {i+1}, message {j+1} is not a dict")
+                log_error(f"Dataset validation FAILED: line {i + 1}, message {j + 1} is not a dict")
                 errors += 1
                 continue
             if "role" not in msg:
-                log_error(f"Dataset validation FAILED: line {i+1}, message {j+1} missing 'role'")
+                log_error(
+                    f"Dataset validation FAILED: line {i + 1}, message {j + 1} missing 'role'"
+                )
                 errors += 1
             if "content" not in msg:
-                log_error(f"Dataset validation FAILED: line {i+1}, message {j+1} missing 'content'")
+                log_error(
+                    f"Dataset validation FAILED: line {i + 1}, message {j + 1} missing 'content'"
+                )
                 errors += 1
 
     # Check for null bytes
@@ -1509,10 +1920,25 @@ def validate_generated_dataset(train_path, val_path=None):
     return True
 
 
-def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=True, val_split=C.DEFAULT_VAL_SPLIT, generator=None, multi_turn_ratio=0.2, temperature=0.6, technique="template", spec_path=None, telemetry_ipc=None, workflow_hooks=None, run_id=None, fresh=False):
+def generate_dataset(
+    spec,
+    output_path,
+    seed=C.DEFAULT_SEED,
+    include_validation=True,
+    val_split=C.DEFAULT_VAL_SPLIT,
+    generator=None,
+    multi_turn_ratio=0.2,
+    temperature=0.6,
+    technique="template",
+    spec_path=None,
+    telemetry_ipc=None,
+    workflow_hooks=None,
+    run_id=None,
+    fresh=False,
+):
     """Generate a complete dataset from a subject spec."""
     random.seed(seed)
-    
+
     concepts = ConceptExtractor(spec).extract()
     examples_per_category = generation_request_counts_for_training_targets(
         dict(spec.get("dataset", {}).get("examples_per_category", {}) or {}),
@@ -1535,8 +1961,12 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
         run_id=run_id or fallback_generation_run_id(spec.get("npc_key"), technique),
     )
     total_count = sum(examples_per_category.values())
-    with hook_recorder.step("prepare", output_path=str(output_path_obj), include_validation=include_validation, total_expected=total_count):
-
+    with hook_recorder.step(
+        "prepare",
+        output_path=str(output_path_obj),
+        include_validation=include_validation,
+        total_expected=total_count,
+    ):
         quest_spec = spec.get("quest", {})
         quest_scenario_list = quest_spec.get("scenarios", [])
         quest_scenarios = [s["name"] for s in quest_scenario_list] if quest_scenario_list else []
@@ -1548,18 +1978,33 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
             with hook_recorder.step("generate_examples", mode="async", total_expected=total_count):
                 examples = _run_coroutine_sync(
                     generate_dataset_async_runner(
-                        spec, concepts, examples_per_category, generator, multi_turn_ratio, temperature,
-                        technique, seed, quest_scenarios, refusal_boundaries, retriever, guardrail,
-                        checkpoint_store, telemetry_reporter
+                        spec,
+                        concepts,
+                        examples_per_category,
+                        generator,
+                        multi_turn_ratio,
+                        temperature,
+                        technique,
+                        seed,
+                        quest_scenarios,
+                        refusal_boundaries,
+                        retriever,
+                        guardrail,
+                        checkpoint_store,
+                        telemetry_reporter,
                     )
                 )
         else:
-            with hook_recorder.step("generate_examples", mode="template", total_expected=total_count):
+            with hook_recorder.step(
+                "generate_examples", mode="template", total_expected=total_count
+            ):
                 examples = []
                 current = 0
                 seen_hashes = set()
-            
-                existing_examples = checkpoint_store.get_all_for_npc(spec["npc_key"]) if checkpoint_store else []
+
+                existing_examples = (
+                    checkpoint_store.get_all_for_npc(spec["npc_key"]) if checkpoint_store else []
+                )
                 existing_by_cat = defaultdict(list)
                 for ex in existing_examples:
                     cat = ex.get("metadata", {}).get("category", "unknown")
@@ -1582,9 +2027,11 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                     examples.extend(recovered)
                     remaining_count = count - len(recovered)
                     if recovered:
-                        print(f"  Recovered {len(recovered)} existing examples for '{category}' from checkpoint.")
+                        print(
+                            f"  Recovered {len(recovered)} existing examples for '{category}' from checkpoint."
+                        )
                         current += len(recovered)
-                
+
                     if remaining_count <= 0:
                         continue
 
@@ -1597,27 +2044,41 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                         n_beg = int(remaining_count * 0.40)
                         n_int = int(remaining_count * 0.35)
                         n_adv = remaining_count - n_beg - n_int
-                        difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                        difficulties = (
+                            ["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv
+                        )
                         random.shuffle(difficulties)
                     elif category == "dialogue":
                         n_clar = int(remaining_count * 0.20)
                         n_dive = int(remaining_count * 0.30)
                         n_app = int(remaining_count * 0.30)
                         n_misc = remaining_count - n_clar - n_dive - n_app
-                        dialogue_types = (["clarification"] * n_clar + ["deep_dive"] * n_dive
-                                        + ["application"] * n_app + ["misconception"] * n_misc)
+                        dialogue_types = (
+                            ["clarification"] * n_clar
+                            + ["deep_dive"] * n_dive
+                            + ["application"] * n_app
+                            + ["misconception"] * n_misc
+                        )
                         random.shuffle(dialogue_types)
                         n_beg = int(remaining_count * 0.40)
                         n_int = int(remaining_count * 0.35)
                         n_adv = remaining_count - n_beg - n_int
-                        difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                        difficulties = (
+                            ["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv
+                        )
                         random.shuffle(difficulties)
                     elif category == "quest" and quest_scenarios:
-                        scenario_names = [quest_scenarios[i % len(quest_scenarios)] for i in range(remaining_count)]
+                        scenario_names = [
+                            quest_scenarios[i % len(quest_scenarios)]
+                            for i in range(remaining_count)
+                        ]
                         random.shuffle(scenario_names)
                         difficulties = ["intermediate"] * remaining_count
                     elif category == "refusal" and refusal_boundaries:
-                        boundaries = [refusal_boundaries[i % len(refusal_boundaries)] for i in range(remaining_count)]
+                        boundaries = [
+                            refusal_boundaries[i % len(refusal_boundaries)]
+                            for i in range(remaining_count)
+                        ]
                         random.shuffle(boundaries)
                         difficulties = ["beginner"] * remaining_count
                     elif category == "identity":
@@ -1637,10 +2098,22 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
 
                         example = _run_coroutine_sync(
                             generate_example_async(
-                                spec, category, concepts, generator=generator, temperature=temperature,
-                                difficulty=diff, dialogue_type=dt, scenario_name=sn, boundary=bd, seed=seed,
-                                technique=technique, session=None, executor=None, retriever=retriever,
-                                guardrail=guardrail, checkpoint_store=checkpoint_store
+                                spec,
+                                category,
+                                concepts,
+                                generator=generator,
+                                temperature=temperature,
+                                difficulty=diff,
+                                dialogue_type=dt,
+                                scenario_name=sn,
+                                boundary=bd,
+                                seed=seed,
+                                technique=technique,
+                                session=None,
+                                executor=None,
+                                retriever=retriever,
+                                guardrail=guardrail,
+                                checkpoint_store=checkpoint_store,
                             )
                         )
 
@@ -1662,7 +2135,6 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                             f"after {attempts} attempts. Add more templates or source material."
                         )
 
-
         # ── Split into train/validation (stratified by category) ─────────────
         ensure_unique_user_prompt_signatures(examples)
         if include_validation and len(examples) > 5:
@@ -1676,7 +2148,11 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
             for cat, cat_examples in by_category.items():
                 random.shuffle(cat_examples)
                 # Ensure at least 1 example for validation if count > 1
-                split = max(1, min(len(cat_examples) - 1, int(len(cat_examples) * val_split))) if len(cat_examples) > 1 else 0
+                split = (
+                    max(1, min(len(cat_examples) - 1, int(len(cat_examples) * val_split)))
+                    if len(cat_examples) > 1
+                    else 0
+                )
                 val_examples.extend(cat_examples[:split])
                 train_examples.extend(cat_examples[split:])
 
@@ -1695,8 +2171,9 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
         # Write training set
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with hook_recorder.step("write_artifacts", train_target=str(output_path), validation_enabled=include_validation):
-
+        with hook_recorder.step(
+            "write_artifacts", train_target=str(output_path), validation_enabled=include_validation
+        ):
             train_path = output_path
             with open(train_path, "w") as f:
                 for ex in train_examples:
@@ -1746,7 +2223,7 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                 "npc_key": spec["npc_key"],
                 "technique": technique,
                 "generation": {
-                    "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "date": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "seed": seed,
                     "generator_version": "improved-workflow-v1",
                     "sanitizer_version": "v1",
@@ -1758,10 +2235,14 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
                 },
                 "contract": dataset_contract,
                 "distribution": {
-                    "expected_examples_per_category": dataset_contract["expected_examples_per_category"],
+                    "expected_examples_per_category": dataset_contract[
+                        "expected_examples_per_category"
+                    ],
                     "generation_request_examples_per_category": dict(examples_per_category),
                     "observed_examples_per_category": dict(by_category),
-                    "distribution_gaps": calculate_distribution_gaps(dataset_contract["expected_examples_per_category"], dict(by_category)),
+                    "distribution_gaps": calculate_distribution_gaps(
+                        dataset_contract["expected_examples_per_category"], dict(by_category)
+                    ),
                 },
                 "statistics": {
                     "total": len(examples),
@@ -1782,8 +2263,13 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
             # Record generation stage completion
             try:
                 from src.core.ops import stage_gate
+
                 manifest = Path.cwd() / ".pipeline" / "run_manifest.json"
-                stage_gate.record_stage("generate", [output_path / "train.jsonl", output_path / "validation.jsonl"], manifest)
+                stage_gate.record_stage(
+                    "generate",
+                    [output_path / "train.jsonl", output_path / "validation.jsonl"],
+                    manifest,
+                )
             except Exception as e:
                 print(f"  [debug] Could not record stage: {e}")
 
@@ -1799,8 +2285,9 @@ def generate_dataset(spec, output_path, seed=C.DEFAULT_SEED, include_validation=
     }
 
 
-def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, output_path: str,
-                                           push_to_confident: bool = False):
+def generate_synthetic_goldens_from_primer(
+    ref_doc_path: str, npc_key: str, output_path: str, push_to_confident: bool = False
+):
     """Generates complex evaluation test cases directly from an NPC reference document.
 
     Args:
@@ -1832,11 +2319,9 @@ def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, outp
     synthesizer = Synthesizer(model=judge, async_mode=True)
     print(f"Synthesizing goldens for {npc_key} using DeepEval...")
     try:
-        synthesizer.generate_goldens_from_contexts(
-            contexts=[chunks],
-            max_goldens_per_context=5
-        )
+        synthesizer.generate_goldens_from_contexts(contexts=[chunks], max_goldens_per_context=5)
         from deepeval.dataset import EvaluationDataset
+
         dataset = EvaluationDataset(goldens=synthesizer.synthetic_goldens)
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         dataset.save_as_json(output_path)
@@ -1851,8 +2336,8 @@ def generate_synthetic_goldens_from_primer(ref_doc_path: str, npc_key: str, outp
         print(f"[error] DeepEval golden synthesis failed: {e}")
 
 
-from src.core.ops.run_registry import PipelineRun
 from src.core.ops.ollama_lifecycle import register_ollama_unload
+from src.core.ops.run_registry import PipelineRun
 
 
 def _push_dataset_to_confident(jsonl_path: str, alias: str) -> None:
@@ -1867,9 +2352,7 @@ def _push_dataset_to_confident(jsonl_path: str, alias: str) -> None:
         EnvironmentError: If CONFIDENT_API_KEY is not set.
     """
     if EvaluationDataset is None:
-        raise ImportError(
-            "deepeval is not installed. Install it with: pip install deepeval"
-        )
+        raise ImportError("deepeval is not installed. Install it with: pip install deepeval")
 
     from deepeval.synthesizer import Golden
 
@@ -1906,24 +2389,42 @@ def _push_dataset_to_confident(jsonl_path: str, alias: str) -> None:
     dataset.push(alias=alias)
     print(f"  Pushed dataset to Confident AI as: {alias}")
 
+
 def main():
     parser = argparse.ArgumentParser(description="Generate ChatML dataset from a subject spec")
     parser.add_argument("spec", help="Path to subject spec JSON file")
-    parser.add_argument("--output", "-o", default=None,
-                        help="Output JSONL path (default: subjects/datasets/<npc_key>/<technique>/train.jsonl)")
+    parser.add_argument(
+        "--output",
+        "-o",
+        default=None,
+        help="Output JSONL path (default: subjects/datasets/<npc_key>/<technique>/train.jsonl)",
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--no-validation", action="store_true",
-                        help="Skip validation split")
-    parser.add_argument("--val-split", type=float, default=0.12,
-                        help="Validation split fraction (default: C.DEFAULT_VAL_SPLIT)")
+    parser.add_argument("--no-validation", action="store_true", help="Skip validation split")
+    parser.add_argument(
+        "--val-split",
+        type=float,
+        default=0.12,
+        help="Validation split fraction (default: C.DEFAULT_VAL_SPLIT)",
+    )
     parser.add_argument("--ollama", action="store_true", help="Use local Ollama for generation")
     parser.add_argument("--model", default="llama3.1:latest", help="Ollama model to use")
     parser.add_argument("--url", default="http://localhost:11434/api/chat", help="Ollama API URL")
-    parser.add_argument("--multi-turn-ratio", type=float, default=0.2, help="Ratio of multi-turn dialogues (0.0 to 1.0)")
+    parser.add_argument(
+        "--multi-turn-ratio",
+        type=float,
+        default=0.2,
+        help="Ratio of multi-turn dialogues (0.0 to 1.0)",
+    )
     parser.add_argument("--temperature", type=float, default=0.6, help="Generation temperature")
-    parser.add_argument("--technique", default=None,
-                        choices=["template", "ollama", "openai", "anthropic", "docs"],
-                        help="Generation technique override (defaults to the resolved workflow context)")
+    parser.add_argument(
+        "--technique",
+        default=None,
+        choices=["template", "ollama", "openai", "anthropic", "docs"],
+        help="Generation technique override (defaults to the resolved workflow context)",
+    )
+
+
 def run_dataset_generation(
     spec_path: str,
     technique: str | None = None,
@@ -1944,13 +2445,11 @@ def run_dataset_generation(
     docs_manifest: str | None = None,
 ) -> None:
     # Import re for JSON extraction
-    import re
-    
+
     # Import generators here to avoid circular imports if needed
-    from src.core.dataset.generators import OllamaGenerator, OpenAIGenerator, AnthropicGenerator
-    from src.core.ops.run_registry import PipelineRun
-    from src.config.log_setup import set_active_run, clear_active_run
-    
+    from src.config.log_setup import clear_active_run, set_active_run
+    from src.core.dataset.generators import AnthropicGenerator, OllamaGenerator, OpenAIGenerator
+
     if technique == "ollama" and not model:
         raise ValueError("Model is required for ollama technique")
 
@@ -1992,11 +2491,15 @@ def run_dataset_generation(
                 if ref_doc and (PROJECT_ROOT / ref_doc).exists():
                     golden_path = Path(output_path).parent / "synthetic_goldens.json"
                     generate_synthetic_goldens_from_primer(
-                        str(PROJECT_ROOT / ref_doc), npc_key, str(golden_path),
+                        str(PROJECT_ROOT / ref_doc),
+                        npc_key,
+                        str(golden_path),
                         push_to_confident=push_to_confident,
                     )
                 else:
-                    print(f"  [warn] No reference_doc found for {npc_key} or file missing. Skipping golden synthesis.")
+                    print(
+                        f"  [warn] No reference_doc found for {npc_key} or file missing. Skipping golden synthesis."
+                    )
 
             # ── Apply concept-focus boost ─────────────────────────────────────────
             if concept_focus:
@@ -2007,15 +2510,21 @@ def run_dataset_generation(
                         if cat in concept_focus:
                             boost_factor = 2.0
                             original = examples_per_category[cat]
-                            examples_per_category[cat] = max(original + 4, int(original * boost_factor))
-                            print(f"    {cat}: {original} -> {examples_per_category[cat]} ({boost_factor}x boost)")
+                            examples_per_category[cat] = max(
+                                original + 4, int(original * boost_factor)
+                            )
+                            print(
+                                f"    {cat}: {original} -> {examples_per_category[cat]} ({boost_factor}x boost)"
+                            )
                     # Also add a focused note to the output path
                     focus_suffix = "_focused"
                     if "_focused" not in output_path:
                         output_path = output_path.replace(".jsonl", f"{focus_suffix}.jsonl")
                         print(f"  Focused output path: {output_path}")
                 else:
-                    print("  [warn] --concept-focus specified but spec has no examples_per_category")
+                    print(
+                        "  [warn] --concept-focus specified but spec has no examples_per_category"
+                    )
 
             if technique == "docs":
                 manifest_path = (
@@ -2056,17 +2565,21 @@ def run_dataset_generation(
             run.set_artifacts(
                 train_path=result["train_path"],
                 val_path=result["val_path"],
-                manifest_path=result.get("manifest_path")
+                manifest_path=result.get("manifest_path"),
             )
             run.set_metrics(
-                total=result["total"],
-                train=result["train"],
-                validation=result["validation"]
+                total=result["total"], train=result["train"], validation=result["validation"]
             )
 
-            log_state("dataset_generated", npc_key=result.get("npc_key", spec.get("npc_key", "unknown")),
-                      total=result["total"], train=result["train"], validation=result["validation"],
-                      train_path=result["train_path"], technique=technique)
+            log_state(
+                "dataset_generated",
+                npc_key=result.get("npc_key", spec.get("npc_key", "unknown")),
+                total=result["total"],
+                train=result["train"],
+                validation=result["validation"],
+                train_path=result["train_path"],
+                technique=technique,
+            )
 
             print(f"  Total examples:  {result['total']}")
             print(f"  Training:        {result['train']}")
@@ -2082,8 +2595,9 @@ def run_dataset_generation(
 
             # ── Record pipeline manifest stage ─────────────────────────────────
             try:
-                from src.core.ops.pipeline_manifest import record_pipeline_stage
                 from src.core.ops.artifact_registry import record_stage_artifacts_best_effort
+                from src.core.ops.pipeline_manifest import record_pipeline_stage
+
                 os.environ.setdefault("NPC_KEY", npc_key)
                 os.environ.setdefault("TECHNIQUE", technique)
                 manifest_artifacts = {}
@@ -2098,7 +2612,11 @@ def run_dataset_generation(
                     "generate",
                     manifest_artifacts,
                     technique=technique,
-                    metadata={"total": result["total"], "train": result["train"], "validation": result["validation"]},
+                    metadata={
+                        "total": result["total"],
+                        "train": result["train"],
+                        "validation": result["validation"],
+                    },
                 )
                 record_canonical_bundle(
                     run_id=run.run_id,
@@ -2106,8 +2624,15 @@ def run_dataset_generation(
                     npc_key=npc_key,
                     technique=technique,
                     artifacts=manifest_artifacts,
-                    metrics={"total": result["total"], "train": result["train"], "validation": result["validation"]},
-                    metadata={"output_path": result.get("train_path"), "val_path": result.get("val_path")},
+                    metrics={
+                        "total": result["total"],
+                        "train": result["train"],
+                        "validation": result["validation"],
+                    },
+                    metadata={
+                        "output_path": result.get("train_path"),
+                        "val_path": result.get("val_path"),
+                    },
                 )
             except Exception:
                 pass  # manifest is optional, never block pipeline
@@ -2124,7 +2649,11 @@ def run_dataset_generation(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate NPC training dataset")
     parser.add_argument("spec", help="Path to subject spec JSON")
-    parser.add_argument("--technique", default="ollama", choices=["docs", "ollama", "template", "openai", "anthropic"])
+    parser.add_argument(
+        "--technique",
+        default="ollama",
+        choices=["docs", "ollama", "template", "openai", "anthropic"],
+    )
     parser.add_argument("--model", default="llama-3.2-3b-instruct", help="Generator model")
     parser.add_argument("--url", default="http://localhost:11434", help="Generator API URL")
     parser.add_argument("--output", default=None, help="Output JSONL path")
@@ -2140,9 +2669,8 @@ def main() -> None:
     parser.add_argument("--fresh", action="store_true")
     parser.add_argument("--synthesize-goldens", action="store_true")
     parser.add_argument("--push-to-confident", action="store_true")
-    
+
     # Import re for JSON extraction
-    import re
 
     args = parser.parse_args()
 

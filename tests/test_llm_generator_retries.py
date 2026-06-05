@@ -105,10 +105,12 @@ def test_openai_generator_async_retries_timeout_then_succeeds(monkeypatch):
 
     monkeypatch.setattr(gd.asyncio, "sleep", fake_sleep)
 
-    session = AsyncDummySession([
-        asyncio.TimeoutError(),
-        AsyncDummyResponse({"choices": [{"message": {"content": "done"}}]}),
-    ])
+    session = AsyncDummySession(
+        [
+            TimeoutError(),
+            AsyncDummyResponse({"choices": [{"message": {"content": "done"}}]}),
+        ]
+    )
 
     result = asyncio.run(
         generator.generate_async(

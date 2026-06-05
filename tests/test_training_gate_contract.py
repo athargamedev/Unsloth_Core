@@ -18,7 +18,12 @@ def _write_clean_dataset(path: Path) -> dict:
                     {"role": "user", "content": "Who are you?"},
                     {"role": "assistant", "content": "I am the NPC."},
                 ],
-                "metadata": {"category": "identity", "difficulty": "beginner", "split": "train", "concept": "intro"},
+                "metadata": {
+                    "category": "identity",
+                    "difficulty": "beginner",
+                    "split": "train",
+                    "concept": "intro",
+                },
             }
         )
         + "\n",
@@ -51,7 +56,9 @@ def test_training_readiness_rejects_passing_summary_without_fresh_registry_linea
     _write_quality_summary(tmp_path / "quality_summary.json", dataset_summary)
     registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
 
-    errors = training_readiness_errors(clean_path, npc_key="chef_assistant", technique="ollama", registry=registry)
+    errors = training_readiness_errors(
+        clean_path, npc_key="chef_assistant", technique="ollama", registry=registry
+    )
 
     assert any("Blocked: no fresh passing dataset-eval" in error for error in errors)
     assert any("Next: ./ucore dataset-eval" in error for error in errors)
@@ -65,7 +72,9 @@ def test_training_readiness_accepts_passing_summary_with_current_registry_lineag
     summary_path = tmp_path / "quality_summary.json"
     _write_quality_summary(summary_path, dataset_summary)
     registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
-    raw_record = registry.record_artifact("run-1", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama")
+    raw_record = registry.record_artifact(
+        "run-1", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama"
+    )
     clean_record = registry.record_artifact(
         "run-2",
         "chef_assistant",
@@ -85,7 +94,12 @@ def test_training_readiness_accepts_passing_summary_with_current_registry_lineag
         metadata={"input_signature": stage_input_signature("dataset_eval", [clean_record])},
     )
 
-    assert training_readiness_errors(clean_path, npc_key="chef_assistant", technique="ollama", registry=registry) == []
+    assert (
+        training_readiness_errors(
+            clean_path, npc_key="chef_assistant", technique="ollama", registry=registry
+        )
+        == []
+    )
 
 
 def test_training_readiness_allows_explicit_ungated_dev_bypass(tmp_path: Path):
@@ -93,10 +107,13 @@ def test_training_readiness_allows_explicit_ungated_dev_bypass(tmp_path: Path):
     _write_clean_dataset(clean_path)
     registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
 
-    assert training_readiness_errors(
-        clean_path,
-        npc_key="chef_assistant",
-        technique="template",
-        registry=registry,
-        allow_ungated_dataset=True,
-    ) == []
+    assert (
+        training_readiness_errors(
+            clean_path,
+            npc_key="chef_assistant",
+            technique="template",
+            registry=registry,
+            allow_ungated_dataset=True,
+        )
+        == []
+    )

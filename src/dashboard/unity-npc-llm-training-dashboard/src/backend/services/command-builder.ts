@@ -967,6 +967,133 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
       },
     },
     {
+      id: "target-plan",
+      label: "Plan Target DAG",
+      icon: "git-branch",
+      color: "accent",
+      type: "Pipeline",
+      requiredFields: ["npcKey"],
+      cli: { source: "ucore", command: "target", subcommand: "plan" },
+      schema: {
+        npcKey: { type: "string", required: true, description: "NPC key", order: 1 },
+        "options.technique": { type: "string", required: false, default: "", enum: ["", "template", "docs", "ollama", "openai", "anthropic"], description: "Dataset technique/artifact lane", order: 2 },
+        "options.targetStage": { type: "string", required: false, default: "evaluate", enum: ["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"], description: "Target stage", order: 3 },
+        "options.artifactIndex": { type: "path", pathType: "file", required: false, default: "", description: "ArtifactRegistry JSONL path override", order: 4 },
+        "options.profile": { type: "string", required: false, default: "npc-production-grounded", description: "NPC profile label", order: 5 },
+        "options.json": { type: "boolean", required: false, default: true, description: "Output JSON", order: 6 },
+      },
+      build: ({ npcKey, options }) => {
+        const args = ["./ucore", "target", "plan", "--npc-key", sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")];
+        const technique = String(options?.technique || "").trim();
+        if (technique) args.push("--technique", sanitizeToken(technique, "technique"));
+        const targetStage = String(options?.targetStage || "evaluate").trim();
+        if (targetStage) args.push("--target-stage", sanitizeToken(targetStage, "targetStage"));
+        const artifactIndex = String(options?.artifactIndex || "").trim();
+        if (artifactIndex) args.push("--artifact-index", resolvePathWithinRoots(artifactIndex, "artifactIndex", [repoRoot], repoRoot));
+        const profile = String(options?.profile || "npc-production-grounded").trim();
+        if (profile) args.push("--profile", sanitizeToken(profile, "profile"));
+        if (options?.json !== false && options?.json !== "false") args.push("--json");
+        return args;
+      },
+    },
+    {
+      id: "target-run",
+      label: "Run Target DAG",
+      icon: "play-circle",
+      color: "success",
+      type: "Pipeline",
+      requiredFields: ["npcKey"],
+      cli: { source: "ucore", command: "target", subcommand: "run" },
+      schema: {
+        npcKey: { type: "string", required: true, description: "NPC key", order: 1 },
+        "options.technique": { type: "string", required: false, default: "", enum: ["", "template", "docs", "ollama", "openai", "anthropic"], description: "Dataset technique/artifact lane", order: 2 },
+        "options.targetStage": { type: "string", required: false, default: "evaluate", enum: ["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"], description: "Target stage", order: 3 },
+        "options.profile": { type: "string", required: false, default: "npc-production-grounded", description: "NPC profile label", order: 4 },
+        "options.dryRun": { type: "boolean", required: false, default: true, description: "Preview commands without executing", order: 5 },
+        "options.resume": { type: "boolean", required: false, default: false, description: "Skip already-completed stages", order: 6 },
+        "options.forceStage": { type: "string", required: false, default: "", enum: ["", "generate", "sanitize", "dataset_eval", "train", "export", "evaluate"], description: "Force re-run a specific stage", order: 7 },
+        "options.artifactIndex": { type: "path", pathType: "file", required: false, default: "", description: "ArtifactRegistry JSONL path override", order: 8 },
+        "options.json": { type: "boolean", required: false, default: true, description: "Output JSON", order: 9 },
+      },
+      build: ({ npcKey, options }) => {
+        const args = ["./ucore", "target", "run", "--npc-key", sanitizeToken(requireString(npcKey, "npcKey"), "npcKey")];
+        const technique = String(options?.technique || "").trim();
+        if (technique) args.push("--technique", sanitizeToken(technique, "technique"));
+        const targetStage = String(options?.targetStage || "evaluate").trim();
+        if (targetStage) args.push("--target-stage", sanitizeToken(targetStage, "targetStage"));
+        const profile = String(options?.profile || "npc-production-grounded").trim();
+        if (profile) args.push("--profile", sanitizeToken(profile, "profile"));
+        if (options?.dryRun !== false && options?.dryRun !== "false") args.push("--dry-run");
+        if (options?.resume === true || options?.resume === "true") args.push("--resume");
+        const forceStage = String(options?.forceStage || "").trim();
+        if (forceStage) args.push("--force-stage", sanitizeToken(forceStage, "forceStage"));
+        const artifactIndex = String(options?.artifactIndex || "").trim();
+        if (artifactIndex) args.push("--artifact-index", resolvePathWithinRoots(artifactIndex, "artifactIndex", [repoRoot], repoRoot));
+        if (options?.json !== false && options?.json !== "false") args.push("--json");
+        return args;
+      },
+    },
+    {
+      id: "compare-canonical-runs",
+      label: "Compare Canonical Runs",
+      icon: "bar-chart-2",
+      color: "accent",
+      type: "Evaluation",
+      requiredFields: ["options.baselineRunId", "options.candidateRunId"],
+      cli: { source: "ucore", command: "compare-canonical-runs" },
+      schema: {
+        "options.baselineRunId": { type: "string", required: true, description: "Baseline canonical run id", order: 1 },
+        "options.candidateRunId": { type: "string", required: true, description: "Candidate canonical run id", order: 2 },
+        "options.output": { type: "path", pathType: "file", required: false, default: "", description: "Comparison report path", order: 3 },
+        "options.registryPath": { type: "path", pathType: "file", required: false, default: "", description: "ExperimentRegistry JSONL path override", order: 4 },
+        "options.refreshIndex": { type: "boolean", required: false, default: false, description: "Refresh .pipeline/runs_index.jsonl before compare", order: 5 },
+        "options.json": { type: "boolean", required: false, default: true, description: "Output JSON", order: 6 },
+      },
+      build: ({ options }) => {
+        const baselineRunId = sanitizeToken(requireString(String(options?.baselineRunId || ""), "baselineRunId"), "baselineRunId");
+        const candidateRunId = sanitizeToken(requireString(String(options?.candidateRunId || ""), "candidateRunId"), "candidateRunId");
+        const args = ["./ucore", "compare-canonical-runs", baselineRunId, candidateRunId];
+        const output = String(options?.output || "").trim();
+        if (output) args.push("--output", resolvePathWithinRoots(output, "output", [repoRoot], repoRoot));
+        const registryPath = String(options?.registryPath || "").trim();
+        if (registryPath) args.push("--registry-path", resolvePathWithinRoots(registryPath, "registryPath", [repoRoot], repoRoot));
+        if (options?.refreshIndex === true || options?.refreshIndex === "true") args.push("--refresh-index");
+        if (options?.json !== false && options?.json !== "false") args.push("--json");
+        return args;
+      },
+    },
+    {
+      id: "promote",
+      label: "Promote Candidate",
+      icon: "award",
+      color: "success",
+      type: "Deployment",
+      requiredFields: ["npcKey", "options.candidateRunId"],
+      cli: { source: "ucore", command: "promote" },
+      schema: {
+        npcKey: { type: "string", required: true, description: "NPC key", order: 1 },
+        "options.candidateRunId": { type: "string", required: true, description: "Candidate run id that won comparison", order: 2 },
+        "options.registryPath": { type: "path", pathType: "file", required: false, default: "", description: "ExperimentRegistry JSONL path override", order: 3 },
+        "options.dryRun": { type: "boolean", required: false, default: true, description: "Preview only; no deployment pointer changes", order: 4 },
+        "options.json": { type: "boolean", required: false, default: true, description: "Output JSON", order: 5 },
+      },
+      build: ({ npcKey, options }) => {
+        const args = [
+          "./ucore",
+          "promote",
+          "--npc-key",
+          sanitizeToken(requireString(npcKey, "npcKey"), "npcKey"),
+          "--candidate-run-id",
+          sanitizeToken(requireString(String(options?.candidateRunId || ""), "candidateRunId"), "candidateRunId"),
+        ];
+        const registryPath = String(options?.registryPath || "").trim();
+        if (registryPath) args.push("--registry-path", resolvePathWithinRoots(registryPath, "registryPath", [repoRoot], repoRoot));
+        if (options?.dryRun !== false && options?.dryRun !== "false") args.push("--dry-run");
+        if (options?.json !== false && options?.json !== "false") args.push("--json");
+        return args;
+      },
+    },
+    {
       id: "compare-runs",
       label: "Compare Training Runs",
       icon: "bar-chart",

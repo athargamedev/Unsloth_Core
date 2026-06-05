@@ -28,17 +28,14 @@ Usage:
 
 import argparse
 import json
-import os
 import shutil
-import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from src.config import paths
-
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 STREAMING_ASSETS_MODELS = "Assets/StreamingAssets/Models"
@@ -48,6 +45,7 @@ MANIFEST_FILENAME = "npc_deployment_manifest.json"
 def _file_sha256(path: Path) -> str:
     """Compute SHA256 hash of a file."""
     import hashlib
+
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(64 * 1024), b""):
@@ -77,7 +75,7 @@ def find_unity_project(project_path: Path | None) -> Path | None:
         return candidates[0]
     elif len(candidates) > 1:
         print(f"[deploy] Multiple sibling Unity projects found: {[c.name for c in candidates]}")
-        print(f"[deploy] Use --unity-project to specify.")
+        print("[deploy] Use --unity-project to specify.")
     else:
         print("[deploy] Could not auto-detect Unity project. Use --unity-project to specify.")
     return None
@@ -87,7 +85,7 @@ def find_subject_spec(npc_key: str) -> dict | None:
     """Find and load a subject JSON spec by npc_key."""
     candidates = [
         paths.spec_path(npc_key),
-        paths.spec_path(npc_key.replace('_', '-')),
+        paths.spec_path(npc_key.replace("_", "-")),
         # Legacy fallback: flat subjects/ dir
         paths.subjects_root() / f"{npc_key}.json",
     ]
@@ -144,17 +142,21 @@ def scan_npcs(skip_export: bool = False, export_only: bool = False) -> list[dict
         # Load subject spec for metadata
         subject_spec = find_subject_spec(npc_key)
 
-        entries.append({
-            "npc_key": npc_key,
-            "lora_gguf_path": str(gguf_path),
-            "adapter_dir": str(adapter_dir) if has_adapter else None,
-            "subject_spec": subject_spec,
-        })
+        entries.append(
+            {
+                "npc_key": npc_key,
+                "lora_gguf_path": str(gguf_path),
+                "adapter_dir": str(adapter_dir) if has_adapter else None,
+                "subject_spec": subject_spec,
+            }
+        )
 
     return entries
 
 
-def deploy(entries: list[dict], unity_project: Path, dry_run: bool = False, export_only: bool = False) -> str | None:
+def deploy(
+    entries: list[dict], unity_project: Path, dry_run: bool = False, export_only: bool = False
+) -> str | None:
     """Deploy LoRA files to Unity project and generate manifest.
 
     Returns path to manifest file, or None if nothing was deployed.
@@ -176,7 +178,9 @@ def deploy(entries: list[dict], unity_project: Path, dry_run: bool = False, expo
         spec = entry["subject_spec"]
 
         if gguf_path is None:
-            print(f"[deploy]  ⚠  {npc_key}: No GGUF file to deploy (adapter dir exists but export needed)")
+            print(
+                f"[deploy]  ⚠  {npc_key}: No GGUF file to deploy (adapter dir exists but export needed)"
+            )
             continue
 
         gguf_filename = Path(gguf_path).name
@@ -184,7 +188,9 @@ def deploy(entries: list[dict], unity_project: Path, dry_run: bool = False, expo
         relative_lora_path = f"Models/{gguf_filename}"
 
         if export_only:
-            print(f"[deploy]  ✓  {npc_key}: Exported GGUF: {gguf_path} ({Path(gguf_path).stat().st_size / 1024 / 1024:.1f} MB)")
+            print(
+                f"[deploy]  ✓  {npc_key}: Exported GGUF: {gguf_path} ({Path(gguf_path).stat().st_size / 1024 / 1024:.1f} MB)"
+            )
             continue
 
         # Copy GGUF file
@@ -192,7 +198,9 @@ def deploy(entries: list[dict], unity_project: Path, dry_run: bool = False, expo
             try:
                 shutil.copy2(gguf_path, dest_path)
                 size_mb = dest_path.stat().st_size / (1024 * 1024)
-                print(f"[deploy]  ✓  {npc_key}: Copied {gguf_filename} ({size_mb:.1f} MB) → {STREAMING_ASSETS_MODELS}/")
+                print(
+                    f"[deploy]  ✓  {npc_key}: Copied {gguf_filename} ({size_mb:.1f} MB) → {STREAMING_ASSETS_MODELS}/"
+                )
 
                 # Verify checksum
                 src_sha = _file_sha256(Path(gguf_path))
@@ -209,7 +217,9 @@ def deploy(entries: list[dict], unity_project: Path, dry_run: bool = False, expo
                 continue
         else:
             size_mb = Path(gguf_path).stat().st_size / (1024 * 1024)
-            print(f"[deploy]  ~  {npc_key}: Would copy {gguf_filename} ({size_mb:.1f} MB) → {STREAMING_ASSETS_MODELS}/")
+            print(
+                f"[deploy]  ~  {npc_key}: Would copy {gguf_filename} ({size_mb:.1f} MB) → {STREAMING_ASSETS_MODELS}/"
+            )
 
         # Build manifest entry
         manifest_entry = {
@@ -239,7 +249,7 @@ def deploy(entries: list[dict], unity_project: Path, dry_run: bool = False, expo
     # Write manifest
     manifest = {
         "version": 1,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "source": "Unsloth_Core",
         "unsloth_core_path": str(PROJECT_ROOT),
         "npcs": manifest_npcs,
@@ -261,27 +271,25 @@ def main():
         description="Deploy Unsloth_Core GGUF LoRA exports to a Unity LLMUnity project"
     )
     parser.add_argument(
-        "--unity-project", "-u",
-        help="Path to Unity project (auto-detected relative to Unsloth_Core if omitted)"
+        "--unity-project",
+        "-u",
+        help="Path to Unity project (auto-detected relative to Unsloth_Core if omitted)",
     )
     parser.add_argument(
-        "--skip-export", action="store_true",
-        help="Skip running export_adapter.py for directories without GGUF files"
+        "--skip-export",
+        action="store_true",
+        help="Skip running export_adapter.py for directories without GGUF files",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
-        help="Show what would be done without copying any files"
+        "--dry-run", action="store_true", help="Show what would be done without copying any files"
     )
     parser.add_argument(
-        "--export-only", action="store_true",
-        help="Only run GGUF export, skip Unity deployment"
+        "--export-only", action="store_true", help="Only run GGUF export, skip Unity deployment"
     )
     args = parser.parse_args()
 
     # Step 1: Find Unity project
-    unity_project = find_unity_project(
-        Path(args.unity_project) if args.unity_project else None
-    )
+    unity_project = find_unity_project(Path(args.unity_project) if args.unity_project else None)
     if not args.export_only and unity_project is None:
         sys.exit(1)
 
@@ -291,7 +299,9 @@ def main():
     print(f"[deploy] Found {len(entries)} candidate(s)\n")
 
     # Step 3: Deploy
-    manifest_path = deploy(entries, unity_project, dry_run=args.dry_run, export_only=args.export_only)
+    manifest_path = deploy(
+        entries, unity_project, dry_run=args.dry_run, export_only=args.export_only
+    )
 
     if manifest_path:
         n = 0
@@ -299,9 +309,11 @@ def main():
             manifest = json.load(f)
             n = len(manifest.get("npcs", []))
         print(f"\n[deploy] ✅ Deployment complete! {n} NPC(s) in manifest.")
-        print(f"[deploy]    Next step: In Unity Editor, run Tools > LLM Unity > Import NPC Deployment")
+        print(
+            "[deploy]    Next step: In Unity Editor, run Tools > LLM Unity > Import NPC Deployment"
+        )
     elif not args.export_only:
-        print(f"\n[deploy] Nothing was deployed.")
+        print("\n[deploy] Nothing was deployed.")
 
 
 if __name__ == "__main__":

@@ -33,6 +33,8 @@ interface ArtifactRecord {
   [key: string]: unknown;
 }
 
+export type ReadinessPlan = Exclude<ReturnType<typeof buildReadinessPlanFromRecords>, { error: string }>;
+
 export function buildReadinessPlanFromRecords(
   records: ArtifactRecord[],
   npcKey: string,
@@ -88,6 +90,48 @@ export function buildReadinessPlanFromRecords(
     artifact_registry_path: artifactRegistryPath,
     artifact_count: filteredRecords.length,
     steps,
+  };
+}
+
+export function buildNpcStatusFromReadinessPlan(plan: ReadinessPlan) {
+  const stages = Object.fromEntries(
+    plan.steps.map((step) => {
+      const hasOutput = Object.values(step.artifacts).some((artifact) => artifact !== null);
+      return [
+        step.stage,
+        {
+          ready: step.ready,
+          has_output: hasOutput,
+          missing_artifacts: step.missing_artifacts,
+          missing_stages: step.missing_stages,
+          artifacts: step.artifacts,
+        },
+      ];
+    }),
+  );
+  const targetStep = plan.steps[plan.steps.length - 1];
+  const targetHasOutput = targetStep ? Object.values(targetStep.artifacts).some((artifact) => artifact !== null) : false;
+  const anyOutput = plan.steps.some((step) => Object.values(step.artifacts).some((artifact) => artifact !== null));
+  const anyBlocked = plan.steps.some((step) => !step.ready);
+  const pipelineHealth = plan.ready && targetHasOutput
+    ? "healthy"
+    : anyBlocked
+      ? "blocked"
+      : anyOutput
+        ? "partial"
+        : "empty";
+
+  return {
+    source: "artifact_registry" as const,
+    npc_key: plan.npc_key,
+    technique: plan.technique,
+    target_stage: plan.target_stage,
+    ready: plan.ready,
+    pipeline_health: pipelineHealth,
+    next_required_stage: plan.next_required_stage ?? plan.target_stage,
+    artifact_registry_path: plan.artifact_registry_path,
+    artifact_count: plan.artifact_count,
+    stages,
   };
 }
 
@@ -256,45 +300,14 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
   // ── GET /api/npc/:npc_key/status ───────────────────────────────────────
   app.get("/api/npc/:npc_key/status", (req: Request, res: Response) => {
     const npcKey = req.params.npc_key;
-    const records = readPipelineRunRecords(1000, npcKey);
-
-    const latestComplete: Record<string, PipelineRunRecord> = {};
-    const latestError: Record<string, PipelineRunRecord> = {};
-    for (const record of records) {
-      const stage = record.stage || "";
-      if (record.event === "complete") latestComplete[stage] = record;
-      if (record.event === "error") latestError[stage] = record;
+    const technique = typeof req.query.technique === "string" ? req.query.technique : undefined;
+    const targetStage = typeof req.query.target_stage === "string" ? req.query.target_stage : "evaluate";
+    const plan = buildReadinessPlan(npcKey, targetStage, technique);
+    if ("error" in plan) {
+      res.status(400).json(plan);
+      return;
     }
-
-    const stages = [
-      "generate",
-      "sanitize",
-      "dataset_eval",
-      "train",
-      "export",
-      "evaluate",
-      "feedback",
-    ];
-    const completedCore = ["generate", "sanitize", "dataset_eval", "train", "export"].filter(
-      (stage) => latestComplete[stage],
-    ).length;
-    const hasErrors = Object.keys(latestError).length > 0;
-    const pipelineHealth =
-      completedCore === 5 ? "healthy" : completedCore > 0 && !hasErrors ? "partial" : hasErrors ? "error" : "empty";
-
-    res.json({
-      npc_key: npcKey,
-      pipeline_health: pipelineHealth,
-      stages: Object.fromEntries(
-        stages.map((stage) => [
-          stage,
-          {
-            latest_complete: latestComplete[stage] ?? null,
-            latest_error: latestError[stage] ?? null,
-          },
-        ]),
-      ),
-    });
+    res.json(buildNpcStatusFromReadinessPlan(plan));
   });
 }
 

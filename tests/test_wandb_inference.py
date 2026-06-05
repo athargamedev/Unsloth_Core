@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from scripts.ops.wandb_inference import WandbInferenceClient, extract_json_object, wandb_inference_project
+from scripts.ops.wandb_inference import (
+    WandbInferenceClient,
+    extract_json_object,
+    wandb_inference_project,
+)
 
 
 def test_extract_json_object_from_model_text():
@@ -24,7 +28,9 @@ def test_wandb_inference_client_posts_openai_project(monkeypatch):
     monkeypatch.setenv("WANDB_API_KEY", "test-key")
     monkeypatch.setattr("scripts.ops.wandb_inference.requests.post", fake_post)
 
-    client = WandbInferenceClient(model="meta-llama/Llama-3.1-8B-Instruct", entity="team", project="proj")
+    client = WandbInferenceClient(
+        model="meta-llama/Llama-3.1-8B-Instruct", entity="team", project="proj"
+    )
     assert client.chat([{"role": "user", "content": "hi"}]) == "ok"
     assert captured["url"].endswith("/chat/completions")
     assert captured["headers"]["Authorization"] == "Bearer test-key"

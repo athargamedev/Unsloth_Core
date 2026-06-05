@@ -9,11 +9,10 @@ degradation when credentials are missing.
 from __future__ import annotations
 
 import json
-import os
 import sys
-from pathlib import Path
 from argparse import Namespace
-from unittest.mock import MagicMock, call, patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -298,7 +297,7 @@ def test_dataset_eval_confident_without_api_key(monkeypatch, tmp_path, capsys):
         with pytest.raises(SystemExit) as exc_info:
             run_deepeval(args, _demo_spec())
 
-        # SystemExit is raised with a string message; the code attribute holds the message
+            # SystemExit is raised with a string message; the code attribute holds the message
             assert exc_info.value.code is not None
             assert "Error: --confident was passed but CONFIDENT_API_KEY" in str(exc_info.value.code)
 
@@ -362,7 +361,10 @@ def test_dataset_eval_remote_eval_sets_judge_provider_confident(monkeypatch, tmp
         patch("scripts.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
         patch("scripts.dataset.dataset_eval.ConfidentAPIClient", return_value=mock_client),
         patch("scripts.dataset.dataset_eval.summarize_jsonl_dataset", return_value=dataset_summary),
-        patch("scripts.dataset.dataset_eval.expected_examples_per_category", return_value=expected_dist),
+        patch(
+            "scripts.dataset.dataset_eval.expected_examples_per_category",
+            return_value=expected_dist,
+        ),
         patch("scripts.dataset.dataset_eval.calculate_distribution_gaps", return_value=[]),
         patch("scripts.dataset.dataset_eval.load_optional_json", return_value=None),
         patch("scripts.dataset.dataset_eval.sanitizer_quality_issues", return_value=({}, [])),
@@ -497,7 +499,6 @@ def test_dataset_eval_remote_eval_calls_confident_api(monkeypatch, tmp_path):
     }
 
     dataset_summary = {"total": 1, "by_category": {"teaching": 1}, "unknown_rows": 0}
-    expected_dist = {"teaching": 1}
 
     with (
         patch("scripts.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
@@ -527,10 +528,13 @@ def test_dataset_eval_remote_eval_calls_confident_api(monkeypatch, tmp_path):
         call_args, call_kwargs = mock_client.evaluate.call_args
         assert len(call_args) >= 2
         assert isinstance(call_args[0], list), "First positional arg should be test_cases list"
-        assert isinstance(call_args[1], dict), "Second positional arg should be metric_collection dict"
+        assert isinstance(call_args[1], dict), (
+            "Second positional arg should be metric_collection dict"
+        )
         assert call_args[1]["name"] == "npc-dataset-quality", "Metric collection name should match"
-        assert call_kwargs.get("identifier") == "custom-eval-id", \
+        assert call_kwargs.get("identifier") == "custom-eval-id", (
             "Identifier should be passed as keyword arg 'identifier'"
+        )
 
 
 # ===================================================================
@@ -552,11 +556,15 @@ def test_evaluate_argparse_accepts_remote_eval():
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--remote-eval", action="store_true", default=False)
 
-    args = parser.parse_args([
-        "--baseline", "old.gguf",
-        "--candidate", "new.gguf",
-        "--remote-eval",
-    ])
+    args = parser.parse_args(
+        [
+            "--baseline",
+            "old.gguf",
+            "--candidate",
+            "new.gguf",
+            "--remote-eval",
+        ]
+    )
     assert args.remote_eval is True
     assert args.baseline == "old.gguf"
     assert args.candidate == "new.gguf"
@@ -571,10 +579,14 @@ def test_evaluate_argparse_remote_eval_default_false():
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--remote-eval", action="store_true", default=False)
 
-    args = parser.parse_args([
-        "--baseline", "old.gguf",
-        "--candidate", "new.gguf",
-    ])
+    args = parser.parse_args(
+        [
+            "--baseline",
+            "old.gguf",
+            "--candidate",
+            "new.gguf",
+        ]
+    )
     assert args.remote_eval is False
 
 
@@ -590,12 +602,16 @@ def test_evaluate_remote_eval_uses_confident_api(monkeypatch, tmp_path):
     monkeypatch.setenv("CONFIDENT_API_KEY", "test-key-123")
 
     spec_path = tmp_path / "spec.json"
-    spec_path.write_text(json.dumps({
-        "npc_key": "demo_npc",
-        "npc_name": "DemoNpc",
-        "subject": "Demo Studies",
-        "system_prompt": "You are DemoNpc.",
-    }))
+    spec_path.write_text(
+        json.dumps(
+            {
+                "npc_key": "demo_npc",
+                "npc_name": "DemoNpc",
+                "subject": "Demo Studies",
+                "system_prompt": "You are DemoNpc.",
+            }
+        )
+    )
 
     args = _make_evaluate_args(
         remote_eval=True,
@@ -609,7 +625,11 @@ def test_evaluate_remote_eval_uses_confident_api(monkeypatch, tmp_path):
         "npc_key": "demo_npc",
         "system_prompt": "You are DemoNpc.",
         "evaluation": [
-            {"question": "What is demo?", "expected_output": "Demo is a test.", "category": "general"},
+            {
+                "question": "What is demo?",
+                "expected_output": "Demo is a test.",
+                "category": "general",
+            },
         ],
     }
 
@@ -642,7 +662,9 @@ def test_evaluate_remote_eval_uses_confident_api(monkeypatch, tmp_path):
             "difficulty": "unknown",
             "format": "eval_question",
         }
-        assert call_args[1]["name"] == "npc-model-quality", "Metric collection name should be npc-model-quality"
+        assert call_args[1]["name"] == "npc-model-quality", (
+            "Metric collection name should be npc-model-quality"
+        )
 
 
 # ===================================================================
@@ -657,12 +679,16 @@ def test_evaluate_remote_eval_includes_confident_url_in_manifest(monkeypatch, tm
     monkeypatch.setenv("CONFIDENT_API_KEY", "test-key-123")
 
     spec_path = tmp_path / "spec.json"
-    spec_path.write_text(json.dumps({
-        "npc_key": "demo_npc",
-        "npc_name": "DemoNpc",
-        "subject": "Demo Studies",
-        "system_prompt": "You are DemoNpc.",
-    }))
+    spec_path.write_text(
+        json.dumps(
+            {
+                "npc_key": "demo_npc",
+                "npc_name": "DemoNpc",
+                "subject": "Demo Studies",
+                "system_prompt": "You are DemoNpc.",
+            }
+        )
+    )
 
     args = _make_evaluate_args(
         remote_eval=True,
@@ -676,7 +702,11 @@ def test_evaluate_remote_eval_includes_confident_url_in_manifest(monkeypatch, tm
         "npc_key": "demo_npc",
         "system_prompt": "You are DemoNpc.",
         "evaluation": [
-            {"question": "What is demo?", "expected_output": "Demo is a test.", "category": "general"},
+            {
+                "question": "What is demo?",
+                "expected_output": "Demo is a test.",
+                "category": "general",
+            },
         ],
     }
 
@@ -697,18 +727,24 @@ def test_evaluate_remote_eval_includes_confident_url_in_manifest(monkeypatch, tm
     with (
         patch("scripts.evaluation.evaluate.ConfidentAPIClient", return_value=mock_client),
         patch("scripts.evaluation.evaluate.ensure_confident_api_key", return_value=True),
-        patch("src.core.ops.pipeline_manifest.record_pipeline_stage", side_effect=_capture_manifest),
+        patch(
+            "src.core.ops.pipeline_manifest.record_pipeline_stage", side_effect=_capture_manifest
+        ),
     ):
         _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=spec_data)
 
-        assert "confident_url" in captured_metadata, \
+        assert "confident_url" in captured_metadata, (
             "Manifest metadata should include confident_url"
-        assert "manifest-run-001" in captured_metadata["confident_url"], \
+        )
+        assert "manifest-run-001" in captured_metadata["confident_url"], (
             "confident_url should reference the test run ID"
-        assert captured_metadata.get("remote_eval") is True, \
+        )
+        assert captured_metadata.get("remote_eval") is True, (
             "Manifest metadata should mark remote_eval as True"
-        assert captured_metadata.get("test_run_id") == "manifest-run-001", \
+        )
+        assert captured_metadata.get("test_run_id") == "manifest-run-001", (
             "Manifest metadata should include test_run_id"
+        )
 
 
 # ===================================================================
@@ -724,12 +760,16 @@ def test_evaluate_run_deepeval_handles_confident_api_key_failure(monkeypatch, tm
     monkeypatch.setenv("CONFIDENT_API_KEY", "test-key-123")
 
     spec_path = tmp_path / "spec.json"
-    spec_path.write_text(json.dumps({
-        "npc_key": "demo_npc",
-        "npc_name": "DemoNpc",
-        "subject": "Demo Studies",
-        "system_prompt": "You are DemoNpc.",
-    }))
+    spec_path.write_text(
+        json.dumps(
+            {
+                "npc_key": "demo_npc",
+                "npc_name": "DemoNpc",
+                "subject": "Demo Studies",
+                "system_prompt": "You are DemoNpc.",
+            }
+        )
+    )
 
     args = _make_evaluate_args(
         remote_eval=False,
@@ -741,8 +781,10 @@ def test_evaluate_run_deepeval_handles_confident_api_key_failure(monkeypatch, tm
     candidate_path.write_text("stub")
 
     with (
-        patch("scripts.evaluation.evaluate.ensure_confident_api_key",
-              side_effect=EnvironmentError("CONFIDENT_API_KEY not set")),
+        patch(
+            "scripts.evaluation.evaluate.ensure_confident_api_key",
+            side_effect=OSError("CONFIDENT_API_KEY not set"),
+        ),
     ):
         # Should return gracefully without raising or calling evaluate()
         _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data={})

@@ -17,8 +17,8 @@ from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 def load_model(model_id, adapter_path):
     """Load model and LoRA adapter via unsloth."""
-    from unsloth import FastLanguageModel
     import torch
+    from unsloth import FastLanguageModel
 
     print(f"  Loading base model: {model_id}")
     model, tokenizer = FastLanguageModel.from_pretrained(
@@ -31,13 +31,21 @@ def load_model(model_id, adapter_path):
     model = FastLanguageModel.get_peft_model(
         model,
         r=16,
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                        "gate_proj", "up_proj", "down_proj"],
+        target_modules=[
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ],
         lora_alpha=16,
         use_gradient_checkpointing="unsloth",
     )
     # Load the adapter weights
     from peft import PeftModel
+
     model = PeftModel.from_pretrained(model, adapter_path)
     model.eval()
     return model, tokenizer
@@ -63,7 +71,7 @@ def run_inference(model, tokenizer, prompt, system_prompt):
             do_sample=True,
             pad_token_id=tokenizer.eos_token_id,
         )
-    response = tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
+    response = tokenizer.decode(outputs[0][inputs.input_ids.shape[1] :], skip_special_tokens=True)
     return response.strip()
 
 
@@ -73,10 +81,15 @@ def main():
     parser.add_argument("--spec", required=True, help="Subject spec JSON path")
     parser.add_argument("--output", default=None, help="Output report path")
     parser.add_argument("--feedback-json", default=None, help="Feedback JSON output path")
-    parser.add_argument("--workflow-hooks", default=None,
-                        help="Path to a JSONL hook log for step tracing (default: <adapter-dir>/workflow_hooks.jsonl)")
+    parser.add_argument(
+        "--workflow-hooks",
+        default=None,
+        help="Path to a JSONL hook log for step tracing (default: <adapter-dir>/workflow_hooks.jsonl)",
+    )
     parser.add_argument("--wandb", action="store_true", help="Enable W&B logging")
-    parser.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    parser.add_argument(
+        "--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)"
+    )
     parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
     args = parser.parse_args()
 
@@ -86,7 +99,6 @@ def main():
         spec_path=args.spec,
     )
     with hook_recorder.step("quick_eval", adapter=args.adapter, spec=args.spec):
-
         # Load spec
         with open(args.spec) as f:
             spec = json.load(f)
@@ -126,15 +138,17 @@ def main():
                 category = q.get("category", "general")
                 concept = q.get("concept", "general")
 
-                print(f"  [{i+1}/{len(questions)}] {category}/{concept}: {prompt[:60]}...")
+                print(f"  [{i + 1}/{len(questions)}] {category}/{concept}: {prompt[:60]}...")
                 response = run_inference(model, tokenizer, prompt, system_prompt)
-                results.append({
-                    "question": prompt,
-                    "expected": expected,
-                    "response": response,
-                    "category": category,
-                    "concept": concept,
-                })
+                results.append(
+                    {
+                        "question": prompt,
+                        "expected": expected,
+                        "response": response,
+                        "category": category,
+                        "concept": concept,
+                    }
+                )
                 # Print first 200 chars of response
                 print(f"    → {response[:200]}")
 
@@ -167,9 +181,9 @@ def main():
                 # Simple quality heuristic: longer responses are better (avoid empty/terse)
                 quality = max(0, min(50, len(r["response"]) / 5))
                 per_concept[key]["avg_candidate_quality"] = (
-                    (per_concept[key]["avg_candidate_quality"] * (per_concept[key]["total"] - 1) + quality)
-                    / per_concept[key]["total"]
-                )
+                    per_concept[key]["avg_candidate_quality"] * (per_concept[key]["total"] - 1)
+                    + quality
+                ) / per_concept[key]["total"]
                 # Check for constraint violations (model refusing or giving non-answer)
                 if "cannot" in r["response"].lower() and "teach" in r["response"].lower():
                     per_concept[key]["constraint_violations"] += 1
@@ -195,8 +209,10 @@ def main():
         # ── W&B Quick Eval Tracking ─────────────────────────────────────────
         if args.wandb:
             try:
-                import wandb as _wandb
                 import re as _re
+
+                import wandb as _wandb
+
                 qualities = []
                 lengths = []
                 sentences_ok = 0
@@ -207,7 +223,7 @@ def main():
                     lengths.append(len(resp))
                     quality = max(0, min(50, len(resp) / 5))
                     qualities.append(quality)
-                    sentence_count = len(_re.split(r'[.!?]+', resp.strip())) - 1
+                    sentence_count = len(_re.split(r"[.!?]+", resp.strip())) - 1
                     if sentence_count > 1:
                         sentences_ok += 1
                     if not ("cannot" in resp.lower() and "teach" in resp.lower()):
@@ -230,23 +246,25 @@ def main():
                 )
                 if _wandb_run and getattr(_wandb_run, "url", None):
                     print(f"  [wandb] Run URL: {_wandb_run.url}")
-                _wandb.log({
-                    "quick_eval/avg_quality": avg_quality,
-                    "quick_eval/avg_sentences": sentences_ok / total_q if total_q else 0,
-                    "quick_eval/avg_length": avg_length,
-                    "quick_eval/sentences_ok": sentences_ok,
-                    "quick_eval/sentences_fail": total_q - sentences_ok,
-                    "quick_eval/no_ai_disclaimer": no_ai_disclaimers,
-                    "quick_eval/ai_disclaimer_violations": total_q - no_ai_disclaimers,
-                    "quick_eval/total": total_q,
-                })
+                _wandb.log(
+                    {
+                        "quick_eval/avg_quality": avg_quality,
+                        "quick_eval/avg_sentences": sentences_ok / total_q if total_q else 0,
+                        "quick_eval/avg_length": avg_length,
+                        "quick_eval/sentences_ok": sentences_ok,
+                        "quick_eval/sentences_fail": total_q - sentences_ok,
+                        "quick_eval/no_ai_disclaimer": no_ai_disclaimers,
+                        "quick_eval/ai_disclaimer_violations": total_q - no_ai_disclaimers,
+                        "quick_eval/total": total_q,
+                    }
+                )
                 _wandb.finish()
-            except Exception as e:
+            except Exception:
                 print("  [wandb] Quick eval W&B logging failed (non-fatal)")
 
         # Print summary
         print(f"\n{'=' * 50}")
-        print(f"  EVALUATION SUMMARY")
+        print("  EVALUATION SUMMARY")
         print(f"{'=' * 50}")
         for r in results:
             cat_concept = f"{r['category']}/{r['concept']}"

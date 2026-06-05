@@ -9,7 +9,7 @@ so remote execution stays aligned with local scripts.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -61,46 +61,52 @@ def build_notebook(
     if not preset_path.exists():
         preset_path = project_root / "configs" / "presets" / f"{preset}.yaml"
     if preset_path.exists():
-        with open(preset_path, "r", encoding="utf-8") as f:
+        with open(preset_path, encoding="utf-8") as f:
             preset_yaml_content = f.read()
 
     # Read local subject spec content
     spec_json_content = ""
     local_spec_path = project_root / spec_relpath
     if local_spec_path.exists():
-        with open(local_spec_path, "r", encoding="utf-8") as f:
+        with open(local_spec_path, encoding="utf-8") as f:
             spec_json_content = f.read()
 
     # Read local dataset files if they exist to embed them directly in the notebook
     train_jsonl_content = ""
     local_train_path = project_root / ds_train
     if local_train_path.exists():
-        with open(local_train_path, "r", encoding="utf-8") as f:
+        with open(local_train_path, encoding="utf-8") as f:
             train_jsonl_content = f.read()
 
     clean_jsonl_content = ""
     local_clean_path = project_root / ds_clean
     if local_clean_path.exists():
-        with open(local_clean_path, "r", encoding="utf-8") as f:
+        with open(local_clean_path, encoding="utf-8") as f:
             clean_jsonl_content = f.read()
 
     val_jsonl_content = ""
     ds_val = f"subjects/datasets/{npc_key}/{technique}/validation.jsonl"
     local_val_path = project_root / ds_val
     if local_val_path.exists():
-        with open(local_val_path, "r", encoding="utf-8") as f:
+        with open(local_val_path, encoding="utf-8") as f:
             val_jsonl_content = f.read()
 
     # Auto-detect repo URL from local git remote if not provided
     if repo_url is None:
         try:
             import subprocess as _sp
+
             result = _sp.run(
                 ["git", "remote", "get-url", "origin"],
-                capture_output=True, text=True, check=False, timeout=5,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
             )
-            repo_url = (result.stdout or "").strip() or "https://github.com/athargamedev/Unsloth_Core.git"
-        except Exception as e:
+            repo_url = (
+                result.stdout or ""
+            ).strip() or "https://github.com/athargamedev/Unsloth_Core.git"
+        except Exception:
             repo_url = "https://github.com/athargamedev/Unsloth_Core.git"
 
     markdown = f"""
@@ -197,7 +203,7 @@ else:
         if (parent / "ucore").exists() and (parent / "scripts").exists():
             repo_dir = parent
             break
-    
+
     if repo_dir:
         print("Detected local repository root at:", repo_dir)
         os.chdir(repo_dir)
@@ -269,7 +275,7 @@ if not os.path.exists(clean_jsonl) and not os.path.exists(train_jsonl):
     cmd = f"{{python_bin}} ucore generate subjects/{{spec}} --technique {{fallback_tech}}"
     print('Running:', cmd)
     subprocess.run(['bash', '-c', cmd], check=True)
-    
+
     fallback_raw = f"subjects/datasets/{npc_key}/{{fallback_tech}}/train.jsonl"
     sanitize_cmd = f"{{python_bin}} ucore sanitize {{fallback_raw}} --output {{clean_jsonl}} --strict-canonical"
     print('Running:', sanitize_cmd)
@@ -379,13 +385,13 @@ import json
 PLAN = {plan_json}
 print(json.dumps(PLAN, indent=2))
 """
-    hf_login_code = f"""
+    hf_login_code = """
 # @title 🔑 Hugging Face Authentication (Optional/Recommended for Gated Models)
 # @markdown Many models (like Llama 3.1 & 3.2) are gated and require Meta's license agreement.
 # @markdown Visit the model page on Hugging Face to accept terms: https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct
 # @markdown Create a Read access token at https://huggingface.co/settings/tokens and paste it below:
 
-HF_TOKEN = "" # @param {{type:"string"}}
+HF_TOKEN = "" # @param {type:"string"}
 
 if HF_TOKEN:
     import os
@@ -398,7 +404,7 @@ if HF_TOKEN:
     except ImportError:
         print("huggingface_hub library not found, but environment variable is set.")
     except Exception as e:
-        print(f"Hugging Face login failed: {{e}}")
+        print(f"Hugging Face login failed: {e}")
 else:
     print("No token provided. If you get 401 Unauthorized errors during training, please obtain a token and re-run this cell.")
 """
@@ -426,7 +432,7 @@ else:
                 "version": "3",
             },
             "unsloth_core": {
-                "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+                "generated_at_utc": datetime.now(UTC).isoformat(),
                 "npc_key": npc_key,
                 "preset": preset,
             },

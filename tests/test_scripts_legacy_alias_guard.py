@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 
 
-
 def load_local_scripts_module():
     repo_root = Path(__file__).resolve().parents[1]
     module_path = repo_root / "scripts" / "__init__.py"

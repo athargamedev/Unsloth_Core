@@ -46,7 +46,9 @@ def test_llm_sanity_checker_can_use_inference_server_judge_endpoint(tmp_path, mo
     assert posts[0]["url"] == "http://127.0.0.1:8765/judge"
     assert posts[0]["json"]["model"] == "qwen2.5:7b"
     assert posts[0]["json"]["input"] == "How do I know chicken is safe?"
-    assert posts[0]["json"]["actual_output"] == "Cook chicken until the thickest part reaches 165°F."
+    assert (
+        posts[0]["json"]["actual_output"] == "Cook chicken until the thickest part reaches 165°F."
+    )
     assert posts[0]["json"]["context"] == ["No context provided."]
     assert "Classify the quality" in posts[0]["json"]["rubric"]
 

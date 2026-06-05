@@ -14,7 +14,7 @@ import json
 import re
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -128,7 +128,7 @@ def _classifier_hints(metadata: dict[str, Any], text: str, turn_type: str) -> di
     """
     category = str(metadata.get("category") or "").lower()
     concept = str(metadata.get("concept") or "").lower()
-    combined = f"{category} {concept} {text}".lower()
+    f"{category} {concept} {text}".lower()
     quality = metadata.get("quality_score")
 
     if turn_type == "conversational":
@@ -168,7 +168,9 @@ def _classifier_hints(metadata: dict[str, Any], text: str, turn_type: str) -> di
     }
 
 
-def _infer_npc_technique_from_dataset(dataset_path: Path, rows: list[dict[str, Any]] = None) -> tuple[str, str]:
+def _infer_npc_technique_from_dataset(
+    dataset_path: Path, rows: list[dict[str, Any]] = None
+) -> tuple[str, str]:
     npc_key = None
     technique = None
     if rows:
@@ -240,7 +242,9 @@ class ConfidentGoldensConverter:
             assistant_content = messages[2].get("content", "")
 
             custom_columns = {
-                "npc_key": str(metadata.get("npc_key") or self.spec.get("npc_key") or "unknown_npc"),
+                "npc_key": str(
+                    metadata.get("npc_key") or self.spec.get("npc_key") or "unknown_npc"
+                ),
                 "category": str(metadata.get("category") or "unknown"),
                 "concept": str(metadata.get("concept") or "unknown"),
                 "difficulty": str(metadata.get("difficulty") or "unknown"),
@@ -253,8 +257,18 @@ class ConfidentGoldensConverter:
             }
 
             additional = {
-                k: v for k, v in metadata.items()
-                if k not in ["npc_key", "category", "concept", "difficulty", "technique", "source", "split"]
+                k: v
+                for k, v in metadata.items()
+                if k
+                not in [
+                    "npc_key",
+                    "category",
+                    "concept",
+                    "difficulty",
+                    "technique",
+                    "source",
+                    "split",
+                ]
             }
             if "system_prompt_hash" not in additional and messages:
                 sys_prompt = messages[0].get("content", "")
@@ -281,17 +295,37 @@ class ConfidentGoldensConverter:
             return "single", golden_dict
 
         else:
-            scenario = metadata.get("scenario_name") or metadata.get("concept") or "NPC Conversational Flow"
-            user_desc = self.spec.get("relationship_to_player") or self.spec.get("player_archetype") or "Game player speaking with the NPC"
+            scenario = (
+                metadata.get("scenario_name")
+                or metadata.get("concept")
+                or "NPC Conversational Flow"
+            )
+            user_desc = (
+                self.spec.get("relationship_to_player")
+                or self.spec.get("player_archetype")
+                or "Game player speaking with the NPC"
+            )
 
-            assistant_turns = [m.get("content", "") for m in messages if m.get("role") == "assistant"]
+            assistant_turns = [
+                m.get("content", "") for m in messages if m.get("role") == "assistant"
+            ]
             last_assistant = assistant_turns[-1] if assistant_turns else ""
-            expected_outcome = metadata.get("expected_outcome") or last_assistant or "Assistant should satisfy the scenario while preserving prior user facts and NPC role constraints."
+            expected_outcome = (
+                metadata.get("expected_outcome")
+                or last_assistant
+                or "Assistant should satisfy the scenario while preserving prior user facts and NPC role constraints."
+            )
 
-            turns = [{"role": turn["role"], "content": turn["content"]} for turn in messages if turn["role"] != "system"]
+            turns = [
+                {"role": turn["role"], "content": turn["content"]}
+                for turn in messages
+                if turn["role"] != "system"
+            ]
 
             custom_columns = {
-                "npc_key": str(metadata.get("npc_key") or self.spec.get("npc_key") or "unknown_npc"),
+                "npc_key": str(
+                    metadata.get("npc_key") or self.spec.get("npc_key") or "unknown_npc"
+                ),
                 "category": str(metadata.get("category") or "unknown"),
                 "concept": str(metadata.get("concept") or "unknown"),
                 "difficulty": str(metadata.get("difficulty") or "unknown"),
@@ -305,11 +339,23 @@ class ConfidentGoldensConverter:
             }
 
             additional = {
-                k: v for k, v in metadata.items()
-                if k not in ["npc_key", "category", "concept", "difficulty", "technique", "source", "split"]
+                k: v
+                for k, v in metadata.items()
+                if k
+                not in [
+                    "npc_key",
+                    "category",
+                    "concept",
+                    "difficulty",
+                    "technique",
+                    "source",
+                    "split",
+                ]
             }
             if "system_prompt_hash" not in additional and messages:
-                sys_prompt = next((m.get("content", "") for m in messages if m.get("role") == "system"), "")
+                sys_prompt = next(
+                    (m.get("content", "") for m in messages if m.get("role") == "system"), ""
+                )
                 additional["system_prompt_hash"] = _sha_text(sys_prompt) if sys_prompt else None
             if "reference_doc_hash" not in additional:
                 ref_doc_val = self.spec.get("reference_doc")
@@ -334,12 +380,19 @@ class ConfidentGoldensConverter:
             }
             return "conversational", golden_dict
 
-    def project_dataset(self, spec_path: Path, technique: str, output_base: Path = None) -> tuple[Path, Path, Path]:
+    def project_dataset(
+        self, spec_path: Path, technique: str, output_base: Path = None
+    ) -> tuple[Path, Path, Path]:
         if not self.train_clean_path:
             npc_key = self.spec.get("npc_key") or "unknown_npc"
 
             # Try to load spec from path to recover the actual npc_key
-            if (not npc_key or npc_key == "unknown_npc") and spec_path and spec_path.exists() and spec_path.is_file():
+            if (
+                (not npc_key or npc_key == "unknown_npc")
+                and spec_path
+                and spec_path.exists()
+                and spec_path.is_file()
+            ):
                 try:
                     loaded_spec = json.loads(spec_path.read_text(encoding="utf-8"))
                     if loaded_spec.get("npc_key"):
@@ -361,7 +414,9 @@ class ConfidentGoldensConverter:
                 if train_path.exists():
                     train_clean_path = train_path
                 else:
-                    raise FileNotFoundError(f"Neither train_clean.jsonl nor train.jsonl found in {dataset_base / npc_key / technique}")
+                    raise FileNotFoundError(
+                        f"Neither train_clean.jsonl nor train.jsonl found in {dataset_base / npc_key / technique}"
+                    )
             self.train_clean_path = train_clean_path
 
         rows = _read_jsonl(self.train_clean_path)
@@ -391,7 +446,9 @@ class ConfidentGoldensConverter:
         # Preserve manually created or pre-existing conversational goldens if they exist in the target path
         if conversational_path.exists():
             existing_conversational = _read_jsonl(conversational_path)
-            seen_scenarios = {cg.get("scenario") for cg in conversational_goldens if cg.get("scenario")}
+            seen_scenarios = {
+                cg.get("scenario") for cg in conversational_goldens if cg.get("scenario")
+            }
             for cg in existing_conversational:
                 scenario = cg.get("scenario")
                 if not scenario or scenario not in seen_scenarios:
@@ -403,10 +460,10 @@ class ConfidentGoldensConverter:
         _write_jsonl(conversational_path, conversational_goldens)
 
         dataset_sha = _sha_file(self.train_clean_path) or ""
-        created_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        created_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
         npc_key = self.spec.get("npc_key") or "unknown_npc"
         default_alias = f"ucore-{_slug(npc_key)}-{_slug(technique)}-single-v1"
-        default_version = f"{datetime.now(timezone.utc).strftime('%Y%m%d')}-{_short_hash(dataset_sha)}"
+        default_version = f"{datetime.now(UTC).strftime('%Y%m%d')}-{_short_hash(dataset_sha)}"
 
         manifest_data = {
             "npc_key": npc_key,
@@ -434,12 +491,16 @@ class ConfidentGoldensConverter:
         }
 
         manifest_path = confident_dir / "push_manifest.json"
-        manifest_path.write_text(json.dumps(manifest_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        manifest_path.write_text(
+            json.dumps(manifest_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
 
         return single_turn_path, conversational_path, manifest_path
 
 
-def project_chatml_rows_to_confident(dataset_path: str | Path, spec_path: str | Path | None = None) -> ConfidentGoldenArtifacts:
+def project_chatml_rows_to_confident(
+    dataset_path: str | Path, spec_path: str | Path | None = None
+) -> ConfidentGoldenArtifacts:
     dataset = Path(dataset_path)
     spec, resolved_spec_path = _load_spec(Path(spec_path) if spec_path else None)
 
@@ -486,14 +547,17 @@ def project_chatml_rows_to_confident(dataset_path: str | Path, spec_path: str | 
             ref_path = paths.PROJECT_ROOT / ref_path
         ref_hash = _sha_file(ref_path) or ""
 
-    version = f"{datetime.now(timezone.utc).strftime('%Y%m%d')}-{_short_hash(dataset_hash)}-{_short_hash(spec_hash)}-{_short_hash(ref_hash)}"
+    version = f"{datetime.now(UTC).strftime('%Y%m%d')}-{_short_hash(dataset_hash)}-{_short_hash(spec_hash)}-{_short_hash(ref_hash)}"
 
     return ConfidentGoldenArtifacts(single_goldens, conversational_goldens, aliases, version)
 
 
 def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("".join(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n" for row in rows), encoding="utf-8")
+    path.write_text(
+        "".join(json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n" for row in rows),
+        encoding="utf-8",
+    )
 
 
 def build_confident_artifacts(
@@ -505,7 +569,9 @@ def build_confident_artifacts(
     dataset_str = str(dataset_path)
     if dataset_str.endswith(".json"):
         if not technique:
-            raise ValueError("--technique must be specified when using a subject spec JSON path as the dataset argument.")
+            raise ValueError(
+                "--technique must be specified when using a subject spec JSON path as the dataset argument."
+            )
 
         spec, resolved_spec_path = _load_spec(Path(dataset_path))
         npc_key = spec.get("npc_key")
@@ -522,7 +588,9 @@ def build_confident_artifacts(
             if fallback_path.exists():
                 resolved_dataset_path = fallback_path
             else:
-                raise FileNotFoundError(f"Neither train_clean.jsonl nor train.jsonl found in {dataset_base / npc_key / technique}")
+                raise FileNotFoundError(
+                    f"Neither train_clean.jsonl nor train.jsonl found in {dataset_base / npc_key / technique}"
+                )
 
         spec_path = dataset_path
         dataset_path = resolved_dataset_path
@@ -543,7 +611,9 @@ def build_confident_artifacts(
     if not inferred_npc_key:
         inferred_npc_key = "unknown_npc"
 
-    resolved_technique = technique or first_meta.get("technique") or dataset.parent.name or "unknown"
+    resolved_technique = (
+        technique or first_meta.get("technique") or dataset.parent.name or "unknown"
+    )
 
     if "npc_key" not in spec or spec["npc_key"] == "unknown_npc":
         spec["npc_key"] = inferred_npc_key
@@ -555,19 +625,23 @@ def build_confident_artifacts(
     out_dir = Path(output_dir) if output_dir else dataset.parent / "confident"
 
     single_turn_path, conversational_path, manifest_path = converter.project_dataset(
-        spec_path=resolved_spec_path or Path(),
-        technique=resolved_technique,
-        output_base=out_dir
+        spec_path=resolved_spec_path or Path(), technique=resolved_technique, output_base=out_dir
     )
 
     return json.loads(manifest_path.read_text(encoding="utf-8"))
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Project ChatML dataset rows to Confident AI goldens")
-    parser.add_argument("dataset", help="Path to train_clean.jsonl or other ChatML JSONL or NPC spec JSON")
+    parser = argparse.ArgumentParser(
+        description="Project ChatML dataset rows to Confident AI goldens"
+    )
+    parser.add_argument(
+        "dataset", help="Path to train_clean.jsonl or other ChatML JSONL or NPC spec JSON"
+    )
     parser.add_argument("--spec", help="NPC spec JSON for reference_doc/context/provenance")
-    parser.add_argument("--output-dir", help="Output directory (default: dataset sibling confident/)")
+    parser.add_argument(
+        "--output-dir", help="Output directory (default: dataset sibling confident/)"
+    )
     parser.add_argument(
         "--technique",
         choices=["docs", "ollama", "template", "openai", "anthropic"],
@@ -618,15 +692,15 @@ def main() -> None:
 
         # Get values from manifest
         version = manifest.get("version") or manifest.get("default_version")
-        
+
         counts = manifest.get("counts", {})
         single_count = counts.get("single_turn", 0)
         conv_count = counts.get("conversational", 0)
-        
+
         files = manifest.get("files", {})
         single_file = files.get("single_turn")
         conv_file = files.get("conversational")
-        
+
         aliases = manifest.get("aliases", {})
         single_alias = aliases.get("single_turn")
         conv_alias = aliases.get("conversational")

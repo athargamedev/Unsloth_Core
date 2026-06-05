@@ -4,8 +4,17 @@ from src.core.dataset.ollama_artifacts import build_ollama_manifest, write_ollam
 
 
 def test_build_and_write_ollama_artifacts(tmp_path):
-    spec = {"npc_name": "Test", "subject": "history", "dataset": {"examples_per_category": {"teaching": 1}}}
-    examples = [{"messages": [], "metadata": {"category": "teaching", "concept": "x", "difficulty": "beginner"}}]
+    spec = {
+        "npc_name": "Test",
+        "subject": "history",
+        "dataset": {"examples_per_category": {"teaching": 1}},
+    }
+    examples = [
+        {
+            "messages": [],
+            "metadata": {"category": "teaching", "concept": "x", "difficulty": "beginner"},
+        }
+    ]
     manifest = build_ollama_manifest(
         npc_key="test_npc",
         technique="ollama",
@@ -21,7 +30,13 @@ def test_build_and_write_ollama_artifacts(tmp_path):
         temperature=0.6,
         multi_turn_ratio=0.25,
     )
-    out = write_ollama_dataset_artifacts(output_path=tmp_path / "train.jsonl", train_examples=examples, val_examples=[], manifest=manifest, create_version_copy=False)
+    out = write_ollama_dataset_artifacts(
+        output_path=tmp_path / "train.jsonl",
+        train_examples=examples,
+        val_examples=[],
+        manifest=manifest,
+        create_version_copy=False,
+    )
     assert Path(out["output_path"]).exists()
     assert out["val_path"] is None
     assert out["manifest_path"] is not None

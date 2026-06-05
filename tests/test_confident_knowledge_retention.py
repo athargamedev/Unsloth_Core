@@ -38,7 +38,11 @@ def test_remote_case_conversion_splits_single_and_multi_turn_rows(tmp_path):
                 {"role": "user", "content": "Suggest a snack."},
                 {"role": "assistant", "content": "Try apple slices with yogurt, no peanuts."},
             ],
-            "metadata": {"npc_key": "chef_assistant", "category": "dialogue", "concept": "allergy memory"},
+            "metadata": {
+                "npc_key": "chef_assistant",
+                "category": "dialogue",
+                "concept": "allergy memory",
+            },
         },
     ]
     jsonl.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
@@ -55,4 +59,7 @@ def test_remote_case_conversion_splits_single_and_multi_turn_rows(tmp_path):
         {"role": "user", "content": "Suggest a snack."},
         {"role": "assistant", "content": "Try apple slices with yogurt, no peanuts."},
     ]
-    assert conversational[0]["additionalMetadata"]["knowledge_retention_target"] == "user-provided facts across turns"
+    assert (
+        conversational[0]["additionalMetadata"]["knowledge_retention_target"]
+        == "user-provided facts across turns"
+    )

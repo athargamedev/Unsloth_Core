@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 
 def test_target_plan_skips_cached_stage_when_output_signature_matches_inputs(tmp_path):
     from scripts.ops.artifact_registry import ArtifactRegistry
@@ -13,7 +11,9 @@ def test_target_plan_skips_cached_stage_when_output_signature_matches_inputs(tmp
     clean.write_text('{"messages": []}\n', encoding="utf-8")
 
     registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
-    raw_record = registry.record_artifact("run-1", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama")
+    raw_record = registry.record_artifact(
+        "run-1", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama"
+    )
     signature = stage_input_signature("sanitize", [raw_record])
     registry.record_artifact(
         "run-1",
@@ -25,7 +25,9 @@ def test_target_plan_skips_cached_stage_when_output_signature_matches_inputs(tmp
         metadata={"input_signature": signature},
     )
 
-    plan = PipelineDAG(registry=registry).plan_target("sanitize", npc_key="chef_assistant", technique="ollama")
+    plan = PipelineDAG(registry=registry).plan_target(
+        "sanitize", npc_key="chef_assistant", technique="ollama"
+    )
 
     assert plan["ready"] is True
     assert plan["steps"][-1]["stage"] == "sanitize"
@@ -43,7 +45,9 @@ def test_target_plan_marks_stage_stale_when_latest_input_hash_changes(tmp_path):
     clean.write_text("clean from old\n", encoding="utf-8")
 
     registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
-    old_raw_record = registry.record_artifact("run-1", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama")
+    old_raw_record = registry.record_artifact(
+        "run-1", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama"
+    )
     registry.record_artifact(
         "run-1",
         "chef_assistant",
@@ -55,9 +59,13 @@ def test_target_plan_marks_stage_stale_when_latest_input_hash_changes(tmp_path):
     )
 
     raw.write_text("new\n", encoding="utf-8")
-    registry.record_artifact("run-2", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama")
+    registry.record_artifact(
+        "run-2", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama"
+    )
 
-    plan = PipelineDAG(registry=registry).plan_target("sanitize", npc_key="chef_assistant", technique="ollama")
+    plan = PipelineDAG(registry=registry).plan_target(
+        "sanitize", npc_key="chef_assistant", technique="ollama"
+    )
 
     sanitize_step = plan["steps"][-1]
     assert plan["ready"] is False
@@ -89,10 +97,16 @@ def test_target_plan_marks_existing_output_without_lineage_inconclusive(tmp_path
     clean = tmp_path / "train_clean.jsonl"
     clean.write_text("clean\n", encoding="utf-8")
     registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
-    registry.record_artifact("run-1", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama")
-    registry.record_artifact("legacy-run", "chef_assistant", "sanitize", "dataset_clean", clean, technique="ollama")
+    registry.record_artifact(
+        "run-1", "chef_assistant", "generate", "dataset_raw", raw, technique="ollama"
+    )
+    registry.record_artifact(
+        "legacy-run", "chef_assistant", "sanitize", "dataset_clean", clean, technique="ollama"
+    )
 
-    plan = PipelineDAG(registry=registry).plan_target("sanitize", npc_key="chef_assistant", technique="ollama")
+    plan = PipelineDAG(registry=registry).plan_target(
+        "sanitize", npc_key="chef_assistant", technique="ollama"
+    )
 
     sanitize_step = plan["steps"][-1]
     assert plan["ready"] is False

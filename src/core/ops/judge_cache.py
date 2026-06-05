@@ -12,7 +12,7 @@ import hashlib
 import json
 import sqlite3
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +22,7 @@ SCHEMA_VERSION = 1
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _normalize(value: Any) -> Any:
@@ -37,7 +37,9 @@ def _normalize(value: Any) -> Any:
 
 
 def _json(value: Any) -> str:
-    return json.dumps(_normalize(value), sort_keys=True, ensure_ascii=False, separators=(",", ":"), default=str)
+    return json.dumps(
+        _normalize(value), sort_keys=True, ensure_ascii=False, separators=(",", ":"), default=str
+    )
 
 
 @dataclass(frozen=True)
@@ -95,7 +97,9 @@ class JudgeCache:
         result["hit_count"] += 1
         return result
 
-    def put(self, item: JudgeCacheInput, *, result: dict[str, Any], latency_ms: int | None = None) -> dict[str, Any]:
+    def put(
+        self, item: JudgeCacheInput, *, result: dict[str, Any], latency_ms: int | None = None
+    ) -> dict[str, Any]:
         key = self.make_key(item)
         now = _utc_now()
         payload_json = _json(item.payload())
@@ -153,7 +157,9 @@ class JudgeCache:
             "db_path": str(self.db_path),
             "entries": int(row["entries"]),
             "total_hits": int(row["total_hits"]),
-            "by_judge": {f"{r['judge_provider']}/{r['judge_model']}": int(r["n"]) for r in by_judge_rows},
+            "by_judge": {
+                f"{r['judge_provider']}/{r['judge_model']}": int(r["n"]) for r in by_judge_rows
+            },
         }
 
     def _connect(self) -> sqlite3.Connection:

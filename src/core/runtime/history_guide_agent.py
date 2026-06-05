@@ -5,16 +5,18 @@ from typing import Annotated, Any, Literal, TypedDict
 from langchain_core.messages import HumanMessage, ToolMessage
 from langchain_core.tools import tool
 from langchain_ollama import ChatOllama
-from langgraph.graph import StateGraph, START
+from langgraph.graph import START, StateGraph
 from langgraph.graph.message import add_messages
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-HISTORY_GUIDE_PRIMER_PATH = PROJECT_ROOT / "data" / "npcs" / "reference_docs" / "history_guide_primer.md"
+HISTORY_GUIDE_PRIMER_PATH = (
+    PROJECT_ROOT / "data" / "npcs" / "reference_docs" / "history_guide_primer.md"
+)
 NPC_KEY = "history_guide"
 DEFAULT_CATEGORY = "dialogue"
 
 from src.core.tracing.confident_observatory import build_npc_trace_metadata
-from src.core.tracing.deepeval_tracing import configure_tracing
+
 
 def build_history_guide_trace_metadata(
     query: str,
@@ -37,9 +39,9 @@ def build_history_guide_trace_metadata(
     )
 
 
-
 try:
     from src.core.vector_db.supabase_pgvector import SupabaseVectorDB, get_embedder
+
     VECTOR_DB_AVAILABLE = True
 except ImportError:
     SupabaseVectorDB = Any  # type: ignore
@@ -57,7 +59,7 @@ def _get_vector_db() -> SupabaseVectorDB | None:  # type: ignore[name-defined]
         return None
     try:
         return SupabaseVectorDB(table="history_guide_lore")
-    except (EnvironmentError, Exception):
+    except (OSError, Exception):
         return None
 
 
@@ -161,11 +163,10 @@ app = workflow.compile()
 def _run_history_guide_traced(query: str, dialogue_id: str | None = None) -> str:
     inputs = {"messages": [HumanMessage(content=query)], "dialogue_id": dialogue_id}
     from deepeval.integrations.langchain import CallbackHandler
+
     final_state = app.invoke(inputs, config={"callbacks": [CallbackHandler()]})
     output = final_state["messages"][-1].content
     return output
-
-
 
 
 def run_history_guide(query: str, dialogue_id: str | None = None) -> str:

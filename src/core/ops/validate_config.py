@@ -9,7 +9,6 @@ Usage:
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -20,7 +19,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import paths
 from src.config.workflow_context import resolve_workflow_context
-from src.core.training.train import load_config, get_available_presets
+from src.core.training.train import get_available_presets, load_config
 
 
 def _is_canonical_dataset_path(path_str: str) -> bool:
@@ -29,7 +28,7 @@ def _is_canonical_dataset_path(path_str: str) -> bool:
         p = (PROJECT_ROOT / p).resolve()
     try:
         rel = p.relative_to(paths.dataset_root().resolve())
-    except Exception as e:
+    except Exception:
         return False
     parts = rel.parts
     return len(parts) >= 3 and parts[2] in {"train.jsonl", "train_clean.jsonl"}
@@ -44,7 +43,7 @@ def _extract_dataset_info(path_str: str):
         parts = rel.parts
         if len(parts) >= 3:
             return parts[0], parts[1], parts[2]
-    except Exception as e:
+    except Exception:
         pass
     return None, None, None
 
@@ -67,7 +66,9 @@ def validate(args):
         spec_technique = spec.get("technique") or spec.get("dataset", {}).get("technique")
         workflow = resolve_workflow_context(spec_path, spec=spec, technique=spec_technique)
         spec_technique = workflow.technique
-        config_path = PROJECT_ROOT / "configs" / "lora-sft-base.yaml"  # TODO: use paths.config_root() when available
+        config_path = (
+            PROJECT_ROOT / "configs" / "lora-sft-base.yaml"
+        )  # TODO: use paths.config_root() when available
     else:
         npc_key = args.npc_key
         config_path = Path(args.config)
@@ -90,7 +91,9 @@ def validate(args):
 
     model_id = config.get("model", "")
     if "-bnb-4bit" not in model_id:
-        warnings.append(f"Model '{model_id}' does not include '-bnb-4bit' suffix (recommended for Unsloth workflow).")
+        warnings.append(
+            f"Model '{model_id}' does not include '-bnb-4bit' suffix (recommended for Unsloth workflow)."
+        )
     if "llama" not in model_id.lower():
         warnings.append(
             f"Model '{model_id}' is non-Llama. This project is optimized for Llama-based Unity dialogue deployment."
@@ -117,14 +120,18 @@ def validate(args):
         if d_npc and npc_key and d_npc != npc_key:
             warnings.append(f"Dataset npc_key '{d_npc}' differs from target npc_key '{npc_key}'.")
         if d_technique and d_technique not in paths.DATASET_TECHNIQUES:
-            warnings.append(f"Dataset technique '{d_technique}' is not in {paths.DATASET_TECHNIQUES}.")
+            warnings.append(
+                f"Dataset technique '{d_technique}' is not in {paths.DATASET_TECHNIQUES}."
+            )
         recommended_technique = spec_technique or d_technique or "template"
         if d_technique and d_technique != recommended_technique:
             warnings.append(
                 f"Technique '{d_technique}' selected. For production training of '{npc_key}', {recommended_technique} is recommended."
             )
         if d_file and d_file not in {"train.jsonl", "train_clean.jsonl"}:
-            warnings.append(f"Dataset file should be train.jsonl or train_clean.jsonl, got {d_file}.")
+            warnings.append(
+                f"Dataset file should be train.jsonl or train_clean.jsonl, got {d_file}."
+            )
 
     raw_output_dir = (
         config.get("training", {}).get("output_dir")
@@ -139,7 +146,7 @@ def validate(args):
             out_dir = PROJECT_ROOT / out_dir
         try:
             out_dir.resolve().relative_to(paths.output_root().resolve())
-        except Exception as e:
+        except Exception:
             warnings.append(f"Output dir '{out_dir}' is outside project outputs/.")
 
     resolved = {
@@ -165,7 +172,9 @@ def main():
     parser.add_argument("--npc-key", help="npc_key when using --config directly")
     parser.add_argument("--format", choices=["yaml", "json"], default="yaml", help="Output format")
     parser.add_argument("--strict", action="store_true", help="Treat warnings as errors")
-    parser.add_argument("--require-canonical", action="store_true", help="Require canonical dataset train path")
+    parser.add_argument(
+        "--require-canonical", action="store_true", help="Require canonical dataset train path"
+    )
 
     args = parser.parse_args()
 

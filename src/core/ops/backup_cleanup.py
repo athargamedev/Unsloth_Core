@@ -9,10 +9,8 @@ Or via ucore:
 """
 
 import argparse
-import os
 import shutil
 import sys
-from datetime import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
@@ -55,7 +53,7 @@ def run_cleanup(project_root: Path, retain: int = 10, dry_run: bool = False) -> 
     """
     candidates = find_backup_candidates(project_root)
     backups_base = project_root / ".pipeline" / "backups"
-    
+
     moved = 0
     errors = 0
     by_pattern: dict[str, int] = {}
@@ -117,13 +115,19 @@ def run_cleanup(project_root: Path, retain: int = 10, dry_run: bool = False) -> 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Clean up .pre_* backup debris")
-    parser.add_argument("--retain", type=int, default=10, help="Max backups to keep per pattern (default: 10)")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be moved without doing it")
+    parser.add_argument(
+        "--retain", type=int, default=10, help="Max backups to keep per pattern (default: 10)"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be moved without doing it"
+    )
     args = parser.parse_args()
-    
+
     result = run_cleanup(PROJECT_ROOT, retain=args.retain, dry_run=args.dry_run)
-    
-    print(f"\nSummary: {result['moved']} moved, {result['pruned']} pruned, {result['errors']} errors")
+
+    print(
+        f"\nSummary: {result['moved']} moved, {result['pruned']} pruned, {result['errors']} errors"
+    )
     if result["by_pattern"]:
         print("By file type:")
         for pattern, count in sorted(result["by_pattern"].items()):

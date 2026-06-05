@@ -10,8 +10,8 @@ Use it when you are about to touch dataset generation, training, export, evaluat
 - **Active NPCs (2 total):** `history_guide` and `chef_assistant`. Previously active NPCs
   (`astronomy_guide`, `fitness_coach`) have been removed — their specs and datasets no
   longer exist in the repository.
-- NPC specs live at `subjects/NPC_specs/{npc_key}.json`
-- Primers live at `subjects/reference_docs/{npc_key}_primer.md`
+- NPC specs live at `data/npcs/specs/{npc_key}.json`
+- Primers live at `data/npcs/reference_docs/{npc_key}_primer.md`
 - Canonical training runs live at `outputs/{npc_key}/runs/{run_id}/`
 - `outputs/{npc_key}/best` and `outputs/{npc_key}/latest` are pointers, not duplicate run folders
 - GGUF exports live at `exports/{npc_key}/`
@@ -23,29 +23,29 @@ Use it when you are about to touch dataset generation, training, export, evaluat
 
 1. Validate the subject spec
    ```bash
-   ./ucore validate-spec subjects/NPC_specs/<npc>.json --generation-ready
+   ./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
    ```
 
 2. Generate the dataset
    ```bash
-   ./ucore generate subjects/NPC_specs/<npc>.json --technique <technique>
+   ./ucore generate data/npcs/specs/<npc>.json --technique <technique>
    ```
 
 3. Sanitize the dataset
    ```bash
-   ./ucore sanitize subjects/datasets/<npc>/<technique>/train.jsonl \
-     --output subjects/datasets/<npc>/<technique>/train_clean.jsonl \
+   ./ucore sanitize data/datasets/<npc>/<technique>/train.jsonl \
+     --output data/datasets/<npc>/<technique>/train_clean.jsonl \
      --strict-canonical --require-complete-metadata
    ```
 
 4. Run dataset quality gating
    ```bash
-   ./ucore dataset-eval subjects/NPC_specs/<npc>.json --technique <technique> --judge-model qwen3:latest
+   ./ucore dataset-eval data/npcs/specs/<npc>.json --technique <technique> --judge-model qwen3:latest
    ```
 
 5. Train
    ```bash
-   ./ucore train subjects/NPC_specs/<npc>.json --technique <technique> --preset fast-3b --export-gguf
+   ./ucore train data/npcs/specs/<npc>.json --technique <technique> --preset fast-3b --export-gguf
    ```
 
 6. Evaluate
@@ -53,7 +53,7 @@ Use it when you are about to touch dataset generation, training, export, evaluat
    ./ucore evaluate \
      --baseline /path/to/base.gguf \
      --candidate /path/to/outputs/<npc>/runs/<run_id> \
-     --spec subjects/NPC_specs/<npc>.json \
+     --spec data/npcs/specs/<npc>.json \
      --report-html --track --judge --judge-model qwen3:latest
    ```
 

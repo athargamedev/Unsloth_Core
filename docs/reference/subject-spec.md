@@ -1,8 +1,8 @@
-# Subject Specification Schema (subjects/NPC_specs/*.json)
+# Subject Specification Schema (data/npcs/specs/*.json)
 
 > **Cross-reference**: For the complete dataset lifecycle, generation techniques, sanitization rules, training data flow, and minimum requirements, see [`training-workflow.md`](../training-workflow.md).
 
-The `subjects/` directory contains JSON files that define the identity, knowledge, and behavior of an NPC. These files are the primary input for the dataset generation pipeline.
+The `data/npcs/specs/` directory contains JSON files that define the identity, knowledge, and behavior of an NPC. These files are the primary input for the dataset generation pipeline.
 
 ## 📂 Top-Level Fields
 

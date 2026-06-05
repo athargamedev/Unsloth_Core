@@ -30,7 +30,9 @@ def test_ollama_generator_can_route_chat_through_inference_server(monkeypatch):
         max_retries=1,
     )
 
-    result = generator.generate("system prompt", "user prompt", temperature=0.4, max_tokens=99, json_format=True)
+    result = generator.generate(
+        "system prompt", "user prompt", temperature=0.4, max_tokens=99, json_format=True
+    )
 
     assert result == "generated row"
     assert posts[0]["url"] == "http://127.0.0.1:8765/chat"

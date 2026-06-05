@@ -24,11 +24,11 @@ export function validate<T>(schema: z.ZodType<T>) {
 // ── Common schemas ────────────────────────────────────────────────────────
 
 const knownCommands: readonly string[] = [
-  'audit', 'batch-export', 'compare-runs', 'dataset-eval', 'dataset-generate',
+  'audit', 'batch-export', 'compare-canonical-runs', 'compare-runs', 'dataset-eval', 'dataset-generate',
   'dataset-sanitize', 'deploy', 'docs-manifest-generate', 'evaluate', 'export',
   'export-adapter', 'export-resume', 'feedback', 'generate-ollama', 'init',
-  'pipeline', 'plan-batch', 'plan-execution', 'quick-eval', 'smoke',
-  'supabase-check', 'tb-reader', 'track', 'train', 'validate-config',
+  'pipeline', 'plan-batch', 'plan-execution', 'promote', 'quick-eval', 'smoke',
+  'supabase-check', 'target-plan', 'target-run', 'tb-reader', 'track', 'train', 'validate-config',
   'validate-spec',
 ];
 

@@ -5,36 +5,43 @@ import hashlib
 import json
 import logging
 import random
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
-from pathlib import Path
 
-from src.core.dataset.dataset_contracts import generation_request_counts_for_training_targets
 from src.core.dataset.generate_dataset import (
     ConceptExtractor,
-    ReferenceDocRetriever,
     LLMGroundingVerifier,
-    generate_example_async,
+    ReferenceDocRetriever,
     _refusal_user_message,
-    compute_content_hash
+    compute_content_hash,
+    generate_example_async,
 )
-from src.core.dataset.generation_profiles import DialogueGuardrail, _is_history_subject, generate_dialogue_response, generate_identity_response, generate_quest_response, generate_refusal_response, generate_teaching_response
-from src.core.dataset.ollama_prompts import build_generation_prompt as _build_generation_prompt, clean_generic_filler, contains_prompt_leak as _contains_prompt_leak
+from src.core.dataset.generation_profiles import (
+    DialogueGuardrail,
+    _is_history_subject,
+    generate_dialogue_response,
+    generate_identity_response,
+    generate_quest_response,
+    generate_refusal_response,
+    generate_teaching_response,
+)
+from src.core.dataset.ollama_prompts import build_generation_prompt as _build_generation_prompt
+from src.core.dataset.ollama_prompts import clean_generic_filler
+from src.core.dataset.ollama_prompts import contains_prompt_leak as _contains_prompt_leak
 
 
 def _clean_llm_response_text(text: str, concept: str) -> str:
     return clean_generic_filler(text, concept)
-from src.core.dataset.ollama_artifacts import build_ollama_manifest, write_ollama_dataset_artifacts
-from src.config.log_setup import log_info, log_warn, log_error, log_state
+
 
 logger = logging.getLogger(__name__)
 
 
 class OllamaDatasetGenerator:
     """High-level Ollama dataset generation orchestrator."""
-    
-    def __init__(self, spec: dict, generator: OllamaGeneratorV2, batch_size: int = 4, hook_recorder=None):
+
+    def __init__(
+        self, spec: dict, generator: OllamaGeneratorV2, batch_size: int = 4, hook_recorder=None
+    ):
         self.spec = spec
         self.generator = generator
         self.batch_size = batch_size
@@ -45,7 +52,7 @@ class OllamaDatasetGenerator:
         self.grounding_verifier = LLMGroundingVerifier()
         self.progress = None
         self.hook_recorder = hook_recorder
-    
+
     def _emit_hook(self, step: str, status: str, **fields) -> None:
         if self.hook_recorder:
             self.hook_recorder.emit(step, status, **fields)
@@ -54,37 +61,85 @@ class OllamaDatasetGenerator:
         """Cycle through concepts deterministically to maximize coverage."""
         if not self.concepts:
             return category
-        category_offset = int(hashlib.sha256(category.encode("utf-8")).hexdigest()[:8], 16) % len(self.concepts)
+        category_offset = int(hashlib.sha256(category.encode("utf-8")).hexdigest()[:8], 16) % len(
+            self.concepts
+        )
         return str(self.concepts[(category_offset + index) % len(self.concepts)])
 
     def _infer_refusal_boundary(self, user_msg: str, concept_str: str) -> str:
         """Infer a refusal boundary label so fallback templates stay specific."""
         text = f"{user_msg} {concept_str}".lower()
-        if any(k in text for k in ["medical", "dietary", "weight loss", "weight", "calorie", "nutrition", "condition"]):
+        if any(
+            k in text
+            for k in [
+                "medical",
+                "dietary",
+                "weight loss",
+                "weight",
+                "calorie",
+                "nutrition",
+                "condition",
+            ]
+        ):
             return "medical or dietary"
-        if any(k in text for k in ["alien", "aliens", "extraterrestrial", "ufo", "life on other planets"]):
+        if any(
+            k in text
+            for k in ["alien", "aliens", "extraterrestrial", "ufo", "life on other planets"]
+        ):
             return "aliens or speculative claims"
-        if any(k in text for k in ["exact date", "exact dates", "started and ended", "when did", "date range"]):
+        if any(
+            k in text
+            for k in ["exact date", "exact dates", "started and ended", "when did", "date range"]
+        ):
             return "unsupported certainty or date range"
         if any(k in text for k in ["unsafe", "leave cooked", "food poisoning", "contamination"]):
             return "unsafe food preparation"
-        if any(k in text for k in ["what if", "would have happened", "counterfactual", "hypothetical", "alternate history"]):
+        if any(
+            k in text
+            for k in [
+                "what if",
+                "would have happened",
+                "counterfactual",
+                "hypothetical",
+                "alternate history",
+            ]
+        ):
             return "speculate or counterfactual"
-        if any(k in text for k in ["hiding", "conspiracy", "misinformation", "experts are hiding", "true story"]):
+        if any(
+            k in text
+            for k in ["hiding", "conspiracy", "misinformation", "experts are hiding", "true story"]
+        ):
             return "misinformation or conspiracy"
-        if any(k in text for k in ["different topic", "something else", "leave world history aside", "talk about something else", "change the topic"]):
+        if any(
+            k in text
+            for k in [
+                "different topic",
+                "something else",
+                "leave world history aside",
+                "talk about something else",
+                "change the topic",
+            ]
+        ):
             return "topic change request"
         return "generic boundary"
 
-    async def generate_example_llm(self, category: str, concept_str: str, 
-                                    difficulty: str = None, dialogue_type: str = None,
-                                    scenario_name: str = None, boundary: str = None,
-                                    session=None, executor=None, temperature: float = 0.7,
-                                    multi_turn: bool = False) -> dict | None:
+    async def generate_example_llm(
+        self,
+        category: str,
+        concept_str: str,
+        difficulty: str = None,
+        dialogue_type: str = None,
+        scenario_name: str = None,
+        boundary: str = None,
+        session=None,
+        executor=None,
+        temperature: float = 0.7,
+        multi_turn: bool = False,
+    ) -> dict | None:
         """Generate single example using LLM."""
         npc_name = self.spec["npc_name"]
         system_prompt = self.spec["system_prompt"]
-        
+
         game_context = self.spec.get("game_context") or {}
         setting = game_context.get("setting", "")
         relationship = game_context.get("relationship_to_player", "")
@@ -92,7 +147,7 @@ class OllamaDatasetGenerator:
         dialogue_conf = self.spec.get("dialogue") or {}
         max_sentences = dialogue_conf.get("max_sentences", 3)
         max_chars = dialogue_conf.get("max_characters", 200)
-        allow_formatting = dialogue_conf.get("allow_formatting", True)
+        dialogue_conf.get("allow_formatting", True)
         player_archetypes = dialogue_conf.get("player_archetypes", ["player"])
         player_role = random.choice(player_archetypes) if player_archetypes else "player"
 
@@ -101,7 +156,7 @@ class OllamaDatasetGenerator:
             contexts = self.retriever.get_grounding_context(concept_str, top_k=2)
             if contexts:
                 grounding = "\nContext:\n" + "\n".join(contexts[:2])
-        
+
         subject = self.spec.get("subject", "the subject")
         concepts = [c.get("name", "") for c in self.spec.get("concepts", [])]
         concepts_str = ", ".join(concepts[:3]) if concepts else f"topics related to {subject}"
@@ -132,7 +187,7 @@ class OllamaDatasetGenerator:
                 f'  "user2": "follow-up user message as a {player_role}",\n'
                 f'  "assistant2": "second NPC response (1-{max_sentences} sentences, max {max_chars} chars)"'
             )
-        
+
         generation_prompt = _build_generation_prompt(
             npc_name=npc_name,
             system_prompt=system_prompt,
@@ -149,11 +204,21 @@ class OllamaDatasetGenerator:
             turn_instruction=turn_instruction,
             json_shape=json_shape,
         )
-        
+
         history_subject = _is_history_subject(self.spec)
         effective_temperature = min(temperature, 0.25) if history_subject else temperature
 
-        self._emit_hook("generate_example", "start", category=category, concept=concept_str, difficulty=difficulty, dialogue_type=dialogue_type, scenario_name=scenario_name, boundary=boundary, multi_turn=multi_turn)
+        self._emit_hook(
+            "generate_example",
+            "start",
+            category=category,
+            concept=concept_str,
+            difficulty=difficulty,
+            dialogue_type=dialogue_type,
+            scenario_name=scenario_name,
+            boundary=boundary,
+            multi_turn=multi_turn,
+        )
 
         async def fallback_template_example(reason: str) -> dict | None:
             fallback = await generate_example_async(
@@ -175,10 +240,26 @@ class OllamaDatasetGenerator:
                 checkpoint_store=None,
             )
             if fallback:
-                logger.warning(f"Falling back to deterministic template for {category}:{concept_str}")
-                self._emit_hook("generate_example", "complete", category=category, concept=concept_str, outcome="fallback", reason=reason)
+                logger.warning(
+                    f"Falling back to deterministic template for {category}:{concept_str}"
+                )
+                self._emit_hook(
+                    "generate_example",
+                    "complete",
+                    category=category,
+                    concept=concept_str,
+                    outcome="fallback",
+                    reason=reason,
+                )
             else:
-                self._emit_hook("generate_example", "error", category=category, concept=concept_str, outcome="fallback", reason=reason)
+                self._emit_hook(
+                    "generate_example",
+                    "error",
+                    category=category,
+                    concept=concept_str,
+                    outcome="fallback",
+                    reason=reason,
+                )
             return fallback
 
         if history_subject:
@@ -191,12 +272,12 @@ class OllamaDatasetGenerator:
             max_tokens=512,
             json_format=True,
             session=session,
-            executor=executor
+            executor=executor,
         )
 
         if not response:
             return await fallback_template_example("empty_response")
-        
+
         try:
             # Extract JSON from response (handle markdown code blocks)
             json_str = response
@@ -204,33 +285,50 @@ class OllamaDatasetGenerator:
                 json_str = response.split("```json")[1].split("```")[0]
             elif "```" in response:
                 json_str = response.split("```")[1].split("```")[0]
-            
+
             res_json = json.loads(json_str.strip())
             user_msg = res_json.get("user", "").strip()
             asst_msg = _clean_llm_response_text(res_json.get("assistant", "").strip(), concept_str)
             user2_msg = res_json.get("user2", "").strip()
-            asst2_msg = _clean_llm_response_text(res_json.get("assistant2", "").strip(), concept_str) if res_json.get("assistant2") else ""
+            asst2_msg = (
+                _clean_llm_response_text(res_json.get("assistant2", "").strip(), concept_str)
+                if res_json.get("assistant2")
+                else ""
+            )
 
             if category == "identity":
                 asst_msg = generate_identity_response(self.spec)
             elif history_subject and category == "teaching":
-                asst_msg = generate_teaching_response(self.spec, concept_str, difficulty=difficulty, retriever=self.retriever)
+                asst_msg = generate_teaching_response(
+                    self.spec, concept_str, difficulty=difficulty, retriever=self.retriever
+                )
             elif history_subject and category == "dialogue":
-                asst_msg = generate_dialogue_response(self.spec, concept_str, dialogue_type=dialogue_type or "deep_dive", retriever=self.retriever)
+                asst_msg = generate_dialogue_response(
+                    self.spec,
+                    concept_str,
+                    dialogue_type=dialogue_type or "deep_dive",
+                    retriever=self.retriever,
+                )
             elif history_subject and category == "quest":
-                asst_msg = generate_quest_response(self.spec, concept_str, scenario_name=scenario_name, retriever=self.retriever)
+                asst_msg = generate_quest_response(
+                    self.spec, concept_str, scenario_name=scenario_name, retriever=self.retriever
+                )
 
             if not user_msg or not asst_msg:
                 return await fallback_template_example("parse_or_missing_fields")
 
             if _contains_prompt_leak(asst_msg):
-                logger.warning("Prompt leak detected in LLM response; falling back to deterministic template")
+                logger.warning(
+                    "Prompt leak detected in LLM response; falling back to deterministic template"
+                )
                 return await fallback_template_example("parse_or_missing_fields")
 
             if len(asst_msg) > max_chars:
-                logger.warning(f"LLM response exceeded char limit ({len(asst_msg)} > {max_chars}); using fallback template")
+                logger.warning(
+                    f"LLM response exceeded char limit ({len(asst_msg)} > {max_chars}); using fallback template"
+                )
                 return await fallback_template_example("parse_or_missing_fields")
-            
+
             # Validate with guardrail
             is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
             if not is_valid:
@@ -244,10 +342,12 @@ class OllamaDatasetGenerator:
                         return await fallback_template_example("parse_or_missing_fields")
                 else:
                     return await fallback_template_example("parse_or_missing_fields")
-            
+
             # Grounding verification with judge model
             if self.grounding_verifier._enabled and grounding:
-                is_grounded, grounding_reason = self.grounding_verifier.verify(asst_msg, [grounding])
+                is_grounded, grounding_reason = self.grounding_verifier.verify(
+                    asst_msg, [grounding]
+                )
                 if not is_grounded:
                     logger.warning(f"Grounding verification FAILED: {grounding_reason}")
                     return await fallback_template_example("grounding_failure")
@@ -261,22 +361,24 @@ class OllamaDatasetGenerator:
                 if not is_valid:
                     logger.warning(f"Refusal fallback rejected: {reason}")
                     return await fallback_template_example("parse_or_missing_fields")
-            
+
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_msg},
-                {"role": "assistant", "content": asst_msg}
+                {"role": "assistant", "content": asst_msg},
             ]
             if multi_turn and user2_msg and asst2_msg:
                 is_valid2, reason2 = self.guardrail.validate(asst2_msg, [grounding], self.spec)
                 if not is_valid2:
                     logger.warning(f"Guardrail rejection: {reason2}")
                     return await fallback_template_example("parse_or_missing_fields")
-                messages.extend([
-                    {"role": "user", "content": user2_msg},
-                    {"role": "assistant", "content": asst2_msg},
-                ])
-            
+                messages.extend(
+                    [
+                        {"role": "user", "content": user2_msg},
+                        {"role": "assistant", "content": asst2_msg},
+                    ]
+                )
+
             content_hash = compute_content_hash(messages)
             metadata = {
                 "npc_key": self.spec["npc_key"],
@@ -288,7 +390,9 @@ class OllamaDatasetGenerator:
                 "difficulty": difficulty,
                 "safety_tags": ["boundary_enforcement"] if category == "refusal" else [],
                 "content_hash": content_hash,
-                "retrieval_context": grounding.replace("\nContext:\n", "").strip().split("\n") if grounding else [],
+                "retrieval_context": grounding.replace("\nContext:\n", "").strip().split("\n")
+                if grounding
+                else [],
                 "generator_params": {
                     "temperature": temperature,
                     "model": self.generator.model,
@@ -296,50 +400,73 @@ class OllamaDatasetGenerator:
                     "turn_count": 2 if multi_turn and user2_msg and asst2_msg else 1,
                 },
             }
-            
+
             if dialogue_type:
                 metadata["dialogue_type"] = dialogue_type
             if scenario_name:
                 metadata["scenario_name"] = scenario_name
             if boundary:
                 metadata["boundary"] = boundary
-            
+
             if self.hook_recorder:
-                self.hook_recorder.emit("generate_example", "complete", category=category, concept=concept_str, outcome="generated", multi_turn=bool(multi_turn and user2_msg and asst2_msg))
-            return {
-                "messages": messages,
-                "metadata": metadata
-            }
-        
+                self.hook_recorder.emit(
+                    "generate_example",
+                    "complete",
+                    category=category,
+                    concept=concept_str,
+                    outcome="generated",
+                    multi_turn=bool(multi_turn and user2_msg and asst2_msg),
+                )
+            return {"messages": messages, "metadata": metadata}
+
         except (json.JSONDecodeError, KeyError) as e:
             logger.warning(f"Failed to parse LLM response: {e}")
             return await fallback_template_example("json_decode_error")
-    
-    async def generate_dataset_async(self, examples_per_category: dict, 
-                                    temperature: float = 0.6, max_workers: int = 4,
-                                    multi_turn_ratio: float = 0.25,
-                                    session=None, executor=None) -> list[dict]:
+
+    async def generate_dataset_async(
+        self,
+        examples_per_category: dict,
+        temperature: float = 0.6,
+        max_workers: int = 4,
+        multi_turn_ratio: float = 0.25,
+        session=None,
+        executor=None,
+    ) -> list[dict]:
         """Generate dataset asynchronously."""
         all_examples = []
         total_count = sum(examples_per_category.values())
         self.progress = ProgressTracker(total_count)
         allow_formatting = (self.spec.get("dialogue") or {}).get("allow_formatting", True)
-        
+
         semaphore = asyncio.Semaphore(max_workers)
-        
-        async def gen_task(category: str, index: int, difficulty: str = None,
-                           dialogue_type: str = None, scenario_name: str = None,
-                           boundary: str = None):
+
+        async def gen_task(
+            category: str,
+            index: int,
+            difficulty: str = None,
+            dialogue_type: str = None,
+            scenario_name: str = None,
+            boundary: str = None,
+        ):
             async with semaphore:
                 try:
                     concept = self._pick_concept(category, index)
-                    multi_turn = False if category in {"identity", "refusal"} else should_generate_multi_turn(category, index, multi_turn_ratio)
+                    multi_turn = (
+                        False
+                        if category in {"identity", "refusal"}
+                        else should_generate_multi_turn(category, index, multi_turn_ratio)
+                    )
                     if not allow_formatting:
                         multi_turn = False
                     example = await self.generate_example_llm(
-                        category, str(concept), difficulty=difficulty,
-                        dialogue_type=dialogue_type, scenario_name=scenario_name,
-                        boundary=boundary, session=session, executor=executor,
+                        category,
+                        str(concept),
+                        difficulty=difficulty,
+                        dialogue_type=dialogue_type,
+                        scenario_name=scenario_name,
+                        boundary=boundary,
+                        session=session,
+                        executor=executor,
                         temperature=temperature,
                         multi_turn=multi_turn,
                     )
@@ -350,8 +477,14 @@ class OllamaDatasetGenerator:
                         self.progress.add_error(category, str(concept), "Generation returned None")
                 except Exception as e:
                     self.progress.add_error(category, "unknown", str(e))
-                    self._emit_hook("generate_example", "error", category=category, concept=str(concept), error=str(e))
-        
+                    self._emit_hook(
+                        "generate_example",
+                        "error",
+                        category=category,
+                        concept=str(concept),
+                        error=str(e),
+                    )
+
         tasks = []
         for category, count in examples_per_category.items():
             difficulties = None
@@ -363,32 +496,45 @@ class OllamaDatasetGenerator:
                 n_beg = int(count * 0.40)
                 n_int = int(count * 0.35)
                 n_adv = count - n_beg - n_int
-                difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                difficulties = (
+                    ["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv
+                )
                 random.shuffle(difficulties)
             elif category == "dialogue":
                 n_clar = int(count * 0.20)
                 n_dive = int(count * 0.30)
                 n_app = int(count * 0.30)
                 n_misc = count - n_clar - n_dive - n_app
-                dialogue_types = (["clarification"] * n_clar + ["deep_dive"] * n_dive
-                                + ["application"] * n_app + ["misconception"] * n_misc)
+                dialogue_types = (
+                    ["clarification"] * n_clar
+                    + ["deep_dive"] * n_dive
+                    + ["application"] * n_app
+                    + ["misconception"] * n_misc
+                )
                 random.shuffle(dialogue_types)
                 n_beg = int(count * 0.40)
                 n_int = int(count * 0.35)
                 n_adv = count - n_beg - n_int
-                difficulties = (["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv)
+                difficulties = (
+                    ["beginner"] * n_beg + ["intermediate"] * n_int + ["advanced"] * n_adv
+                )
                 random.shuffle(difficulties)
             elif category == "quest":
                 quest_scenarios = self.spec.get("quest_scenarios") or []
                 if quest_scenarios:
-                    scenario_names = [quest_scenarios[i % len(quest_scenarios)] for i in range(count)]
+                    scenario_names = [
+                        quest_scenarios[i % len(quest_scenarios)] for i in range(count)
+                    ]
                     random.shuffle(scenario_names)
                 difficulties = ["intermediate"] * count
             elif category == "refusal":
                 refusal_spec = self.spec.get("refusal", {})
                 refusal_boundaries = refusal_spec.get("boundaries", []) or [
-                    "medical or dietary", "speculative claims", "historical certainty",
-                    "unsafe instructions", "conspiracy or misinformation"
+                    "medical or dietary",
+                    "speculative claims",
+                    "historical certainty",
+                    "unsafe instructions",
+                    "conspiracy or misinformation",
                 ]
                 boundaries = [refusal_boundaries[i % len(refusal_boundaries)] for i in range(count)]
                 random.shuffle(boundaries)
@@ -402,14 +548,19 @@ class OllamaDatasetGenerator:
                 sn = scenario_names[i] if scenario_names else None
                 bd = boundaries[i] if boundaries else None
                 tasks.append(gen_task(category, i, diff, dt, sn, bd))
-        
+
         await asyncio.gather(*tasks)
-        self._emit_hook("generate_dataset", "complete", total_examples=len(all_examples), categories=list(examples_per_category.keys()))
+        self._emit_hook(
+            "generate_dataset",
+            "complete",
+            total_examples=len(all_examples),
+            categories=list(examples_per_category.keys()),
+        )
         return all_examples
-    
-    def generate_dataset_sync(self, examples_per_category: dict, 
-                             temperature: float = 0.7,
-                             multi_turn_ratio: float = 0.25) -> list[dict]:
+
+    def generate_dataset_sync(
+        self, examples_per_category: dict, temperature: float = 0.7, multi_turn_ratio: float = 0.25
+    ) -> list[dict]:
         """Synchronous wrapper for async generation."""
         try:
             asyncio.get_running_loop()
@@ -421,9 +572,7 @@ class OllamaDatasetGenerator:
                         temperature=temperature,
                         max_workers=self.batch_size,
                         multi_turn_ratio=multi_turn_ratio,
-                        executor=executor
+                        executor=executor,
                     )
                 )
         raise RuntimeError("Synchronous dataset generation cannot run inside an active event loop.")
-
-

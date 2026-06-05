@@ -13,7 +13,9 @@ source_order:
 
 # training-vram-engineer
 
-Low-VRAM training, dataset gate enforcement, LoRA config, and W&B training specialist.
+## Mission
+
+Low-VRAM training, dataset gate enforcement, LoRA config tuning, and W&B specialist.
 
 ## Ownership
 

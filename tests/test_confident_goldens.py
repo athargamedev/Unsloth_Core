@@ -15,9 +15,16 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
 def test_projects_single_turn_chatml_to_confident_golden_without_actual_output(tmp_path):
     spec_path = tmp_path / "chef_assistant.json"
     ref_path = tmp_path / "chef_primer.md"
-    spec_path.write_text(json.dumps({"npc_key": "chef_assistant", "reference_doc": str(ref_path)}), encoding="utf-8")
-    ref_path.write_text("# Chef\n\n## Evaluation Contract\nStay safe.\n\n## Concepts\nFood safety facts.", encoding="utf-8")
-    dataset_path = tmp_path / "data" / "datasets" / "chef_assistant" / "ollama" / "train_clean.jsonl"
+    spec_path.write_text(
+        json.dumps({"npc_key": "chef_assistant", "reference_doc": str(ref_path)}), encoding="utf-8"
+    )
+    ref_path.write_text(
+        "# Chef\n\n## Evaluation Contract\nStay safe.\n\n## Concepts\nFood safety facts.",
+        encoding="utf-8",
+    )
+    dataset_path = (
+        tmp_path / "data" / "datasets" / "chef_assistant" / "ollama" / "train_clean.jsonl"
+    )
     row = {
         "messages": [
             {"role": "system", "content": "Chef system prompt"},
@@ -55,7 +62,9 @@ def test_projects_single_turn_chatml_to_confident_golden_without_actual_output(t
 
 
 def test_projects_multi_turn_chatml_to_conversational_golden(tmp_path):
-    dataset_path = tmp_path / "data" / "datasets" / "chef_assistant" / "ollama" / "train_clean.jsonl"
+    dataset_path = (
+        tmp_path / "data" / "datasets" / "chef_assistant" / "ollama" / "train_clean.jsonl"
+    )
     row = {
         "messages": [
             {"role": "system", "content": "Chef system prompt"},
@@ -94,7 +103,9 @@ def test_projects_multi_turn_chatml_to_conversational_golden(tmp_path):
 
 
 def test_build_confident_artifacts_writes_split_files_and_manifest(tmp_path):
-    dataset_path = tmp_path / "data" / "datasets" / "chef_assistant" / "ollama" / "train_clean.jsonl"
+    dataset_path = (
+        tmp_path / "data" / "datasets" / "chef_assistant" / "ollama" / "train_clean.jsonl"
+    )
     rows = [
         {
             "messages": [

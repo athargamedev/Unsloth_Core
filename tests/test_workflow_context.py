@@ -18,7 +18,15 @@ def _write_spec(root: Path, npc_key: str) -> Path:
         "npc_name": npc_key.title().replace("_", ""),
         "subject": "Demo Subject",
         "system_prompt": "Keep answers short.",
-        "dataset": {"examples_per_category": {"identity": 8, "teaching": 32, "dialogue": 16, "quest": 8, "refusal": 8}},
+        "dataset": {
+            "examples_per_category": {
+                "identity": 8,
+                "teaching": 32,
+                "dialogue": 16,
+                "quest": 8,
+                "refusal": 8,
+            }
+        },
     }
     spec_path = root / "subjects" / "NPC_specs" / f"{npc_key}.json"
     spec_path.parent.mkdir(parents=True, exist_ok=True)

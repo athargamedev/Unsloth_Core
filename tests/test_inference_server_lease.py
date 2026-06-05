@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 import sys
+
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
@@ -75,12 +75,14 @@ def test_inference_service_release_nonexistent_returns_false():
 
 def test_lease_status_reflects_active_leases():
     """InferenceService.status() includes lease info when leases are active."""
-    from src.core.ops.inference_server import InferenceService
     from src.core.ops.gpu_lease import GpuLeaseManager
+    from src.core.ops.inference_server import InferenceService
 
     mgr = GpuLeaseManager()
     mgr.request_lease(mode="judge_shared", ttl=300)
-    service = InferenceService(client=FakeOllamaClient(), default_model="qwen2.5:7b", lease_manager=mgr)
+    service = InferenceService(
+        client=FakeOllamaClient(), default_model="qwen2.5:7b", lease_manager=mgr
+    )
 
     status = service.status()
     assert "gpu_lease" in status

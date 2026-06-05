@@ -47,6 +47,7 @@ VALID_ROLES = frozenset({"system", "user", "assistant"})
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _csv_env(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
     """Parse a comma-separated env var into a tuple of non-empty strings."""
     value = os.getenv(name)
@@ -67,8 +68,7 @@ def _parse_category_minimums() -> dict[str, int]:
     parts = [part.strip() for part in raw.split(",") if part.strip()]
     if not parts:
         raise ValueError(
-            "DEEPEVAL_DATASET_CATEGORY_MINIMUMS is set but contains no "
-            "parseable key=value pairs"
+            "DEEPEVAL_DATASET_CATEGORY_MINIMUMS is set but contains no parseable key=value pairs"
         )
 
     valid = set(DEFAULT_CATEGORIES)
@@ -76,8 +76,7 @@ def _parse_category_minimums() -> dict[str, int]:
     for part in parts:
         if "=" not in part:
             raise ValueError(
-                f"DEEPEVAL_DATASET_CATEGORY_MINIMUMS: invalid entry "
-                f"{part!r} — expected key=value"
+                f"DEEPEVAL_DATASET_CATEGORY_MINIMUMS: invalid entry {part!r} — expected key=value"
             )
         key, val_str = part.split("=", 1)
         key = key.strip()
@@ -104,10 +103,7 @@ def _parse_category_minimums() -> dict[str, int]:
             )
 
         if key in result:
-            raise ValueError(
-                f"DEEPEVAL_DATASET_CATEGORY_MINIMUMS: "
-                f"duplicate key {key!r}"
-            )
+            raise ValueError(f"DEEPEVAL_DATASET_CATEGORY_MINIMUMS: duplicate key {key!r}")
 
         result[key] = val
 
@@ -163,16 +159,18 @@ def _load_rows() -> list[dict]:
 
                 row = json.loads(line)
                 meta = row.get("metadata") or {}
-                rows.append({
-                    "npc_key": npc_key,
-                    "category": meta.get("category", ""),
-                    "concept": meta.get("concept", ""),
-                    "difficulty": meta.get("difficulty", ""),
-                    "messages": row.get("messages", []),
-                    "metadata": meta,
-                    "_line_number": line_number,
-                    "_source_path": str(path.relative_to(PROJECT_ROOT)),
-                })
+                rows.append(
+                    {
+                        "npc_key": npc_key,
+                        "category": meta.get("category", ""),
+                        "concept": meta.get("concept", ""),
+                        "difficulty": meta.get("difficulty", ""),
+                        "messages": row.get("messages", []),
+                        "metadata": meta,
+                        "_line_number": line_number,
+                        "_source_path": str(path.relative_to(PROJECT_ROOT)),
+                    }
+                )
 
     if not rows:
         pytest.skip(
@@ -233,9 +231,7 @@ def test_chatml_format(row: dict) -> None:
 
     # First message must be system
     first_role = messages[0].get("role", "")
-    assert first_role == "system", (
-        f"first message must have role='system', got '{first_role}'"
-    )
+    assert first_role == "system", f"first message must have role='system', got '{first_role}'"
 
     # Subsequent messages must alternate user/assistant
     for i, msg in enumerate(messages[1:], start=1):
@@ -248,8 +244,7 @@ def test_chatml_format(row: dict) -> None:
         content = msg.get("content")
         assert content is not None, f"message at position {i} has null content"
         assert isinstance(content, str), (
-            f"message at position {i} content must be a string, "
-            f"got {type(content).__name__}"
+            f"message at position {i} content must be a string, got {type(content).__name__}"
         )
 
     # Validate system content too
@@ -277,9 +272,7 @@ def test_metadata_required_fields(row: dict) -> None:
     meta = row["metadata"]
 
     # Early exit: metadata must be a dict
-    assert isinstance(meta, dict), (
-        f"metadata must be a dict, got {type(meta).__name__}"
-    )
+    assert isinstance(meta, dict), f"metadata must be a dict, got {type(meta).__name__}"
 
     required_keys = ("npc_key", "category", "concept", "difficulty")
     for key in required_keys:
@@ -304,9 +297,7 @@ def test_metadata_required_fields(row: dict) -> None:
 def test_category_values(row: dict) -> None:
     """Category must be one of the valid values."""
     category = row["category"]
-    assert category in CATEGORIES, (
-        f"category='{category}' must be one of {sorted(CATEGORIES)}"
-    )
+    assert category in CATEGORIES, f"category='{category}' must be one of {sorted(CATEGORIES)}"
 
 
 # ---- test_category_balance -----------------------------------------------
@@ -325,13 +316,10 @@ def test_category_balance(npc_key: str) -> None:
     for cat, minimum in CATEGORY_MINIMUMS.items():
         actual = counts.get(cat, 0)
         if actual < minimum:
-            failures.append(
-                f"{cat}: got {actual}, minimum {minimum}"
-            )
+            failures.append(f"{cat}: got {actual}, minimum {minimum}")
 
-    assert not failures, (
-        f"{npc_key}: {len(failures)} category(ies) below minimum:\n"
-        + "\n".join(f"  - {f}" for f in failures)
+    assert not failures, f"{npc_key}: {len(failures)} category(ies) below minimum:\n" + "\n".join(
+        f"  - {f}" for f in failures
     )
 
 
@@ -356,9 +344,7 @@ def test_field_types(row: dict) -> None:
         assert isinstance(msg, dict), (
             f"message at position {i} must be a dict, got {type(msg).__name__}"
         )
-        assert isinstance(msg.get("role"), str), (
-            f"message at position {i} 'role' must be a string"
-        )
+        assert isinstance(msg.get("role"), str), f"message at position {i} 'role' must be a string"
         assert isinstance(msg.get("content"), str), (
             f"message at position {i} 'content' must be a string"
         )
@@ -376,19 +362,14 @@ def test_no_empty_messages(row: dict) -> None:
         content = msg.get("content", "")
 
         # Empty or whitespace-only
-        assert content.strip(), (
-            f"message at position {i} content is empty or whitespace-only"
-        )
+        assert content.strip(), f"message at position {i} content is empty or whitespace-only"
 
         # Null byte
-        assert "\0" not in content, (
-            f"message at position {i} contains null byte character"
-        )
+        assert "\0" not in content, f"message at position {i} contains null byte character"
 
         # HTML tags
         assert not HTML_TAG_PATTERN.search(content), (
-            f"message at position {i} contains HTML tags: "
-            f"{HTML_TAG_PATTERN.findall(content)[:3]}"
+            f"message at position {i} contains HTML tags: {HTML_TAG_PATTERN.findall(content)[:3]}"
         )
 
 
@@ -409,13 +390,10 @@ def test_unique_rows(npc_key: str) -> None:
             _first_user_message(row["messages"]),
         )
         if key in seen:
-            duplicates.append(
-                f"  category='{key[0]}', concept='{key[1]}'"
-            )
+            duplicates.append(f"  category='{key[0]}', concept='{key[1]}'")
         seen.add(key)
 
     assert not duplicates, (
         f"{npc_key}: {len(duplicates)} duplicate(s) found "
-        f"(same category + concept + user message):\n"
-        + "\n".join(duplicates)
+        f"(same category + concept + user message):\n" + "\n".join(duplicates)
     )

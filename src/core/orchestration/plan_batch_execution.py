@@ -11,8 +11,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from plan_execution import PROJECT_ROOT, detect_local_vram_gb, parse_json, recommend
 from colab_notebook_generator import build_notebook, write_notebook
+from plan_execution import PROJECT_ROOT, detect_local_vram_gb, parse_json, recommend
 
 
 def _resolve_specs(spec_glob: str, explicit_specs: list[str] | None) -> list[Path]:
@@ -110,15 +110,25 @@ def generate_colab_notebooks(
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Batch planner for local vs remote_colab training")
-    ap.add_argument("--spec-glob", default="subjects/NPC_specs/*.json", help="Glob under project root")
+    ap.add_argument(
+        "--spec-glob", default="subjects/NPC_specs/*.json", help="Glob under project root"
+    )
     ap.add_argument("--spec", action="append", dest="specs", help="Explicit spec path; repeatable")
     ap.add_argument("--presets", default="fast-3b", help="Comma-separated presets")
     ap.add_argument("--local-vram-gb", type=float, help="Override local VRAM GB")
     ap.add_argument("--json", action="store_true", help="Print JSON output")
     ap.add_argument("--write-plan", help="Write full plan JSON to this path")
-    ap.add_argument("--generate-colab-notebooks", action="store_true", help="Generate notebooks for remote_colab queue")
+    ap.add_argument(
+        "--generate-colab-notebooks",
+        action="store_true",
+        help="Generate notebooks for remote_colab queue",
+    )
     ap.add_argument("--colab-output-dir", default="colab/outputs", help="Notebook output dir")
-    ap.add_argument("--drive-repo-dir", default="/content/drive/MyDrive/Unsloth_Core", help="Colab Drive repo dir")
+    ap.add_argument(
+        "--drive-repo-dir",
+        default="/content/drive/MyDrive/Unsloth_Core",
+        help="Colab Drive repo dir",
+    )
     # note: --drive-datasets-dir removed as DRIVE_DATASETS_DIR was unused
     args = ap.parse_args()
 

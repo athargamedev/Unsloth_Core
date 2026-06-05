@@ -19,12 +19,28 @@ def test_combined_quality_report_merges_manifest_sanitize_and_deepeval(tmp_path:
     clean_path = tmp_path / "train_clean.jsonl"
     clean_rows = [
         {
-            "messages": [{"role": "user", "content": "What are you?"}, {"role": "assistant", "content": "I am a history guide."}],
-            "metadata": {"category": "identity", "difficulty": "beginner", "split": "train", "concept": "identity"},
+            "messages": [
+                {"role": "user", "content": "What are you?"},
+                {"role": "assistant", "content": "I am a history guide."},
+            ],
+            "metadata": {
+                "category": "identity",
+                "difficulty": "beginner",
+                "split": "train",
+                "concept": "identity",
+            },
         },
         {
-            "messages": [{"role": "user", "content": "Explain cause and effect."}, {"role": "assistant", "content": "Cause and effect links events."}],
-            "metadata": {"category": "teaching", "difficulty": "intermediate", "split": "train", "concept": "cause and effect"},
+            "messages": [
+                {"role": "user", "content": "Explain cause and effect."},
+                {"role": "assistant", "content": "Cause and effect links events."},
+            ],
+            "metadata": {
+                "category": "teaching",
+                "difficulty": "intermediate",
+                "split": "train",
+                "concept": "cause and effect",
+            },
         },
     ]
     clean_path.write_text("\n".join(json.dumps(row) for row in clean_rows) + "\n", encoding="utf-8")
@@ -55,11 +71,26 @@ def test_combined_quality_report_merges_manifest_sanitize_and_deepeval(tmp_path:
         "passed": 1,
         "failed": 1,
         "pass_rate": 0.5,
-        "metrics": {"Training Usefulness and Specificity [GEval]": {"count": 1, "average_score": 0.4, "pass_rate": 0.0}},
-        "categories": {"identity": {"total": 1, "passed": 1, "pass_rate": 1.0}, "teaching": {"total": 1, "passed": 0, "pass_rate": 0.0}},
+        "metrics": {
+            "Training Usefulness and Specificity [GEval]": {
+                "count": 1,
+                "average_score": 0.4,
+                "pass_rate": 0.0,
+            }
+        },
+        "categories": {
+            "identity": {"total": 1, "passed": 1, "pass_rate": 1.0},
+            "teaching": {"total": 1, "passed": 0, "pass_rate": 0.0},
+        },
         "failures_path": str(tmp_path / "quality_failures.json"),
         "dataset_summary": dataset_summary,
-        "expected_distribution": {"identity": 8, "teaching": 32, "dialogue": 16, "quest": 8, "refusal": 8},
+        "expected_distribution": {
+            "identity": 8,
+            "teaching": 32,
+            "dialogue": 16,
+            "quest": 8,
+            "refusal": 8,
+        },
         "distribution_gaps": [
             {"category": "teaching", "target": 32, "actual": 1, "shortfall": 31},
         ],
@@ -72,7 +103,13 @@ def test_combined_quality_report_merges_manifest_sanitize_and_deepeval(tmp_path:
             "input": "Explain cause and effect.",
             "actual_output": "Cause and effect links events.",
             "metadata": {"category": "teaching", "concept": "cause and effect"},
-            "metric": {"name": "Training Usefulness and Specificity [GEval]", "score": 0.4, "threshold": 0.7, "success": False, "reason": "too generic"},
+            "metric": {
+                "name": "Training Usefulness and Specificity [GEval]",
+                "score": 0.4,
+                "threshold": 0.7,
+                "success": False,
+                "reason": "too generic",
+            },
         }
     ]
 
@@ -92,4 +129,7 @@ def test_combined_quality_report_merges_manifest_sanitize_and_deepeval(tmp_path:
     assert report["feedback_signals"]
     assert any(signal["type"] == "distribution_gap" for signal in report["feedback_signals"])
     assert any(signal["type"] == "deepeval_metric_failure" for signal in report["feedback_signals"])
-    assert any(signal["type"] == "dataset_density_gap" and signal["category"] == "teaching" for signal in report["feedback_signals"])
+    assert any(
+        signal["type"] == "dataset_density_gap" and signal["category"] == "teaching"
+        for signal in report["feedback_signals"]
+    )

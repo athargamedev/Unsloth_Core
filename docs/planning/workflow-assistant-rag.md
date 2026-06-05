@@ -248,16 +248,16 @@ Indexing can still scan and hash files while GPU is busy, but embedding calls sh
 - `README.md`
 - `docs/**/*.md`
 - `configs/**/*.yaml`
-- `subjects/schemas/**/*.json`
-- `subjects/NPC_specs/**/*.json`
-- `subjects/reference_docs/**/*.md`
+- `data/npcs/schemas/**/*.json`
+- `data/npcs/specs/**/*.json`
+- `data/npcs/reference_docs/**/*.md`
 - `ucore` help output and command schemas from `/api/command-schemas`
 - Dashboard backend route definitions and frontend API types
 
 ### Dynamic operational knowledge
 
-- `subjects/datasets/*/*/quality_summary.json`
-- `subjects/datasets/*/*/quality_failures.json`
+- `data/datasets/*/*/quality_summary.json`
+- `data/datasets/*/*/quality_failures.json`
 - `outputs/*/runs/**/workflow_hooks.jsonl`
 - `eval/reports/**/*.{md,json,html}` summarized/extracted
 - `eval/results/**/*.{json,md}`
@@ -431,6 +431,6 @@ Implement Phase 1 and Phase 2 as a small vertical slice:
 
 1. Migration for `assistant_sources`, `assistant_knowledge_chunks`, `assistant_retrieval_events`, `assistant_lessons`, and `search_assistant_knowledge`.
 2. `assistant-embeddings.ts` with Ollama provider.
-3. `assistant-indexer.ts` indexing `AGENTS.md`, `README.md`, `docs/**/*.md`, `subjects/NPC_specs/**/*.json`, and `subjects/reference_docs/**/*.md`.
+3. `assistant-indexer.ts` indexing `AGENTS.md`, `README.md`, `docs/**/*.md`, `data/npcs/specs/**/*.json`, and `data/npcs/reference_docs/**/*.md`.
 4. `GET /api/assistant/rag/status` and `POST /api/assistant/rag/index`.
 5. Test with a query like: “why is training blocked for history_guide?” and verify retrieved sources cite quality gate rules and relevant artifacts.

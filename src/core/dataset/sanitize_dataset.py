@@ -22,19 +22,20 @@ import re
 import sys
 import time
 import traceback
-import requests
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
+import requests
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import paths
-from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 from src.core.ops.canonical_artifacts import record_canonical_bundle
-from src.core.ops.ollama_model_presets import resolve_ollama_model
 from src.core.ops.judge_cache import JudgeCache, JudgeCacheInput
+from src.core.ops.ollama_model_presets import resolve_ollama_model
+from src.core.ops.workflow_hooks import WorkflowHookRecorder
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -66,9 +67,16 @@ AI_ARTIFACT_PATTERNS = [
 ]
 
 REQUIRED_METADATA_FIELDS = [
-    "npc_key", "category", "technique", "source",
-    "split", "concept", "difficulty", "safety_tags",
-    "content_hash", "generator_params",
+    "npc_key",
+    "category",
+    "technique",
+    "source",
+    "split",
+    "concept",
+    "difficulty",
+    "safety_tags",
+    "content_hash",
+    "generator_params",
 ]
 
 TEXTBOOK_PATTERNS = [
@@ -161,14 +169,35 @@ CRITERIA FOR LOW QUALITY (is_high_quality=false):
 4. Formatting: Response uses forbidden markdown (like bullets or bolding) if the persona forbids it.
 """
 
+
 class LLMSanityChecker:
-    def __init__(self, model=None, url="http://localhost:11434/api/chat", cache=None, cache_enabled=True, prompt_version="llm-sanity-v1", inference_server_url=None):
+    def __init__(
+        self,
+        model=None,
+        url="http://localhost:11434/api/chat",
+        cache=None,
+        cache_enabled=True,
+        prompt_version="llm-sanity-v1",
+        inference_server_url=None,
+    ):
         self.model = model or resolve_ollama_model(role="judge")
         self.url = url
-        self.inference_server_url = (inference_server_url or os.getenv("UCORE_INFERENCE_SERVER_URL") or "").rstrip("/") or None
+        self.inference_server_url = (
+            inference_server_url or os.getenv("UCORE_INFERENCE_SERVER_URL") or ""
+        ).rstrip("/") or None
         self._enabled = bool(self.model)
-        self.cache_enabled = bool(cache_enabled) and os.getenv("UCORE_JUDGE_CACHE_DISABLE", "").lower() not in {"1", "true", "yes"}
-        self.cache = cache if cache is not None else (JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None) if self.cache_enabled else None)
+        self.cache_enabled = bool(cache_enabled) and os.getenv(
+            "UCORE_JUDGE_CACHE_DISABLE", ""
+        ).lower() not in {"1", "true", "yes"}
+        self.cache = (
+            cache
+            if cache is not None
+            else (
+                JudgeCache(os.getenv("UCORE_JUDGE_CACHE_PATH") or None)
+                if self.cache_enabled
+                else None
+            )
+        )
         self.prompt_version = prompt_version
         self.cache_hits = 0
         self.cache_misses = 0
@@ -191,21 +220,23 @@ class LLMSanityChecker:
             return None
 
         user_input = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
-        assistant_output = next((m["content"] for m in reversed(messages) if m["role"] == "assistant"), "")
+        assistant_output = next(
+            (m["content"] for m in reversed(messages) if m["role"] == "assistant"), ""
+        )
         npc_key = example.get("metadata", {}).get("npc_key", "unknown")
-        
+
         # Build context from spec or metadata
         context = ""
         if spec_data and "reference_doc" in spec_data:
             ref_path = PROJECT_ROOT / spec_data["reference_doc"]
             if ref_path.exists():
-                context = ref_path.read_text()[:2000] # Limit context size
-        
+                context = ref_path.read_text()[:2000]  # Limit context size
+
         prompt = LLM_JUDGE_PROMPT.format(
             npc_key=npc_key,
             context=context or "No context provided.",
             input=user_input,
-            actual_output=assistant_output
+            actual_output=assistant_output,
         )
 
         cache_item = None
@@ -226,13 +257,17 @@ class LLMSanityChecker:
                 return cached["result"]
             self.cache_misses += 1
 
-        payload = self._build_inference_payload(user_input, assistant_output, npc_key, context) if self.inference_server_url else {
-            "model": self.model,
-            "messages": [{"role": "user", "content": prompt}],
-            "stream": False,
-            "format": "json",
-            "options": {"temperature": 0.1}
-        }
+        payload = (
+            self._build_inference_payload(user_input, assistant_output, npc_key, context)
+            if self.inference_server_url
+            else {
+                "model": self.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
+                "format": "json",
+                "options": {"temperature": 0.1},
+            }
+        )
 
         try:
             print(f"  [judge] Requesting evaluation from {self.model}...", flush=True)
@@ -268,14 +303,15 @@ class LLMSanityChecker:
             "rubric": rubric,
         }
 
+
 # ── Sentence Counting (with abbreviation awareness) ──────────────────────────
 
 _ABBREVIATIONS_PATTERN = re.compile(
-    r'\b(?:Dr|Mr|Ms|Mrs|Prof|Sr|Jr|St|vs|etc|approx|dept|est|govt|e\.g|i\.e|a\.m|p\.m|Ph\.D)\.',
+    r"\b(?:Dr|Mr|Ms|Mrs|Prof|Sr|Jr|St|vs|etc|approx|dept|est|govt|e\.g|i\.e|a\.m|p\.m|Ph\.D)\.",
     re.IGNORECASE,
 )
 # Handle initialisms like U.S.A., U.S., B.B.C.
-_INITIALISM_PATTERN = re.compile(r'\b(?:[A-Za-z]\.)+(?=[A-Za-z])')
+_INITIALISM_PATTERN = re.compile(r"\b(?:[A-Za-z]\.)+(?=[A-Za-z])")
 
 
 def count_sentences(text):
@@ -286,10 +322,10 @@ def count_sentences(text):
     """
     if not text:
         return 0
-    cleaned = _ABBREVIATIONS_PATTERN.sub(lambda m: m.group(0).replace('.', '<DOT>'), text)
-    cleaned = _INITIALISM_PATTERN.sub(lambda m: m.group(0).replace('.', '<DOT>'), cleaned)
-    cleaned = cleaned.replace('...', '<ELLIPSIS>')
-    sentences = [s.strip() for s in re.split(r'[.!?]+', cleaned) if s.strip()]
+    cleaned = _ABBREVIATIONS_PATTERN.sub(lambda m: m.group(0).replace(".", "<DOT>"), text)
+    cleaned = _INITIALISM_PATTERN.sub(lambda m: m.group(0).replace(".", "<DOT>"), cleaned)
+    cleaned = cleaned.replace("...", "<ELLIPSIS>")
+    sentences = [s.strip() for s in re.split(r"[.!?]+", cleaned) if s.strip()]
     return len(sentences)
 
 
@@ -304,12 +340,12 @@ def trim_to_max_sentences(text: str, max_sentences: int) -> str:
         return ""
 
     # Replace abbreviations and initialisms with same-length placeholders to preserve indices
-    cleaned = _ABBREVIATIONS_PATTERN.sub(lambda m: m.group(0).replace('.', '\x00'), text)
-    cleaned = _INITIALISM_PATTERN.sub(lambda m: m.group(0).replace('.', '\x00'), cleaned)
-    cleaned = cleaned.replace('...', '\x00\x00\x00')
+    cleaned = _ABBREVIATIONS_PATTERN.sub(lambda m: m.group(0).replace(".", "\x00"), text)
+    cleaned = _INITIALISM_PATTERN.sub(lambda m: m.group(0).replace(".", "\x00"), cleaned)
+    cleaned = cleaned.replace("...", "\x00\x00\x00")
 
     # Find all sentence terminators in cleaned
-    matches = list(re.finditer(r'[.!?]+', cleaned))
+    matches = list(re.finditer(r"[.!?]+", cleaned))
 
     if len(matches) < max_sentences:
         trimmed = text.strip()
@@ -318,8 +354,8 @@ def trim_to_max_sentences(text: str, max_sentences: int) -> str:
         end_idx = boundary_match.end()
         trimmed = text[:end_idx].strip()
 
-    if trimmed and not trimmed[-1] in '.!?':
-        trimmed += '.'
+    if trimmed and trimmed[-1] not in ".!?":
+        trimmed += "."
 
     return trimmed
 
@@ -328,11 +364,11 @@ def split_into_sentences(text: str) -> list[str]:
     """Helper to split a text into individual sentences while preserving indices/punctuation."""
     if not text:
         return []
-    cleaned = _ABBREVIATIONS_PATTERN.sub(lambda m: m.group(0).replace('.', '\x00'), text)
-    cleaned = _INITIALISM_PATTERN.sub(lambda m: m.group(0).replace('.', '\x00'), cleaned)
-    cleaned = cleaned.replace('...', '\x00\x00\x00')
+    cleaned = _ABBREVIATIONS_PATTERN.sub(lambda m: m.group(0).replace(".", "\x00"), text)
+    cleaned = _INITIALISM_PATTERN.sub(lambda m: m.group(0).replace(".", "\x00"), cleaned)
+    cleaned = cleaned.replace("...", "\x00\x00\x00")
 
-    matches = list(re.finditer(r'[.!?]+', cleaned))
+    matches = list(re.finditer(r"[.!?]+", cleaned))
     if not matches:
         return [text]
 
@@ -366,8 +402,8 @@ def repair_and_filter_artifacts(content: str) -> str:
             kept_sentences.append(s.strip())
 
     repaired = " ".join(kept_sentences).strip()
-    if repaired and not repaired[-1] in '.!?':
-        repaired += '.'
+    if repaired and repaired[-1] not in ".!?":
+        repaired += "."
     return repaired
 
 
@@ -512,7 +548,7 @@ def validate_structure(messages, strict_mode=False):
         expected_roles.append("user" if i % 2 == 0 else "assistant")
 
     actual_roles = [m["role"] for m in messages]
-    for i, (actual, expected) in enumerate(zip(actual_roles, expected_roles)):
+    for i, (actual, expected) in enumerate(zip(actual_roles, expected_roles, strict=False)):
         if actual != expected:
             msg = f"Message at index {i} has role '{actual}', expected '{expected}'"
             if strict_mode:
@@ -550,7 +586,9 @@ def score_persona_alignment(example, spec_data=None):
             score -= 1
 
     # -2 if response uses first-person plural inappropriately
-    if re.search(r'\bwe\s+(believe|think|understand|feel|know|see|find)\b', response, re.IGNORECASE):
+    if re.search(
+        r"\bwe\s+(believe|think|understand|feel|know|see|find)\b", response, re.IGNORECASE
+    ):
         score -= 2
 
     # -2 if response sounds like a textbook (one penalty suffices)
@@ -560,7 +598,9 @@ def score_persona_alignment(example, spec_data=None):
     return max(0, min(10, score))
 
 
-def score_rule_compliance(example, max_sentences=5, min_length=10, max_characters=500, allow_formatting=True):
+def score_rule_compliance(
+    example, max_sentences=5, min_length=10, max_characters=500, allow_formatting=True
+):
     """Score rule_compliance (0-10): penalize violations of length and
     sentence rules derived from the NPC spec."""
     messages = example.get("messages", [])
@@ -601,11 +641,26 @@ def score_rule_compliance(example, max_sentences=5, min_length=10, max_character
     # but skip this if user message starts with command verbs.
     if user_msg and "?" not in user_msg:
         command_verbs = (
-            "introduce", "describe", "explain", "roleplay", "tell", "show",
-            "give", "list", "name", "say", "talk", "greet", "share", "write", "create"
+            "introduce",
+            "describe",
+            "explain",
+            "roleplay",
+            "tell",
+            "show",
+            "give",
+            "list",
+            "name",
+            "say",
+            "talk",
+            "greet",
+            "share",
+            "write",
+            "create",
         )
         user_msg_lower = user_msg.strip().lower()
-        starts_with_command = any(re.match(rf"^{re.escape(verb)}\b", user_msg_lower) for verb in command_verbs)
+        starts_with_command = any(
+            re.match(rf"^{re.escape(verb)}\b", user_msg_lower) for verb in command_verbs
+        )
         if not starts_with_command:
             score -= 1
 
@@ -614,11 +669,11 @@ def score_rule_compliance(example, max_sentences=5, min_length=10, max_character
         has_formatting_viol = False
         if "**" in response or "__" in response:
             has_formatting_viol = True
-        elif any(line.strip().startswith('#') for line in response.splitlines()):
+        elif any(line.strip().startswith("#") for line in response.splitlines()):
             has_formatting_viol = True
         else:
             for line in response.splitlines():
-                if re.match(r'^[-*•\d]+\.?\s+', line.strip()):
+                if re.match(r"^[-*•\d]+\.?\s+", line.strip()):
                     has_formatting_viol = True
                     break
         if has_formatting_viol:
@@ -646,18 +701,17 @@ def score_concept_fidelity(example, spec_data=None):
     score = 5
 
     # +3 if concept keyword appears in the assistant response
-    if concept and re.search(rf'\b{re.escape(concept)}\b', response, re.IGNORECASE):
+    if concept and re.search(rf"\b{re.escape(concept)}\b", response, re.IGNORECASE):
         score += 3
 
     # +2 if concept keyword appears in the user message
-    if concept and re.search(rf'\b{re.escape(concept)}\b', user_msg, re.IGNORECASE):
+    if concept and re.search(rf"\b{re.escape(concept)}\b", user_msg, re.IGNORECASE):
         score += 2
 
     # -2 if category is "teaching" but response doesn't teach/explain
     if category == "teaching":
         has_explanation = any(
-            re.search(p, response, re.IGNORECASE)
-            for p in TEACHING_EXPLANATION_PATTERNS
+            re.search(p, response, re.IGNORECASE) for p in TEACHING_EXPLANATION_PATTERNS
         )
         if not has_explanation:
             score -= 2
@@ -738,8 +792,15 @@ def score_uniqueness(example, seen_user_messages=None):
     return max(0, min(10, score))
 
 
-def score_example(example, spec_data=None, seen_user_messages=None,
-                  max_sentences=5, min_length=10, max_characters=500, allow_formatting=True):
+def score_example(
+    example,
+    spec_data=None,
+    seen_user_messages=None,
+    max_sentences=5,
+    min_length=10,
+    max_characters=500,
+    allow_formatting=True,
+):
     """Score a single example on 5 dimensions (each 0-10).
 
     Returns a dict:
@@ -766,7 +827,9 @@ def score_example(example, spec_data=None, seen_user_messages=None,
             allow_formatting = spec_formatting
 
     persona = score_persona_alignment(example, spec_data)
-    rule = score_rule_compliance(example, max_sentences, min_length, max_characters, allow_formatting)
+    rule = score_rule_compliance(
+        example, max_sentences, min_length, max_characters, allow_formatting
+    )
     concept = score_concept_fidelity(example, spec_data)
     engagement = score_engagement(example)
     uniqueness = score_uniqueness(example, seen_user_messages)
@@ -805,7 +868,7 @@ def infer_npc_key_from_path(input_path):
     str_path = str(path)
     idx = str_path.find("datasets/")
     if idx >= 0:
-        after = str_path[idx + len("datasets/"):]
+        after = str_path[idx + len("datasets/") :]
         return after.split("/")[0]
     return None
 
@@ -842,48 +905,90 @@ def count_sibling_validation_examples(train_path):
 
 
 REFUSAL_BOUNDARY_MARKERS = [
-    "i can't", "i can\u2019t", "i cannot", "i won\u2019t", "i won't",
-    "i don\u2019t", "i don't", "i do not",
-    "cannot confirm", "can't confirm",
-    "not safe", "risky", "dangerous",
-    "outside what i cover", "outside my scope", "outside my area of expertise",
-    "not supported by evidence", "not supported by the evidence", "misleading",
-    "conspiracy", "astrology is not science",
-    "i don't help", "i don't handle", "i don't recommend",
-    "no, that's not", "no, that is not", "nope, that's not",
+    "i can't",
+    "i can\u2019t",
+    "i cannot",
+    "i won\u2019t",
+    "i won't",
+    "i don\u2019t",
+    "i don't",
+    "i do not",
+    "cannot confirm",
+    "can't confirm",
+    "not safe",
+    "risky",
+    "dangerous",
+    "outside what i cover",
+    "outside my scope",
+    "outside my area of expertise",
+    "not supported by evidence",
+    "not supported by the evidence",
+    "misleading",
+    "conspiracy",
+    "astrology is not science",
+    "i don't help",
+    "i don't handle",
+    "i don't recommend",
+    "no, that's not",
+    "no, that is not",
+    "nope, that's not",
     # Direct refusal starters (non-first-person variants)
-    "nope. ", "nope!", "no, never", "no shortcuts", "absolutely not",
+    "nope. ",
+    "nope!",
+    "no, never",
+    "no shortcuts",
+    "absolutely not",
     # Safety prohibition / refusal to allow
-    "never skip", "don't skip", "do not skip",
+    "never skip",
+    "don't skip",
+    "do not skip",
     # Unsafe labeling (refusing to endorse unsafe behavior)
-    "that's unsafe", "that is unsafe", "it's unsafe", "it is unsafe",
-    "isn't safe", "is not safe",
+    "that's unsafe",
+    "that is unsafe",
+    "it's unsafe",
+    "it is unsafe",
+    "isn't safe",
+    "is not safe",
     # Safety boundary phrases
-    "food safety isn't", "food safety is not",
-    "safety isn't negotiable", "safety is not negotiable",
+    "food safety isn't",
+    "food safety is not",
+    "safety isn't negotiable",
+    "safety is not negotiable",
     "safety first",
     # Risk-context refusal markers
-    "risk of", "at risk of",
+    "risk of",
+    "at risk of",
 ]
 
 REFUSAL_REDIRECT_MARKERS = [
-    "i can help with", "instead", "instead of", "let's focus on", "let's talk about",
-    "we can focus on", "what i can do", "a safer way", "a better approach",
-    "better to", "evidence-based", "within the evidence",
+    "i can help with",
+    "instead",
+    "instead of",
+    "let's focus on",
+    "let's talk about",
+    "we can focus on",
+    "what i can do",
+    "a safer way",
+    "a better approach",
+    "better to",
+    "evidence-based",
+    "within the evidence",
 ]
 
 
 def refusal_response_has_boundary(text):
     """Return True if a refusal row includes boundary-setting or safe redirect.
-    
+
     Normalizes Unicode curly apostrophes/single quotes to ASCII equivalents
     so that markers like "i can't" match "i\\u2019t" (curly apostrophe).
     """
     normalized = (text or "").lower()
     # Normalize Unicode curly quotes/single quotes to ASCII
-    normalized = normalized.replace('\u2018', "'").replace('\u2019', "'")
-    normalized = normalized.replace('\u201c', '"').replace('\u201d', '"')
-    return any(marker in normalized for marker in REFUSAL_BOUNDARY_MARKERS + REFUSAL_REDIRECT_MARKERS)
+    normalized = normalized.replace("\u2018", "'").replace("\u2019", "'")
+    normalized = normalized.replace("\u201c", '"').replace("\u201d", '"')
+    return any(
+        marker in normalized for marker in REFUSAL_BOUNDARY_MARKERS + REFUSAL_REDIRECT_MARKERS
+    )
 
 
 def infer_category_from_messages(messages):
@@ -895,22 +1000,41 @@ def infer_category_from_messages(messages):
     user_msgs = [m for m in messages if m.get("role") == "user"]
     user_msg = user_msgs[0].get("content", "").lower() if user_msgs else ""
 
-    if any(w in user_msg for w in
-           ["who are you", "tell me about yourself", "introduce yourself"]):
+    if any(w in user_msg for w in ["who are you", "tell me about yourself", "introduce yourself"]):
         return "identity"
-    if any(w in response for w in
-           ["i want to make sure we stick", "not supported by the evidence",
-            "stay within", "i cannot", "i won't", "i don't",
-            "i can't", "outside my scope", "outside my area"]):
+    if any(
+        w in response
+        for w in [
+            "i want to make sure we stick",
+            "not supported by the evidence",
+            "stay within",
+            "i cannot",
+            "i won't",
+            "i don't",
+            "i can't",
+            "outside my scope",
+            "outside my area",
+        ]
+    ):
         return "refusal"
-    if any(w in user_msg for w in
-           ["what is", "explain", "how does", "why did", "tell me about",
-            "describe", "define", "what was", "how did"]):
+    if any(
+        w in user_msg
+        for w in [
+            "what is",
+            "explain",
+            "how does",
+            "why did",
+            "tell me about",
+            "describe",
+            "define",
+            "what was",
+            "how did",
+        ]
+    ):
         return "teaching"
     if "?" in user_msg:
         return "dialogue"
-    if any(w in user_msg for w in
-           ["help me", "i need", "can you help", "scenario"]):
+    if any(w in user_msg for w in ["help me", "i need", "can you help", "scenario"]):
         return "quest"
     return "unknown"
 
@@ -936,8 +1060,7 @@ def fix_metadata(example, input_path, fix=True, require_complete=False):
         missing = [f for f in REQUIRED_METADATA_FIELDS if f not in metadata]
         if missing:
             raise ValueError(
-                f"Missing required metadata fields: {missing}. "
-                f"Use --fix-metadata to auto-repair."
+                f"Missing required metadata fields: {missing}. Use --fix-metadata to auto-repair."
             )
         return example, warnings
 
@@ -983,9 +1106,7 @@ def fix_metadata(example, input_path, fix=True, require_complete=False):
         old = metadata["content_hash"]
         if old != computed:
             metadata["content_hash"] = computed
-            warnings.append(
-                f"content_hash was wrong (old: {old[:16]}...), recomputed"
-            )
+            warnings.append(f"content_hash was wrong (old: {old[:16]}...), recomputed")
 
     return example, warnings
 
@@ -993,12 +1114,23 @@ def fix_metadata(example, input_path, fix=True, require_complete=False):
 # ── Main Sanitization Pipeline ───────────────────────────────────────────────
 
 
-def sanitize_example(example, input_path, min_length=10, max_sentences=5,
-                     strict_mode=False, artifact_check="strict",
-                     verbose_artifacts=False, fix_metadata_flag=True,
-                     require_complete_metadata=False, discard_below_score=0,
-                     quality_threshold_pass=70, quality_threshold_flag=50,
-                     seen_user_messages=None, spec_data=None, llm_checker=None):
+def sanitize_example(
+    example,
+    input_path,
+    min_length=10,
+    max_sentences=5,
+    strict_mode=False,
+    artifact_check="strict",
+    verbose_artifacts=False,
+    fix_metadata_flag=True,
+    require_complete_metadata=False,
+    discard_below_score=0,
+    quality_threshold_pass=70,
+    quality_threshold_flag=50,
+    seen_user_messages=None,
+    spec_data=None,
+    llm_checker=None,
+):
     """Run the full sanitization pipeline on a single example.
 
     Returns (clean_example, quality_score, meta_warnings, discard_reason).
@@ -1026,7 +1158,8 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
 
     # 1. Metadata enrichment (early, so later steps have category/concept)
     example, meta_warnings = fix_metadata(
-        example, input_path,
+        example,
+        input_path,
         fix=fix_metadata_flag,
         require_complete=require_complete_metadata,
     )
@@ -1056,7 +1189,9 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
                     repaired_content = repair_and_filter_artifacts(content)
                     m["content"] = repaired_content
                     content = repaired_content
-                    meta_warnings.append(f"Repaired AI artifact in content (original matched pattern '{pattern}')")
+                    meta_warnings.append(
+                        f"Repaired AI artifact in content (original matched pattern '{pattern}')"
+                    )
 
         if m["role"] == "assistant":
             sentence_count = count_sentences(content)
@@ -1064,31 +1199,54 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
                 trimmed_content = trim_to_max_sentences(content, max_sentences)
                 m["content"] = trimmed_content
                 content = trimmed_content
-                meta_warnings.append(f"Trimmed content from {sentence_count} to {max_sentences} sentences")
+                meta_warnings.append(
+                    f"Trimmed content from {sentence_count} to {max_sentences} sentences"
+                )
 
             if len(content) < min_length:
-                return None, None, meta_warnings, \
-                    f"Assistant response too short ({len(content)} chars)"
+                return (
+                    None,
+                    None,
+                    meta_warnings,
+                    f"Assistant response too short ({len(content)} chars)",
+                )
 
             if len(content) > max_characters:
-                return None, None, meta_warnings, \
-                    f"Assistant response too long ({len(content)} chars, max {max_characters})"
+                return (
+                    None,
+                    None,
+                    meta_warnings,
+                    f"Assistant response too long ({len(content)} chars, max {max_characters})",
+                )
 
             if not allow_formatting:
                 if "**" in content or "__" in content:
-                    return None, None, meta_warnings, \
-                        "Assistant response contains markdown bolding"
-                if any(line.strip().startswith('#') for line in content.splitlines()):
-                    return None, None, meta_warnings, \
-                        "Assistant response contains markdown headers (#)"
+                    return None, None, meta_warnings, "Assistant response contains markdown bolding"
+                if any(line.strip().startswith("#") for line in content.splitlines()):
+                    return (
+                        None,
+                        None,
+                        meta_warnings,
+                        "Assistant response contains markdown headers (#)",
+                    )
                 for line in content.splitlines():
-                    if re.match(r'^[-*•\d]+\.?\s+', line.strip()):
-                        return None, None, meta_warnings, \
-                            "Assistant response contains markdown lists/bullets"
+                    if re.match(r"^[-*•\d]+\.?\s+", line.strip()):
+                        return (
+                            None,
+                            None,
+                            meta_warnings,
+                            "Assistant response contains markdown lists/bullets",
+                        )
 
-            if example.get("metadata", {}).get("category") == "refusal" and not refusal_response_has_boundary(content):
-                return None, None, meta_warnings, \
-                    "Refusal response lacks boundary-setting or safe redirect"
+            if example.get("metadata", {}).get(
+                "category"
+            ) == "refusal" and not refusal_response_has_boundary(content):
+                return (
+                    None,
+                    None,
+                    meta_warnings,
+                    "Refusal response lacks boundary-setting or safe redirect",
+                )
 
     # 4. Quality scoring
     quality = score_example(
@@ -1109,16 +1267,22 @@ def sanitize_example(example, input_path, min_length=10, max_sentences=5,
             if "metadata" not in example:
                 example["metadata"] = {}
             example["metadata"]["llm_check"] = llm_result
-            
+
             if not llm_result.get("is_high_quality", True):
                 # Penalize total score
                 quality["total"] = max(0, quality["total"] - 30)
-                meta_warnings.append(f"LLM Sanity Check flagged row: {llm_result.get('failure_reason')}")
+                meta_warnings.append(
+                    f"LLM Sanity Check flagged row: {llm_result.get('failure_reason')}"
+                )
 
     # 6. Discard below score threshold
     if quality["total"] < discard_below_score:
-        return None, quality, meta_warnings, \
-            f"Quality score {quality['total']} below threshold {discard_below_score}"
+        return (
+            None,
+            quality,
+            meta_warnings,
+            f"Quality score {quality['total']} below threshold {discard_below_score}",
+        )
 
     return example, quality, meta_warnings, None
 
@@ -1149,14 +1313,16 @@ def compute_quality_stats(scores, threshold_pass=70, threshold_flag=50):
     mean = sum(totals) / n
 
     sorted_totals = sorted(totals)
-    median = sorted_totals[n // 2] if n % 2 == 1 else (
-        sorted_totals[n // 2 - 1] + sorted_totals[n // 2]
-    ) / 2
+    median = (
+        sorted_totals[n // 2]
+        if n % 2 == 1
+        else (sorted_totals[n // 2 - 1] + sorted_totals[n // 2]) / 2
+    )
 
     min_val = min(totals)
     max_val = max(totals)
     variance = sum((t - mean) ** 2 for t in totals) / n
-    std_dev = round(variance ** 0.5, 1)
+    std_dev = round(variance**0.5, 1)
 
     passed = sum(1 for s in scores if s["passed"])
     flagged = sum(1 for s in scores if s["total"] < threshold_flag)
@@ -1215,7 +1381,7 @@ def build_sanitizer_manifest(
     (written by ``generate_dataset.py``), the ``generation`` and ``spec`` blocks
     are carried forward for provenance chaining.
     """
-    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now_str = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Resolve sanitizer config — prefer explicit args, fall back to defaults
     if sanitizer_args:
@@ -1248,11 +1414,15 @@ def build_sanitizer_manifest(
     }
 
     # Statistics
-    quality_stats = compute_quality_stats(
-        quality_scores,
-        threshold_pass=quality_threshold_pass,
-        threshold_flag=quality_threshold_flag,
-    ) if quality_scores else None
+    quality_stats = (
+        compute_quality_stats(
+            quality_scores,
+            threshold_pass=quality_threshold_pass,
+            threshold_flag=quality_threshold_flag,
+        )
+        if quality_scores
+        else None
+    )
 
     statistics = {
         "total_input": total_input,
@@ -1269,7 +1439,8 @@ def build_sanitizer_manifest(
     discarded = {
         "total": total_input - total_output,
         "by_reason": dict(sorted(discard_reasons.items(), key=lambda x: -x[1]))
-        if discard_reasons else {},
+        if discard_reasons
+        else {},
     }
 
     # Content hashes
@@ -1304,7 +1475,7 @@ def build_sanitizer_manifest(
                 gen_manifest = json.load(f)
             manifest["generation"] = gen_manifest.get("generation", {})
             manifest["spec"] = gen_manifest.get("spec", manifest.get("spec", {}))
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             pass
 
     return manifest
@@ -1335,73 +1506,136 @@ def write_manifest(manifest, output_dir, manifest_name="train_manifest.json"):
 def main():
     parser = argparse.ArgumentParser(
         description="Sanitize training dataset — Phase 2: structural validation, "
-                    "AI artifact filtering, quality scoring, metadata enrichment"
+        "AI artifact filtering, quality scoring, metadata enrichment"
     )
     parser.add_argument("input", help="Input JSONL path")
     parser.add_argument("--output", "-o", help="Output JSONL path (defaults to *_clean.jsonl)")
-    parser.add_argument("--min-length", type=int, default=10,
-                        help="Min chars for assistant response (default: 10)")
-    parser.add_argument("--max-sentences", type=int, default=5,
-                        help="Max sentences for assistant response (default: 5)")
-    parser.add_argument("--verbose", "-v", action="store_true",
-                        help="Print discarded examples and metadata warnings")
+    parser.add_argument(
+        "--min-length", type=int, default=10, help="Min chars for assistant response (default: 10)"
+    )
+    parser.add_argument(
+        "--max-sentences",
+        type=int,
+        default=5,
+        help="Max sentences for assistant response (default: 5)",
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Print discarded examples and metadata warnings",
+    )
     parser.add_argument("--spec", help="Path to NPC spec JSON (better quality scoring)")
 
     # 2a: Structural validation
-    parser.add_argument("--strict-mode", action="store_true",
-                        help="Raise on structural validation errors instead of discarding")
+    parser.add_argument(
+        "--strict-mode",
+        action="store_true",
+        help="Raise on structural validation errors instead of discarding",
+    )
 
     # 2b: AI artifact filtering
-    parser.add_argument("--artifact-check", choices=["strict", "warn", "off", "repair"],
-                        default="strict",
-                        help="How to handle AI artifacts (default: strict)")
-    parser.add_argument("--verbose-artifacts", action="store_true",
-                        help="Show the exact artifact pattern matched")
+    parser.add_argument(
+        "--artifact-check",
+        choices=["strict", "warn", "off", "repair"],
+        default="strict",
+        help="How to handle AI artifacts (default: strict)",
+    )
+    parser.add_argument(
+        "--verbose-artifacts", action="store_true", help="Show the exact artifact pattern matched"
+    )
 
     # 2c: Quality scoring
-    parser.add_argument("--quality-threshold-pass", type=int, default=70,
-                        help="Minimum total score to pass (default: 70)")
-    parser.add_argument("--quality-threshold-flag", type=int, default=50,
-                        help="Below this total, examples are flagged for review (default: 50)")
-    parser.add_argument("--quality-report", action="store_true",
-                        help="Print quality score distribution at the end")
-    parser.add_argument("--discard-below-score", type=int, default=0,
-                        help="Discard examples below this total score (default: 0 = keep all)")
+    parser.add_argument(
+        "--quality-threshold-pass",
+        type=int,
+        default=70,
+        help="Minimum total score to pass (default: 70)",
+    )
+    parser.add_argument(
+        "--quality-threshold-flag",
+        type=int,
+        default=50,
+        help="Below this total, examples are flagged for review (default: 50)",
+    )
+    parser.add_argument(
+        "--quality-report", action="store_true", help="Print quality score distribution at the end"
+    )
+    parser.add_argument(
+        "--discard-below-score",
+        type=int,
+        default=0,
+        help="Discard examples below this total score (default: 0 = keep all)",
+    )
 
     # 2d: Metadata enrichment
-    parser.add_argument("--no-fix-metadata", action="store_true",
-                        help="Disable auto-repair of missing metadata fields")
-    parser.add_argument("--require-complete-metadata", action="store_true",
-                        help="Error out if any metadata field is missing")
+    parser.add_argument(
+        "--no-fix-metadata",
+        action="store_true",
+        help="Disable auto-repair of missing metadata fields",
+    )
+    parser.add_argument(
+        "--require-complete-metadata",
+        action="store_true",
+        help="Error out if any metadata field is missing",
+    )
 
     # 3a: Deduplication
-    parser.add_argument("--dedup", default=True, action=argparse.BooleanOptionalAction,
-                        help="Enable/disable content_hash deduplication (default: True)")
-    parser.add_argument("--dedup-report", action="store_true",
-                        help="Show which content hashes were removed during dedup")
+    parser.add_argument(
+        "--dedup",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help="Enable/disable content_hash deduplication (default: True)",
+    )
+    parser.add_argument(
+        "--dedup-report",
+        action="store_true",
+        help="Show which content hashes were removed during dedup",
+    )
 
     # 3b: Manifest writing
-    parser.add_argument("--write-manifest", default=True, action=argparse.BooleanOptionalAction,
-                        help="Enable/disable enriched manifest writing (default: True)")
-    parser.add_argument("--manifest-path",
-                        help="Override manifest output path (default: <output_dir>/train_manifest.json)")
+    parser.add_argument(
+        "--write-manifest",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help="Enable/disable enriched manifest writing (default: True)",
+    )
+    parser.add_argument(
+        "--manifest-path",
+        help="Override manifest output path (default: <output_dir>/train_manifest.json)",
+    )
 
     # 4a: LLM Sanity Check
     parser.add_argument("--llm-check", action="store_true", help="Run LLM-based quality check")
     parser.add_argument("--llm-model", help="Ollama model for quality check")
-    parser.add_argument("--judge-cache-path", help="SQLite judge cache path for --llm-check (default: .pipeline/judge_cache.sqlite3)")
-    parser.add_argument("--no-judge-cache", action="store_true", help="Disable judge-result cache for --llm-check")
-    parser.add_argument("--inference-server-url", help="Use ucore inference-server /judge endpoint instead of direct Ollama for --llm-check")
+    parser.add_argument(
+        "--judge-cache-path",
+        help="SQLite judge cache path for --llm-check (default: .pipeline/judge_cache.sqlite3)",
+    )
+    parser.add_argument(
+        "--no-judge-cache", action="store_true", help="Disable judge-result cache for --llm-check"
+    )
+    parser.add_argument(
+        "--inference-server-url",
+        help="Use ucore inference-server /judge endpoint instead of direct Ollama for --llm-check",
+    )
 
     # Debugging
-    parser.add_argument("--debug", action="store_true",
-                        help="Re-raise exceptions with traceback for debugging")
+    parser.add_argument(
+        "--debug", action="store_true", help="Re-raise exceptions with traceback for debugging"
+    )
 
     # Legacy flags
-    parser.add_argument("--strict-canonical", action="store_true",
-                        help="Error unless input is canonical subjects/datasets/{key}/{tech}/train.jsonl")
-    parser.add_argument("--workflow-hooks", default=None,
-                        help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)")
+    parser.add_argument(
+        "--strict-canonical",
+        action="store_true",
+        help="Error unless input is canonical subjects/datasets/{key}/{tech}/train.jsonl",
+    )
+    parser.add_argument(
+        "--workflow-hooks",
+        default=None,
+        help="Path to a JSONL hook log for step tracing (default: <output-dir>/workflow_hooks.jsonl)",
+    )
 
     args = parser.parse_args()
 
@@ -1416,8 +1650,9 @@ def main():
         print(f"Got:      {input_path}")
         return
 
-    output_path = Path(args.output) if args.output else \
-        input_path.parent / f"{input_path.stem}_clean.jsonl"
+    output_path = (
+        Path(args.output) if args.output else input_path.parent / f"{input_path.stem}_clean.jsonl"
+    )
 
     fix_metadata_flag = not args.no_fix_metadata
 
@@ -1433,7 +1668,7 @@ def main():
                 detected = paths.spec_path(npc_key)
                 if detected and detected.exists():
                     spec_path = detected
-            except Exception as e:
+            except Exception:
                 pass
 
     if spec_path and spec_path.exists():
@@ -1446,7 +1681,11 @@ def main():
     # Initialize LLM checker if requested
     llm_checker = None
     if args.llm_check:
-        judge_cache = JudgeCache(args.judge_cache_path) if args.judge_cache_path and not args.no_judge_cache else None
+        judge_cache = (
+            JudgeCache(args.judge_cache_path)
+            if args.judge_cache_path and not args.no_judge_cache
+            else None
+        )
         llm_checker = LLMSanityChecker(
             model=args.llm_model,
             cache=judge_cache,
@@ -1460,8 +1699,8 @@ def main():
         else:
             print("Warning: LLM Sanity Check requested but no judge model found.")
 
+    from src.config.log_setup import clear_active_run, set_active_run
     from src.core.ops.run_registry import PipelineRun
-    from src.config.log_setup import set_active_run, clear_active_run
 
     npc_key_val = infer_npc_key_from_path(input_path) or "unknown"
     tech_val = input_path.parent.name if input_path.parent else "unknown"
@@ -1471,7 +1710,7 @@ def main():
         stage="sanitize",
         technique=tech_val,
         spec_path=spec_path,
-        entrypoint="cli"
+        entrypoint="cli",
     ) as run:
         set_active_run(run.run_id, run.run_dir)
         try:
@@ -1483,18 +1722,22 @@ def main():
                 spec_path=str(spec_path) if spec_path else None,
                 run_id=run.run_id,
             )
-            with hook_recorder.step("sanitize", input_path=str(input_path), output_path=str(output_path)):
+            with hook_recorder.step(
+                "sanitize", input_path=str(input_path), output_path=str(output_path)
+            ):
                 print(f"Sanitizing: {input_path}")
                 print(f"Output:     {output_path}")
                 if args.quality_report:
-                    print(f"Quality thresholds: pass >= {args.quality_threshold_pass}, "
-                          f"flag < {args.quality_threshold_flag}")
+                    print(
+                        f"Quality thresholds: pass >= {args.quality_threshold_pass}, "
+                        f"flag < {args.quality_threshold_flag}"
+                    )
 
                 # ── Phase 3a: Read all examples into memory ────────────────────────────
                 print(f"Reading: {input_path}")
                 all_examples = []
                 parse_errors = 0
-                with open(input_path, "r") as fin:
+                with open(input_path) as fin:
                     for line in fin:
                         if not line.strip():
                             continue
@@ -1515,11 +1758,15 @@ def main():
 
                 # ── Phase 3a: Deduplication ───────────────────────────────────────────
                 if args.dedup:
-                    unique_examples, dedup_count, removed_hashes = deduplicate_examples(all_examples)
+                    unique_examples, dedup_count, removed_hashes = deduplicate_examples(
+                        all_examples
+                    )
                     dedup_pct = dedup_count / total_input * 100 if total_input > 0 else 0
-                    print(f"Deduplication: removed {dedup_count} duplicates ({dedup_pct:.1f}% of total)")
+                    print(
+                        f"Deduplication: removed {dedup_count} duplicates ({dedup_pct:.1f}% of total)"
+                    )
                     if args.dedup_report and removed_hashes:
-                        print(f"  Removed hashes:")
+                        print("  Removed hashes:")
                         for h in removed_hashes:
                             print(f"    - {h}")
                 else:
@@ -1557,7 +1804,8 @@ def main():
                     for example in unique_examples:
                         try:
                             clean_ex, quality, meta_warnings, reason = sanitize_example(
-                                example, input_path,
+                                example,
+                                input_path,
                                 min_length=args.min_length,
                                 max_sentences=args.max_sentences,
                                 strict_mode=args.strict_mode,
@@ -1634,8 +1882,10 @@ def main():
 
                 # ── Also write clean file to versioned directory if it exists ──
                 import shutil
-                from src.config.paths import dataset_latest_actual_dir
-                if input_path and input_path.parent.name.startswith("v"):  # Check if input is versioned
+
+                if input_path and input_path.parent.name.startswith(
+                    "v"
+                ):  # Check if input is versioned
                     version_dir = input_path.parent
                     shutil.copy2(output_path, version_dir / "train_clean.jsonl")
 
@@ -1690,10 +1940,12 @@ def main():
 
                 # ── Statistics output ─────────────────────────────────────────────────
                 total_processed = total_input
-                discard_pct = (total_processed - kept) / total_processed * 100 if total_processed > 0 else 0
-                print(f"\nStats:")
+                discard_pct = (
+                    (total_processed - kept) / total_processed * 100 if total_processed > 0 else 0
+                )
+                print("\nStats:")
                 print(f"  Total:     {total_input}")
-                print(f"  Kept:      {kept} ({kept/total_processed*100:.1f}%)")
+                print(f"  Kept:      {kept} ({kept / total_processed * 100:.1f}%)")
                 print(f"  Discarded: {discarded} ({discard_pct:.1f}%)")
 
                 if reasons:
@@ -1703,9 +1955,15 @@ def main():
 
                 if args.quality_report and quality_scores:
                     avg_total = sum(s["total"] for s in quality_scores) / len(quality_scores)
-                    avg_persona = sum(s["persona_alignment"] for s in quality_scores) / len(quality_scores)
-                    avg_rule = sum(s["rule_compliance"] for s in quality_scores) / len(quality_scores)
-                    avg_concept = sum(s["concept_fidelity"] for s in quality_scores) / len(quality_scores)
+                    avg_persona = sum(s["persona_alignment"] for s in quality_scores) / len(
+                        quality_scores
+                    )
+                    avg_rule = sum(s["rule_compliance"] for s in quality_scores) / len(
+                        quality_scores
+                    )
+                    avg_concept = sum(s["concept_fidelity"] for s in quality_scores) / len(
+                        quality_scores
+                    )
                     avg_engage = sum(s["engagement"] for s in quality_scores) / len(quality_scores)
                     avg_unique = sum(s["uniqueness"] for s in quality_scores) / len(quality_scores)
 
@@ -1717,29 +1975,38 @@ def main():
                     print(f"  Average engagement:         {avg_engage:.1f}/10")
                     print(f"  Average uniqueness:         {avg_unique:.1f}/10")
 
-                    print(f"\n  Distribution (total score buckets):")
+                    print("\n  Distribution (total score buckets):")
                     for bucket in range(0, 101, 10):
                         count = quality_distribution.get(bucket, 0)
                         if count > 0:
                             bar = "█" * count
-                            print(f"    {bucket:3d}-{bucket+9:2d}: {count:3d} {bar}")
+                            print(f"    {bucket:3d}-{bucket + 9:2d}: {count:3d} {bar}")
 
-                    flagged = [s for s in quality_scores if s["total"] < args.quality_threshold_flag]
-                    below_pass = [s for s in quality_scores if s["total"] < args.quality_threshold_pass]
+                    flagged = [
+                        s for s in quality_scores if s["total"] < args.quality_threshold_flag
+                    ]
+                    below_pass = [
+                        s for s in quality_scores if s["total"] < args.quality_threshold_pass
+                    ]
 
                     if flagged:
-                        print(f"\n  Flagged for review (< {args.quality_threshold_flag}): "
-                              f"{len(flagged)}/{len(quality_scores)}")
+                        print(
+                            f"\n  Flagged for review (< {args.quality_threshold_flag}): "
+                            f"{len(flagged)}/{len(quality_scores)}"
+                        )
                     else:
                         print(f"\n  Flagged for review (< {args.quality_threshold_flag}): none")
 
                     if below_pass:
-                        print(f"  Below pass threshold (< {args.quality_threshold_pass}): "
-                              f"{len(below_pass)}/{len(quality_scores)}")
+                        print(
+                            f"  Below pass threshold (< {args.quality_threshold_pass}): "
+                            f"{len(below_pass)}/{len(quality_scores)}"
+                        )
 
                 # ── Record pipeline manifest stage ─────────────────────────────────
                 try:
                     from src.core.ops.pipeline_manifest import record_pipeline_stage
+
                     os.environ.setdefault("NPC_KEY", npc_key_val)
                     os.environ.setdefault("TECHNIQUE", tech_val if tech_val else "template")
                     manifest_artifacts = {}
@@ -1747,6 +2014,7 @@ def main():
                         manifest_artifacts["output"] = str(output_path)
                     record_pipeline_stage("sanitize", artifacts=manifest_artifacts)
                     from src.core.ops.artifact_registry import record_stage_artifacts_best_effort
+
                     record_stage_artifacts_best_effort(
                         run.run_id,
                         npc_key_val,
@@ -1762,14 +2030,28 @@ def main():
                         technique=tech_val,
                         artifacts=manifest_artifacts,
                         metrics={"total_input": total_input, "kept": kept, "discarded": discarded},
-                        metadata={"output_path": str(output_path), "manifest_path": str(locals().get("manifest_path")) if locals().get("manifest_path") else None},
+                        metadata={
+                            "output_path": str(output_path),
+                            "manifest_path": str(locals().get("manifest_path"))
+                            if locals().get("manifest_path")
+                            else None,
+                        },
                     )
                 except Exception:
                     pass  # manifest is optional, never block pipeline
 
         finally:
-            run.set_artifacts(clean_path=str(output_path), manifest_path=str(manifest_path) if 'manifest_path' in locals() and manifest_path else None)
-            run.set_metrics(total=total_input if 'total_input' in locals() else 0, kept=kept if 'kept' in locals() else 0, discarded=discarded if 'discarded' in locals() else 0)
+            run.set_artifacts(
+                clean_path=str(output_path),
+                manifest_path=str(manifest_path)
+                if "manifest_path" in locals() and manifest_path
+                else None,
+            )
+            run.set_metrics(
+                total=total_input if "total_input" in locals() else 0,
+                kept=kept if "kept" in locals() else 0,
+                discarded=discarded if "discarded" in locals() else 0,
+            )
             clear_active_run()
 
 

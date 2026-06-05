@@ -21,6 +21,12 @@ runs/
 *.gguf
 *.db
 *.checkpoint.db
+artifacts/
+var/
+outputs/
+exports/
+eval/
+logs/
 
 # Heavy local/vendor caches
 unsloth_compiled_cache/
@@ -60,11 +66,14 @@ dist/
 build/
 *.dist
 *.egg
-he directories
+
+# Test/cache dirs
 .pytest_cache/
 .cache/
 *.cache
 .deepeval/
+
+# Legacy data dir (moved to data/)
 subjects/datasets/*/*/quality_summary.json
 subjects/datasets/*/*/quality_failures.json
 
@@ -81,13 +90,5 @@ src/dashboard/unity-npc-llm-training-dashboard/.next/
 .env.local
 *.token
 
-# Reorganization Artifacts and Cache
-/artifacts/
-/var/
-/outputs
-/exports
-/eval
-/logs
-/unsloth_compiled_cache
-__pycache__/
-*.pyc
+# Pre-commit
+.pre-commit-config-local.yaml

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-import time
 from pathlib import Path
 from uuid import UUID
 
@@ -9,6 +7,7 @@ import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 import sys
+
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
@@ -117,7 +116,7 @@ def test_expired_lease_removed_on_status_check():
     from src.core.ops.gpu_lease import GpuLeaseManager
 
     mgr = GpuLeaseManager()
-    lease = mgr.request_lease(mode="judge_shared", ttl=-1)  # Already expired
+    mgr.request_lease(mode="judge_shared", ttl=-1)  # Already expired
 
     status = mgr.status()
     assert len(status["active_leases"]) == 0

@@ -27,7 +27,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 from src.config import paths
-from src.config.workflow_context import infer_spec_technique as infer_shared_spec_technique, load_subject_spec as load_shared_subject_spec
+from src.config.workflow_context import infer_spec_technique as infer_shared_spec_technique
+from src.config.workflow_context import load_subject_spec as load_shared_subject_spec
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
 
@@ -37,7 +38,7 @@ def _infer_spec_technique(spec_path: str | None) -> str:
         return "template"
     try:
         spec = load_shared_subject_spec(spec_path)
-    except Exception as e:
+    except Exception:
         return "template"
     return str(infer_shared_spec_technique(spec) or "template")
 
@@ -70,14 +71,13 @@ def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str, str | None]:
     model_short = None
     try:
         model_short = paths.model_short_name(model_id)
-    except Exception as e:
+    except Exception:
         pass
 
-    dataset_technique = str(
-        manifest.get("dataset", {}).get("technique")
-        or manifest.get("technique")
-        or ""
-    ).strip() or None
+    dataset_technique = (
+        str(manifest.get("dataset", {}).get("technique") or manifest.get("technique") or "").strip()
+        or None
+    )
 
     export_dir = paths.export_dir(npc_key)
     if not export_dir.exists():
@@ -102,22 +102,26 @@ def find_gguf_for_run(npc_key: str, run_id: str) -> tuple[str, str, str | None]:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Compare two training runs by run_id"
-    )
+    parser = argparse.ArgumentParser(description="Compare two training runs by run_id")
     parser.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
     parser.add_argument("--baseline-run", required=True, help="Baseline run ID")
     parser.add_argument("--candidate-run", required=True, help="Candidate run ID")
     parser.add_argument("--spec", help="Subject spec path (auto-detected if omitted)")
-    parser.add_argument("--golden-technique", choices=["template", "ollama", "docs", "openai", "anthropic"],
-                        help="Technique label for technique-scoped live golden evals (defaults to the spec technique)")
-    parser.add_argument("--num-questions", type=int, default=10,
-                        help="Number of eval questions (default: 10)")
-    parser.add_argument("--judge", action="store_true",
-                        help="Use local Ollama judge")
+    parser.add_argument(
+        "--golden-technique",
+        choices=["template", "ollama", "docs", "openai", "anthropic"],
+        help="Technique label for technique-scoped live golden evals (defaults to the spec technique)",
+    )
+    parser.add_argument(
+        "--num-questions", type=int, default=10, help="Number of eval questions (default: 10)"
+    )
+    parser.add_argument("--judge", action="store_true", help="Use local Ollama judge")
     parser.add_argument("--output", "-o", help="Output report path")
-    parser.add_argument("--workflow-hooks", default=None,
-                        help="Path to a JSONL hook log for step tracing (default: <comparison-dir>/workflow_hooks.jsonl)")
+    parser.add_argument(
+        "--workflow-hooks",
+        default=None,
+        help="Path to a JSONL hook log for step tracing (default: <comparison-dir>/workflow_hooks.jsonl)",
+    )
     args = parser.parse_args()
 
     baseline_gguf, model_id, baseline_technique = find_gguf_for_run(args.npc_key, args.baseline_run)
@@ -130,7 +134,12 @@ def main():
             spec_path = str(spec_guess)
             print(f"Auto-detected spec: {spec_path}")
 
-    golden_technique = args.golden_technique or candidate_technique or baseline_technique or _infer_spec_technique(spec_path)
+    golden_technique = (
+        args.golden_technique
+        or candidate_technique
+        or baseline_technique
+        or _infer_spec_technique(spec_path)
+    )
     if golden_technique not in {"template", "ollama", "docs", "openai", "anthropic"}:
         golden_technique = "template"
     if baseline_technique and candidate_technique and baseline_technique != candidate_technique:
@@ -146,12 +155,19 @@ def main():
         npc_key=args.npc_key,
         spec_path=spec_path,
     )
-    with hook_recorder.step("compare_runs", npc_key=args.npc_key, baseline_run=args.baseline_run, candidate_run=args.candidate_run):
+    with hook_recorder.step(
+        "compare_runs",
+        npc_key=args.npc_key,
+        baseline_run=args.baseline_run,
+        candidate_run=args.candidate_run,
+    ):
         cmd = [
             sys.executable,
             str(PROJECT_ROOT / "scripts" / "evaluation" / "evaluate.py"),
-            "--baseline", baseline_gguf,
-            "--candidate", candidate_gguf,
+            "--baseline",
+            baseline_gguf,
+            "--candidate",
+            candidate_gguf,
         ]
         if spec_path:
             cmd.extend(["--spec", spec_path])
@@ -181,7 +197,7 @@ def main():
         env["DEEPEVAL_GOLDEN_PER_CATEGORY"] = env.get("DEEPEVAL_GOLDEN_PER_CATEGORY", "3")
 
         print(f"{'=' * 60}")
-        print(f"  RUN COMPARISON")
+        print("  RUN COMPARISON")
         print(f"  NPC:        {args.npc_key}")
         print(f"  Baseline:   {args.baseline_run}")
         print(f"  Candidate:  {args.candidate_run}")

@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import json
+import shutil
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
-import json
-import shutil
 
 from src.config.paths import dataset_latest_symlink, dataset_version_dir, generate_version_timestamp
-from src.core.dataset.dataset_contracts import calculate_distribution_gaps, dataset_contract_from_spec
+from src.core.dataset.dataset_contracts import (
+    calculate_distribution_gaps,
+    dataset_contract_from_spec,
+)
 
 
 def build_ollama_manifest(
@@ -55,7 +58,7 @@ def build_ollama_manifest(
         "technique": technique,
         "model": model,
         "generation": {
-            "date": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "date": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "seed": seed,
             "temperature": temperature,
             "multi_turn_ratio": multi_turn_ratio,
@@ -67,7 +70,9 @@ def build_ollama_manifest(
             "expected_examples_per_category": dataset_contract["expected_examples_per_category"],
             "generation_request_examples_per_category": dict(examples_per_category),
             "observed_examples_per_category": dict(by_category),
-            "distribution_gaps": calculate_distribution_gaps(dataset_contract["expected_examples_per_category"], dict(by_category)),
+            "distribution_gaps": calculate_distribution_gaps(
+                dataset_contract["expected_examples_per_category"], dict(by_category)
+            ),
         },
         "statistics": {
             "total": len(examples),
@@ -106,7 +111,9 @@ def write_ollama_dataset_artifacts(
                 f.write(json.dumps(ex, ensure_ascii=False) + "\n")
 
     manifest_path = output_path.parent / "train_manifest.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
     if create_version_copy:
         version = generate_version_timestamp()
@@ -125,4 +132,8 @@ def write_ollama_dataset_artifacts(
         except (OSError, FileNotFoundError):
             pass
 
-    return {"output_path": str(output_path), "val_path": str(val_path) if val_path else None, "manifest_path": str(manifest_path)}
+    return {
+        "output_path": str(output_path),
+        "val_path": str(val_path) if val_path else None,
+        "manifest_path": str(manifest_path),
+    }

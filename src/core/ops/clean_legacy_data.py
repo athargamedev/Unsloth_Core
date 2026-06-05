@@ -18,7 +18,11 @@ from src.core.ops.legacy_data_cleanup import iter_legacy_dataset_artifacts, summ
 def main() -> int:
     parser = argparse.ArgumentParser(description="Clean legacy dataset/eval artifacts")
     parser.add_argument("--apply", action="store_true", help="Actually remove matched artifacts")
-    parser.add_argument("--archive-dir", default="var/archive/legacy-data", help="Archive directory used when --apply is set")
+    parser.add_argument(
+        "--archive-dir",
+        default="var/archive/legacy-data",
+        help="Archive directory used when --apply is set",
+    )
     args = parser.parse_args()
 
     targets = list(iter_legacy_dataset_artifacts())

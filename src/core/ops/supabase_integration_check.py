@@ -16,7 +16,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
@@ -60,7 +60,7 @@ def upsert_profile(client, npc_key: str, spec: dict, model_path: str | None):
 
     metadata = {
         "source": "unsloth_core_phase_supabase_check",
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
         "subject_file": f"{npc_key}.json",
     }
 
@@ -152,7 +152,9 @@ def run_probe(client, npc_key: str, player_id: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Supabase compatibility and memory probe for an NPC")
+    parser = argparse.ArgumentParser(
+        description="Supabase compatibility and memory probe for an NPC"
+    )
     parser.add_argument("--npc-key", required=True, help="NPC key, e.g. chemistry_instructor")
     parser.add_argument(
         "--player-id",
@@ -192,7 +194,9 @@ def main():
 
     print("\n[2/3] Running dialogue + memory probe...")
     result = run_probe(client, args.npc_key, args.player_id)
-    print("  ✓ get_or_create_session / insert_turn_fast / summarize_dialogue_session / get_player_npc_memory")
+    print(
+        "  ✓ get_or_create_session / insert_turn_fast / summarize_dialogue_session / get_player_npc_memory"
+    )
     print(f"    session_id={result['session_id']}")
     print(f"    memory_id={result['memory_id']}")
     print(f"    memory_text={result['memory_text']}")

@@ -13,7 +13,9 @@ source_order:
 
 # regression-reviewer
 
-Final test selection, code review, and confidence specialist.
+## Mission
+
+Final test selection, code review, and confidence gate specialist.
 
 ## Ownership
 

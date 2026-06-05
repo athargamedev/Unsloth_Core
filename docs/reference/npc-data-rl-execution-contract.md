@@ -8,16 +8,16 @@ shape. Use it before any training run.
 
 Fresh datasets must be generated from:
 
-- `subjects/NPC_specs/{npc_key}.json` for identity, system prompt, categories, counts, and behavior rules.
-- `subjects/reference_docs/{npc_key_or_subject}_primer.md` for grounded domain facts.
-- `subjects/schemas/*.schema.json` for machine-readable record formats.
+- `data/npcs/specs/{npc_key}.json` for identity, system prompt, categories, counts, and behavior rules.
+- `data/npcs/reference_docs/{npc_key_or_subject}_primer.md` for grounded domain facts.
+- `data/npcs/schemas/*.schema.json` for machine-readable record formats.
 
-Do not generate new training data from old `subjects/datasets/**/train*.jsonl`
+Do not generate new training data from old `data/datasets/**/train*.jsonl`
 files. Those files are generated artifacts, not source material.
 
 ## 2. Reference Doc Pattern
 
-Each `reference_doc` must be a Markdown file under `subjects/reference_docs/`.
+Each `reference_doc` must be a Markdown file under `data/npcs/reference_docs/`.
 Minimum requirements:
 
 - One H1 title naming the NPC or subject.
@@ -46,10 +46,10 @@ metadata.
 Canonical path:
 
 ```text
-subjects/datasets/{npc_key}/{technique}/train.jsonl
-subjects/datasets/{npc_key}/{technique}/train_clean.jsonl
-subjects/datasets/{npc_key}/{technique}/validation.jsonl
-subjects/datasets/{npc_key}/{technique}/train_manifest.json
+data/datasets/{npc_key}/{technique}/train.jsonl
+data/datasets/{npc_key}/{technique}/train_clean.jsonl
+data/datasets/{npc_key}/{technique}/validation.jsonl
+data/datasets/{npc_key}/{technique}/train_manifest.json
 ```
 
 Active techniques:
@@ -89,13 +89,13 @@ Every SFT JSONL row must include:
 Before training:
 
 ```bash
-./ucore validate-spec subjects/NPC_specs/{npc_key}.json --generation-ready
-./ucore generate subjects/NPC_specs/{npc_key}.json --technique template
-./ucore sanitize subjects/datasets/{npc_key}/template/train.jsonl \
-  --output subjects/datasets/{npc_key}/template/train_clean.jsonl \
+./ucore validate-spec data/npcs/specs/{npc_key}.json --generation-ready
+./ucore generate data/npcs/specs/{npc_key}.json --technique template
+./ucore sanitize data/datasets/{npc_key}/template/train.jsonl \
+  --output data/datasets/{npc_key}/template/train_clean.jsonl \
   --strict-canonical \
   --require-complete-metadata
-./ucore dataset-eval subjects/NPC_specs/{npc_key}.json --technique template --judge-model qwen3:latest
+./ucore dataset-eval data/npcs/specs/{npc_key}.json --technique template --judge-model qwen3:latest
 ```
 
 Use `quality_failures.json` as the build-loop source of truth. Fix generation,
@@ -110,19 +110,19 @@ When implemented, it must use the cleaned SFT data and eval failures as inputs.
 Preference pairs:
 
 ```text
-subjects/datasets/{npc_key}/{technique}/rl/preferences.jsonl
+data/datasets/{npc_key}/{technique}/rl/preferences.jsonl
 ```
 
-- Schema: `subjects/schemas/rl_preferences_record.schema.json`
+- Schema: `data/npcs/schemas/rl_preferences_record.schema.json`
 - Must contain `prompt`, `chosen`, `rejected`, and metadata.
 - Should prioritize refusal boundaries, misconception correction, and tone improvements.
 
 Reward rollouts:
 
 ```text
-subjects/datasets/{npc_key}/{technique}/rl/reward_rollouts.jsonl
+data/datasets/{npc_key}/{technique}/rl/reward_rollouts.jsonl
 ```
 
-- Schema: `subjects/schemas/rl_reward_rollout_record.schema.json`
+- Schema: `data/npcs/schemas/rl_reward_rollout_record.schema.json`
 - Must contain `prompt`, `response`, `scores.overall`, and metadata.
 - Scores must come from a local judge unless the user explicitly allows cloud evaluation.

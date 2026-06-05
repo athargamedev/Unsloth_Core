@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-
 jsonschema = pytest.importorskip("jsonschema")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]

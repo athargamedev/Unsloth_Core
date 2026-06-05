@@ -4,6 +4,7 @@
 Usage:
     python scripts/evaluation/tb_reader.py --run-dir <path_to_event_folder>
 """
+
 import argparse
 import json
 import os
@@ -48,13 +49,13 @@ def read_tensorboard(run_dir: str) -> dict:
         try:
             ea = EventAccumulator(event_dir)
             ea.Reload()
-        except Exception as e:
+        except Exception:
             continue
 
         for tag in ea.Tags().get("scalars", []):
             try:
                 events = ea.Scalars(tag)
-            except Exception as e:
+            except Exception:
                 continue
 
             points = [{"step": e.step, "value": round(e.value, 6)} for e in events]

@@ -20,6 +20,7 @@ from pathlib import Path
 is_colab = False
 try:
     import google.colab
+
     is_colab = True
 except ImportError:
     pass
@@ -35,11 +36,13 @@ PYTHON = str(VENV_PYTHON) if (VENV_PYTHON.exists() and not is_colab) else sys.ex
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import paths
-from src.core.tracing.deepeval_tracing import configure_tracing, trace_type
+from src.core.tracing.deepeval_tracing import trace_type
 
 EARLY_ALERT_PATTERNS = [
     re.compile(r"Traceback \(most recent call last\):"),
-    re.compile(r"\b(?:AssertionError|ModuleNotFoundError|RuntimeError|ValueError|KeyError|IndexError|CalledProcessError|OSError)\b"),
+    re.compile(
+        r"\b(?:AssertionError|ModuleNotFoundError|RuntimeError|ValueError|KeyError|IndexError|CalledProcessError|OSError)\b"
+    ),
     re.compile(r"\b(?:ERROR|Error:|FAILED|FAILURE)\b"),
     re.compile(r"Command timed out|timed out after"),
     re.compile(r"^\s*F\s+🎯 Evaluating test case"),
@@ -64,7 +67,9 @@ def _line_is_early_alert(line: str) -> bool:
 
 def _write_json(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False, default=str) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, default=str) + "\n", encoding="utf-8"
+    )
 
 
 def _json_serialize(obj: object) -> str:
@@ -122,7 +127,10 @@ def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
     started_at = datetime.now().isoformat()
     try:
         assert proc.stdout is not None
-        with log_path.open("a", encoding="utf-8") as log_file, alerts_path.open("a", encoding="utf-8") as alert_file:
+        with (
+            log_path.open("a", encoding="utf-8") as log_file,
+            alerts_path.open("a", encoding="utf-8") as alert_file,
+        ):
             while True:
                 line = proc.stdout.readline()
                 if line == "" and proc.poll() is not None:
@@ -134,7 +142,11 @@ def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
                 log_file.write(line)
                 log_file.flush()
                 if _line_is_early_alert(line):
-                    alert = {"timestamp": datetime.now().isoformat(), "line": line.rstrip("\n"), "command": " ".join(cmd)}
+                    alert = {
+                        "timestamp": datetime.now().isoformat(),
+                        "line": line.rstrip("\n"),
+                        "command": " ".join(cmd),
+                    }
                     alerts.append(alert)
                     alert_file.write(json.dumps(alert, ensure_ascii=False) + "\n")
                     alert_file.flush()
@@ -159,10 +171,15 @@ def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
     }
     _write_json(summary_path, summary)
     if returncode != 0:
-        print(f"[WATCH] Command failed with return code {returncode}. Logs: {watch_dir}", flush=True)
+        print(
+            f"[WATCH] Command failed with return code {returncode}. Logs: {watch_dir}", flush=True
+        )
         sys.exit(returncode)
 
-def _new_npc_checklist_payload(npc_key: str, subject: str | None = None, name: str | None = None) -> dict:
+
+def _new_npc_checklist_payload(
+    npc_key: str, subject: str | None = None, name: str | None = None
+) -> dict:
     return {
         "npc_key": npc_key,
         "name": name,
@@ -196,10 +213,16 @@ def create_parser():
         description="Unsloth_Core Unified CLI",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--workflow-hooks", default=None,
-                        help="Path to a JSONL hook log for step tracing (used by workflow scripts)")
-    parser.add_argument("--watch", action="store_true",
-                        help="Stream command output with early error alerts and save a watch log")
+    parser.add_argument(
+        "--workflow-hooks",
+        default=None,
+        help="Path to a JSONL hook log for step tracing (used by workflow scripts)",
+    )
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="Stream command output with early error alerts and save a watch log",
+    )
     parser.add_argument("--version", action="version", version="ucore (local)")
     subparsers = parser.add_subparsers(dest="command", help="Command to run", required=True)
 
@@ -208,153 +231,367 @@ def create_parser():
     gen_p.add_argument("spec", help="Path to subject spec JSON")
     gen_mode = gen_p.add_mutually_exclusive_group()
     gen_mode.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
-    gen_mode.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"], help="Generation technique")
+    gen_mode.add_argument(
+        "--technique",
+        default="template",
+        choices=["docs", "ollama", "template", "openai", "anthropic"],
+        help="Generation technique",
+    )
     gen_p.add_argument("--docs-manifest", help="Docs corpus manifest override for --technique docs")
     gen_p.add_argument("--model", help="LLM model name for ollama/openai/anthropic")
-    gen_p.add_argument("--concept-focus", action="append", dest="concept_focus",
-                        help="Focus on specific categories (repeatable, boosts example count)")
-    gen_p.add_argument("--fresh", action="store_true",
-                        help="Ignore checkpoint recovery and regenerate the dataset from scratch")
+    gen_p.add_argument(
+        "--concept-focus",
+        action="append",
+        dest="concept_focus",
+        help="Focus on specific categories (repeatable, boosts example count)",
+    )
+    gen_p.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Ignore checkpoint recovery and regenerate the dataset from scratch",
+    )
 
     # Generate with Ollama (optimized)
-    gen_ollama_p = subparsers.add_parser("generate-ollama", help="Generate dataset using optimized Ollama generator (defaults to local llama3.1-3060-chat)")
+    gen_ollama_p = subparsers.add_parser(
+        "generate-ollama",
+        help="Generate dataset using optimized Ollama generator (defaults to local llama3.1-3060-chat)",
+    )
     gen_ollama_p.add_argument("spec", help="Path to subject spec JSON")
-    gen_ollama_p.add_argument("--model", default="llama3.1-3060-chat:latest", help="Ollama model (default: llama3.1-3060-chat:latest)")
+    gen_ollama_p.add_argument(
+        "--model",
+        default="llama3.1-3060-chat:latest",
+        help="Ollama model (default: llama3.1-3060-chat:latest)",
+    )
     gen_ollama_p.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
-    gen_ollama_p.add_argument("--inference-server-url", help="Route generation through ucore inference-server /chat")
-    gen_ollama_p.add_argument("--batch-size", type=int, default=4, help="Concurrent generation tasks")
-    gen_ollama_p.add_argument("--max-retries", type=int, default=3, help="Max retries per generation")
-    gen_ollama_p.add_argument("--temperature", type=float, default=0.6, help="Generation temperature")
-    gen_ollama_p.add_argument("--multi-turn-ratio", type=float, default=0.25,
-                              help="Fraction of rows to request as two-turn dialogues")
+    gen_ollama_p.add_argument(
+        "--inference-server-url", help="Route generation through ucore inference-server /chat"
+    )
+    gen_ollama_p.add_argument(
+        "--batch-size", type=int, default=4, help="Concurrent generation tasks"
+    )
+    gen_ollama_p.add_argument(
+        "--max-retries", type=int, default=3, help="Max retries per generation"
+    )
+    gen_ollama_p.add_argument(
+        "--temperature", type=float, default=0.6, help="Generation temperature"
+    )
+    gen_ollama_p.add_argument(
+        "--multi-turn-ratio",
+        type=float,
+        default=0.25,
+        help="Fraction of rows to request as two-turn dialogues",
+    )
     gen_ollama_p.add_argument("--seed", type=int, default=42, help="Random seed")
     gen_ollama_p.add_argument("--output", "-o", help="Output JSONL path")
     gen_ollama_p.add_argument("--no-validation", action="store_true", help="Skip validation split")
-    gen_ollama_p.add_argument("--val-split", type=float, default=0.12, help="Validation split ratio")
-    gen_ollama_p.add_argument("--check-health", action="store_true", help="Verify Ollama is running")
-    gen_ollama_p.add_argument("--pull-model", action="store_true", help="Auto-pull model if not found")
-    gen_ollama_p.add_argument("--fresh", action="store_true",
-                        help="Ignore checkpoint recovery and regenerate the dataset from scratch")
-    gen_ollama_p.add_argument("--concept-focus", action="append", dest="concept_focus",
-                              help="Focus regeneration on specific categories (repeatable)")
-    gen_ollama_p.add_argument("--dry-run", action="store_true", help="Dry-run: show plan without generating")
+    gen_ollama_p.add_argument(
+        "--val-split", type=float, default=0.12, help="Validation split ratio"
+    )
+    gen_ollama_p.add_argument(
+        "--check-health", action="store_true", help="Verify Ollama is running"
+    )
+    gen_ollama_p.add_argument(
+        "--pull-model", action="store_true", help="Auto-pull model if not found"
+    )
+    gen_ollama_p.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Ignore checkpoint recovery and regenerate the dataset from scratch",
+    )
+    gen_ollama_p.add_argument(
+        "--concept-focus",
+        action="append",
+        dest="concept_focus",
+        help="Focus regeneration on specific categories (repeatable)",
+    )
+    gen_ollama_p.add_argument(
+        "--dry-run", action="store_true", help="Dry-run: show plan without generating"
+    )
 
     # Sanitize
     san_p = subparsers.add_parser("sanitize", help="Sanitize a dataset")
     san_p.add_argument("input", help="Path to input JSONL")
     san_p.add_argument("--output", "-o", help="Path to output JSONL (defaults to *_clean.jsonl)")
-    san_p.add_argument("--min-length", type=int, default=10,
-                       help="Min chars for assistant response (default: 10)")
-    san_p.add_argument("--max-sentences", type=int, default=5,
-                       help="Max sentences for assistant response (default: 5)")
-    san_p.add_argument("--verbose", "-v", action="store_true",
-                       help="Print discarded examples and metadata warnings")
+    san_p.add_argument(
+        "--min-length", type=int, default=10, help="Min chars for assistant response (default: 10)"
+    )
+    san_p.add_argument(
+        "--max-sentences",
+        type=int,
+        default=5,
+        help="Max sentences for assistant response (default: 5)",
+    )
+    san_p.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Print discarded examples and metadata warnings",
+    )
     san_p.add_argument("--spec", help="Path to NPC spec JSON (better quality scoring)")
-    san_p.add_argument("--strict-canonical", action="store_true",
-                       help="Require canonical dataset path")
-    san_p.add_argument("--strict-mode", action="store_true",
-                       help="Raise on structural validation errors instead of discarding")
-    san_p.add_argument("--artifact-check", default="strict", choices=["strict", "warn", "off", "repair"],
-                       help="How to handle AI artifacts (default: strict)")
-    san_p.add_argument("--verbose-artifacts", action="store_true",
-                       help="Show the exact artifact pattern matched")
+    san_p.add_argument(
+        "--strict-canonical", action="store_true", help="Require canonical dataset path"
+    )
+    san_p.add_argument(
+        "--strict-mode",
+        action="store_true",
+        help="Raise on structural validation errors instead of discarding",
+    )
+    san_p.add_argument(
+        "--artifact-check",
+        default="strict",
+        choices=["strict", "warn", "off", "repair"],
+        help="How to handle AI artifacts (default: strict)",
+    )
+    san_p.add_argument(
+        "--verbose-artifacts", action="store_true", help="Show the exact artifact pattern matched"
+    )
     san_p.add_argument("--llm-check", action="store_true", help="Run LLM-based quality check")
     san_p.add_argument("--llm-model", help="Ollama model for quality check")
     san_p.add_argument("--judge-cache-path", help="SQLite judge cache path for --llm-check")
-    san_p.add_argument("--no-judge-cache", action="store_true", help="Disable judge-result cache for --llm-check")
-    san_p.add_argument("--inference-server-url", help="Use ucore inference-server /judge endpoint for --llm-check")
-    san_p.add_argument("--quality-threshold-pass", type=int, default=70,
-                       help="Minimum total score to pass (default: 70)")
-    san_p.add_argument("--quality-threshold-flag", type=int, default=50,
-                       help="Below this total, examples are flagged for review (default: 50)")
-    san_p.add_argument("--quality-report", action="store_true",
-                       help="Print quality score distribution at the end")
-    san_p.add_argument("--discard-below-score", type=int, default=0,
-                       help="Discard examples below this total score (default: 0 = keep all)")
-    san_p.add_argument("--no-fix-metadata", action="store_true",
-                       help="Disable auto-repair of missing metadata fields")
-    san_p.add_argument("--require-complete-metadata", action="store_true",
-                       help="Error out if any metadata field is missing")
-    san_p.add_argument("--dedup", default=True, action=argparse.BooleanOptionalAction,
-                       help="Enable/disable content_hash deduplication (default: True)")
-    san_p.add_argument("--dedup-report", action="store_true",
-                       help="Show which content hashes were removed during dedup")
-    san_p.add_argument("--write-manifest", default=True, action=argparse.BooleanOptionalAction,
-                       help="Enable/disable enriched manifest writing (default: True)")
+    san_p.add_argument(
+        "--no-judge-cache", action="store_true", help="Disable judge-result cache for --llm-check"
+    )
+    san_p.add_argument(
+        "--inference-server-url", help="Use ucore inference-server /judge endpoint for --llm-check"
+    )
+    san_p.add_argument(
+        "--quality-threshold-pass",
+        type=int,
+        default=70,
+        help="Minimum total score to pass (default: 70)",
+    )
+    san_p.add_argument(
+        "--quality-threshold-flag",
+        type=int,
+        default=50,
+        help="Below this total, examples are flagged for review (default: 50)",
+    )
+    san_p.add_argument(
+        "--quality-report", action="store_true", help="Print quality score distribution at the end"
+    )
+    san_p.add_argument(
+        "--discard-below-score",
+        type=int,
+        default=0,
+        help="Discard examples below this total score (default: 0 = keep all)",
+    )
+    san_p.add_argument(
+        "--no-fix-metadata",
+        action="store_true",
+        help="Disable auto-repair of missing metadata fields",
+    )
+    san_p.add_argument(
+        "--require-complete-metadata",
+        action="store_true",
+        help="Error out if any metadata field is missing",
+    )
+    san_p.add_argument(
+        "--dedup",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help="Enable/disable content_hash deduplication (default: True)",
+    )
+    san_p.add_argument(
+        "--dedup-report",
+        action="store_true",
+        help="Show which content hashes were removed during dedup",
+    )
+    san_p.add_argument(
+        "--write-manifest",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help="Enable/disable enriched manifest writing (default: True)",
+    )
     san_p.add_argument("--manifest-path", help="Override manifest output path")
-    san_p.add_argument("--debug", action="store_true",
-                       help="Re-raise exceptions with traceback for debugging")
+    san_p.add_argument(
+        "--debug", action="store_true", help="Re-raise exceptions with traceback for debugging"
+    )
 
     # Dataset quality eval (DeepEval, local-first)
-    de_p = subparsers.add_parser("dataset-eval", help="Run DeepEval quality checks on a generated dataset")
+    de_p = subparsers.add_parser(
+        "dataset-eval", help="Run DeepEval quality checks on a generated dataset"
+    )
     de_p.add_argument("spec", help="Path to subject spec JSON")
-    de_p.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"],
-                      help="Dataset technique to evaluate")
-    de_p.add_argument("--judge-provider", default="ollama", choices=["ollama", "wandb"],
-                      help="Judge backend: local Ollama or W&B Serverless Inference")
-    de_p.add_argument("--judge-model", default=None, help="Judge model (Ollama tag or W&B Inference model ID)")
-    de_p.add_argument("--judge-preset", default=None,
-                      choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
-                      help="Named Ollama judge preset (default: auto — resolves from configs/ollama-model-presets.yaml)")
-    de_p.add_argument("--ollama-base-url", default="http://localhost:11434", help="Ollama server URL")
-    de_p.add_argument("--inference-server-url", help="Route local Ollama judge calls through ucore inference-server /chat")
-    de_p.add_argument("--judge-cache-path", default=None, help="SQLite cache path for local DeepEval judge calls")
-    de_p.add_argument("--no-local-judge-cache", dest="local_judge_cache", action="store_false", default=True,
-                      help="Disable local judge-result cache for DeepEval judge calls")
+    de_p.add_argument(
+        "--technique",
+        default="template",
+        choices=["docs", "ollama", "template", "openai", "anthropic"],
+        help="Dataset technique to evaluate",
+    )
+    de_p.add_argument(
+        "--judge-provider",
+        default="ollama",
+        choices=["ollama", "wandb"],
+        help="Judge backend: local Ollama or W&B Serverless Inference",
+    )
+    de_p.add_argument(
+        "--judge-model", default=None, help="Judge model (Ollama tag or W&B Inference model ID)"
+    )
+    de_p.add_argument(
+        "--judge-preset",
+        default=None,
+        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
+        help="Named Ollama judge preset (default: auto — resolves from configs/ollama-model-presets.yaml)",
+    )
+    de_p.add_argument(
+        "--ollama-base-url", default="http://localhost:11434", help="Ollama server URL"
+    )
+    de_p.add_argument(
+        "--inference-server-url",
+        help="Route local Ollama judge calls through ucore inference-server /chat",
+    )
+    de_p.add_argument(
+        "--judge-cache-path", default=None, help="SQLite cache path for local DeepEval judge calls"
+    )
+    de_p.add_argument(
+        "--no-local-judge-cache",
+        dest="local_judge_cache",
+        action="store_false",
+        default=True,
+        help="Disable local judge-result cache for DeepEval judge calls",
+    )
     de_p.add_argument("--judge-temperature", type=float, default=0.0, help="Judge temperature")
-    de_p.add_argument("--mode", default="fast", choices=["fast", "release"],
-                      help="Quality gate mode (fast: iteration-friendly, release: strict)")
-    de_p.add_argument("--cases-per-category", type=int, default=None,
-                      help="Rows sampled per category (default: 1 for fast, 5 for release)")
+    de_p.add_argument(
+        "--mode",
+        default="fast",
+        choices=["fast", "release"],
+        help="Quality gate mode (fast: iteration-friendly, release: strict)",
+    )
+    de_p.add_argument(
+        "--cases-per-category",
+        type=int,
+        default=None,
+        help="Rows sampled per category (default: 1 for fast, 5 for release)",
+    )
     de_p.add_argument("--categories", help="Comma-separated category filter")
     de_p.add_argument("--identifier", help="DeepEval run identifier")
-    de_p.add_argument("--display", default="all", choices=["all", "failing", "passing"], help="DeepEval display mode")
-    de_p.add_argument("--ignore-errors", action="store_true", help="Continue when individual metric calls error")
-    de_p.add_argument("--soft-fail", action="store_true", help="Write artifacts but return 0 even when metrics fail")
+    de_p.add_argument(
+        "--display",
+        default="all",
+        choices=["all", "failing", "passing"],
+        help="DeepEval display mode",
+    )
+    de_p.add_argument(
+        "--ignore-errors", action="store_true", help="Continue when individual metric calls error"
+    )
+    de_p.add_argument(
+        "--soft-fail",
+        action="store_true",
+        help="Write artifacts but return 0 even when metrics fail",
+    )
     de_p.add_argument("--output", help="Quality summary JSON path")
     de_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
-    de_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    de_p.add_argument(
+        "--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)"
+    )
     de_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
-    de_p.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference")
-    de_p.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference")
-    de_p.add_argument("--pull-alias", default=None, help="Pull dataset by alias from Confident AI instead of loading local JSONL files")
-    de_p.add_argument("--confident", action="store_true", default=False,
-                      help="Require Confident AI API key (exits with error if not configured)")
-    de_p.add_argument("--remote-eval", action="store_true", default=False,
-                      help="Evaluate on Confident AI infrastructure instead of locally. Requires --confident.")
+    de_p.add_argument(
+        "--wandb-inference-project",
+        default=None,
+        help="W&B project used for hosted judge inference",
+    )
+    de_p.add_argument(
+        "--wandb-inference-entity",
+        default=None,
+        help="W&B entity/team used for hosted judge inference",
+    )
+    de_p.add_argument(
+        "--pull-alias",
+        default=None,
+        help="Pull dataset by alias from Confident AI instead of loading local JSONL files",
+    )
+    de_p.add_argument(
+        "--confident",
+        action="store_true",
+        default=False,
+        help="Require Confident AI API key (exits with error if not configured)",
+    )
+    de_p.add_argument(
+        "--remote-eval",
+        action="store_true",
+        default=False,
+        help="Evaluate on Confident AI infrastructure instead of locally. Requires --confident.",
+    )
 
-    cg_p = subparsers.add_parser("confident-goldens", help="Project ChatML rows into Confident AI single/conversational golden files")
-    cg_p.add_argument("dataset", help="Path to train_clean.jsonl or other ChatML JSONL or NPC spec JSON")
+    cg_p = subparsers.add_parser(
+        "confident-goldens",
+        help="Project ChatML rows into Confident AI single/conversational golden files",
+    )
+    cg_p.add_argument(
+        "dataset", help="Path to train_clean.jsonl or other ChatML JSONL or NPC spec JSON"
+    )
     cg_p.add_argument("--spec", help="NPC spec JSON for reference_doc/context/provenance")
     cg_p.add_argument("--output-dir", help="Output directory (default: dataset sibling confident/)")
-    cg_p.add_argument("--technique", choices=["docs", "ollama", "template", "openai", "anthropic"], help="Override/resolve dataset technique")
+    cg_p.add_argument(
+        "--technique",
+        choices=["docs", "ollama", "template", "openai", "anthropic"],
+        help="Override/resolve dataset technique",
+    )
     cg_p.add_argument("--push", action="store_true", help="Push projected goldens to Confident AI")
     cg_final_group = cg_p.add_mutually_exclusive_group()
-    cg_final_group.add_argument("--finalized", dest="finalized", action="store_true", default=True, help="Mark pushed goldens finalized/eval-ready")
-    cg_final_group.add_argument("--unfinalized", dest="finalized", action="store_false", help="Queue pushed goldens for Confident review")
+    cg_final_group.add_argument(
+        "--finalized",
+        dest="finalized",
+        action="store_true",
+        default=True,
+        help="Mark pushed goldens finalized/eval-ready",
+    )
+    cg_final_group.add_argument(
+        "--unfinalized",
+        dest="finalized",
+        action="store_false",
+        help="Queue pushed goldens for Confident review",
+    )
 
-    cc_p = subparsers.add_parser("confident-classifiers", help="Print/write Confident AI classifier setup specs for manual UI entry")
-    cc_p.add_argument("--write", action="store_true", help="Write configs/confident/classifiers_setup.{json,md}")
+    cc_p = subparsers.add_parser(
+        "confident-classifiers",
+        help="Print/write Confident AI classifier setup specs for manual UI entry",
+    )
+    cc_p.add_argument(
+        "--write", action="store_true", help="Write configs/confident/classifiers_setup.{json,md}"
+    )
     cc_p.add_argument("--json-path", help="Override JSON output path")
     cc_p.add_argument("--markdown-path", help="Override Markdown output path")
-    cc_p.add_argument("--format", choices=["json", "markdown"], default="markdown", help="Print format")
+    cc_p.add_argument(
+        "--format", choices=["json", "markdown"], default="markdown", help="Print format"
+    )
 
     # Train
     train_p = subparsers.add_parser("train", help="Train a model")
     train_p.add_argument("config_or_spec", help="Path to config YAML or subject spec")
     train_p.add_argument("--from-spec", action="store_true", help="Train directly from spec")
     train_p.add_argument("--preset", help="Training preset")
-    train_p.add_argument("--technique", choices=["docs", "ollama", "template", "openai", "anthropic"], help="Override dataset technique")
+    train_p.add_argument(
+        "--technique",
+        choices=["docs", "ollama", "template", "openai", "anthropic"],
+        help="Override dataset technique",
+    )
     train_p.add_argument("--model", help="Base model ID/path override")
-    train_p.add_argument("--export-gguf", "--auto-export", action="store_true", help="Export to GGUF after training (adapter mode for Unity)")
-    train_p.add_argument("--full-merge-export", action="store_true",
-                         help="Full merge export after training (slower, standalone GGUF)")
+    train_p.add_argument(
+        "--export-gguf",
+        "--auto-export",
+        action="store_true",
+        help="Export to GGUF after training (adapter mode for Unity)",
+    )
+    train_p.add_argument(
+        "--full-merge-export",
+        action="store_true",
+        help="Full merge export after training (slower, standalone GGUF)",
+    )
     wandb_group = train_p.add_mutually_exclusive_group()
-    wandb_group.add_argument("--wandb", action="store_true", default=None,
-                             help="Enable W&B logging (overrides config)")
-    wandb_group.add_argument("--no-wandb", action="store_true", default=None,
-                             dest="no_wandb", help="Disable W&B logging (overrides config)")
-    train_p.add_argument("--wandb-project", default=None, help="W&B project (default: unsloth-core)")
+    wandb_group.add_argument(
+        "--wandb", action="store_true", default=None, help="Enable W&B logging (overrides config)"
+    )
+    wandb_group.add_argument(
+        "--no-wandb",
+        action="store_true",
+        default=None,
+        dest="no_wandb",
+        help="Disable W&B logging (overrides config)",
+    )
+    train_p.add_argument(
+        "--wandb-project", default=None, help="W&B project (default: unsloth-core)"
+    )
     train_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
     train_p.add_argument("--lr", type=float, help="Learning rate")
     train_p.add_argument("--batch-size", type=int, help="Batch size")
@@ -368,22 +605,36 @@ def create_parser():
     train_p.add_argument("--weight-decay", type=float, help="Weight decay")
     train_p.add_argument("--warmup", type=int, help="Warmup steps")
     train_p.add_argument("--lr-scheduler", help="Learning rate scheduler type")
-    train_p.add_argument("--packing", choices=["true", "false", "True", "False"], help="Enable packing")
-    train_p.add_argument("--train-on-responses", choices=["true", "false", "True", "False"], help="Train on responses only")
-    train_p.add_argument("--quantization", choices=["q4_k_m", "q5_k_m", "q8_0", "f16"], help="GGUF quantization type")
-    train_p.add_argument("--allow-ungated-dataset", action="store_true",
-                         help="Train without a fresh passing dataset-eval artifact")
+    train_p.add_argument(
+        "--packing", choices=["true", "false", "True", "False"], help="Enable packing"
+    )
+    train_p.add_argument(
+        "--train-on-responses",
+        choices=["true", "false", "True", "False"],
+        help="Train on responses only",
+    )
+    train_p.add_argument(
+        "--quantization", choices=["q4_k_m", "q5_k_m", "q8_0", "f16"], help="GGUF quantization type"
+    )
+    train_p.add_argument(
+        "--allow-ungated-dataset",
+        action="store_true",
+        help="Train without a fresh passing dataset-eval artifact",
+    )
 
     # Smoke Test
     smoke_p = subparsers.add_parser("smoke", help="Smoke test a GGUF model")
     smoke_p.add_argument("model", help="Path to GGUF model")
     smoke_p.add_argument("--spec", help="Path to subject spec for context")
-    smoke_p.add_argument("--check-integrity", action="store_true",
-                         help="Validate GGUF file structure (no inference)")
+    smoke_p.add_argument(
+        "--check-integrity", action="store_true", help="Validate GGUF file structure (no inference)"
+    )
     smoke_p.add_argument("--track", action="store_true", help="Track results in Supabase")
 
     # Validate config
-    val_p = subparsers.add_parser("validate-config", help="Resolve and validate effective training config")
+    val_p = subparsers.add_parser(
+        "validate-config", help="Resolve and validate effective training config"
+    )
     val_p.add_argument("--spec", help="Path to subject spec JSON")
     val_p.add_argument("--config", help="Path to YAML config")
     val_p.add_argument("--preset", help="Training preset")
@@ -393,37 +644,84 @@ def create_parser():
     val_p.add_argument("--npc-key", help="npc_key when using --config")
     val_p.add_argument("--format", default="yaml", choices=["yaml", "json"], help="Output format")
     val_p.add_argument("--strict", action="store_true", help="Treat warnings as errors")
-    val_p.add_argument("--require-canonical", action="store_true", help="Require canonical dataset train path")
+    val_p.add_argument(
+        "--require-canonical", action="store_true", help="Require canonical dataset train path"
+    )
 
     # Validate subject spec
-    spec_val_p = subparsers.add_parser("validate-spec", help="Validate subject specs before generation/training")
+    spec_val_p = subparsers.add_parser(
+        "validate-spec", help="Validate subject specs before generation/training"
+    )
     spec_val_p.add_argument("spec", nargs="?", help="Path to subject spec JSON")
-    spec_val_p.add_argument("--all", action="store_true", help="Validate every subjects/NPC_specs/*.json spec")
+    spec_val_p.add_argument(
+        "--all", action="store_true", help="Validate every subjects/NPC_specs/*.json spec"
+    )
     spec_val_p.add_argument("--json", action="store_true", help="Output JSON")
     spec_val_p.add_argument("--strict", action="store_true", help="Treat warnings as errors")
-    spec_val_p.add_argument("--require-reference-docs", action="store_true", help="Fail if reference_doc is missing or not readable")
-    spec_val_p.add_argument("--require-reference-contract", action="store_true", help="Fail unless reference_doc meets generation-readiness minimums")
-    spec_val_p.add_argument("--require-all-categories", action="store_true", help="Fail unless all 5 dataset categories have positive counts")
-    spec_val_p.add_argument("--require-dataset-minimums", action="store_true", help="Fail unless all dataset categories meet minimum SFT counts")
-    spec_val_p.add_argument("--generation-ready", action="store_true", help="Fail unless the spec is ready for fresh dataset generation")
+    spec_val_p.add_argument(
+        "--require-reference-docs",
+        action="store_true",
+        help="Fail if reference_doc is missing or not readable",
+    )
+    spec_val_p.add_argument(
+        "--require-reference-contract",
+        action="store_true",
+        help="Fail unless reference_doc meets generation-readiness minimums",
+    )
+    spec_val_p.add_argument(
+        "--require-all-categories",
+        action="store_true",
+        help="Fail unless all 5 dataset categories have positive counts",
+    )
+    spec_val_p.add_argument(
+        "--require-dataset-minimums",
+        action="store_true",
+        help="Fail unless all dataset categories meet minimum SFT counts",
+    )
+    spec_val_p.add_argument(
+        "--generation-ready",
+        action="store_true",
+        help="Fail unless the spec is ready for fresh dataset generation",
+    )
 
     # Validate params
-    val_params_p = subparsers.add_parser("validate-params", help="Validate parameter-registry.yaml against codebase")
+    val_params_p = subparsers.add_parser(
+        "validate-params", help="Validate parameter-registry.yaml against codebase"
+    )
     val_params_p.add_argument("--json", action="store_true", help="Output as JSON")
 
     # Export (adapter-only by default for Unity, --full-merge for standalone GGUF)
-    export_p = subparsers.add_parser("export", help="Export trained LoRA adapter to GGUF (adapter-only by default)")
+    export_p = subparsers.add_parser(
+        "export", help="Export trained LoRA adapter to GGUF (adapter-only by default)"
+    )
     export_p.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
     export_p.add_argument("--model", "-m", help="Base model ID (auto-detected if omitted)")
-    export_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization for full-merge mode (default: q4_k_m)")
-    export_p.add_argument("--full-merge", action="store_true", help="Produce full merged GGUF (slower, standalone)")
-    export_p.add_argument("--skip-f16", action="store_true", help="In full-merge mode: skip f16 variant")
-    export_p.add_argument("--outtype", default="f16", choices=["f32", "f16", "bf16", "q8_0"],
-                          help="Adapter output format (default: f16)")
-    export_p.add_argument("--maximum-memory", type=float, default=None,
-                          help="Max memory (GB) for save_pretrained_gguf (full-merge mode)")
-    export_p.add_argument("--resume", action="store_true",
-                          help="Resume: skip GGUFs that already exist")
+    export_p.add_argument(
+        "--quantization",
+        default="q4_k_m",
+        help="GGUF quantization for full-merge mode (default: q4_k_m)",
+    )
+    export_p.add_argument(
+        "--full-merge", action="store_true", help="Produce full merged GGUF (slower, standalone)"
+    )
+    export_p.add_argument(
+        "--skip-f16", action="store_true", help="In full-merge mode: skip f16 variant"
+    )
+    export_p.add_argument(
+        "--outtype",
+        default="f16",
+        choices=["f32", "f16", "bf16", "q8_0"],
+        help="Adapter output format (default: f16)",
+    )
+    export_p.add_argument(
+        "--maximum-memory",
+        type=float,
+        default=None,
+        help="Max memory (GB) for save_pretrained_gguf (full-merge mode)",
+    )
+    export_p.add_argument(
+        "--resume", action="store_true", help="Resume: skip GGUFs that already exist"
+    )
 
     # Export resume
     exr_p = subparsers.add_parser("export-resume", help="Resume/continue GGUF export for an NPC")
@@ -434,17 +732,27 @@ def create_parser():
     exr_p.add_argument("--timeout-seconds", type=int, default=5400, help="Per-variant timeout")
 
     # Export adapter (LoRA-only for LLMUnity)
-    ea_p = subparsers.add_parser("export-adapter", help="Export LoRA adapter as GGUF (for LLMUnity)")
+    ea_p = subparsers.add_parser(
+        "export-adapter", help="Export LoRA adapter as GGUF (for LLMUnity)"
+    )
     ea_p.add_argument("adapter_path", nargs="?", help="Path to PEFT adapter directory")
     ea_p.add_argument("--all", "-a", action="store_true", help="Convert all adapters in outputs/")
-    ea_p.add_argument("--outtype", default="f16", choices=["f32", "f16", "bf16", "q8_0", "auto"],
-                      help="Output format (default: f16)")
+    ea_p.add_argument(
+        "--outtype",
+        default="f16",
+        choices=["f32", "f16", "bf16", "q8_0", "auto"],
+        help="Output format (default: f16)",
+    )
     ea_p.add_argument("--outfile", help="Explicit output file path")
 
     # Deploy
     deploy_p = subparsers.add_parser("deploy", help="Deploy exports to Unity project")
-    deploy_p.add_argument("--unity-project", "-u", help="Path to Unity project (auto-detected if omitted)")
-    deploy_p.add_argument("--dry-run", action="store_true", help="Show what would be done without copying")
+    deploy_p.add_argument(
+        "--unity-project", "-u", help="Path to Unity project (auto-detected if omitted)"
+    )
+    deploy_p.add_argument(
+        "--dry-run", action="store_true", help="Show what would be done without copying"
+    )
     deploy_p.add_argument("--skip-export", action="store_true", help="Skip GGUF export step")
     deploy_p.add_argument("--export-only", action="store_true", help="Only export, skip Unity copy")
 
@@ -457,45 +765,89 @@ def create_parser():
     eval_p.add_argument("--val-data", help="Validation JSONL path")
     eval_p.add_argument("--num-questions", type=int, default=10, help="Number of eval questions")
     eval_p.add_argument("--output", "-o", help="Output report path")
-    eval_p.add_argument("--report-html", action="store_true", help="Generate HTML report with charts")
+    eval_p.add_argument(
+        "--report-html", action="store_true", help="Generate HTML report with charts"
+    )
     eval_p.add_argument("--judge", action="store_true", help="Use LLM judge")
-    eval_p.add_argument("--judge-provider", default="ollama", choices=["ollama", "wandb"], help="Judge backend")
+    eval_p.add_argument(
+        "--judge-provider", default="ollama", choices=["ollama", "wandb"], help="Judge backend"
+    )
     eval_p.add_argument("--judge-model", default="llama3.1:latest", help="Judge model")
     eval_p.add_argument("--track", action="store_true", help="Track results in eval/results/")
     eval_p.add_argument("--wandb", action="store_true", help="Enable W&B evaluation tracking")
-    eval_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    eval_p.add_argument(
+        "--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)"
+    )
     eval_p.add_argument("--interactive", "-i", action="store_true", help="Interactive chat mode")
     eval_p.add_argument("--port", type=int, default=8888, help="llama-server port")
-    eval_p.add_argument("--gpu-layers", type=int, default=99, help="llama-server GPU layers to offload; 0 = CPU-only")
-    eval_p.add_argument("--max-tokens", type=int, default=256, help="Max generated tokens per eval answer")
-    eval_p.add_argument("--feedback-json", help="Save structured per-concept eval results for the feedback loop")
-    eval_p.add_argument("--base-model", help="Base GGUF path (required when --candidate is a LoRA adapter)")
-    eval_p.add_argument("--lora-weight", type=float, default=1.0, help="LoRA adapter weight (default: 1.0)")
-    eval_p.add_argument("--host", default="127.0.0.1",
-                        help="llama-server host (default: 127.0.0.1)")
-    eval_p.add_argument("--training-metrics", nargs="?", const="",
-                        help="Show training metrics from TensorBoard logs (optional: runs dir)")
-    eval_p.add_argument("--wandb-entity", default=None,
-                        help="W&B entity (default: auto-detect)")
-    eval_p.add_argument("--wandb-inference-project", default=None, help="W&B project used for hosted judge inference")
-    eval_p.add_argument("--wandb-inference-entity", default=None, help="W&B entity/team used for hosted judge inference")
+    eval_p.add_argument(
+        "--gpu-layers",
+        type=int,
+        default=99,
+        help="llama-server GPU layers to offload; 0 = CPU-only",
+    )
+    eval_p.add_argument(
+        "--max-tokens", type=int, default=256, help="Max generated tokens per eval answer"
+    )
+    eval_p.add_argument(
+        "--feedback-json", help="Save structured per-concept eval results for the feedback loop"
+    )
+    eval_p.add_argument(
+        "--base-model", help="Base GGUF path (required when --candidate is a LoRA adapter)"
+    )
+    eval_p.add_argument(
+        "--lora-weight", type=float, default=1.0, help="LoRA adapter weight (default: 1.0)"
+    )
+    eval_p.add_argument(
+        "--host", default="127.0.0.1", help="llama-server host (default: 127.0.0.1)"
+    )
+    eval_p.add_argument(
+        "--training-metrics",
+        nargs="?",
+        const="",
+        help="Show training metrics from TensorBoard logs (optional: runs dir)",
+    )
+    eval_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
+    eval_p.add_argument(
+        "--wandb-inference-project",
+        default=None,
+        help="W&B project used for hosted judge inference",
+    )
+    eval_p.add_argument(
+        "--wandb-inference-entity",
+        default=None,
+        help="W&B entity/team used for hosted judge inference",
+    )
     eval_p.add_argument("--npc-key", help="NPC key for per-model TensorBoard runs lookup")
-    eval_p.add_argument("--confident", action="store_true", default=False,
-                        help="Require Confident AI API key (exits with error if not configured)")
-    eval_p.add_argument("--remote-eval", action="store_true", default=False,
-                        help="Evaluate on Confident AI infrastructure instead of locally. Requires --confident.")
+    eval_p.add_argument(
+        "--confident",
+        action="store_true",
+        default=False,
+        help="Require Confident AI API key (exits with error if not configured)",
+    )
+    eval_p.add_argument(
+        "--remote-eval",
+        action="store_true",
+        default=False,
+        help="Evaluate on Confident AI infrastructure instead of locally. Requires --confident.",
+    )
     # Quick-eval
     qe_p = subparsers.add_parser("quick-eval", help="Quick local evaluation (llama-cpp-python)")
     qe_p.add_argument("--adapter", required=True, help="Path to LoRA adapter directory")
     qe_p.add_argument("--samples", "-n", type=int, default=20, help="Number of validation samples")
     qe_p.add_argument("--spec", "-s", required=True, help="Subject spec JSON")
     qe_p.add_argument("--val-data", help="Validation JSONL (auto-detected if omitted)")
-    qe_p.add_argument("--output", help="Output report path (default: eval/results/{npc_key}_eval_report.json)")
-    qe_p.add_argument("--feedback-json",
-                      help="Save structured per-concept eval results for the feedback loop")
+    qe_p.add_argument(
+        "--output", help="Output report path (default: eval/results/{npc_key}_eval_report.json)"
+    )
+    qe_p.add_argument(
+        "--feedback-json", help="Save structured per-concept eval results for the feedback loop"
+    )
     qe_p.add_argument("--workflow-hooks", help="Path to workflow hooks JSONL")
     qe_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
-    qe_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    qe_p.add_argument(
+        "--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)"
+    )
     qe_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
 
     # Track
@@ -518,163 +870,369 @@ def create_parser():
     cr_p.add_argument("--judge", action="store_true", help="Use local Ollama judge")
 
     # Feedback (Self-Improving Dataset Factory)
-    fb_p = subparsers.add_parser("feedback", help="Run the self-improving feedback loop (targeted regeneration)")
+    fb_p = subparsers.add_parser(
+        "feedback", help="Run the self-improving feedback loop (targeted regeneration)"
+    )
     fb_p.add_argument("feedback_json", help="Path to feedback JSON from evaluate --feedback-json")
-    fb_p.add_argument("--win-rate-threshold", type=float, default=0.5, help="Min win rate (default: 0.5)")
-    fb_p.add_argument("--quality-threshold", type=float, default=25.0, help="Max quality score, lower=better (default: 25)")
-    fb_p.add_argument("--violation-threshold", type=int, default=1, help="Max constraint violations (default: 1)")
+    fb_p.add_argument(
+        "--win-rate-threshold", type=float, default=0.5, help="Min win rate (default: 0.5)"
+    )
+    fb_p.add_argument(
+        "--quality-threshold",
+        type=float,
+        default=25.0,
+        help="Max quality score, lower=better (default: 25)",
+    )
+    fb_p.add_argument(
+        "--violation-threshold", type=int, default=1, help="Max constraint violations (default: 1)"
+    )
     fb_p.add_argument("--dry-run", action="store_true", help="Analyze without regenerating")
     fb_p.add_argument("--auto", "-y", action="store_true", help="Auto-accept all suggestions")
-    fb_p.add_argument("--skip-gap-detection", action="store_true",
-                       help="Skip knowledge coverage check")
+    fb_p.add_argument(
+        "--skip-gap-detection", action="store_true", help="Skip knowledge coverage check"
+    )
     fb_p.add_argument("--save-gaps", help="Save knowledge gap report to JSON file")
-    fb_p.add_argument("--json", action="store_true",
-                       help="Output machine-readable JSON summary")
-    fb_p.add_argument("--strategy-profile", default="npc-production-grounded",
-                      help="NPC production strategy profile for anti-loop decisions")
+    fb_p.add_argument("--json", action="store_true", help="Output machine-readable JSON summary")
+    fb_p.add_argument(
+        "--strategy-profile",
+        default="npc-production-grounded",
+        help="NPC production strategy profile for anti-loop decisions",
+    )
 
     # Repair (Targeted Dataset Repair)
-    rp_p = subparsers.add_parser("repair", help="Run the dataset repair loop using DeepEval failure reasons")
+    rp_p = subparsers.add_parser(
+        "repair", help="Run the dataset repair loop using DeepEval failure reasons"
+    )
     rp_p.add_argument("npc_key", help="NPC key (e.g., chef_assistant)")
-    rp_p.add_argument("--technique", default="template", help="Dataset technique (default: template)")
+    rp_p.add_argument(
+        "--technique", default="template", help="Dataset technique (default: template)"
+    )
 
     # GRPO Training
     gr_p = subparsers.add_parser("grpo-train", help="Run GRPO training with DeepEval rewards")
     gr_p.add_argument("npc_key", help="NPC key")
     gr_p.add_argument("--steps", type=int, default=10, help="Max steps (default: 10)")
-    fb_p.add_argument("--auto-retrain", action="store_true",
-                       help="After regeneration, auto-retrain and re-evaluate")
-    fb_p.add_argument("--train-preset", default="fast-3b",
-                       help="Training preset for auto-retrain (default: fast-3b)")
+    fb_p.add_argument(
+        "--auto-retrain",
+        action="store_true",
+        help="After regeneration, auto-retrain and re-evaluate",
+    )
+    fb_p.add_argument(
+        "--train-preset",
+        default="fast-3b",
+        help="Training preset for auto-retrain (default: fast-3b)",
+    )
     fb_p.add_argument("--baseline", help="Baseline GGUF for auto-evaluation after retrain")
-    fb_p.add_argument("--regeneration-technique", default="template", choices=["template", "ollama"],
-                       help="Regeneration technique to use (default: template)")
-    fb_p.add_argument("--regeneration-preset", default=None,
-                       choices=["generate-qwen25", "generate-llama31", "generate-qwen35-exp", "generate-qwen3-exp"],
-                       help="Named Ollama regeneration preset (default: generate-qwen25)")
-    fb_p.add_argument("--regeneration-model", default="qwen2.5:7b",
-                       help="Exact Ollama regeneration model (wins over --regeneration-preset)")
-    fb_p.add_argument("--regeneration-url", default="http://localhost:11434",
-                       help="Ollama base URL for regeneration")
-    fb_p.add_argument("--regeneration-batch-size", type=int, default=4,
-                       help="Ollama batch size for regeneration")
-    fb_p.add_argument("--deepeval-judge-provider", default="ollama", choices=["ollama", "wandb"],
-                       help="Judge backend for DeepEval")
-    fb_p.add_argument("--deepeval-judge-preset", default=None,
-                       choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
-                       help="Named Ollama judge preset (default: judge-qwen25)")
-    fb_p.add_argument("--deepeval-judge-model", default=None,
-                       help="Exact Ollama judge model (wins over --deepeval-judge-preset)")
-    fb_p.add_argument("--deepeval-ollama-url", default="http://localhost:11434",
-                       help="Ollama base URL for DeepEval")
-    fb_p.add_argument("--deepeval-cases-per-category", type=int, default=1,
-                       help="Cases per category for fast DeepEval")
-    fb_p.add_argument("--deepeval-soft-fail", action="store_true",
-                       help="Do not abort dataset evaluation on metric failure; continue training")
+    fb_p.add_argument(
+        "--regeneration-technique",
+        default="template",
+        choices=["template", "ollama"],
+        help="Regeneration technique to use (default: template)",
+    )
+    fb_p.add_argument(
+        "--regeneration-preset",
+        default=None,
+        choices=[
+            "generate-qwen25",
+            "generate-llama31",
+            "generate-qwen35-exp",
+            "generate-qwen3-exp",
+        ],
+        help="Named Ollama regeneration preset (default: generate-qwen25)",
+    )
+    fb_p.add_argument(
+        "--regeneration-model",
+        default="qwen2.5:7b",
+        help="Exact Ollama regeneration model (wins over --regeneration-preset)",
+    )
+    fb_p.add_argument(
+        "--regeneration-url",
+        default="http://localhost:11434",
+        help="Ollama base URL for regeneration",
+    )
+    fb_p.add_argument(
+        "--regeneration-batch-size", type=int, default=4, help="Ollama batch size for regeneration"
+    )
+    fb_p.add_argument(
+        "--deepeval-judge-provider",
+        default="ollama",
+        choices=["ollama", "wandb"],
+        help="Judge backend for DeepEval",
+    )
+    fb_p.add_argument(
+        "--deepeval-judge-preset",
+        default=None,
+        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
+        help="Named Ollama judge preset (default: judge-qwen25)",
+    )
+    fb_p.add_argument(
+        "--deepeval-judge-model",
+        default=None,
+        help="Exact Ollama judge model (wins over --deepeval-judge-preset)",
+    )
+    fb_p.add_argument(
+        "--deepeval-ollama-url",
+        default="http://localhost:11434",
+        help="Ollama base URL for DeepEval",
+    )
+    fb_p.add_argument(
+        "--deepeval-cases-per-category",
+        type=int,
+        default=1,
+        help="Cases per category for fast DeepEval",
+    )
+    fb_p.add_argument(
+        "--deepeval-soft-fail",
+        action="store_true",
+        help="Do not abort dataset evaluation on metric failure; continue training",
+    )
     fb_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
-    fb_p.add_argument("--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)")
+    fb_p.add_argument(
+        "--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)"
+    )
     fb_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
-    fb_p.add_argument("--wandb-inference-project", default=None,
-                      help="W&B project used for hosted DeepEval judge inference")
-    fb_p.add_argument("--wandb-inference-entity", default=None,
-                      help="W&B entity/team used for hosted DeepEval judge inference")
+    fb_p.add_argument(
+        "--wandb-inference-project",
+        default=None,
+        help="W&B project used for hosted DeepEval judge inference",
+    )
+    fb_p.add_argument(
+        "--wandb-inference-entity",
+        default=None,
+        help="W&B entity/team used for hosted DeepEval judge inference",
+    )
 
     # Strategy profiles
-    strategy_p = subparsers.add_parser("strategy", help="Show canonical NPC production strategy profiles")
-    strategy_p.add_argument("--profile", default="npc-production-grounded", help="Strategy profile name")
+    strategy_p = subparsers.add_parser(
+        "strategy", help="Show canonical NPC production strategy profiles"
+    )
+    strategy_p.add_argument(
+        "--profile", default="npc-production-grounded", help="Strategy profile name"
+    )
     strategy_p.add_argument("--json", action="store_true", help="Output JSON")
 
     # Local model comparison
-    cmp_models_p = subparsers.add_parser("compare-local-models", help="Benchmark and rank local Ollama models with a shared prompt suite")
-    cmp_models_p.add_argument("--host", default=os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434"), help="Ollama host URL")
-    cmp_models_p.add_argument("--model", action="append", help="Model to benchmark; may be supplied multiple times. Defaults to running models.")
-    cmp_models_p.add_argument("--all-tags", action="store_true", help="Benchmark all models listed by /api/tags instead of running models")
-    cmp_models_p.add_argument("--prompt", action="append", help="Prompt to benchmark; may be supplied multiple times.")
-    cmp_models_p.add_argument("--system-prompt", help="Optional system prompt for the benchmark suite")
+    cmp_models_p = subparsers.add_parser(
+        "compare-local-models",
+        help="Benchmark and rank local Ollama models with a shared prompt suite",
+    )
+    cmp_models_p.add_argument(
+        "--host", default=os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434"), help="Ollama host URL"
+    )
+    cmp_models_p.add_argument(
+        "--model",
+        action="append",
+        help="Model to benchmark; may be supplied multiple times. Defaults to running models.",
+    )
+    cmp_models_p.add_argument(
+        "--all-tags",
+        action="store_true",
+        help="Benchmark all models listed by /api/tags instead of running models",
+    )
+    cmp_models_p.add_argument(
+        "--prompt", action="append", help="Prompt to benchmark; may be supplied multiple times."
+    )
+    cmp_models_p.add_argument(
+        "--system-prompt", help="Optional system prompt for the benchmark suite"
+    )
     cmp_models_p.add_argument("--output", help="Optional path to write the JSON report")
 
     # Canonical run comparison
-    cmp_runs_p = subparsers.add_parser("compare-canonical-runs", help="Compare canonical run bundles in .pipeline/runs")
+    cmp_runs_p = subparsers.add_parser(
+        "compare-canonical-runs", help="Compare canonical run bundles in .pipeline/runs"
+    )
     cmp_runs_p.add_argument("baseline_run_id", help="Baseline canonical run id")
     cmp_runs_p.add_argument("candidate_run_id", help="Candidate canonical run id")
     cmp_runs_p.add_argument("--output", help="Optional comparison report path")
-    cmp_runs_p.add_argument("--refresh-index", action="store_true", help="Refresh .pipeline/runs_index.jsonl before comparing")
+    cmp_runs_p.add_argument(
+        "--refresh-index",
+        action="store_true",
+        help="Refresh .pipeline/runs_index.jsonl before comparing",
+    )
+    cmp_runs_p.add_argument("--registry-path", help="ExperimentRegistry JSONL path override")
+    cmp_runs_p.add_argument("--json", action="store_true", help="Output JSON and record comparison")
+
+    promote_p = subparsers.add_parser(
+        "promote", help="Promote a model using canonical comparison evidence"
+    )
+    promote_p.add_argument("--npc-key", required=True, help="NPC key")
+    promote_p.add_argument(
+        "--candidate-run-id", required=True, help="Candidate run id that won comparison"
+    )
+    promote_p.add_argument("--registry-path", help="ExperimentRegistry JSONL path override")
+    promote_p.add_argument(
+        "--dry-run", action="store_true", help="Preview only; no deployment pointer changes"
+    )
+    promote_p.add_argument("--json", action="store_true", help="Output JSON")
 
     # Supabase integration check
-    sb_p = subparsers.add_parser("supabase-check", help="Verify NPC profile + dialogue memory path in Supabase")
+    sb_p = subparsers.add_parser(
+        "supabase-check", help="Verify NPC profile + dialogue memory path in Supabase"
+    )
     sb_p.add_argument("--npc-key", required=True, help="NPC key")
     sb_p.add_argument("--player-id", help="Probe player UUID")
-    sb_p.add_argument("--skip-probe", action="store_true", help="Only profile alignment, skip dialogue probe")
+    sb_p.add_argument(
+        "--skip-probe", action="store_true", help="Only profile alignment, skip dialogue probe"
+    )
 
     # Pipeline (Validate Spec + Generate + Sanitize + Dataset Eval + Train + Export + Evaluate)
-    pipe_p = subparsers.add_parser("pipeline", help="Run the full generate -> sanitize -> dataset-eval -> train -> export -> evaluate pipeline")
+    pipe_p = subparsers.add_parser(
+        "pipeline",
+        help="Run the full generate -> sanitize -> dataset-eval -> train -> export -> evaluate pipeline",
+    )
     pipe_p.add_argument("spec", help="Path to subject spec JSON")
     pipe_p.add_argument("--preset", default="fast-3b", help="Training preset")
     pipe_mode = pipe_p.add_mutually_exclusive_group()
     pipe_mode.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
-    pipe_mode.add_argument("--technique", default="template", choices=["docs", "ollama", "template", "openai", "anthropic"], help="Generation technique")
-    pipe_p.add_argument("--docs-manifest", help="Docs corpus manifest override for --technique docs")
-    pipe_p.add_argument("--model", help="LLM model name for the generation stage (ollama/openai/anthropic)")
+    pipe_mode.add_argument(
+        "--technique",
+        default="template",
+        choices=["docs", "ollama", "template", "openai", "anthropic"],
+        help="Generation technique",
+    )
+    pipe_p.add_argument(
+        "--docs-manifest", help="Docs corpus manifest override for --technique docs"
+    )
+    pipe_p.add_argument(
+        "--model", help="LLM model name for the generation stage (ollama/openai/anthropic)"
+    )
     pipe_p.add_argument("--track", action="store_true", help="Track results in Supabase")
     pipe_p.add_argument("--wandb", action="store_true", help="Enable W&B logging during training")
-    pipe_p.add_argument("--full-merge-export", action="store_true",
-                        help="Full merge export after training (slower, standalone GGUF)")
+    pipe_p.add_argument(
+        "--full-merge-export",
+        action="store_true",
+        help="Full merge export after training (slower, standalone GGUF)",
+    )
     pipe_p.add_argument("--skip-smoke", action="store_true", help="Skip smoke test phase")
     pipe_p.add_argument("--skip-eval", action="store_true", help="Skip evaluation phase")
-    pipe_p.add_argument("--skip-spec-validate", action="store_true", help="Skip spec generation-ready validation")
-    pipe_p.add_argument("--skip-dataset-eval", action="store_true", help="Skip DeepEval dataset quality gate")
-    pipe_p.add_argument("--dataset-eval-mode", default="fast", choices=["fast", "release"],
-                        help="Dataset quality gate mode used by the pipeline (default: fast)")
-    pipe_p.add_argument("--dataset-eval-cases-per-category", type=int, default=None,
-                        help="Rows sampled per category for pipeline dataset-eval (default depends on mode)")
-    pipe_p.add_argument("--dataset-eval-judge-provider", default="ollama", choices=["ollama", "wandb"],
-                        help="Judge backend for pipeline dataset-eval")
-    pipe_p.add_argument("--dataset-eval-judge-preset", default=None,
-                        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
-                        help="Named Ollama judge preset for pipeline dataset-eval")
-    pipe_p.add_argument("--dataset-eval-judge-model", default=None,
-                        help="Exact judge model for pipeline dataset-eval (Ollama tag or W&B Inference model ID)")
-    pipe_p.add_argument("--dataset-eval-ollama-url", default="http://localhost:11434",
-                        help="Ollama URL for pipeline dataset-eval")
-    pipe_p.add_argument("--eval-judge", action="store_true", help="Use judge during pipeline model evaluation")
-    pipe_p.add_argument("--eval-judge-provider", default="ollama", choices=["ollama", "wandb"],
-                        help="Judge backend for pipeline model evaluation")
-    pipe_p.add_argument("--eval-judge-model", default="llama3.1:latest",
-                        help="Judge model for pipeline model evaluation")
-    pipe_p.add_argument("--confident", action="store_true", default=False,
-                        help="Require Confident AI API key for pipeline tracing/evals")
-    pipe_p.add_argument("--remote-eval", action="store_true", default=False,
-                        help="Perform evaluations on Confident AI infrastructure. Requires --confident.")
-    pipe_p.add_argument("--wandb-inference-project", default=None,
-                        help="W&B project used for hosted judge inference in pipeline gates/evals")
-    pipe_p.add_argument("--wandb-inference-entity", default=None,
-                        help="W&B entity/team used for hosted judge inference in pipeline gates/evals")
-    pipe_p.add_argument("--num-eval-questions", type=int, default=5,
-                        help="Number of evaluation questions (default: 5)")
+    pipe_p.add_argument(
+        "--skip-spec-validate", action="store_true", help="Skip spec generation-ready validation"
+    )
+    pipe_p.add_argument(
+        "--skip-dataset-eval", action="store_true", help="Skip DeepEval dataset quality gate"
+    )
+    pipe_p.add_argument(
+        "--dataset-eval-mode",
+        default="fast",
+        choices=["fast", "release"],
+        help="Dataset quality gate mode used by the pipeline (default: fast)",
+    )
+    pipe_p.add_argument(
+        "--dataset-eval-cases-per-category",
+        type=int,
+        default=None,
+        help="Rows sampled per category for pipeline dataset-eval (default depends on mode)",
+    )
+    pipe_p.add_argument(
+        "--dataset-eval-judge-provider",
+        default="ollama",
+        choices=["ollama", "wandb"],
+        help="Judge backend for pipeline dataset-eval",
+    )
+    pipe_p.add_argument(
+        "--dataset-eval-judge-preset",
+        default=None,
+        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
+        help="Named Ollama judge preset for pipeline dataset-eval",
+    )
+    pipe_p.add_argument(
+        "--dataset-eval-judge-model",
+        default=None,
+        help="Exact judge model for pipeline dataset-eval (Ollama tag or W&B Inference model ID)",
+    )
+    pipe_p.add_argument(
+        "--dataset-eval-ollama-url",
+        default="http://localhost:11434",
+        help="Ollama URL for pipeline dataset-eval",
+    )
+    pipe_p.add_argument(
+        "--eval-judge", action="store_true", help="Use judge during pipeline model evaluation"
+    )
+    pipe_p.add_argument(
+        "--eval-judge-provider",
+        default="ollama",
+        choices=["ollama", "wandb"],
+        help="Judge backend for pipeline model evaluation",
+    )
+    pipe_p.add_argument(
+        "--eval-judge-model",
+        default="llama3.1:latest",
+        help="Judge model for pipeline model evaluation",
+    )
+    pipe_p.add_argument(
+        "--confident",
+        action="store_true",
+        default=False,
+        help="Require Confident AI API key for pipeline tracing/evals",
+    )
+    pipe_p.add_argument(
+        "--remote-eval",
+        action="store_true",
+        default=False,
+        help="Perform evaluations on Confident AI infrastructure. Requires --confident.",
+    )
+    pipe_p.add_argument(
+        "--wandb-inference-project",
+        default=None,
+        help="W&B project used for hosted judge inference in pipeline gates/evals",
+    )
+    pipe_p.add_argument(
+        "--wandb-inference-entity",
+        default=None,
+        help="W&B entity/team used for hosted judge inference in pipeline gates/evals",
+    )
+    pipe_p.add_argument(
+        "--num-eval-questions",
+        type=int,
+        default=5,
+        help="Number of evaluation questions (default: 5)",
+    )
 
     # Plan execution placement
-    plan_p = subparsers.add_parser("plan-execution", help="Recommend local vs remote (Colab) for generation/training")
+    plan_p = subparsers.add_parser(
+        "plan-execution", help="Recommend local vs remote (Colab) for generation/training"
+    )
     plan_p.add_argument("--spec", required=True, help="Path to subject spec JSON")
     plan_p.add_argument("--preset", help="Training preset")
     plan_p.add_argument("--local-vram-gb", type=float, help="Override detected local VRAM")
     plan_p.add_argument("--json", action="store_true", help="Output JSON")
 
     # Batch execution planning + optional colab notebook generation
-    bp_p = subparsers.add_parser("plan-batch", help="Batch plan local vs remote_colab queues and generate Colab notebooks")
-    bp_p.add_argument("--spec-glob", default="subjects/NPC_specs/*.json", help="Spec glob under project root")
-    bp_p.add_argument("--spec", action="append", dest="specs", help="Explicit spec path (repeatable)")
+    bp_p = subparsers.add_parser(
+        "plan-batch", help="Batch plan local vs remote_colab queues and generate Colab notebooks"
+    )
+    bp_p.add_argument(
+        "--spec-glob", default="subjects/NPC_specs/*.json", help="Spec glob under project root"
+    )
+    bp_p.add_argument(
+        "--spec", action="append", dest="specs", help="Explicit spec path (repeatable)"
+    )
     bp_p.add_argument("--presets", default="fast-3b", help="Comma-separated presets")
     bp_p.add_argument("--local-vram-gb", type=float, help="Override detected local VRAM")
     bp_p.add_argument("--json", action="store_true", help="Output JSON")
     bp_p.add_argument("--write-plan", help="Write plan JSON to file")
-    bp_p.add_argument("--generate-colab-notebooks", action="store_true", help="Generate notebooks for remote_colab queue")
-    bp_p.add_argument("--colab-output-dir", default="colab/outputs", help="Notebook output directory")
-    bp_p.add_argument("--drive-repo-dir", default="/content/drive/MyDrive/Unsloth_Core", help="Drive path where repo is cloned")
+    bp_p.add_argument(
+        "--generate-colab-notebooks",
+        action="store_true",
+        help="Generate notebooks for remote_colab queue",
+    )
+    bp_p.add_argument(
+        "--colab-output-dir", default="colab/outputs", help="Notebook output directory"
+    )
+    bp_p.add_argument(
+        "--drive-repo-dir",
+        default="/content/drive/MyDrive/Unsloth_Core",
+        help="Drive path where repo is cloned",
+    )
 
     # Batch export (reuse base model for all NPCs)
-    be_p = subparsers.add_parser("batch-export", help="Export all NPCs to GGUF without reloading base model between NPCs")
+    be_p = subparsers.add_parser(
+        "batch-export", help="Export all NPCs to GGUF without reloading base model between NPCs"
+    )
     be_p.add_argument("--npc", help="Comma-separated NPC keys (default: auto-detect from outputs/)")
-    be_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization (default: q4_k_m)")
+    be_p.add_argument(
+        "--quantization", default="q4_k_m", help="GGUF quantization (default: q4_k_m)"
+    )
     be_p.add_argument("--model", help="Base model ID (auto-detected if omitted)")
     be_p.add_argument("--skip-f16", action="store_true", help="Skip f16 variants")
 
@@ -684,48 +1242,81 @@ def create_parser():
     tb_p.add_argument("--indent", type=int, default=2, help="JSON indent (default: 2)")
 
     # Init/Scaffold
-    init_p = subparsers.add_parser("init", aliases=["new-npc"], help="Scaffold a new NPC (folders + spec)")
+    init_p = subparsers.add_parser(
+        "init", aliases=["new-npc"], help="Scaffold a new NPC (folders + spec)"
+    )
     init_p.add_argument("npc_key", help="NPC key (snake_case)")
     init_p.add_argument("--subject", help="Subject description")
     init_p.add_argument("--name", help="NPC display name")
     init_p.add_argument("--force", action="store_true", help="Overwrite existing spec")
-    init_p.add_argument("--skip-spec", action="store_true", help="Only create folders, skip spec file")
+    init_p.add_argument(
+        "--skip-spec", action="store_true", help="Only create folders, skip spec file"
+    )
 
-    checklist_p = subparsers.add_parser("new-npc-checklist", help="Print the recommended checklist for creating a new NPC")
+    checklist_p = subparsers.add_parser(
+        "new-npc-checklist", help="Print the recommended checklist for creating a new NPC"
+    )
     checklist_p.add_argument("npc_key", help="NPC key (snake_case)")
     checklist_p.add_argument("--subject", help="Subject description")
     checklist_p.add_argument("--name", help="NPC display name")
     checklist_p.add_argument("--json", action="store_true", help="Output JSON")
 
-    bootstrap_p = subparsers.add_parser("new-npc-bootstrap", help="Scaffold a new NPC and print a canonical setup checklist")
+    bootstrap_p = subparsers.add_parser(
+        "new-npc-bootstrap", help="Scaffold a new NPC and print a canonical setup checklist"
+    )
     bootstrap_p.add_argument("npc_key", help="NPC key (snake_case)")
     bootstrap_p.add_argument("--subject", help="Subject description")
     bootstrap_p.add_argument("--name", help="NPC display name")
-    bootstrap_p.add_argument("--force", action="store_true", help="Overwrite existing spec and stubs")
-    bootstrap_p.add_argument("--skip-spec", action="store_true", help="Only create folders, skip spec file")
+    bootstrap_p.add_argument(
+        "--force", action="store_true", help="Overwrite existing spec and stubs"
+    )
+    bootstrap_p.add_argument(
+        "--skip-spec", action="store_true", help="Only create folders, skip spec file"
+    )
     bootstrap_p.add_argument("--json", action="store_true", help="Output JSON")
-    bootstrap_p.add_argument("--print-plan", action="store_true", help="Print the recommended pipeline plan after scaffolding")
+    bootstrap_p.add_argument(
+        "--print-plan",
+        action="store_true",
+        help="Print the recommended pipeline plan after scaffolding",
+    )
 
     # Audit
     audit_p = subparsers.add_parser("audit", help="Health check and context audit")
-    audit_subcmd = audit_p.add_subparsers(dest="audit_command", help="Audit subcommand", required=True)
+    audit_subcmd = audit_p.add_subparsers(
+        dest="audit_command", help="Audit subcommand", required=True
+    )
     audit_check = audit_subcmd.add_parser("check", help="Quick environment health check")
-    audit_check.add_argument("--full", action="store_true", help="Full audit (env + NPC + datasets + training + eval)")
+    audit_check.add_argument(
+        "--full", action="store_true", help="Full audit (env + NPC + datasets + training + eval)"
+    )
     audit_diag = audit_subcmd.add_parser("diagnose", help="Diagnose NPC issue")
     audit_diag.add_argument("--npc", required=True, help="NPC key to diagnose")
-    audit_plan = audit_subcmd.add_parser("pipeline-plan", help="Audit canonical pipeline DAG prerequisites")
+    audit_plan = audit_subcmd.add_parser(
+        "pipeline-plan", help="Audit canonical pipeline DAG prerequisites"
+    )
     audit_plan.add_argument("--npc-key", required=True, help="NPC key to audit")
     audit_plan.add_argument("--technique", default=None, help="Dataset technique/artifact lane")
-    audit_plan.add_argument("--target-stage", default="evaluate", choices=["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"], help="Stage to plan up to")
-    audit_plan.add_argument("--artifact-index", default=None, help="ArtifactRegistry JSONL path override")
+    audit_plan.add_argument(
+        "--target-stage",
+        default="evaluate",
+        choices=["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"],
+        help="Stage to plan up to",
+    )
+    audit_plan.add_argument(
+        "--artifact-index", default=None, help="ArtifactRegistry JSONL path override"
+    )
     audit_plan.add_argument("--write", default=None, help="Write plan JSON to this path")
-    audit_coherence = audit_subcmd.add_parser("config-coherence", help="Audit production config invariants")
+    audit_coherence = audit_subcmd.add_parser(
+        "config-coherence", help="Audit production config invariants"
+    )
     audit_coherence.add_argument("--json", action="store_true", help="Output JSON")
     audit_subcmd.add_parser("resume", help="Recover session context (full audit)")
 
     # Target DAG runner
     target_p = subparsers.add_parser("target", help="Plan/cache-check canonical pipeline targets")
-    target_sub = target_p.add_subparsers(dest="target_command", help="Target subcommand", required=True)
+    target_sub = target_p.add_subparsers(
+        dest="target_command", help="Target subcommand", required=True
+    )
     target_plan = target_sub.add_parser("plan", help="Show cache-aware target DAG plan")
     target_plan.add_argument("--npc-key", required=True, help="NPC key to plan")
     target_plan.add_argument("--technique", default=None, help="Dataset technique/artifact lane")
@@ -735,8 +1326,12 @@ def create_parser():
         choices=["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"],
         help="Stage to plan up to",
     )
-    target_plan.add_argument("--artifact-index", default=None, help="ArtifactRegistry JSONL path override")
-    target_plan.add_argument("--profile", default="npc-production-grounded", help="NPC profile label")
+    target_plan.add_argument(
+        "--artifact-index", default=None, help="ArtifactRegistry JSONL path override"
+    )
+    target_plan.add_argument(
+        "--profile", default="npc-production-grounded", help="NPC profile label"
+    )
     target_plan.add_argument("--json", action="store_true", help="Output JSON")
 
     target_run = target_sub.add_parser("run", help="Execute (or preview) a target plan")
@@ -748,22 +1343,36 @@ def create_parser():
         choices=["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"],
         help="Stage to run up to",
     )
-    target_run.add_argument("--profile", default="npc-production-grounded", help="NPC profile label")
-    target_run.add_argument("--dry-run", action="store_true", help="Preview commands without executing")
+    target_run.add_argument(
+        "--profile", default="npc-production-grounded", help="NPC profile label"
+    )
+    target_run.add_argument(
+        "--dry-run", action="store_true", help="Preview commands without executing"
+    )
     target_run.add_argument("--resume", action="store_true", help="Skip already-completed stages")
     target_run.add_argument("--force-stage", default=None, help="Force re-run a specific stage")
-    target_run.add_argument("--artifact-index", default=None, help="ArtifactRegistry JSONL path override")
+    target_run.add_argument(
+        "--artifact-index", default=None, help="ArtifactRegistry JSONL path override"
+    )
 
     # Judge cache
-    judge_cache_p = subparsers.add_parser("judge-cache", help="Inspect durable LLM judge-result cache")
-    judge_cache_sub = judge_cache_p.add_subparsers(dest="judge_cache_command", help="Judge cache subcommand", required=True)
+    judge_cache_p = subparsers.add_parser(
+        "judge-cache", help="Inspect durable LLM judge-result cache"
+    )
+    judge_cache_sub = judge_cache_p.add_subparsers(
+        dest="judge_cache_command", help="Judge cache subcommand", required=True
+    )
     judge_cache_stats = judge_cache_sub.add_parser("stats", help="Show judge cache stats")
-    judge_cache_stats.add_argument("--db-path", default=None, help="Judge cache SQLite path override")
+    judge_cache_stats.add_argument(
+        "--db-path", default=None, help="Judge cache SQLite path override"
+    )
     judge_cache_stats.add_argument("--json", action="store_true", help="Output JSON")
 
     # Inference server
     infer_p = subparsers.add_parser("inference-server", help="Local Ollama inference control plane")
-    infer_sub = infer_p.add_subparsers(dest="inference_command", help="Inference server subcommand", required=True)
+    infer_sub = infer_p.add_subparsers(
+        dest="inference_command", help="Inference server subcommand", required=True
+    )
 
     def _add_infer_common(p):
         p.add_argument("--ollama-host", default="http://localhost:11434", help="Ollama host URL")
@@ -787,9 +1396,13 @@ def create_parser():
     _add_infer_common(infer_judge)
     infer_judge.add_argument("--input", required=True, help="User/input text")
     infer_judge.add_argument("--actual-output", required=True, help="Model output to judge")
-    infer_judge.add_argument("--context", action="append", default=[], help="Reference context chunk")
+    infer_judge.add_argument(
+        "--context", action="append", default=[], help="Reference context chunk"
+    )
 
-    infer_unload = infer_sub.add_parser("unload", help="Unload selected model or all running Ollama models")
+    infer_unload = infer_sub.add_parser(
+        "unload", help="Unload selected model or all running Ollama models"
+    )
     _add_infer_common(infer_unload)
 
     # ── History (experiment dashboard) ──────────────────────────────
@@ -797,7 +1410,9 @@ def create_parser():
         "history",
         help="Query experiment history: win rates, quality trends, training metrics",
     )
-    hist_sub = hist_p.add_subparsers(dest="history_command", help="History subcommand", required=True)
+    hist_sub = hist_p.add_subparsers(
+        dest="history_command", help="History subcommand", required=True
+    )
 
     hist_wins = hist_sub.add_parser("wins", help="Win-rate trends for comparison runs")
     hist_wins.add_argument("--npc-key", help="Filter by NPC key")
@@ -818,7 +1433,9 @@ def create_parser():
         "backup",
         help="Move .pre_* backup debris to .pipeline/backups/ with retention",
     )
-    hist_backup.add_argument("--retain", type=int, default=10, help="Max backups per pattern (default: 10)")
+    hist_backup.add_argument(
+        "--retain", type=int, default=10, help="Max backups per pattern (default: 10)"
+    )
     hist_backup.add_argument("--dry-run", action="store_true", help="Preview without moving")
 
     # ── Registry (model + dataset catalog) ──────────────────────────
@@ -826,7 +1443,9 @@ def create_parser():
         "registry",
         help="Manage model registry and dataset version catalog",
     )
-    reg_sub = reg_p.add_subparsers(dest="registry_command", help="Registry subcommand", required=True)
+    reg_sub = reg_p.add_subparsers(
+        dest="registry_command", help="Registry subcommand", required=True
+    )
 
     reg_models = reg_sub.add_parser("models", help="List registered models for an NPC")
     reg_models.add_argument("--npc-key", required=True, help="NPC key")
@@ -840,7 +1459,12 @@ def create_parser():
     reg_register.add_argument("--npc-key", required=True, help="NPC key")
     reg_register.add_argument("--model-name", required=True, help="Model display name")
     reg_register.add_argument("--base-model", required=True, help="Base model (e.g. qwen2.5:7b)")
-    reg_register.add_argument("--technique", required=True, choices=["lora", "qlora", "full", "grpo"], help="Training technique")
+    reg_register.add_argument(
+        "--technique",
+        required=True,
+        choices=["lora", "qlora", "full", "grpo"],
+        help="Training technique",
+    )
     reg_register.add_argument("--tags", nargs="*", help="Tags (e.g. candidate production)")
     reg_register.add_argument("--status", default="draft", help="Status (default: draft)")
 
@@ -859,10 +1483,14 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command in ["init", "new-npc"]:
         cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "scaffold_npc.py"), args.npc_key]
-        if args.subject is not None: cmd.extend(["--subject", args.subject])
-        if args.name is not None: cmd.extend(["--name", args.name])
-        if args.force: cmd.append("--force")
-        if args.skip_spec: cmd.append("--skip-spec")
+        if args.subject is not None:
+            cmd.extend(["--subject", args.subject])
+        if args.name is not None:
+            cmd.extend(["--name", args.name])
+        if args.force:
+            cmd.append("--force")
+        if args.skip_spec:
+            cmd.append("--skip-spec")
         run_cmd(cmd)
         return 0
 
@@ -895,7 +1523,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.skip_spec:
             cmd.append("--skip-spec")
         if args.json:
-            result = subprocess.run(cmd, cwd=PROJECT_ROOT, check=True, capture_output=True, text=True)
+            result = subprocess.run(
+                cmd, cwd=PROJECT_ROOT, check=True, capture_output=True, text=True
+            )
         else:
             run_cmd(cmd)
             result = None
@@ -916,24 +1546,28 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "target":
         from src.core.orchestration.target_runner import TargetRunner
 
-        runner = TargetRunner(artifact_index=args.artifact_index if hasattr(args, 'artifact_index') else None)
+        runner = TargetRunner(
+            artifact_index=args.artifact_index if hasattr(args, "artifact_index") else None
+        )
 
         if args.target_command == "plan":
             plan = runner.plan(
                 npc_key=args.npc_key,
-                profile=args.profile if hasattr(args, 'profile') else "npc-production-grounded",
+                profile=args.profile if hasattr(args, "profile") else "npc-production-grounded",
                 technique=args.technique,
                 target_stage=args.target_stage,
             )
-            if args.json if hasattr(args, 'json') else False:
+            if args.json if hasattr(args, "json") else False:
                 print(_json_serialize(plan))
             else:
-                print(f"Target plan: npc={args.npc_key} target={args.target_stage} technique={args.technique or '-'}")
+                print(
+                    f"Target plan: npc={args.npc_key} target={args.target_stage} technique={args.technique or '-'}"
+                )
                 print(f"  ready: {plan.get('ready')}  profile: {plan.get('profile', '-')}")
-                if plan.get('blockers'):
-                    for b in plan['blockers']:
+                if plan.get("blockers"):
+                    for b in plan["blockers"]:
                         print(f"  blocker: {b}")
-                if plan.get('cache_hits'):
+                if plan.get("cache_hits"):
                     print(f"  cached: {', '.join(plan['cache_hits'].keys())}")
                 print(f"{'stage':<14} {'status':<12} {'action':<6} {'reason':<26} {'missing'}")
                 print("-" * 88)
@@ -948,13 +1582,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.target_command == "run":
             plan = runner.plan(
                 npc_key=args.npc_key,
-                profile=args.profile if hasattr(args, 'profile') else "npc-production-grounded",
+                profile=args.profile if hasattr(args, "profile") else "npc-production-grounded",
                 technique=args.technique,
                 target_stage=args.target_stage,
             )
 
             # For dry-run, just show commands
-            dry_run = args.dry_run if hasattr(args, 'dry_run') else False
+            dry_run = args.dry_run if hasattr(args, "dry_run") else False
 
             if dry_run:
                 cmds = runner.dry_run(plan)
@@ -968,12 +1602,14 @@ def main(argv: list[str] | None = None) -> int:
                 return 0
 
             # Real execution
-            print(f"Target run: npc={args.npc_key} target={args.target_stage} resume={args.resume or False}")
+            print(
+                f"Target run: npc={args.npc_key} target={args.target_stage} resume={args.resume or False}"
+            )
             results = runner.run(
                 plan,
                 dry_run=False,
-                resume=args.resume if hasattr(args, 'resume') else False,
-                force_stage=args.force_stage if hasattr(args, 'force_stage') else None,
+                resume=args.resume if hasattr(args, "resume") else False,
+                force_stage=args.force_stage if hasattr(args, "force_stage") else None,
             )
 
             # Report results
@@ -1028,11 +1664,17 @@ def main(argv: list[str] | None = None) -> int:
             from src.core.ops.artifact_registry import ArtifactRegistry
             from src.core.ops.pipeline_dag import PipelineDAG
 
-            registry = ArtifactRegistry(args.artifact_index) if args.artifact_index else ArtifactRegistry()
+            registry = (
+                ArtifactRegistry(args.artifact_index) if args.artifact_index else ArtifactRegistry()
+            )
             dag = PipelineDAG(registry=registry)
-            plan = dag.plan_to_stage(args.target_stage, npc_key=args.npc_key, technique=args.technique)
+            plan = dag.plan_to_stage(
+                args.target_stage, npc_key=args.npc_key, technique=args.technique
+            )
             if args.write:
-                out = dag.write_plan(args.write, args.target_stage, npc_key=args.npc_key, technique=args.technique)
+                out = dag.write_plan(
+                    args.write, args.target_stage, npc_key=args.npc_key, technique=args.technique
+                )
                 print(f"Pipeline plan written: {out}")
             else:
                 print(json.dumps(plan, indent=2, ensure_ascii=False))
@@ -1049,6 +1691,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if result["ok"] else 1
 
         from src.core.ops.audit import ProjectAudit
+
         audit = ProjectAudit()
         if args.audit_command == "check":
             audit.report("full" if args.full else "env")
@@ -1116,35 +1759,60 @@ def main(argv: list[str] | None = None) -> int:
 
     elif args.command == "sanitize":
         cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), args.input]
-        if args.output: cmd.extend(["--output", args.output])
-        if args.min_length != 10: cmd.extend(["--min-length", str(args.min_length)])
-        if args.max_sentences != 5: cmd.extend(["--max-sentences", str(args.max_sentences)])
-        if args.verbose: cmd.append("--verbose")
-        if args.spec: cmd.extend(["--spec", args.spec])
-        if args.strict_canonical: cmd.append("--strict-canonical")
-        if args.strict_mode: cmd.append("--strict-mode")
-        if args.artifact_check != "strict": cmd.extend(["--artifact-check", args.artifact_check])
-        if args.verbose_artifacts: cmd.append("--verbose-artifacts")
-        if args.quality_threshold_pass != 70: cmd.extend(["--quality-threshold-pass", str(args.quality_threshold_pass)])
-        if args.quality_threshold_flag != 50: cmd.extend(["--quality-threshold-flag", str(args.quality_threshold_flag)])
-        if args.quality_report: cmd.append("--quality-report")
-        if args.llm_check: cmd.append("--llm-check")
-        if args.llm_model: cmd.extend(["--llm-model", args.llm_model])
-        if args.judge_cache_path: cmd.extend(["--judge-cache-path", args.judge_cache_path])
-        if args.no_judge_cache: cmd.append("--no-judge-cache")
-        if args.inference_server_url: cmd.extend(["--inference-server-url", args.inference_server_url])
-        if args.discard_below_score != 0: cmd.extend(["--discard-below-score", str(args.discard_below_score)])
-        if args.no_fix_metadata: cmd.append("--no-fix-metadata")
-        if args.require_complete_metadata: cmd.append("--require-complete-metadata")
+        if args.output:
+            cmd.extend(["--output", args.output])
+        if args.min_length != 10:
+            cmd.extend(["--min-length", str(args.min_length)])
+        if args.max_sentences != 5:
+            cmd.extend(["--max-sentences", str(args.max_sentences)])
+        if args.verbose:
+            cmd.append("--verbose")
+        if args.spec:
+            cmd.extend(["--spec", args.spec])
+        if args.strict_canonical:
+            cmd.append("--strict-canonical")
+        if args.strict_mode:
+            cmd.append("--strict-mode")
+        if args.artifact_check != "strict":
+            cmd.extend(["--artifact-check", args.artifact_check])
+        if args.verbose_artifacts:
+            cmd.append("--verbose-artifacts")
+        if args.quality_threshold_pass != 70:
+            cmd.extend(["--quality-threshold-pass", str(args.quality_threshold_pass)])
+        if args.quality_threshold_flag != 50:
+            cmd.extend(["--quality-threshold-flag", str(args.quality_threshold_flag)])
+        if args.quality_report:
+            cmd.append("--quality-report")
+        if args.llm_check:
+            cmd.append("--llm-check")
+        if args.llm_model:
+            cmd.extend(["--llm-model", args.llm_model])
+        if args.judge_cache_path:
+            cmd.extend(["--judge-cache-path", args.judge_cache_path])
+        if args.no_judge_cache:
+            cmd.append("--no-judge-cache")
+        if args.inference_server_url:
+            cmd.extend(["--inference-server-url", args.inference_server_url])
+        if args.discard_below_score != 0:
+            cmd.extend(["--discard-below-score", str(args.discard_below_score)])
+        if args.no_fix_metadata:
+            cmd.append("--no-fix-metadata")
+        if args.require_complete_metadata:
+            cmd.append("--require-complete-metadata")
         if args.dedup is False:
             cmd.append("--no-dedup")
         elif args.dedup is True:
             cmd.append("--dedup")
-        if args.dedup_report: cmd.append("--dedup-report")
-        if args.write_manifest is False: cmd.append("--no-write-manifest")
-        if args.manifest_path: cmd.extend(["--manifest-path", args.manifest_path])
-        if args.debug: cmd.append("--debug")
-        if args.workflow_hooks: cmd.extend(["--workflow-hooks", args.workflow_hooks])
+        if args.dedup_report:
+            cmd.append("--dedup-report")
+        if args.write_manifest is False:
+            cmd.append("--no-write-manifest")
+        if args.manifest_path:
+            cmd.extend(["--manifest-path", args.manifest_path])
+        if args.debug:
+            cmd.append("--debug")
+        if args.workflow_hooks:
+            cmd.extend(["--workflow-hooks", args.workflow_hooks])
         run_cmd(cmd)
 
     elif args.command == "dataset-eval":
@@ -1154,7 +1822,8 @@ def main(argv: list[str] | None = None) -> int:
             cmd.extend(["--judge-provider", args.judge_provider])
         if args.judge_model is not None:
             cmd.extend(["--judge-model", args.judge_model])
-        if args.judge_preset: cmd.extend(["--judge-preset", args.judge_preset])
+        if args.judge_preset:
+            cmd.extend(["--judge-preset", args.judge_preset])
         cmd.extend(["--ollama-base-url", args.ollama_base_url])
         if args.inference_server_url:
             cmd.extend(["--inference-server-url", args.inference_server_url])
@@ -1166,88 +1835,146 @@ def main(argv: list[str] | None = None) -> int:
         cmd.extend(["--mode", args.mode])
         if args.cases_per_category is not None:
             cmd.extend(["--cases-per-category", str(args.cases_per_category)])
-        if args.categories: cmd.extend(["--categories", args.categories])
-        if args.identifier: cmd.extend(["--identifier", args.identifier])
-        if args.display: cmd.extend(["--display", args.display])
-        if args.ignore_errors: cmd.append("--ignore-errors")
-        if args.soft_fail: cmd.append("--soft-fail")
-        if args.output: cmd.extend(["--output", args.output])
-        if args.workflow_hooks: cmd.extend(["--workflow-hooks", args.workflow_hooks])
-        if args.wandb: cmd.append("--wandb")
-        if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
-        if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
-        if args.wandb_inference_project: cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
-        if args.wandb_inference_entity: cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
-        if getattr(args, "pull_alias", None): cmd.extend(["--pull-alias", args.pull_alias])
-        if getattr(args, "confident", False): cmd.append("--confident")
-        if getattr(args, "remote_eval", False): cmd.append("--remote-eval")
+        if args.categories:
+            cmd.extend(["--categories", args.categories])
+        if args.identifier:
+            cmd.extend(["--identifier", args.identifier])
+        if args.display:
+            cmd.extend(["--display", args.display])
+        if args.ignore_errors:
+            cmd.append("--ignore-errors")
+        if args.soft_fail:
+            cmd.append("--soft-fail")
+        if args.output:
+            cmd.extend(["--output", args.output])
+        if args.workflow_hooks:
+            cmd.extend(["--workflow-hooks", args.workflow_hooks])
+        if args.wandb:
+            cmd.append("--wandb")
+        if args.wandb_project:
+            cmd.extend(["--wandb-project", args.wandb_project])
+        if args.wandb_entity:
+            cmd.extend(["--wandb-entity", args.wandb_entity])
+        if args.wandb_inference_project:
+            cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
+        if args.wandb_inference_entity:
+            cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
+        if getattr(args, "pull_alias", None):
+            cmd.extend(["--pull-alias", args.pull_alias])
+        if getattr(args, "confident", False):
+            cmd.append("--confident")
+        if getattr(args, "remote_eval", False):
+            cmd.append("--remote-eval")
         run_cmd(cmd)
 
     elif args.command == "confident-goldens":
         cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "confident_goldens.py"), args.dataset]
-        if args.spec: cmd.extend(["--spec", args.spec])
-        if args.output_dir: cmd.extend(["--output-dir", args.output_dir])
-        if getattr(args, "technique", None): cmd.extend(["--technique", args.technique])
-        if getattr(args, "push", False): cmd.append("--push")
-        if not getattr(args, "finalized", True): cmd.append("--unfinalized")
+        if args.spec:
+            cmd.extend(["--spec", args.spec])
+        if args.output_dir:
+            cmd.extend(["--output-dir", args.output_dir])
+        if getattr(args, "technique", None):
+            cmd.extend(["--technique", args.technique])
+        if getattr(args, "push", False):
+            cmd.append("--push")
+        if not getattr(args, "finalized", True):
+            cmd.append("--unfinalized")
         run_cmd(cmd)
 
     elif args.command == "confident-classifiers":
         cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "confident_classifiers.py")]
-        if getattr(args, "write", False): cmd.append("--write")
-        if getattr(args, "json_path", None): cmd.extend(["--json-path", args.json_path])
-        if getattr(args, "markdown_path", None): cmd.extend(["--markdown-path", args.markdown_path])
-        if getattr(args, "format", None): cmd.extend(["--format", args.format])
+        if getattr(args, "write", False):
+            cmd.append("--write")
+        if getattr(args, "json_path", None):
+            cmd.extend(["--json-path", args.json_path])
+        if getattr(args, "markdown_path", None):
+            cmd.extend(["--markdown-path", args.markdown_path])
+        if getattr(args, "format", None):
+            cmd.extend(["--format", args.format])
         run_cmd(cmd)
 
     elif args.command == "train":
         cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "train.py"), args.config_or_spec]
-        if args.from_spec or Path(args.config_or_spec).suffix.lower() == ".json": cmd.append("--from-spec")
-        if args.preset: cmd.extend(["--preset", args.preset])
-        if getattr(args, "technique", None): cmd.extend(["--technique", args.technique])
-        if getattr(args, "model", None): cmd.extend(["--model", args.model])
-        if getattr(args, "lr", None): cmd.extend(["--lr", str(args.lr)])
-        if getattr(args, "batch_size", None): cmd.extend(["--batch-size", str(args.batch_size)])
-        if getattr(args, "epochs", None): cmd.extend(["--epochs", str(args.epochs)])
-        if getattr(args, "grad_accum", None): cmd.extend(["--grad-accum", str(args.grad_accum)])
-        if getattr(args, "max_seq_len", None): cmd.extend(["--max-seq-len", str(args.max_seq_len)])
-        if getattr(args, "lora_r", None): cmd.extend(["--lora-r", str(args.lora_r)])
-        if getattr(args, "lora_alpha", None): cmd.extend(["--lora-alpha", str(args.lora_alpha)])
-        if getattr(args, "lora_dropout", None) is not None: cmd.extend(["--lora-dropout", str(args.lora_dropout)])
-        if getattr(args, "neftune", None) is not None: cmd.extend(["--neftune", str(args.neftune)])
-        if getattr(args, "weight_decay", None) is not None: cmd.extend(["--weight-decay", str(args.weight_decay)])
-        if getattr(args, "warmup", None) is not None: cmd.extend(["--warmup", str(args.warmup)])
-        if getattr(args, "lr_scheduler", None): cmd.extend(["--lr-scheduler", args.lr_scheduler])
-        if getattr(args, "packing", None): cmd.extend(["--packing", args.packing.lower()])
-        if getattr(args, "train_on_responses", None): cmd.extend(["--train-on-responses", args.train_on_responses.lower()])
-        if getattr(args, "quantization", None): cmd.extend(["--quantization", args.quantization])
-        if getattr(args, "allow_ungated_dataset", False): cmd.append("--allow-ungated-dataset")
-        if args.export_gguf: cmd.append("--export-gguf")
-        if getattr(args, 'full_merge_export', False): cmd.append("--full-merge-export")
-        if args.wandb: cmd.append("--wandb")
-        if args.no_wandb: cmd.append("--no-wandb")
-        if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
-        if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
+        if args.from_spec or Path(args.config_or_spec).suffix.lower() == ".json":
+            cmd.append("--from-spec")
+        if args.preset:
+            cmd.extend(["--preset", args.preset])
+        if getattr(args, "technique", None):
+            cmd.extend(["--technique", args.technique])
+        if getattr(args, "model", None):
+            cmd.extend(["--model", args.model])
+        if getattr(args, "lr", None):
+            cmd.extend(["--lr", str(args.lr)])
+        if getattr(args, "batch_size", None):
+            cmd.extend(["--batch-size", str(args.batch_size)])
+        if getattr(args, "epochs", None):
+            cmd.extend(["--epochs", str(args.epochs)])
+        if getattr(args, "grad_accum", None):
+            cmd.extend(["--grad-accum", str(args.grad_accum)])
+        if getattr(args, "max_seq_len", None):
+            cmd.extend(["--max-seq-len", str(args.max_seq_len)])
+        if getattr(args, "lora_r", None):
+            cmd.extend(["--lora-r", str(args.lora_r)])
+        if getattr(args, "lora_alpha", None):
+            cmd.extend(["--lora-alpha", str(args.lora_alpha)])
+        if getattr(args, "lora_dropout", None) is not None:
+            cmd.extend(["--lora-dropout", str(args.lora_dropout)])
+        if getattr(args, "neftune", None) is not None:
+            cmd.extend(["--neftune", str(args.neftune)])
+        if getattr(args, "weight_decay", None) is not None:
+            cmd.extend(["--weight-decay", str(args.weight_decay)])
+        if getattr(args, "warmup", None) is not None:
+            cmd.extend(["--warmup", str(args.warmup)])
+        if getattr(args, "lr_scheduler", None):
+            cmd.extend(["--lr-scheduler", args.lr_scheduler])
+        if getattr(args, "packing", None):
+            cmd.extend(["--packing", args.packing.lower()])
+        if getattr(args, "train_on_responses", None):
+            cmd.extend(["--train-on-responses", args.train_on_responses.lower()])
+        if getattr(args, "quantization", None):
+            cmd.extend(["--quantization", args.quantization])
+        if getattr(args, "allow_ungated_dataset", False):
+            cmd.append("--allow-ungated-dataset")
+        if args.export_gguf:
+            cmd.append("--export-gguf")
+        if getattr(args, "full_merge_export", False):
+            cmd.append("--full-merge-export")
+        if args.wandb:
+            cmd.append("--wandb")
+        if args.no_wandb:
+            cmd.append("--no-wandb")
+        if args.wandb_project:
+            cmd.extend(["--wandb-project", args.wandb_project])
+        if args.wandb_entity:
+            cmd.extend(["--wandb-entity", args.wandb_entity])
         run_cmd(cmd)
 
     elif args.command == "smoke":
         cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "smoke_test.py"), args.model]
-        if args.spec: cmd.extend(["--spec", args.spec])
-        if args.check_integrity: cmd.append("--check-integrity")
-        if args.track: cmd.append("--track")
+        if args.spec:
+            cmd.extend(["--spec", args.spec])
+        if args.check_integrity:
+            cmd.append("--check-integrity")
+        if args.track:
+            cmd.append("--track")
         run_cmd(cmd)
 
     elif args.command == "batch-export":
         cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "batch_export.py")]
-        if args.npc: cmd.extend(["--npc", args.npc])
-        if args.quantization: cmd.extend(["--quantization", args.quantization])
-        if args.model: cmd.extend(["--model", args.model])
-        if args.skip_f16: cmd.append("--skip-f16")
+        if args.npc:
+            cmd.extend(["--npc", args.npc])
+        if args.quantization:
+            cmd.extend(["--quantization", args.quantization])
+        if args.model:
+            cmd.extend(["--model", args.model])
+        if args.skip_f16:
+            cmd.append("--skip-f16")
         run_cmd(cmd)
 
     elif args.command == "tb-reader":
         cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "tb_reader.py"), "--run-dir", args.run_dir]
-        if args.indent: cmd.extend(["--indent", str(args.indent)])
+        if args.indent:
+            cmd.extend(["--indent", str(args.indent)])
         run_cmd(cmd)
 
     elif args.command == "validate-config":
@@ -1304,21 +2031,32 @@ def main(argv: list[str] | None = None) -> int:
 
     elif args.command == "export":
         cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "export.py"), args.npc_key]
-        if args.model: cmd.extend(["--model", args.model])
-        if args.quantization: cmd.extend(["--quantization", args.quantization])
-        if args.full_merge: cmd.append("--full-merge")
-        if args.skip_f16: cmd.append("--skip-f16")
-        if args.outtype: cmd.extend(["--outtype", args.outtype])
-        if args.maximum_memory is not None: cmd.extend(["--maximum-memory", str(args.maximum_memory)])
-        if args.resume: cmd.append("--resume")
+        if args.model:
+            cmd.extend(["--model", args.model])
+        if args.quantization:
+            cmd.extend(["--quantization", args.quantization])
+        if args.full_merge:
+            cmd.append("--full-merge")
+        if args.skip_f16:
+            cmd.append("--skip-f16")
+        if args.outtype:
+            cmd.extend(["--outtype", args.outtype])
+        if args.maximum_memory is not None:
+            cmd.extend(["--maximum-memory", str(args.maximum_memory)])
+        if args.resume:
+            cmd.append("--resume")
         run_cmd(cmd)
 
     elif args.command == "export-resume":
         cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "export_resume.py"), args.npc_key]
-        if args.model: cmd.extend(["--model", args.model])
-        if args.quantization: cmd.extend(["--quantization", args.quantization])
-        if args.skip_f16: cmd.append("--skip-f16")
-        if args.timeout_seconds is not None: cmd.extend(["--timeout-seconds", str(args.timeout_seconds)])
+        if args.model:
+            cmd.extend(["--model", args.model])
+        if args.quantization:
+            cmd.extend(["--quantization", args.quantization])
+        if args.skip_f16:
+            cmd.append("--skip-f16")
+        if args.timeout_seconds is not None:
+            cmd.extend(["--timeout-seconds", str(args.timeout_seconds)])
         run_cmd(cmd)
 
     elif args.command == "export-adapter":
@@ -1331,69 +2069,111 @@ def main(argv: list[str] | None = None) -> int:
             print("Error: Provide adapter_path or --all")
             sys.exit(1)
         cmd.extend(["--outtype", args.outtype])
-        if args.outfile: cmd.extend(["--outfile", args.outfile])
+        if args.outfile:
+            cmd.extend(["--outfile", args.outfile])
         run_cmd(cmd)
 
     elif args.command == "deploy":
         cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "deploy_to_unity.py")]
-        if args.unity_project: cmd.extend(["--unity-project", args.unity_project])
-        if args.dry_run: cmd.append("--dry-run")
-        if args.skip_export: cmd.append("--skip-export")
-        if args.export_only: cmd.append("--export-only")
+        if args.unity_project:
+            cmd.extend(["--unity-project", args.unity_project])
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.skip_export:
+            cmd.append("--skip-export")
+        if args.export_only:
+            cmd.append("--export-only")
         run_cmd(cmd)
 
     elif args.command == "evaluate":
         cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "evaluate.py")]
-        if args.baseline: cmd.extend(["--baseline", args.baseline])
-        if args.candidate: cmd.extend(["--candidate", args.candidate])
-        if args.model: cmd.extend(["--model", args.model])
-        if args.spec: cmd.extend(["--spec", args.spec])
-        if args.val_data: cmd.extend(["--val-data", args.val_data])
-        if args.num_questions is not None: cmd.extend(["--num-questions", str(args.num_questions)])
-        if args.output: cmd.extend(["--output", args.output])
-        if args.report_html: cmd.append("--report-html")
-        if args.judge: cmd.append("--judge")
-        if args.judge_provider != "ollama": cmd.extend(["--judge-provider", args.judge_provider])
-        if args.judge_model: cmd.extend(["--judge-model", args.judge_model])
-        if args.track: cmd.append("--track")
-        if args.wandb: cmd.append("--wandb")
-        if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
-        if args.interactive: cmd.append("--interactive")
-        if args.port is not None: cmd.extend(["--port", str(args.port)])
-        if args.gpu_layers is not None: cmd.extend(["--gpu-layers", str(args.gpu_layers)])
-        if args.max_tokens is not None: cmd.extend(["--max-tokens", str(args.max_tokens)])
-        if args.feedback_json: cmd.extend(["--feedback-json", args.feedback_json])
-        if args.base_model: cmd.extend(["--base-model", args.base_model])
-        if args.lora_weight is not None: cmd.extend(["--lora-weight", str(args.lora_weight)])
-        if args.host != "127.0.0.1": cmd.extend(["--host", args.host])
+        if args.baseline:
+            cmd.extend(["--baseline", args.baseline])
+        if args.candidate:
+            cmd.extend(["--candidate", args.candidate])
+        if args.model:
+            cmd.extend(["--model", args.model])
+        if args.spec:
+            cmd.extend(["--spec", args.spec])
+        if args.val_data:
+            cmd.extend(["--val-data", args.val_data])
+        if args.num_questions is not None:
+            cmd.extend(["--num-questions", str(args.num_questions)])
+        if args.output:
+            cmd.extend(["--output", args.output])
+        if args.report_html:
+            cmd.append("--report-html")
+        if args.judge:
+            cmd.append("--judge")
+        if args.judge_provider != "ollama":
+            cmd.extend(["--judge-provider", args.judge_provider])
+        if args.judge_model:
+            cmd.extend(["--judge-model", args.judge_model])
+        if args.track:
+            cmd.append("--track")
+        if args.wandb:
+            cmd.append("--wandb")
+        if args.wandb_project:
+            cmd.extend(["--wandb-project", args.wandb_project])
+        if args.interactive:
+            cmd.append("--interactive")
+        if args.port is not None:
+            cmd.extend(["--port", str(args.port)])
+        if args.gpu_layers is not None:
+            cmd.extend(["--gpu-layers", str(args.gpu_layers)])
+        if args.max_tokens is not None:
+            cmd.extend(["--max-tokens", str(args.max_tokens)])
+        if args.feedback_json:
+            cmd.extend(["--feedback-json", args.feedback_json])
+        if args.base_model:
+            cmd.extend(["--base-model", args.base_model])
+        if args.lora_weight is not None:
+            cmd.extend(["--lora-weight", str(args.lora_weight)])
+        if args.host != "127.0.0.1":
+            cmd.extend(["--host", args.host])
         if args.training_metrics is not None:
             cmd.append("--training-metrics")
-            if args.training_metrics: cmd.append(args.training_metrics)
-        if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
-        if args.wandb_inference_project: cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
-        if args.wandb_inference_entity: cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
-        if args.npc_key: cmd.extend(["--npc-key", args.npc_key])
-        if args.workflow_hooks: cmd.extend(["--workflow-hooks", args.workflow_hooks])
+            if args.training_metrics:
+                cmd.append(args.training_metrics)
+        if args.wandb_entity:
+            cmd.extend(["--wandb-entity", args.wandb_entity])
+        if args.wandb_inference_project:
+            cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
+        if args.wandb_inference_entity:
+            cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
+        if args.npc_key:
+            cmd.extend(["--npc-key", args.npc_key])
+        if args.workflow_hooks:
+            cmd.extend(["--workflow-hooks", args.workflow_hooks])
         run_cmd(cmd)
 
     elif args.command == "quick-eval":
         cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "quick_eval.py")]
         cmd.extend(["--adapter", args.adapter])
-        if args.samples is not None: cmd.extend(["--samples", str(args.samples)])
+        if args.samples is not None:
+            cmd.extend(["--samples", str(args.samples)])
         cmd.extend(["--spec", args.spec])
-        if args.val_data: cmd.extend(["--val-data", args.val_data])
-        if args.output: cmd.extend(["--output", args.output])
-        if args.feedback_json: cmd.extend(["--feedback-json", args.feedback_json])
-        if args.workflow_hooks: cmd.extend(["--workflow-hooks", args.workflow_hooks])
-        if args.wandb: cmd.append("--wandb")
-        if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
-        if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
+        if args.val_data:
+            cmd.extend(["--val-data", args.val_data])
+        if args.output:
+            cmd.extend(["--output", args.output])
+        if args.feedback_json:
+            cmd.extend(["--feedback-json", args.feedback_json])
+        if args.workflow_hooks:
+            cmd.extend(["--workflow-hooks", args.workflow_hooks])
+        if args.wandb:
+            cmd.append("--wandb")
+        if args.wandb_project:
+            cmd.extend(["--wandb-project", args.wandb_project])
+        if args.wandb_entity:
+            cmd.extend(["--wandb-entity", args.wandb_entity])
         run_cmd(cmd)
 
     elif args.command == "track":
         if args.show:
             cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "track_eval_results.py"), "--show"]
-            if args.npc_key: cmd.extend(["--npc-key", args.npc_key])
+            if args.npc_key:
+                cmd.extend(["--npc-key", args.npc_key])
             run_cmd(cmd)
         else:
             if not args.npc_key:
@@ -1401,24 +2181,33 @@ def main(argv: list[str] | None = None) -> int:
                 sys.exit(1)
             cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "track_eval_results.py"), "--track"]
             cmd.extend(["--npc-key", args.npc_key])
-            if args.model: cmd.extend(["--model", args.model])
-            if args.win_rate is not None: cmd.extend(["--win-rate", str(args.win_rate)])
-            if args.avg_quality is not None: cmd.extend(["--avg-quality", str(args.avg_quality)])
-            if args.val_loss is not None: cmd.extend(["--val-loss", str(args.val_loss)])
-            if args.notes: cmd.extend(["--notes", args.notes])
+            if args.model:
+                cmd.extend(["--model", args.model])
+            if args.win_rate is not None:
+                cmd.extend(["--win-rate", str(args.win_rate)])
+            if args.avg_quality is not None:
+                cmd.extend(["--avg-quality", str(args.avg_quality)])
+            if args.val_loss is not None:
+                cmd.extend(["--val-loss", str(args.val_loss)])
+            if args.notes:
+                cmd.extend(["--notes", args.notes])
             run_cmd(cmd)
 
     elif args.command == "compare-runs":
         cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "compare_runs.py"), args.npc_key]
         cmd.extend(["--baseline-run", args.baseline_run])
         cmd.extend(["--candidate-run", args.candidate_run])
-        if args.spec: cmd.extend(["--spec", args.spec])
-        if args.num_questions is not None: cmd.extend(["--num-questions", str(args.num_questions)])
-        if args.judge: cmd.append("--judge")
+        if args.spec:
+            cmd.extend(["--spec", args.spec])
+        if args.num_questions is not None:
+            cmd.extend(["--num-questions", str(args.num_questions)])
+        if args.judge:
+            cmd.append("--judge")
         run_cmd(cmd)
 
     elif args.command == "strategy":
         from src.core.ops.npc_production_strategy import print_strategy_summary
+
         print_strategy_summary(args.profile, as_json=args.json)
 
     elif args.command == "compare-local-models":
@@ -1438,58 +2227,151 @@ def main(argv: list[str] | None = None) -> int:
         run_cmd(cmd)
 
     elif args.command == "compare-canonical-runs":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "compare_canonical_runs.py"), args.baseline_run_id, args.candidate_run_id]
+        if args.json:
+            from dataclasses import asdict
+
+            from src.core.ops.compare_canonical_runs import compare_and_record
+
+            if args.refresh_index:
+                from src.core.ops.run_index import refresh_run_index
+
+                refresh_run_index()
+            report_path, comparison = compare_and_record(
+                args.baseline_run_id,
+                args.candidate_run_id,
+                output_path=Path(args.output) if args.output else None,
+                registry_path=args.registry_path,
+            )
+            print(
+                _json_serialize({"report_path": str(report_path), "comparison": asdict(comparison)})
+            )
+            return 0
+        cmd = [
+            PYTHON,
+            str(PROJECT_ROOT / "src" / "core" / "ops" / "compare_canonical_runs.py"),
+            args.baseline_run_id,
+            args.candidate_run_id,
+        ]
         if args.output:
             cmd.extend(["--output", args.output])
         if args.refresh_index:
             cmd.append("--refresh-index")
+        if args.registry_path:
+            cmd.extend(["--registry-path", args.registry_path])
+        run_cmd(cmd)
+
+    elif args.command == "promote":
+        if args.json:
+            from src.core.ops.promote_model import promotion_decision
+
+            decision = promotion_decision(
+                npc_key=args.npc_key,
+                candidate_run_id=args.candidate_run_id,
+                registry_path=args.registry_path,
+                dry_run=args.dry_run,
+            )
+            print(_json_serialize(decision))
+            return 0 if decision["can_promote"] or args.dry_run else 1
+        cmd = [
+            PYTHON,
+            str(PROJECT_ROOT / "src" / "core" / "ops" / "promote_model.py"),
+            "--npc-key",
+            args.npc_key,
+            "--candidate-run-id",
+            args.candidate_run_id,
+        ]
+        if args.registry_path:
+            cmd.extend(["--registry-path", args.registry_path])
+        if args.dry_run:
+            cmd.append("--dry-run")
         run_cmd(cmd)
 
     elif args.command == "supabase-check":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "supabase_integration_check.py"), "--npc-key", args.npc_key]
-        if args.player_id: cmd.extend(["--player-id", args.player_id])
-        if args.skip_probe: cmd.append("--skip-probe")
+        cmd = [
+            PYTHON,
+            str(SCRIPTS_DIR / "ops" / "supabase_integration_check.py"),
+            "--npc-key",
+            args.npc_key,
+        ]
+        if args.player_id:
+            cmd.extend(["--player-id", args.player_id])
+        if args.skip_probe:
+            cmd.append("--skip-probe")
         run_cmd(cmd)
 
     elif args.command == "feedback":
         cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "feedback_loop.py"), args.feedback_json]
-        if args.win_rate_threshold is not None: cmd.extend(["--win-rate-threshold", str(args.win_rate_threshold)])
-        if args.quality_threshold is not None: cmd.extend(["--quality-threshold", str(args.quality_threshold)])
-        if args.violation_threshold is not None: cmd.extend(["--violation-threshold", str(args.violation_threshold)])
-        if args.dry_run: cmd.append("--dry-run")
-        if args.auto: cmd.append("--auto")
-        if args.skip_gap_detection: cmd.append("--skip-gap-detection")
-        if args.save_gaps: cmd.extend(["--save-gaps", args.save_gaps])
-        if args.json: cmd.append("--json")
-        if args.strategy_profile: cmd.extend(["--strategy-profile", args.strategy_profile])
-        if args.auto_retrain: cmd.append("--auto-retrain")
-        if args.train_preset: cmd.extend(["--train-preset", args.train_preset])
-        if args.baseline: cmd.extend(["--baseline", args.baseline])
-        if args.regeneration_technique: cmd.extend(["--regeneration-technique", args.regeneration_technique])
-        if args.regeneration_preset: cmd.extend(["--regeneration-preset", args.regeneration_preset])
-        if args.regeneration_model: cmd.extend(["--regeneration-model", args.regeneration_model])
-        if args.regeneration_url: cmd.extend(["--regeneration-url", args.regeneration_url])
-        if args.regeneration_batch_size is not None: cmd.extend(["--regeneration-batch-size", str(args.regeneration_batch_size)])
-        if args.deepeval_judge_provider != "ollama": cmd.extend(["--deepeval-judge-provider", args.deepeval_judge_provider])
-        if args.deepeval_judge_preset: cmd.extend(["--deepeval-judge-preset", args.deepeval_judge_preset])
-        if args.deepeval_judge_model: cmd.extend(["--deepeval-judge-model", args.deepeval_judge_model])
-        if args.deepeval_ollama_url: cmd.extend(["--deepeval-ollama-url", args.deepeval_ollama_url])
-        if args.deepeval_cases_per_category is not None: cmd.extend(["--deepeval-cases-per-category", str(args.deepeval_cases_per_category)])
-        if args.deepeval_soft_fail: cmd.append("--deepeval-soft-fail")
-        if args.wandb: cmd.append("--wandb")
-        if args.wandb_project: cmd.extend(["--wandb-project", args.wandb_project])
-        if args.wandb_entity: cmd.extend(["--wandb-entity", args.wandb_entity])
-        if args.wandb_inference_project: cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
-        if args.wandb_inference_entity: cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
+        if args.win_rate_threshold is not None:
+            cmd.extend(["--win-rate-threshold", str(args.win_rate_threshold)])
+        if args.quality_threshold is not None:
+            cmd.extend(["--quality-threshold", str(args.quality_threshold)])
+        if args.violation_threshold is not None:
+            cmd.extend(["--violation-threshold", str(args.violation_threshold)])
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.auto:
+            cmd.append("--auto")
+        if args.skip_gap_detection:
+            cmd.append("--skip-gap-detection")
+        if args.save_gaps:
+            cmd.extend(["--save-gaps", args.save_gaps])
+        if args.json:
+            cmd.append("--json")
+        if args.strategy_profile:
+            cmd.extend(["--strategy-profile", args.strategy_profile])
+        if args.auto_retrain:
+            cmd.append("--auto-retrain")
+        if args.train_preset:
+            cmd.extend(["--train-preset", args.train_preset])
+        if args.baseline:
+            cmd.extend(["--baseline", args.baseline])
+        if args.regeneration_technique:
+            cmd.extend(["--regeneration-technique", args.regeneration_technique])
+        if args.regeneration_preset:
+            cmd.extend(["--regeneration-preset", args.regeneration_preset])
+        if args.regeneration_model:
+            cmd.extend(["--regeneration-model", args.regeneration_model])
+        if args.regeneration_url:
+            cmd.extend(["--regeneration-url", args.regeneration_url])
+        if args.regeneration_batch_size is not None:
+            cmd.extend(["--regeneration-batch-size", str(args.regeneration_batch_size)])
+        if args.deepeval_judge_provider != "ollama":
+            cmd.extend(["--deepeval-judge-provider", args.deepeval_judge_provider])
+        if args.deepeval_judge_preset:
+            cmd.extend(["--deepeval-judge-preset", args.deepeval_judge_preset])
+        if args.deepeval_judge_model:
+            cmd.extend(["--deepeval-judge-model", args.deepeval_judge_model])
+        if args.deepeval_ollama_url:
+            cmd.extend(["--deepeval-ollama-url", args.deepeval_ollama_url])
+        if args.deepeval_cases_per_category is not None:
+            cmd.extend(["--deepeval-cases-per-category", str(args.deepeval_cases_per_category)])
+        if args.deepeval_soft_fail:
+            cmd.append("--deepeval-soft-fail")
+        if args.wandb:
+            cmd.append("--wandb")
+        if args.wandb_project:
+            cmd.extend(["--wandb-project", args.wandb_project])
+        if args.wandb_entity:
+            cmd.extend(["--wandb-entity", args.wandb_entity])
+        if args.wandb_inference_project:
+            cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
+        if args.wandb_inference_entity:
+            cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
         run_cmd(cmd)
 
     elif args.command == "repair":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "feedback_loop_deepeval.py"), args.npc_key, args.technique]
+        cmd = [
+            PYTHON,
+            str(SCRIPTS_DIR / "training" / "feedback_loop_deepeval.py"),
+            args.npc_key,
+            args.technique,
+        ]
         run_cmd(cmd)
 
     elif args.command == "grpo-train":
         cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "train_grpo_deepeval.py"), args.npc_key]
-        if args.steps is not None: cmd.extend(["--steps", str(args.steps)])
+        if args.steps is not None:
+            cmd.extend(["--steps", str(args.steps)])
         run_cmd(cmd)
 
     elif args.command == "pipeline":
@@ -1499,34 +2381,41 @@ def main(argv: list[str] | None = None) -> int:
         workflow_id = uuid.uuid4().hex
         technique = "ollama" if args.ollama else args.technique
         wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
-        pipeline_hooks = args.workflow_hooks or str(PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique / "workflow_hooks.jsonl")
-        
+        pipeline_hooks = args.workflow_hooks or str(
+            PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique / "workflow_hooks.jsonl"
+        )
+
         # Set on the base environment so all child processes inherit it
         if args.wandb:
             os.environ["WANDB_GROUP"] = wandb_group
             os.environ["WANDB_RUN_GROUP"] = wandb_group
         os.environ["WORKFLOW_HOOKS_PATH"] = pipeline_hooks
         os.environ["WORKFLOW_ID"] = workflow_id
-        
+
         # Metadata for DeepEval Tracing
         trace_metadata = {
             "npc_key": npc_key,
             "technique": technique,
             "workflow_id": workflow_id,
-            "pipeline_timestamp": pipeline_timestamp
+            "pipeline_timestamp": pipeline_timestamp,
         }
 
         with trace_type("agent", name=f"Pipeline: {npc_key}", **trace_metadata):
             print("[STAGE] spec")
             if not args.skip_spec_validate:
                 with trace_type("agent", name="Phase 0: Validating Spec"):
-                    print(f"--- Phase 0: Validating Spec ---")
-                    validate_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "validate_subject_spec.py"), args.spec, "--generation-ready"]
+                    print("--- Phase 0: Validating Spec ---")
+                    validate_cmd = [
+                        PYTHON,
+                        str(SCRIPTS_DIR / "dataset" / "validate_subject_spec.py"),
+                        args.spec,
+                        "--generation-ready",
+                    ]
                     run_cmd(validate_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
             print("[STAGE] dataset")
             with trace_type("agent", name="Phase 1: Generating Dataset"):
-                print(f"--- Phase 1: Generating Dataset ---")
+                print("--- Phase 1: Generating Dataset ---")
                 gen_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec]
                 gen_cmd.extend(["--technique", technique])
                 if technique == "ollama":
@@ -1536,7 +2425,9 @@ def main(argv: list[str] | None = None) -> int:
                 if args.model:
                     gen_cmd.extend(["--model", args.model])
                 os.environ["WORKFLOW_NEXT_ACTION"] = "sanitize_dataset"
-                os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(paths.dataset_train_path(npc_key, technique))
+                os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(
+                    paths.dataset_train_path(npc_key, technique)
+                )
                 run_cmd(gen_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
             # Determine paths
@@ -1544,17 +2435,28 @@ def main(argv: list[str] | None = None) -> int:
 
             print("[STAGE] dataset")
             with trace_type("tool", name="Phase 2: Sanitizing Dataset"):
-                print(f"\n--- Phase 2: Sanitizing Dataset ---")
-                san_path = paths.dataset_train_path(npc_key, technique).with_name("train_clean.jsonl")
-                san_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), str(dataset_path), "--output", str(san_path), "--strict-canonical"]
-                os.environ["WORKFLOW_NEXT_ACTION"] = "deepeval_run" if not args.skip_dataset_eval else "training_pipeline"
+                print("\n--- Phase 2: Sanitizing Dataset ---")
+                san_path = paths.dataset_train_path(npc_key, technique).with_name(
+                    "train_clean.jsonl"
+                )
+                san_cmd = [
+                    PYTHON,
+                    str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"),
+                    str(dataset_path),
+                    "--output",
+                    str(san_path),
+                    "--strict-canonical",
+                ]
+                os.environ["WORKFLOW_NEXT_ACTION"] = (
+                    "deepeval_run" if not args.skip_dataset_eval else "training_pipeline"
+                )
                 os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(san_path)
                 run_cmd(san_cmd, extra_env={"WORKFLOW_HOOKS_PATH": pipeline_hooks})
 
             if not args.skip_dataset_eval:
                 with trace_type("agent", name="Phase 3: DeepEval Quality Gate"):
                     print("[STAGE] quality-gate")
-                    print(f"\n--- Phase 3: DeepEval Dataset Quality Gate ---")
+                    print("\n--- Phase 3: DeepEval Dataset Quality Gate ---")
                     eval_cmd = [
                         PYTHON,
                         str(SCRIPTS_DIR / "dataset" / "dataset_eval.py"),
@@ -1565,7 +2467,9 @@ def main(argv: list[str] | None = None) -> int:
                         args.dataset_eval_mode,
                     ]
                     if args.dataset_eval_cases_per_category is not None:
-                        eval_cmd.extend(["--cases-per-category", str(args.dataset_eval_cases_per_category)])
+                        eval_cmd.extend(
+                            ["--cases-per-category", str(args.dataset_eval_cases_per_category)]
+                        )
                     if args.dataset_eval_judge_provider != "ollama":
                         eval_cmd.extend(["--judge-provider", args.dataset_eval_judge_provider])
                     if args.dataset_eval_judge_preset:
@@ -1590,9 +2494,17 @@ def main(argv: list[str] | None = None) -> int:
 
             print("[STAGE] training")
             with trace_type("agent", name="Phase 4: Training Model"):
-                print(f"\n--- Phase 4: Training Model ---")
-                train_cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "train.py"), args.spec, "--from-spec",
-                             "--technique", technique, "--preset", args.preset]
+                print("\n--- Phase 4: Training Model ---")
+                train_cmd = [
+                    PYTHON,
+                    str(SCRIPTS_DIR / "training" / "train.py"),
+                    args.spec,
+                    "--from-spec",
+                    "--technique",
+                    technique,
+                    "--preset",
+                    args.preset,
+                ]
                 if args.skip_dataset_eval:
                     train_cmd.append("--allow-ungated-dataset")
                 if args.full_merge_export:
@@ -1605,7 +2517,7 @@ def main(argv: list[str] | None = None) -> int:
                 os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(export_dir)
                 train_env = {"WANDB_JOB_TYPE": "train", "WORKFLOW_HOOKS_PATH": pipeline_hooks}
                 run_cmd(train_cmd, extra_env=train_env)
-            
+
             ggufs = list(export_dir.glob("*.gguf")) if export_dir.exists() else []
             if ggufs:
                 ggufs.sort(key=lambda x: x.stat().st_mtime, reverse=True)
@@ -1613,9 +2525,15 @@ def main(argv: list[str] | None = None) -> int:
             print("[STAGE] export")
             if not args.skip_smoke:
                 with trace_type("agent", name="Phase 5: Smoke Testing"):
-                    print(f"\n--- Phase 5: Smoke Testing ---")
+                    print("\n--- Phase 5: Smoke Testing ---")
                     if ggufs:
-                        smoke_cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "smoke_test.py"), str(ggufs[0]), "--spec", args.spec]
+                        smoke_cmd = [
+                            PYTHON,
+                            str(SCRIPTS_DIR / "ops" / "smoke_test.py"),
+                            str(ggufs[0]),
+                            "--spec",
+                            args.spec,
+                        ]
                         if args.track:
                             smoke_cmd.append("--track")
                         os.environ["WORKFLOW_NEXT_ACTION"] = "evaluate_pipeline"
@@ -1626,23 +2544,32 @@ def main(argv: list[str] | None = None) -> int:
 
             if not args.skip_eval:
                 with trace_type("agent", name="Phase 6: Evaluation"):
-                    print(f"\n--- Phase 6: Evaluation ---")
+                    print("\n--- Phase 6: Evaluation ---")
                     # Re-scan for GGUFs if not already found
                     if not ggufs and export_dir.exists():
-                        ggufs = sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
+                        ggufs = sorted(
+                            export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True
+                        )
                     if len(ggufs) >= 2:
                         # Candidate = newest GGUF (just exported), Baseline = previous export
                         candidate_path = ggufs[0]
                         baseline_path = ggufs[1]
                         print(f"  Candidate (new): {candidate_path.name}")
                         print(f"  Baseline (prev): {baseline_path.name}")
-                        print(f"  Running side-by-side evaluation...")
-                        eval_cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "evaluate.py"),
-                                    "--baseline", str(baseline_path),
-                                    "--candidate", str(candidate_path),
-                                    "--spec", args.spec,
-                                    "--num-questions", str(args.num_eval_questions),
-                                    "--track"]
+                        print("  Running side-by-side evaluation...")
+                        eval_cmd = [
+                            PYTHON,
+                            str(SCRIPTS_DIR / "evaluation" / "evaluate.py"),
+                            "--baseline",
+                            str(baseline_path),
+                            "--candidate",
+                            str(candidate_path),
+                            "--spec",
+                            args.spec,
+                            "--num-questions",
+                            str(args.num_eval_questions),
+                            "--track",
+                        ]
                         if args.eval_judge:
                             eval_cmd.append("--judge")
                             if args.eval_judge_provider != "ollama":
@@ -1650,29 +2577,53 @@ def main(argv: list[str] | None = None) -> int:
                             if args.eval_judge_model:
                                 eval_cmd.extend(["--judge-model", args.eval_judge_model])
                             if args.wandb_inference_project:
-                                eval_cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
+                                eval_cmd.extend(
+                                    ["--wandb-inference-project", args.wandb_inference_project]
+                                )
                             if args.wandb_inference_entity:
-                                eval_cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
+                                eval_cmd.extend(
+                                    ["--wandb-inference-entity", args.wandb_inference_entity]
+                                )
                         if args.wandb:
                             eval_cmd.append("--wandb")
                         os.environ["WORKFLOW_NEXT_ACTION"] = "NONE"
                         os.environ.pop("WORKFLOW_NEXT_ARTIFACT", None)
-                        run_cmd(eval_cmd, extra_env={"WANDB_JOB_TYPE": "eval", "WORKFLOW_HOOKS_PATH": pipeline_hooks})
+                        run_cmd(
+                            eval_cmd,
+                            extra_env={
+                                "WANDB_JOB_TYPE": "eval",
+                                "WORKFLOW_HOOKS_PATH": pipeline_hooks,
+                            },
+                        )
                     elif len(ggufs) == 1:
-                        print(f"  Only one GGUF export found ({ggufs[0].name}) — no baseline to compare against.")
-                        print(f"  Run pipeline again after a future training to get a side-by-side evaluation.")
+                        print(
+                            f"  Only one GGUF export found ({ggufs[0].name}) — no baseline to compare against."
+                        )
+                        print(
+                            "  Run pipeline again after a future training to get a side-by-side evaluation."
+                        )
                     else:
                         print("  Warning: No GGUF found — skipping evaluation")
 
         # Clean up workflow env vars to avoid polluting subsequent commands
-        for var in ["WORKFLOW_ID", "WORKFLOW_NEXT_ACTION", "WORKFLOW_NEXT_ARTIFACT", "WORKFLOW_AWAIT_CONFIRMATION"]:
+        for var in [
+            "WORKFLOW_ID",
+            "WORKFLOW_NEXT_ACTION",
+            "WORKFLOW_NEXT_ARTIFACT",
+            "WORKFLOW_AWAIT_CONFIRMATION",
+        ]:
             os.environ.pop(var, None)
 
         print("[STAGE] complete")
-        print(f"\n--- Pipeline Complete! ---")
+        print("\n--- Pipeline Complete! ---")
 
     elif args.command == "plan-execution":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "orchestration" / "plan_execution.py"), "--spec", args.spec]
+        cmd = [
+            PYTHON,
+            str(SCRIPTS_DIR / "orchestration" / "plan_execution.py"),
+            "--spec",
+            args.spec,
+        ]
         if args.preset:
             cmd.extend(["--preset", args.preset])
         if args.local_vram_gb is not None:
@@ -1682,7 +2633,14 @@ def main(argv: list[str] | None = None) -> int:
         run_cmd(cmd)
 
     elif args.command == "plan-batch":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "orchestration" / "plan_batch_execution.py"), "--spec-glob", args.spec_glob, "--presets", args.presets]
+        cmd = [
+            PYTHON,
+            str(SCRIPTS_DIR / "orchestration" / "plan_batch_execution.py"),
+            "--spec-glob",
+            args.spec_glob,
+            "--presets",
+            args.presets,
+        ]
         if args.specs:
             for s in args.specs:
                 cmd.extend(["--spec", s])
@@ -1703,11 +2661,12 @@ def main(argv: list[str] | None = None) -> int:
 
     elif args.command == "history":
         from src.core.ops.pipeline_db import PipelineDB
+
         db = PipelineDB()
         if not db.ensure_connected():
             print("Error: PipelineDB not connected", file=sys.stderr)
             return 1
-        
+
         if args.history_command == "wins":
             rows = db.query_eval_sessions(npc_key=args.npc_key, limit=args.limit)
             if args.json:
@@ -1716,23 +2675,25 @@ def main(argv: list[str] | None = None) -> int:
                 if not rows:
                     print(f"No eval sessions found{' for ' + args.npc_key if args.npc_key else ''}")
                 else:
-                    print(f"{'npc_key':<22} {'comparison_id':<35} {'baseline':<22} {'candidate':<22} {'win_rate':>8} {'judge':<20}")
+                    print(
+                        f"{'npc_key':<22} {'comparison_id':<35} {'baseline':<22} {'candidate':<22} {'win_rate':>8} {'judge':<20}"
+                    )
                     print("-" * 130)
                     for r in rows:
                         wr = r.get("win_rate", "?")
                         if wr is not None:
-                            wr = f"{float(wr)*100:>6.0f}%"
+                            wr = f"{float(wr) * 100:>6.0f}%"
                         else:
                             wr = "   N/A"
                         print(
-                            f"{r.get('npc_key','?'):<22} "
+                            f"{r.get('npc_key', '?'):<22} "
                             f"{(r.get('comparison_id') or '(no id)'):<35} "
                             f"{(r.get('baseline_model') or '?'):<22} "
                             f"{(r.get('candidate_model') or '?'):<22} "
                             f"{wr:>8} "
                             f"{(r.get('judge_model') or '?'):<20}"
                         )
-        
+
         elif args.history_command == "quality":
             rows = db.query_quality_gates(npc_key=args.npc_key, limit=args.limit)
             if args.json:
@@ -1741,20 +2702,22 @@ def main(argv: list[str] | None = None) -> int:
                 if not rows:
                     print(f"No quality gates found{' for ' + args.npc_key if args.npc_key else ''}")
                 else:
-                    print(f"{'npc_key':<22} {'pass_rate':>10} {'pass_count':>6} {'/total':>6}  {'judge':<30}")
+                    print(
+                        f"{'npc_key':<22} {'pass_rate':>10} {'pass_count':>6} {'/total':>6}  {'judge':<30}"
+                    )
                     print("-" * 76)
                     for r in rows:
                         pr = r.get("pass_rate", "?")
                         if pr is not None:
-                            pr = f"{float(pr)*100:>6.0f}%"
+                            pr = f"{float(pr) * 100:>6.0f}%"
                         print(
-                            f"{r.get('npc_key','?'):<22} "
+                            f"{r.get('npc_key', '?'):<22} "
                             f"{pr:>10} "
                             f"{r.get('pass_count', 0):>6} "
-                            f"/{str(r.get('total_examples',0)):>4}  "
+                            f"/{str(r.get('total_examples', 0)):>4}  "
                             f"{(r.get('judge_model') or '?'):<30}"
                         )
-        
+
         elif args.history_command == "metrics":
             rows = db.get_metrics(run_id=args.run_id, limit=args.limit)
             if args.json:
@@ -1764,29 +2727,36 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"No metrics found for run {args.run_id}")
                 else:
                     for m in rows:
-                        print(f"  step={m['step']:>5}  loss={m.get('loss','?'):>8}  "
-                              f"lr={m.get('learning_rate','?'):>10}  "
-                              f"tokens/s={m.get('tokens_per_second','?'):>8}")
-        
+                        print(
+                            f"  step={m['step']:>5}  loss={m.get('loss', '?'):>8}  "
+                            f"lr={m.get('learning_rate', '?'):>10}  "
+                            f"tokens/s={m.get('tokens_per_second', '?'):>8}"
+                        )
+
         db.close()
 
     elif args.command == "backup":
-        from src.core.ops.backup_cleanup import PROJECT_ROOT as BACKUP_PROJECT_ROOT, run_cleanup
+        from src.core.ops.backup_cleanup import PROJECT_ROOT as BACKUP_PROJECT_ROOT
+        from src.core.ops.backup_cleanup import run_cleanup
+
         result = run_cleanup(BACKUP_PROJECT_ROOT, retain=args.retain, dry_run=args.dry_run)
         if args.json:
             print(_json_serialize(result))
         else:
-            print(f"\nBackup cleanup: {result['moved']} moved, {result['pruned']} pruned, {result['errors']} errors")
+            print(
+                f"\nBackup cleanup: {result['moved']} moved, {result['pruned']} pruned, {result['errors']} errors"
+            )
             for p, c in sorted(result.get("by_pattern", {}).items()):
                 print(f"  {p}: {c}")
 
     elif args.command == "registry":
         from src.core.ops.pipeline_db import PipelineDB
+
         db = PipelineDB()
         if not db.ensure_connected():
             print("Error: PipelineDB not connected", file=sys.stderr)
             return 1
-        
+
         if args.registry_command == "models":
             rows = db.get_model_registry(npc_key=args.npc_key)
             if args.json:
@@ -1796,10 +2766,12 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"No registered models for NPC '{args.npc_key}'")
                 else:
                     for r in rows:
-                        print(f"  {r.get('model_name'):<40} {r.get('base_model'):<20} "
-                              f"{r.get('technique'):<8} [{r.get('status','?')}] "
-                              f"tags={r.get('tags', [])}")
-        
+                        print(
+                            f"  {r.get('model_name'):<40} {r.get('base_model'):<20} "
+                            f"{r.get('technique'):<8} [{r.get('status', '?')}] "
+                            f"tags={r.get('tags', [])}"
+                        )
+
         elif args.registry_command == "datasets":
             rows = db.query_datasets(npc_key=args.npc_key, limit=20)
             if args.json:
@@ -1809,12 +2781,14 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"No dataset versions for NPC '{args.npc_key}'")
                 else:
                     for r in rows:
-                        print(f"  v{r.get('version','?'):<8} "
-                              f"hash={r.get('content_hash','?'):<20} "
-                              f"technique={r.get('technique','?'):<10} "
-                              f"rows={r.get('row_count','?'):>6} "
-                              f"size={r.get('size_bytes','?'):>8}")
-        
+                        print(
+                            f"  v{r.get('version', '?'):<8} "
+                            f"hash={r.get('content_hash', '?'):<20} "
+                            f"technique={r.get('technique', '?'):<10} "
+                            f"rows={r.get('row_count', '?'):>6} "
+                            f"size={r.get('size_bytes', '?'):>8}"
+                        )
+
         elif args.registry_command == "register-model":
             result = db.create_model_registry(
                 npc_key=args.npc_key,
@@ -1825,11 +2799,13 @@ def main(argv: list[str] | None = None) -> int:
                 status=args.status,
             )
             if result:
-                print(f"Registered model '{args.model_name}' for NPC '{args.npc_key}' (id={result['id'][:12]}...)")
+                print(
+                    f"Registered model '{args.model_name}' for NPC '{args.npc_key}' (id={result['id'][:12]}...)"
+                )
             else:
                 print("Error: Failed to register model", file=sys.stderr)
                 return 1
-        
+
         db.close()
 
     else:
@@ -1837,6 +2813,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

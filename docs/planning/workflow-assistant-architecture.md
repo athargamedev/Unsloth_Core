@@ -21,7 +21,7 @@ This assistant is **not** another NPC dataset/model. It is an operational copilo
   - Currently focused on generating a `workflow_assistant` docs dataset.
   - This treats the assistant too much like an NPC/spec training target.
   - Uses stale paths:
-    - `subjects/workflow_assistant.json`
+    - `data/npcs/specs/workflow_assistant.json`
     - `docs/corpora/${selectedManifest}`
   - Current project state has the workflow assistant manifest under:
     - `src/dashboard/unity-npc-llm-training-dashboard/workflow_assistant/docs/workflow_assistant_docs.json`
@@ -226,7 +226,7 @@ The assistant should retrieve compact, structured context from:
 - `README.md`
 - `docs/training-workflow.md`
 - `docs/npc-data-rl-execution-contract.md`
-- `subjects/reference_docs/README.md`
+- `data/npcs/reference_docs/README.md`
 - `configs/ollama-model-presets.yaml`
 - `configs/presets/*.yaml`
 - `ucore --help` output snapshots
@@ -242,7 +242,7 @@ The assistant should retrieve compact, structured context from:
 
 ### Artifacts/results
 
-- `subjects/datasets/{npc}/{technique}/train_clean.jsonl`
+- `data/datasets/{npc}/{technique}/train_clean.jsonl`
 - `quality_summary.json`
 - `quality_failures.json`
 - `outputs/{npc}/runs/**/trainer_state.json`

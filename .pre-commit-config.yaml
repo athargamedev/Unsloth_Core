@@ -1,0 +1,36 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        exclude: "^compose\\.yaml$"
+      - id: check-json
+        exclude: "frontend_control|node_modules|dashboard"
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=5000]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: pyproject-deps-sync
+        name: pyproject deps in sync
+        entry: python -c "import tomllib; d=tomllib.load(open('pyproject.toml')); deps=d['project']['dependencies']; print(f'{len(deps)} deps in pyproject.toml OK')"
+        language: python
+        pass_filenames: false
+        always_run: true
+        files: "^pyproject\\.toml$|^requirements\\.txt$"

@@ -11,7 +11,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -21,13 +20,15 @@ from src.core.dataset.dataset_contracts import (
     MIN_DATASET_EXAMPLES_PER_CATEGORY,
     SUPPORTED_DATASET_CATEGORIES,
     VALID_DIFFICULTY_LEVELS,
-    expected_examples_per_category,
 )
+
 GENERATOR_SUPPORTED_DATASET_CATEGORIES = set(SUPPORTED_DATASET_CATEGORIES)
 REFERENCE_DOC_MIN_WORDS = 250
 REFERENCE_DOC_MIN_H2_SECTIONS = 5
 REFERENCE_DOC_MIN_BULLETS = 20
-REFERENCE_DOC_QUALITY_PATTERN = re.compile(r"\b(boundar(?:y|ies)|refusal|safety|misconception|myth)\b", re.IGNORECASE)
+REFERENCE_DOC_QUALITY_PATTERN = re.compile(
+    r"\b(boundar(?:y|ies)|refusal|safety|misconception|myth)\b", re.IGNORECASE
+)
 PLACEHOLDER_PATTERN = re.compile(r"\b(TODO|TBD|FIXME|stub|placeholder)\b", re.IGNORECASE)
 
 
@@ -92,7 +93,9 @@ def read_json_object(spec_path: Path) -> tuple[dict[str, Any] | None, list[str]]
     return parsed, []
 
 
-def require_object(spec: dict[str, Any], field_name: str, errors: list[str]) -> dict[str, Any] | None:
+def require_object(
+    spec: dict[str, Any], field_name: str, errors: list[str]
+) -> dict[str, Any] | None:
     value = spec.get(field_name)
     if isinstance(value, dict):
         return value
@@ -101,7 +104,9 @@ def require_object(spec: dict[str, Any], field_name: str, errors: list[str]) -> 
     return None
 
 
-def require_non_empty_string(container: dict[str, Any], field_path: str, errors: list[str]) -> str | None:
+def require_non_empty_string(
+    container: dict[str, Any], field_path: str, errors: list[str]
+) -> str | None:
     value = container.get(field_path.rsplit(".", 1)[-1])
     if is_non_empty_string(value):
         return value.strip()
@@ -116,17 +121,23 @@ def validate_research_queries(spec: dict[str, Any], errors: list[str], warnings:
 
     if research_queries is None and research_fallback is not None:
         research_queries = research_fallback
-        warnings.append("Using fallback `research`; prefer `research_queries` for generation readiness.")
+        warnings.append(
+            "Using fallback `research`; prefer `research_queries` for generation readiness."
+        )
 
     if not is_non_empty_list(research_queries):
-        errors.append("Missing or invalid research query array (`research_queries` preferred, `research` fallback allowed).")
+        errors.append(
+            "Missing or invalid research query array (`research_queries` preferred, `research` fallback allowed)."
+        )
         return
 
     VALID_MODES = {"fast", "deep"}
 
     for index, entry in enumerate(research_queries):
         if not isinstance(entry, dict):
-            errors.append(f"Research entry {index} must be an object with a non-empty `query` string and a `mode` (fast/deep).")
+            errors.append(
+                f"Research entry {index} must be an object with a non-empty `query` string and a `mode` (fast/deep)."
+            )
             continue
 
         if not is_non_empty_string(entry.get("query")):
@@ -134,7 +145,9 @@ def validate_research_queries(spec: dict[str, Any], errors: list[str], warnings:
 
         mode = entry.get("mode")
         if mode not in VALID_MODES:
-            errors.append(f"Research entry {index} has invalid `mode` \"{mode}\"; expected one of: {', '.join(sorted(VALID_MODES))}.")
+            errors.append(
+                f'Research entry {index} has invalid `mode` "{mode}"; expected one of: {", ".join(sorted(VALID_MODES))}.'
+            )
 
 
 def validate_reference_docs(
@@ -215,7 +228,9 @@ def validate_reference_docs(
         warnings.extend(f"`reference_doc` contract: {msg}" for msg in contract_warnings)
 
 
-def validate_difficulty_levels(spec: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
+def validate_difficulty_levels(
+    spec: dict[str, Any], errors: list[str], warnings: list[str]
+) -> None:
     teaching = spec.get("teaching")
     if not isinstance(teaching, dict):
         return
@@ -229,7 +244,9 @@ def validate_difficulty_levels(spec: dict[str, Any], errors: list[str], warnings
 
     if isinstance(levels, list):
         if not levels:
-            warnings.append("`teaching.difficulty_levels` should contain at least one difficulty level.")
+            warnings.append(
+                "`teaching.difficulty_levels` should contain at least one difficulty level."
+            )
             return
         for level in levels:
             if not is_non_empty_string(level) or level not in VALID_DIFFICULTY_LEVELS:
@@ -238,17 +255,23 @@ def validate_difficulty_levels(spec: dict[str, Any], errors: list[str], warnings
                 )
     elif isinstance(levels, dict):
         if not levels:
-            warnings.append("`teaching.difficulty_levels` mapping should contain at least one concept-to-level entry.")
+            warnings.append(
+                "`teaching.difficulty_levels` mapping should contain at least one concept-to-level entry."
+            )
             return
         for key, value in levels.items():
             if not is_non_empty_string(key):
-                errors.append("`teaching.difficulty_levels` mapping keys must be non-empty strings.")
+                errors.append(
+                    "`teaching.difficulty_levels` mapping keys must be non-empty strings."
+                )
             if not is_non_empty_string(value) or value not in VALID_DIFFICULTY_LEVELS:
                 errors.append(
                     f"`teaching.difficulty_levels['{key}']` must be one of: {', '.join(sorted(VALID_DIFFICULTY_LEVELS))}."
                 )
     else:
-        errors.append("`teaching.difficulty_levels` must be either a list of levels or a mapping from concept to level.")
+        errors.append(
+            "`teaching.difficulty_levels` must be either a list of levels or a mapping from concept to level."
+        )
 
 
 def validate_concepts(spec: dict[str, Any], errors: list[str], warnings: list[str]) -> None:
@@ -293,11 +316,19 @@ def validate_concepts(spec: dict[str, Any], errors: list[str], warnings: list[st
         elif isinstance(aliases, list):
             for alias in aliases:
                 if not is_non_empty_string(alias):
-                    errors.append(f"`concepts[{index}].aliases` must contain only non-empty strings.")
+                    errors.append(
+                        f"`concepts[{index}].aliases` must contain only non-empty strings."
+                    )
                     break
 
 
-def validate_system_prompt(spec: dict[str, Any], npc_name: str | None, max_sentences: int | None, errors: list[str], warnings: list[str]) -> None:
+def validate_system_prompt(
+    spec: dict[str, Any],
+    npc_name: str | None,
+    max_sentences: int | None,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
     system_prompt = spec.get("system_prompt")
     if not is_non_empty_string(system_prompt):
         errors.append("Missing or invalid `system_prompt` non-empty string.")
@@ -318,7 +349,9 @@ def validate_system_prompt(spec: dict[str, Any], npc_name: str | None, max_sente
     if any(re.search(pattern, system_prompt, re.IGNORECASE) for pattern in sentence_limit_patterns):
         return
 
-    warnings.append(f"`system_prompt` should include a sentence limit consistent with dialogue.max_sentences={max_sentences}.")
+    warnings.append(
+        f"`system_prompt` should include a sentence limit consistent with dialogue.max_sentences={max_sentences}."
+    )
 
 
 def validate_dataset(
@@ -344,7 +377,11 @@ def validate_dataset(
         if not is_non_empty_string(corpus_manifest):
             errors.append("`dataset.corpus_manifest` must be a non-empty string if present.")
         else:
-            manifest_path = PROJECT_ROOT / corpus_manifest if not Path(corpus_manifest).is_absolute() else Path(corpus_manifest)
+            manifest_path = (
+                PROJECT_ROOT / corpus_manifest
+                if not Path(corpus_manifest).is_absolute()
+                else Path(corpus_manifest)
+            )
             if not manifest_path.exists():
                 warnings.append(f"`dataset.corpus_manifest` file not found: {corpus_manifest}")
 
@@ -353,7 +390,9 @@ def validate_dataset(
 
     for category, count in examples_per_category.items():
         if not isinstance(count, int) or isinstance(count, bool) or count < 0:
-            errors.append(f"`dataset.examples_per_category.{category}` must be a non-negative integer.")
+            errors.append(
+                f"`dataset.examples_per_category.{category}` must be a non-negative integer."
+            )
             continue
 
         present_categories.add(category)
@@ -369,7 +408,9 @@ def validate_dataset(
             )
             continue
 
-        warnings.append(f"Unknown zero-count dataset category `{category}` ignored; remove it or add generator support before use.")
+        warnings.append(
+            f"Unknown zero-count dataset category `{category}` ignored; remove it or add generator support before use."
+        )
 
     missing_categories = GENERATOR_SUPPORTED_DATASET_CATEGORIES - present_categories
     if missing_categories:
@@ -411,7 +452,9 @@ def validate_dataset(
     quest = spec.get("quest")
     quest_scenarios = quest.get("scenarios") if isinstance(quest, dict) else None
     if isinstance(quest_count, int) and quest_count > 0 and not is_non_empty_list(quest_scenarios):
-        warnings.append("Quest examples are requested, but optional `quest.scenarios` is empty or missing.")
+        warnings.append(
+            "Quest examples are requested, but optional `quest.scenarios` is empty or missing."
+        )
 
 
 def validate_spec(
@@ -440,7 +483,9 @@ def validate_spec(
     else:
         npc_key = npc_key.strip()
         if not SNAKE_CASE_PATTERN.fullmatch(npc_key):
-            errors.append("`npc_key` must be snake_case (lowercase letters, numbers, and underscores).")
+            errors.append(
+                "`npc_key` must be snake_case (lowercase letters, numbers, and underscores)."
+            )
         if resolved_path.stem != npc_key:
             errors.append(f"Filename stem `{resolved_path.stem}` must match npc_key `{npc_key}`.")
 
@@ -473,7 +518,9 @@ def validate_spec(
         if isinstance(value, int) and not isinstance(value, bool) and value > 0:
             max_sentences = value
             if value > 3:
-                warnings.append("`dialogue.max_sentences` is greater than 3; short NPC responses of 1-3 sentences are recommended.")
+                warnings.append(
+                    "`dialogue.max_sentences` is greater than 3; short NPC responses of 1-3 sentences are recommended."
+                )
         else:
             errors.append("Missing or invalid `dialogue.max_sentences` positive integer.")
         if not is_non_empty_list(dialogue.get("example_topics")):
@@ -540,16 +587,42 @@ def build_json_payload(results: list[SpecResult]) -> dict[str, Any]:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate subject specs before generation/training.")
+    parser = argparse.ArgumentParser(
+        description="Validate subject specs before generation/training."
+    )
     parser.add_argument("spec", nargs="?", help="Path to one subjects/NPC_specs/*.json spec")
-    parser.add_argument("--all", action="store_true", help="Validate every subjects/NPC_specs/*.json spec")
+    parser.add_argument(
+        "--all", action="store_true", help="Validate every subjects/NPC_specs/*.json spec"
+    )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
-    parser.add_argument("--strict", action="store_true", help="Exit nonzero on warnings as well as errors")
-    parser.add_argument("--require-reference-docs", action="store_true", help="Fail if reference_doc file does not exist on disk")
-    parser.add_argument("--require-reference-contract", action="store_true", help="Fail unless reference_doc meets minimum generation-readiness contract")
-    parser.add_argument("--require-all-categories", action="store_true", help="Fail unless all 5 dataset categories have positive counts")
-    parser.add_argument("--require-dataset-minimums", action="store_true", help="Fail unless all dataset categories meet minimum SFT counts")
-    parser.add_argument("--generation-ready", action="store_true", help="Shortcut for reference docs, reference contract, all categories, and dataset minimums")
+    parser.add_argument(
+        "--strict", action="store_true", help="Exit nonzero on warnings as well as errors"
+    )
+    parser.add_argument(
+        "--require-reference-docs",
+        action="store_true",
+        help="Fail if reference_doc file does not exist on disk",
+    )
+    parser.add_argument(
+        "--require-reference-contract",
+        action="store_true",
+        help="Fail unless reference_doc meets minimum generation-readiness contract",
+    )
+    parser.add_argument(
+        "--require-all-categories",
+        action="store_true",
+        help="Fail unless all 5 dataset categories have positive counts",
+    )
+    parser.add_argument(
+        "--require-dataset-minimums",
+        action="store_true",
+        help="Fail unless all dataset categories meet minimum SFT counts",
+    )
+    parser.add_argument(
+        "--generation-ready",
+        action="store_true",
+        help="Shortcut for reference docs, reference contract, all categories, and dataset minimums",
+    )
     args = parser.parse_args()
 
     if args.all and args.spec:

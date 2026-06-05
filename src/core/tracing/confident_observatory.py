@@ -11,9 +11,9 @@ DeepEval tracing at module import time.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Literal
-
+from typing import Any, Literal
 
 ObservabilityUseCase = Literal[
     "dataset_quality_gate",
@@ -211,7 +211,9 @@ def observe_npc_runtime_call(
                 extra=metadata,
             )
             output = result.get("actual_output") if isinstance(result, dict) else result
-            retrieval_context = result.get("retrieval_context") if isinstance(result, dict) else None
+            retrieval_context = (
+                result.get("retrieval_context") if isinstance(result, dict) else None
+            )
             update_current_trace(
                 name=f"{npc_key}:{category}:{turn_type}",
                 tags=tags,

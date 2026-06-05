@@ -38,9 +38,9 @@ import json
 import logging
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlencode, urljoin
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ _TABLE_METRIC_COLLECTIONS = "metric_collections"
 
 def _iso_now() -> str:
     """Return the current UTC time as an ISO 8601 string."""
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _parse_db_url(url: str) -> dict[str, Any]:
@@ -99,10 +99,7 @@ def _parse_db_url(url: str) -> dict[str, Any]:
 
 def _build_default_conn_params() -> dict[str, Any]:
     """Return connection parameters from env vars or local Supabase defaults."""
-    db_url = (
-        os.environ.get("PIPELINE_DB_URL")
-        or os.environ.get("SUPABASE_DB_URL")
-    )
+    db_url = os.environ.get("PIPELINE_DB_URL") or os.environ.get("SUPABASE_DB_URL")
     if db_url:
         return _parse_db_url(db_url)
 
@@ -141,17 +138,19 @@ class PipelineDB:
 
     def __init__(
         self,
-        db_url: Optional[str] = None,
-        supabase_url: Optional[str] = None,
-        supabase_key: Optional[str] = None,
+        db_url: str | None = None,
+        supabase_url: str | None = None,
+        supabase_key: str | None = None,
     ) -> None:
         self._conn: Any = None
-        self._mode: Optional[str] = None  # "direct" or "rest"
-        self._supabase_url: Optional[str] = None
-        self._supabase_key: Optional[str] = None
+        self._mode: str | None = None  # "direct" or "rest"
+        self._supabase_url: str | None = None
+        self._supabase_key: str | None = None
 
         # Resolve DB connection — explicit arg wins over env var
-        resolved_db_url = db_url or os.environ.get("PIPELINE_DB_URL") or os.environ.get("SUPABASE_DB_URL")
+        resolved_db_url = (
+            db_url or os.environ.get("PIPELINE_DB_URL") or os.environ.get("SUPABASE_DB_URL")
+        )
         resolved_supabase_url = supabase_url or os.environ.get("SUPABASE_URL")
         resolved_supabase_key = supabase_key or os.environ.get("SUPABASE_KEY")
 
@@ -169,7 +168,7 @@ class PipelineDB:
             self._supabase_url = f"http://{_DEFAULT_SUPABASE_HOST}:{_DEFAULT_REST_PORT}"
 
         self._supabase_key = resolved_supabase_key or ""
-        self._last_status: Optional[int] = None
+        self._last_status: int | None = None
 
     @property
     def connected(self) -> bool:
@@ -185,39 +184,108 @@ class PipelineDB:
     # Only these column names may be used as dynamic SQL identifiers from
     # **kwargs. Any key not in this set is skipped with a warning.
     SANITIZE_ALLOWLIST: set[str] = {
-        "status", "progress", "error", "wandb_url", "logs", "name",
-        "role", "is_active", "key_prefix", "version", "config",
-        "spec_path", "run_id", "technique", "preset", "base_model",
-        "npc_key", "category", "score", "pass_rate", "total", "passed",
-        "failed", "failure_reason", "recommendation", "stage", "model",
-        "model_id", "duration_s", "step", "tool", "output_dir",
-        "command_id", "command_args",
-        "pid", "recoveredAt", "retryCount", "retryMax", "retryDelayBaseMs",
-        "nextRetryAt", "cwd", "artifact_type", "file_path", "file_size_bytes",
-        "metadata", "dataset_path", "judge_model", "candidate_path",
-        "baseline_path", "full_config", "run_dir",
-        "total_examples", "baseline_wins", "candidate_wins", "ties", "win_rate",
-        "per_concept", "weak_concepts", "feedback_json_path", "report_html_path",
+        "status",
+        "progress",
+        "error",
+        "wandb_url",
+        "logs",
+        "name",
+        "role",
+        "is_active",
+        "key_prefix",
+        "version",
+        "config",
+        "spec_path",
+        "run_id",
+        "technique",
+        "preset",
+        "base_model",
+        "npc_key",
+        "category",
+        "score",
+        "pass_rate",
+        "total",
+        "passed",
+        "failed",
+        "failure_reason",
+        "recommendation",
+        "stage",
+        "model",
+        "model_id",
+        "duration_s",
+        "step",
+        "tool",
+        "output_dir",
+        "command_id",
+        "command_args",
+        "pid",
+        "recoveredAt",
+        "retryCount",
+        "retryMax",
+        "retryDelayBaseMs",
+        "nextRetryAt",
+        "cwd",
+        "artifact_type",
+        "file_path",
+        "file_size_bytes",
+        "metadata",
+        "dataset_path",
+        "judge_model",
+        "candidate_path",
+        "baseline_path",
+        "full_config",
+        "run_dir",
+        "total_examples",
+        "baseline_wins",
+        "candidate_wins",
+        "ties",
+        "win_rate",
+        "per_concept",
+        "weak_concepts",
+        "feedback_json_path",
+        "report_html_path",
         "loss",
-        "comparison_id", "baseline_model", "candidate_model",
-        "dataset_hash", "baseline_eval_run_id", "candidate_eval_run_id",
+        "comparison_id",
+        "baseline_model",
+        "candidate_model",
+        "dataset_hash",
+        "baseline_eval_run_id",
+        "candidate_eval_run_id",
         "created_at",
-
         # model_registry
-        "model_name", "training_run_id", "parent_model_id",
-        "lora_config", "training_params", "eval_session_id",
-        "quality_gate_pass_rate", "adapter_artifact_id", "gguf_artifact_id",
-        "gguf_quantization", "tags", "deployed_at",
-
+        "model_name",
+        "training_run_id",
+        "parent_model_id",
+        "lora_config",
+        "training_params",
+        "eval_session_id",
+        "quality_gate_pass_rate",
+        "adapter_artifact_id",
+        "gguf_artifact_id",
+        "gguf_quantization",
+        "tags",
+        "deployed_at",
         # dataset_versions
-        "version", "content_hash", "row_count", "size_bytes",
-        "split_info", "concept_coverage", "parent_hash", "parent_id",
-        "generation_params", "change_log", "quality_gate_id",
-
+        "content_hash",
+        "row_count",
+        "size_bytes",
+        "split_info",
+        "concept_coverage",
+        "parent_hash",
+        "parent_id",
+        "generation_params",
+        "change_log",
+        "quality_gate_id",
         # metric_collections
-        "job_id", "model_registry_id", "epoch",
-        "grad_norm", "learning_rate", "tokens_per_second",
-        "gpu_memory_mb", "gpu_utilization", "extra_metrics",
+        "job_id",
+        "model_registry_id",
+        "epoch",
+        "grad_norm",
+        "learning_rate",
+        "tokens_per_second",
+        "gpu_memory_mb",
+        "gpu_utilization",
+        "extra_metrics",
     }
 
     @staticmethod
@@ -269,15 +337,14 @@ class PipelineDB:
                 cur.execute("SELECT 1")
                 cur.close()
                 return True
-            except Exception as e:
+            except Exception:
                 self._conn = None
 
         try:
             import psycopg2  # type: ignore[import-untyped]
         except ImportError:
             logger.warning(
-                "psycopg2 is not installed. Install it with: "
-                "pip install psycopg2-binary"
+                "psycopg2 is not installed. Install it with: pip install psycopg2-binary"
             )
             return False
 
@@ -305,10 +372,10 @@ class PipelineDB:
             # Short timeout — the HEAD probe should be fast
             import socket
 
-            timeout = socket.getdefaulttimeout()
+            socket.getdefaulttimeout()
             urlopen(req, timeout=5)
             return True
-        except Exception as e:
+        except Exception:
             return False
 
     def _ensure_direct_connected(self) -> None:
@@ -343,7 +410,7 @@ class PipelineDB:
         columns = [col[0] for col in cursor.description]
         rows: list[dict[str, Any]] = []
         for row in cursor.fetchall():
-            rows.append(dict(zip(columns, row)))
+            rows.append(dict(zip(columns, row, strict=False)))
         return rows
 
     # ── REST helpers ───────────────────────────────────────────────────
@@ -352,9 +419,9 @@ class PipelineDB:
         self,
         method: str,
         table: str,
-        params: Optional[dict[str, Any]] = None,
-        data: Optional[dict[str, Any]] = None,
-    ) -> Optional[Any]:
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+    ) -> Any | None:
         """Make a REST API request to Supabase.
 
         Returns the parsed JSON response on success, or None on failure.
@@ -382,7 +449,7 @@ class PipelineDB:
             query_string = urlencode(params, doseq=True)
             url = f"{url}?{query_string}"
 
-        body: Optional[bytes] = None
+        body: bytes | None = None
         if data is not None:
             body = json.dumps(data, default=str).encode("utf-8")
 
@@ -426,9 +493,13 @@ class PipelineDB:
         extra = _sanitize_kwargs(**kwargs)
 
         if self._mode == "direct":
-            return self._direct_create_job(job_id, npc_key, type, command_id, command_args, now, extra)
+            return self._direct_create_job(
+                job_id, npc_key, type, command_id, command_args, now, extra
+            )
         elif self._mode == "rest":
-            return self._rest_create_job(job_id, npc_key, type, command_id, command_args, now, extra)
+            return self._rest_create_job(
+                job_id, npc_key, type, command_id, command_args, now, extra
+            )
 
         logger.warning("PipelineDB is not connected; cannot create job")
         return {}
@@ -497,11 +568,11 @@ class PipelineDB:
         self,
         job_id: str,
         status: str,
-        exit_code: Optional[int] = None,
-        error: Optional[str] = None,
-        progress: Optional[int] = None,
-        loss: Optional[float] = None,
-        wandb_url: Optional[str] = None,
+        exit_code: int | None = None,
+        error: str | None = None,
+        progress: int | None = None,
+        loss: float | None = None,
+        wandb_url: str | None = None,
         **kwargs: Any,
     ) -> bool:
         """Update a job's status and optional metrics.
@@ -523,9 +594,13 @@ class PipelineDB:
         extra = _sanitize_kwargs(**kwargs)
 
         if self._mode == "direct":
-            return self._direct_update_job(job_id, status, exit_code, error, progress, loss, wandb_url, now, extra)
+            return self._direct_update_job(
+                job_id, status, exit_code, error, progress, loss, wandb_url, now, extra
+            )
         elif self._mode == "rest":
-            return self._rest_update_job(job_id, status, exit_code, error, progress, loss, wandb_url, now, extra)
+            return self._rest_update_job(
+                job_id, status, exit_code, error, progress, loss, wandb_url, now, extra
+            )
 
         logger.warning("PipelineDB is not connected; cannot update job %s", job_id)
         return False
@@ -534,11 +609,11 @@ class PipelineDB:
         self,
         job_id: str,
         status: str,
-        exit_code: Optional[int],
-        error: Optional[str],
-        progress: Optional[int],
-        loss: Optional[float],
-        wandb_url: Optional[str],
+        exit_code: int | None,
+        error: str | None,
+        progress: int | None,
+        loss: float | None,
+        wandb_url: str | None,
         now: str,
         extra: dict[str, Any],
     ) -> bool:
@@ -589,11 +664,11 @@ class PipelineDB:
         self,
         job_id: str,
         status: str,
-        exit_code: Optional[int],
-        error: Optional[str],
-        progress: Optional[int],
-        loss: Optional[float],
-        wandb_url: Optional[str],
+        exit_code: int | None,
+        error: str | None,
+        progress: int | None,
+        loss: float | None,
+        wandb_url: str | None,
         now: str,
         extra: dict[str, Any],
     ) -> bool:
@@ -631,7 +706,7 @@ class PipelineDB:
             return False
         return self._last_status in (200, 201, 204)
 
-    def get_job(self, job_id: str) -> Optional[dict]:
+    def get_job(self, job_id: str) -> dict | None:
         """Fetch a single job by UUID.
 
         Returns the job row as a dict, or None if not found.
@@ -644,7 +719,7 @@ class PipelineDB:
         logger.warning("PipelineDB is not connected; cannot get job %s", job_id)
         return None
 
-    def _direct_get_job(self, job_id: str) -> Optional[dict]:
+    def _direct_get_job(self, job_id: str) -> dict | None:
         try:
             self._ensure_direct_connected()
             cur = self._conn.cursor()
@@ -656,7 +731,7 @@ class PipelineDB:
             logger.warning("Failed to get job %s: %s", job_id, exc)
             return None
 
-    def _rest_get_job(self, job_id: str) -> Optional[dict]:
+    def _rest_get_job(self, job_id: str) -> dict | None:
         params = {"id": f"eq.{job_id}", "limit": 1}
         result = self._rest_request("GET", _TABLE_JOBS, params=params)
         if isinstance(result, list) and result:
@@ -665,8 +740,8 @@ class PipelineDB:
 
     def list_jobs(
         self,
-        npc_key: Optional[str] = None,
-        status: Optional[str] = None,
+        npc_key: str | None = None,
+        status: str | None = None,
         limit: int = 50,
         **kwargs: Any,
     ) -> list[dict]:
@@ -689,7 +764,7 @@ class PipelineDB:
         logger.warning("PipelineDB is not connected; cannot list jobs")
         return []
 
-    def _direct_list_jobs(self, npc_key: Optional[str], status: Optional[str], limit: int) -> list[dict]:
+    def _direct_list_jobs(self, npc_key: str | None, status: str | None, limit: int) -> list[dict]:
         try:
             self._ensure_direct_connected()
             conditions: list[str] = []
@@ -717,7 +792,7 @@ class PipelineDB:
             logger.warning("Failed to list jobs: %s", exc)
             return []
 
-    def _rest_list_jobs(self, npc_key: Optional[str], status: Optional[str], limit: int) -> list[dict]:
+    def _rest_list_jobs(self, npc_key: str | None, status: str | None, limit: int) -> list[dict]:
         params: dict[str, Any] = {"order": "created_at.desc", "limit": limit}
         if npc_key is not None:
             params["npc_key"] = f"eq.{npc_key}"
@@ -870,8 +945,7 @@ class PipelineDB:
 
             values.extend([npc_key, run_id])
             cur.execute(
-                f"UPDATE pipeline_runs SET {', '.join(fields)} "
-                "WHERE npc_key = %s AND run_id = %s",
+                f"UPDATE pipeline_runs SET {', '.join(fields)} WHERE npc_key = %s AND run_id = %s",
                 values,
             )
             cur.close()
@@ -904,7 +978,7 @@ class PipelineDB:
             return True
         return False
 
-    def get_run(self, npc_key: str, run_id: str) -> Optional[dict]:
+    def get_run(self, npc_key: str, run_id: str) -> dict | None:
         """Fetch a single run by NPC key and run ID.
 
         Returns the run row as a dict, or None if not found.
@@ -917,7 +991,7 @@ class PipelineDB:
         logger.warning("PipelineDB is not connected; cannot get run")
         return None
 
-    def _direct_get_run(self, npc_key: str, run_id: str) -> Optional[dict]:
+    def _direct_get_run(self, npc_key: str, run_id: str) -> dict | None:
         try:
             self._ensure_direct_connected()
             cur = self._conn.cursor()
@@ -932,7 +1006,7 @@ class PipelineDB:
             logger.warning("Failed to get run %s/%s: %s", npc_key, run_id, exc)
             return None
 
-    def _rest_get_run(self, npc_key: str, run_id: str) -> Optional[dict]:
+    def _rest_get_run(self, npc_key: str, run_id: str) -> dict | None:
         params = {
             "npc_key": f"eq.{npc_key}",
             "run_id": f"eq.{run_id}",
@@ -945,7 +1019,7 @@ class PipelineDB:
 
     def list_runs(
         self,
-        npc_key: Optional[str] = None,
+        npc_key: str | None = None,
         limit: int = 50,
         **kwargs: Any,
     ) -> list[dict]:
@@ -967,7 +1041,7 @@ class PipelineDB:
         logger.warning("PipelineDB is not connected; cannot list runs")
         return []
 
-    def _direct_list_runs(self, npc_key: Optional[str], limit: int) -> list[dict]:
+    def _direct_list_runs(self, npc_key: str | None, limit: int) -> list[dict]:
         try:
             self._ensure_direct_connected()
             cur = self._conn.cursor()
@@ -988,7 +1062,7 @@ class PipelineDB:
             logger.warning("Failed to list runs: %s", exc)
             return []
 
-    def _rest_list_runs(self, npc_key: Optional[str], limit: int) -> list[dict]:
+    def _rest_list_runs(self, npc_key: str | None, limit: int) -> list[dict]:
         params: dict[str, Any] = {"order": "created_at.desc", "limit": limit}
         if npc_key is not None:
             params["npc_key"] = f"eq.{npc_key}"
@@ -1004,10 +1078,10 @@ class PipelineDB:
         npc_key: str,
         artifact_type: str,
         file_path: str,
-        run_id: Optional[str] = None,
-        technique: Optional[str] = None,
-        file_size_bytes: Optional[int] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        run_id: str | None = None,
+        technique: str | None = None,
+        file_size_bytes: int | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> dict:
         """Insert a pipeline_artifacts row and return it as a dict.
@@ -1030,13 +1104,27 @@ class PipelineDB:
 
         if self._mode == "direct":
             return self._direct_create_artifact(
-                npc_key, artifact_type, file_path, run_id, technique,
-                file_size_bytes, metadata, now, extra,
+                npc_key,
+                artifact_type,
+                file_path,
+                run_id,
+                technique,
+                file_size_bytes,
+                metadata,
+                now,
+                extra,
             )
         elif self._mode == "rest":
             return self._rest_create_artifact(
-                npc_key, artifact_type, file_path, run_id, technique,
-                file_size_bytes, metadata, now, extra,
+                npc_key,
+                artifact_type,
+                file_path,
+                run_id,
+                technique,
+                file_size_bytes,
+                metadata,
+                now,
+                extra,
             )
 
         logger.warning("PipelineDB is not connected; cannot create artifact")
@@ -1047,10 +1135,10 @@ class PipelineDB:
         npc_key: str,
         artifact_type: str,
         file_path: str,
-        run_id: Optional[str],
-        technique: Optional[str],
-        file_size_bytes: Optional[int],
-        metadata: Optional[dict[str, Any]],
+        run_id: str | None,
+        technique: str | None,
+        file_size_bytes: int | None,
+        metadata: dict[str, Any] | None,
         now: str,
         extra: dict[str, Any],
     ) -> dict:
@@ -1091,10 +1179,10 @@ class PipelineDB:
         npc_key: str,
         artifact_type: str,
         file_path: str,
-        run_id: Optional[str],
-        technique: Optional[str],
-        file_size_bytes: Optional[int],
-        metadata: Optional[dict[str, Any]],
+        run_id: str | None,
+        technique: str | None,
+        file_size_bytes: int | None,
+        metadata: dict[str, Any] | None,
         now: str,
         extra: dict[str, Any],
     ) -> dict:
@@ -1119,8 +1207,8 @@ class PipelineDB:
 
     def list_artifacts(
         self,
-        npc_key: Optional[str] = None,
-        artifact_type: Optional[str] = None,
+        npc_key: str | None = None,
+        artifact_type: str | None = None,
         **kwargs: Any,
     ) -> list[dict]:
         """List artifacts with optional filters.
@@ -1143,8 +1231,8 @@ class PipelineDB:
 
     def _direct_list_artifacts(
         self,
-        npc_key: Optional[str],
-        artifact_type: Optional[str],
+        npc_key: str | None,
+        artifact_type: str | None,
     ) -> list[dict]:
         try:
             self._ensure_direct_connected()
@@ -1176,8 +1264,8 @@ class PipelineDB:
 
     def _rest_list_artifacts(
         self,
-        npc_key: Optional[str],
-        artifact_type: Optional[str],
+        npc_key: str | None,
+        artifact_type: str | None,
     ) -> list[dict]:
         params: dict[str, Any] = {"order": "created_at.desc"}
         if npc_key is not None:
@@ -1199,11 +1287,11 @@ class PipelineDB:
         passed: int,
         failed: int,
         pass_rate: float,
-        metrics: Optional[dict[str, Any]] = None,
-        categories: Optional[dict[str, Any]] = None,
-        failures: Optional[list[dict[str, Any]]] = None,
+        metrics: dict[str, Any] | None = None,
+        categories: dict[str, Any] | None = None,
+        failures: list[dict[str, Any]] | None = None,
         judge_model: str = DEFAULT_JUDGE_MODEL,
-        dataset_path: Optional[str] = None,
+        dataset_path: str | None = None,
         **kwargs: Any,
     ) -> dict:
         """Insert a dataset_quality_gates row and return it as a dict.
@@ -1232,15 +1320,37 @@ class PipelineDB:
 
         if self._mode == "direct":
             return self._direct_create_quality_gate(
-                eval_id, npc_key, technique, total_samples, passed, failed,
-                pass_rate, metrics, categories, failures, judge_model,
-                dataset_path, now, extra,
+                eval_id,
+                npc_key,
+                technique,
+                total_samples,
+                passed,
+                failed,
+                pass_rate,
+                metrics,
+                categories,
+                failures,
+                judge_model,
+                dataset_path,
+                now,
+                extra,
             )
         elif self._mode == "rest":
             return self._rest_create_quality_gate(
-                eval_id, npc_key, technique, total_samples, passed, failed,
-                pass_rate, metrics, categories, failures, judge_model,
-                dataset_path, now, extra,
+                eval_id,
+                npc_key,
+                technique,
+                total_samples,
+                passed,
+                failed,
+                pass_rate,
+                metrics,
+                categories,
+                failures,
+                judge_model,
+                dataset_path,
+                now,
+                extra,
             )
 
         logger.warning("PipelineDB is not connected; cannot create quality gate")
@@ -1255,11 +1365,11 @@ class PipelineDB:
         passed: int,
         failed: int,
         pass_rate: float,
-        metrics: Optional[dict[str, Any]],
-        categories: Optional[dict[str, Any]],
-        failures: Optional[list[dict[str, Any]]],
+        metrics: dict[str, Any] | None,
+        categories: dict[str, Any] | None,
+        failures: list[dict[str, Any]] | None,
         judge_model: str,
-        dataset_path: Optional[str],
+        dataset_path: str | None,
         now: str,
         extra: dict[str, Any],
     ) -> dict:
@@ -1296,7 +1406,8 @@ class PipelineDB:
             if rows:
                 logger.info(
                     "Created quality gate for NPC %s (pass_rate=%.2f)",
-                    npc_key, pass_rate,
+                    npc_key,
+                    pass_rate,
                 )
                 return rows[0]
             return {}
@@ -1313,11 +1424,11 @@ class PipelineDB:
         passed: int,
         failed: int,
         pass_rate: float,
-        metrics: Optional[dict[str, Any]],
-        categories: Optional[dict[str, Any]],
-        failures: Optional[list[dict[str, Any]]],
+        metrics: dict[str, Any] | None,
+        categories: dict[str, Any] | None,
+        failures: list[dict[str, Any]] | None,
         judge_model: str,
-        dataset_path: Optional[str],
+        dataset_path: str | None,
         now: str,
         extra: dict[str, Any],
     ) -> dict:
@@ -1341,7 +1452,8 @@ class PipelineDB:
         if result:
             logger.info(
                 "REST: Created quality gate for NPC %s (pass_rate=%.2f)",
-                npc_key, pass_rate,
+                npc_key,
+                pass_rate,
             )
             if isinstance(result, list):
                 return result[0] if result else {}
@@ -1441,9 +1553,9 @@ class PipelineDB:
         self,
         npc_key: str,
         full_config: dict[str, Any],
-        preset: Optional[str] = None,
-        technique: Optional[str] = None,
-        file_path: Optional[str] = None,
+        preset: str | None = None,
+        technique: str | None = None,
+        file_path: str | None = None,
         **kwargs: Any,
     ) -> dict:
         """Insert a pipeline_config_snapshots row and return it as a dict.
@@ -1465,13 +1577,25 @@ class PipelineDB:
 
         if self._mode == "direct":
             return self._direct_save_config_snapshot(
-                snapshot_id, npc_key, full_config, preset, technique,
-                file_path, now, extra,
+                snapshot_id,
+                npc_key,
+                full_config,
+                preset,
+                technique,
+                file_path,
+                now,
+                extra,
             )
         elif self._mode == "rest":
             return self._rest_save_config_snapshot(
-                snapshot_id, npc_key, full_config, preset, technique,
-                file_path, now, extra,
+                snapshot_id,
+                npc_key,
+                full_config,
+                preset,
+                technique,
+                file_path,
+                now,
+                extra,
             )
 
         logger.warning("PipelineDB is not connected; cannot save config snapshot")
@@ -1482,9 +1606,9 @@ class PipelineDB:
         snapshot_id: str,
         npc_key: str,
         full_config: dict[str, Any],
-        preset: Optional[str],
-        technique: Optional[str],
-        file_path: Optional[str],
+        preset: str | None,
+        technique: str | None,
+        file_path: str | None,
         now: str,
         extra: dict[str, Any],
     ) -> dict:
@@ -1523,9 +1647,9 @@ class PipelineDB:
         snapshot_id: str,
         npc_key: str,
         full_config: dict[str, Any],
-        preset: Optional[str],
-        technique: Optional[str],
-        file_path: Optional[str],
+        preset: str | None,
+        technique: str | None,
+        file_path: str | None,
         now: str,
         extra: dict[str, Any],
     ) -> dict:
@@ -1542,7 +1666,9 @@ class PipelineDB:
         result = self._rest_request("POST", _TABLE_CONFIG_SNAPSHOTS, data=payload)
         if result:
             logger.info(
-                "REST: Saved config snapshot %s for NPC %s", snapshot_id, npc_key,
+                "REST: Saved config snapshot %s for NPC %s",
+                snapshot_id,
+                npc_key,
             )
             if isinstance(result, list):
                 return result[0] if result else {}
@@ -1551,7 +1677,7 @@ class PipelineDB:
 
     # ── API key operations ────────────────────────────────────────────
 
-    def validate_api_key(self, api_key: str) -> Optional[dict]:
+    def validate_api_key(self, api_key: str) -> dict | None:
         """Hash the key and look it up in the api_keys table.
 
         Args:
@@ -1570,7 +1696,7 @@ class PipelineDB:
         logger.warning("PipelineDB is not connected; cannot validate API key")
         return None
 
-    def _direct_validate_api_key(self, key_hash: str) -> Optional[dict]:
+    def _direct_validate_api_key(self, key_hash: str) -> dict | None:
         try:
             self._ensure_direct_connected()
             cur = self._conn.cursor()
@@ -1587,7 +1713,7 @@ class PipelineDB:
             logger.warning("Failed to validate API key: %s", exc)
             return None
 
-    def _rest_validate_api_key(self, key_hash: str) -> Optional[dict]:
+    def _rest_validate_api_key(self, key_hash: str) -> dict | None:
         params = {
             "key_hash": f"eq.{key_hash}",
             "is_active": "eq.true",
@@ -1602,14 +1728,14 @@ class PipelineDB:
 
     def log_audit_event(
         self,
-        api_key_id: Optional[str] = None,
-        user_role: Optional[str] = None,
+        api_key_id: str | None = None,
+        user_role: str | None = None,
         method: str = "",
         path: str = "",
-        status_code: Optional[int] = None,
-        request_body: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        duration_ms: Optional[int] = None,
+        status_code: int | None = None,
+        request_body: str | None = None,
+        ip_address: str | None = None,
+        duration_ms: int | None = None,
         **kwargs: Any,
     ) -> bool:
         """Insert an api_audit_log row.
@@ -1633,13 +1759,29 @@ class PipelineDB:
 
         if self._mode == "direct":
             return self._direct_log_audit_event(
-                api_key_id, user_role, method, path, status_code,
-                request_body, ip_address, duration_ms, now, extra,
+                api_key_id,
+                user_role,
+                method,
+                path,
+                status_code,
+                request_body,
+                ip_address,
+                duration_ms,
+                now,
+                extra,
             )
         elif self._mode == "rest":
             return self._rest_log_audit_event(
-                api_key_id, user_role, method, path, status_code,
-                request_body, ip_address, duration_ms, now, extra,
+                api_key_id,
+                user_role,
+                method,
+                path,
+                status_code,
+                request_body,
+                ip_address,
+                duration_ms,
+                now,
+                extra,
             )
 
         logger.warning("PipelineDB is not connected; cannot log audit event")
@@ -1647,14 +1789,14 @@ class PipelineDB:
 
     def _direct_log_audit_event(
         self,
-        api_key_id: Optional[str],
-        user_role: Optional[str],
+        api_key_id: str | None,
+        user_role: str | None,
         method: str,
         path: str,
-        status_code: Optional[int],
-        request_body: Optional[str],
-        ip_address: Optional[str],
-        duration_ms: Optional[int],
+        status_code: int | None,
+        request_body: str | None,
+        ip_address: str | None,
+        duration_ms: int | None,
         now: str,
         extra: dict[str, Any],
     ) -> bool:
@@ -1688,14 +1830,14 @@ class PipelineDB:
 
     def _rest_log_audit_event(
         self,
-        api_key_id: Optional[str],
-        user_role: Optional[str],
+        api_key_id: str | None,
+        user_role: str | None,
         method: str,
         path: str,
-        status_code: Optional[int],
-        request_body: Optional[str],
-        ip_address: Optional[str],
-        duration_ms: Optional[int],
+        status_code: int | None,
+        request_body: str | None,
+        ip_address: str | None,
+        duration_ms: int | None,
         now: str,
         extra: dict[str, Any],
     ) -> bool:
@@ -1764,7 +1906,7 @@ class PipelineDB:
                                 metadata={"file": "train.jsonl"},
                             )
                             counts["datasets"] += 1
-                        except Exception as e:
+                        except Exception:
                             pass
 
                     clean_path = technique_dir / "train_clean.jsonl"
@@ -1780,7 +1922,7 @@ class PipelineDB:
                                 metadata={"file": "train_clean.jsonl"},
                             )
                             counts["datasets"] += 1
-                        except Exception as e:
+                        except Exception:
                             pass
 
         # Scan exports
@@ -1804,7 +1946,7 @@ class PipelineDB:
                             },
                         )
                         counts["exports"] += 1
-                    except Exception as e:
+                    except Exception:
                         pass
 
         # Scan outputs for run directories
@@ -1836,7 +1978,7 @@ class PipelineDB:
                                     status=meta.get("status", "unknown"),
                                 )
                                 counts["runs"] += 1
-                            except Exception as e:
+                            except Exception:
                                 pass
 
         logger.info(
@@ -1848,7 +1990,7 @@ class PipelineDB:
         return counts
 
     # ── Query helpers for CLI dashboard ─────────────────────────────────
-    
+
     def query_eval_sessions(self, npc_key: str | None = None, limit: int = 10) -> list[dict]:
         """Fetch eval sessions, optionally filtered by NPC, newest first."""
         if self._mode == "direct":
@@ -1947,21 +2089,39 @@ class PipelineDB:
         extra = _sanitize_kwargs(**kwargs)
 
         if self._mode == "direct":
-            return self._direct_create_model_registry(entry_id, npc_key, model_name, base_model, technique, now, extra)
+            return self._direct_create_model_registry(
+                entry_id, npc_key, model_name, base_model, technique, now, extra
+            )
         elif self._mode == "rest":
-            return self._rest_create_model_registry(entry_id, npc_key, model_name, base_model, technique, now, extra)
+            return self._rest_create_model_registry(
+                entry_id, npc_key, model_name, base_model, technique, now, extra
+            )
 
         logger.warning("PipelineDB not connected; cannot create model registry entry")
         return {}
 
     def _direct_create_model_registry(
-        self, entry_id: str, npc_key: str, model_name: str,
-        base_model: str, technique: str, now: str, extra: dict[str, Any],
+        self,
+        entry_id: str,
+        npc_key: str,
+        model_name: str,
+        base_model: str,
+        technique: str,
+        now: str,
+        extra: dict[str, Any],
     ) -> dict:
         try:
             self._ensure_direct_connected()
             cur = self._conn.cursor()
-            columns = ["id", "npc_key", "model_name", "base_model", "technique", "created_at", "updated_at"]
+            columns = [
+                "id",
+                "npc_key",
+                "model_name",
+                "base_model",
+                "technique",
+                "created_at",
+                "updated_at",
+            ]
             placeholders = ["%s"] * len(columns)
             values: list[Any] = [entry_id, npc_key, model_name, base_model, technique, now, now]
             for key, val in self._filter_extra(extra).items():
@@ -1969,7 +2129,14 @@ class PipelineDB:
                     val = json.dumps(val)
                 if key == "tags" and isinstance(val, list):
                     # PostgreSQL TEXT[] requires {a,b,c} syntax, not JSON
-                    val = "{" + ",".join(v.replace("{","\\{").replace("}","\\}").replace(",","\\,") for v in val) + "}"
+                    val = (
+                        "{"
+                        + ",".join(
+                            v.replace("{", "\\{").replace("}", "\\}").replace(",", "\\,")
+                            for v in val
+                        )
+                        + "}"
+                    )
                 columns.append(key)
                 placeholders.append("%s")
                 values.append(val)
@@ -1986,13 +2153,23 @@ class PipelineDB:
             return {}
 
     def _rest_create_model_registry(
-        self, entry_id: str, npc_key: str, model_name: str,
-        base_model: str, technique: str, now: str, extra: dict[str, Any],
+        self,
+        entry_id: str,
+        npc_key: str,
+        model_name: str,
+        base_model: str,
+        technique: str,
+        now: str,
+        extra: dict[str, Any],
     ) -> dict:
         payload: dict[str, Any] = {
-            "id": entry_id, "npc_key": npc_key, "model_name": model_name,
-            "base_model": base_model, "technique": technique,
-            "created_at": now, "updated_at": now,
+            "id": entry_id,
+            "npc_key": npc_key,
+            "model_name": model_name,
+            "base_model": base_model,
+            "technique": technique,
+            "created_at": now,
+            "updated_at": now,
         }
         payload.update(extra)
         result = self._rest_request("POST", _TABLE_MODEL_REGISTRY, data=payload)
@@ -2038,7 +2215,12 @@ class PipelineDB:
         return {}
 
     def _direct_create_dataset_version(
-        self, entry_id: str, npc_key: str, technique: str, now: str, extra: dict[str, Any],
+        self,
+        entry_id: str,
+        npc_key: str,
+        technique: str,
+        now: str,
+        extra: dict[str, Any],
     ) -> dict:
         try:
             self._ensure_direct_connected()
@@ -2047,7 +2229,9 @@ class PipelineDB:
             placeholders = ["%s"] * len(columns)
             values: list[Any] = [entry_id, npc_key, technique, now, now]
             for key, val in self._filter_extra(extra).items():
-                if key in {"split_info", "concept_coverage", "generation_params"} and isinstance(val, (dict, list)):
+                if key in {"split_info", "concept_coverage", "generation_params"} and isinstance(
+                    val, (dict, list)
+                ):
                     val = json.dumps(val)
                 columns.append(key)
                 placeholders.append("%s")
@@ -2065,11 +2249,19 @@ class PipelineDB:
             return {}
 
     def _rest_create_dataset_version(
-        self, entry_id: str, npc_key: str, technique: str, now: str, extra: dict[str, Any],
+        self,
+        entry_id: str,
+        npc_key: str,
+        technique: str,
+        now: str,
+        extra: dict[str, Any],
     ) -> dict:
         payload: dict[str, Any] = {
-            "id": entry_id, "npc_key": npc_key, "technique": technique,
-            "created_at": now, "updated_at": now,
+            "id": entry_id,
+            "npc_key": npc_key,
+            "technique": technique,
+            "created_at": now,
+            "updated_at": now,
         }
         payload.update(extra)
         result = self._rest_request("POST", _TABLE_DATASET_VERSIONS, data=payload)
@@ -2093,7 +2285,13 @@ class PipelineDB:
         return False
 
     def _direct_insert_metric(
-        self, entry_id: str, run_id: str, npc_key: str, step: int, now: str, extra: dict[str, Any],
+        self,
+        entry_id: str,
+        run_id: str,
+        npc_key: str,
+        step: int,
+        now: str,
+        extra: dict[str, Any],
     ) -> bool:
         try:
             self._ensure_direct_connected()
@@ -2116,11 +2314,20 @@ class PipelineDB:
             return False
 
     def _rest_insert_metric(
-        self, entry_id: str, run_id: str, npc_key: str, step: int, now: str, extra: dict[str, Any],
+        self,
+        entry_id: str,
+        run_id: str,
+        npc_key: str,
+        step: int,
+        now: str,
+        extra: dict[str, Any],
     ) -> bool:
         payload: dict[str, Any] = {
-            "id": entry_id, "run_id": run_id, "npc_key": npc_key,
-            "step": step, "created_at": now,
+            "id": entry_id,
+            "run_id": run_id,
+            "npc_key": npc_key,
+            "step": step,
+            "created_at": now,
         }
         payload.update(extra)
         result = self._rest_request("POST", _TABLE_METRIC_COLLECTIONS, data=payload)
@@ -2164,7 +2371,7 @@ class PipelineDB:
             finally:
                 self._conn = None
 
-    def __enter__(self) -> "PipelineDB":
+    def __enter__(self) -> PipelineDB:
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:

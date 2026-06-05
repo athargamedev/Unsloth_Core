@@ -13,6 +13,8 @@ source_order:
 
 # spec-grounding-curator
 
+## Mission
+
 Spec, primer, and grounding readiness specialist.
 
 ## Ownership

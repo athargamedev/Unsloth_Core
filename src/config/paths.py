@@ -15,8 +15,7 @@ Naming conventions:
 """
 
 import re
-
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 # ── Project root ─────────────────────────────────────────────────────────────
@@ -35,6 +34,7 @@ CONFIG_DIR = _new_config_dir if _new_config_dir.exists() else _old_config_dir
 
 
 # ── Pipeline registry (unified run/log source of truth) ──────────────────────
+
 
 def pipeline_root() -> Path:
     """Return var/.pipeline/ or .pipeline/ — unified runtime registry root."""
@@ -176,7 +176,9 @@ def autodetect_dataset(npc_key: str) -> tuple[str, Path, Path] | None:
     return None
 
 
-def resolve_dataset_context(npc_key: str, preferred_technique: str | None = None) -> tuple[str, Path, Path]:
+def resolve_dataset_context(
+    npc_key: str, preferred_technique: str | None = None
+) -> tuple[str, Path, Path]:
     """Resolve the dataset technique and canonical train/val files for an NPC.
 
     If a preferred technique is provided, that dataset wins even when it does
@@ -242,6 +244,7 @@ def infer_validation_path(train_path: str | Path) -> Path:
 
 # ── Dataset versioning ───────────────────────────────────────────────────────
 
+
 def dataset_version_dir(npc_key: str, technique: str, version: str) -> Path:
     """Return Path to versioned dataset dir: subjects/datasets/{npc}/{technique}/v{version}/"""
     return dataset_dir(npc_key) / technique / f"v{version}"
@@ -280,6 +283,7 @@ def generate_version_timestamp() -> str:
 
 # ── Subjects (NPC spec files) ────────────────────────────────────────────────
 
+
 def subjects_root() -> Path:
     """Return data/npcs/ or subjects/ directory root."""
     new_path = PROJECT_ROOT / "data" / "npcs"
@@ -298,6 +302,7 @@ def spec_path(npc_key: str) -> Path:
 
 
 # ── Per-NPC workflow config ───────────────────────────────────────────────────
+
 
 def npc_config_root() -> Path:
     """Return etc/npcs/ or configs/npcs/."""
@@ -337,6 +342,7 @@ def sweep_dir(npc_key: str) -> Path:
 
 # ── Logs and per-NPC pipeline registry ────────────────────────────────────────
 
+
 def log_root() -> Path:
     """Return artifacts/logs/ or logs/."""
     new_path = PROJECT_ROOT / "artifacts" / "logs"
@@ -375,6 +381,7 @@ def npc_pipeline_runs_path(npc_key: str) -> Path:
 
 # ── Outputs (LoRA adapters + checkpoints, NO GGUF) ──────────────────────────
 
+
 def output_root() -> Path:
     """Return artifacts/models/ or outputs/."""
     new_path = PROJECT_ROOT / "artifacts" / "models"
@@ -387,6 +394,7 @@ def output_dir(npc_key: str) -> Path:
 
 
 # ── Exports (GGUF only — deployable artifacts) ──────────────────────────────
+
 
 def export_root() -> Path:
     """Return artifacts/exports/ or exports/."""
@@ -432,6 +440,7 @@ def export_manifest_path(npc_key: str) -> Path:
 
 # ── Evaluation ───────────────────────────────────────────────────────────────
 
+
 def eval_root() -> Path:
     """Return artifacts/eval/ or eval/."""
     new_path = PROJECT_ROOT / "artifacts" / "eval"
@@ -452,15 +461,15 @@ def eval_feedback_path(npc_key: str) -> Path:
     """Return eval/results/feedback/{npc_key}.json"""
     return eval_root() / "results" / "feedback" / f"{npc_key}.json"
 
+
 def eval_gaps_dir(npc_key: str) -> Path:
     """Return eval/results/gaps/{npc_key}/"""
     return eval_root() / "results" / "gaps" / npc_key
 
 
-
 def eval_timestamp() -> str:
     """Return a UTC timestamp suitable for eval report filenames."""
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
+    return datetime.now(UTC).strftime("%Y%m%dT%H%M%S_%fZ")
 
 
 def eval_report_path(npc_key: str, fmt: str = "md", timestamp: str | None = None) -> Path:
@@ -486,6 +495,7 @@ def eval_results_path() -> Path:
 
 
 # ── Subdir initialisation ────────────────────────────────────────────────────
+
 
 def ensure_dirs(*paths: Path) -> None:
     """Create parent directories for all given paths if they don't exist."""
@@ -581,11 +591,13 @@ def _latest_direct_adapter_run_dir(npc_key: str) -> Path | None:
     if not npc_output_dir.exists():
         return None
 
-    return _newest_adapter_dir([
-        path
-        for path in npc_output_dir.iterdir()
-        if path.is_dir() and path.name.startswith("run_")
-    ])
+    return _newest_adapter_dir(
+        [
+            path
+            for path in npc_output_dir.iterdir()
+            if path.is_dir() and path.name.startswith("run_")
+        ]
+    )
 
 
 def _latest_nested_adapter_run_dir(npc_key: str) -> Path | None:
@@ -600,7 +612,10 @@ def _latest_nested_adapter_run_dir(npc_key: str) -> Path | None:
 def _latest_adapter_run_dir(npc_key: str) -> Path | None:
     """Return the newest valid adapter across legacy and canonical run layouts."""
     candidates = []
-    for adapter_dir in (_latest_direct_adapter_run_dir(npc_key), _latest_nested_adapter_run_dir(npc_key)):
+    for adapter_dir in (
+        _latest_direct_adapter_run_dir(npc_key),
+        _latest_nested_adapter_run_dir(npc_key),
+    ):
         if adapter_dir is not None:
             candidates.append(adapter_dir)
     return _newest_adapter_dir(candidates)

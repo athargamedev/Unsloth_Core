@@ -37,7 +37,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -72,7 +72,7 @@ _PIPELINE_ORDER: list[str] = [
 
 def _iso_now() -> str:
     """Return the current UTC time as an ISO 8601 string."""
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 # ── Data Classes ───────────────────────────────────────────────────────────────
@@ -176,14 +176,12 @@ class PipelineManifest:
         handle a missing manifest — either initialise a new one or skip).
         Raises on malformed JSON.
         """
-        path = Path(
-            manifest_path or os.getenv("UCORE_MANIFEST_PATH") or _DEFAULT_MANIFEST_PATH
-        )
+        path = Path(manifest_path or os.getenv("UCORE_MANIFEST_PATH") or _DEFAULT_MANIFEST_PATH)
 
         if not path.is_file():
             return None
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             raw = json.load(f)
 
         obj = PipelineManifest(
@@ -211,7 +209,7 @@ class PipelineManifest:
         run_id = os.getenv("RUN_ID")
         if run_id:
             return run_id
-        now = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        now = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         return f"run_{now}"
 
     # ── Properties ─────────────────────────────────────────────────────────
@@ -251,7 +249,11 @@ class PipelineManifest:
         if existing is not None:
             # Update existing record — preserve started_at, update the rest.
             existing["status"] = status
-            existing["completed_at"] = now if status in ("completed", "failed", "skipped") else existing.get("completed_at")
+            existing["completed_at"] = (
+                now
+                if status in ("completed", "failed", "skipped")
+                else existing.get("completed_at")
+            )
             if status in ("completed", "failed", "skipped"):
                 started = existing.get("started_at", now)
                 existing["duration_s"] = _duration_seconds(started, now)
@@ -467,9 +469,13 @@ def record_pipeline_stage(
                 manifest.updated_at = raw.get("updated_at", manifest.updated_at)
                 manifest.stages = raw.get("stages", [])
             else:
-                manifest = PipelineManifest(run_id, npc_key, technique, preset, manifest_path=manifest_path)
+                manifest = PipelineManifest(
+                    run_id, npc_key, technique, preset, manifest_path=manifest_path
+                )
 
-            result = manifest.record_stage(stage, status, artifacts=artifacts, metadata=metadata, error=error)
+            result = manifest.record_stage(
+                stage, status, artifacts=artifacts, metadata=metadata, error=error
+            )
 
             # Write back through the locked fd — safe because we hold the lock.
             f.seek(0)

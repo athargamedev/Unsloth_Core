@@ -1,0 +1,52 @@
+# Auto-detect text files
+* text=auto
+
+# Python
+*.py text diff=python
+*.pyi text diff=python
+*.pyx text
+*.pxd text
+
+# Shell
+*.sh text eol=lf
+*.bash text eol=lf
+
+# YAML / JSON
+*.yml text
+*.yaml text
+*.json text
+
+# Markdown / Docs
+*.md text
+*.rst text
+*.txt text
+
+# Generated / vendored artifacts
+*.gguf binary
+*.bin binary
+*.pt binary
+*.pth binary
+*.safetensors binary
+*.onnx binary
+*.ckpt binary
+
+# Lock / DB
+*.db binary
+*.checkpoint.db binary
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.svg text
+*.ico binary
+
+# Secrets / env
+.env text
+.env.* text eol=lf
+
+# Linguist overrides — mark generated files so they're hidden in diffs
+subjects/ linguist-generated=true
+archive/ linguist-generated=true
+exports/ linguist-generated=true
+outputs/ linguist-generated=true

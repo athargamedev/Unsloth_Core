@@ -117,7 +117,9 @@ class OllamaHealthCheck:
     def pull_model(self, model_name: str) -> bool:
         logger.info(f"Pulling model: {model_name} (this may take a few minutes)...")
         try:
-            response = requests.post(f"{self.url}/api/pull", json={"name": model_name, "stream": False}, timeout=600)
+            response = requests.post(
+                f"{self.url}/api/pull", json={"name": model_name, "stream": False}, timeout=600
+            )
             return response.status_code == 200
         except Exception as e:
             logger.error(f"Failed to pull model {model_name}: {e}")
@@ -125,7 +127,14 @@ class OllamaHealthCheck:
 
 
 class OllamaGeneratorV2:
-    def __init__(self, model="llama2", url="http://localhost:11434/api/chat", max_retries=3, batch_size=4, health_check=None):
+    def __init__(
+        self,
+        model="llama2",
+        url="http://localhost:11434/api/chat",
+        max_retries=3,
+        batch_size=4,
+        health_check=None,
+    ):
         self.model = model
         self.url = url
         self.max_retries = max_retries
@@ -136,10 +145,36 @@ class OllamaGeneratorV2:
         self.success_count = 0
 
     def get_stats(self) -> dict:
-        return {"requests": self.request_count, "successes": self.success_count, "errors": self.error_count, "success_rate": self.success_count / max(1, self.request_count)}
+        return {
+            "requests": self.request_count,
+            "successes": self.success_count,
+            "errors": self.error_count,
+            "success_rate": self.success_count / max(1, self.request_count),
+        }
 
-    def _build_payload(self, system_prompt: str, user_prompt: str, temperature: float, max_tokens: int, json_format: bool, stream: bool) -> dict:
-        payload = {"model": self.model, "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}], "stream": stream, "options": {"temperature": temperature, "num_predict": max_tokens, "top_k": 40, "top_p": 0.9}}
+    def _build_payload(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float,
+        max_tokens: int,
+        json_format: bool,
+        stream: bool,
+    ) -> dict:
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "stream": stream,
+            "options": {
+                "temperature": temperature,
+                "num_predict": max_tokens,
+                "top_k": 40,
+                "top_p": 0.9,
+            },
+        }
         if json_format:
             payload["format"] = "json"
         return payload
@@ -150,7 +185,7 @@ class OllamaGeneratorV2:
 
     @staticmethod
     def _retry_delay(attempt: int) -> float:
-        return float(min(2 ** attempt, 8))
+        return float(min(2**attempt, 8))
 
     def _retryable_errors(self):
         errors = [requests.exceptions.RequestException, json.JSONDecodeError, asyncio.TimeoutError]
@@ -172,15 +207,27 @@ class OllamaGeneratorV2:
         logger.warning(f"{reason} (attempt {attempt}/{self.max_retries})")
 
     def _log_unexpected_error(self, attempt: int, error: Exception):
-        logger.error(f"Unexpected Ollama generation error (attempt {attempt}/{self.max_retries}): {error}")
+        logger.error(
+            f"Unexpected Ollama generation error (attempt {attempt}/{self.max_retries}): {error}"
+        )
 
     def _record_success(self, content: str) -> str:
         self.success_count += 1
         return content
 
-    def generate(self, system_prompt: str, user_prompt: str, temperature: float = 0.7, max_tokens: int = 512, json_format: bool = False, stream: bool = False) -> str | None:
+    def generate(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 512,
+        json_format: bool = False,
+        stream: bool = False,
+    ) -> str | None:
         self.request_count += 1
-        payload = self._build_payload(system_prompt, user_prompt, temperature, max_tokens, json_format, stream)
+        payload = self._build_payload(
+            system_prompt, user_prompt, temperature, max_tokens, json_format, stream
+        )
         for attempt in range(1, self.max_retries + 1):
             try:
                 content = self._extract_content(self._post_chat(payload))
@@ -198,9 +245,20 @@ class OllamaGeneratorV2:
         logger.error(f"Failed to generate after {self.max_retries} attempts")
         return None
 
-    async def generate_async(self, system_prompt: str, user_prompt: str, temperature: float = 0.7, max_tokens: int = 512, json_format: bool = False, session=None, executor=None) -> str | None:
+    async def generate_async(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 512,
+        json_format: bool = False,
+        session=None,
+        executor=None,
+    ) -> str | None:
         if session and aiohttp:
-            payload = self._build_payload(system_prompt, user_prompt, temperature, max_tokens, json_format, False)
+            payload = self._build_payload(
+                system_prompt, user_prompt, temperature, max_tokens, json_format, False
+            )
             for attempt in range(1, self.max_retries + 1):
                 try:
                     content = self._extract_content(await self._post_chat_async(payload, session))
@@ -218,4 +276,12 @@ class OllamaGeneratorV2:
             logger.error(f"Failed to generate after {self.max_retries} attempts")
             return None
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(executor, self.generate, system_prompt, user_prompt, temperature, max_tokens, json_format)
+        return await loop.run_in_executor(
+            executor,
+            self.generate,
+            system_prompt,
+            user_prompt,
+            temperature,
+            max_tokens,
+            json_format,
+        )

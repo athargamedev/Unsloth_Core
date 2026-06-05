@@ -12,9 +12,11 @@ source_order:
 
 # context-sentinel
 
-Read-only context hygiene and drift auditor.
+15|Read-only context hygiene and drift auditor.
 
-## Ownership
+## Mission
+
+17|## Ownership
 
 - Source-of-truth conflicts.
 - Stale NotebookLM/template production claims.

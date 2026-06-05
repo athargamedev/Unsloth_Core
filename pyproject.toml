@@ -1,0 +1,146 @@
+[build-system]
+requires = ["setuptools>=70.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "unsloth-core"
+version = "0.4.0"
+description = "GGUF LoRA fine-tuning pipeline for llama3.2 3B NPC dialogue models, with Unity LLMUnity deployment"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+
+authors = [
+    { name = "Andre Benathar", email = "andreathar@users.noreply.github.com" },
+]
+
+keywords = ["fine-tuning", "lora", "gguf", "npc", "unity", "llm", "unsloth"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Games/Entertainment",
+]
+
+dependencies = [
+    # Dashboard server
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "jinja2>=3.1.0",
+    "gputil>=1.4.0",
+    "psutil>=5.9.0",
+    # Metrics & evaluation
+    "tensorboard>=2.16.0",
+    "deepeval>=4.0.2",
+    "ollama>=0.6.2",
+    # API integration
+    "huggingface_hub>=0.20.0",
+    "openai>=1.0.0",
+    # Core ML (provided by the unsloth virtual env but listed for reference)
+    "unsloth>=2026.4",
+    "torch>=2.4.0",
+    "transformers>=4.45.0",
+    "datasets>=2.20.0",
+    "trl>=0.10.0",
+    "peft>=0.12.0",
+    "accelerate>=0.34.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/andreathar/Unsloth_Core"
+Documentation = "https://github.com/andreathar/Unsloth_Core/blob/main/docs/INDEX.md"
+Source = "https://github.com/andreathar/Unsloth_Core"
+
+[project.scripts]
+ucore = "src.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["src.*", "cli.*", "config.*", "core.*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.json", "*.md"]
+
+# ── Testing ──────────────────────────────────────────────────────────────────
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+cache_dir = "var/.cache/pytest"
+norecursedirs = [".agents", ".codex", ".gemini", ".hermes", ".opencode", ".pipeline", ".pi", "CLI-Anything", "frontend_control", "node_modules", "subjects", "unsloth_env", "archive"]
+markers = [
+    "unit: pure unit tests",
+    "contract: path, CLI, schema, and naming invariant tests",
+    "integration: touches real workflow command boundaries",
+    "slow: slow tests",
+    "requires_ollama: needs Ollama server or model",
+    "requires_gpu: needs CUDA GPU",
+    "requires_llama_cpp: needs llama.cpp binaries",
+    "requires_supabase: needs local Supabase",
+    "requires_wandb: needs W&B credentials or network",
+    "live_model: loads a model or starts a model server",
+    "smoke_template_only: template generation is allowed only for smoke tests",
+    "production_path: production workflow behavior",
+]
+
+# ── Code quality (ruff) ──────────────────────────────────────────────────────
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "scripts", "tests"]
+exclude = ["CLI-Anything", ".agents", ".codex", "frontend_control", "node_modules", "unsloth_env"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort (import order)
+    "N",    # pep8-naming
+    "UP",   # pyupgrade (modernize)
+    "B",    # flake8-bugbear
+    "T20",  # flake8-print
+    "S",    # flake8-bandit (security)
+    "C4",   # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line too long (handled by ruff formatter)
+    "S101",  # asserts allowed in tests
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S311"]
+"scripts/**" = ["T201"]
+"src/**" = ["T201", "S311", "S108"]
+"**/__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+# ── Static type checking (mypy) ──────────────────────────────────────────────
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = [
+    "unsloth_env/",
+    "build/",
+    "dist/",
+    "archive/",
+    "subjects/",
+]
+
+# ── Pre-commit (version pins managed by pre-commit autoupdate) ───────────────
+
+[tool.pre-commit.install]
+args = ["--install-hooks", "--hook-type", "pre-commit", "--hook-type", "pre-push"]

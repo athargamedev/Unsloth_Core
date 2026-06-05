@@ -128,7 +128,10 @@ def _is_cooking_subject(spec) -> bool:
     subject = _subject_focus(spec).lower()
     subject_text = str(spec.get("subject", "")).lower()
     npc_name = str(spec.get("npc_name", "")).lower()
-    return any(word in subject or word in subject_text or word in npc_name for word in ["cook", "culinary", "chef"])
+    return any(
+        word in subject or word in subject_text or word in npc_name
+        for word in ["cook", "culinary", "chef"]
+    )
 
 
 def _example_topics(spec, limit=2):
@@ -167,7 +170,12 @@ def _sanitize_grounding_text(text: str) -> str:
 
 def _topic_to_anchor(topic: str, subject: str) -> str:
     clean = topic.strip().rstrip("?")
-    clean = re.sub(r'^(what caused|what is|who is|how do i|how do|why is|how does|is|are|can i|should i|what are|how many|when does|where does)\s+', '', clean, flags=re.I).strip()
+    clean = re.sub(
+        r"^(what caused|what is|who is|how do i|how do|why is|how does|is|are|can i|should i|what are|how many|when does|where does)\s+",
+        "",
+        clean,
+        flags=re.I,
+    ).strip()
     if not clean:
         return subject
     return _capitalize_first(clean)
@@ -185,17 +193,74 @@ def _cooking_practical_focus(concept: str, spec, retriever=None):
     concept_l = concept.lower()
     detail = _lower_first(_concept_anchor(concept, spec, retriever))
     mappings = [
-        ("knife", ("keep your fingertips tucked and make slow, even slices", "you get safer, more even cuts")),
-        ("food safety and storage", ("separate raw food from ready-to-eat food and chill leftovers promptly", "you lower contamination risk")),
-        ("food safety", ("keep raw chicken separate and store leftovers cold", "you lower contamination risk")),
-        ("ingredient science", ("change one variable at a time, like heat or acid", "you can see how texture and flavor change")),
-        ("kitchen workflow", ("set up mise en place first and keep the station clean as you go", "the work stays organized and faster")),
-        ("kitchen organization", ("group tools and ingredients before you start", "you waste less time hunting for things")),
-        ("flavor balance", ("taste, then adjust salt, acid, fat, or sweetness one at a time", "the dish tastes fuller and more balanced")),
-        ("cooking techniques", ("match the heat and pan motion to the technique", "the texture or doneness improves")),
-        ("core kitchen flow", ("choose the order of steps before turning on the heat", "the dish finishes more smoothly")),
-        ("flavor and ingredient logic", ("choose ingredients that support the same flavor goal", "the final dish tastes coherent")),
-        ("knife skills and techniques", ("keep the blade steady and make controlled cuts", "the slices stay even and safe")),
+        (
+            "knife",
+            (
+                "keep your fingertips tucked and make slow, even slices",
+                "you get safer, more even cuts",
+            ),
+        ),
+        (
+            "food safety and storage",
+            (
+                "separate raw food from ready-to-eat food and chill leftovers promptly",
+                "you lower contamination risk",
+            ),
+        ),
+        (
+            "food safety",
+            ("keep raw chicken separate and store leftovers cold", "you lower contamination risk"),
+        ),
+        (
+            "ingredient science",
+            (
+                "change one variable at a time, like heat or acid",
+                "you can see how texture and flavor change",
+            ),
+        ),
+        (
+            "kitchen workflow",
+            (
+                "set up mise en place first and keep the station clean as you go",
+                "the work stays organized and faster",
+            ),
+        ),
+        (
+            "kitchen organization",
+            (
+                "group tools and ingredients before you start",
+                "you waste less time hunting for things",
+            ),
+        ),
+        (
+            "flavor balance",
+            (
+                "taste, then adjust salt, acid, fat, or sweetness one at a time",
+                "the dish tastes fuller and more balanced",
+            ),
+        ),
+        (
+            "cooking techniques",
+            ("match the heat and pan motion to the technique", "the texture or doneness improves"),
+        ),
+        (
+            "core kitchen flow",
+            (
+                "choose the order of steps before turning on the heat",
+                "the dish finishes more smoothly",
+            ),
+        ),
+        (
+            "flavor and ingredient logic",
+            (
+                "choose ingredients that support the same flavor goal",
+                "the final dish tastes coherent",
+            ),
+        ),
+        (
+            "knife skills and techniques",
+            ("keep the blade steady and make controlled cuts", "the slices stay even and safe"),
+        ),
     ]
     for needle, pair in mappings:
         if needle in concept_l:
@@ -214,7 +279,7 @@ def _concept_anchor(concept: str, spec, retriever=None) -> str:
     if retriever:
         contexts = retriever.get_grounding_context(concept, top_k=1)
         if contexts:
-            first_sent = re.split(r'[.!?]+', _sanitize_grounding_text(contexts[0]))[0].strip()
+            first_sent = re.split(r"[.!?]+", _sanitize_grounding_text(contexts[0]))[0].strip()
             if first_sent:
                 return _capitalize_first(first_sent)
     concept_l = concept.lower()
@@ -234,20 +299,38 @@ def _concept_anchor(concept: str, spec, retriever=None) -> str:
         ("nutrition", "Balancing protein, carbohydrates, and fats for steady energy"),
         ("ancient civilizations", "Mesopotamia, early cities, writing, and codified law"),
         ("classical antiquity", "Greek city-states, Roman law, republican government, and empire"),
-        ("roman empire", "Greece and Rome, with democracy, empire, republican government, and legal legacy"),
+        (
+            "roman empire",
+            "Greece and Rome, with democracy, empire, republican government, and legal legacy",
+        ),
         ("medieval history", "feudalism, the Byzantine world, crusades, and the Black Death"),
         ("industrial revolution", "industrialization, world wars, and the Cold War"),
         ("world war", "industrialization, world wars, and the Cold War"),
         ("modern history", "industrialization, world wars, and the Cold War"),
-        ("core timeline anchors", "placing events in order so causes, dates, and consequences stay connected"),
+        (
+            "core timeline anchors",
+            "placing events in order so causes, dates, and consequences stay connected",
+        ),
         ("scope and use", "major eras, turning points, and why events changed societies"),
         ("historical methodology", "primary sources, eyewitness accounts, and uncertainty"),
         ("historical thinking", "the big picture, the main cause, and one consequence"),
-        ("kitchen organization", "setting up a clean station, grouping tools, and keeping workflow efficient"),
-        ("kitchen workflow", "mise en place, clean-as-you-go habits, and choosing the right order for each step"),
+        (
+            "kitchen organization",
+            "setting up a clean station, grouping tools, and keeping workflow efficient",
+        ),
+        (
+            "kitchen workflow",
+            "mise en place, clean-as-you-go habits, and choosing the right order for each step",
+        ),
         ("knife skills and techniques", "grip, angle, and control with a sharp chef's knife"),
-        ("food safety and storage", "temperature control, cross-contamination, and fast refrigeration"),
-        ("ingredient science", "how heat, acid, fat, starch, and protein change texture and flavor"),
+        (
+            "food safety and storage",
+            "temperature control, cross-contamination, and fast refrigeration",
+        ),
+        (
+            "ingredient science",
+            "how heat, acid, fat, starch, and protein change texture and flavor",
+        ),
         ("flavor balance", "salt, acid, fat, sweetness, and tasting as you go"),
     ]
     for needle, anchor in anchors:
@@ -341,7 +424,7 @@ def _history_fact_lines(concept: str) -> list[str]:
         if needle in concept_l:
             return lines
     anchor = _concept_anchor(concept, {"subject": "world history"})
-    return [f"{anchor}.", f"It helps keep the timeline clear."]
+    return [f"{anchor}.", "It helps keep the timeline clear."]
 
 
 def _history_fact_pair(concept: str) -> tuple[str, str]:
@@ -350,7 +433,12 @@ def _history_fact_pair(concept: str) -> tuple[str, str]:
 
 
 class DialogueGuardrail:
-    def __init__(self, max_sentences: int | None = None, max_characters: int | None = None, allow_formatting: bool | None = None):
+    def __init__(
+        self,
+        max_sentences: int | None = None,
+        max_characters: int | None = None,
+        allow_formatting: bool | None = None,
+    ):
         self.max_sentences = max_sentences
         self.max_characters = max_characters
         self.allow_formatting = allow_formatting
@@ -359,7 +447,11 @@ class DialogueGuardrail:
         dialogue_conf = spec.get("dialogue", {}) if isinstance(spec, dict) else {}
         max_sentences = self.max_sentences or dialogue_conf.get("max_sentences", 5)
         max_characters = self.max_characters or dialogue_conf.get("max_characters", 500)
-        allow_formatting = dialogue_conf.get("allow_formatting", True) if self.allow_formatting is None else self.allow_formatting
+        allow_formatting = (
+            dialogue_conf.get("allow_formatting", True)
+            if self.allow_formatting is None
+            else self.allow_formatting
+        )
 
         resp_clean = str(response or "").strip()
         lower_resp = resp_clean.lower()
@@ -383,19 +475,31 @@ class DialogueGuardrail:
 
         sentences = [s for s in re.split(r"[.!?]+", resp_clean) if s.strip()]
         if len(sentences) > max_sentences:
-            return False, f"Response is too verbose ({len(sentences)} sentences). Must be 1-{max_sentences} short sentences."
+            return (
+                False,
+                f"Response is too verbose ({len(sentences)} sentences). Must be 1-{max_sentences} short sentences.",
+            )
 
         if len(resp_clean) > max_characters:
-            return False, f"Response is too long ({len(resp_clean)} characters). Must be under {max_characters} characters."
+            return (
+                False,
+                f"Response is too long ({len(resp_clean)} characters). Must be under {max_characters} characters.",
+            )
 
         if not allow_formatting:
             if "**" in resp_clean or "__" in resp_clean:
                 return False, "Response contains markdown bolding, which is disabled for game UI."
             if any(line.strip().startswith("#") for line in resp_clean.splitlines()):
-                return False, "Response contains markdown headers (#), which is disabled for game UI."
+                return (
+                    False,
+                    "Response contains markdown headers (#), which is disabled for game UI.",
+                )
             for line in resp_clean.splitlines():
                 if re.match(r"^[-*•\d]+\.?\s+", line.strip()):
-                    return False, "Response contains markdown lists/bullets, which are disabled for game UI."
+                    return (
+                        False,
+                        "Response contains markdown lists/bullets, which are disabled for game UI.",
+                    )
 
         return True, ""
 
@@ -403,7 +507,9 @@ class DialogueGuardrail:
 def generate_identity_response(spec):
     npc_name = spec.get("npc_name", "the guide")
     subject = _subject_focus(spec)
-    subject_short = spec.get("subject", subject).split(",")[0].strip().split(":")[0].strip() or subject
+    subject_short = (
+        spec.get("subject", subject).split(",")[0].strip().split(":")[0].strip() or subject
+    )
     personality = spec.get("identity", {}).get("personality", "")
     personality_short = personality.split("—")[0].split("-")[0].split(";")[0].split(",")[0].strip()
 
@@ -436,13 +542,23 @@ def generate_identity_response(spec):
     return random.choice(templates)
 
 
-def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="beginner", retriever=None):
+def generate_teaching_response(
+    spec, concept_a, concept_b=None, difficulty="beginner", retriever=None
+):
     subject = _subject_focus(spec)
-    detail_a = _history_fact_anchor(concept_a) if _is_history_subject(spec) else _concept_anchor(concept_a, spec, retriever)
-    detail_b = _history_fact_anchor(concept_b) if concept_b and _is_history_subject(spec) else (_concept_anchor(concept_b, spec, retriever) if concept_b else None)
+    detail_a = (
+        _history_fact_anchor(concept_a)
+        if _is_history_subject(spec)
+        else _concept_anchor(concept_a, spec, retriever)
+    )
+    detail_b = (
+        _history_fact_anchor(concept_b)
+        if concept_b and _is_history_subject(spec)
+        else (_concept_anchor(concept_b, spec, retriever) if concept_b else None)
+    )
     if "methodology" in concept_a.lower():
         detail_a = "comparing primary sources, secondary analysis, chronology, context, bias, and cause and effect"
-    detail_a_lower = _lower_first(detail_a)
+    _lower_first(detail_a)
 
     if _is_history_subject(spec):
         same_concept = bool(concept_b) and concept_a.strip().lower() == concept_b.strip().lower()
@@ -475,32 +591,38 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
                 ]
     elif _is_cooking_subject(spec):
         action_a, result_a = _cooking_practical_focus(concept_a, spec, retriever)
-        action_b, result_b = _cooking_practical_focus(concept_b, spec, retriever) if concept_b else (None, None)
+        action_b, result_b = (
+            _cooking_practical_focus(concept_b, spec, retriever) if concept_b else (None, None)
+        )
         concept_l = concept_a.lower()
         if "ingredient science" in concept_l:
             templates = [
-                f"Think of ingredient science as a test kitchen method: change one thing at a time, such as heat, acid, or fat, so you can see exactly what shifted in the dish. For example, a small heat change can thicken a sauce, brown a crust, or alter texture. That is how you learn which variable actually caused the result.",
-                f"Ingredient science means treating ingredients like controlled variables. If you adjust only one dial, you can compare the before and after and see whether the dish became thicker, sharper, or more stable. The practical lesson is to test one change, then taste again.",
+                "Think of ingredient science as a test kitchen method: change one thing at a time, such as heat, acid, or fat, so you can see exactly what shifted in the dish. For example, a small heat change can thicken a sauce, brown a crust, or alter texture. That is how you learn which variable actually caused the result.",
+                "Ingredient science means treating ingredients like controlled variables. If you adjust only one dial, you can compare the before and after and see whether the dish became thicker, sharper, or more stable. The practical lesson is to test one change, then taste again.",
             ]
         elif "knife" in concept_l:
             templates = [
-                f"Knife skills is about control, angle, and rhythm, but the useful part is seeing how those choices affect safety and evenness. For example, a steady grip and a consistent motion give cleaner cuts that cook at the same rate. The result is safer prep and more even texture in the finished dish.",
-                f"Think of knife skills as controlled cutting practice: keep the blade steady, use a safe grip, and adjust pressure so the pieces stay uniform. That is what makes prep safer and more consistent. A good cut is the one you can repeat without rushing.",
+                "Knife skills is about control, angle, and rhythm, but the useful part is seeing how those choices affect safety and evenness. For example, a steady grip and a consistent motion give cleaner cuts that cook at the same rate. The result is safer prep and more even texture in the finished dish.",
+                "Think of knife skills as controlled cutting practice: keep the blade steady, use a safe grip, and adjust pressure so the pieces stay uniform. That is what makes prep safer and more consistent. A good cut is the one you can repeat without rushing.",
             ]
         elif "flavor balance" in concept_l:
             templates = [
-                f"Flavor balance is about tasting, then adjusting salt, acid, fat, or sweetness one step at a time so the whole dish feels complete. For example, a flat soup may need acid or salt before it needs anything else. The right move is the one that changes the whole bowl without overpowering it.",
-                f"Think of flavor balance as tuning a dish in small moves: change one flavor note, taste again, and check whether the result feels fuller or sharper. That is how you avoid making the whole dish swing too far. One careful adjustment is usually better than three guesses.",
+                "Flavor balance is about tasting, then adjusting salt, acid, fat, or sweetness one step at a time so the whole dish feels complete. For example, a flat soup may need acid or salt before it needs anything else. The right move is the one that changes the whole bowl without overpowering it.",
+                "Think of flavor balance as tuning a dish in small moves: change one flavor note, taste again, and check whether the result feels fuller or sharper. That is how you avoid making the whole dish swing too far. One careful adjustment is usually better than three guesses.",
             ]
         elif "food safety" in concept_l:
             templates = [
-                f"Food safety is about separation, temperature, and time. Keep raw meat away from ready-to-eat food, cook poultry to 165 F, and chill leftovers within 2 hours so bacteria do not get time to grow. That sequence prevents the most common mistakes.",
-                f"Think of food safety as a chain of checks: separate raw foods, cook to a safe temperature, cool quickly, and store cold. For example, chicken needs a thermometer check, then leftovers need the refrigerator before they sit out too long. The safe habit is the one you repeat every time.",
+                "Food safety is about separation, temperature, and time. Keep raw meat away from ready-to-eat food, cook poultry to 165 F, and chill leftovers within 2 hours so bacteria do not get time to grow. That sequence prevents the most common mistakes.",
+                "Think of food safety as a chain of checks: separate raw foods, cook to a safe temperature, cool quickly, and store cold. For example, chicken needs a thermometer check, then leftovers need the refrigerator before they sit out too long. The safe habit is the one you repeat every time.",
             ]
-        elif "kitchen workflow" in concept_l or "kitchen organization" in concept_l or "core kitchen flow" in concept_l:
+        elif (
+            "kitchen workflow" in concept_l
+            or "kitchen organization" in concept_l
+            or "core kitchen flow" in concept_l
+        ):
             templates = [
-                f"Kitchen workflow is the order of the job: set up first, then cook in a clean sequence so prep, heat, and cleanup do not fight each other. For example, mise en place saves time because the tools and ingredients are ready before the pan gets hot. That keeps the pan, the board, and the timer from competing for attention.",
-                f"Think of kitchen workflow like a route through the kitchen: organize the station, work in order, and keep the counter clear so the dish moves from prep to plating smoothly. That is what makes the whole process faster and safer. A good workflow leaves fewer surprises at the end.",
+                "Kitchen workflow is the order of the job: set up first, then cook in a clean sequence so prep, heat, and cleanup do not fight each other. For example, mise en place saves time because the tools and ingredients are ready before the pan gets hot. That keeps the pan, the board, and the timer from competing for attention.",
+                "Think of kitchen workflow like a route through the kitchen: organize the station, work in order, and keep the counter clear so the dish moves from prep to plating smoothly. That is what makes the whole process faster and safer. A good workflow leaves fewer surprises at the end.",
             ]
         elif concept_b:
             templates = [
@@ -561,10 +683,14 @@ def generate_teaching_response(spec, concept_a, concept_b=None, difficulty="begi
 
 
 def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriever=None):
-    npc_name = spec["npc_name"]
-    subject = _subject_focus(spec)
-    detail = _history_fact_anchor(concept) if _is_history_subject(spec) else _concept_anchor(concept, spec, retriever)
-    detail_lower = _lower_first(detail)
+    spec["npc_name"]
+    _subject_focus(spec)
+    detail = (
+        _history_fact_anchor(concept)
+        if _is_history_subject(spec)
+        else _concept_anchor(concept, spec, retriever)
+    )
+    _lower_first(detail)
 
     if _is_history_subject(spec):
         lines = _history_fact_lines(concept)
@@ -637,8 +763,12 @@ def generate_dialogue_response(spec, concept, dialogue_type="deep_dive", retriev
 
 
 def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
-    subject = _subject_focus(spec)
-    detail = _history_fact_anchor(concept) if _is_history_subject(spec) else _concept_anchor(concept, spec, retriever)
+    _subject_focus(spec)
+    detail = (
+        _history_fact_anchor(concept)
+        if _is_history_subject(spec)
+        else _concept_anchor(concept, spec, retriever)
+    )
     detail_lower = _lower_first(detail)
 
     if scenario_name:
@@ -649,8 +779,8 @@ def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
                 f"Scenario: two notes disagree about {concept}. Pick the stronger one by naming the source type, the date, and the consequence it supports.",
             ],
             "primary_source": [
-                f"Scenario: two sources date one event differently. Pick the stronger one by naming the source type, the date, and the consequence it supports.",
-                f"Scenario: one source gives a date and another gives only a story. Choose the stronger source, then explain what changed next.",
+                "Scenario: two sources date one event differently. Pick the stronger one by naming the source type, the date, and the consequence it supports.",
+                "Scenario: one source gives a date and another gives only a story. Choose the stronger source, then explain what changed next.",
             ],
             "technique_mastery": [
                 f"Task: apply {concept} to {lines[0].rstrip('.')}. Then explain one cause and one consequence with a date or source.",
@@ -670,28 +800,32 @@ def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
         concept_l = concept.lower()
         if "knife" in concept_l:
             templates = [
-                f"Exercise: chop one onion into even slices, then say what changed when you kept the cuts steady and the pieces matched in size. Focus on grip, angle, and control. Explain the safety benefit as well as the visual result.",
-                f"Scenario: cut carrots into the same size pieces, then explain the first adjustment you made and why it improved control. Say whether the cuts felt safer, smoother, or more even. The goal is repeatable knife work, not speed alone.",
+                "Exercise: chop one onion into even slices, then say what changed when you kept the cuts steady and the pieces matched in size. Focus on grip, angle, and control. Explain the safety benefit as well as the visual result.",
+                "Scenario: cut carrots into the same size pieces, then explain the first adjustment you made and why it improved control. Say whether the cuts felt safer, smoother, or more even. The goal is repeatable knife work, not speed alone.",
             ]
         elif "food safety" in concept_l:
             templates = [
-                f"Scenario: you have raw chicken and salad ingredients. What is the first safe move, and how does that prevent contamination? Name the separation step and the storage step you would use next. Then say what temperature check comes before serving.",
-                f"Exercise: choose the safest way to handle leftovers before serving. What do you do first, and what temperature check comes next? Explain how that keeps the food safe. The answer should show the sequence, not just the rule.",
+                "Scenario: you have raw chicken and salad ingredients. What is the first safe move, and how does that prevent contamination? Name the separation step and the storage step you would use next. Then say what temperature check comes before serving.",
+                "Exercise: choose the safest way to handle leftovers before serving. What do you do first, and what temperature check comes next? Explain how that keeps the food safe. The answer should show the sequence, not just the rule.",
             ]
         elif "ingredient science" in concept_l:
             templates = [
-                f"Exercise: change only one thing, like heat or acid, then describe what happened to texture and flavor, and name the visible result. Keep the comparison to one variable only. That makes the cause easy to spot.",
-                f"Scenario: you adjust one ingredient variable in a dish. What changes first, and how do you know the adjustment worked? Explain the before-and-after difference in plain language. The useful part is the observed result.",
+                "Exercise: change only one thing, like heat or acid, then describe what happened to texture and flavor, and name the visible result. Keep the comparison to one variable only. That makes the cause easy to spot.",
+                "Scenario: you adjust one ingredient variable in a dish. What changes first, and how do you know the adjustment worked? Explain the before-and-after difference in plain language. The useful part is the observed result.",
             ]
         elif "flavor balance" in concept_l:
             templates = [
-                f"Exercise: taste a dish and adjust only salt, acid, fat, or sweetness. What changes first, and what is the next taste check? Say which flavor you would test again afterward. Keep the feedback loop small and obvious.",
-                f"Scenario: your soup tastes flat. Which single flavor dial do you turn first, why that one, and what result are you looking for? Explain the effect on the final taste. A good answer names the before and after.",
+                "Exercise: taste a dish and adjust only salt, acid, fat, or sweetness. What changes first, and what is the next taste check? Say which flavor you would test again afterward. Keep the feedback loop small and obvious.",
+                "Scenario: your soup tastes flat. Which single flavor dial do you turn first, why that one, and what result are you looking for? Explain the effect on the final taste. A good answer names the before and after.",
             ]
-        elif "kitchen workflow" in concept_l or "kitchen organization" in concept_l or "core kitchen flow" in concept_l:
+        elif (
+            "kitchen workflow" in concept_l
+            or "kitchen organization" in concept_l
+            or "core kitchen flow" in concept_l
+        ):
             templates = [
-                f"Scenario: your prep, cooking, and cleanup all overlap. What order do you choose, and what is the first thing you set up? Explain why that order keeps the station under control. Then name the step that saves the most time.",
-                f"Exercise: plan the order for a simple dinner, then name the first station you set and why it comes first. Include the step that saves the most time. The answer should make the workflow obvious from the first sentence.",
+                "Scenario: your prep, cooking, and cleanup all overlap. What order do you choose, and what is the first thing you set up? Explain why that order keeps the station under control. Then name the step that saves the most time.",
+                "Exercise: plan the order for a simple dinner, then name the first station you set and why it comes first. Include the step that saves the most time. The answer should make the workflow obvious from the first sentence.",
             ]
         else:
             templates = [
@@ -760,30 +894,34 @@ def generate_refusal_response(spec, boundary=None):
     if boundary:
         boundary_lower = boundary.lower()
         if _is_history_subject(spec):
-            if "speculate" in boundary_lower or "speculation" in boundary_lower or "counterfactual" in boundary_lower:
+            if (
+                "speculate" in boundary_lower
+                or "speculation" in boundary_lower
+                or "counterfactual" in boundary_lower
+            ):
                 example = _example_topics(spec, limit=1)
                 example = example[0] if example else "the fall of Rome"
                 concrete = example.replace("What caused ", "").replace("?", "")
                 templates = [
                     f"I can't treat counterfactuals as fact, so I would label that as speculation. Instead, we can stick to the real event and its sources, like {concrete}.",
-                    f"That is hypothetical, so I would mark it as speculation. Instead, I can help with the documented event and the evidence historians use to explain the outcome.",
-                    f"I can't present an alternate outcome as fact. Instead, I can separate the speculation from what the sources actually show.",
+                    "That is hypothetical, so I would mark it as speculation. Instead, I can help with the documented event and the evidence historians use to explain the outcome.",
+                    "I can't present an alternate outcome as fact. Instead, I can separate the speculation from what the sources actually show.",
                 ]
             elif "misinformation" in boundary_lower or "conspiracy" in boundary_lower:
                 templates = [
-                    f"I can't help spread unsupported claims. Instead, I can help with verified chronology, sources, and evidence, then show where the record confirms or rejects the claim.",
-                    f"I need to stay with evidence-based history. Let's focus on the documented version, the sources behind it, and the dates historians use to check it.",
-                    f"I can't endorse a conspiracy account without evidence. Instead, I can compare the claim with documented sources, the provenance of the story, and scholarly consensus.",
+                    "I can't help spread unsupported claims. Instead, I can help with verified chronology, sources, and evidence, then show where the record confirms or rejects the claim.",
+                    "I need to stay with evidence-based history. Let's focus on the documented version, the sources behind it, and the dates historians use to check it.",
+                    "I can't endorse a conspiracy account without evidence. Instead, I can compare the claim with documented sources, the provenance of the story, and scholarly consensus.",
                 ]
             elif "unsupported certainty" in boundary_lower or "date range" in boundary_lower:
                 templates = [
-                    f"I can't give exact dates as if historians all agree, but I can share the commonly used range and why it is used.",
-                    f"That question asks for more certainty than the evidence supports. Instead, I can give the standard range and the reason behind it.",
+                    "I can't give exact dates as if historians all agree, but I can share the commonly used range and why it is used.",
+                    "That question asks for more certainty than the evidence supports. Instead, I can give the standard range and the reason behind it.",
                 ]
             elif "topic change" in boundary_lower or "different topic" in boundary_lower:
                 templates = [
-                    f"Absolutely, we can switch topics. I can still help with ancient civilizations, medieval history, or modern history.",
-                    f"Yes, let's change direction. We could look at the fall of Rome, the Black Death, or the printing press instead.",
+                    "Absolutely, we can switch topics. I can still help with ancient civilizations, medieval history, or modern history.",
+                    "Yes, let's change direction. We could look at the fall of Rome, the Black Death, or the printing press instead.",
                 ]
             else:
                 templates = [
@@ -793,7 +931,11 @@ def generate_refusal_response(spec, boundary=None):
                     f"That sits outside what I cover. What I can do is help with a documented {subject} topic like ancient civilizations or modern history.",
                 ]
             return _with_refusal_contract(_choose_variant(templates))
-        if "speculate" in boundary_lower or "speculation" in boundary_lower or "counterfactual" in boundary_lower:
+        if (
+            "speculate" in boundary_lower
+            or "speculation" in boundary_lower
+            or "counterfactual" in boundary_lower
+        ):
             example = _example_topics(spec, limit=1)
             example = example[0] if example else "the fall of Rome"
             concrete = example.replace("What caused ", "").replace("?", "")
@@ -808,64 +950,64 @@ def generate_refusal_response(spec, boundary=None):
             ]
         elif "aliens" in boundary_lower or "extraterrestrial" in boundary_lower:
             templates = [
-                f"I can't confirm alien existence or appearance. Instead, I can explain how astronomers search for life using exoplanets and biosignatures.",
-                f"I can't verify that claim. Let's focus on astronomy facts and current evidence.",
+                "I can't confirm alien existence or appearance. Instead, I can explain how astronomers search for life using exoplanets and biosignatures.",
+                "I can't verify that claim. Let's focus on astronomy facts and current evidence.",
             ]
         elif "unsupported certainty" in boundary_lower or "date range" in boundary_lower:
             templates = [
-                f"I can't give exact dates as if historians all agree, but I can share the commonly used range and why it is used.",
-                f"That question asks for more certainty than the evidence supports. Instead, I can give the standard range and the reason behind it.",
+                "I can't give exact dates as if historians all agree, but I can share the commonly used range and why it is used.",
+                "That question asks for more certainty than the evidence supports. Instead, I can give the standard range and the reason behind it.",
             ]
         elif "medical" in boundary_lower or "dietary" in boundary_lower:
             if any(word in subject.lower() for word in ["cook", "culinary", "chef"]):
                 templates = [
-                    f"I can't make a diet plan or treat a medical condition. Instead, I can help with safe recipes and meal prep.",
-                    f"I can't prescribe a diet. Instead, I can walk you through a safe cooking technique or a simple balanced meal.",
-                    f"I don't give medical or dietary advice. Instead, I can share safe cooking techniques and balanced recipes.",
-                    f"I don't handle treatment plans. Instead, I can help with safe cooking methods and flavor.",
+                    "I can't make a diet plan or treat a medical condition. Instead, I can help with safe recipes and meal prep.",
+                    "I can't prescribe a diet. Instead, I can walk you through a safe cooking technique or a simple balanced meal.",
+                    "I don't give medical or dietary advice. Instead, I can share safe cooking techniques and balanced recipes.",
+                    "I don't handle treatment plans. Instead, I can help with safe cooking methods and flavor.",
                 ]
             elif any(word in subject.lower() for word in ["fitness", "exercise"]):
                 templates = [
-                    f"I can't give personalized medical or dietary advice. Instead, I can help with safe training habits and recovery.",
+                    "I can't give personalized medical or dietary advice. Instead, I can help with safe training habits and recovery.",
                     f"That is outside my role as {npc_name}. I can explain form, consistency, and general fitness basics instead.",
                 ]
             else:
                 templates = [
-                    f"I can't give personalized medical or dietary advice. Instead, I can help with general nutrition basics.",
+                    "I can't give personalized medical or dietary advice. Instead, I can help with general nutrition basics.",
                     f"That is outside my role as {npc_name}. I cannot prescribe diets, but I can cover safe meal-prep basics.",
                 ]
         elif "unsafe" in boundary_lower or "food preparation" in boundary_lower:
             if _is_history_subject(spec):
                 templates = [
-                    f"I can't help with that safety question here. Instead, I can explain chronology, sources, or evidence in world history.",
-                    f"That is outside my history role. I can help with a documented world history topic about chronology or sources.",
-                    f"I can't answer that as a history guide. Instead, we can look at a source, a date range, or a turning point.",
-                    f"That question is outside my scope. I can still help with evidence-based world history or source analysis.",
+                    "I can't help with that safety question here. Instead, I can explain chronology, sources, or evidence in world history.",
+                    "That is outside my history role. I can help with a documented world history topic about chronology or sources.",
+                    "I can't answer that as a history guide. Instead, we can look at a source, a date range, or a turning point.",
+                    "That question is outside my scope. I can still help with evidence-based world history or source analysis.",
                 ]
             elif any(word in subject.lower() for word in ["cook", "culinary", "chef"]):
                 templates = [
-                    f"I can't recommend unsafe preparation methods. Use a safer approach instead: keep food at safe temperatures, handle it cleanly, and cool leftovers promptly.",
-                    f"That's unsafe and not safe to recommend. A safer option is to cook it properly, check the temperature, and store it right away.",
-                    f"I don't recommend shortcuts that risk food safety. Cook it properly, cool leftovers promptly, and store them cold so the food stays safe and still tastes good.",
-                    f"I don't handle methods that ignore safe cooking temperatures. I can help with a safer step instead, like cooling, reheating, or storage.",
+                    "I can't recommend unsafe preparation methods. Use a safer approach instead: keep food at safe temperatures, handle it cleanly, and cool leftovers promptly.",
+                    "That's unsafe and not safe to recommend. A safer option is to cook it properly, check the temperature, and store it right away.",
+                    "I don't recommend shortcuts that risk food safety. Cook it properly, cool leftovers promptly, and store them cold so the food stays safe and still tastes good.",
+                    "I don't handle methods that ignore safe cooking temperatures. I can help with a safer step instead, like cooling, reheating, or storage.",
                 ]
             elif any(word in subject.lower() for word in ["fitness", "exercise"]):
                 templates = [
-                    f"I can't recommend unsafe preparation methods. Instead, I can help with a safer training or recovery alternative.",
-                    f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk fitness alternative.",
+                    "I can't recommend unsafe preparation methods. Instead, I can help with a safer training or recovery alternative.",
+                    "Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk fitness alternative.",
                 ]
             else:
                 templates = [
-                    f"I can't recommend unsafe preparation methods. Instead, I can help with a safer way to get a similar result.",
-                    f"Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
+                    "I can't recommend unsafe preparation methods. Instead, I can help with a safer way to get a similar result.",
+                    "Safety comes first, so I wouldn't endorse that approach. Let's focus on a lower-risk alternative.",
                 ]
         else:
             if any(word in subject.lower() for word in ["cook", "culinary", "chef"]):
                 templates = [
                     f"That is outside my role as {npc_name}. Instead, I can help with a safe recipe, a technique, or a safer cooking alternative with a clear next step. I can also explain the temperature or timing check that keeps it safe. Pick one and I will keep it practical.",
-                    f"I can't help with that request. I can still answer a safe cooking question or walk through a safer version of the dish with specific steps. If you want, I can focus on heat, timing, or storage. That keeps the advice useful without crossing the line.",
-                    f"I can't answer that directly. Let's focus on cooking fundamentals, food safety, or a safe recipe step you can use right away. I can make the answer concrete with a temperature or texture check. Give me one safe target and I will help.",
-                    f"That sits outside what I cover. What I can do is help with a documented cooking topic or a safer, useful alternative. I can also help you choose the next step in the recipe. Tell me what you want to fix and I'll stay specific.",
+                    "I can't help with that request. I can still answer a safe cooking question or walk through a safer version of the dish with specific steps. If you want, I can focus on heat, timing, or storage. That keeps the advice useful without crossing the line.",
+                    "I can't answer that directly. Let's focus on cooking fundamentals, food safety, or a safe recipe step you can use right away. I can make the answer concrete with a temperature or texture check. Give me one safe target and I will help.",
+                    "That sits outside what I cover. What I can do is help with a documented cooking topic or a safer, useful alternative. I can also help you choose the next step in the recipe. Tell me what you want to fix and I'll stay specific.",
                 ]
             else:
                 templates = [
@@ -881,11 +1023,11 @@ def generate_refusal_response(spec, boundary=None):
     if _is_cooking_subject(spec):
         templates = [
             f"That is outside my role as {npc_name}. Instead, I can help with a safe recipe, a technique, or a safer cooking alternative with a clear next step.",
-            f"I can't help with that request. I can still answer a safe cooking question or walk through a safer version of the dish with specific steps.",
-            f"I can't answer that directly. Let's focus on cooking fundamentals, food safety, or a safe recipe step you can use right away.",
-            f"That sits outside what I cover. What I can do is help with a documented cooking topic or a safer, useful alternative.",
-            f"I don't cover that topic. Let's talk about safe cooking fundamentals instead - what would you like to learn, a technique or a recipe step?",
-            f"I don't handle requests outside cooking fundamentals. I can help with safe techniques, ingredients, or a safer concrete example you can use.",
+            "I can't help with that request. I can still answer a safe cooking question or walk through a safer version of the dish with specific steps.",
+            "I can't answer that directly. Let's focus on cooking fundamentals, food safety, or a safe recipe step you can use right away.",
+            "That sits outside what I cover. What I can do is help with a documented cooking topic or a safer, useful alternative.",
+            "I don't cover that topic. Let's talk about safe cooking fundamentals instead - what would you like to learn, a technique or a recipe step?",
+            "I don't handle requests outside cooking fundamentals. I can help with safe techniques, ingredients, or a safer concrete example you can use.",
         ]
     else:
         templates = [

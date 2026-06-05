@@ -27,8 +27,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.core.ops.env_loader import confident_available
-from src.core.ops.ollama_lifecycle import list_running_ollama_models, stop_running_models
 from src.core.ops.model_presets import DEFAULT_FALLBACK_PRESET
+from src.core.ops.ollama_lifecycle import list_running_ollama_models, stop_running_models
 
 
 @dataclass
@@ -203,7 +203,9 @@ def _maybe_recommend_preset(
         with spec_path.open("r", encoding="utf-8") as f:
             spec = json.load(f)
     except Exception as exc:
-        recommendation = {"training": {"location": "unknown", "reason": f"Could not load spec: {exc}"}}
+        recommendation = {
+            "training": {"location": "unknown", "reason": f"Could not load spec: {exc}"}
+        }
         return effective_preset, recommendation
 
     try:
@@ -215,7 +217,9 @@ def _maybe_recommend_preset(
         if preset == "fast-3b" and training.get("location") == "remote_colab":
             effective_preset = DEFAULT_FALLBACK_PRESET
     except Exception as exc:
-        recommendation = {"training": {"location": "unknown", "reason": f"Plan evaluation failed: {exc}"}}
+        recommendation = {
+            "training": {"location": "unknown", "reason": f"Plan evaluation failed: {exc}"}
+        }
 
     return effective_preset, recommendation
 
@@ -253,13 +257,9 @@ def run_preflight(
         stopped = stop_running_models(ollama_url)
         report.stopped_ollama_models = stopped
         if stopped:
-            report.warnings.append(
-                f"Stopped Ollama model(s) before {phase}: {', '.join(stopped)}"
-            )
+            report.warnings.append(f"Stopped Ollama model(s) before {phase}: {', '.join(stopped)}")
     elif running:
-        report.warnings.append(
-            f"Ollama model(s) still loaded before {phase}: {', '.join(running)}"
-        )
+        report.warnings.append(f"Ollama model(s) still loaded before {phase}: {', '.join(running)}")
 
     if require_gcc is None:
         require_gcc = phase == "train"
@@ -307,9 +307,7 @@ def run_preflight(
     report.recommendation = recommendation
 
     if preset == "fast-3b" and effective_preset == DEFAULT_FALLBACK_PRESET:
-        report.warnings.append(
-            f"Auto-fallback: {preset} -> {effective_preset} on this GPU"
-        )
+        report.warnings.append(f"Auto-fallback: {preset} -> {effective_preset} on this GPU")
 
     if total_vram_gb is None:
         report.warnings.append("Could not read GPU memory via nvidia-smi")
@@ -353,7 +351,9 @@ def _format_text_report(report: PreflightReport) -> str:
     if report.recommendation:
         training = report.recommendation.get("training", {}) or {}
         if training:
-            lines.append(f"Training recommendation: {training.get('location', '-')}: {training.get('reason', '-')}")
+            lines.append(
+                f"Training recommendation: {training.get('location', '-')}: {training.get('reason', '-')}"
+            )
     if report.warnings:
         lines.append("Warnings:")
         lines.extend(f"  - {warning}" for warning in report.warnings)
@@ -364,16 +364,31 @@ def _format_text_report(report: PreflightReport) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run a preflight check for the Unsloth_Core pipeline")
-    parser.add_argument("--phase", default="train", choices=["train", "dataset_eval", "export"], help="Pipeline phase")
+    parser = argparse.ArgumentParser(
+        description="Run a preflight check for the Unsloth_Core pipeline"
+    )
+    parser.add_argument(
+        "--phase",
+        default="train",
+        choices=["train", "dataset_eval", "export"],
+        help="Pipeline phase",
+    )
     parser.add_argument("--preset", help="Requested training preset")
     parser.add_argument("--spec", help="Subject spec JSON path")
     parser.add_argument("--technique", help="Dataset technique name")
     parser.add_argument("--ollama-url", default="http://localhost:11434", help="Ollama server URL")
-    parser.add_argument("--no-auto-unload-ollama", action="store_true", help="Do not stop running Ollama models")
-    parser.add_argument("--no-gcc-check", action="store_true", help="Skip gcc validation even for training")
-    parser.add_argument("--lease", action="store_true", default=True, help="Acquire GPU lease (default: True)")
-    parser.add_argument("--no-lease", action="store_false", dest="lease", help="Skip GPU lease acquisition")
+    parser.add_argument(
+        "--no-auto-unload-ollama", action="store_true", help="Do not stop running Ollama models"
+    )
+    parser.add_argument(
+        "--no-gcc-check", action="store_true", help="Skip gcc validation even for training"
+    )
+    parser.add_argument(
+        "--lease", action="store_true", default=True, help="Acquire GPU lease (default: True)"
+    )
+    parser.add_argument(
+        "--no-lease", action="store_false", dest="lease", help="Skip GPU lease acquisition"
+    )
     parser.add_argument("--json", action="store_true", help="Print JSON only")
     args = parser.parse_args()
 

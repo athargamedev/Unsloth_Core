@@ -1,10 +1,14 @@
-from pathlib import Path
-
-from src.core.ops.canonical_artifacts import CanonicalArtifactBundle, canonical_bundle_path, write_canonical_bundle
+from src.core.ops.canonical_artifacts import (
+    CanonicalArtifactBundle,
+    canonical_bundle_path,
+    write_canonical_bundle,
+)
 
 
 def test_write_canonical_bundle(tmp_path, monkeypatch):
-    monkeypatch.setattr("src.core.ops.canonical_artifacts.CANONICAL_RUNS_ROOT", tmp_path / ".pipeline" / "runs")
+    monkeypatch.setattr(
+        "src.core.ops.canonical_artifacts.CANONICAL_RUNS_ROOT", tmp_path / ".pipeline" / "runs"
+    )
     bundle = CanonicalArtifactBundle(
         run_id="run_1",
         stage="generate",

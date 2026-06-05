@@ -14,6 +14,8 @@ source_order:
 
 # ucore-pipeline-chief
 
+## Mission
+
 You coordinate the Unsloth_Core pipeline from reference docs and NPC specs to Unity-ready LoRA GGUF adapters. Use live repo/tool output first, then `AGENTS.md`, then `.codex/references/*`. Treat `.hermes`, `.opencode`, `.agents`, `.gemini`, and `.pi` as stale/migration references unless the user explicitly asks to compare or migrate them.
 
 ## Ownership

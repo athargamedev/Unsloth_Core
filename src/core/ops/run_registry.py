@@ -45,7 +45,7 @@ from __future__ import annotations
 import json
 import os
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -56,8 +56,7 @@ _DEFAULT_INDEX = PROJECT_ROOT / ".pipeline" / "runs.jsonl"
 
 # Pipeline stages (canonical labels)
 STAGES = frozenset(
-    ["generate", "sanitize", "dataset_eval", "train", "export",
-     "evaluate", "feedback", "compare"]
+    ["generate", "sanitize", "dataset_eval", "train", "export", "evaluate", "feedback", "compare"]
 )
 
 # File-level lock so that concurrent imports share the same lock instance
@@ -68,7 +67,7 @@ _registry_lock = threading.Lock()
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def make_pipeline_run_id(
@@ -87,7 +86,7 @@ def make_pipeline_run_id(
         20260520_history_guide_train_fast-3b_001
         20260520_history_guide_dataset_eval_template_002
     """
-    today = datetime.now(timezone.utc).strftime("%Y%m%d")
+    today = datetime.now(UTC).strftime("%Y%m%d")
     runs_dir = PROJECT_ROOT / ".pipeline" / "runs"
     runs_dir.mkdir(parents=True, exist_ok=True)
 
@@ -148,14 +147,13 @@ class RunRegistry:
                 "spec_path": str(spec_path) if spec_path else None,
                 "preset": preset,
                 "entrypoint": entrypoint,
-                "frontend_job_id": frontend_job_id
-                or os.getenv("UCORE_FRONTEND_JOB_ID"),
+                "frontend_job_id": frontend_job_id or os.getenv("UCORE_FRONTEND_JOB_ID"),
                 "pid": os.getpid(),
                 "run_dir": str(run_dir),
                 **extra,
             }
             _safe_write_json(run_dir / "meta.json", meta)
-        except Exception as e:
+        except Exception:
             pass  # Best-effort — still return the run_dir
 
         self._append(
@@ -323,7 +321,7 @@ class RunRegistry:
             with _registry_lock:
                 with self.index_path.open("a", encoding="utf-8") as f:
                     f.write(line)
-        except Exception as e:
+        except Exception:
             pass  # Best-effort — never raise
 
     def _read_all(self) -> list[dict]:
@@ -340,7 +338,7 @@ class RunRegistry:
                             records.append(json.loads(line))
                         except json.JSONDecodeError:
                             continue
-        except Exception as e:
+        except Exception:
             pass
         return records
 
@@ -390,7 +388,7 @@ class PipelineRun:
         self._artifacts: dict[str, Any] = {}
         self._metrics: dict[str, Any] = {}
 
-    def __enter__(self) -> "PipelineRun":
+    def __enter__(self) -> PipelineRun:
         self.run_dir = self._registry.start_run(
             run_id=self.run_id,
             npc_key=self.npc_key,
@@ -442,10 +440,10 @@ def _safe_write_json(path: Path, data: Any) -> None:
     try:
         tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False, default=str))
         tmp.rename(path)
-    except Exception as e:
+    except Exception:
         try:
             tmp.unlink(missing_ok=True)
-        except Exception as e:
+        except Exception:
             pass
 
 
@@ -468,7 +466,8 @@ def archive_quality_artifact(src: Path, run_id: str) -> Path | None:
         stem = src.stem  # e.g. "quality_summary"
         dst = history_dir / f"{stem}_{run_id}{src.suffix}"
         import shutil
+
         shutil.copy2(src, dst)
         return dst
-    except Exception as e:
+    except Exception:
         return None

@@ -8,13 +8,14 @@ shape regardless of the stage-specific legacy files that still exist for
 compatibility.
 """
 
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Mapping
 import json
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
-from src.core.ops.artifact_registry import ArtifactRegistry, record_stage_artifacts_best_effort
+from src.core.ops.artifact_registry import record_stage_artifacts_best_effort
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 CANONICAL_RUNS_ROOT = PROJECT_ROOT / ".pipeline" / "runs"
@@ -33,7 +34,7 @@ class CanonicalArtifactBundle:
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def canonical_run_dir(run_id: str) -> Path:

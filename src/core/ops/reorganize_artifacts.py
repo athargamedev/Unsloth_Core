@@ -5,35 +5,38 @@ from pathlib import Path
 
 repo_dir = Path("/home/athar/Projects/Unsloth_Core")
 
+
 def run_cmd(args, cwd=repo_dir, capture=True):
     res = subprocess.run(args, cwd=cwd, capture_output=capture, text=True)
     return res
+
 
 def is_tracked(path):
     # Check if a file/dir is tracked in git
     res = run_cmd(["git", "ls-files", "--error-unmatch", str(path)])
     return res.returncode == 0
 
+
 def move_recursively(src_dir_name, dest_dir_name):
     src_dir = repo_dir / src_dir_name
     dest_dir = repo_dir / dest_dir_name
-    
+
     if not src_dir.exists():
         print(f"Source dir {src_dir_name} does not exist. Skipping.")
         return
-        
+
     print(f"Moving contents of {src_dir_name} to {dest_dir_name}...")
-    
+
     # We walk the source directory recursively
-    for root, dirs, files in os.walk(src_dir):
+    for root, _dirs, files in os.walk(src_dir):
         for name in files:
             file_path = Path(root) / name
             rel_path = file_path.relative_to(src_dir)
             target_path = dest_dir / rel_path
-            
+
             # Ensure target parent directory exists
             target_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # If the source is a symlink, handle it manually
             if file_path.is_symlink():
                 link_target = os.readlink(file_path)
@@ -47,13 +50,24 @@ def move_recursively(src_dir_name, dest_dir_name):
                 if is_tracked(file_path.relative_to(repo_dir)):
                     run_cmd(["git", "rm", "--cached", str(file_path.relative_to(repo_dir))])
                 continue
-                
+
             if is_tracked(file_path.relative_to(repo_dir)):
-                print(f"Git move: {file_path.relative_to(repo_dir)} -> {target_path.relative_to(repo_dir)}")
+                print(
+                    f"Git move: {file_path.relative_to(repo_dir)} -> {target_path.relative_to(repo_dir)}"
+                )
                 # Git mv needs target dir to exist, which we created
-                run_cmd(["git", "mv", str(file_path.relative_to(repo_dir)), str(target_path.relative_to(repo_dir))])
+                run_cmd(
+                    [
+                        "git",
+                        "mv",
+                        str(file_path.relative_to(repo_dir)),
+                        str(target_path.relative_to(repo_dir)),
+                    ]
+                )
             else:
-                print(f"FS move: {file_path.relative_to(repo_dir)} -> {target_path.relative_to(repo_dir)}")
+                print(
+                    f"FS move: {file_path.relative_to(repo_dir)} -> {target_path.relative_to(repo_dir)}"
+                )
                 if target_path.exists():
                     os.remove(target_path)
                 shutil.move(str(file_path), str(target_path))
@@ -65,16 +79,17 @@ def move_recursively(src_dir_name, dest_dir_name):
     # Create symlink from old to new
     if src_dir.exists() or src_dir.is_symlink():
         src_dir.unlink()
-    
+
     # Symlink target should be relative for portability
     # outputs/ is at root, artifacts/models/ is at root, so relative is: artifacts/models
     rel_symlink_target = os.path.relpath(dest_dir, src_dir.parent)
     os.symlink(rel_symlink_target, src_dir)
     print(f"Created symlink {src_dir_name} -> {rel_symlink_target}")
-    
+
     # Git track the symlink
     run_cmd(["git", "add", src_dir_name])
     print(f"Staged symlink {src_dir_name} in Git")
+
 
 # 1. Clean and symlink configs -> etc
 configs_dir = repo_dir / "configs"

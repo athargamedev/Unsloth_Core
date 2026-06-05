@@ -23,7 +23,13 @@ class FakeOllamaClient:
             }
         )
         if format == "json":
-            return {"message": {"content": json.dumps({"is_high_quality": True, "score": 0.91, "failure_reason": None})}}
+            return {
+                "message": {
+                    "content": json.dumps(
+                        {"is_high_quality": True, "score": 0.91, "failure_reason": None}
+                    )
+                }
+            }
         return {"message": {"content": "ok"}}
 
     def unload(self, model=None):

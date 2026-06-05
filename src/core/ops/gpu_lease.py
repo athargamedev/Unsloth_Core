@@ -18,9 +18,8 @@ from __future__ import annotations
 import threading
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
-
 
 VALID_MODES = frozenset({"judge_shared", "generation_shared", "train_exclusive"})
 
@@ -32,6 +31,7 @@ class LeaseConflictError(Exception):
 @dataclass
 class Lease:
     """A single GPU lease token."""
+
     id: str
     mode: str
     status: str = "active"  # active | expired | released
@@ -77,8 +77,7 @@ class GpuLeaseManager:
             self._purge_expired()
 
             has_exclusive = any(
-                l.mode == "train_exclusive" and l.status == "active"
-                for l in self._leases.values()
+                l.mode == "train_exclusive" and l.status == "active" for l in self._leases.values()
             )
 
             if mode == "train_exclusive" and has_exclusive:

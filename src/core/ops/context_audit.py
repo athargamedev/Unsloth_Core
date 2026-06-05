@@ -11,14 +11,14 @@ Usage:
   python src/core/ops/context_audit.py --instructions-audit [paths...]
   python src/core/ops/context_audit.py --json [paths...]
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import re
-import sys
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
 try:
@@ -37,52 +37,99 @@ DEFAULT_FILES: list[str] = [
 
 # Regex, severity, message for legacy paths migrated in Phases 3-5.
 LEGACY_PATTERNS: list[tuple[str, str, str]] = [
-    (r"\bconfigs/presets\b|\bconfigs/base_configs\b", "warn",
-     "legacy configs preset/base path mentioned; should be etc/presets/ or etc/base_models/"),
-    (r"\bsubjects/NPC_specs\b", "warn",
-     "legacy specs path subjects/NPC_specs mentioned; should be data/npcs/specs/"),
-    (r"\bsubjects/reference_docs\b", "warn",
-     "legacy reference docs path subjects/reference_docs mentioned; should be data/npcs/reference_docs/"),
-    (r"\bsubjects/schemas\b", "warn",
-     "legacy schemas path subjects/schemas mentioned; should be data/npcs/schemas/"),
-    (r"\bsubjects/datasets\b", "warn",
-     "legacy datasets path subjects/datasets mentioned; should be data/datasets/"),
-    (r"\boutputs/", "warn",
-     "legacy outputs path outputs/ mentioned; should be artifacts/models/"),
-    (r"(?<!artifacts/)\bexports/", "warn",
-     "legacy exports path exports/ mentioned; should be artifacts/exports/"),
-    (r"(?<!artifacts/)\beval/", "warn",
-     "legacy eval path eval/ mentioned; should be artifacts/eval/"),
-    (r"(?<!artifacts/)\blogs/", "warn",
-     "legacy logs path logs/ mentioned; should be artifacts/logs/"),
+    (
+        r"\bconfigs/presets\b|\bconfigs/base_configs\b",
+        "warn",
+        "legacy configs preset/base path mentioned; should be etc/presets/ or etc/base_models/",
+    ),
+    (
+        r"\bsubjects/NPC_specs\b",
+        "warn",
+        "legacy specs path subjects/NPC_specs mentioned; should be data/npcs/specs/",
+    ),
+    (
+        r"\bsubjects/reference_docs\b",
+        "warn",
+        "legacy reference docs path subjects/reference_docs mentioned; should be data/npcs/reference_docs/",
+    ),
+    (
+        r"\bsubjects/schemas\b",
+        "warn",
+        "legacy schemas path subjects/schemas mentioned; should be data/npcs/schemas/",
+    ),
+    (
+        r"\bsubjects/datasets\b",
+        "warn",
+        "legacy datasets path subjects/datasets mentioned; should be data/datasets/",
+    ),
+    (r"\boutputs/", "warn", "legacy outputs path outputs/ mentioned; should be artifacts/models/"),
+    (
+        r"(?<!artifacts/)\bexports/",
+        "warn",
+        "legacy exports path exports/ mentioned; should be artifacts/exports/",
+    ),
+    (
+        r"(?<!artifacts/)\beval/",
+        "warn",
+        "legacy eval path eval/ mentioned; should be artifacts/eval/",
+    ),
+    (
+        r"(?<!artifacts/)\blogs/",
+        "warn",
+        "legacy logs path logs/ mentioned; should be artifacts/logs/",
+    ),
 ]
 
 # Regex, severity, message. Keep these focused on references that caused drift.
 PATTERNS: list[tuple[str, str, str]] = [
-    (r"astronomy_guide|fitness_coach", "warn",
-     "inactive NPC mentioned; ensure it is labelled deprecated, not active"),
-    (r"Production Train.*--technique template|production.*--technique template|--technique template.*production", "error",
-     "template generation must not be presented as production training"),
-    (r"qwen3:latest", "warn",
-     "qwen3 appears; current local tested default is qwen2.5:7b unless re-verified"),
-    (r"npm run dev:modular", "warn",
-     "old dashboard command; current package uses npm run dev from dashboard directory"),
-    (r"server-modular\.ts", "warn",
-     "old modular entrypoint reference; verify against current dashboard package before using"),
-    (r"auto-retrain.*6GB|6GB.*auto-retrain", "warn",
-     "auto-retrain on 6GB can collide with Ollama/training VRAM"),
-    (r"npc-fit/", "error",
-     "old HF namespace; use andreathar/ or TWLgames/"),
+    (
+        r"astronomy_guide|fitness_coach",
+        "warn",
+        "inactive NPC mentioned; ensure it is labelled deprecated, not active",
+    ),
+    (
+        r"Production Train.*--technique template|production.*--technique template|--technique template.*production",
+        "error",
+        "template generation must not be presented as production training",
+    ),
+    (
+        r"qwen3:latest",
+        "warn",
+        "qwen3 appears; current local tested default is qwen2.5:7b unless re-verified",
+    ),
+    (
+        r"npm run dev:modular",
+        "warn",
+        "old dashboard command; current package uses npm run dev from dashboard directory",
+    ),
+    (
+        r"server-modular\.ts",
+        "warn",
+        "old modular entrypoint reference; verify against current dashboard package before using",
+    ),
+    (
+        r"auto-retrain.*6GB|6GB.*auto-retrain",
+        "warn",
+        "auto-retrain on 6GB can collide with Ollama/training VRAM",
+    ),
+    (r"npc-fit/", "error", "old HF namespace; use andreathar/ or TWLgames/"),
 ] + LEGACY_PATTERNS
 
 ALLOWED_CONTEXT: dict[str, list[str]] = {
     "astronomy_guide": ["deprecated", "inactive", "avoid", "do not"],
     "fitness_coach": ["deprecated", "inactive", "avoid", "do not"],
-    "qwen3:latest": ["deprecated", "avoid", "unless re-verified", "older docs",
-                     "experimental", "legacy", "not the local default"],
+    "qwen3:latest": [
+        "deprecated",
+        "avoid",
+        "unless re-verified",
+        "older docs",
+        "experimental",
+        "legacy",
+        "not the local default",
+    ],
 }
 
-STALE_DAYS = 30          # docs / instructions files
+STALE_DAYS = 30  # docs / instructions files
 AGENTS_LINE_LIMIT = 150  # soft limit
 
 
@@ -108,6 +155,7 @@ class AuditSummary:
 
 
 # ── helpers ──────────────────────────────────────────────────────────────
+
 
 def iter_files(paths: list[str]) -> list[Path]:
     files: list[Path] = []
@@ -159,6 +207,7 @@ def parse_frontmatter(text: str) -> dict:
 
 # ── scanners ─────────────────────────────────────────────────────────────
 
+
 def _pattern_scan(paths: list[str]) -> list[Finding]:
     """Existing stale-pattern scanner."""
     findings: list[Finding] = []
@@ -196,74 +245,106 @@ def _instructions_scan(files: list[Path], base_path: Path) -> list[Finding]:
         if rel == "AGENTS.md":
             line_count = len(text.splitlines())
             if line_count > AGENTS_LINE_LIMIT:
-                findings.append(Finding(
-                    file=rel, line=0, severity="warn",
-                    pattern="agents_line_limit",
-                    message=f"AGENTS.md is {line_count} lines (soft limit: {AGENTS_LINE_LIMIT})",
-                    text="",
-                ))
+                findings.append(
+                    Finding(
+                        file=rel,
+                        line=0,
+                        severity="warn",
+                        pattern="agents_line_limit",
+                        message=f"AGENTS.md is {line_count} lines (soft limit: {AGENTS_LINE_LIMIT})",
+                        text="",
+                    )
+                )
 
         # ── frontmatter freshness ──
         if fm.get("last_verified"):
             last_str = str(fm["last_verified"])
             try:
-                last = datetime.strptime(last_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-                days = (datetime.now(timezone.utc) - last).days
+                last = datetime.strptime(last_str, "%Y-%m-%d").replace(tzinfo=UTC)
+                days = (datetime.now(UTC) - last).days
                 if days > STALE_DAYS:
-                    findings.append(Finding(
-                        file=rel, line=0, severity="warn",
-                        pattern="stale_frontmatter",
-                        message=f"last_verified {last_str} is {days} days old (>{STALE_DAYS})",
-                        text="",
-                    ))
+                    findings.append(
+                        Finding(
+                            file=rel,
+                            line=0,
+                            severity="warn",
+                            pattern="stale_frontmatter",
+                            message=f"last_verified {last_str} is {days} days old (>{STALE_DAYS})",
+                            text="",
+                        )
+                    )
             except ValueError:
-                findings.append(Finding(
-                    file=rel, line=0, severity="warn",
-                    pattern="bad_date_format",
-                    message=f"last_verified '{last_str}' is not a valid YYYY-MM-DD date",
-                    text="",
-                ))
+                findings.append(
+                    Finding(
+                        file=rel,
+                        line=0,
+                        severity="warn",
+                        pattern="bad_date_format",
+                        message=f"last_verified '{last_str}' is not a valid YYYY-MM-DD date",
+                        text="",
+                    )
+                )
         elif fm:  # has frontmatter but no last_verified
-            findings.append(Finding(
-                file=rel, line=0, severity="warn",
-                pattern="missing_last_verified",
-                message="Has frontmatter but missing last_verified",
-                text="",
-            ))
+            findings.append(
+                Finding(
+                    file=rel,
+                    line=0,
+                    severity="warn",
+                    pattern="missing_last_verified",
+                    message="Has frontmatter but missing last_verified",
+                    text="",
+                )
+            )
 
         # ── agent brief completeness ──
         if is_brief:
             if "version" not in fm:
-                findings.append(Finding(
-                    file=rel, line=0, severity="error",
-                    pattern="missing_version",
-                    message="Agent brief missing version in frontmatter",
-                    text="",
-                ))
+                findings.append(
+                    Finding(
+                        file=rel,
+                        line=0,
+                        severity="error",
+                        pattern="missing_version",
+                        message="Agent brief missing version in frontmatter",
+                        text="",
+                    )
+                )
             if "last_verified" not in fm:
-                findings.append(Finding(
-                    file=rel, line=0, severity="warn",
-                    pattern="missing_brief_verified",
-                    message="Agent brief missing last_verified in frontmatter",
-                    text="",
-                ))
+                findings.append(
+                    Finding(
+                        file=rel,
+                        line=0,
+                        severity="warn",
+                        pattern="missing_brief_verified",
+                        message="Agent brief missing last_verified in frontmatter",
+                        text="",
+                    )
+                )
             if "source_order" not in fm:
-                findings.append(Finding(
-                    file=rel, line=0, severity="warn",
-                    pattern="missing_source_order",
-                    message="Agent brief missing source_order in frontmatter",
-                    text="",
-                ))
+                findings.append(
+                    Finding(
+                        file=rel,
+                        line=0,
+                        severity="warn",
+                        pattern="missing_source_order",
+                        message="Agent brief missing source_order in frontmatter",
+                        text="",
+                    )
+                )
 
         # ── skill frontmatter completeness ──
         is_skill = ".hermes/skills/" in rel or ".codex/skills/" in rel
         if is_skill and "last_verified" not in fm:
-            findings.append(Finding(
-                file=rel, line=0, severity="warn",
-                pattern="missing_skill_verified",
-                message="Skill missing last_verified in frontmatter",
-                text="",
-            ))
+            findings.append(
+                Finding(
+                    file=rel,
+                    line=0,
+                    severity="warn",
+                    pattern="missing_skill_verified",
+                    message="Skill missing last_verified in frontmatter",
+                    text="",
+                )
+            )
 
     return findings
 
@@ -278,9 +359,7 @@ def audit(paths: list[str], instructions: bool = False) -> tuple[list[Finding], 
         for raw in paths:
             p = PROJECT_ROOT / raw
             if p.is_dir():
-                scan_paths.extend(
-                    pp for pp in p.rglob("*.md") if "node_modules" not in pp.parts
-                )
+                scan_paths.extend(pp for pp in p.rglob("*.md") if "node_modules" not in pp.parts)
             elif p.exists():
                 scan_paths.append(p)
         scan_paths = sorted(set(scan_paths))
@@ -297,12 +376,18 @@ def _compute_summary(findings: list[Finding], _paths: list[str]) -> AuditSummary
             s.stale_docs += 1
         elif f.pattern in ("missing_version",):
             s.missing_version += 1
-        elif f.pattern in ("missing_last_verified", "missing_brief_verified", "missing_skill_verified"):
+        elif f.pattern in (
+            "missing_last_verified",
+            "missing_brief_verified",
+            "missing_skill_verified",
+        ):
             s.missing_last_verified += 1
         elif f.pattern == "agents_line_limit":
             # captured via agents_lines below
             pass
-        elif f.pattern.startswith("legacy") or any(leg_pat[0] == f.pattern for leg_pat in LEGACY_PATTERNS):
+        elif f.pattern.startswith("legacy") or any(
+            leg_pat[0] == f.pattern for leg_pat in LEGACY_PATTERNS
+        ):
             s.legacy_path_warnings += 1
         else:
             s.other_issues += 1
@@ -338,15 +423,20 @@ def _format_summary(s: AuditSummary) -> str:
 
 # ── CLI ──────────────────────────────────────────────────────────────────
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Audit agent context for stale references and freshness"
     )
-    parser.add_argument("paths", nargs="*", default=DEFAULT_FILES,
-                        help="Files or directories to audit")
+    parser.add_argument(
+        "paths", nargs="*", default=DEFAULT_FILES, help="Files or directories to audit"
+    )
     parser.add_argument("--json", action="store_true", help="Emit JSON")
-    parser.add_argument("--instructions-audit", action="store_true",
-                        help="Run extended freshness and completeness audit")
+    parser.add_argument(
+        "--instructions-audit",
+        action="store_true",
+        help="Run extended freshness and completeness audit",
+    )
     args = parser.parse_args()
 
     findings, summary = audit(args.paths, instructions=args.instructions_audit)

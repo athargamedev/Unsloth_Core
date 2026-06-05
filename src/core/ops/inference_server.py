@@ -12,24 +12,24 @@ import argparse
 import json
 import sys
 import time
-from dataclasses import asdict, dataclass
+from collections.abc import Callable
+from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.core.ops.gpu_lease import GpuLeaseManager, LeaseConflictError  # noqa: E402
 from src.core.ops.ollama_lifecycle import (  # noqa: E402
     list_running_ollama_models,
     stop_ollama_model,
     stop_running_models,
 )
 from src.core.ops.ollama_model_presets import resolve_ollama_model  # noqa: E402
-from src.core.ops.gpu_lease import GpuLeaseManager, LeaseConflictError  # noqa: E402
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
@@ -73,7 +73,9 @@ class OllamaHTTPClient:
 
     def status(self) -> dict[str, Any]:
         tags = self._request("GET", "/api/tags", timeout=15)
-        models = [m.get("name") for m in tags.get("models", []) if isinstance(m, dict) and m.get("name")]
+        models = [
+            m.get("name") for m in tags.get("models", []) if isinstance(m, dict) and m.get("name")
+        ]
         return {
             "ok": True,
             "models": models,
@@ -135,7 +137,14 @@ class OllamaHTTPClient:
 
 
 class InferenceService:
-    def __init__(self, *, client: Any | None = None, default_model: str | None = None, timeout: int = 180, lease_manager: GpuLeaseManager | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        client: Any | None = None,
+        default_model: str | None = None,
+        timeout: int = 180,
+        lease_manager: GpuLeaseManager | None = None,
+    ) -> None:
         self.client = client or OllamaHTTPClient(timeout=timeout)
         self.default_model = default_model or resolve_ollama_model(role="judge")
         self.timeout = timeout
@@ -220,7 +229,11 @@ class InferenceService:
         try:
             parsed = json.loads(content)
         except json.JSONDecodeError:
-            parsed = {"is_high_quality": False, "failure_reason": "judge_json_parse_error", "score": 0.0}
+            parsed = {
+                "is_high_quality": False,
+                "failure_reason": "judge_json_parse_error",
+                "score": 0.0,
+            }
         return {
             "ok": True,
             "model": model,
@@ -251,7 +264,9 @@ def make_handler(service: InferenceService) -> type[BaseHTTPRequestHandler]:
     class InferenceRequestHandler(BaseHTTPRequestHandler):
         server_version = "UCoreInferenceServer/0.1"
 
-        def log_message(self, format: str, *args: Any) -> None:  # pragma: no cover - keep tests/logs quiet
+        def log_message(
+            self, format: str, *args: Any
+        ) -> None:  # pragma: no cover - keep tests/logs quiet
             return None
 
         def do_GET(self) -> None:  # noqa: N802
@@ -305,7 +320,9 @@ def make_handler(service: InferenceService) -> type[BaseHTTPRequestHandler]:
 
 def serve(config: InferenceServerConfig) -> None:
     client = OllamaHTTPClient(config.ollama_host, timeout=config.timeout)
-    service = InferenceService(client=client, default_model=config.default_model, timeout=config.timeout)
+    service = InferenceService(
+        client=client, default_model=config.default_model, timeout=config.timeout
+    )
     server = ThreadingHTTPServer((config.host, config.port), make_handler(service))
     print(
         json.dumps(
@@ -358,8 +375,11 @@ def create_parser() -> argparse.ArgumentParser:
 
     lease_p = sub.add_parser("lease", help="Acquire GPU lease for exclusive training access")
     add_common(lease_p)
-    lease_p.add_argument("--mode", default="judge_shared",
-                         choices=["judge_shared", "generation_shared", "train_exclusive"])
+    lease_p.add_argument(
+        "--mode",
+        default="judge_shared",
+        choices=["judge_shared", "generation_shared", "train_exclusive"],
+    )
     lease_p.add_argument("--ttl", type=int, default=300, help="Lease TTL in seconds")
 
     release_p = sub.add_parser("release", help="Release a GPU lease by ID")
@@ -391,7 +411,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "status":
         _print_json(service.status())
     elif args.command == "warm":
-        _print_json(service.warm({"model": args.model, "keep_alive": args.keep_alive, "prompt": args.prompt}))
+        _print_json(
+            service.warm(
+                {"model": args.model, "keep_alive": args.keep_alive, "prompt": args.prompt}
+            )
+        )
     elif args.command == "judge":
         _print_json(
             service.judge(
