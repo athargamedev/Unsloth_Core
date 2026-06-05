@@ -92,3 +92,6 @@ src/dashboard/unity-npc-llm-training-dashboard/.next/
 
 # Pre-commit
 .pre-commit-config-local.yaml
+
+# Submodule noise — CLI-Anything has its own repo; don't scan its changes
+CLI-Anything/
