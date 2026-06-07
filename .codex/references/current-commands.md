@@ -13,7 +13,7 @@ git status --short
 ## Production Pipeline Shape
 
 ```bash
-./ucore generate data/npcs/specs/<npc>.json --technique ollama
+./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b --fresh
 ./ucore sanitize data/datasets/<npc>/ollama/train.jsonl \
   --output data/datasets/<npc>/ollama/train_clean.jsonl \
   --strict-canonical --require-complete-metadata

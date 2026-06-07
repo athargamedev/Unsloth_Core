@@ -2,6 +2,19 @@
 
 ## Overview
 
+The preferred agent/operator entrypoint is the target workflow runner:
+
+```bash
+./ucore target plan --npc-key <npc> --technique ollama \
+  --profile npc-production-grounded --target-stage evaluate
+./ucore target run --npc-key <npc> --technique ollama \
+  --profile npc-production-grounded --target-stage evaluate --resume
+```
+
+This state-aware runner plans and executes the canonical stages with cache, lineage,
+GPU policy, and artifact checks. Use the manual commands below only for advanced
+recovery or debugging.
+
 The Unsloth Core training pipeline transforms an NPC subject specification into a playable GGUF-quantized LoRA model ready for Unity deployment. The pipeline follows nine canonical stages tracked in the pipeline run manifest:
 
 ```
@@ -34,12 +47,18 @@ Runs before expensive pipeline stages to check the local environment and apply s
 
 ### Stage 1: Generate Dataset
 
-**Entry point:** `./ucore generate <spec>`
-**Script:** `src/core/dataset/generate_dataset.py`
+**Production entry point:** `./ucore generate-ollama <spec>`
+**Script:** `src/core/dataset/generate_dataset_ollama.py`
+
+**Legacy/smoke entry point:** `./ucore generate <spec>`
+**Legacy script:** `src/core/dataset/generate_dataset.py`
 
 Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 
-**Technique selection (--technique):**
+**Production rule:** use `./ucore generate-ollama` for Ollama production data.
+`./ucore generate --technique ollama` is legacy/fallback and should not be used for production.
+
+**Technique selection for legacy `generate` (--technique):**
 
 | Technique | Description | When to use |
 |-----------|-------------|-------------|
@@ -59,7 +78,7 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 ```bash
 ./ucore generate data/npcs/specs/history_guide.json
 ./ucore generate data/npcs/specs/history_guide.json --technique template
-./ucore generate data/npcs/specs/history_guide.json --technique ollama --model llama3.1
+./ucore generate-ollama data/npcs/specs/history_guide.json --model qwen2.5:7b --fresh
 ./ucore generate data/npcs/specs/history_guide.json --technique template --push-to-confident  # Push dataset to Confident AI
 ```
 

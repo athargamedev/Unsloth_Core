@@ -250,7 +250,7 @@ export function DatasetPipelinePanel({ availableCommands, subjects, onTriggerCom
           commandId: 'dataset-sanitize',
           type: 'Dataset',
           options: {
-            datasetPath: `subjects/datasets/${npcKey}/${technique}/train.jsonl`,
+            datasetPath: `data/datasets/${npcKey}/${technique}/train.jsonl`,
             ...sanitizeConfig,
           },
         }),

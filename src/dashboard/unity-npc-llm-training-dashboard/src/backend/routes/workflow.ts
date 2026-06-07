@@ -86,7 +86,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
             type: "Dataset",
             spec,
             options: {
-              datasetPath: `subjects/datasets/${npcKey}/${technique}/train.jsonl`,
+              datasetPath: `data/datasets/${npcKey}/${technique}/train.jsonl`,
             },
           },
         },
@@ -102,7 +102,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
             spec,
             preset,
             options: {
-              dataPath: `subjects/datasets/${npcKey}/${technique}/train_clean.jsonl`,
+              dataPath: `data/datasets/${npcKey}/${technique}/train_clean.jsonl`,
               requireCanonical: true,
             },
           },

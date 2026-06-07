@@ -58,7 +58,7 @@ export function WorkflowAssistantPanel({ availableCommands, onTriggerCommand, jo
       buildPayload: (spec, manifest) => ({
         commandId: 'dataset-sanitize',
         type: 'Dataset',
-        options: { datasetPath: `subjects/datasets/workflow_assistant/docs/train.jsonl` },
+        options: { datasetPath: `data/datasets/workflow_assistant/docs/train.jsonl` },
       }),
       status: 'idle',
       log: [],
@@ -429,7 +429,7 @@ export function WorkflowAssistantPanel({ availableCommands, onTriggerCommand, jo
             <p>
               The <code className="text-accent">docs</code> technique generates NPC training data by extracting facts, commands, and prose from checked-in documentation. 
               Each source in the manifest defines curated questions and optional section hints to target specific content areas.
-              Output is saved to <code className="text-accent">subjects/datasets/workflow_assistant/docs/</code>.
+              Output is saved to <code className="text-accent">data/datasets/workflow_assistant/docs/</code>.
             </p>
           </div>
         </div>

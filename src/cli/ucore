@@ -227,7 +227,9 @@ def create_parser():
     subparsers = parser.add_subparsers(dest="command", help="Command to run", required=True)
 
     # Generate
-    gen_p = subparsers.add_parser("generate", help="Generate dataset from spec")
+    gen_p = subparsers.add_parser(
+        "generate", help="[LEGACY] Generate dataset from spec — prefer generate-ollama"
+    )
     gen_p.add_argument("spec", help="Path to subject spec JSON")
     gen_mode = gen_p.add_mutually_exclusive_group()
     gen_mode.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
@@ -254,13 +256,13 @@ def create_parser():
     # Generate with Ollama (optimized)
     gen_ollama_p = subparsers.add_parser(
         "generate-ollama",
-        help="Generate dataset using optimized Ollama generator (defaults to local llama3.1-3060-chat)",
+        help="Generate dataset using Ollama (defaults to qwen2.5:7b) — canonical generation command",
     )
     gen_ollama_p.add_argument("spec", help="Path to subject spec JSON")
     gen_ollama_p.add_argument(
         "--model",
-        default="llama3.1-3060-chat:latest",
-        help="Ollama model (default: llama3.1-3060-chat:latest)",
+        default="qwen2.5:7b",
+        help="Ollama model (default: qwen2.5:7b)",
     )
     gen_ollama_p.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
     gen_ollama_p.add_argument(
@@ -724,7 +726,9 @@ def create_parser():
     )
 
     # Export resume
-    exr_p = subparsers.add_parser("export-resume", help="Resume/continue GGUF export for an NPC")
+    exr_p = subparsers.add_parser(
+        "export-resume", help="[DEPRECATED] Resume/continue GGUF export for an NPC (unused)"
+    )
     exr_p.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
     exr_p.add_argument("--model", "-m", help="Base model ID")
     exr_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization")
@@ -733,7 +737,7 @@ def create_parser():
 
     # Export adapter (LoRA-only for LLMUnity)
     ea_p = subparsers.add_parser(
-        "export-adapter", help="Export LoRA adapter as GGUF (for LLMUnity)"
+        "export-adapter", help="[DEPRECATED] Use export (adapter-only by default)"
     )
     ea_p.add_argument("adapter_path", nargs="?", help="Path to PEFT adapter directory")
     ea_p.add_argument("--all", "-a", action="store_true", help="Convert all adapters in outputs/")
@@ -832,7 +836,7 @@ def create_parser():
         help="Evaluate on Confident AI infrastructure instead of locally. Requires --confident.",
     )
     # Quick-eval
-    qe_p = subparsers.add_parser("quick-eval", help="Quick local evaluation (llama-cpp-python)")
+    qe_p = subparsers.add_parser("quick-eval", help="[DEPRECATED] Use evaluate instead")
     qe_p.add_argument("--adapter", required=True, help="Path to LoRA adapter directory")
     qe_p.add_argument("--samples", "-n", type=int, default=20, help="Number of validation samples")
     qe_p.add_argument("--spec", "-s", required=True, help="Subject spec JSON")
@@ -871,7 +875,7 @@ def create_parser():
 
     # Feedback (Self-Improving Dataset Factory)
     fb_p = subparsers.add_parser(
-        "feedback", help="Run the self-improving feedback loop (targeted regeneration)"
+        "feedback", help="[DEPRECATED] Use dataset-eval + generate-ollama --repair instead"
     )
     fb_p.add_argument("feedback_json", help="Path to feedback JSON from evaluate --feedback-json")
     fb_p.add_argument(
@@ -901,7 +905,7 @@ def create_parser():
 
     # Repair (Targeted Dataset Repair)
     rp_p = subparsers.add_parser(
-        "repair", help="Run the dataset repair loop using DeepEval failure reasons"
+        "repair", help="[DEPRECATED] Use dataset-eval + generate-ollama --repair instead"
     )
     rp_p.add_argument("npc_key", help="NPC key (e.g., chef_assistant)")
     rp_p.add_argument(
@@ -909,7 +913,10 @@ def create_parser():
     )
 
     # GRPO Training
-    gr_p = subparsers.add_parser("grpo-train", help="Run GRPO training with DeepEval rewards")
+    gr_p = subparsers.add_parser(
+        "grpo-train",
+        help="[EXPERIMENTAL] GRPO training with DeepEval rewards — not production-ready",
+    )
     gr_p.add_argument("npc_key", help="NPC key")
     gr_p.add_argument("--steps", type=int, default=10, help="Max steps (default: 10)")
     fb_p.add_argument(
@@ -1668,23 +1675,21 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "audit":
         if args.audit_command == "pipeline-plan":
-            from src.core.ops.artifact_registry import ArtifactRegistry
-            from src.core.ops.pipeline_dag import PipelineDAG
+            from src.core.orchestration.target_runner import TargetRunner
 
-            registry = (
-                ArtifactRegistry(args.artifact_index) if args.artifact_index else ArtifactRegistry()
-            )
-            dag = PipelineDAG(registry=registry)
-            plan = dag.plan_to_stage(
-                args.target_stage, npc_key=args.npc_key, technique=args.technique
+            runner = TargetRunner(artifact_index=args.artifact_index)
+            plan = runner.plan(
+                npc_key=args.npc_key,
+                profile="npc-production-grounded",
+                technique=args.technique,
+                target_stage=args.target_stage,
             )
             if args.write:
-                out = dag.write_plan(
-                    args.write, args.target_stage, npc_key=args.npc_key, technique=args.technique
-                )
+                out = Path(args.write)
+                _write_json(out, plan)
                 print(f"Pipeline plan written: {out}")
             else:
-                print(json.dumps(plan, indent=2, ensure_ascii=False))
+                print(json.dumps(plan, indent=2, ensure_ascii=False, default=str))
             return 0
 
         if args.audit_command == "config-coherence":
@@ -2402,7 +2407,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
         pipeline_hooks = args.workflow_hooks or str(
-            PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique / "workflow_hooks.jsonl"
+            paths.dataset_train_path(npc_key, technique).parent / "workflow_hooks.jsonl"
         )
 
         # Set on the base environment so all child processes inherit it

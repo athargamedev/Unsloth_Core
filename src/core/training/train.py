@@ -1557,7 +1557,7 @@ def main():
             exports_dir.mkdir(parents=True, exist_ok=True)
 
             # Use the unified export.py in adapter mode (fast, no base model loading)
-            export_script = PROJECT_ROOT / "scripts" / "export" / "export.py"
+            export_script = PROJECT_ROOT / "src" / "core" / "export" / "export.py"
             export_cmd = [sys.executable, str(export_script), str(output_dir)]
             if getattr(args, "full_merge_export", False):
                 export_cmd.append("--full-merge")

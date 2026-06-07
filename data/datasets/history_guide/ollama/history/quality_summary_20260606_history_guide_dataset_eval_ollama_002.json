@@ -1,18 +1,18 @@
 {
-  "created_at": "2026-06-06T07:42:56.684217+00:00",
+  "created_at": "2026-06-06T07:40:16.293984+00:00",
   "npc_key": "history_guide",
   "technique": "ollama",
   "judge_provider": "ollama",
   "judge_model": "qwen2.5:7b",
-  "deepeval_identifier": "dataset-quality-history_guide-ollama-fast-20260606-044156",
-  "deepeval_result_identifier": "dataset-quality-history_guide-ollama-fast-20260606-044156",
+  "deepeval_identifier": "dataset-quality-history_guide-ollama-fast-20260606-043912",
+  "deepeval_result_identifier": "dataset-quality-history_guide-ollama-fast-20260606-043912",
   "command": [
     "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
     "test",
     "run",
     "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
     "--identifier",
-    "dataset-quality-history_guide-ollama-fast-20260606-044156",
+    "dataset-quality-history_guide-ollama-fast-20260606-043912",
     "--display",
     "all",
     "--skip-on-missing-params"
@@ -28,7 +28,7 @@
   "metrics": {
     "Constraint Compliance [GEval]": {
       "count": 5,
-      "average_score": 0.92,
+      "average_score": 0.98,
       "pass_rate": 1.0
     },
     "Persona and Category Fit [GEval]": {
@@ -38,7 +38,7 @@
     },
     "Training Usefulness and Specificity [GEval]": {
       "count": 5,
-      "average_score": 0.72,
+      "average_score": 0.74,
       "pass_rate": 1.0
     }
   },

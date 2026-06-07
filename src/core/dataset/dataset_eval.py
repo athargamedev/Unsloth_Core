@@ -68,6 +68,14 @@ def write_json(path: Path, payload: Any) -> None:
         f.write("\n")
 
 
+def dataset_eval_input_records(
+    npc_key: str, technique: str | None, registry: Any
+) -> list[dict[str, Any]]:
+    """Return current dataset_eval lineage inputs for ArtifactRegistry records."""
+    clean_record = registry.latest_artifact(npc_key, "dataset_clean", technique=technique)
+    return [clean_record] if clean_record else []
+
+
 def resolve_deepeval_bin() -> str:
     venv_bin = PROJECT_ROOT / "unsloth_env" / "bin" / "deepeval"
     if venv_bin.exists():
@@ -1192,8 +1200,13 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                 record_pipeline_stage(
                     "dataset_eval", artifacts=manifest_artifacts, metadata=manifest_metadata
                 )
-                from src.core.ops.artifact_registry import record_stage_artifacts_best_effort
+                from src.core.ops.artifact_registry import (
+                    ArtifactRegistry,
+                    record_stage_artifacts_best_effort,
+                )
 
+                artifact_registry = ArtifactRegistry()
+                input_records = dataset_eval_input_records(npc_key, technique, artifact_registry)
                 record_stage_artifacts_best_effort(
                     run.run_id,
                     npc_key,
@@ -1201,6 +1214,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     manifest_artifacts,
                     technique=technique,
                     metadata=manifest_metadata,
+                    input_records=input_records,
                 )
                 record_canonical_bundle(
                     run_id=run.run_id,
@@ -1210,6 +1224,7 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
                     artifacts=manifest_artifacts,
                     metrics=summary,
                     metadata=manifest_metadata,
+                    input_records=input_records,
                 )
             except Exception as e:
                 logger.warning(

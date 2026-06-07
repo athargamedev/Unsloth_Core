@@ -5,7 +5,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.dataset.dataset_contracts import (
+from src.core.dataset.dataset_contracts import (
     MIN_DATASET_EXAMPLES_PER_CATEGORY,
     calculate_distribution_gaps,
     expected_examples_per_category,

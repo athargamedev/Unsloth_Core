@@ -8,7 +8,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 
 def test_dataset_eval_cli_exposes_local_judge_cache_flags(monkeypatch, tmp_path):
-    from scripts.dataset import dataset_eval
+    from src.core.dataset import dataset_eval
 
     cache_path = tmp_path / "judge-cache.sqlite3"
     monkeypatch.setattr(
@@ -32,7 +32,7 @@ def test_dataset_eval_cli_exposes_local_judge_cache_flags(monkeypatch, tmp_path)
 
 
 def test_dataset_eval_judge_cache_env_propagates_path_and_disable_flag(tmp_path):
-    from scripts.dataset.dataset_eval import dataset_eval_judge_cache_env
+    from src.core.dataset.dataset_eval import dataset_eval_judge_cache_env
 
     cache_path = tmp_path / "judge-cache.sqlite3"
 
