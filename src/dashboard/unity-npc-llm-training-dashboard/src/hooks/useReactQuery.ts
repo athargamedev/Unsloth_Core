@@ -289,12 +289,27 @@ export function usePipelineRunsQuery(npcKey?: string, limit = 24) {
 /**
  * Registry-backed readiness plan for an NPC pipeline target stage.
  */
-export function usePipelineReadinessQuery(npcKey?: string, technique = 'notebooklm', targetStage = 'evaluate') {
+export const DEFAULT_PIPELINE_READINESS_TECHNIQUE = 'ollama';
+export const DEPRECATED_NOTEBOOKLM_TECHNIQUE = 'notebooklm';
+
+export function buildPipelineReadinessUrl(
+  npcKey?: string,
+  technique = DEFAULT_PIPELINE_READINESS_TECHNIQUE,
+  targetStage = 'evaluate',
+) {
+  return `/api/pipeline/readiness?npc_key=${encodeURIComponent(npcKey ?? '')}&technique=${encodeURIComponent(technique)}&target_stage=${encodeURIComponent(targetStage)}`;
+}
+
+export function usePipelineReadinessQuery(
+  npcKey?: string,
+  technique = DEFAULT_PIPELINE_READINESS_TECHNIQUE,
+  targetStage = 'evaluate',
+) {
   return useQuery({
     queryKey: queryKeys.pipeline.readiness(npcKey, technique, targetStage),
     queryFn: () =>
       fetchJson<PipelineReadinessPlan>(
-        `/api/pipeline/readiness?npc_key=${encodeURIComponent(npcKey ?? '')}&technique=${encodeURIComponent(technique)}&target_stage=${encodeURIComponent(targetStage)}`,
+        buildPipelineReadinessUrl(npcKey, technique, targetStage),
       ),
     refetchInterval: 15_000,
     staleTime: 10_000,

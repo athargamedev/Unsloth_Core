@@ -2,8 +2,13 @@ import { test } from "node:test";
 import * as assert from "node:assert/strict";
 
 import { buildReadinessPlanFromRecords } from "./src/backend/routes/pipeline";
+import {
+  buildPipelineReadinessUrl,
+  DEFAULT_PIPELINE_READINESS_TECHNIQUE,
+  DEPRECATED_NOTEBOOKLM_TECHNIQUE,
+} from "./src/hooks/useReactQuery";
 
-const artifact = (artifact_type: string, stage: string, path: string, technique = "notebooklm") => ({
+const artifact = (artifact_type: string, stage: string, path: string, technique = DEFAULT_PIPELINE_READINESS_TECHNIQUE) => ({
   ts: new Date().toISOString(),
   npc_key: "history_guide",
   technique,
@@ -13,16 +18,22 @@ const artifact = (artifact_type: string, stage: string, path: string, technique 
   sha256: `sha-${artifact_type}`,
 });
 
+test("default pipeline readiness request uses ollama technique", () => {
+  const url = buildPipelineReadinessUrl("history_guide");
+  assert.equal(DEFAULT_PIPELINE_READINESS_TECHNIQUE, "ollama");
+  assert.match(url, /[?&]technique=ollama(?:&|$)/);
+});
+
 test("buildReadinessPlanFromRecords reports missing artifacts and next required stage", () => {
   const plan = buildReadinessPlanFromRecords(
     [
-      artifact("dataset_raw", "generate", "data/datasets/history_guide/notebooklm/train.jsonl"),
-      artifact("dataset_clean", "sanitize", "data/datasets/history_guide/notebooklm/train_clean.jsonl"),
-      artifact("quality_summary", "dataset_eval", "data/datasets/history_guide/notebooklm/quality_summary.json"),
+      artifact("dataset_raw", "generate", "subjects/datasets/history_guide/ollama/train.jsonl"),
+      artifact("dataset_clean", "sanitize", "subjects/datasets/history_guide/ollama/train_clean.jsonl"),
+      artifact("quality_summary", "dataset_eval", "subjects/datasets/history_guide/ollama/quality_summary.json"),
     ],
     "history_guide",
     "evaluate",
-    "notebooklm",
+    DEFAULT_PIPELINE_READINESS_TECHNIQUE,
     "/repo/.pipeline/artifacts.jsonl",
   );
 
@@ -55,7 +66,7 @@ test("buildReadinessPlanFromRecords marks evaluate ready when all canonical arti
     ],
     "history_guide",
     "evaluate",
-    "notebooklm",
+    DEFAULT_PIPELINE_READINESS_TECHNIQUE,
   );
 
   assert.equal("error" in plan, false);
@@ -73,7 +84,7 @@ test("buildReadinessPlanFromRecords filters by technique", () => {
     ],
     "history_guide",
     "dataset_eval",
-    "notebooklm",
+    DEFAULT_PIPELINE_READINESS_TECHNIQUE,
   );
 
   assert.equal("error" in plan, false);
@@ -82,4 +93,11 @@ test("buildReadinessPlanFromRecords filters by technique", () => {
   assert.equal(plan.ready, false);
   assert.equal(plan.next_required_stage, "generate");
   assert.deepEqual(plan.steps.find((step) => step.stage === "sanitize")?.missing_artifacts, ["dataset_raw"]);
+});
+
+
+test("deprecated notebooklm readiness requires explicit opt-in", () => {
+  const url = buildPipelineReadinessUrl("history_guide", DEPRECATED_NOTEBOOKLM_TECHNIQUE);
+  assert.equal(DEPRECATED_NOTEBOOKLM_TECHNIQUE, "notebooklm");
+  assert.match(url, /[?&]technique=notebooklm(?:&|$)/);
 });
