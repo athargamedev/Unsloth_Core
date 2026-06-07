@@ -20,20 +20,31 @@ from typing import Any
 
 from src.core.ops.artifact_registry import ArtifactRegistry
 from src.core.ops.gpu_lease import GpuLeaseManager
-from src.core.ops.pipeline_dag import PipelineDAG
+from src.core.ops.pipeline_dag import (
+    STAGE_OUTPUT_ARTIFACTS,
+    STAGE_REQUIRED_ARTIFACTS,
+    TECHNIQUE_SCOPED_ARTIFACTS,
+    PipelineDAG,
+    stage_input_signature,
+)
 from src.core.ops.run_registry import RunRegistry, make_pipeline_run_id
+from src.core.orchestration.workflow_spec import WorkflowContext, build_stage_command, repo_root
 
 UCORE_CLI = Path(__file__).resolve().parent.parent.parent / "cli" / "ucore"
+PROJECT_ROOT = UCORE_CLI.parents[2]
 
-# Map pipeline stages to the CLI command that runs them
+# Map pipeline stages to the canonical top-level CLI command family.
+# Generate is finalized by _command_for_stage(): production Ollama uses
+# generate-ollama, while explicitly selected non-production techniques use generate.
 STAGE_COMMANDS: dict[str, list[str]] = {
-    "generate": [str(UCORE_CLI), "dataset", "generate"],
-    "sanitize": [str(UCORE_CLI), "dataset", "sanitize"],
-    "dataset_eval": [str(UCORE_CLI), "dataset", "eval"],
+    "generate": [str(UCORE_CLI), "generate-ollama"],
+    "sanitize": [str(UCORE_CLI), "sanitize"],
+    "dataset_eval": [str(UCORE_CLI), "dataset-eval"],
     "train": [str(UCORE_CLI), "train"],
     "export": [str(UCORE_CLI), "export"],
     "evaluate": [str(UCORE_CLI), "evaluate"],
 }
+NON_PRODUCTION_GENERATION_TECHNIQUES = {"docs", "template", "openai", "anthropic"}
 
 
 class TargetRunner:
@@ -169,6 +180,35 @@ class TargetRunner:
             technique = plan.get("technique")
             profile = plan.get("profile", "default")
 
+            if stage == "train":
+                from src.core.ops.artifact_registry import ArtifactRegistry
+                from src.core.training.train import training_readiness_errors
+
+                ctx = WorkflowContext(
+                    npc_key=npc_key,
+                    technique=technique or "ollama",
+                    profile=profile,
+                )
+                fresh_registry = ArtifactRegistry(self.registry.index_path)
+                self.registry = fresh_registry
+                self.dag = PipelineDAG(registry=self.registry)
+                gate_errors = training_readiness_errors(
+                    PROJECT_ROOT / ctx.clean_train_path,
+                    npc_key=npc_key,
+                    technique=technique,
+                    registry=fresh_registry,
+                )
+                if gate_errors:
+                    cmd["exit_code"] = 1
+                    cmd["error"] = "training_gate_blocked"
+                    cmd["gate_errors"] = gate_errors
+                    if self.verbose:
+                        print("  [blocked] train: dataset quality gate is not ready")
+                        for error in gate_errors:
+                            print(f"    - {error}")
+                    results.append(cmd)
+                    break
+
             run_id = make_pipeline_run_id(npc_key, stage, technique or profile)
             self.run_registry.start_run(
                 run_id=run_id,
@@ -186,13 +226,20 @@ class TargetRunner:
             try:
                 completed = subprocess.run(
                     command,
-                    cwd=UCORE_CLI.parent.parent,
+                    cwd=PROJECT_ROOT,
                     text=True,
                     capture_output=True,
                     timeout=3600,
                 )
                 if completed.returncode == 0:
                     self.run_registry.complete_run(run_id)
+                    self._record_stage_lineage(
+                        stage=stage,
+                        run_id=run_id,
+                        npc_key=npc_key,
+                        technique=technique,
+                        command=command,
+                    )
                     cmd["exit_code"] = 0
                     cmd["stdout"] = completed.stdout[-500:] if completed.stdout else ""
                 else:
@@ -233,6 +280,65 @@ class TargetRunner:
 
     # ── Internal helpers ──────────────────────────────────────────────
 
+    def _record_stage_lineage(
+        self,
+        *,
+        stage: str,
+        run_id: str,
+        npc_key: str,
+        technique: str | None,
+        command: list[str],
+    ) -> None:
+        """Append a target-runner lineage record after a successful stage command."""
+        self.registry = ArtifactRegistry(self.registry.index_path)
+        input_records: list[dict[str, Any]] = []
+        for artifact_type in STAGE_REQUIRED_ARTIFACTS.get(stage, []):
+            record = self.registry.latest_artifact(
+                npc_key,
+                artifact_type,
+                technique=technique if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS else None,
+            )
+            if record:
+                input_records.append(record)
+
+        ctx = WorkflowContext(npc_key=npc_key, technique=technique or "ollama")
+        fallback_paths = {
+            "dataset_raw": ctx.raw_train_path,
+            "dataset_clean": ctx.clean_train_path,
+            "quality_summary": ctx.quality_summary_path,
+            "adapter_checkpoint": f"artifacts/models/{npc_key}/latest",
+            "gguf_adapter": ctx.adapter_gguf_path,
+        }
+        metadata = {
+            "input_signature": stage_input_signature(stage, input_records),
+            "producer_command": " ".join(shlex.quote(str(part)) for part in command),
+            "recorded_by": "target-runner",
+        }
+
+        for artifact_type in STAGE_OUTPUT_ARTIFACTS.get(stage, []):
+            latest = self.registry.latest_artifact(
+                npc_key,
+                artifact_type,
+                technique=technique if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS else None,
+            )
+            path = (latest or {}).get("path") or fallback_paths.get(artifact_type)
+            if not path:
+                continue
+            candidate = Path(str(path))
+            if not candidate.exists() and not (PROJECT_ROOT / candidate).exists():
+                continue
+            self.registry.record_artifact(
+                run_id,
+                npc_key,
+                stage,
+                artifact_type,
+                path,
+                technique=technique if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS else None,
+                metadata=metadata,
+            )
+        self.registry = ArtifactRegistry(self.registry.index_path)
+        self.dag = PipelineDAG(registry=self.registry)
+
     def _resolve_commands(
         self,
         plan: dict[str, Any],
@@ -256,10 +362,7 @@ class TargetRunner:
             if action == "skip" and step.get("status") == "cached":
                 continue  # Fully cached, nothing to do
 
-            command = list(STAGE_COMMANDS.get(stage, [str(UCORE_CLI), stage]))
-            technique = plan.get("technique")
-            if technique:
-                command.extend(["--technique", technique])
+            command = self._command_for_stage(stage, plan)
 
             entry: dict[str, Any] = {
                 "stage": stage,
@@ -279,3 +382,65 @@ class TargetRunner:
             commands.append(entry)
 
         return commands
+
+    def _command_for_stage(self, stage: str, plan: dict[str, Any]) -> list[str]:
+        """Return the concrete CLI vector for a pipeline stage."""
+        npc_key = plan["npc_key"]
+        technique = plan.get("technique") or "ollama"
+        spec_path = Path("data") / "npcs" / "specs" / f"{npc_key}.json"
+        dataset_dir = Path("data") / "datasets" / npc_key / technique
+        raw_dataset = dataset_dir / "train.jsonl"
+        clean_dataset = dataset_dir / "train_clean.jsonl"
+        adapter_path = Path("artifacts") / "exports" / npc_key / f"{npc_key}-lora-f16.gguf"
+
+        if stage == "generate":
+            if technique == "ollama":
+                return [*STAGE_COMMANDS[stage], str(spec_path)]
+            if technique in NON_PRODUCTION_GENERATION_TECHNIQUES:
+                return [str(UCORE_CLI), "generate", str(spec_path), "--technique", technique]
+            raise ValueError(
+                f"Unsupported generation technique for TargetRunner: {technique!r}. "
+                "Use 'ollama' for production or an explicit non-production technique."
+            )
+
+        if stage == "sanitize":
+            return [
+                *STAGE_COMMANDS[stage],
+                str(raw_dataset),
+                "--output",
+                str(clean_dataset),
+                "--spec",
+                str(spec_path),
+                "--strict-canonical",
+                "--require-complete-metadata",
+            ]
+
+        if stage == "dataset_eval":
+            return [*STAGE_COMMANDS[stage], str(spec_path), "--technique", technique]
+
+        if stage == "train":
+            return [
+                *STAGE_COMMANDS[stage],
+                str(spec_path),
+                "--from-spec",
+                "--technique",
+                technique,
+                "--preset",
+                "fast-3b",
+                "--export-gguf",
+            ]
+
+        if stage == "export":
+            return [*STAGE_COMMANDS[stage], npc_key]
+
+        if stage == "evaluate":
+            return [
+                *STAGE_COMMANDS[stage],
+                "--candidate",
+                str(adapter_path),
+                "--spec",
+                str(spec_path),
+                "--report-html",
+            ]
+
+        return list(STAGE_COMMANDS.get(stage, [str(UCORE_CLI), stage]))

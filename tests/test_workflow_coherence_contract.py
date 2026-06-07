@@ -167,3 +167,97 @@ def test_ucore_rejects_resume_from_flag_for_train():
     )
     assert result.returncode != 0
     assert "resume-from" in result.stderr
+
+
+def load_ucore_module():
+    import importlib.machinery
+    import importlib.util
+
+    ucore_path = PROJECT_ROOT / "ucore"
+    loader = importlib.machinery.SourceFileLoader("ucore_contract", str(ucore_path))
+    spec = importlib.util.spec_from_loader("ucore_contract", loader, origin=str(ucore_path))
+    mod = importlib.util.module_from_spec(spec)
+    mod.__file__ = str(ucore_path)
+    loader.exec_module(mod)
+    return mod
+
+
+def test_ucore_pipeline_blocks_template_without_explicit_smoke_flag(monkeypatch, capsys):
+    ucore = load_ucore_module()
+    commands = []
+    monkeypatch.setattr(ucore, "run_cmd", lambda cmd, **kwargs: commands.append(cmd))
+
+    result = ucore.main(
+        [
+            "pipeline",
+            "data/npcs/specs/history_guide.json",
+            "--technique",
+            "template",
+            "--skip-spec-validate",
+            "--skip-dataset-eval",
+            "--skip-smoke",
+            "--skip-eval",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 2
+    assert "cannot use template data unless --smoke-template" in captured.err
+    assert commands == []
+
+
+def test_ucore_pipeline_template_requires_smoke_flag_before_train(monkeypatch):
+    import contextlib
+
+    ucore = load_ucore_module()
+    commands = []
+    monkeypatch.setattr(ucore, "run_cmd", lambda cmd, **kwargs: commands.append(cmd))
+    monkeypatch.setattr(ucore, "trace_type", lambda *args, **kwargs: contextlib.nullcontext())
+
+    result = ucore.main(
+        [
+            "pipeline",
+            "data/npcs/specs/history_guide.json",
+            "--technique",
+            "template",
+            "--smoke-template",
+            "--skip-spec-validate",
+            "--skip-dataset-eval",
+            "--skip-smoke",
+            "--skip-eval",
+        ]
+    )
+
+    assert result == 0
+    train_commands = [cmd for cmd in commands if "training/train.py" in " ".join(cmd)]
+    assert train_commands
+    assert "--technique" in train_commands[0]
+    assert "template" in train_commands[0]
+
+
+def test_ucore_pipeline_ollama_uses_optimized_generator(monkeypatch, capsys):
+    import contextlib
+
+    ucore = load_ucore_module()
+    commands = []
+    monkeypatch.setattr(ucore, "run_cmd", lambda cmd, **kwargs: commands.append(cmd))
+    monkeypatch.setattr(ucore, "trace_type", lambda *args, **kwargs: contextlib.nullcontext())
+
+    result = ucore.main(
+        [
+            "pipeline",
+            "data/npcs/specs/history_guide.json",
+            "--skip-spec-validate",
+            "--skip-dataset-eval",
+            "--skip-smoke",
+            "--skip-eval",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert "--skip-dataset-eval is DEV ONLY" in captured.err
+    generate_commands = [cmd for cmd in commands if "generate_dataset" in " ".join(cmd)]
+    assert generate_commands
+    assert "generate_dataset_ollama.py" in " ".join(generate_commands[0])
+    assert "generate_dataset.py" not in " ".join(generate_commands[0])

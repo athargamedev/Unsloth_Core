@@ -6,8 +6,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.ops import ollama_lifecycle as ollama
-from scripts.ops.model_presets import resolve_training_preset
+from src.core.ops import ollama_lifecycle as ollama
+from src.core.ops.model_presets import resolve_training_preset
 
 
 def test_resolve_training_preset_prefers_explicit_exact_and_bucket_defaults():

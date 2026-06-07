@@ -30,6 +30,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_FILES: list[str] = [
     "AGENTS.md",
     "README.md",
+    "SETUP.md",
+    "CONTRIBUTING.md",
     "docs/project-state.md",
     "docs/training-workflow.md",
     "MIGRATION_NOTES.md",
@@ -37,6 +39,11 @@ DEFAULT_FILES: list[str] = [
 
 # Regex, severity, message for legacy paths migrated in Phases 3-5.
 LEGACY_PATTERNS: list[tuple[str, str, str]] = [
+    (
+        r"from scripts\b|import scripts\b",
+        "error",
+        "legacy scripts/ import used; should use canonical src.core paths",
+    ),
     (
         r"\bconfigs/presets\b|\bconfigs/base_configs\b",
         "warn",
@@ -81,7 +88,16 @@ LEGACY_PATTERNS: list[tuple[str, str, str]] = [
 ]
 
 # Regex, severity, message. Keep these focused on references that caused drift.
+DEPRECATED_OLLAMA_GENERATE_PATTERN = (
+    r"\./ucore\s+generate\b(?=[^`\n]*--technique\s+ollama)"
+)
+
 PATTERNS: list[tuple[str, str, str]] = [
+    (
+        DEPRECATED_OLLAMA_GENERATE_PATTERN,
+        "error",
+        "deprecated production generation command; use ./ucore generate-ollama ... --model qwen2.5:7b --fresh",
+    ),
     (
         r"astronomy_guide|fitness_coach",
         "warn",
@@ -112,6 +128,11 @@ PATTERNS: list[tuple[str, str, str]] = [
         "warn",
         "auto-retrain on 6GB can collide with Ollama/training VRAM",
     ),
+    (
+        r"generate.*--technique ollama",
+        "error",
+        "legacy production generation command; use ./ucore generate-ollama instead",
+    ),
     (r"npc-fit/", "error", "old HF namespace; use andreathar/ or TWLgames/"),
 ] + LEGACY_PATTERNS
 
@@ -126,6 +147,18 @@ ALLOWED_CONTEXT: dict[str, list[str]] = {
         "experimental",
         "legacy",
         "not the local default",
+    ],
+    "generate.*--technique ollama": [
+        "deprecated",
+        "avoid",
+        "do not",
+        "don't",
+        "legacy",
+        "not use",
+        "instead",
+        "use generate-ollama",
+        "differ from",
+        "differs from",
     ],
 }
 
@@ -170,6 +203,8 @@ def iter_files(paths: list[str]) -> list[Path]:
 
 def is_allowed(line: str, pattern: str) -> bool:
     lower = line.lower()
+    if pattern == DEPRECATED_OLLAMA_GENERATE_PATTERN:
+        return any(word in lower for word in ("legacy", "avoid"))
     for token, allowed_words in ALLOWED_CONTEXT.items():
         if token in pattern or token in line:
             return any(word in lower for word in allowed_words)
@@ -351,7 +386,7 @@ def _instructions_scan(files: list[Path], base_path: Path) -> list[Finding]:
 
 def audit(paths: list[str], instructions: bool = False) -> tuple[list[Finding], AuditSummary]:
     """Run all scanners and produce findings + summary."""
-    findings = _pattern_scan(paths) if not instructions else []
+    findings = _pattern_scan(paths)
 
     if instructions:
         # Scan all relevant files for instructions-audit

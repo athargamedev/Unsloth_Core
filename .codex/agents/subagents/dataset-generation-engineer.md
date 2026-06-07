@@ -30,10 +30,10 @@ Grounded ollama dataset generation and dataset top-up specialist.
 ## First Commands
 
 ```bash
-./ucore generate data/npcs/specs/<npc>.json --technique ollama
+./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b --fresh
 ```
 
-Use `--fresh` only when checkpoint reuse is clearly causing stale or duplicated generation.
+Use the dedicated `generate-ollama` production path; the legacy `./ucore generate ... --technique ollama` route is deprecated/avoid.
 
 ## Workflow
 

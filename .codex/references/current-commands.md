@@ -13,7 +13,7 @@ git status --short
 ## Production Pipeline Shape
 
 ```bash
-./ucore generate data/npcs/specs/<npc>.json --technique ollama
+./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b --fresh
 ./ucore sanitize data/datasets/<npc>/ollama/train.jsonl \
   --output data/datasets/<npc>/ollama/train_clean.jsonl \
   --strict-canonical --require-complete-metadata
@@ -25,7 +25,7 @@ PATH=/usr/bin:/bin:$PATH ./ucore train data/npcs/specs/<npc>.json \
   --base-model <base-gguf> --spec data/npcs/specs/<npc>.json --report-html
 ```
 
-## Smoke Only
+## Smoke/Dev Only
 
 ```bash
 ./ucore generate data/npcs/specs/<npc>.json --technique template
