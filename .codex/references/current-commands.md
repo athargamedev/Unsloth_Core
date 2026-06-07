@@ -25,7 +25,7 @@ PATH=/usr/bin:/bin:$PATH ./ucore train data/npcs/specs/<npc>.json \
   --base-model <base-gguf> --spec data/npcs/specs/<npc>.json --report-html
 ```
 
-## Smoke Only
+## Smoke/Dev Only
 
 ```bash
 ./ucore generate data/npcs/specs/<npc>.json --technique template

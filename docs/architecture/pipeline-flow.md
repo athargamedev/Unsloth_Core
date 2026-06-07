@@ -75,6 +75,7 @@ Standard output: `.../{technique}/train_clean.jsonl`
 Uses **DeepEval** with a local Ollama judge (`qwen2.5:7b`, 7B params) to evaluate dataset quality before training:
 
 ```bash
+# Smoke/dev template quality gate example
 ./ucore dataset-eval data/npcs/specs/history_guide.json \
   --technique template --judge-model qwen2.5:7b
 ```
@@ -248,7 +249,7 @@ All writes are **best-effort** — a missing database never blocks the pipeline.
 
 ---
 
-## Quick Reference CLI
+## Smoke/Dev Quick Reference CLI
 
 ```bash
 ./ucore validate-spec data/npcs/specs/npc.json --generation-ready

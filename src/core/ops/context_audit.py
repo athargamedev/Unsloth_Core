@@ -88,7 +88,16 @@ LEGACY_PATTERNS: list[tuple[str, str, str]] = [
 ]
 
 # Regex, severity, message. Keep these focused on references that caused drift.
+DEPRECATED_OLLAMA_GENERATE_PATTERN = (
+    r"\./ucore\s+generate\b(?=[^`\n]*--technique\s+ollama)"
+)
+
 PATTERNS: list[tuple[str, str, str]] = [
+    (
+        DEPRECATED_OLLAMA_GENERATE_PATTERN,
+        "error",
+        "deprecated production generation command; use ./ucore generate-ollama ... --model qwen2.5:7b --fresh",
+    ),
     (
         r"astronomy_guide|fitness_coach",
         "warn",
@@ -194,6 +203,8 @@ def iter_files(paths: list[str]) -> list[Path]:
 
 def is_allowed(line: str, pattern: str) -> bool:
     lower = line.lower()
+    if pattern == DEPRECATED_OLLAMA_GENERATE_PATTERN:
+        return any(word in lower for word in ("legacy", "avoid"))
     for token, allowed_words in ALLOWED_CONTEXT.items():
         if token in pattern or token in line:
             return any(word in lower for word in allowed_words)

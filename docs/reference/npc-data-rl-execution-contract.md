@@ -84,9 +84,9 @@ Every SFT JSONL row must include:
 - `metadata.generator_params`: object with generation settings.
 - `metadata.safety_tags`: array, empty when not applicable.
 
-## 4. Quality Gate
+## 4. Smoke/Dev Template Quality Gate
 
-Before training:
+Before smoke/dev template training:
 
 ```bash
 ./ucore validate-spec data/npcs/specs/{npc_key}.json --generation-ready
