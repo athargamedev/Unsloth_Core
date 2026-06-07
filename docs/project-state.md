@@ -1,5 +1,5 @@
 ---
-last_verified: 2026-06-05
+last_verified: 2026-06-07
 next_audit: 2026-07-05
 ---
 
@@ -160,14 +160,20 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
 - P7 Dashboard truthfulness — artifact-registry-backed status, command schema parity
 - P8 NPC component contracts — Pydantic Identity/Tone/Grounding/Refusal/Runtime/Distribution
 - P9 Docs/context cleanup — qwen3→qwen2.5 defaults across 7 docs, inactive NPC examples replaced, stale paths fixed, operator-runbook path corrections
-- P10 Production pilot (in progress) — chef_assistant:
-  - 170 fresh examples generated (156 clean, 100% sanitized)
+- P10 Production pilot (completed 2026-06-07):
+  - Both NPCs trained and evaluated end-to-end:
+    - `history_guide`: run `20260607_fast-1.7b_llama3.2-3b_002`, final loss 1.6116, GGUF 48,655,200 bytes
+    - `chef_assistant`: run `20260607_fast-1.7b_llama3.2-3b_004`, final loss 1.2203
+  - Both runs promoted (best/latest point to current run)
+  - GGUF adapters exported to `artifacts/exports/<npc>/<npc>-lora-f16.gguf`
+  - Evaluation: history_guide 55.6% win rate (5W/2L/2T), chef_assistant 50.0% win rate (5W/5L/0T)
+  - Both evals used CPU fallback (`--gpu-layers 0`) due to GPU OOM on 6GB VRAM
+  - HTML reports: `artifacts/eval/reports/<npc>/eval_20260607T*.html`
+  - Feedback JSONs: `artifacts/eval/results/feedback/<npc>.json`
   - 3 bugs fixed in legacy generate_dataset.py (import error, url=None crash, async fallback)
-  - Corrected generation tool: `./ucore generate-ollama` is production path; `generate --technique ollama` is legacy
-  - DAG shows lineage_missing for pre-metadata runs — train blocked pending approval
-  - All changes committed (976638c, e295612)
-  - Generation workflow saved as Hermes skill (unsloth-core-generation-workflow)
-  - subjects/ path deprecated — added to .gitignore
+  - Fixed `dataset_eval.py` L107 and L607-608 — both `dataset_dir()` and error message now use `dataset_root()` not hardcoded `subjects/datasets/`
+  - Cleared stale quality artifacts from `subjects/datasets/`
+  - All changes committed
 
 **Completed phases (Context):**
 - Create standard agent brief template
@@ -176,6 +182,7 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
 
 **Remaining work:**
 - P2 Train-gate hardening — make ArtifactRegistry lineage properly block on stale/missing input signatures
-- P10 Production pilot — train chef_assistant (approval needed), export GGUF, evaluate adapter
 - Walk through SETUP.md from fresh clone
-- Regenerate history_guide dataset via proper `./ucore generate-ollama` path
+- Regenerate history_guide dataset via proper `./ucore generate-ollama` path (currently forced to template due to `_is_history_subject()` in ollama_orchestrator.py)
+- GPU eval OOM — investigate running llama-server with partial offload (`--gpu-layers` < 99) to fit both base + LoRA on 6GB
+- Address 104+ stale `subjects/` path references across source code (tech debt)

@@ -9,6 +9,9 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 ## Active project state
 
 - Active NPCs: `history_guide`, `chef_assistant` only.
+- **Latest runs:** `history_guide` run `20260607_fast-1.7b_llama3.2-3b_002` (loss 1.61), `chef_assistant` run `20260607_fast-1.7b_llama3.2-3b_004` (loss 1.22). Both promoted. GGUF exports at `artifacts/exports/<npc>/`.
+- **Eval results:** history_guide 5/9 wins (55.6%), chef_assistant 5/10 wins (50.0%). GPU OOM forced CPU fallback (`--gpu-layers 0`).
+- **Bug fixed:** `dataset_eval.py` both `dataset_dir()` function and error message now use canonical `dataset_root()` instead of hardcoded `subjects/datasets/`.
 - Production dataset rule: use the current approved grounded workflow. NotebookLM is no longer used. Template generation is smoke/dev only.
 - Local tested Ollama judge/default: `qwen2.5:7b` unless a fresh benchmark says otherwise.
 - Local GPU: RTX 3060-class 6GB VRAM. Unload Ollama before train/eval when it holds VRAM.
