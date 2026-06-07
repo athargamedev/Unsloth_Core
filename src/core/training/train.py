@@ -806,7 +806,7 @@ def get_model_and_tokenizer(config):
         dtype=None,
         load_in_4bit=True,
         quantization_config=bnb_config,
-        device_map="auto",
+        device_map=0,
         gpu_memory_utilization=gpu_memory_utilization,
     )
     _patch_tokenizers_backend_special_tokens(tokenizer)
@@ -941,9 +941,9 @@ def run_training(model, tokenizer, dataset, eval_dataset, config, preset_name: s
         logging_steps=10,
         save_steps=training.get("save_steps", 50),
         eval_steps=training.get("eval_steps", 50),
-        eval_strategy="steps" if eval_dataset else "no",
+        eval_strategy="no",  # Skip eval on 6GB GPU — OOMs on accelerate convert_to_fp32
         save_total_limit=3,
-        load_best_model_at_end=True if eval_dataset else False,
+        load_best_model_at_end=False,
         report_to=report_to,
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),

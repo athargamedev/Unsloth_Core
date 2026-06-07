@@ -17,6 +17,7 @@ from urllib.parse import urlparse, urlunparse
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.config.paths import dataset_root
 from src.config.workflow_context import resolve_workflow_context
 from src.core.dataset.dataset_contracts import (
     SUPPORTED_DATASET_CATEGORIES,
@@ -104,7 +105,7 @@ def _normalize_ollama_base_url(base_url: str) -> str:
 
 
 def dataset_dir(npc_key: str, technique: str) -> Path:
-    return PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique
+    return dataset_root() / npc_key / technique
 
 
 def latest_deepeval_result() -> dict:
@@ -602,10 +603,13 @@ def run_deepeval(args: argparse.Namespace, spec: dict) -> int:
     ).rstrip("/")
     is_pull = bool(getattr(args, "pull_alias", None))
     if not is_pull and not clean_path.exists():
+        from src.config.paths import dataset_root
+
+        dd = dataset_root() / npc_key / technique
         raise SystemExit(
             f"Error: {clean_path} does not exist. Run sanitize first, for example:\n"
-            f"  ./ucore sanitize subjects/datasets/{npc_key}/{technique}/train.jsonl "
-            f"--output subjects/datasets/{npc_key}/{technique}/train_clean.jsonl --strict-canonical"
+            f"  ./ucore sanitize {dd}/train.jsonl "
+            f"--output {dd}/train_clean.jsonl --strict-canonical"
         )
 
     cases_per_category = effective_cases_per_category(args)

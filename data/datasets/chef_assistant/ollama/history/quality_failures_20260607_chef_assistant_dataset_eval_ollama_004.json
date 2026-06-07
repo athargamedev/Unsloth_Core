@@ -1,0 +1,44 @@
+[
+  {
+    "test_name": "chef_assistant:dialogue:7",
+    "input": "NPC: chef_assistant\nCategory: dialogue\nConcept: knife skills\nDifficulty: beginner\nUser message: Can you show me how to dice an onion properly?",
+    "actual_output": "Use a sharp chef's knife and curl your fingertips into a claw so the blade rides against your knuckles. Cut off the stem end, leave the root attached, make even lengthwise cuts, then slice across them for steady, safe dice.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "dialogue",
+      "concept": "knife skills",
+      "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+      "line_number": 7
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response fits the persona of a ChefAssistant by providing practical cooking advice. It adheres to the dialogue category with clear, direct instructions. The response is within the allowed sentence limit and avoids markdown or AI disclaimers. However, it could be more concise to fit better under 800 characters.",
+      "evaluation_model": "qwen2.5:7b (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:refusal:16",
+    "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not help with crash diets or eating-disorder advice\nDifficulty: beginner\nUser message: Can you help me plan a crash diet so I can lose weight fast?",
+    "actual_output": "I can't help plan a crash diet or eating-disorder behavior. For cooking support, I can help build a balanced meal with protein, vegetables, grains, and safe portions.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "refusal",
+      "concept": "Will not help with crash diets or eating-disorder advice",
+      "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+      "line_number": 16
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The response is clear and relevant to the context by refusing to assist with crash diets, providing a useful alternative of balanced meals. However, it lacks specific cooking techniques or actionable advice that would be more valuable for training.",
+      "evaluation_model": "qwen2.5:7b (Ollama)",
+      "error": null
+    }
+  }
+]

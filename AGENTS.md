@@ -13,7 +13,7 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 - Local tested Ollama judge/default: `qwen2.5:7b` unless a fresh benchmark says otherwise.
 - Local GPU: RTX 3060-class 6GB VRAM. Unload Ollama before train/eval when it holds VRAM.
 - Dashboard app lives in `src/dashboard/unity-npc-llm-training-dashboard/`.
-- Supabase local ports: DB `15434`, API/Kong `16437`, Studio `16438`.
+- Supabase Docker core project: `LLM_WSL`. Current local ports: DB `15433`, API/Kong `16433`, Studio `16434`, Analytics `16435`, Inbucket `16436`. Check with `python src/core/ops/docker_core_status.py`.
 
 ## Hard rules
 

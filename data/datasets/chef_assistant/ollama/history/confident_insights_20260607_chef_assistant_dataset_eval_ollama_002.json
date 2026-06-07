@@ -1,0 +1,406 @@
+{
+  "artifact_paths": {
+    "quality_failures": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/quality_failures.json",
+    "quality_report": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/quality_report.json",
+    "quality_summary": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/quality_summary.json"
+  },
+  "component_counts": {
+    "dataset_distribution": 4
+  },
+  "confident_payload": {
+    "hyperparameters": {
+      "local_status": "structural_failure",
+      "npc_key": "chef_assistant",
+      "project": "Unsloth_Core",
+      "technique": "ollama"
+    },
+    "identifier": "dataset-quality:chef_assistant:ollama:20260607T082922Z",
+    "llmTestCases": [
+      {
+        "actualOutput": "I can't help with that request. That is outside my role as ChefAssistant. Instead, I can help with a safe recipe, a technique, or a safer cooking alternative with a clear next step.",
+        "context": [],
+        "customColumnKeyValues": {
+          "category": "refusal",
+          "component": "dataset_distribution",
+          "concept": "Will not help with crash diets or eating-disorder advice",
+          "line_number": 16,
+          "metric": "Persona and Category Fit [GEval]",
+          "npc_key": "chef_assistant",
+          "project": "Unsloth_Core",
+          "reason": "The response fits the refusal category but exceeds the sentence limit and uses a header-like structure, which is not allowed.",
+          "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
+          "score": 0.4,
+          "technique": "ollama"
+        },
+        "expectedOutput": "",
+        "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not help with crash diets or eating-disorder advice\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve cooking fundamentals?",
+        "name": "chef_assistant:refusal:16"
+      },
+      {
+        "actualOutput": "I'm ChefAssistant; I turn cooking problems into clear steps, from prep to finish, and I can help you choose the next move. I keep the answer grounded in temperature, texture, and safe handling. That way the fix is practical, not vague.",
+        "context": [],
+        "customColumnKeyValues": {
+          "category": "identity",
+          "component": "dataset_distribution",
+          "concept": "kitchen organization",
+          "line_number": 17,
+          "metric": "Persona and Category Fit [GEval]",
+          "npc_key": "chef_assistant",
+          "project": "Unsloth_Core",
+          "reason": "The response fits the identity category with a clear role statement but exceeds the sentence limit and uses forbidden markdown formatting.",
+          "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
+          "score": 0.4,
+          "technique": "ollama"
+        },
+        "expectedOutput": "",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: kitchen organization\nDifficulty: beginner\nUser message: Hi ChefAssistant, can you give me some tips on keeping the kitchen organized while I'm cooking?",
+        "name": "chef_assistant:identity:17"
+      },
+      {
+        "actualOutput": "I'm ChefAssistant; I turn cooking problems into clear steps, from prep to finish, and I can help you choose the next move. I keep the answer grounded in temperature, texture, and safe handling. That way the fix is practical, not vague.",
+        "context": [],
+        "customColumnKeyValues": {
+          "category": "identity",
+          "component": "dataset_distribution",
+          "concept": "kitchen organization",
+          "line_number": 17,
+          "metric": "Training Usefulness and Specificity [GEval]",
+          "npc_key": "chef_assistant",
+          "project": "Unsloth_Core",
+          "reason": "The response is vague and generic, lacking specific kitchen organization tips. It does not provide concrete, actionable advice for beginners as required by the rubric.",
+          "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
+          "score": 0.2,
+          "technique": "ollama"
+        },
+        "expectedOutput": "",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: kitchen organization\nDifficulty: beginner\nUser message: Hi ChefAssistant, can you give me some tips on keeping the kitchen organized while I'm cooking?",
+        "name": "chef_assistant:identity:17"
+      },
+      {
+        "actualOutput": "I'm ChefAssistant; I turn cooking problems into clear steps, from prep to finish, and I can help you choose the next move. I keep the answer grounded in temperature, texture, and safe handling. That way the fix is practical, not vague.",
+        "context": [],
+        "customColumnKeyValues": {
+          "category": "identity",
+          "component": "dataset_distribution",
+          "concept": "kitchen organization",
+          "line_number": 17,
+          "metric": "Constraint Compliance [GEval]",
+          "npc_key": "chef_assistant",
+          "project": "Unsloth_Core",
+          "reason": "The response is clear and relevant to kitchen organization but exceeds the sentence length constraint by providing more detail than necessary. It also introduces a new concept (clear steps vs. vague answers) that wasn't directly asked for in the context.",
+          "repair_action": "top up missing categories/concepts, then sanitize and re-gate",
+          "score": 0.6,
+          "technique": "ollama"
+        },
+        "expectedOutput": "",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: kitchen organization\nDifficulty: beginner\nUser message: Hi ChefAssistant, can you give me some tips on keeping the kitchen organized while I'm cooking?",
+        "name": "chef_assistant:identity:17"
+      }
+    ],
+    "metricCollection": {
+      "include": [
+        "Persona and Category Fit",
+        "Training Usefulness and Specificity",
+        "Grounding and Specificity",
+        "Runtime Constraint Fit"
+      ],
+      "name": "unsloth-core-dataset-repair"
+    }
+  },
+  "created_at": "2026-06-07T08:29:22.626382+00:00",
+  "kind": "dataset_quality_insights",
+  "npc_key": "chef_assistant",
+  "project": "Unsloth_Core",
+  "recommended_next_actions": [
+    {
+      "action": "top up missing categories/concepts, then sanitize and re-gate",
+      "component": "dataset_distribution",
+      "count": 4
+    }
+  ],
+  "status": "structural_failure",
+  "summary": {
+    "cases_per_category": 1,
+    "categories": {
+      "dialogue": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "total": 1
+      },
+      "identity": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "total": 1
+      },
+      "quest": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "total": 1
+      },
+      "refusal": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "total": 1
+      },
+      "teaching": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "total": 1
+      }
+    },
+    "command": [
+      "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+      "test",
+      "run",
+      "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+      "--identifier",
+      "dataset-quality-chef_assistant-ollama-fast-20260607-052747",
+      "--display",
+      "all",
+      "--skip-on-missing-params"
+    ],
+    "created_at": "2026-06-07T08:29:22.599415+00:00",
+    "dataset_summary": {
+      "assistant_density": {
+        "by_category": {
+          "dialogue": {
+            "chars": {
+              "avg": 163.97,
+              "count": 32,
+              "max": 262,
+              "min": 107
+            },
+            "sentences": {
+              "avg": 2.12,
+              "count": 32,
+              "max": 3,
+              "min": 1
+            },
+            "words": {
+              "avg": 28.38,
+              "count": 32,
+              "max": 47,
+              "min": 20
+            }
+          },
+          "identity": {
+            "chars": {
+              "avg": 213.0,
+              "count": 11,
+              "max": 258,
+              "min": 108
+            },
+            "sentences": {
+              "avg": 2.64,
+              "count": 11,
+              "max": 3,
+              "min": 1
+            },
+            "words": {
+              "avg": 37.18,
+              "count": 11,
+              "max": 45,
+              "min": 17
+            }
+          },
+          "quest": {
+            "chars": {
+              "avg": 153.5,
+              "count": 16,
+              "max": 225,
+              "min": 112
+            },
+            "sentences": {
+              "avg": 2.12,
+              "count": 16,
+              "max": 3,
+              "min": 2
+            },
+            "words": {
+              "avg": 27.38,
+              "count": 16,
+              "max": 37,
+              "min": 19
+            }
+          },
+          "refusal": {
+            "chars": {
+              "avg": 162.67,
+              "count": 12,
+              "max": 223,
+              "min": 89
+            },
+            "sentences": {
+              "avg": 2.5,
+              "count": 12,
+              "max": 3,
+              "min": 2
+            },
+            "words": {
+              "avg": 27.67,
+              "count": 12,
+              "max": 37,
+              "min": 15
+            }
+          },
+          "teaching": {
+            "chars": {
+              "avg": 178.46,
+              "count": 80,
+              "max": 310,
+              "min": 100
+            },
+            "sentences": {
+              "avg": 2.25,
+              "count": 80,
+              "max": 3,
+              "min": 1
+            },
+            "words": {
+              "avg": 31.62,
+              "count": 80,
+              "max": 58,
+              "min": 18
+            }
+          }
+        },
+        "chars": {
+          "avg": 174.01,
+          "count": 151,
+          "max": 310,
+          "min": 89
+        },
+        "sentences": {
+          "avg": 2.26,
+          "count": 151,
+          "max": 3,
+          "min": 1
+        },
+        "words": {
+          "avg": 30.58,
+          "count": 151,
+          "max": 58,
+          "min": 15
+        }
+      },
+      "by_category": {
+        "dialogue": 32,
+        "identity": 11,
+        "quest": 16,
+        "refusal": 12,
+        "teaching": 80
+      },
+      "by_concept": {
+        "Will not help with crash diets or eating-disorder advice": 3,
+        "Will not recommend unsafe shortcuts that ignore food safety": 4,
+        "chef_assistant": 5,
+        "cooking techniques": 22,
+        "flavor balance": 21,
+        "food safety": 18,
+        "ingredient science": 19,
+        "kitchen organization": 20,
+        "kitchen workflow": 18,
+        "knife skills": 21
+      },
+      "by_difficulty": {
+        "advanced": 30,
+        "beginner": 65,
+        "intermediate": 56
+      },
+      "by_split": {
+        "train": 151
+      },
+      "content_sha256": "sha256:9411085b9e869888a2473d16ccca01e07354114df8f7d061e40e77291a39d41b",
+      "exists": true,
+      "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
+      "total": 151,
+      "unknown_rows": 0
+    },
+    "dataset_total_rows": 151,
+    "dataset_unknown_rows": 0,
+    "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260607-052747",
+    "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260607-052747",
+    "distribution_gaps": [
+      {
+        "actual": 11,
+        "category": "identity",
+        "shortfall": 1,
+        "target": 12
+      },
+      {
+        "actual": 12,
+        "category": "refusal",
+        "shortfall": 4,
+        "target": 16
+      }
+    ],
+    "expected_distribution": {
+      "dialogue": 32,
+      "identity": 12,
+      "quest": 16,
+      "refusal": 16,
+      "teaching": 80
+    },
+    "failed": 2,
+    "failures_path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/quality_failures.json",
+    "judge_model": "qwen2.5:7b",
+    "judge_provider": "ollama",
+    "metric_count": 15,
+    "metrics": {
+      "Constraint Compliance [GEval]": {
+        "average_score": 0.84,
+        "count": 5,
+        "pass_rate": 0.8
+      },
+      "Persona and Category Fit [GEval]": {
+        "average_score": 0.64,
+        "count": 5,
+        "pass_rate": 0.6
+      },
+      "Training Usefulness and Specificity [GEval]": {
+        "average_score": 0.64,
+        "count": 5,
+        "pass_rate": 0.8
+      }
+    },
+    "npc_key": "chef_assistant",
+    "null_metric_count": 0,
+    "null_metric_rate": 0.0,
+    "pass_rate": 0.6,
+    "passed": 3,
+    "quality_gate_mode": "fast",
+    "sanitizer": {
+      "discarded_total": 5,
+      "flagged_for_review": 0,
+      "passed_threshold": 151,
+      "quality_scores": {
+        "distribution": {
+          "0-9": 0,
+          "10-19": 0,
+          "100+": 0,
+          "20-29": 0,
+          "30-39": 0,
+          "40-49": 0,
+          "50-59": 0,
+          "60-69": 0,
+          "70-79": 77,
+          "80-89": 60,
+          "90-99": 14
+        },
+        "flagged_for_review": 0,
+        "max": 91,
+        "mean": 80.2,
+        "median": 78,
+        "min": 74,
+        "passed_threshold": 151,
+        "std_dev": 4.3
+      },
+      "total_output": 151
+    },
+    "sanitizer_quality_issues": [],
+    "status": "structural_failure",
+    "technique": "ollama",
+    "total": 5
+  },
+  "technique": "ollama"
+}

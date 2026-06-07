@@ -1,0 +1,106 @@
+{
+  "npc_key": "chef_assistant",
+  "technique": "ollama",
+  "model": "qwen2.5:7b",
+  "generation": {
+    "date": "2026-06-07T03:10:05Z",
+    "seed": 42,
+    "temperature": 0.6,
+    "multi_turn_ratio": 0.25,
+    "version": "ollama-v2"
+  },
+  "spec": {
+    "file": "/home/athar/Projects/Unsloth_Core/data/npcs/specs/chef_assistant.json",
+    "hash": "sha256:91cbd1f844c0e1686457c208a1b52cb5867e3efa8ae3e2d3e16bb0c1b0431f52"
+  },
+  "contract": {
+    "supported_categories": [
+      "identity",
+      "teaching",
+      "dialogue",
+      "quest",
+      "refusal"
+    ],
+    "minimum_examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 80,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "valid_difficulty_levels": [
+      "beginner",
+      "intermediate",
+      "advanced"
+    ],
+    "spec_npc_key": "chef_assistant",
+    "reference_doc": "data/npcs/reference_docs/chef_assistant_primer.md",
+    "technique": null
+  },
+  "distribution": {
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 80,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "generation_request_examples_per_category": {
+      "identity": 13,
+      "teaching": 90,
+      "dialogue": 36,
+      "quest": 18,
+      "refusal": 18
+    },
+    "observed_examples_per_category": {
+      "identity": 13,
+      "teaching": 90,
+      "dialogue": 36,
+      "quest": 18,
+      "refusal": 18
+    },
+    "distribution_gaps": []
+  },
+  "statistics": {
+    "total": 175,
+    "train": 156,
+    "validation": 19,
+    "by_category": {
+      "identity": 13,
+      "teaching": 90,
+      "dialogue": 36,
+      "quest": 18,
+      "refusal": 18
+    },
+    "by_difficulty": {
+      "beginner": 81,
+      "intermediate": 61,
+      "advanced": 33
+    },
+    "by_concept": {
+      "cooking techniques": 25,
+      "food safety": 23,
+      "kitchen organization": 22,
+      "knife skills": 22,
+      "flavor balance": 22,
+      "kitchen workflow": 22,
+      "ingredient science": 20,
+      "Will not recommend unsafe shortcuts that ignore food safety": 9,
+      "chef_assistant": 7,
+      "Will not help with crash diets or eating-disorder advice": 3
+    },
+    "generator_stats": {
+      "requests": 175,
+      "successes": 175,
+      "errors": 0,
+      "success_rate": 1.0
+    }
+  }
+}

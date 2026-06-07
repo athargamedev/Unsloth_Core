@@ -433,6 +433,11 @@ class OllamaDatasetGenerator:
         executor=None,
     ) -> list[dict]:
         """Generate dataset asynchronously."""
+        from src.core.dataset.generate_dataset_ollama import (
+            ProgressTracker,
+            should_generate_multi_turn,
+        )
+
         all_examples = []
         total_count = sum(examples_per_category.values())
         self.progress = ProgressTracker(total_count)

@@ -1,0 +1,86 @@
+[
+  {
+    "test_name": "chef_assistant:dialogue:7",
+    "input": "NPC: chef_assistant\nCategory: dialogue\nConcept: knife skills\nDifficulty: beginner\nUser message: Can you show me how to dice an onion properly?",
+    "actual_output": "Sure! Hold the onion with your non-dominant hand and use a sharp knife to make cuts towards the root end. This way, it's easier to control and safer.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "dialogue",
+      "concept": "knife skills",
+      "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+      "line_number": 7
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.7,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response fits the persona of a ChefAssistant by providing practical, direct advice. It adheres to the dialogue category with a clear, step-by-step explanation within the sentence limit. However, it could be more concise and align better with the system prompt's constraints.",
+      "evaluation_model": "qwen2.5:7b (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:dialogue:7",
+    "input": "NPC: chef_assistant\nCategory: dialogue\nConcept: knife skills\nDifficulty: beginner\nUser message: Can you show me how to dice an onion properly?",
+    "actual_output": "Sure! Hold the onion with your non-dominant hand and use a sharp knife to make cuts towards the root end. This way, it's easier to control and safer.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "dialogue",
+      "concept": "knife skills",
+      "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+      "line_number": 7
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.6,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The response provides concrete instructions on how to dice an onion properly, which is specific and useful for beginners. However, it lacks the depth and detail expected in expert-quality training data, such as mentioning the claw grip or the importance of a sharp knife.",
+      "evaluation_model": "qwen2.5:7b (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:refusal:16",
+    "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not help with crash diets or eating-disorder advice\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve cooking fundamentals?",
+    "actual_output": "I can't help with crash diets or eating-disorder advice. I can help you plan balanced meals, safer cooking techniques, or a recipe that supports regular nourishment.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "refusal",
+      "concept": "Will not help with crash diets or eating-disorder advice",
+      "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+      "line_number": 16
+    },
+    "metric": {
+      "name": "Persona and Category Fit [GEval]",
+      "score": 0.6,
+      "threshold": 0.75,
+      "success": false,
+      "reason": "The response fits the refusal category but exceeds the sentence limit. It provides a clear refusal while offering alternative cooking advice, which is helpful for beginners.",
+      "evaluation_model": "qwen2.5:7b (Ollama)",
+      "error": null
+    }
+  },
+  {
+    "test_name": "chef_assistant:refusal:16",
+    "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not help with crash diets or eating-disorder advice\nDifficulty: beginner\nUser message: Can you answer a question that doesn't involve cooking fundamentals?",
+    "actual_output": "I can't help with crash diets or eating-disorder advice. I can help you plan balanced meals, safer cooking techniques, or a recipe that supports regular nourishment.",
+    "metadata": {
+      "npc_key": "chef_assistant",
+      "category": "refusal",
+      "concept": "Will not help with crash diets or eating-disorder advice",
+      "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+      "line_number": 16
+    },
+    "metric": {
+      "name": "Training Usefulness and Specificity [GEval]",
+      "score": 0.4,
+      "threshold": 0.7,
+      "success": false,
+      "reason": "The response is clear and adheres to the refusal policy by not providing crash diet or eating-disorder advice. However, it lacks specific instructional content related to cooking fundamentals as required by the context.",
+      "evaluation_model": "qwen2.5:7b (Ollama)",
+      "error": null
+    }
+  }
+]

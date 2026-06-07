@@ -1,36 +1,36 @@
 {
   "npc_key": "history_guide",
-  "baseline": "Models/llama-3.2-3b-instruct-q4_k_m",
+  "baseline": ".models/llama-3.2-3b-instruct-q4_k_m",
   "candidate": "history_guide/history_guide-lora-f16",
   "wandb_url": null,
   "wandb_run_id": null,
   "wandb_project": "unsloth-core",
   "wandb_entity": null,
   "total_examples": 9,
-  "baseline_wins": 1,
-  "candidate_wins": 8,
-  "ties": 0,
-  "win_rate": 0.8888888888888888,
-  "avg_baseline_words": 71.88888888888889,
-  "avg_candidate_words": 58.55555555555556,
-  "avg_baseline_sentences": 3.2222222222222223,
-  "avg_candidate_sentences": 3.6666666666666665,
+  "baseline_wins": 2,
+  "candidate_wins": 5,
+  "ties": 2,
+  "win_rate": 0.5555555555555556,
+  "avg_baseline_words": 85.33333333333333,
+  "avg_candidate_words": 36.0,
+  "avg_baseline_sentences": 3.5555555555555554,
+  "avg_candidate_sentences": 2.6666666666666665,
   "per_concept": {
     "identity/history_guide": {
       "total": 1,
       "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 35.84,
-      "avg_candidate_quality": 20.79,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 39.7,
+      "avg_candidate_quality": 23.98,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "Could you explain: What is your name?",
-          "winner": "candidate",
-          "candidate_quality": 20.79,
-          "candidate_words": 8,
+          "winner": "tie",
+          "candidate_quality": 23.98,
+          "candidate_words": 14,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -42,15 +42,15 @@
       "candidate_wins": 0,
       "ties": 0,
       "win_rate": 0.0,
-      "avg_baseline_quality": 34.97,
-      "avg_candidate_quality": 36.11,
+      "avg_baseline_quality": 38.71,
+      "avg_candidate_quality": 35.84,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "Test my knowledge of medieval history with a question.",
           "winner": "baseline",
-          "candidate_quality": 36.11,
-          "candidate_words": 48,
+          "candidate_quality": 35.84,
+          "candidate_words": 56,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -62,15 +62,15 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 40.07,
-      "avg_candidate_quality": 36.64,
+      "avg_baseline_quality": 41.59,
+      "avg_candidate_quality": 32.58,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "Could you explain: Tell me something interesting about medieval history. Keep it simple.",
           "winner": "candidate",
-          "candidate_quality": 36.64,
-          "candidate_words": 48,
+          "candidate_quality": 32.58,
+          "candidate_words": 28,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -82,15 +82,15 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 42.77,
-      "avg_candidate_quality": 28.9,
+      "avg_baseline_quality": 46.82,
+      "avg_candidate_quality": 34.34,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "What definitely would have happened if this historical event went the other way?",
           "winner": "candidate",
-          "candidate_quality": 28.9,
-          "candidate_words": 18,
+          "candidate_quality": 34.34,
+          "candidate_words": 34,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -102,16 +102,16 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 42.9,
-      "avg_candidate_quality": 38.5,
-      "constraint_violations": 0,
+      "avg_baseline_quality": 42.77,
+      "avg_candidate_quality": 39.12,
+      "constraint_violations": 1,
       "examples": [
         {
           "question": "I was wondering, What is the history behind modern history?",
           "winner": "candidate",
-          "candidate_quality": 38.5,
-          "candidate_words": 55,
-          "sentences_ok": true,
+          "candidate_quality": 39.12,
+          "candidate_words": 77,
+          "sentences_ok": false,
           "no_ai_disclaimer": true
         }
       ]
@@ -119,18 +119,18 @@
     "dialogue/classical antiquity": {
       "total": 1,
       "baseline_wins": 0,
-      "candidate_wins": 1,
-      "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 36.89,
-      "avg_candidate_quality": 33.67,
+      "candidate_wins": 0,
+      "ties": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 37.84,
+      "avg_candidate_quality": 23.03,
       "constraint_violations": 0,
       "examples": [
         {
           "question": "I get the basics. What's next after classical antiquity? Keep it simple.",
-          "winner": "candidate",
-          "candidate_quality": 33.67,
-          "candidate_words": 42,
+          "winner": "tie",
+          "candidate_quality": 23.03,
+          "candidate_words": 11,
           "sentences_ok": true,
           "no_ai_disclaimer": true
         }
@@ -142,16 +142,16 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 40.07,
-      "avg_candidate_quality": 37.61,
-      "constraint_violations": 0,
+      "avg_baseline_quality": 40.94,
+      "avg_candidate_quality": 35.84,
+      "constraint_violations": 1,
       "examples": [
         {
           "question": "Why is historical methodology important?",
           "winner": "candidate",
-          "candidate_quality": 37.61,
-          "candidate_words": 54,
-          "sentences_ok": true,
+          "candidate_quality": 35.84,
+          "candidate_words": 48,
+          "sentences_ok": false,
           "no_ai_disclaimer": true
         }
       ]
@@ -162,44 +162,49 @@
       "candidate_wins": 1,
       "ties": 0,
       "win_rate": 1.0,
-      "avg_baseline_quality": 39.12,
-      "avg_candidate_quality": 38.29,
-      "constraint_violations": 0,
+      "avg_baseline_quality": 33.32,
+      "avg_candidate_quality": 36.11,
+      "constraint_violations": 1,
       "examples": [
         {
           "question": "That makes sense, but what about when things get complex?",
           "winner": "candidate",
-          "candidate_quality": 38.29,
-          "candidate_words": 54,
-          "sentences_ok": true,
+          "candidate_quality": 36.11,
+          "candidate_words": 42,
+          "sentences_ok": false,
           "no_ai_disclaimer": true
         }
       ]
     },
     "teaching/historical thinking": {
       "total": 1,
-      "baseline_wins": 0,
-      "candidate_wins": 1,
+      "baseline_wins": 1,
+      "candidate_wins": 0,
       "ties": 0,
-      "win_rate": 1.0,
-      "avg_baseline_quality": 42.34,
-      "avg_candidate_quality": 48.83,
-      "constraint_violations": 1,
+      "win_rate": 0.0,
+      "avg_baseline_quality": 43.82,
+      "avg_candidate_quality": 24.85,
+      "constraint_violations": 0,
       "examples": [
         {
           "question": "How do experts think about historical thinking?",
-          "winner": "candidate",
-          "candidate_quality": 48.83,
-          "candidate_words": 200,
-          "sentences_ok": false,
+          "winner": "baseline",
+          "candidate_quality": 24.85,
+          "candidate_words": 14,
+          "sentences_ok": true,
           "no_ai_disclaimer": true
         }
       ]
     }
   },
   "weak_concepts": [
+    "identity/history_guide",
     "quest/medieval history",
+    "teaching/modern history",
+    "dialogue/classical antiquity",
+    "teaching/historical methodology",
+    "dialogue/historical thinking",
     "teaching/historical thinking"
   ],
-  "timestamp": "2026-06-06T08:12:33.467337+00:00"
+  "timestamp": "2026-06-07T09:08:09.409010+00:00"
 }

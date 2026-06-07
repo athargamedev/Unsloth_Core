@@ -1,0 +1,105 @@
+{
+  "npc_key": "history_guide",
+  "technique": "ollama",
+  "model": "qwen2.5:7b",
+  "generation": {
+    "date": "2026-06-07T02:27:40Z",
+    "seed": 42,
+    "temperature": 0.6,
+    "multi_turn_ratio": 0.25,
+    "version": "ollama-v2"
+  },
+  "spec": {
+    "file": "/home/athar/Projects/Unsloth_Core/data/npcs/specs/history_guide.json",
+    "hash": "sha256:9f9f904485f9c38e909056263012bf009cf5dbcde4b69bfb9662e7e70719fa3f"
+  },
+  "contract": {
+    "supported_categories": [
+      "identity",
+      "teaching",
+      "dialogue",
+      "quest",
+      "refusal"
+    ],
+    "minimum_examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "expected_examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "valid_difficulty_levels": [
+      "beginner",
+      "intermediate",
+      "advanced"
+    ],
+    "spec_npc_key": "history_guide",
+    "reference_doc": "data/npcs/reference_docs/history_guide_primer.md",
+    "technique": null
+  },
+  "distribution": {
+    "expected_examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "generation_request_examples_per_category": {
+      "identity": 9,
+      "teaching": 36,
+      "dialogue": 18,
+      "quest": 9,
+      "refusal": 9
+    },
+    "observed_examples_per_category": {
+      "identity": 9,
+      "teaching": 36,
+      "dialogue": 18,
+      "quest": 9,
+      "refusal": 9
+    },
+    "distribution_gaps": []
+  },
+  "statistics": {
+    "total": 81,
+    "train": 72,
+    "validation": 9,
+    "by_category": {
+      "identity": 9,
+      "teaching": 36,
+      "dialogue": 18,
+      "quest": 9,
+      "refusal": 9
+    },
+    "by_difficulty": {
+      "beginner": 39,
+      "advanced": 15,
+      "intermediate": 27
+    },
+    "by_concept": {
+      "modern history": 11,
+      "historical methodology": 11,
+      "historical thinking": 11,
+      "ancient civilizations": 10,
+      "classical antiquity": 10,
+      "medieval history": 10,
+      "history_guide": 9,
+      "Will not present speculation as fact": 5,
+      "Will not promote conspiracy theories or historical misinformation": 4
+    },
+    "generator_stats": {
+      "requests": 0,
+      "successes": 0,
+      "errors": 0,
+      "success_rate": 0.0
+    }
+  }
+}
