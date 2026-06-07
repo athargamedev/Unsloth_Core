@@ -59,7 +59,7 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 ```bash
 ./ucore generate data/npcs/specs/history_guide.json
 ./ucore generate data/npcs/specs/history_guide.json --technique template
-./ucore generate data/npcs/specs/history_guide.json --technique ollama --model llama3.1
+./ucore generate-ollama data/npcs/specs/history_guide.json --model qwen2.5:7b --fresh
 ./ucore generate data/npcs/specs/history_guide.json --technique template --push-to-confident  # Push dataset to Confident AI
 ```
 
