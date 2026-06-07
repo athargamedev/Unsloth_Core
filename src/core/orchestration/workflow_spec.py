@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 CANONICAL_WORKFLOW_STAGES: tuple[str, ...] = (
     "generate",
@@ -74,56 +75,125 @@ class WorkflowContext:
         return f"artifacts/eval/results/feedback/{self.npc_key}.json"
 
 
-def build_stage_command(ctx: WorkflowContext, stage: str) -> list[str]:
-    """Return the real top-level ``./ucore`` command for a workflow stage."""
+def _section(ctx: Any, name: str) -> dict[str, Any]:
+    return getattr(ctx, name, {}) if not isinstance(ctx, dict) else ctx.get(name, {})
+
+
+def _bool_flag(value: Any) -> bool:
+    return bool(value)
+
+
+def build_stage_command(ctx: Any, stage: str) -> list[str]:
+    """Return the real top-level ``./ucore`` command for a workflow stage.
+
+    ``ctx`` may be the legacy ``WorkflowContext`` or the newer
+    ``PipelineRunSpec``.  The latter carries all effective strategy/profile
+    flags, while the former preserves older unit-test and compatibility defaults.
+    """
+
+    generation = _section(ctx, "generation")
+    dataset_eval = _section(ctx, "dataset_eval")
+    training = _section(ctx, "training")
+    runtime_eval = _section(ctx, "runtime_eval")
+    sanitize = _section(ctx, "sanitize")
+    technique = getattr(ctx, "technique", DEFAULT_TECHNIQUE)
 
     if stage == "generate":
-        return [
-            "./ucore",
-            "generate-ollama",
-            ctx.spec_path,
-            "--model",
-            ctx.generation_model,
-            "--fresh",
-        ]
+        command_name = generation.get("command", "generate-ollama" if technique == "ollama" else "generate")
+        if command_name == "generate-ollama":
+            cmd = [
+                "./ucore",
+                "generate-ollama",
+                ctx.spec_path,
+                "--model",
+                str(generation.get("model", ctx.generation_model)),
+            ]
+            if generation.get("temperature") is not None and generation:
+                cmd.extend(["--temperature", str(generation["temperature"])])
+            if generation.get("batch_size") is not None and generation:
+                cmd.extend(["--batch-size", str(generation["batch_size"])])
+            if generation.get("retry_policy", {}).get("max_retries") is not None:
+                cmd.extend(["--max-retries", str(generation["retry_policy"]["max_retries"])])
+            if generation.get("multi_turn_ratio") is not None and generation:
+                cmd.extend(["--multi-turn-ratio", str(generation["multi_turn_ratio"])])
+            if generation.get("fresh", True):
+                cmd.append("--fresh")
+            return cmd
+        return ["./ucore", "generate", ctx.spec_path, "--technique", technique]
 
     if stage == "sanitize":
-        return [
+        cmd = [
             "./ucore",
             "sanitize",
             ctx.raw_train_path,
             "--output",
-            ctx.clean_train_path,
-            "--strict-canonical",
-            "--require-complete-metadata",
+            str(sanitize.get("output", ctx.clean_train_path)),
         ]
+        if hasattr(ctx, "spec_path") and sanitize:
+            cmd.extend(["--spec", ctx.spec_path])
+        if sanitize.get("strict_canonical", True):
+            cmd.append("--strict-canonical")
+        if sanitize.get("require_complete_metadata", True):
+            cmd.append("--require-complete-metadata")
+        return cmd
 
     if stage == "dataset_eval":
-        return [
+        cmd = [
             "./ucore",
             "dataset-eval",
             ctx.spec_path,
             "--technique",
-            ctx.technique,
+            technique,
             "--mode",
-            ctx.dataset_eval_mode,
-            "--judge-model",
-            ctx.judge_model,
-            "--output",
-            ctx.quality_summary_path,
+            str(dataset_eval.get("mode", ctx.dataset_eval_mode)),
         ]
+        if dataset_eval.get("cases_per_category") is not None:
+            cmd.extend(["--cases-per-category", str(dataset_eval["cases_per_category"])])
+        if dataset_eval.get("judge_provider"):
+            cmd.extend(["--judge-provider", str(dataset_eval["judge_provider"])])
+        cmd.extend(["--judge-model", str(dataset_eval.get("judge_model", ctx.judge_model))])
+        if dataset_eval.get("display"):
+            cmd.extend(["--display", str(dataset_eval["display"])])
+        if dataset_eval.get("ignore_errors"):
+            cmd.append("--ignore-errors")
+        if dataset_eval.get("soft_fail"):
+            cmd.append("--soft-fail")
+        if dataset_eval.get("wandb"):
+            cmd.append("--wandb")
+        if dataset_eval.get("confident"):
+            cmd.append("--confident")
+        cmd.extend(["--output", str(dataset_eval.get("output", ctx.quality_summary_path))])
+        return cmd
 
     if stage == "train":
-        return [
+        cmd = [
             "./ucore",
             "train",
             ctx.spec_path,
             "--technique",
-            ctx.technique,
+            technique,
             "--preset",
-            ctx.train_preset,
-            "--export-gguf",
+            str(training.get("preset", ctx.train_preset)),
         ]
+        optional_flags = [
+            ("max_seq_len", "--max-seq-len"),
+            ("batch_size", "--batch-size"),
+            ("grad_accum", "--grad-accum"),
+            ("lora_r", "--lora-r"),
+            ("lora_alpha", "--lora-alpha"),
+        ]
+        for key, flag in optional_flags:
+            if training.get(key) is not None:
+                cmd.extend([flag, str(training[key])])
+        if training.get("packing") is not None:
+            cmd.extend(["--packing", str(training["packing"]).lower()])
+        if training.get("train_on_responses_only") is not None and training:
+            cmd.extend(["--train-on-responses", str(training["train_on_responses_only"]).lower()])
+        if training.get("wandb"):
+            cmd.append("--wandb")
+        if training.get("export_gguf", True):
+            cmd.append("--export-gguf")
+        return cmd
 
     if stage == "export":
         return [
@@ -136,24 +206,31 @@ def build_stage_command(ctx: WorkflowContext, stage: str) -> list[str]:
         ]
 
     if stage == "evaluate":
-        return [
+        cmd = [
             "./ucore",
             "evaluate",
             "--baseline",
-            ctx.base_gguf,
+            str(runtime_eval.get("baseline", ctx.base_gguf)),
             "--candidate",
-            ctx.adapter_gguf_path,
-            "--base-model",
-            ctx.base_gguf,
+            str(runtime_eval.get("candidate_adapter", ctx.adapter_gguf_path)),
+        ]
+        if runtime_eval.get("requires_base_model", True):
+            cmd.extend(["--base-model", str(runtime_eval.get("base_model", ctx.base_gguf))])
+        cmd.extend([
             "--spec",
             ctx.spec_path,
             "--feedback-json",
-            ctx.feedback_json_path,
-            "--report-html",
-            "--judge",
-            "--judge-model",
-            ctx.judge_model,
-        ]
+            str(runtime_eval.get("feedback_json", ctx.feedback_json_path)),
+        ])
+        if runtime_eval.get("report_html", True):
+            cmd.append("--report-html")
+        cmd.append("--judge")
+        if runtime_eval.get("judge_provider"):
+            cmd.extend(["--judge-provider", str(runtime_eval["judge_provider"])])
+        cmd.extend(["--judge-model", str(runtime_eval.get("judge_model", ctx.judge_model))])
+        if runtime_eval.get("wandb"):
+            cmd.append("--wandb")
+        return cmd
 
     raise ValueError(f"Unknown workflow stage: {stage}")
 

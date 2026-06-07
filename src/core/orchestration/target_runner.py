@@ -28,6 +28,7 @@ from src.core.ops.pipeline_dag import (
     stage_input_signature,
 )
 from src.core.ops.run_registry import RunRegistry, make_pipeline_run_id
+from src.core.orchestration.run_spec import PipelineRunSpec, resolve_pipeline_run_spec
 from src.core.orchestration.workflow_spec import WorkflowContext, build_stage_command, repo_root
 
 UCORE_CLI = Path(__file__).resolve().parent.parent.parent / "cli" / "ucore"
@@ -86,7 +87,16 @@ class TargetRunner:
     ) -> dict[str, Any]:
         """Return a full target plan with the enhanced schema."""
         base = self.dag.plan_target(target_stage, npc_key=npc_key, technique=technique)
+        run_spec = resolve_pipeline_run_spec(
+            npc_key=npc_key,
+            profile=profile,
+            technique=technique,
+            target_stage=target_stage,
+        )
         base["profile"] = profile
+        base["run_spec"] = run_spec.to_dict()
+        base["effective_flags"] = base["run_spec"]
+        base["gpu_policy"] = run_spec.gpu_policy | base.get("gpu_policy", {})
         # Compute next_required_stage if not already part of plan_target output
         if "next_required_stage" not in base:
             base["next_required_stage"] = self.dag._next_required_stage(
@@ -387,60 +397,16 @@ class TargetRunner:
         """Return the concrete CLI vector for a pipeline stage."""
         npc_key = plan["npc_key"]
         technique = plan.get("technique") or "ollama"
-        spec_path = Path("data") / "npcs" / "specs" / f"{npc_key}.json"
-        dataset_dir = Path("data") / "datasets" / npc_key / technique
-        raw_dataset = dataset_dir / "train.jsonl"
-        clean_dataset = dataset_dir / "train_clean.jsonl"
-        adapter_path = Path("artifacts") / "exports" / npc_key / f"{npc_key}-lora-f16.gguf"
+        profile = plan.get("profile", "npc-production-grounded")
+        run_spec_payload = plan.get("run_spec")
 
-        if stage == "generate":
-            if technique == "ollama":
-                return [*STAGE_COMMANDS[stage], str(spec_path)]
-            if technique in NON_PRODUCTION_GENERATION_TECHNIQUES:
-                return [str(UCORE_CLI), "generate", str(spec_path), "--technique", technique]
-            raise ValueError(
-                f"Unsupported generation technique for TargetRunner: {technique!r}. "
-                "Use 'ollama' for production or an explicit non-production technique."
-            )
+        if run_spec_payload:
+            ctx = PipelineRunSpec(**run_spec_payload)
+            return build_stage_command(ctx, stage)
 
-        if stage == "sanitize":
-            return [
-                *STAGE_COMMANDS[stage],
-                str(raw_dataset),
-                "--output",
-                str(clean_dataset),
-                "--spec",
-                str(spec_path),
-                "--strict-canonical",
-                "--require-complete-metadata",
-            ]
-
-        if stage == "dataset_eval":
-            return [*STAGE_COMMANDS[stage], str(spec_path), "--technique", technique]
-
-        if stage == "train":
-            return [
-                *STAGE_COMMANDS[stage],
-                str(spec_path),
-                "--from-spec",
-                "--technique",
-                technique,
-                "--preset",
-                "fast-3b",
-                "--export-gguf",
-            ]
-
-        if stage == "export":
-            return [*STAGE_COMMANDS[stage], npc_key]
-
-        if stage == "evaluate":
-            return [
-                *STAGE_COMMANDS[stage],
-                "--candidate",
-                str(adapter_path),
-                "--spec",
-                str(spec_path),
-                "--report-html",
-            ]
-
-        return list(STAGE_COMMANDS.get(stage, [str(UCORE_CLI), stage]))
+        ctx = WorkflowContext(
+            npc_key=npc_key,
+            technique=technique,
+            profile=profile,
+        )
+        return build_stage_command(ctx, stage)

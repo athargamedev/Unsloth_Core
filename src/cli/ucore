@@ -1603,6 +1603,7 @@ def main(argv: list[str] | None = None) -> int:
                 technique=args.technique,
                 target_stage=args.target_stage,
             )
+            plan["dry_run_commands"] = runner.dry_run(plan)
             if args.json if hasattr(args, "json") else False:
                 print(_json_serialize(plan))
             else:

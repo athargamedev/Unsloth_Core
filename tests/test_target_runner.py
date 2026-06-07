@@ -254,6 +254,9 @@ class TestTargetRunner:
         assert "blockers" in plan
         assert "cache_hits" in plan
         assert "gpu_policy" in plan
+        assert "run_spec" in plan
+        assert plan["run_spec"]["generation"]["command"] == "generate-ollama"
+        assert plan["run_spec"]["dataset_eval"]["judge_provider"] == "wandb"
 
     def test_runner_dry_run_returns_command_list_for_non_cached_stages(self, tmp_path):
         from src.core.orchestration.target_runner import TargetRunner
@@ -292,9 +295,12 @@ class TestTargetRunner:
             {
                 "stage": "generate",
                 "command": [
-                    str(UCORE_CLI),
+                    "./ucore",
                     "generate-ollama",
                     "data/npcs/specs/chef_assistant.json",
+                    "--model",
+                    "qwen2.5:7b",
+                    "--fresh",
                 ],
                 "reason": "needed",
                 "status": "missing",
@@ -315,7 +321,7 @@ class TestTargetRunner:
         dry = runner.dry_run(plan)
 
         assert dry[0]["command"] == [
-            str(UCORE_CLI),
+            "./ucore",
             "generate",
             "data/npcs/specs/chef_assistant.json",
             "--technique",
@@ -342,13 +348,11 @@ class TestTargetRunner:
         dry = runner.dry_run(plan)
 
         assert dry[0]["command"] == [
-            str(UCORE_CLI),
+            "./ucore",
             "sanitize",
             "data/datasets/chef_assistant/ollama/train.jsonl",
             "--output",
             "data/datasets/chef_assistant/ollama/train_clean.jsonl",
-            "--spec",
-            "data/npcs/specs/chef_assistant.json",
             "--strict-canonical",
             "--require-complete-metadata",
         ]
@@ -373,11 +377,17 @@ class TestTargetRunner:
         dry = runner.dry_run(plan)
 
         assert dry[0]["command"] == [
-            str(UCORE_CLI),
+            "./ucore",
             "dataset-eval",
             "data/npcs/specs/chef_assistant.json",
             "--technique",
             "ollama",
+            "--mode",
+            "fast",
+            "--judge-model",
+            "qwen2.5:7b",
+            "--output",
+            "data/datasets/chef_assistant/ollama/quality_summary.json",
         ]
 
     def test_target_runner_command_family_help_smoke(self):
@@ -516,8 +526,8 @@ class TestTargetRunner:
         runner = TargetRunner(artifact_index=tmp_path / "artifacts.jsonl")
         plan = runner.plan(
             npc_key="chef_assistant",
-            profile="test-profile-v2",
+            profile="npc-production-grounded",
             technique="ollama",
             target_stage="sanitize",
         )
-        assert plan["profile"] == "test-profile-v2"
+        assert plan["profile"] == "npc-production-grounded"
