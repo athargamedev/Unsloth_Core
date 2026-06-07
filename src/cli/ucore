@@ -1093,9 +1093,14 @@ def create_parser():
     pipe_mode.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
     pipe_mode.add_argument(
         "--technique",
-        default="template",
+        default="ollama",
         choices=["docs", "ollama", "template", "openai", "anthropic"],
-        help="Generation technique",
+        help="Generation technique (default: ollama; template requires --smoke-template)",
+    )
+    pipe_p.add_argument(
+        "--smoke-template",
+        action="store_true",
+        help="DEV/SMOKE ONLY: allow --technique template in pipeline runs",
     )
     pipe_p.add_argument(
         "--docs-manifest", help="Docs corpus manifest override for --technique docs"
@@ -1116,7 +1121,9 @@ def create_parser():
         "--skip-spec-validate", action="store_true", help="Skip spec generation-ready validation"
     )
     pipe_p.add_argument(
-        "--skip-dataset-eval", action="store_true", help="Skip DeepEval dataset quality gate"
+        "--skip-dataset-eval",
+        action="store_true",
+        help="DEV ONLY: skip DeepEval dataset quality gate and train with an ungated dataset",
     )
     pipe_p.add_argument(
         "--dataset-eval-mode",
@@ -2385,6 +2392,19 @@ def main(argv: list[str] | None = None) -> int:
         npc_key = Path(args.spec).stem
         workflow_id = uuid.uuid4().hex
         technique = "ollama" if args.ollama else args.technique
+        if technique == "template" and not args.smoke_template:
+            print(
+                "Error: ./ucore pipeline cannot use template data unless --smoke-template "
+                "is explicitly set. Production pipeline defaults to --technique ollama.",
+                file=sys.stderr,
+            )
+            return 2
+        if args.skip_dataset_eval:
+            print(
+                "Warning: --skip-dataset-eval is DEV ONLY; training will use "
+                "--allow-ungated-dataset and must not be promoted as production evidence.",
+                file=sys.stderr,
+            )
         wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
         pipeline_hooks = args.workflow_hooks or str(
             paths.dataset_train_path(npc_key, technique).parent / "workflow_hooks.jsonl"
@@ -2427,6 +2447,8 @@ def main(argv: list[str] | None = None) -> int:
                         str(SCRIPTS_DIR / "dataset" / "generate_dataset_ollama.py"),
                         args.spec,
                     ]
+                    if args.model:
+                        gen_cmd.extend(["--model", args.model])
                 else:
                     gen_cmd = [
                         PYTHON,
@@ -2434,10 +2456,10 @@ def main(argv: list[str] | None = None) -> int:
                         args.spec,
                     ]
                     gen_cmd.extend(["--technique", technique])
-                if args.docs_manifest and technique != "ollama":
-                    gen_cmd.extend(["--docs-manifest", args.docs_manifest])
-                if args.model:
-                    gen_cmd.extend(["--model", args.model])
+                    if args.docs_manifest:
+                        gen_cmd.extend(["--docs-manifest", args.docs_manifest])
+                    if args.model:
+                        gen_cmd.extend(["--model", args.model])
                 os.environ["WORKFLOW_NEXT_ACTION"] = "sanitize_dataset"
                 os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(
                     paths.dataset_train_path(npc_key, technique)
