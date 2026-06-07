@@ -346,7 +346,7 @@ class OllamaDatasetGenerator:
             # Grounding verification with judge model
             if self.grounding_verifier._enabled and grounding:
                 is_grounded, grounding_reason = self.grounding_verifier.verify(
-                    asst_msg, [grounding]
+                    asst_msg, [grounding], spec=self.spec
                 )
                 if not is_grounded:
                     logger.warning(f"Grounding verification FAILED: {grounding_reason}")

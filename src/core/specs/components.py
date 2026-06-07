@@ -126,6 +126,38 @@ class DatasetDistributionContract(BaseModel, extra="forbid"):
         return self.identity + self.teaching + self.dialogue + self.quest + self.refusal
 
 
+# ── GuardrailsContract ─────────────────────────────────────────────────
+
+
+class VerbosityRule(BaseModel, extra="forbid"):
+    """Per-category verbosity limits."""
+
+    min: int = Field(default=1, ge=0, le=20)
+    max: int = Field(default=3, ge=1, le=20)
+
+
+class DomainRules(BaseModel, extra="forbid"):
+    """Allowed and forbidden domain boundaries for grounding verification."""
+
+    allowed: list[str] = Field(default_factory=list)
+    forbidden: list[str] = Field(default_factory=list)
+
+
+class GuardrailsContract(BaseModel, extra="ignore"):
+    """Runtime enforcement limits for generation guardrails and grounding verification.
+
+    This contract decouples runtime limits (verbosity per category, domain boundaries)
+    from dialogue metadata (style, examples). When absent, guardrails fall back to
+    dialogue.max_sentences and refusal.boundaries for backward compatibility.
+    """
+
+    domain: DomainRules = Field(default_factory=DomainRules)
+    verbosity: dict[str, VerbosityRule] | None = None
+    grounding: dict[str, bool] = Field(
+        default_factory=lambda: {"reference_doc_required": True, "allowed_domain_must_match": True}
+    )
+
+
 # ── NpcComponents composite ───────────────────────────────────────────
 
 
@@ -138,6 +170,7 @@ class NpcComponents(BaseModel):
     refusal: RefusalContract | None = None
     runtime: RuntimeConstraintContract | None = None
     distribution: DatasetDistributionContract | None = None
+    guardrails: GuardrailsContract | None = None
 
 
 # ── Loader ────────────────────────────────────────────────────────────
@@ -230,6 +263,38 @@ def load_npc_components(path: str | Path) -> NpcComponents:
     else:
         distribution = DatasetDistributionContract()
 
+    # Guardrails
+    guardrails_raw = raw.get("guardrails", {})
+    if isinstance(guardrails_raw, dict) and guardrails_raw:
+        verbosity_raw = guardrails_raw.get("verbosity")
+        verbosity = None
+        if isinstance(verbosity_raw, dict):
+            verbosity = {}
+            for cat, rule in verbosity_raw.items():
+                if isinstance(rule, dict):
+                    verbosity[cat] = VerbosityRule(
+                        min=rule.get("min", 1),
+                        max=rule.get("max", 3),
+                    )
+        domain_raw = guardrails_raw.get("domain", {})
+        domain = (
+            DomainRules(
+                allowed=domain_raw.get("allowed", []) if isinstance(domain_raw, dict) else [],
+                forbidden=domain_raw.get("forbidden", []) if isinstance(domain_raw, dict) else [],
+            )
+            if isinstance(domain_raw, dict)
+            else DomainRules()
+        )
+        guardrails = GuardrailsContract(
+            domain=domain,
+            verbosity=verbosity,
+            grounding=guardrails_raw.get(
+                "grounding", {"reference_doc_required": True, "allowed_domain_must_match": True}
+            ),
+        )
+    else:
+        guardrails = None
+
     return NpcComponents(
         identity=identity,
         tone=tone,
@@ -237,4 +302,5 @@ def load_npc_components(path: str | Path) -> NpcComponents:
         refusal=refusal,
         runtime=runtime,
         distribution=distribution,
+        guardrails=guardrails,
     )

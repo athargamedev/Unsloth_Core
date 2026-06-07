@@ -512,6 +512,8 @@ def validate_spec(
         require_non_empty_string(teaching, "teaching.approach", errors)
 
     max_sentences: int | None = None
+    max_characters: int | None = None
+    conversation_style: str | None = None
     dialogue = require_object(spec, "dialogue", errors)
     if dialogue is not None:
         value = dialogue.get("max_sentences")
@@ -526,11 +528,98 @@ def validate_spec(
         if not is_non_empty_list(dialogue.get("example_topics")):
             errors.append("Missing or invalid `dialogue.example_topics` non-empty list.")
 
+        # Cross-field: max_characters / max_sentences ratio
+        char_value = dialogue.get("max_characters")
+        if isinstance(char_value, int) and not isinstance(char_value, bool) and char_value > 0:
+            max_characters = char_value
+        style_raw = dialogue.get("conversation_style")
+        if isinstance(style_raw, str) and style_raw.strip():
+            conversation_style = style_raw.strip()
+
+    if max_sentences is not None and max_characters is not None:
+        ratio = max_characters / max_sentences
+        if ratio < 80:
+            warnings.append(
+                f"`dialogue.max_characters` ({max_characters}) / `dialogue.max_sentences` "
+                f"({max_sentences}) = {ratio:.0f} chars/sentence — very tight for "
+                f"response generation."
+            )
+        elif ratio > 300:
+            warnings.append(
+                f"`dialogue.max_characters` ({max_characters}) / `dialogue.max_sentences` "
+                f"({max_sentences}) = {ratio:.0f} chars/sentence — generous limit; "
+                f"responses may exceed game UI constraints."
+            )
+
+    # Cross-field: conversation_style vs structural limits
+    if conversation_style and max_sentences is not None:
+        style_lower = conversation_style.lower()
+        style_contradictions = {
+            "detailed": {
+                "max_sentences_threshold": 4,
+                "hint": '"detailed" style needs room to develop examples; consider max_sentences >= 4',
+            },
+            "vivid": {
+                "max_sentences_threshold": 4,
+                "hint": '"vivid" descriptive style needs room; consider max_sentences >= 4',
+            },
+            "descriptive": {
+                "max_sentences_threshold": 4,
+                "hint": '"descriptive" style needs room; consider max_sentences >= 4',
+            },
+            "concise": {
+                "max_sentences_threshold": 2,
+                "hint": '"concise" style suggests max_sentences <= 2',
+            },
+            "brief": {
+                "max_sentences_threshold": 2,
+                "hint": '"brief" style suggests max_sentences <= 2',
+            },
+        }
+        for keyword, rules in style_contradictions.items():
+            if keyword in style_lower:
+                thresh = rules["max_sentences_threshold"]
+                if keyword in ("concise", "brief") and max_sentences > thresh:
+                    warnings.append(
+                        f'`dialogue.conversation_style` contains "{keyword}" '
+                        f"({rules['hint']}), but max_sentences={max_sentences}."
+                    )
+                elif keyword not in ("concise", "brief") and max_sentences < thresh:
+                    warnings.append(
+                        f'`dialogue.conversation_style` contains "{keyword}" '
+                        f"({rules['hint']}), but max_sentences={max_sentences}."
+                    )
+
     refusal = require_object(spec, "refusal", errors)
     if refusal is not None:
         if not is_non_empty_list(refusal.get("boundaries")):
             errors.append("Missing or invalid `refusal.boundaries` non-empty list.")
         require_non_empty_string(refusal, "refusal.redirect_policy", errors)
+
+        # Cross-field: refusal.boundaries key terms in system_prompt
+        system_prompt = spec.get("system_prompt", "")
+        if is_non_empty_string(system_prompt):
+            for i, boundary in enumerate(refusal.get("boundaries", [])):
+                if not is_non_empty_string(boundary):
+                    continue
+                # Extract meaningful key terms (skip boilerplate like "Will not")
+                boundary_lower = boundary.lower()
+                key_phrases = [
+                    p.strip()
+                    for p in boundary_lower.replace("will not ", "")
+                    .replace("will not ", "")
+                    .replace(",", "")
+                    .split()
+                    if len(p.strip()) > 3
+                ]
+                if not any(phrase in system_prompt.lower() for phrase in key_phrases):
+                    # Fall back to checking the full boundary as a soft match
+                    boundary_short = boundary_lower[:40]
+                    if boundary_short not in system_prompt.lower():
+                        warnings.append(
+                            f'`refusal.boundaries[{i}]` "{boundary[:60]}..." '
+                            f"not clearly reflected in `system_prompt` RULES section."
+                        )
 
     validate_research_queries(spec, errors, warnings)
     validate_system_prompt(spec, npc_name, max_sentences, errors, warnings)
@@ -550,6 +639,28 @@ def validate_spec(
         require_all_categories=require_all_categories,
         require_dataset_minimums=require_dataset_minimums,
     )
+
+    # Cross-field: concept coverage in reference doc
+    concepts = spec.get("concepts", [])
+    ref_doc_path = spec.get("reference_doc")
+    if concepts and isinstance(ref_doc_path, str) and ref_doc_path.strip():
+        primer_path = PROJECT_ROOT / ref_doc_path.strip()
+        if primer_path.exists():
+            try:
+                primer_text = primer_path.read_text(encoding="utf-8").lower()
+                for i, concept in enumerate(concepts):
+                    if not isinstance(concept, dict):
+                        continue
+                    cname = concept.get("name")
+                    if not isinstance(cname, str) or not cname.strip():
+                        continue
+                    if cname.strip().lower() not in primer_text:
+                        warnings.append(
+                            f'`concepts[{i}].name` "{cname}" not found in reference doc '
+                            f'"{ref_doc_path}" — BM25 retrieval may fail to ground this concept.'
+                        )
+            except OSError:
+                pass  # validate_reference_docs already warned about read errors
 
     return SpecResult(path=display_path, npc_key=npc_key, errors=errors, warnings=warnings)
 

@@ -140,6 +140,23 @@
       "refusal": 8
     }
   },
+  "guardrails": {
+    "domain": {
+      "allowed": ["The Avengers", "Mutant abilities", "Street-level vigilantes", "Cosmic threats", "SHIELD history", "Tactical assessments"],
+      "forbidden": ["revealing classified SHIELD protocols or current mission details", "disclosing personal civilian identities or classified addresses", "engaging in speculative 'who would win' debates without tactical emphasis"]
+    },
+    "verbosity": {
+      "identity": {"min": 1, "max": 2},
+      "teaching": {"min": 1, "max": 3},
+      "dialogue": {"min": 1, "max": 3},
+      "quest": {"min": 1, "max": 3},
+      "refusal": {"min": 1, "max": 2}
+    },
+    "grounding": {
+      "reference_doc_required": true,
+      "allowed_domain_must_match": true
+    }
+  },
   "confident": {
     "dataset_alias_prefix": "ucore-marvel-instructor-ollama",
     "single_turn_collection": "npc-dataset-quality",

@@ -263,7 +263,7 @@ class LLMGroundingVerifier:
         url: str = "http://localhost:11434/api/chat",
         cache=None,
         cache_enabled: bool = True,
-        prompt_version: str = "generation-grounding-v1",
+        prompt_version: str = "generation-grounding-v2",
     ):
         from src.core.ops.ollama_model_presets import resolve_ollama_model
 
@@ -295,7 +295,12 @@ class LLMGroundingVerifier:
             prompt_version=self.prompt_version,
         )
 
-    def verify(self, assistant_response: str, grounding_chunks: list[str]) -> tuple[bool, str]:
+    def verify(
+        self,
+        assistant_response: str,
+        grounding_chunks: list[str],
+        spec: dict | None = None,
+    ) -> tuple[bool, str]:
         if not self._enabled or not grounding_chunks:
             return True, ""
 
@@ -306,15 +311,50 @@ class LLMGroundingVerifier:
             if cached is not None:
                 result = cached["result"]
                 return bool(result.get("is_grounded", True)), result.get("reason", "")
-        prompt = f"""
-Verify if the NPC RESPONSE below is factually supported by the CONTEXT.
-NPCs must stick strictly to their knowledge base.
+
+        # Extract domain boundaries from spec for the judge prompt
+        allowed_domain = ""
+        forbidden_domain = ""
+        if spec:
+            # Prefer new structured guardrails section, fall back to teaching/refusal fields
+            guardrails = spec.get("guardrails", {})
+            domain = guardrails.get("domain", {})
+            allowed_list = domain.get("allowed", []) or spec.get("teaching", {}).get(
+                "expertise", []
+            )
+            forbidden_list = domain.get("forbidden", []) or [
+                b.replace("Will not ", "").replace("Will not ", "").strip().rstrip(".")
+                for b in spec.get("refusal", {}).get("boundaries", [])
+            ]
+            if allowed_list:
+                allowed_domain = "\n".join(f"- {item}" for item in allowed_list)
+            if forbidden_list:
+                forbidden_domain = "\n".join(f"- {item}" for item in forbidden_list)
+
+        domain_section = "NO ADDITIONAL DOMAIN CONTEXT PROVIDED"
+        if allowed_domain or forbidden_domain:
+            parts = []
+            if allowed_domain:
+                parts.append(f"ALLOWED DOMAIN:\n{allowed_domain}")
+            if forbidden_domain:
+                parts.append(f"FORBIDDEN DOMAIN:\n{forbidden_domain}")
+            domain_section = "\n\n".join(parts)
+
+        prompt = f"""\
+Verify if the NPC RESPONSE below is factually supported by the CONTEXT
+and stays within the ALLOWED DOMAIN (does NOT touch FORBIDDEN topics).
 
 CONTEXT:
 {context}
 
+{domain_section}
+
 NPC RESPONSE:
 {assistant_response}
+
+1. Is the response factually supported by the CONTEXT?
+2. Is the response within the ALLOWED DOMAIN (does NOT touch any FORBIDDEN topic)?
+3. Does the response stay in character per the NPC's role?
 
 Return a JSON object with:
 {{

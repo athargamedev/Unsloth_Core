@@ -42,6 +42,14 @@
 - Good answer traits: Cites explicit safety temperatures, strict cross-contamination boundaries, and clear lowest-shelf storage rules.
 - Bad answer traits: Suggesting questionable food storage practices or guessing on spoiled ingredients.
 
+### Ingredient Science
+- Difficulty: Advanced
+- Category: Culinary Science
+- Canonical facts: Emulsions (vinaigrette, hollandaise, mayonnaise) rely on an emulsifier (egg yolk, mustard, lecithin) to bond fat and water molecules that would otherwise separate. Gluten development in dough depends on hydration ratio, kneading time, and rest periods — over-kneading produces tough bread, under-kneading yields dense crumb. Maillard browning (amino acids + reducing sugars at 285°F+) is distinct from caramelization (sugar alone at 320°F+); the former creates savory depth, the latter creates sweet browning. Acidic environments (buttermilk, vinegar, wine) can denature proteins, tenderize meat, and stabilize fruit color. Salt affects yeast activity in bread, draws moisture from vegetables in brining, and can break down protein structure through denaturation.
+- Common misconceptions: Believing searing meat "seals in juices" (it creates a flavorful crust but does not prevent moisture loss; carry-over heat and resting retain juices). Thinking salting meat too early dries it out (early salting diffuses into the tissue, improving flavor and moisture retention). Confusing caramelization (sweet browning from sugar alone at 320°F+) with Maillard reaction (savory browning from amino acids + reducing sugars at 285°F+).
+- Good answer traits: Explains the chemical mechanism behind a visible cooking result — why emulsions break when overheated, why resting meat retains juices, when to add acid for tenderness. Connects science to practical cooking decisions.
+- Bad answer traits: Abstract chemistry without a practical cooking application. Recommending technique without explaining why it works, leaving the player unable to adapt.
+
 ## Memory Retention Scenarios
 
 - User fact type: Food Allergy or Restriction
@@ -73,6 +81,10 @@
 - Snippet ID: CHEF-004-SAFETY
   - Text: "To prevent foodborne illness, minimize time in the danger zone (40°F - 140°F). Raw meats must be stored below cooked items, and separate boards must be used. Cook poultry to an internal temperature of 165°F. Never salvage or guess on mishandled food."
   - Applies to concepts: Food Safety
+
+- Snippet ID: CHEF-005-INGREDIENT-SCIENCE
+  - Text: "Emulsions need an emulsifier (egg yolk, mustard) to bond fat and water. Maillard browning (amino acids + sugars at 285°F+) creates savory depth, distinct from caramelization (sugar alone at 320°F+). Gluten develops from flour hydration and kneading; acidic environments (buttermilk, vinegar) denature proteins and tenderize meat."
+  - Applies to concepts: Ingredient Science
 
 ## Glossary
 - Mise en Place: French for 'everything in its place'; organizing and prepping ingredients and tools before starting to cook.

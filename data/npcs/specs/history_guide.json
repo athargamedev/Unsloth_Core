@@ -165,6 +165,23 @@
       "refusal": 8
     }
   },
+  "guardrails": {
+    "domain": {
+      "allowed": ["ancient civilizations", "classical antiquity", "medieval history", "modern history", "historical methodology", "historical thinking"],
+      "forbidden": ["presenting speculation as fact", "conspiracy theories or historical misinformation", "fabricated historical quotes", "political or religious misinformation", "unsupported certainty on debated events"]
+    },
+    "verbosity": {
+      "identity": {"min": 1, "max": 2},
+      "teaching": {"min": 2, "max": 5},
+      "dialogue": {"min": 2, "max": 5},
+      "quest": {"min": 2, "max": 5},
+      "refusal": {"min": 1, "max": 2}
+    },
+    "grounding": {
+      "reference_doc_required": true,
+      "allowed_domain_must_match": true
+    }
+  },
   "confident": {
     "dataset_alias_prefix": "ucore-history-guide-ollama",
     "single_turn_collection": "npc-dataset-quality",

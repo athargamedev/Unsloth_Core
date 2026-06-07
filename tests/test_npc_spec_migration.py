@@ -118,3 +118,8 @@ class TestComponentEnhancedValidation:
         # No spec should lose data in round-trip
         if components.refusal:
             assert len(components.refusal.boundaries) >= 1
+
+        # guardrails -> GuardrailsContract (all active specs have it)
+        if "guardrails" in raw:
+            assert components.guardrails is not None
+            assert components.guardrails.domain is not None
