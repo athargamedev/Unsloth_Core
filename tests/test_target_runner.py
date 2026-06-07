@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -275,23 +276,127 @@ class TestTargetRunner:
             if cmd["stage"] != "generate":
                 assert "depends_on" in cmd
 
-    def test_runner_dry_run_uses_real_top_level_ucore_commands(self, tmp_path):
-        from src.core.orchestration.target_runner import TargetRunner
+    def test_runner_resolves_production_ollama_generate_command_exactly(self, tmp_path):
+        from src.core.orchestration.target_runner import TargetRunner, UCORE_CLI
 
         runner = TargetRunner(artifact_index=tmp_path / "artifacts.jsonl")
-        plan = runner.plan(
-            npc_key="chef_assistant",
-            profile="npc-production-grounded",
-            technique="ollama",
-            target_stage="sanitize",
-        )
+        plan = {
+            "npc_key": "chef_assistant",
+            "technique": "ollama",
+            "steps": [{"stage": "generate", "status": "missing", "action": "run"}],
+        }
 
         dry = runner.dry_run(plan)
-        commands = [entry["command"] for entry in dry]
-        assert ["./ucore", "generate-ollama"] in [cmd[:2] for cmd in commands]
-        assert ["./ucore", "sanitize"] in [cmd[:2] for cmd in commands]
-        assert all(len(cmd) > 2 and cmd[1] != "dataset" for cmd in commands)
-        assert any("data/datasets/chef_assistant/ollama/train.jsonl" in cmd for cmd in commands)
+
+        assert dry == [
+            {
+                "stage": "generate",
+                "command": [
+                    str(UCORE_CLI),
+                    "generate-ollama",
+                    "data/npcs/specs/chef_assistant.json",
+                ],
+                "reason": "needed",
+                "status": "missing",
+                "depends_on": [],
+            }
+        ]
+
+    def test_runner_resolves_non_production_generate_command_exactly(self, tmp_path):
+        from src.core.orchestration.target_runner import TargetRunner, UCORE_CLI
+
+        runner = TargetRunner(artifact_index=tmp_path / "artifacts.jsonl")
+        plan = {
+            "npc_key": "chef_assistant",
+            "technique": "template",
+            "steps": [{"stage": "generate", "status": "missing", "action": "run"}],
+        }
+
+        dry = runner.dry_run(plan)
+
+        assert dry[0]["command"] == [
+            str(UCORE_CLI),
+            "generate",
+            "data/npcs/specs/chef_assistant.json",
+            "--technique",
+            "template",
+        ]
+
+    def test_runner_resolves_sanitize_command_exactly(self, tmp_path):
+        from src.core.orchestration.target_runner import TargetRunner, UCORE_CLI
+
+        runner = TargetRunner(artifact_index=tmp_path / "artifacts.jsonl")
+        plan = {
+            "npc_key": "chef_assistant",
+            "technique": "ollama",
+            "steps": [
+                {
+                    "stage": "sanitize",
+                    "status": "missing",
+                    "action": "run",
+                    "requires": ["dataset_raw"],
+                }
+            ],
+        }
+
+        dry = runner.dry_run(plan)
+
+        assert dry[0]["command"] == [
+            str(UCORE_CLI),
+            "sanitize",
+            "data/datasets/chef_assistant/ollama/train.jsonl",
+            "--output",
+            "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+            "--spec",
+            "data/npcs/specs/chef_assistant.json",
+            "--strict-canonical",
+            "--require-complete-metadata",
+        ]
+
+    def test_runner_resolves_dataset_eval_command_exactly(self, tmp_path):
+        from src.core.orchestration.target_runner import TargetRunner, UCORE_CLI
+
+        runner = TargetRunner(artifact_index=tmp_path / "artifacts.jsonl")
+        plan = {
+            "npc_key": "chef_assistant",
+            "technique": "ollama",
+            "steps": [
+                {
+                    "stage": "dataset_eval",
+                    "status": "missing",
+                    "action": "run",
+                    "requires": ["dataset_clean"],
+                }
+            ],
+        }
+
+        dry = runner.dry_run(plan)
+
+        assert dry[0]["command"] == [
+            str(UCORE_CLI),
+            "dataset-eval",
+            "data/npcs/specs/chef_assistant.json",
+            "--technique",
+            "ollama",
+        ]
+
+    def test_target_runner_command_family_help_smoke(self):
+        from src.core.orchestration.target_runner import STAGE_COMMANDS
+
+        planned_subcommands = sorted({cmd[1] for cmd in STAGE_COMMANDS.values()} | {"generate"})
+        for subcommand in planned_subcommands:
+            completed = subprocess.run(
+                [str(PROJECT_ROOT / "src" / "cli" / "ucore"), subcommand, "--help"],
+                cwd=PROJECT_ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            assert completed.returncode == 0, (
+                subcommand,
+                completed.stdout[-500:],
+                completed.stderr[-500:],
+            )
 
     def test_runner_dry_run_no_commands_when_ready(self, tmp_path):
         from src.core.orchestration.target_runner import TargetRunner

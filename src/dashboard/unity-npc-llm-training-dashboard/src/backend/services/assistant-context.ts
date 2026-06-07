@@ -63,7 +63,7 @@ export function collectAssistantContext(
   request: AssistantContextRequest,
 ): AssistantContextBundle {
   const npcKey = request.npcKey || inferNpcKey(request.message) || inferNpcFromJobs(registry);
-  const technique = request.technique || "template";
+  const technique = request.technique || "ollama";
   const evidence: EvidenceRef[] = [];
 
   const activeJobs = registry.jobs

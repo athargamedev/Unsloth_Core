@@ -266,7 +266,7 @@ export function syncExternalArtifactsToRegistry(registry: Registry, repoRoot: st
   let changed = false;
 
   // Datasets
-  const datasetsRoot = path.join(repoRoot, "subjects", "datasets");
+  const datasetsRoot = path.join(repoRoot, "data", "datasets");
   if (fs.existsSync(datasetsRoot)) {
     for (const npcKey of fs.readdirSync(datasetsRoot)) {
       const npcDir = path.join(datasetsRoot, npcKey);
@@ -285,8 +285,10 @@ export function syncExternalArtifactsToRegistry(registry: Registry, repoRoot: st
           npcKey,
           createdAt: fileIso(trainPath),
           finishedAt: fileIso(trainPath),
-          command: ["./ucore", "generate", `subjects/${npcKey}.json`, "--technique", technique],
-          logs: [`[EXTERNAL] dataset artifact detected: datasets/${npcKey}/${technique}/train.jsonl`],
+          command: technique === "ollama"
+            ? ["./ucore", "generate-ollama", `data/npcs/specs/${npcKey}.json`]
+            : ["./ucore", "generate", `data/npcs/specs/${npcKey}.json`, "--technique", technique],
+          logs: [`[EXTERNAL] dataset artifact detected: data/datasets/${npcKey}/${technique}/train.jsonl`],
         }) || changed;
 
         const cleanPath = path.join(techniqueDir, "train_clean.jsonl");
@@ -299,8 +301,8 @@ export function syncExternalArtifactsToRegistry(registry: Registry, repoRoot: st
             npcKey,
             createdAt: fileIso(cleanPath),
             finishedAt: fileIso(cleanPath),
-            command: ["./ucore", "sanitize", `subjects/datasets/${npcKey}/${technique}/train.jsonl`],
-            logs: [`[EXTERNAL] sanitized dataset artifact detected: subjects/datasets/${npcKey}/${technique}/train_clean.jsonl`],
+            command: ["./ucore", "sanitize", `data/datasets/${npcKey}/${technique}/train.jsonl`],
+            logs: [`[EXTERNAL] sanitized dataset artifact detected: data/datasets/${npcKey}/${technique}/train_clean.jsonl`],
           }) || changed;
         }
       }
@@ -363,7 +365,7 @@ export function syncExternalArtifactsToRegistry(registry: Registry, repoRoot: st
           npcKey,
           createdAt,
           finishedAt: fileIso(manifestPath),
-          command: ["./ucore", "train", `subjects/${npcKey}.json`, "--from-spec", ...(preset ? ["--preset", preset] : [])],
+          command: ["./ucore", "train", `data/npcs/specs/${npcKey}.json`, "--from-spec", ...(preset ? ["--preset", preset] : [])],
           loss,
           logs: [`[EXTERNAL] run artifact detected: ${path.relative(repoRoot, manifestPath)}`],
         }) || changed;

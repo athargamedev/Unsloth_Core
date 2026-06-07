@@ -39,10 +39,10 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
   app.get("/api/health", (_req: Request, res: Response) => {
     const coreChecks = {
       ucoreExists: fs.existsSync(path.join(repoRoot, "ucore")),
-      subjectsDir: fs.existsSync(path.join(repoRoot, "subjects")),
-      datasetsDir: fs.existsSync(path.join(repoRoot, "subjects", "datasets")),
-      outputsDir: fs.existsSync(path.join(repoRoot, "outputs")),
-      exportsDir: fs.existsSync(path.join(repoRoot, "exports")),
+      subjectsDir: fs.existsSync(path.join(repoRoot, "data", "npcs", "specs")),
+      datasetsDir: fs.existsSync(path.join(repoRoot, "data", "datasets")),
+      outputsDir: fs.existsSync(path.join(repoRoot, "artifacts", "models")),
+      exportsDir: fs.existsSync(path.join(repoRoot, "artifacts", "exports")),
     };
     const supabaseChecks = {
       supabaseUrlConfigured: Boolean(process.env.SUPABASE_URL),

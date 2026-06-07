@@ -7,7 +7,7 @@ test("deriveJobMetadataFromCommand extracts preset and ollama unload target", ()
   const derived = deriveJobMetadataFromCommand([
     "./ucore",
     "generate-ollama",
-    "subjects/NPC_specs/history_guide.json",
+    "data/npcs/specs/history_guide.json",
     "--model",
     "llama3.1-3060-rag:latest",
     "--url",
@@ -27,7 +27,7 @@ test("deriveJobMetadataFromCommand ignores non-Ollama base-model paths", () => {
   const derived = deriveJobMetadataFromCommand([
     "./ucore",
     "train",
-    "subjects/NPC_specs/history_guide.json",
+    "data/npcs/specs/history_guide.json",
     "--from-spec",
     "--preset",
     "safe-any",
@@ -43,7 +43,7 @@ test("deriveJobMetadataFromCommand supports judge model flags and default ollama
   const derived = deriveJobMetadataFromCommand([
     "./ucore",
     "evaluate",
-    "subjects/NPC_specs/astronomy_guide.json",
+    "data/npcs/specs/astronomy_guide.json",
     "--judge-model",
     "qwen3:latest",
   ]);
