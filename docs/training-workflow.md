@@ -57,10 +57,12 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 
 **Key CLI flags:**
 ```bash
-./ucore generate data/npcs/specs/history_guide.json
+# Production grounded generation
+./ucore generate-ollama data/npcs/specs/history_guide.json --model qwen2.5:7b --fresh
+
+# Smoke/dev template generation only
 ./ucore generate data/npcs/specs/history_guide.json --technique template
-./ucore generate data/npcs/specs/history_guide.json --technique ollama --model llama3.1
-./ucore generate data/npcs/specs/history_guide.json --technique template --push-to-confident  # Push dataset to Confident AI
+./ucore generate data/npcs/specs/history_guide.json --technique template --push-to-confident  # Smoke/dev push to Confident AI
 ```
 
 *Records `generate` stage to pipeline manifest with train/validation paths.*
@@ -90,6 +92,7 @@ This is the local build-loop gate for dataset generation quality, not a final
 model validation step.
 
 ```bash
+# Smoke/dev template quality gate example
 ./ucore dataset-eval data/npcs/specs/history_guide.json \
   --technique template \
   --mode fast \

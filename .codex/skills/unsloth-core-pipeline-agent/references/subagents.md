@@ -107,7 +107,7 @@ Key files:
 
 Must prefer:
 ```bash
-./ucore generate data/npcs/specs/<npc>.json --technique ollama
+./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b --fresh
 ```
 
 Review for:

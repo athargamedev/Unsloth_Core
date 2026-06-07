@@ -395,13 +395,14 @@ A: Modify the `examples_per_category` in your spec JSON, or edit after generatio
 **Q: Is generation resumable?**
 A: Currently no, but can be added. File a feature request if needed.
 
-**Q: How does this differ from `./ucore generate --technique ollama`?**
+**Q: How does this differ from the legacy/avoid `./ucore generate --technique ollama` path?**
 A: This script is optimized for local Ollama with better health checks, retry logic, and progress tracking
 
 ## Related Commands
 
 ```bash
 # Compare generation techniques
+# Smoke/dev template only; production uses generate-ollama.
 ./ucore generate data/npcs/specs/history_guide.json --technique template  # Fast, deterministic
 ./ucore generate-ollama data/npcs/specs/history_guide.json                # Quality, LLM-based
 
