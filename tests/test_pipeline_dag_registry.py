@@ -10,8 +10,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 
 def test_pipeline_dag_blocks_stage_when_required_artifacts_missing(tmp_path):
-    from scripts.ops.artifact_registry import ArtifactRegistry
-    from scripts.ops.pipeline_dag import PipelineDAG
+    from src.core.ops.artifact_registry import ArtifactRegistry
+    from src.core.ops.pipeline_dag import PipelineDAG
 
     registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
     dag = PipelineDAG(registry=registry)
@@ -26,8 +26,8 @@ def test_pipeline_dag_blocks_stage_when_required_artifacts_missing(tmp_path):
 
 
 def test_pipeline_dag_allows_stage_after_prerequisite_artifacts_exist(tmp_path):
-    from scripts.ops.artifact_registry import ArtifactRegistry
-    from scripts.ops.pipeline_dag import PipelineDAG
+    from src.core.ops.artifact_registry import ArtifactRegistry
+    from src.core.ops.pipeline_dag import PipelineDAG
 
     clean = tmp_path / "train_clean.jsonl"
     clean.write_text('{"messages": []}\n', encoding="utf-8")
@@ -52,7 +52,7 @@ def test_pipeline_dag_allows_stage_after_prerequisite_artifacts_exist(tmp_path):
 
 
 def test_artifact_registry_records_hash_and_queries_latest_by_type(tmp_path):
-    from scripts.ops.artifact_registry import ArtifactRegistry
+    from src.core.ops.artifact_registry import ArtifactRegistry
 
     artifact = tmp_path / "eval.index.json"
     artifact.write_text(json.dumps({"schema_version": "eval_report_index.v1"}), encoding="utf-8")
@@ -77,7 +77,7 @@ def test_artifact_registry_records_hash_and_queries_latest_by_type(tmp_path):
 
 
 def test_record_stage_artifacts_maps_canonical_stage_outputs(tmp_path):
-    from scripts.ops.artifact_registry import ArtifactRegistry, record_stage_artifacts
+    from src.core.ops.artifact_registry import ArtifactRegistry, record_stage_artifacts
 
     raw = tmp_path / "train.jsonl"
     raw.write_text('{"messages": []}\n', encoding="utf-8")
@@ -144,8 +144,8 @@ def test_record_stage_artifacts_maps_canonical_stage_outputs(tmp_path):
 
 
 def test_record_stage_artifacts_can_attach_input_lineage_metadata(tmp_path):
-    from scripts.ops.artifact_registry import ArtifactRegistry, record_stage_artifacts
-    from scripts.ops.pipeline_dag import stage_input_signature
+    from src.core.ops.artifact_registry import ArtifactRegistry, record_stage_artifacts
+    from src.core.ops.pipeline_dag import stage_input_signature
 
     raw = tmp_path / "train.jsonl"
     raw.write_text("raw rows\n", encoding="utf-8")
@@ -177,8 +177,8 @@ def test_record_stage_artifacts_can_attach_input_lineage_metadata(tmp_path):
 
 
 def test_pipeline_dag_writes_plan_with_ordered_blockers(tmp_path):
-    from scripts.ops.artifact_registry import ArtifactRegistry
-    from scripts.ops.pipeline_dag import PipelineDAG
+    from src.core.ops.artifact_registry import ArtifactRegistry
+    from src.core.ops.pipeline_dag import PipelineDAG
 
     plan = PipelineDAG(registry=ArtifactRegistry(tmp_path / "artifacts.jsonl")).plan_to_stage(
         "evaluate", npc_key="chef_assistant", technique="notebooklm"

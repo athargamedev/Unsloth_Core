@@ -20,8 +20,15 @@ from typing import Any
 
 from src.core.ops.artifact_registry import ArtifactRegistry
 from src.core.ops.gpu_lease import GpuLeaseManager
-from src.core.ops.pipeline_dag import PipelineDAG
+from src.core.ops.pipeline_dag import (
+    STAGE_OUTPUT_ARTIFACTS,
+    STAGE_REQUIRED_ARTIFACTS,
+    TECHNIQUE_SCOPED_ARTIFACTS,
+    PipelineDAG,
+    stage_input_signature,
+)
 from src.core.ops.run_registry import RunRegistry, make_pipeline_run_id
+from src.core.orchestration.workflow_spec import WorkflowContext, build_stage_command, repo_root
 
 UCORE_CLI = Path(__file__).resolve().parent.parent.parent / "cli" / "ucore"
 PROJECT_ROOT = UCORE_CLI.parents[2]
@@ -173,6 +180,35 @@ class TargetRunner:
             technique = plan.get("technique")
             profile = plan.get("profile", "default")
 
+            if stage == "train":
+                from src.core.ops.artifact_registry import ArtifactRegistry
+                from src.core.training.train import training_readiness_errors
+
+                ctx = WorkflowContext(
+                    npc_key=npc_key,
+                    technique=technique or "ollama",
+                    profile=profile,
+                )
+                fresh_registry = ArtifactRegistry(self.registry.index_path)
+                self.registry = fresh_registry
+                self.dag = PipelineDAG(registry=self.registry)
+                gate_errors = training_readiness_errors(
+                    PROJECT_ROOT / ctx.clean_train_path,
+                    npc_key=npc_key,
+                    technique=technique,
+                    registry=fresh_registry,
+                )
+                if gate_errors:
+                    cmd["exit_code"] = 1
+                    cmd["error"] = "training_gate_blocked"
+                    cmd["gate_errors"] = gate_errors
+                    if self.verbose:
+                        print("  [blocked] train: dataset quality gate is not ready")
+                        for error in gate_errors:
+                            print(f"    - {error}")
+                    results.append(cmd)
+                    break
+
             run_id = make_pipeline_run_id(npc_key, stage, technique or profile)
             self.run_registry.start_run(
                 run_id=run_id,
@@ -197,6 +233,13 @@ class TargetRunner:
                 )
                 if completed.returncode == 0:
                     self.run_registry.complete_run(run_id)
+                    self._record_stage_lineage(
+                        stage=stage,
+                        run_id=run_id,
+                        npc_key=npc_key,
+                        technique=technique,
+                        command=command,
+                    )
                     cmd["exit_code"] = 0
                     cmd["stdout"] = completed.stdout[-500:] if completed.stdout else ""
                 else:
@@ -236,6 +279,65 @@ class TargetRunner:
         return results
 
     # ── Internal helpers ──────────────────────────────────────────────
+
+    def _record_stage_lineage(
+        self,
+        *,
+        stage: str,
+        run_id: str,
+        npc_key: str,
+        technique: str | None,
+        command: list[str],
+    ) -> None:
+        """Append a target-runner lineage record after a successful stage command."""
+        self.registry = ArtifactRegistry(self.registry.index_path)
+        input_records: list[dict[str, Any]] = []
+        for artifact_type in STAGE_REQUIRED_ARTIFACTS.get(stage, []):
+            record = self.registry.latest_artifact(
+                npc_key,
+                artifact_type,
+                technique=technique if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS else None,
+            )
+            if record:
+                input_records.append(record)
+
+        ctx = WorkflowContext(npc_key=npc_key, technique=technique or "ollama")
+        fallback_paths = {
+            "dataset_raw": ctx.raw_train_path,
+            "dataset_clean": ctx.clean_train_path,
+            "quality_summary": ctx.quality_summary_path,
+            "adapter_checkpoint": f"artifacts/models/{npc_key}/latest",
+            "gguf_adapter": ctx.adapter_gguf_path,
+        }
+        metadata = {
+            "input_signature": stage_input_signature(stage, input_records),
+            "producer_command": " ".join(shlex.quote(str(part)) for part in command),
+            "recorded_by": "target-runner",
+        }
+
+        for artifact_type in STAGE_OUTPUT_ARTIFACTS.get(stage, []):
+            latest = self.registry.latest_artifact(
+                npc_key,
+                artifact_type,
+                technique=technique if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS else None,
+            )
+            path = (latest or {}).get("path") or fallback_paths.get(artifact_type)
+            if not path:
+                continue
+            candidate = Path(str(path))
+            if not candidate.exists() and not (PROJECT_ROOT / candidate).exists():
+                continue
+            self.registry.record_artifact(
+                run_id,
+                npc_key,
+                stage,
+                artifact_type,
+                path,
+                technique=technique if artifact_type in TECHNIQUE_SCOPED_ARTIFACTS else None,
+                metadata=metadata,
+            )
+        self.registry = ArtifactRegistry(self.registry.index_path)
+        self.dag = PipelineDAG(registry=self.registry)
 
     def _resolve_commands(
         self,

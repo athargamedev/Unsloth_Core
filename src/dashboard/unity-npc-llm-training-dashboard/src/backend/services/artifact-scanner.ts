@@ -5,10 +5,10 @@ import type { DatasetInfo, RunInfo, ExportInfo } from "../types";
 // ── Dataset Scanning ───────────────────────────────────────────────────────
 
 /**
- * Scans subjects/datasets/ for all available datasets.
+ * Scans data/datasets/ for all available datasets.
  */
 export function scanDatasets(repoRoot: string): DatasetInfo[] {
-  const datasetsRoot = path.join(repoRoot, "subjects", "datasets");
+  const datasetsRoot = path.join(repoRoot, "data", "datasets");
   if (!fs.existsSync(datasetsRoot)) return [];
 
   const results: DatasetInfo[] = [];
@@ -32,7 +32,7 @@ export function scanDatasets(repoRoot: string): DatasetInfo[] {
       results.push({
         npcKey,
         technique,
-        path: `subjects/datasets/${npcKey}/${technique}/train.jsonl`,
+        path: `data/datasets/${npcKey}/${technique}/train.jsonl`,
         entries,
         size: `${Math.max(1, Math.round(stat.size / 1024))}KB`,
         createdAt: stat.mtime.toISOString(),

@@ -4,9 +4,9 @@ import type { TrainingConfig } from '../api';
 // --- Persistent defaults ---
 
 const DEFAULT_TRAINING_CONFIG: TrainingConfig = {
-  spec: 'subjects/NPC_specs/history_guide.json',
+  spec: 'data/npcs/specs/history_guide.json',
   preset: 'fast-3b',
-  technique: 'template',
+  technique: 'ollama',
   baseModel: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
   modelId: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
   modelPreset: '',

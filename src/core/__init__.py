@@ -1,11 +1,11 @@
 """Legacy import aliases for the categorized scripts layout.
 
 The runnable entrypoints now live under category subpackages such as
-scripts.dataset, scripts.training, scripts.evaluation, scripts.export,
-scripts.orchestration, and scripts.ops.
+src.core.dataset, src.core.training, src.core.evaluation, src.core.export,
+src.core.orchestration, and src.core.ops.
 
 This package keeps old import paths working for code that still does things
-like `from scripts import smoke_test` or `from scripts.generate_dataset
+like `from src.core import smoke_test` or `from src.core.generate_dataset
 import generate_dataset`.
 """
 
@@ -80,38 +80,38 @@ class _LazyAliasModule(ModuleType):
 
 
 _LEGACY_MODULES = {
-    "audit": "scripts.ops.audit",
-    "batch_export": "scripts.export.batch_export",
-    "colab_notebook_generator": "scripts.ops.colab_notebook_generator",
-    "compare_quality_gates": "scripts.dataset.compare_quality_gates",
-    "compare_local_models": "scripts.ops.compare_local_models",
-    "compare_runs": "scripts.evaluation.compare_runs",
-    "convert_lora_to_gguf": "scripts.export.convert_lora_to_gguf",
-    "dataset_contracts": "scripts.dataset.dataset_contracts",
-    "dataset_eval": "scripts.dataset.dataset_eval",
-    "deploy_to_unity": "scripts.export.deploy_to_unity",
-    "evaluate": "scripts.evaluation.evaluate",
-    "export": "scripts.export.export",
-    "export_adapter": "scripts.export.export_adapter",
-    "export_resume": "scripts.export.export_resume",
-    "feedback_loop": "scripts.training.feedback_loop",
-    "generate_dataset": "scripts.dataset.generate_dataset",
-    "generate_dataset_ollama": "scripts.dataset.generate_dataset_ollama",
-    "generate_workflow_dataset": "scripts.dataset.generate_workflow_dataset",
-    "iterate_feedback": "scripts.training.iterate_feedback",
-    "plan_batch_execution": "scripts.orchestration.plan_batch_execution",
-    "plan_execution": "scripts.orchestration.plan_execution",
-    "quick_eval": "scripts.evaluation.quick_eval",
-    "sanitize_dataset": "scripts.dataset.sanitize_dataset",
-    "scaffold_npc": "scripts.ops.scaffold_npc",
-    "smoke_test": "scripts.ops.smoke_test",
-    "supabase_integration_check": "scripts.ops.supabase_integration_check",
-    "tb_reader": "scripts.evaluation.tb_reader",
-    "track_eval_results": "scripts.evaluation.track_eval_results",
-    "train": "scripts.training.train",
-    "validate_config": "scripts.ops.validate_config",
-    "validate_subject_spec": "scripts.dataset.validate_subject_spec",
-    "wb_report": "scripts.evaluation.wb_report",
+    "audit": "src.core.ops.audit",
+    "batch_export": "src.core.export.batch_export",
+    "colab_notebook_generator": "src.core.ops.colab_notebook_generator",
+    "compare_quality_gates": "src.core.dataset.compare_quality_gates",
+    "compare_local_models": "src.core.ops.compare_local_models",
+    "compare_runs": "src.core.evaluation.compare_runs",
+    "convert_lora_to_gguf": "src.core.export.convert_lora_to_gguf",
+    "dataset_contracts": "src.core.dataset.dataset_contracts",
+    "dataset_eval": "src.core.dataset.dataset_eval",
+    "deploy_to_unity": "src.core.export.deploy_to_unity",
+    "evaluate": "src.core.evaluation.evaluate",
+    "export": "src.core.export.export",
+    "export_adapter": "src.core.export.export_adapter",
+    "export_resume": "src.core.export.export_resume",
+    "feedback_loop": "src.core.training.feedback_loop",
+    "generate_dataset": "src.core.dataset.generate_dataset",
+    "generate_dataset_ollama": "src.core.dataset.generate_dataset_ollama",
+    "generate_workflow_dataset": "src.core.dataset.generate_workflow_dataset",
+    "iterate_feedback": "src.core.training.iterate_feedback",
+    "plan_batch_execution": "src.core.orchestration.plan_batch_execution",
+    "plan_execution": "src.core.orchestration.plan_execution",
+    "quick_eval": "src.core.evaluation.quick_eval",
+    "sanitize_dataset": "src.core.dataset.sanitize_dataset",
+    "scaffold_npc": "src.core.ops.scaffold_npc",
+    "smoke_test": "src.core.ops.smoke_test",
+    "supabase_integration_check": "src.core.ops.supabase_integration_check",
+    "tb_reader": "src.core.evaluation.tb_reader",
+    "track_eval_results": "src.core.evaluation.track_eval_results",
+    "train": "src.core.training.train",
+    "validate_config": "src.core.ops.validate_config",
+    "validate_subject_spec": "src.core.dataset.validate_subject_spec",
+    "wb_report": "src.core.evaluation.wb_report",
 }
 
 __all__ = list(_LEGACY_MODULES.keys())
