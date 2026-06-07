@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.ops.wandb_inference import (
+from src.core.ops.wandb_inference import (
     WandbInferenceClient,
     extract_json_object,
     wandb_inference_project,
@@ -26,7 +26,7 @@ def test_wandb_inference_client_posts_openai_project(monkeypatch):
         return Response()
 
     monkeypatch.setenv("WANDB_API_KEY", "test-key")
-    monkeypatch.setattr("scripts.ops.wandb_inference.requests.post", fake_post)
+    monkeypatch.setattr("src.core.ops.wandb_inference.requests.post", fake_post)
 
     client = WandbInferenceClient(
         model="meta-llama/Llama-3.1-8B-Instruct", entity="team", project="proj"

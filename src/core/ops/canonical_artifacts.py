@@ -63,6 +63,7 @@ def record_canonical_bundle(
     artifacts: Mapping[str, Any],
     metrics: Mapping[str, Any] | None = None,
     metadata: Mapping[str, Any] | None = None,
+    input_records: list[dict[str, Any]] | None = None,
 ) -> Path:
     bundle = CanonicalArtifactBundle(
         run_id=run_id,
@@ -82,5 +83,6 @@ def record_canonical_bundle(
         artifacts,
         technique=technique,
         metadata={**(metadata or {}), "canonical_bundle": str(path)},
+        input_records=input_records,
     )
     return path

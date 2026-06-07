@@ -11,7 +11,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
   // ── GET /api/datasets ─────────────────────────────────────────────
   app.get("/api/datasets", (_req: Request, res: Response) => {
-    const datasetsRoot = path.join(repoRoot, "subjects", "datasets");
+    const datasetsRoot = path.join(repoRoot, "data", "datasets");
     if (!fs.existsSync(datasetsRoot)) {
       res.json([]);
       return;
@@ -53,7 +53,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
   // ── GET /api/subjects ──────────────────────────────────────────────
   app.get("/api/subjects", (_req: Request, res: Response) => {
-    const specsDir = path.join(repoRoot, "subjects", "NPC_specs");
+    const specsDir = path.join(repoRoot, "data", "npcs", "specs");
     if (!fs.existsSync(specsDir)) {
       res.json([]);
       return;
@@ -64,7 +64,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
       .filter((f: string) => f.endsWith(".json"))
       .map((file: string) => ({
         id: file.replace(/\.json$/, ""),
-        path: `subjects/NPC_specs/${file}`,
+        path: `data/npcs/specs/${file}`,
       }));
 
     res.json(subjects);
@@ -72,7 +72,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
   // ── GET /api/datasets/quality-summary ──────────────────────────────
   app.get("/api/datasets/quality-summary", (_req: Request, res: Response) => {
-    const datasetsDir = path.join(repoRoot, "subjects", "datasets");
+    const datasetsDir = path.join(repoRoot, "data", "datasets");
     if (!fs.existsSync(datasetsDir)) {
       res.json([]);
       return;
@@ -98,7 +98,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
               results.push({
                 npcKey,
                 technique,
-                path: `subjects/datasets/${npcKey}/${technique}/quality_summary.json`,
+                path: `data/datasets/${npcKey}/${technique}/quality_summary.json`,
                 summary,
               });
             } catch {
@@ -142,7 +142,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
         "quality_summary.json",
       );
       if (
-        !summaryPath.startsWith(path.join(repoRoot, "subjects", "datasets"))
+        !summaryPath.startsWith(path.join(repoRoot, "data", "datasets"))
       ) {
         res.status(400).json({ error: "Invalid path" });
         return;
@@ -216,7 +216,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
 
       if (
         !failuresPath.startsWith(
-          path.join(repoRoot, "subjects", "datasets"),
+          path.join(repoRoot, "data", "datasets"),
         )
       ) {
         res.status(400).json({ error: "Invalid path" });
@@ -309,7 +309,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
   app.get(
     "/api/datasets/quality-summary",
     (_req: Request, res: Response) => {
-      const datasetsDir = path.join(repoRoot, "subjects", "datasets");
+      const datasetsDir = path.join(repoRoot, "data", "datasets");
       if (!fs.existsSync(datasetsDir)) {
         res.json([]);
         return;
@@ -340,7 +340,7 @@ export function registerRoutes(app: Express, deps: RouterDependencies): void {
                 results.push({
                   npcKey,
                   technique,
-                  path: `subjects/datasets/${npcKey}/${technique}/quality_summary.json`,
+                  path: `data/datasets/${npcKey}/${technique}/quality_summary.json`,
                   summary,
                 });
               } catch {

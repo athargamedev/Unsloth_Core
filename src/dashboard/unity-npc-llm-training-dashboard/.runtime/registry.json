@@ -2,15 +2,15 @@
   "executionMode": "local",
   "jobs": [
     {
-      "id": "job_1780675774248_ojiti",
+      "id": "job_1780696201434_ifgdh",
       "name": "Generate Dataset",
       "type": "Dataset",
       "commandId": "dataset-generate",
       "status": "stopped",
       "progress": 10,
       "loss": null,
-      "createdAt": "2026-06-05T16:09:34.248Z",
-      "startedAt": "2026-06-05T16:09:34.248Z",
+      "createdAt": "2026-06-05T21:50:01.434Z",
+      "startedAt": "2026-06-05T21:50:01.434Z",
       "command": [
         "./ucore",
         "generate",
@@ -48,14 +48,14 @@
       "ollamaUnloadTarget": null,
       "stopRequested": true,
       "exitCode": -1,
-      "finishedAt": "2026-06-05T16:09:34.257Z",
+      "finishedAt": "2026-06-05T21:50:01.444Z",
       "terminalReason": "user_requested_stop"
     }
   ],
   "logs": [
-    "[2026-06-05T16:09:34.257Z] [SYSTEM] job job_1780675774248_ojiti stopped (exit null)",
-    "[2026-06-05T16:09:34.255Z] [SYSTEM] stop requested job_1780675774248_ojiti",
-    "[2026-06-05T16:09:34.249Z] [SYSTEM] starting job_1780675774248_ojiti: ./ucore generate subjects/nonexistent_integration_spec_2.json"
+    "[2026-06-05T21:50:01.444Z] [SYSTEM] job job_1780696201434_ifgdh stopped (exit null)",
+    "[2026-06-05T21:50:01.442Z] [SYSTEM] stop requested job_1780696201434_ifgdh",
+    "[2026-06-05T21:50:01.435Z] [SYSTEM] starting job_1780696201434_ifgdh: ./ucore generate subjects/nonexistent_integration_spec_2.json"
   ],
   "nodeId": "5ecbf770-7a12-4eb4-a559-6491504274a9",
   "workflows": [],

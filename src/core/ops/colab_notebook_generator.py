@@ -3,7 +3,7 @@
 Generate Colab notebooks for remote_colab training plans.
 
 Notebook cells are assembled from the existing ucore dataset/training commands,
-so remote execution stays aligned with local scripts.
+so remote execution stays aligned with local src.core.
 """
 
 from __future__ import annotations

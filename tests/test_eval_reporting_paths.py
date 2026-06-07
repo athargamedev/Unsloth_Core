@@ -6,12 +6,13 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from _config import paths
-from scripts.evaluation.evaluate import (
+
+from src.core.evaluation.evaluate import (
     build_eval_report_index,
     generate_html_report,
     generate_report,
 )
-from scripts.training.feedback_loop import identify_weak_concepts
+from src.core.training.feedback_loop import identify_weak_concepts
 
 
 def _comparison_result():
