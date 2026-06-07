@@ -101,6 +101,55 @@ test("dashboard feedback command exposes hosted W&B DeepEval judge flags", () =>
   assert.ok(args.includes("judge-project"));
 });
 
+test("dashboard target-run defaults to canonical production workflow", () => {
+  const args = command("target-run").build({
+    npcKey: "chef_assistant",
+    options: {},
+  });
+
+  assert.deepEqual(args, [
+    "./ucore",
+    "target",
+    "run",
+    "--npc-key",
+    "chef_assistant",
+    "--technique",
+    "ollama",
+    "--target-stage",
+    "evaluate",
+    "--profile",
+    "npc-production-grounded",
+    "--dry-run",
+  ]);
+});
+
+test("dashboard target-run can run resume without invalid json flag", () => {
+  const args = command("target-run").build({
+    npcKey: "history_guide",
+    options: {
+      dryRun: false,
+      resume: true,
+      targetStage: "dataset_eval",
+    },
+  });
+
+  assert.deepEqual(args, [
+    "./ucore",
+    "target",
+    "run",
+    "--npc-key",
+    "history_guide",
+    "--technique",
+    "ollama",
+    "--target-stage",
+    "dataset_eval",
+    "--profile",
+    "npc-production-grounded",
+    "--resume",
+  ]);
+  assert.ok(!args.includes("--json"));
+});
+
 test("dashboard pipeline command exposes dataset and eval judge selectors", () => {
   const args = command("pipeline").build({
     spec: "data/npcs/specs/history_guide.json",

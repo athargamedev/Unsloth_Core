@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.dataset.dataset_contracts import summarize_jsonl_dataset
-from scripts.ops.artifact_registry import ArtifactRegistry
-from scripts.ops.pipeline_dag import stage_input_signature
-from scripts.training.train import training_readiness_errors
+from src.core.dataset.dataset_contracts import summarize_jsonl_dataset
+from src.core.ops.artifact_registry import ArtifactRegistry
+from src.core.ops.pipeline_dag import stage_input_signature
+from src.core.training.train import training_readiness_errors
 
 
 def _write_clean_dataset(path: Path) -> dict:

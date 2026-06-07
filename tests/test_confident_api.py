@@ -47,14 +47,14 @@ class TestKeyResolution:
 
     def test_accepts_api_key_argument(self):
         """Key passed as constructor argument is used directly."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key-123")
         assert client._api_key == "test-key-123"
 
     def test_reads_key_from_env_var(self, monkeypatch):
         """Key from ``CONFIDENT_API_KEY`` env var when argument is omitted."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         monkeypatch.setenv("CONFIDENT_API_KEY", "env-key-value")
         client = ConfidentAPIClient()
@@ -62,7 +62,7 @@ class TestKeyResolution:
 
     def test_raises_error_when_key_missing(self, monkeypatch):
         """No key anywhere raises ``EnvironmentError``."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         monkeypatch.delenv("CONFIDENT_API_KEY", raising=False)
         with patch("src.core.ops.env_loader.load_env_local", return_value=False):
@@ -80,7 +80,7 @@ class TestEvaluate:
 
     def test_sends_correct_request(self):
         """Happy path: POST with correct body, returns testRunId."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         test_cases = [{"input": "Hello", "actualOutput": "Hi"}]
@@ -105,7 +105,7 @@ class TestEvaluate:
 
     def test_sends_custom_hyperparameters(self):
         """When hyperparameters dict is provided, it is populated in the body."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         test_cases = [{"input": "Hello", "actualOutput": "Hi"}]
@@ -121,7 +121,7 @@ class TestEvaluate:
 
     def test_without_identifier_omits_field(self):
         """When identifier is None it must not appear in the body."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"success": True})
@@ -140,7 +140,7 @@ class TestEvaluateConversational:
 
     def test_sends_correct_request(self):
         """Happy path with conversational test cases."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         test_cases = [{"messages": [{"role": "user", "content": "Hi"}]}]
@@ -164,7 +164,7 @@ class TestEvaluateConversational:
 
     def test_sends_custom_hyperparameters(self):
         """Conversational eval propagates custom hyperparameters dict in the body."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         test_cases = [{"messages": [{"role": "user", "content": "Hi"}]}]
@@ -182,7 +182,7 @@ class TestEvaluateConversational:
 
     def test_without_identifier_omits_field(self):
         """Conversational eval without identifier field."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"success": True})
@@ -204,7 +204,7 @@ class TestPushDataset:
 
     def test_sends_correct_request(self):
         """Happy path with version and finalized=True."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         goldens = [{"input": "Q", "actualOutput": "A"}]
@@ -226,7 +226,7 @@ class TestPushDataset:
 
     def test_without_version_omits_field(self):
         """Version key absent from body when not provided."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"success": True})
@@ -240,7 +240,7 @@ class TestPushDataset:
 
     def test_sends_conversational_goldens_without_single_turn_goldens(self):
         """Multi-turn dataset push uses conversationalGoldens, not goldens."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         conversational = [{"scenario": "remember user facts"}]
@@ -261,7 +261,7 @@ class TestPushDataset:
 
     def test_rejects_mixed_single_and_conversational_goldens(self):
         """Confident datasets should not mix single-turn and multi-turn payloads."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         with pytest.raises(ValueError, match="exactly one"):
@@ -277,7 +277,7 @@ class TestPullDataset:
 
     def test_returns_goldens(self):
         """Returns ``goldens`` list from response."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"goldens": [{"input": "Q", "actualOutput": "A"}]})
@@ -293,7 +293,7 @@ class TestPullDataset:
 
     def test_falls_back_to_data_key(self):
         """Uses ``data`` key when ``goldens`` is absent."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"data": [{"input": "fallback"}]})
@@ -305,7 +305,7 @@ class TestPullDataset:
 
     def test_returns_raw_dict_when_no_expected_keys(self):
         """Returns the raw response dict when neither ``goldens`` nor ``data`` is present (type mismatch vs return annotation)."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"unexpected": "structure"})
@@ -321,7 +321,7 @@ class TestListDatasets:
 
     def test_returns_list(self):
         """Returns ``datasets`` list from response."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"datasets": [{"alias": "ds-1"}, {"alias": "ds-2"}]})
@@ -338,7 +338,7 @@ class TestListDatasets:
 
     def test_falls_back_to_data_key(self):
         """Uses ``data`` key when ``datasets`` is absent."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"data": [{"alias": "fallback-ds"}]})
@@ -354,7 +354,7 @@ class TestDeleteDataset:
 
     def test_returns_true_on_success(self):
         """Returns True regardless of response content."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"success": True})
@@ -374,7 +374,7 @@ class TestCreateDatasetVersion:
 
     def test_sends_correct_request(self):
         """POST with goldens in body, returns response."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         goldens = [{"input": "Q", "actualOutput": "A"}]
@@ -399,7 +399,7 @@ class TestListDatasetVersions:
 
     def test_returns_versions(self):
         """Returns ``versions`` list from response."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"versions": [{"version": "1.0.0"}]})
@@ -424,7 +424,7 @@ class TestGetTestRun:
 
     def test_returns_test_run_details(self):
         """Returns the full test-run response dict."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"testRunId": "run-1", "status": "completed"})
@@ -445,7 +445,7 @@ class TestListTestRuns:
 
     def test_returns_data_key(self):
         """Returns ``data`` list from response."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"data": [{"testRunId": "r1"}, {"testRunId": "r2"}]})
@@ -462,7 +462,7 @@ class TestListTestRuns:
 
     def test_falls_back_to_testRuns_key(self):
         """Uses ``testRuns`` key when ``data`` is absent."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"testRuns": [{"testRunId": "fallback-run"}]})
@@ -478,7 +478,7 @@ class TestListTestRunsPaginated:
 
     def test_sends_pagination_params(self):
         """Passes page and page_size as query parameters."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"items": [{"testRunId": "r1"}], "total": 1})
@@ -496,7 +496,7 @@ class TestListTestRunsPaginated:
 
     def test_defaults_page_and_page_size(self):
         """Default page=1, page_size=20."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock = _mock_response({"items": [], "total": 0})
@@ -518,49 +518,49 @@ class TestRaiseForStatus:
     """``_raise_for_status()`` maps HTTP status codes to exceptions."""
 
     def test_400_raises_value_error(self):
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         with pytest.raises(ValueError, match="Bad request"):
             ConfidentAPIClient._raise_for_status(400, '{"error":"bad"}', "/evaluate")
 
     def test_401_raises_permission_error(self):
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         with pytest.raises(PermissionError, match="API key invalid"):
             ConfidentAPIClient._raise_for_status(401, "unauthorized", "/evaluate")
 
     def test_403_raises_permission_error(self):
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         with pytest.raises(PermissionError, match="Access forbidden"):
             ConfidentAPIClient._raise_for_status(403, "forbidden", "/evaluate")
 
     def test_404_raises_file_not_found_error(self):
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         with pytest.raises(FileNotFoundError, match="Resource not found"):
             ConfidentAPIClient._raise_for_status(404, "not found", "/datasets/unknown")
 
     def test_409_raises_runtime_error(self):
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         with pytest.raises(RuntimeError, match="Conflict"):
             ConfidentAPIClient._raise_for_status(409, '{"error":"conflict"}', "/datasets/ds")
 
     def test_422_raises_value_error(self):
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         with pytest.raises(ValueError, match="Unprocessable"):
             ConfidentAPIClient._raise_for_status(422, "bad data", "/evaluate")
 
     def test_500_raises_runtime_error(self):
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         with pytest.raises(RuntimeError, match="Server error"):
             ConfidentAPIClient._raise_for_status(500, "internal error", "/evaluate")
 
     def test_unknown_status_raises_runtime_error(self):
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         with pytest.raises(RuntimeError, match="HTTP 418"):
             ConfidentAPIClient._raise_for_status(418, "teapot", "/evaluate")
@@ -571,7 +571,7 @@ class TestRequestNetworkErrors:
 
     def test_url_error_raises_runtime_error(self):
         """Connection errors and timeouts (``URLError``) become ``RuntimeError``."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock_urlopen = MagicMock()
@@ -585,7 +585,7 @@ class TestRequestNetworkErrors:
 
     def test_http_error_through_request_raises_mapped_exception(self):
         """``HTTPError`` in ``_request`` triggers the ``_raise_for_status`` path."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         headers = {}
@@ -598,7 +598,7 @@ class TestRequestNetworkErrors:
 
     def test_invalid_json_response_raises_json_decode_error(self):
         """Non-JSON response raises ``json.JSONDecodeError``."""
-        from scripts.ops.confident_api import ConfidentAPIClient
+        from src.core.ops.confident_api import ConfidentAPIClient
 
         client = ConfidentAPIClient(api_key="test-key")
         mock_resp = MagicMock()
@@ -623,7 +623,7 @@ class TestPipelineManifestConfidentUrl:
 
     def test_accepts_confident_url_metadata(self, monkeypatch, tmp_path):
         """``confident_url`` survives the record → save → load round-trip."""
-        from scripts.ops.pipeline_manifest import record_pipeline_stage
+        from src.core.ops.pipeline_manifest import record_pipeline_stage
 
         manifest_path = tmp_path / ".pipeline" / "run_manifest.json"
         monkeypatch.setenv("NPC_KEY", "test_npc")
@@ -642,7 +642,7 @@ class TestPipelineManifestConfidentUrl:
 
     def test_metadata_without_confident_url(self, monkeypatch, tmp_path):
         """Other metadata keys are preserved; ``confident_url`` is optional."""
-        from scripts.ops.pipeline_manifest import record_pipeline_stage
+        from src.core.ops.pipeline_manifest import record_pipeline_stage
 
         manifest_path = tmp_path / ".pipeline" / "run_manifest.json"
         monkeypatch.setenv("NPC_KEY", "test_npc")

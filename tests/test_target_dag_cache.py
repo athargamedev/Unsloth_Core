@@ -2,8 +2,8 @@ from __future__ import annotations
 
 
 def test_target_plan_skips_cached_stage_when_output_signature_matches_inputs(tmp_path):
-    from scripts.ops.artifact_registry import ArtifactRegistry
-    from scripts.ops.pipeline_dag import PipelineDAG, stage_input_signature
+    from src.core.ops.artifact_registry import ArtifactRegistry
+    from src.core.ops.pipeline_dag import PipelineDAG, stage_input_signature
 
     raw = tmp_path / "train.jsonl"
     raw.write_text('{"messages": []}\n', encoding="utf-8")
@@ -36,8 +36,8 @@ def test_target_plan_skips_cached_stage_when_output_signature_matches_inputs(tmp
 
 
 def test_target_plan_marks_stage_stale_when_latest_input_hash_changes(tmp_path):
-    from scripts.ops.artifact_registry import ArtifactRegistry
-    from scripts.ops.pipeline_dag import PipelineDAG, stage_input_signature
+    from src.core.ops.artifact_registry import ArtifactRegistry
+    from src.core.ops.pipeline_dag import PipelineDAG, stage_input_signature
 
     raw = tmp_path / "train.jsonl"
     raw.write_text("old\n", encoding="utf-8")
@@ -75,8 +75,8 @@ def test_target_plan_marks_stage_stale_when_latest_input_hash_changes(tmp_path):
 
 
 def test_target_plan_reports_missing_first_stage_output(tmp_path):
-    from scripts.ops.artifact_registry import ArtifactRegistry
-    from scripts.ops.pipeline_dag import PipelineDAG
+    from src.core.ops.artifact_registry import ArtifactRegistry
+    from src.core.ops.pipeline_dag import PipelineDAG
 
     plan = PipelineDAG(registry=ArtifactRegistry(tmp_path / "artifacts.jsonl")).plan_target(
         "sanitize", npc_key="chef_assistant", technique="ollama"
@@ -89,8 +89,8 @@ def test_target_plan_reports_missing_first_stage_output(tmp_path):
 
 
 def test_target_plan_marks_existing_output_without_lineage_inconclusive(tmp_path):
-    from scripts.ops.artifact_registry import ArtifactRegistry
-    from scripts.ops.pipeline_dag import PipelineDAG
+    from src.core.ops.artifact_registry import ArtifactRegistry
+    from src.core.ops.pipeline_dag import PipelineDAG
 
     raw = tmp_path / "train.jsonl"
     raw.write_text("raw\n", encoding="utf-8")

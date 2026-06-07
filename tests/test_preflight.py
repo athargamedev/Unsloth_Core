@@ -5,7 +5,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.ops import preflight
+from src.core.ops import preflight
 
 
 def test_run_preflight_auto_downgrades_fast3b_and_stops_ollama(tmp_path, monkeypatch):

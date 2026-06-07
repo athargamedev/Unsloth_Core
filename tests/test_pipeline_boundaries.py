@@ -42,7 +42,7 @@ def test_dataset_technique_priority_order(monkeypatch, tmp_path):
 
 
 def test_ollama_generator_output_shape_is_chatml(tmp_path):
-    from scripts.generate_dataset import generate_dataset
+    from src.core.generate_dataset import generate_dataset
 
     class FakeGenerator:
         model = "fake"
@@ -62,7 +62,7 @@ def test_ollama_generator_output_shape_is_chatml(tmp_path):
 
 
 def test_concept_extractor_uses_explicit_concepts_and_metadata():
-    from scripts.generate_dataset import ConceptExtractor
+    from src.core.generate_dataset import ConceptExtractor
 
     spec = minimal_spec()
     spec["teaching"] = {
@@ -89,7 +89,7 @@ def test_concept_extractor_uses_explicit_concepts_and_metadata():
 
 
 def test_concept_extractor_ignores_meta_reference_headings():
-    from scripts.generate_dataset import ConceptExtractor
+    from src.core.generate_dataset import ConceptExtractor
 
     spec = {
         "npc_key": "chef_assistant",
@@ -106,7 +106,7 @@ def test_concept_extractor_ignores_meta_reference_headings():
 
 
 def test_smoke_custom_prompts_and_tracking_timestamp(monkeypatch, tmp_path, capsys):
-    from scripts import smoke_test
+    from src.core import smoke_test
 
     model_path = tmp_path / "model.gguf"
     model_path.write_text("stub")
@@ -121,7 +121,7 @@ def test_smoke_custom_prompts_and_tracking_timestamp(monkeypatch, tmp_path, caps
 
 
 def test_tracking_local_fallback_shape(tmp_path):
-    from scripts.track_eval_results import track_result
+    from src.core.track_eval_results import track_result
 
     results_file = tmp_path / "eval_results.jsonl"
     saved_to_supabase = track_result(
@@ -141,9 +141,9 @@ def test_tracking_local_fallback_shape(tmp_path):
 
 def test_sanitizer_infers_relative_technique_and_counts_sibling_validation(monkeypatch, tmp_path):
     from _config import paths
-    from scripts import sanitize_dataset
 
     from src.config import paths as src_paths
+    from src.core import sanitize_dataset
 
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     monkeypatch.setattr(src_paths, "PROJECT_ROOT", tmp_path)
@@ -160,7 +160,7 @@ def test_sanitizer_infers_relative_technique_and_counts_sibling_validation(monke
 
 
 def test_refusal_structural_check_requires_boundary_or_redirect():
-    from scripts.sanitize_dataset import refusal_response_has_boundary
+    from src.core.sanitize_dataset import refusal_response_has_boundary
 
     assert refusal_response_has_boundary(
         "I can't confirm that claim, but I can help with evidence from astronomy."
@@ -172,7 +172,7 @@ def test_refusal_structural_check_requires_boundary_or_redirect():
 
 def test_refusal_boundary_markers_catch_safety_refusals():
     """All 6 previously-dropped 'unsafe shortcuts' refusal patterns must be recognized."""
-    from scripts.sanitize_dataset import refusal_response_has_boundary
+    from src.core.sanitize_dataset import refusal_response_has_boundary
 
     patterns = [
         "Nope. Food safety isn't negotiable. Use a thermometer to check internal temperature.",
@@ -198,7 +198,7 @@ def test_refusal_boundary_markers_catch_safety_refusals():
 
 def test_refusal_boundary_markers_dont_falsely_match_teaching():
     """Teaching responses about food safety or bacteria must NOT be flagged as having boundaries."""
-    from scripts.sanitize_dataset import refusal_response_has_boundary
+    from src.core.sanitize_dataset import refusal_response_has_boundary
 
     non_refusals = [
         "Bacteria are single-celled organisms that can be found in various environments.",
@@ -216,7 +216,7 @@ def test_refusal_boundary_markers_dont_falsely_match_teaching():
 def test_refusal_response_includes_boundary_and_redirect():
     from importlib import import_module
 
-    gd = import_module("scripts.generate_dataset")
+    gd = import_module("src.core.generate_dataset")
 
     spec = {
         "npc_name": "HistoryGuide",
@@ -244,7 +244,7 @@ def test_refusal_response_includes_boundary_and_redirect():
 
 
 def test_ollama_category_prompts_remain_short_and_specific():
-    from scripts.generate_dataset_ollama import build_category_generation_prompt
+    from src.core.generate_dataset_ollama import build_category_generation_prompt
 
     identity = build_category_generation_prompt("identity", "ancient civilizations", "HistoryGuide")
     teaching = build_category_generation_prompt("teaching", "ancient civilizations", "HistoryGuide")
@@ -269,7 +269,7 @@ def test_ollama_category_prompts_remain_short_and_specific():
 
 
 def test_ollama_multi_turn_selection_is_deterministic():
-    from scripts.generate_dataset_ollama import should_generate_multi_turn
+    from src.core.generate_dataset_ollama import should_generate_multi_turn
 
     first = [should_generate_multi_turn("teaching", i, 0.25) for i in range(12)]
     second = [should_generate_multi_turn("teaching", i, 0.25) for i in range(12)]
@@ -280,12 +280,12 @@ def test_ollama_multi_turn_selection_is_deterministic():
 
 
 def test_template_generation_avoids_duplicate_refusal_rows(tmp_path):
-    from scripts.dataset.dataset_contracts import (
+    from src.core.dataset.dataset_contracts import (
         calculate_distribution_gaps,
         expected_examples_per_category,
         summarize_jsonl_dataset,
     )
-    from scripts.dataset.generate_dataset import generate_dataset
+    from src.core.dataset.generate_dataset import generate_dataset
 
     spec = {
         "npc_key": "history_guide",
@@ -394,7 +394,7 @@ def test_export_resolution_falls_back_to_newest_run_without_symlinks(monkeypatch
 
 
 def test_validate_spec_generation_ready_requires_reference_contract(monkeypatch, tmp_path):
-    from scripts import validate_subject_spec as validator
+    from src.core import validate_subject_spec as validator
 
     spec = minimal_spec()
     spec["identity"] = {
@@ -448,7 +448,7 @@ def test_validate_spec_generation_ready_requires_reference_contract(monkeypatch,
 
 
 def test_all_current_specs_are_generation_ready():
-    from scripts.validate_subject_spec import find_subject_specs, validate_spec
+    from src.core.validate_subject_spec import find_subject_specs, validate_spec
 
     results = [
         validate_spec(
