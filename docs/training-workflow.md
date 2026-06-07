@@ -76,8 +76,10 @@ Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 
 **Key CLI flags:**
 ```bash
-./ucore generate-ollama data/npcs/specs/history_guide.json --model qwen2.5:7b
-./ucore generate data/npcs/specs/history_guide.json --technique template  # smoke/dev only
+./ucore generate data/npcs/specs/history_guide.json
+./ucore generate data/npcs/specs/history_guide.json --technique template
+./ucore generate-ollama data/npcs/specs/history_guide.json --model qwen2.5:7b --fresh
+./ucore generate data/npcs/specs/history_guide.json --technique template --push-to-confident  # Push dataset to Confident AI
 ```
 
 *Records `generate` stage to pipeline manifest with train/validation paths.*
