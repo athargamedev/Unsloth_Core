@@ -396,6 +396,7 @@ Run the full canonical pipeline: validate-spec → generate → sanitize → dat
 | `--skip-eval` | `bool` | `False` | Skip evaluation phase |
 | `--skip-spec-validate` | `bool` | `False` | Skip spec generation-ready validation |
 | `--skip-dataset-eval` | `bool` | `False` | Skip DeepEval dataset quality gate |
+| `--allow-metadata-repair` | `bool` | `False` | Dev/template-only escape hatch: omit `--require-complete-metadata` so sanitizer can repair missing metadata during smoke runs |
 | `--dataset-eval-mode` | `str` | `fast` | `fast`, `release` |
 | `--dataset-eval-cases-per-category N` | `int` | *mode-dep.* | Rows sampled per category for pipeline dataset-eval |
 | `--num-eval-questions N` | `int` | `5` | Number of evaluation questions |

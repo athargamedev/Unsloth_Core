@@ -77,6 +77,30 @@ def _json_serialize(obj: object) -> str:
     return json.dumps(obj, indent=2, ensure_ascii=False, default=str)
 
 
+def build_pipeline_sanitize_cmd(
+    dataset_path: Path | str,
+    output_path: Path | str,
+    *,
+    allow_metadata_repair: bool = False,
+) -> list[str]:
+    """Build the sanitize command used by the full pipeline.
+
+    Production/default pipeline runs require generator-complete metadata.
+    ``allow_metadata_repair`` is a dev-only escape hatch for template smoke runs.
+    """
+    cmd = [
+        PYTHON,
+        str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"),
+        str(dataset_path),
+        "--output",
+        str(output_path),
+        "--strict-canonical",
+    ]
+    if not allow_metadata_repair:
+        cmd.append("--require-complete-metadata")
+    return cmd
+
+
 def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
     """Run a shell command and print its output.
 
@@ -1124,6 +1148,14 @@ def create_parser():
         "--skip-dataset-eval",
         action="store_true",
         help="DEV ONLY: skip DeepEval dataset quality gate and train with an ungated dataset",
+    )
+    pipe_p.add_argument(
+        "--allow-metadata-repair",
+        action="store_true",
+        help=(
+            "DEV/TEMPLATE ONLY: allow sanitizer metadata auto-repair by omitting "
+            "--require-complete-metadata"
+        ),
     )
     pipe_p.add_argument(
         "--dataset-eval-mode",
@@ -2392,18 +2424,10 @@ def main(argv: list[str] | None = None) -> int:
         npc_key = Path(args.spec).stem
         workflow_id = uuid.uuid4().hex
         technique = "ollama" if args.ollama else args.technique
-        if technique == "template" and not args.smoke_template:
-            print(
-                "Error: ./ucore pipeline cannot use template data unless --smoke-template "
-                "is explicitly set. Production pipeline defaults to --technique ollama.",
-                file=sys.stderr,
-            )
-            return 2
-        if args.skip_dataset_eval:
-            print(
-                "Warning: --skip-dataset-eval is DEV ONLY; training will use "
-                "--allow-ungated-dataset and must not be promoted as production evidence.",
-                file=sys.stderr,
+        if args.allow_metadata_repair and technique != "template":
+            parser.error(
+                "--allow-metadata-repair is dev-only and may only be used "
+                "with --technique template"
             )
         wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
         pipeline_hooks = args.workflow_hooks or str(
@@ -2475,14 +2499,11 @@ def main(argv: list[str] | None = None) -> int:
                 san_path = paths.dataset_train_path(npc_key, technique).with_name(
                     "train_clean.jsonl"
                 )
-                san_cmd = [
-                    PYTHON,
-                    str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"),
-                    str(dataset_path),
-                    "--output",
-                    str(san_path),
-                    "--strict-canonical",
-                ]
+                san_cmd = build_pipeline_sanitize_cmd(
+                    dataset_path,
+                    san_path,
+                    allow_metadata_repair=args.allow_metadata_repair,
+                )
                 os.environ["WORKFLOW_NEXT_ACTION"] = (
                     "deepeval_run" if not args.skip_dataset_eval else "training_pipeline"
                 )

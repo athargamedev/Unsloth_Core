@@ -97,6 +97,8 @@ Validates dataset integrity:
 
 **Output:** `{input_path}_clean.jsonl` (in same directory as input)
 
+The full `./ucore pipeline` sanitize stage always passes `--strict-canonical` and, by default, `--require-complete-metadata` so production generators must emit complete metadata before training. Template smoke runs that intentionally exercise legacy/minimal fixtures may opt out with `./ucore pipeline ... --technique template --allow-metadata-repair`; that flag is dev-only and leaves sanitizer metadata repair enabled.
+
 *Records `sanitize` stage to pipeline manifest with output path.*
 
 ### Stage 2b: Dataset Quality Eval
