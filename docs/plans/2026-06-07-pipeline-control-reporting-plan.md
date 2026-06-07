@@ -6,9 +6,9 @@ Date: 2026-06-07
 
 The NPC pipeline has strong tools, but the operator experience is still too
 script-shaped. Generation, sanitization, dataset evaluation, training, export,
-runtime evaluation, Confident/W&B publishing, feedback classification, and
-promotion each own separate flags and artifacts. That makes it easy to run a
-valid command sequence that is not a coherent experiment.
+runtime evaluation, Confident/W&B publishing, Modal remote execution, feedback
+classification, and promotion each own separate flags and artifacts. That makes
+it easy to run a valid command sequence that is not a coherent experiment.
 
 The fix is not another command list. The fix is a single controlled pipeline
 contract that resolves every flag before execution, records every decision, and
@@ -30,6 +30,9 @@ produces one report bundle that says what to improve before the next NPC run.
   but the output is not promoted to a first-class operator report.
 - `tests/test_cli_schema_drift.py` already detects CLI/schema drift, which
   should become a report input instead of a passive test artifact.
+- `docs/reports/2026-06-07-integration-readiness-report.md` captures the
+  current Confident AI, W&B, DeepEval, and Modal readiness state. Modal is
+  installed as a Python client but has no project execution lane yet.
 
 ## Target State
 
@@ -57,6 +60,9 @@ spec must include every effective flag:
   lease policy.
 - Runtime-eval baseline, candidate adapter, base model, judge provider/model,
   report formats, feedback JSON path, and promotion threshold.
+- Integration settings and evidence for DeepEval, Confident AI, W&B, and Modal:
+  enabled flags, credential presence/scope, run IDs, URLs, artifact IDs, remote
+  execution status, and unavailable reasons.
 
 The resolved run spec should be written to:
 
@@ -81,6 +87,8 @@ artifacts/reports/<npc_key>/<run_id>/
   training_report.json
   runtime_eval_report.json
   feedback_decision.json
+  integration_health.json
+  modal_remote_run.json
   next_actions.json
 ```
 
@@ -94,6 +102,8 @@ The `summary.md` should answer, in order:
 5. What exact source/spec/reference/prompt changes should happen next?
 6. Are we allowed to run another per-NPC repair, or must we escalate to shared
    strategy?
+7. Are Confident AI, W&B, DeepEval, and Modal configured, executed, and linked
+   well enough to trust the result?
 
 ## Implementation Phases
 
@@ -106,8 +116,18 @@ The `summary.md` should answer, in order:
 - Make `workflow_spec.build_stage_command()` consume `PipelineRunSpec` instead
   of hardcoded constants.
 - Tests: strategy overrides, CLI overrides, active/inactive NPC handling,
-  Confident/W&B flag propagation, and no legacy `generate --technique ollama`
-  path in production.
+  Confident/W&B/DeepEval/Modal flag propagation, and no legacy
+  `generate --technique ollama` path in production.
+
+### Phase 1B: Integration Audit
+
+- Add `src/core/ops/integration_audit.py`.
+- Add `./ucore audit integrations --profile npc-production-grounded --json`.
+- Check DeepEval CLI/library, Confident AI key presence and project scope, W&B
+  login/key state, Modal token/profile state, and interpreter coherence.
+- Reports must record only secret presence/scope, never raw secret values.
+- Production profiles must fail preflight when required integrations are absent
+  unless the run spec explicitly marks them unavailable with a reason.
 
 ### Phase 2: Stage Reports Become Inputs
 
@@ -118,6 +138,9 @@ The `summary.md` should answer, in order:
   response-only masking confirmation, GPU lease, OOM status, and export paths.
 - Runtime eval report includes baseline/candidate win rate, category wins,
   sentence/word/format compliance, weak concepts, and feedback JSON.
+- Integration report includes DeepEval run IDs/paths, Confident test run IDs and
+  URLs, W&B run/artifact IDs and URLs, and Modal remote run IDs/artifact sync
+  status.
 - Tests: missing report fragments block promotion but do not delete artifacts.
 
 ### Phase 3: Bundle Builder
@@ -130,6 +153,16 @@ The `summary.md` should answer, in order:
 - Add `./ucore report bundle --npc-key ... --run-id ...` and wire
   `./ucore target run --report-bundle`.
 - Tests: bundle renders when some optional cloud integrations are missing.
+
+### Phase 3B: Modal Remote Lane
+
+- Add `src/core/remote/modal_pipeline.py`.
+- Add `./ucore modal plan` and `./ucore modal run`.
+- Supported remote stages: `dataset-eval`, `train`, `evaluate`, and
+  `report-bundle`.
+- Modal outputs must sync back into `artifacts/reports/<npc_key>/<run_id>/`.
+- Tests must mock Modal client calls and verify that run spec flags, secrets,
+  stage inputs, and artifact sync contracts are honored.
 
 ### Phase 4: Improvement Engine
 
@@ -156,11 +189,15 @@ The `summary.md` should answer, in order:
 ## Immediate Next Build Order
 
 1. Implement `PipelineRunSpec` and refactor `workflow_spec.py`.
-2. Add `./ucore target plan --json` output that includes all effective flags.
-3. Add report fragments for generation fallback and guardrail rejection counts.
-4. Add `pipeline_bundle.py` and `./ucore report bundle`.
-5. Make `target run --report-bundle` mandatory for production profiles.
-6. Gate promotion on bundle presence and runtime-eval readiness.
+2. Implement `./ucore audit integrations` for DeepEval, Confident AI, W&B, and
+   Modal.
+3. Add `./ucore target plan --json` output that includes all effective flags.
+4. Add report fragments for generation fallback and guardrail rejection counts.
+5. Add `pipeline_bundle.py` and `./ucore report bundle`.
+6. Add Modal remote stage planning/execution with artifact sync.
+7. Make `target run --report-bundle` mandatory for production profiles.
+8. Gate promotion on bundle presence, integration health, and runtime-eval
+   readiness.
 
 ## Non-Negotiables
 
@@ -172,3 +209,5 @@ The `summary.md` should answer, in order:
 - Do not lower thresholds to pass gates.
 - Every repair loop must end in a report-backed decision, not another ad hoc
   command.
+- Confident AI, W&B, DeepEval, and Modal evidence must be report fields, not
+  console output.
