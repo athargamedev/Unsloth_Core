@@ -91,6 +91,15 @@ def test_ucore_pipeline_ollama_uses_optimized_generator(monkeypatch):
     )
 
 
+def test_train_export_uses_src_core_export_after_scripts_symlink_removal():
+    train_source = (PROJECT_ROOT / "src" / "core" / "training" / "train.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'PROJECT_ROOT / "src" / "core" / "export" / "export.py"' in train_source
+    assert 'PROJECT_ROOT / "scripts" / "export" / "export.py"' not in train_source
+
+
 def test_ucore_generate_ollama_preserves_zero_values(monkeypatch):
     ucore = load_ucore()
     captured: list[list[str]] = []

@@ -45,6 +45,8 @@ def test_dataset_eval_uses_spec_technique_mode_and_current_judge_default():
     assert "fast" in cmd
     assert "--judge-model" in cmd
     assert "qwen2.5:7b" in cmd
+    assert "--output" in cmd
+    assert "data/datasets/history_guide/ollama/quality_summary.json" in cmd
 
 
 def test_train_exports_gguf_and_never_allows_ungated_dataset_by_default():

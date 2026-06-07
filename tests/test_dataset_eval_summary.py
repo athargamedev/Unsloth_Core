@@ -9,6 +9,7 @@ from src.core.dataset_eval import (
     DEFAULT_FAST_CASES_PER_CATEGORY,
     DEFAULT_PRODUCTION_CASES_PER_CATEGORY,
     dataset_eval_exit_code,
+    dataset_eval_input_records,
     summarize_deepeval_result,
 )
 
@@ -145,6 +146,28 @@ def test_dataset_eval_fast_mode_is_default_and_samples_one_case_per_category():
 
 def test_dataset_eval_release_samples_five_cases_per_category():
     assert DEFAULT_PRODUCTION_CASES_PER_CATEGORY == 5
+
+
+def test_dataset_eval_records_dataset_clean_lineage_input(tmp_path):
+    from src.core.ops.artifact_registry import ArtifactRegistry
+
+    registry = ArtifactRegistry(tmp_path / "artifacts.jsonl")
+    clean = tmp_path / "train_clean.jsonl"
+    clean.write_text("{}\n", encoding="utf-8")
+    registry.record_artifact(
+        "run-sanitize",
+        "history_guide",
+        "sanitize",
+        "dataset_clean",
+        clean,
+        technique="ollama",
+    )
+
+    records = dataset_eval_input_records("history_guide", "ollama", registry)
+
+    assert len(records) == 1
+    assert records[0]["artifact_type"] == "dataset_clean"
+    assert records[0]["sha256"]
 
 
 def test_fast_gate_metric_failures_are_diagnostic_not_blocking():
