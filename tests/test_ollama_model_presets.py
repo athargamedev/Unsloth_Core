@@ -1,4 +1,4 @@
-from scripts.ops.ollama_model_presets import resolve_ollama_model
+from src.core.ops.ollama_model_presets import resolve_ollama_model
 
 
 def test_generation_presets_resolve_expected_models():

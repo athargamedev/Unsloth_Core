@@ -20,9 +20,22 @@ from deepeval.models import DeepEvalBaseLLM, OllamaModel
 from deepeval.models.llms.ollama_model import retry_ollama
 from deepeval.test_case import SingleTurnParams
 from pydantic import BaseModel
-from scripts.ops.judge_cache import JudgeCache, JudgeCacheInput
-from scripts.ops.ollama_lifecycle import register_ollama_unload
-from scripts.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient
+
+from src.core.ops.judge_cache import JudgeCache, JudgeCacheInput
+from src.core.ops.ollama_lifecycle import register_ollama_unload
+from src.core.ops.preflight import query_gpu_memory
+from src.core.ops.wandb_inference import DEFAULT_WANDB_INFERENCE_MODEL, WandbInferenceClient
+
+# Detect if we are on a low-VRAM machine (like RTX 3060 Laptop 6GB)
+_free_vram, _total_vram = query_gpu_memory()
+IS_LOW_VRAM = _total_vram is not None and _total_vram < 8.0
+# On low-VRAM machines, disable parallel judge calls to prevent OOM/timeouts
+METRIC_ASYNC_MODE = False if IS_LOW_VRAM else True
+
+if IS_LOW_VRAM:
+    print(
+        f"[metrics] Low VRAM detected ({_total_vram}GB). Disabling DeepEval metric async_mode for stability."
+    )
 
 
 def _ollama_think_enabled() -> bool:
@@ -262,7 +275,7 @@ DATASET_QUALITY_METRICS = [
         ],
         model=JUDGE_MODEL,
         threshold=0.75,
-        async_mode=True,
+        async_mode=METRIC_ASYNC_MODE,
     ),
     GEval(
         name="Training Usefulness and Specificity",
@@ -305,7 +318,7 @@ DATASET_QUALITY_METRICS = [
         ],
         model=JUDGE_MODEL,
         threshold=0.70,
-        async_mode=True,
+        async_mode=METRIC_ASYNC_MODE,
     ),
     GEval(
         name="Constraint Compliance",
@@ -346,7 +359,7 @@ DATASET_QUALITY_METRICS = [
         ],
         model=JUDGE_MODEL,
         threshold=0.70,
-        async_mode=True,
+        async_mode=METRIC_ASYNC_MODE,
     ),
 ]
 
@@ -358,11 +371,11 @@ DATASET_QUALITY_METRICS = [
 # ─────────────────────────────────────────────────────────────────────────────
 
 RAG_QUALITY_METRICS = [
-    FaithfulnessMetric(model=JUDGE_MODEL, threshold=0.85, async_mode=True),
-    AnswerRelevancyMetric(model=JUDGE_MODEL, threshold=0.80, async_mode=True),
-    ContextualRelevancyMetric(model=JUDGE_MODEL, threshold=0.75, async_mode=True),
+    FaithfulnessMetric(model=JUDGE_MODEL, threshold=0.85, async_mode=METRIC_ASYNC_MODE),
+    AnswerRelevancyMetric(model=JUDGE_MODEL, threshold=0.80, async_mode=METRIC_ASYNC_MODE),
+    ContextualRelevancyMetric(model=JUDGE_MODEL, threshold=0.75, async_mode=METRIC_ASYNC_MODE),
     # HallucinationMetric requires retrieval_context — belongs here, not in SAFETY_METRICS
-    HallucinationMetric(model=JUDGE_MODEL, threshold=0.50, async_mode=True),
+    HallucinationMetric(model=JUDGE_MODEL, threshold=0.50, async_mode=METRIC_ASYNC_MODE),
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -372,9 +385,9 @@ RAG_QUALITY_METRICS = [
 # ─────────────────────────────────────────────────────────────────────────────
 
 CONVERSATIONAL_METRICS = [
-    RoleAdherenceMetric(model=JUDGE_MODEL, threshold=0.80, async_mode=True),
-    KnowledgeRetentionMetric(model=JUDGE_MODEL, threshold=0.80, async_mode=True),
-    ConversationCompletenessMetric(model=JUDGE_MODEL, threshold=0.70, async_mode=True),
+    RoleAdherenceMetric(model=JUDGE_MODEL, threshold=0.80, async_mode=METRIC_ASYNC_MODE),
+    KnowledgeRetentionMetric(model=JUDGE_MODEL, threshold=0.80, async_mode=METRIC_ASYNC_MODE),
+    ConversationCompletenessMetric(model=JUDGE_MODEL, threshold=0.70, async_mode=METRIC_ASYNC_MODE),
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -387,6 +400,6 @@ CONVERSATIONAL_METRICS = [
 # ─────────────────────────────────────────────────────────────────────────────
 
 SAFETY_METRICS = [
-    ToxicityMetric(model=JUDGE_MODEL, threshold=0.50, async_mode=True),
-    BiasMetric(model=JUDGE_MODEL, threshold=0.50, async_mode=True),
+    ToxicityMetric(model=JUDGE_MODEL, threshold=0.50, async_mode=METRIC_ASYNC_MODE),
+    BiasMetric(model=JUDGE_MODEL, threshold=0.50, async_mode=METRIC_ASYNC_MODE),
 ]

@@ -19,6 +19,7 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -247,20 +248,49 @@ def run_preflight(
         technique=technique,
     )
 
+    # 1. Initial inventory
     free_vram_gb, total_vram_gb = query_gpu_memory()
     report.free_vram_gb = free_vram_gb
     report.total_vram_gb = total_vram_gb
 
+    # RTX 3060 Laptop (6GB) specific strictness
+    is_low_vram = total_vram_gb is not None and total_vram_gb < 8.0
+
+    # 2. Ollama lifecycle management
     running = list_running_ollama_models(ollama_url)
     report.running_ollama_models = running
+
     if running and auto_unload_ollama:
         stopped = stop_running_models(ollama_url)
         report.stopped_ollama_models = stopped
         if stopped:
             report.warnings.append(f"Stopped Ollama model(s) before {phase}: {', '.join(stopped)}")
+
+            # ── Wait for VRAM reclamation ───────────────────────────────────
+            # Model eviction in Ollama can be asynchronous. We wait up to 5s
+            # for memory to stabilize, especially critical on 6GB cards.
+            if free_vram_gb is not None:
+                max_wait = 5.0
+                step = 0.5
+                waited = 0.0
+                while waited < max_wait:
+                    time.sleep(step)
+                    waited += step
+                    current_free, _ = query_gpu_memory()
+                    if current_free is not None and current_free > free_vram_gb + 0.5:
+                        # Found significant freed memory (>500MB)
+                        break
     elif running:
         report.warnings.append(f"Ollama model(s) still loaded before {phase}: {', '.join(running)}")
+        if is_low_vram:
+            report.errors.append(
+                "Low VRAM detected and Ollama models are holding memory. Aborting to prevent OOM."
+            )
 
+    # 3. Final memory check
+    report.free_vram_gb, _ = query_gpu_memory()
+
+    # 4. GCC availability (required for Unsloth/Triton)
     if require_gcc is None:
         require_gcc = phase == "train"
     if require_gcc:

@@ -24,9 +24,21 @@ If old docs mention other NPCs as active, treat that as deprecated unless the us
 - Never train production LoRA on template data.
 - Production data must use the approved grounded workflow. NotebookLM is deprecated — do not use for production.
 - **Use `./ucore generate-ollama` for production generation.** `./ucore generate --technique ollama` hits the legacy `generate_dataset.py` path (documented as fallback in its own header) and has known bugs fixed in the current commit.
-- The legacy `generate_dataset.py` module header states: *"Active production generation should use scripts/dataset/generate_dataset_ollama.py."*
+- The legacy `generate_dataset.py` module header states: *"Active production generation should use generate_dataset_ollama.py."*
 
-## Canonical pipeline
+## Canonical workflow
+
+Primary agent/operator path (preferred):
+
+```bash
+source unsloth_env/bin/activate
+./ucore target plan --npc-key <npc> --technique ollama \
+  --profile npc-production-grounded --target-stage evaluate
+./ucore target run --npc-key <npc> --technique ollama \
+  --profile npc-production-grounded --target-stage evaluate --resume
+```
+
+Manual recovery commands (advanced):
 
 ```bash
 source unsloth_env/bin/activate
@@ -44,6 +56,18 @@ source unsloth_env/bin/activate
 ./ucore evaluate --baseline <base-or-baseline-gguf> --candidate <adapter-or-run> \
   --base-model <base-gguf> --spec data/npcs/specs/<npc>.json --report-html
 ```
+
+### Scripts location
+
+All pipeline scripts live in `src/core/` (organized by function: `dataset/`, `training/`, `evaluation/`, `export/`, `ops/`). The old `scripts/` was a symlink to `src/core/` — removed to eliminate confusion. Use `./ucore` to run all pipeline commands.
+
+### CLI structure
+
+The CLI (`src/cli/ucore`) exposes ~38 commands. The canonical pipeline uses only 6:
+
+1. `validate-spec` → 2. `generate-ollama` → 3. `sanitize` → 4. `dataset-eval` → 5. `train` (+ `--export-gguf`) → 6. `evaluate`
+
+Dead/deprecated commands are marked `[LEGACY]`, `[DEPRECATED]`, or `[EXPERIMENTAL]` in the help text. See the Simplification report at `docs/dataflow-report.md` for details.
 
 ## Quality gate
 

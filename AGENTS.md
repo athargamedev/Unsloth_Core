@@ -41,6 +41,15 @@ Use `--strategy-profile` on `./ucore feedback` to set the profile.
 
 ```bash
 source unsloth_env/bin/activate
+./ucore target plan --npc-key history_guide --technique ollama \
+  --profile npc-production-grounded --target-stage evaluate
+./ucore target plan --npc-key chef_assistant --technique ollama \
+  --profile npc-production-grounded --target-stage evaluate
+```
+
+Manual health/spec checks:
+
+```bash
 ./ucore audit check
 ./ucore validate-spec data/npcs/specs/history_guide.json --generation-ready
 ./ucore validate-spec data/npcs/specs/chef_assistant.json --generation-ready
@@ -143,4 +152,5 @@ Then update in this order:
 - `.hermes/skills/unsloth-core-operator/SKILL.md` — operator runbook.
 - `.hermes/skills/unsloth-core-low-vram-training/SKILL.md` — 6GB VRAM training/eval survival.
 - `.hermes/skills/llmunity-runtime-deploy/SKILL.md` — Unity deployment checks.
-- `.hermes/skills/unsloth-core-generation-workflow/SKILL.md` — production generation workflow (use generate-ollama, not legacy path)
+- `.hermes/skills/unsloth-core-generation-workflow/SKILL.md` — production generation workflow
+- `AGENTS.md` (this file) — project-level agent context

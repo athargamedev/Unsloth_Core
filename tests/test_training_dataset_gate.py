@@ -5,8 +5,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.dataset.dataset_contracts import summarize_jsonl_dataset
-from scripts.training.train import dataset_quality_gate_errors, validation_dataset_path
+from src.core.dataset.dataset_contracts import summarize_jsonl_dataset
+from src.core.training.train import dataset_quality_gate_errors, validation_dataset_path
 
 
 def _write_clean_dataset(path: Path) -> dict:
