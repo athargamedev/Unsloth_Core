@@ -1356,6 +1356,13 @@ def create_parser():
         "config-coherence", help="Audit production config invariants"
     )
     audit_coherence.add_argument("--json", action="store_true", help="Output JSON")
+    audit_integrations = audit_subcmd.add_parser(
+        "integrations", help="Audit DeepEval, Confident AI, W&B, and Modal readiness"
+    )
+    audit_integrations.add_argument(
+        "--profile", default="npc-production-grounded", help="Strategy profile to audit"
+    )
+    audit_integrations.add_argument("--json", action="store_true", help="Output JSON")
     audit_subcmd.add_parser("resume", help="Recover session context (full audit)")
 
     # Target DAG runner
@@ -1734,6 +1741,19 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print(format_audit_table(result))
             return 0 if result["ok"] else 1
+
+        if args.audit_command == "integrations":
+            from src.core.ops.integration_audit import (
+                audit_integrations,
+                format_integration_audit,
+            )
+
+            result = audit_integrations(profile=args.profile, root=PROJECT_ROOT)
+            if args.json:
+                print(json.dumps(result, indent=2, ensure_ascii=False))
+            else:
+                print(format_integration_audit(result))
+            return 0
 
         from src.core.ops.audit import ProjectAudit
 
