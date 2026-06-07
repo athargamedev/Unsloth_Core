@@ -1,5 +1,5 @@
 """
-_config/log_setup.py — Structured logging for Unsloth_Core scripts.
+_config/log_setup.py — Structured logging for Unsloth_Core src.core.
 
 Provides a consistent logging setup across all pipeline scripts:
 - Timestamped, leveled output to stderr

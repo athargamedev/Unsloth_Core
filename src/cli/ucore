@@ -77,6 +77,30 @@ def _json_serialize(obj: object) -> str:
     return json.dumps(obj, indent=2, ensure_ascii=False, default=str)
 
 
+def build_pipeline_sanitize_cmd(
+    dataset_path: Path | str,
+    output_path: Path | str,
+    *,
+    allow_metadata_repair: bool = False,
+) -> list[str]:
+    """Build the sanitize command used by the full pipeline.
+
+    Production/default pipeline runs require generator-complete metadata.
+    ``allow_metadata_repair`` is a dev-only escape hatch for template smoke runs.
+    """
+    cmd = [
+        PYTHON,
+        str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"),
+        str(dataset_path),
+        "--output",
+        str(output_path),
+        "--strict-canonical",
+    ]
+    if not allow_metadata_repair:
+        cmd.append("--require-complete-metadata")
+    return cmd
+
+
 def run_cmd(cmd, cwd=PROJECT_ROOT, announce=True, extra_env=None):
     """Run a shell command and print its output.
 
@@ -227,7 +251,9 @@ def create_parser():
     subparsers = parser.add_subparsers(dest="command", help="Command to run", required=True)
 
     # Generate
-    gen_p = subparsers.add_parser("generate", help="Generate dataset from spec")
+    gen_p = subparsers.add_parser(
+        "generate", help="[LEGACY] Generate dataset from spec — prefer generate-ollama"
+    )
     gen_p.add_argument("spec", help="Path to subject spec JSON")
     gen_mode = gen_p.add_mutually_exclusive_group()
     gen_mode.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
@@ -254,13 +280,13 @@ def create_parser():
     # Generate with Ollama (optimized)
     gen_ollama_p = subparsers.add_parser(
         "generate-ollama",
-        help="Generate dataset using optimized Ollama generator (defaults to local llama3.1-3060-chat)",
+        help="Generate dataset using Ollama (defaults to qwen2.5:7b) — canonical generation command",
     )
     gen_ollama_p.add_argument("spec", help="Path to subject spec JSON")
     gen_ollama_p.add_argument(
         "--model",
-        default="llama3.1-3060-chat:latest",
-        help="Ollama model (default: llama3.1-3060-chat:latest)",
+        default="qwen2.5:7b",
+        help="Ollama model (default: qwen2.5:7b)",
     )
     gen_ollama_p.add_argument("--url", default="http://localhost:11434", help="Ollama server URL")
     gen_ollama_p.add_argument(
@@ -724,7 +750,9 @@ def create_parser():
     )
 
     # Export resume
-    exr_p = subparsers.add_parser("export-resume", help="Resume/continue GGUF export for an NPC")
+    exr_p = subparsers.add_parser(
+        "export-resume", help="[DEPRECATED] Resume/continue GGUF export for an NPC (unused)"
+    )
     exr_p.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
     exr_p.add_argument("--model", "-m", help="Base model ID")
     exr_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization")
@@ -733,7 +761,7 @@ def create_parser():
 
     # Export adapter (LoRA-only for LLMUnity)
     ea_p = subparsers.add_parser(
-        "export-adapter", help="Export LoRA adapter as GGUF (for LLMUnity)"
+        "export-adapter", help="[DEPRECATED] Use export (adapter-only by default)"
     )
     ea_p.add_argument("adapter_path", nargs="?", help="Path to PEFT adapter directory")
     ea_p.add_argument("--all", "-a", action="store_true", help="Convert all adapters in outputs/")
@@ -832,7 +860,7 @@ def create_parser():
         help="Evaluate on Confident AI infrastructure instead of locally. Requires --confident.",
     )
     # Quick-eval
-    qe_p = subparsers.add_parser("quick-eval", help="Quick local evaluation (llama-cpp-python)")
+    qe_p = subparsers.add_parser("quick-eval", help="[DEPRECATED] Use evaluate instead")
     qe_p.add_argument("--adapter", required=True, help="Path to LoRA adapter directory")
     qe_p.add_argument("--samples", "-n", type=int, default=20, help="Number of validation samples")
     qe_p.add_argument("--spec", "-s", required=True, help="Subject spec JSON")
@@ -871,7 +899,7 @@ def create_parser():
 
     # Feedback (Self-Improving Dataset Factory)
     fb_p = subparsers.add_parser(
-        "feedback", help="Run the self-improving feedback loop (targeted regeneration)"
+        "feedback", help="[DEPRECATED] Use dataset-eval + generate-ollama --repair instead"
     )
     fb_p.add_argument("feedback_json", help="Path to feedback JSON from evaluate --feedback-json")
     fb_p.add_argument(
@@ -901,7 +929,7 @@ def create_parser():
 
     # Repair (Targeted Dataset Repair)
     rp_p = subparsers.add_parser(
-        "repair", help="Run the dataset repair loop using DeepEval failure reasons"
+        "repair", help="[DEPRECATED] Use dataset-eval + generate-ollama --repair instead"
     )
     rp_p.add_argument("npc_key", help="NPC key (e.g., chef_assistant)")
     rp_p.add_argument(
@@ -909,7 +937,10 @@ def create_parser():
     )
 
     # GRPO Training
-    gr_p = subparsers.add_parser("grpo-train", help="Run GRPO training with DeepEval rewards")
+    gr_p = subparsers.add_parser(
+        "grpo-train",
+        help="[EXPERIMENTAL] GRPO training with DeepEval rewards — not production-ready",
+    )
     gr_p.add_argument("npc_key", help="NPC key")
     gr_p.add_argument("--steps", type=int, default=10, help="Max steps (default: 10)")
     fb_p.add_argument(
@@ -1086,9 +1117,14 @@ def create_parser():
     pipe_mode.add_argument("--ollama", action="store_true", help="Shortcut for --technique ollama")
     pipe_mode.add_argument(
         "--technique",
-        default="template",
+        default="ollama",
         choices=["docs", "ollama", "template", "openai", "anthropic"],
-        help="Generation technique",
+        help="Generation technique (default: ollama; template requires --smoke-template)",
+    )
+    pipe_p.add_argument(
+        "--smoke-template",
+        action="store_true",
+        help="DEV/SMOKE ONLY: allow --technique template in pipeline runs",
     )
     pipe_p.add_argument(
         "--docs-manifest", help="Docs corpus manifest override for --technique docs"
@@ -1109,7 +1145,17 @@ def create_parser():
         "--skip-spec-validate", action="store_true", help="Skip spec generation-ready validation"
     )
     pipe_p.add_argument(
-        "--skip-dataset-eval", action="store_true", help="Skip DeepEval dataset quality gate"
+        "--skip-dataset-eval",
+        action="store_true",
+        help="DEV ONLY: skip DeepEval dataset quality gate and train with an ungated dataset",
+    )
+    pipe_p.add_argument(
+        "--allow-metadata-repair",
+        action="store_true",
+        help=(
+            "DEV/TEMPLATE ONLY: allow sanitizer metadata auto-repair by omitting "
+            "--require-complete-metadata"
+        ),
     )
     pipe_p.add_argument(
         "--dataset-eval-mode",
@@ -1661,23 +1707,21 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "audit":
         if args.audit_command == "pipeline-plan":
-            from src.core.ops.artifact_registry import ArtifactRegistry
-            from src.core.ops.pipeline_dag import PipelineDAG
+            from src.core.orchestration.target_runner import TargetRunner
 
-            registry = (
-                ArtifactRegistry(args.artifact_index) if args.artifact_index else ArtifactRegistry()
-            )
-            dag = PipelineDAG(registry=registry)
-            plan = dag.plan_to_stage(
-                args.target_stage, npc_key=args.npc_key, technique=args.technique
+            runner = TargetRunner(artifact_index=args.artifact_index)
+            plan = runner.plan(
+                npc_key=args.npc_key,
+                profile="npc-production-grounded",
+                technique=args.technique,
+                target_stage=args.target_stage,
             )
             if args.write:
-                out = dag.write_plan(
-                    args.write, args.target_stage, npc_key=args.npc_key, technique=args.technique
-                )
+                out = Path(args.write)
+                _write_json(out, plan)
                 print(f"Pipeline plan written: {out}")
             else:
-                print(json.dumps(plan, indent=2, ensure_ascii=False))
+                print(json.dumps(plan, indent=2, ensure_ascii=False, default=str))
             return 0
 
         if args.audit_command == "config-coherence":
@@ -2380,9 +2424,14 @@ def main(argv: list[str] | None = None) -> int:
         npc_key = Path(args.spec).stem
         workflow_id = uuid.uuid4().hex
         technique = "ollama" if args.ollama else args.technique
+        if args.allow_metadata_repair and technique != "template":
+            parser.error(
+                "--allow-metadata-repair is dev-only and may only be used "
+                "with --technique template"
+            )
         wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
         pipeline_hooks = args.workflow_hooks or str(
-            PROJECT_ROOT / "subjects" / "datasets" / npc_key / technique / "workflow_hooks.jsonl"
+            paths.dataset_train_path(npc_key, technique).parent / "workflow_hooks.jsonl"
         )
 
         # Set on the base environment so all child processes inherit it
@@ -2416,14 +2465,25 @@ def main(argv: list[str] | None = None) -> int:
             print("[STAGE] dataset")
             with trace_type("agent", name="Phase 1: Generating Dataset"):
                 print("--- Phase 1: Generating Dataset ---")
-                gen_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec]
-                gen_cmd.extend(["--technique", technique])
                 if technique == "ollama":
-                    gen_cmd.append("--ollama")
-                if args.docs_manifest:
-                    gen_cmd.extend(["--docs-manifest", args.docs_manifest])
-                if args.model:
-                    gen_cmd.extend(["--model", args.model])
+                    gen_cmd = [
+                        PYTHON,
+                        str(SCRIPTS_DIR / "dataset" / "generate_dataset_ollama.py"),
+                        args.spec,
+                    ]
+                    if args.model:
+                        gen_cmd.extend(["--model", args.model])
+                else:
+                    gen_cmd = [
+                        PYTHON,
+                        str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"),
+                        args.spec,
+                    ]
+                    gen_cmd.extend(["--technique", technique])
+                    if args.docs_manifest:
+                        gen_cmd.extend(["--docs-manifest", args.docs_manifest])
+                    if args.model:
+                        gen_cmd.extend(["--model", args.model])
                 os.environ["WORKFLOW_NEXT_ACTION"] = "sanitize_dataset"
                 os.environ["WORKFLOW_NEXT_ARTIFACT"] = str(
                     paths.dataset_train_path(npc_key, technique)
@@ -2439,14 +2499,11 @@ def main(argv: list[str] | None = None) -> int:
                 san_path = paths.dataset_train_path(npc_key, technique).with_name(
                     "train_clean.jsonl"
                 )
-                san_cmd = [
-                    PYTHON,
-                    str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"),
-                    str(dataset_path),
-                    "--output",
-                    str(san_path),
-                    "--strict-canonical",
-                ]
+                san_cmd = build_pipeline_sanitize_cmd(
+                    dataset_path,
+                    san_path,
+                    allow_metadata_repair=args.allow_metadata_repair,
+                )
                 os.environ["WORKFLOW_NEXT_ACTION"] = (
                     "deepeval_run" if not args.skip_dataset_eval else "training_pipeline"
                 )

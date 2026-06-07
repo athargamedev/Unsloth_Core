@@ -19,9 +19,9 @@ const artifact = (artifact_type: string, stage: string, artifactPath: string, te
 test("NPC status is derived from artifact registry readiness, not historical complete events", () => {
   const plan = buildReadinessPlanFromRecords(
     [
-      artifact("dataset_raw", "generate", "subjects/datasets/chef_assistant/ollama/train.jsonl"),
-      artifact("dataset_clean", "sanitize", "subjects/datasets/chef_assistant/ollama/train_clean.jsonl"),
-      artifact("quality_summary", "dataset_eval", "subjects/datasets/chef_assistant/ollama/quality_summary.json"),
+      artifact("dataset_raw", "generate", "data/datasets/chef_assistant/ollama/train.jsonl"),
+      artifact("dataset_clean", "sanitize", "data/datasets/chef_assistant/ollama/train_clean.jsonl"),
+      artifact("quality_summary", "dataset_eval", "data/datasets/chef_assistant/ollama/quality_summary.json"),
       // Deliberately no adapter_checkpoint / gguf_adapter. Historical run events may exist,
       // but dashboard truth must not call export/evaluate ready without artifacts.
     ],

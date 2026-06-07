@@ -759,12 +759,12 @@ config = AsyncConfig(
 export DEEPEVAL_OLLAMA_MODEL="qwen3:latest"
 export DEEPEVAL_OLLAMA_BASE_URL="http://localhost:11434"
 
-# 2. Run dataset gate (fast mode)
+# 2. Run smoke/dev template dataset gate (fast mode)
 ./ucore dataset-eval data/npcs/specs/history_guide.json \
   --technique template \
   --mode fast
 
-# 3. Train (bypass gate for iteration)
+# 3. Smoke/dev train (bypass gate for iteration)
 ./ucore train data/npcs/specs/history_guide.json \
   --technique template \
   --preset fast-3b

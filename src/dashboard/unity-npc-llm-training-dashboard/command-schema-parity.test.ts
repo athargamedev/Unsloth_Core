@@ -51,7 +51,9 @@ test("command schema payload exposes typed defaults/enums and resolved npcKey te
 
   assert.equal(schemas["promote"].fields["options.dryRun"].default, true);
   assert.equal(schemas["promote"].fields["options.candidateRunId"].required, true);
-  assert.equal(schemas["dataset-generate"].fields.spec.default, "subjects/NPC_specs/chef_assistant.json");
+  assert.equal(schemas["dataset-generate"].fields.spec.default, "data/npcs/specs/chef_assistant.json");
+  assert.equal(schemas["dataset-generate"].fields["options.technique"].default, "ollama");
+  assert.deepEqual(schemas["dataset-generate"].fields.spec.roots?.slice(0, 2), ["data", "subjects"]);
 });
 
 test("dataset-eval dashboard mode enum matches ucore CLI choices", () => {

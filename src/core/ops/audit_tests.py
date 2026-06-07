@@ -107,7 +107,7 @@ def infer_owner(path: Path, imports: list[str], tests: list[str]) -> str:
 def detect_risks(path: Path, text: str, imports: list[str], markers: list[str]) -> list[str]:
     risks: list[str] = []
     rel = _repo_rel(path)
-    if any(imp.startswith("scripts.") and imp.count(".") == 1 for imp in imports):
+    if any(imp.startswith("src.core.") and imp.count(".") == 1 for imp in imports):
         risks.append("legacy-root-script-import")
     if (
         any(token in text for token in ("subjects/", "outputs/", "exports/", "eval/"))
