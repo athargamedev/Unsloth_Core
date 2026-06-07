@@ -275,6 +275,24 @@ class TestTargetRunner:
             if cmd["stage"] != "generate":
                 assert "depends_on" in cmd
 
+    def test_runner_dry_run_uses_real_top_level_ucore_commands(self, tmp_path):
+        from src.core.orchestration.target_runner import TargetRunner
+
+        runner = TargetRunner(artifact_index=tmp_path / "artifacts.jsonl")
+        plan = runner.plan(
+            npc_key="chef_assistant",
+            profile="npc-production-grounded",
+            technique="ollama",
+            target_stage="sanitize",
+        )
+
+        dry = runner.dry_run(plan)
+        commands = [entry["command"] for entry in dry]
+        assert ["./ucore", "generate-ollama"] in [cmd[:2] for cmd in commands]
+        assert ["./ucore", "sanitize"] in [cmd[:2] for cmd in commands]
+        assert all(len(cmd) > 2 and cmd[1] != "dataset" for cmd in commands)
+        assert any("data/datasets/chef_assistant/ollama/train.jsonl" in cmd for cmd in commands)
+
     def test_runner_dry_run_no_commands_when_ready(self, tmp_path):
         from src.core.orchestration.target_runner import TargetRunner
 
@@ -316,6 +334,49 @@ class TestTargetRunner:
         # run with --dry-run should not execute
         dry_cmds = runner.run(plan, dry_run=True)
         assert isinstance(dry_cmds, list)
+
+    def test_runner_run_blocks_train_when_quality_gate_not_ready(self, tmp_path, monkeypatch):
+        import subprocess
+
+        from src.core.orchestration.target_runner import TargetRunner
+
+        def fake_gate(*args, **kwargs):
+            return ["quality summary status is 'structural_failure', expected 'ok'"]
+
+        def fail_subprocess(*args, **kwargs):  # pragma: no cover - should not run
+            raise AssertionError("train subprocess should not run when gate is blocked")
+
+        monkeypatch.setattr(
+            "src.core.training.train.training_readiness_errors",
+            fake_gate,
+        )
+        monkeypatch.setattr(subprocess, "run", fail_subprocess)
+
+        runner = TargetRunner(
+            artifact_index=tmp_path / "artifacts.jsonl",
+            run_index=tmp_path / "runs.jsonl",
+        )
+        plan = {
+            "npc_key": "chef_assistant",
+            "technique": "ollama",
+            "profile": "npc-production-grounded",
+            "gpu_policy": {"train": {"lease_required": False}},
+            "steps": [
+                {
+                    "stage": "train",
+                    "status": "missing",
+                    "action": "run",
+                    "reason": "output_missing",
+                    "requires": ["dataset_clean", "quality_summary"],
+                }
+            ],
+        }
+
+        result = runner.run(plan)
+
+        assert result[0]["error"] == "training_gate_blocked"
+        assert result[0]["exit_code"] == 1
+        assert "structural_failure" in result[0]["gate_errors"][0]
 
     def test_runner_run_with_resume_skips_completed_stages(self, tmp_path):
         from src.core.orchestration.target_runner import TargetRunner

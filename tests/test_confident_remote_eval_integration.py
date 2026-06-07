@@ -132,7 +132,7 @@ def _make_evaluate_args(
 
 def test_dataset_eval_argparse_defaults(monkeypatch):
     """Default values for ``--remote-eval`` and ``--confident`` are ``False``."""
-    from scripts.dataset.dataset_eval import parse_args
+    from src.core.dataset.dataset_eval import parse_args
 
     monkeypatch.setattr(
         sys,
@@ -146,7 +146,7 @@ def test_dataset_eval_argparse_defaults(monkeypatch):
 
 def test_dataset_eval_argparse_accepts_remote_eval(monkeypatch):
     """``--remote-eval`` sets ``remote_eval=True``."""
-    from scripts.dataset.dataset_eval import parse_args
+    from src.core.dataset.dataset_eval import parse_args
 
     monkeypatch.setattr(
         sys,
@@ -159,7 +159,7 @@ def test_dataset_eval_argparse_accepts_remote_eval(monkeypatch):
 
 def test_dataset_eval_argparse_accepts_confident(monkeypatch):
     """``--confident`` sets ``confident=True``."""
-    from scripts.dataset.dataset_eval import parse_args
+    from src.core.dataset.dataset_eval import parse_args
 
     monkeypatch.setattr(
         sys,
@@ -172,7 +172,7 @@ def test_dataset_eval_argparse_accepts_confident(monkeypatch):
 
 def test_dataset_eval_argparse_accepts_both_flags(monkeypatch):
     """Both ``--remote-eval`` and ``--confident`` can be set together."""
-    from scripts.dataset.dataset_eval import parse_args
+    from src.core.dataset.dataset_eval import parse_args
 
     monkeypatch.setattr(
         sys,
@@ -200,7 +200,7 @@ def test_dataset_eval_remote_eval_requires_confident(monkeypatch, tmp_path, caps
     The check ``if not args.confident`` inside the ``remote_eval`` branch must
     print an error message and call ``sys.exit(1)``.
     """
-    from scripts.dataset.dataset_eval import run_deepeval
+    from src.core.dataset.dataset_eval import run_deepeval
 
     # Create a real clean_path so the file-exists guard in run_deepeval passes
     clean_path = _write_jsonl(tmp_path / "train_clean.jsonl", [_make_dataset_row()])
@@ -224,19 +224,21 @@ def test_dataset_eval_remote_eval_requires_confident(monkeypatch, tmp_path, caps
     mock_hook_recorder.step.return_value.__exit__ = MagicMock(return_value=False)
 
     # PipelineRun, archive_quality_artifact are imported INSIDE run_deepeval
-    # from scripts.ops.run_registry; set_active_run/clear_active_run from
+    # from src.core.ops.run_registry; set_active_run/clear_active_run from
     # _config.log_setup — patch at source modules
     with (
-        patch("scripts.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
-        patch("scripts.dataset.dataset_eval.effective_cases_per_category", return_value=1),
-        patch("scripts.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
-        patch("scripts.ops.run_registry.archive_quality_artifact"),
+        patch("src.core.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
+        patch("src.core.dataset.dataset_eval.effective_cases_per_category", return_value=1),
+        patch("src.core.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
+        patch("src.core.ops.run_registry.archive_quality_artifact"),
         patch("_config.log_setup.set_active_run"),
         patch("_config.log_setup.clear_active_run"),
-        patch("scripts.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder),
-        patch("scripts.dataset.dataset_eval.resolve_deepeval_bin", return_value="deepeval"),
-        patch("scripts.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
-        patch("scripts.dataset.dataset_eval.subprocess.run") as mock_run,
+        patch(
+            "src.core.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder
+        ),
+        patch("src.core.dataset.dataset_eval.resolve_deepeval_bin", return_value="deepeval"),
+        patch("src.core.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
+        patch("src.core.dataset.dataset_eval.subprocess.run") as mock_run,
     ):
         mock_run.return_value = MagicMock(returncode=0)
 
@@ -251,7 +253,7 @@ def test_dataset_eval_remote_eval_requires_confident(monkeypatch, tmp_path, caps
 
 def test_dataset_eval_confident_without_api_key(monkeypatch, tmp_path, capsys):
     """``run_deepeval()`` exits with SystemExit(1) when ``--confident`` is passed but ``CONFIDENT_API_KEY`` is not set."""
-    from scripts.dataset.dataset_eval import run_deepeval
+    from src.core.dataset.dataset_eval import run_deepeval
 
     clean_path = _write_jsonl(tmp_path / "train_clean.jsonl", [_make_dataset_row()])
 
@@ -280,17 +282,19 @@ def test_dataset_eval_confident_without_api_key(monkeypatch, tmp_path, capsys):
     mock_preflight.warnings = []
 
     with (
-        patch("scripts.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
-        patch("scripts.dataset.dataset_eval.effective_cases_per_category", return_value=1),
-        patch("scripts.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
-        patch("scripts.ops.run_registry.archive_quality_artifact"),
+        patch("src.core.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
+        patch("src.core.dataset.dataset_eval.effective_cases_per_category", return_value=1),
+        patch("src.core.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
+        patch("src.core.ops.run_registry.archive_quality_artifact"),
         patch("_config.log_setup.set_active_run"),
         patch("_config.log_setup.clear_active_run"),
-        patch("scripts.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder),
-        patch("scripts.dataset.dataset_eval.resolve_deepeval_bin", return_value="deepeval"),
-        patch("scripts.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
-        patch("scripts.dataset.dataset_eval.run_preflight", return_value=mock_preflight),
-        patch("scripts.dataset.dataset_eval.subprocess.run") as mock_run,
+        patch(
+            "src.core.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder
+        ),
+        patch("src.core.dataset.dataset_eval.resolve_deepeval_bin", return_value="deepeval"),
+        patch("src.core.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
+        patch("src.core.dataset.dataset_eval.run_preflight", return_value=mock_preflight),
+        patch("src.core.dataset.dataset_eval.subprocess.run") as mock_run,
     ):
         mock_run.return_value = MagicMock(returncode=0)
 
@@ -312,7 +316,7 @@ def test_dataset_eval_confident_without_api_key(monkeypatch, tmp_path, capsys):
 
 def test_dataset_eval_remote_eval_sets_judge_provider_confident(monkeypatch, tmp_path):
     """With ``--remote-eval``, the quality summary has ``judge_provider`` set to ``"confident"``."""
-    from scripts.dataset.dataset_eval import run_deepeval
+    from src.core.dataset.dataset_eval import run_deepeval
 
     clean_path = _write_jsonl(tmp_path / "train_clean.jsonl", [_make_dataset_row()])
 
@@ -350,27 +354,31 @@ def test_dataset_eval_remote_eval_sets_judge_provider_confident(monkeypatch, tmp
     expected_dist = {"teaching": 1}
 
     with (
-        patch("scripts.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
-        patch("scripts.dataset.dataset_eval.effective_cases_per_category", return_value=1),
-        patch("scripts.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
-        patch("scripts.ops.run_registry.archive_quality_artifact"),
+        patch("src.core.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
+        patch("src.core.dataset.dataset_eval.effective_cases_per_category", return_value=1),
+        patch("src.core.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
+        patch("src.core.ops.run_registry.archive_quality_artifact"),
         patch("_config.log_setup.set_active_run"),
         patch("_config.log_setup.clear_active_run"),
-        patch("scripts.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder),
-        patch("scripts.dataset.dataset_eval.resolve_deepeval_bin", return_value="deepeval"),
-        patch("scripts.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
-        patch("scripts.dataset.dataset_eval.ConfidentAPIClient", return_value=mock_client),
-        patch("scripts.dataset.dataset_eval.summarize_jsonl_dataset", return_value=dataset_summary),
         patch(
-            "scripts.dataset.dataset_eval.expected_examples_per_category",
+            "src.core.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder
+        ),
+        patch("src.core.dataset.dataset_eval.resolve_deepeval_bin", return_value="deepeval"),
+        patch("src.core.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
+        patch("src.core.dataset.dataset_eval.ConfidentAPIClient", return_value=mock_client),
+        patch(
+            "src.core.dataset.dataset_eval.summarize_jsonl_dataset", return_value=dataset_summary
+        ),
+        patch(
+            "src.core.dataset.dataset_eval.expected_examples_per_category",
             return_value=expected_dist,
         ),
-        patch("scripts.dataset.dataset_eval.calculate_distribution_gaps", return_value=[]),
-        patch("scripts.dataset.dataset_eval.load_optional_json", return_value=None),
-        patch("scripts.dataset.dataset_eval.sanitizer_quality_issues", return_value=({}, [])),
-        patch("scripts.dataset.dataset_eval.build_combined_quality_report", return_value={}),
-        patch("scripts.dataset.dataset_eval.write_json", side_effect=_capture_write_json),
-        patch("scripts.dataset.dataset_eval.dataset_eval_exit_code", return_value=0),
+        patch("src.core.dataset.dataset_eval.calculate_distribution_gaps", return_value=[]),
+        patch("src.core.dataset.dataset_eval.load_optional_json", return_value=None),
+        patch("src.core.dataset.dataset_eval.sanitizer_quality_issues", return_value=({}, [])),
+        patch("src.core.dataset.dataset_eval.build_combined_quality_report", return_value={}),
+        patch("src.core.dataset.dataset_eval.write_json", side_effect=_capture_write_json),
+        patch("src.core.dataset.dataset_eval.dataset_eval_exit_code", return_value=0),
     ):
         exit_code = run_deepeval(args, _demo_spec())
 
@@ -393,7 +401,7 @@ def test_dataset_eval_remote_eval_sets_judge_provider_confident(monkeypatch, tmp
 
 def test_dataset_eval_remote_eval_skips_preflight(monkeypatch, tmp_path):
     """With ``--remote-eval``, the preflight check is NOT called."""
-    from scripts.dataset.dataset_eval import run_deepeval
+    from src.core.dataset.dataset_eval import run_deepeval
 
     clean_path = _write_jsonl(tmp_path / "train_clean.jsonl", [_make_dataset_row()])
 
@@ -433,25 +441,29 @@ def test_dataset_eval_remote_eval_skips_preflight(monkeypatch, tmp_path):
         return MagicMock()
 
     with (
-        patch("scripts.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
-        patch("scripts.dataset.dataset_eval.effective_cases_per_category", return_value=1),
-        patch("scripts.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
-        patch("scripts.ops.run_registry.archive_quality_artifact"),
+        patch("src.core.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
+        patch("src.core.dataset.dataset_eval.effective_cases_per_category", return_value=1),
+        patch("src.core.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
+        patch("src.core.ops.run_registry.archive_quality_artifact"),
         patch("_config.log_setup.set_active_run"),
         patch("_config.log_setup.clear_active_run"),
-        patch("scripts.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder),
-        patch("scripts.dataset.dataset_eval.resolve_deepeval_bin", return_value="deepeval"),
-        patch("scripts.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
-        patch("scripts.dataset.dataset_eval.ConfidentAPIClient", return_value=mock_client),
-        patch("scripts.dataset.dataset_eval.run_preflight", side_effect=_track_preflight),
-        patch("scripts.dataset.dataset_eval.summarize_jsonl_dataset", return_value=dataset_summary),
-        patch("scripts.dataset.dataset_eval.expected_examples_per_category", return_value={}),
-        patch("scripts.dataset.dataset_eval.calculate_distribution_gaps", return_value=[]),
-        patch("scripts.dataset.dataset_eval.load_optional_json", return_value=None),
-        patch("scripts.dataset.dataset_eval.sanitizer_quality_issues", return_value=({}, [])),
-        patch("scripts.dataset.dataset_eval.build_combined_quality_report", return_value={}),
-        patch("scripts.dataset.dataset_eval.write_json"),
-        patch("scripts.dataset.dataset_eval.dataset_eval_exit_code", return_value=0),
+        patch(
+            "src.core.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder
+        ),
+        patch("src.core.dataset.dataset_eval.resolve_deepeval_bin", return_value="deepeval"),
+        patch("src.core.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
+        patch("src.core.dataset.dataset_eval.ConfidentAPIClient", return_value=mock_client),
+        patch("src.core.dataset.dataset_eval.run_preflight", side_effect=_track_preflight),
+        patch(
+            "src.core.dataset.dataset_eval.summarize_jsonl_dataset", return_value=dataset_summary
+        ),
+        patch("src.core.dataset.dataset_eval.expected_examples_per_category", return_value={}),
+        patch("src.core.dataset.dataset_eval.calculate_distribution_gaps", return_value=[]),
+        patch("src.core.dataset.dataset_eval.load_optional_json", return_value=None),
+        patch("src.core.dataset.dataset_eval.sanitizer_quality_issues", return_value=({}, [])),
+        patch("src.core.dataset.dataset_eval.build_combined_quality_report", return_value={}),
+        patch("src.core.dataset.dataset_eval.write_json"),
+        patch("src.core.dataset.dataset_eval.dataset_eval_exit_code", return_value=0),
     ):
         exit_code = run_deepeval(args, _demo_spec())
         assert exit_code == 0
@@ -465,7 +477,7 @@ def test_dataset_eval_remote_eval_skips_preflight(monkeypatch, tmp_path):
 
 def test_dataset_eval_remote_eval_calls_confident_api(monkeypatch, tmp_path):
     """With ``--remote-eval``, ``ConfidentAPIClient.evaluate()`` is called with correct arguments."""
-    from scripts.dataset.dataset_eval import run_deepeval
+    from src.core.dataset.dataset_eval import run_deepeval
 
     clean_path = _write_jsonl(tmp_path / "train_clean.jsonl", [_make_dataset_row("identity")])
 
@@ -501,24 +513,28 @@ def test_dataset_eval_remote_eval_calls_confident_api(monkeypatch, tmp_path):
     dataset_summary = {"total": 1, "by_category": {"teaching": 1}, "unknown_rows": 0}
 
     with (
-        patch("scripts.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
-        patch("scripts.dataset.dataset_eval.effective_cases_per_category", return_value=1),
-        patch("scripts.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
-        patch("scripts.ops.run_registry.archive_quality_artifact"),
+        patch("src.core.dataset.dataset_eval.resolve_workflow_context", return_value=mock_workflow),
+        patch("src.core.dataset.dataset_eval.effective_cases_per_category", return_value=1),
+        patch("src.core.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
+        patch("src.core.ops.run_registry.archive_quality_artifact"),
         patch("_config.log_setup.set_active_run"),
         patch("_config.log_setup.clear_active_run"),
-        patch("scripts.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder),
-        patch("scripts.dataset.dataset_eval.resolve_deepeval_bin", return_value="deepeval"),
-        patch("scripts.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
-        patch("scripts.dataset.dataset_eval.ConfidentAPIClient", return_value=mock_client),
-        patch("scripts.dataset.dataset_eval.summarize_jsonl_dataset", return_value=dataset_summary),
-        patch("scripts.dataset.dataset_eval.expected_examples_per_category", return_value={}),
-        patch("scripts.dataset.dataset_eval.calculate_distribution_gaps", return_value=[]),
-        patch("scripts.dataset.dataset_eval.load_optional_json", return_value=None),
-        patch("scripts.dataset.dataset_eval.sanitizer_quality_issues", return_value=({}, [])),
-        patch("scripts.dataset.dataset_eval.build_combined_quality_report", return_value={}),
-        patch("scripts.dataset.dataset_eval.write_json"),
-        patch("scripts.dataset.dataset_eval.dataset_eval_exit_code", return_value=0),
+        patch(
+            "src.core.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder
+        ),
+        patch("src.core.dataset.dataset_eval.resolve_deepeval_bin", return_value="deepeval"),
+        patch("src.core.dataset.dataset_eval.resolve_ollama_model", return_value="qwen3:latest"),
+        patch("src.core.dataset.dataset_eval.ConfidentAPIClient", return_value=mock_client),
+        patch(
+            "src.core.dataset.dataset_eval.summarize_jsonl_dataset", return_value=dataset_summary
+        ),
+        patch("src.core.dataset.dataset_eval.expected_examples_per_category", return_value={}),
+        patch("src.core.dataset.dataset_eval.calculate_distribution_gaps", return_value=[]),
+        patch("src.core.dataset.dataset_eval.load_optional_json", return_value=None),
+        patch("src.core.dataset.dataset_eval.sanitizer_quality_issues", return_value=({}, [])),
+        patch("src.core.dataset.dataset_eval.build_combined_quality_report", return_value={}),
+        patch("src.core.dataset.dataset_eval.write_json"),
+        patch("src.core.dataset.dataset_eval.dataset_eval_exit_code", return_value=0),
     ):
         exit_code = run_deepeval(args, _demo_spec())
 
@@ -597,7 +613,7 @@ def test_evaluate_argparse_remote_eval_default_false():
 
 def test_evaluate_remote_eval_uses_confident_api(monkeypatch, tmp_path):
     """With ``--remote-eval``, ``_run_deepeval_eval`` calls ``ConfidentAPIClient.evaluate()``."""
-    from scripts.evaluation.evaluate import _run_deepeval_eval
+    from src.core.evaluation.evaluate import _run_deepeval_eval
 
     monkeypatch.setenv("CONFIDENT_API_KEY", "test-key-123")
 
@@ -643,10 +659,10 @@ def test_evaluate_remote_eval_uses_confident_api(monkeypatch, tmp_path):
     candidate_path.write_text("stub")
 
     # record_pipeline_stage is imported INSIDE _run_deepeval_eval from
-    # scripts.ops.pipeline_manifest — patch at source module
+    # src.core.ops.pipeline_manifest — patch at source module
     with (
-        patch("scripts.evaluation.evaluate.ConfidentAPIClient", return_value=mock_client),
-        patch("scripts.evaluation.evaluate.ensure_confident_api_key", return_value=True),
+        patch("src.core.evaluation.evaluate.ConfidentAPIClient", return_value=mock_client),
+        patch("src.core.evaluation.evaluate.ensure_confident_api_key", return_value=True),
         patch("src.core.ops.pipeline_manifest.record_pipeline_stage"),
     ):
         _run_deepeval_eval(args, candidate_path, baseline_path=None, spec_data=spec_data)
@@ -674,7 +690,7 @@ def test_evaluate_remote_eval_uses_confident_api(monkeypatch, tmp_path):
 
 def test_evaluate_remote_eval_includes_confident_url_in_manifest(monkeypatch, tmp_path):
     """With ``--remote-eval``, the manifest metadata includes ``confident_url``."""
-    from scripts.evaluation.evaluate import _run_deepeval_eval
+    from src.core.evaluation.evaluate import _run_deepeval_eval
 
     monkeypatch.setenv("CONFIDENT_API_KEY", "test-key-123")
 
@@ -725,8 +741,8 @@ def test_evaluate_remote_eval_includes_confident_url_in_manifest(monkeypatch, tm
         captured_metadata.update(kwargs.get("metadata", {}))
 
     with (
-        patch("scripts.evaluation.evaluate.ConfidentAPIClient", return_value=mock_client),
-        patch("scripts.evaluation.evaluate.ensure_confident_api_key", return_value=True),
+        patch("src.core.evaluation.evaluate.ConfidentAPIClient", return_value=mock_client),
+        patch("src.core.evaluation.evaluate.ensure_confident_api_key", return_value=True),
         patch(
             "src.core.ops.pipeline_manifest.record_pipeline_stage", side_effect=_capture_manifest
         ),
@@ -755,7 +771,7 @@ def test_evaluate_remote_eval_includes_confident_url_in_manifest(monkeypatch, tm
 def test_evaluate_run_deepeval_handles_confident_api_key_failure(monkeypatch, tmp_path):
     """When ``ensure_confident_api_key()`` raises ``EnvironmentError`` in ``_run_deepeval_eval``,
     the function prints an error and returns without calling ``evaluate()``."""
-    from scripts.evaluation.evaluate import _run_deepeval_eval
+    from src.core.evaluation.evaluate import _run_deepeval_eval
 
     monkeypatch.setenv("CONFIDENT_API_KEY", "test-key-123")
 
@@ -782,7 +798,7 @@ def test_evaluate_run_deepeval_handles_confident_api_key_failure(monkeypatch, tm
 
     with (
         patch(
-            "scripts.evaluation.evaluate.ensure_confident_api_key",
+            "src.core.evaluation.evaluate.ensure_confident_api_key",
             side_effect=OSError("CONFIDENT_API_KEY not set"),
         ),
     ):
@@ -797,7 +813,7 @@ def test_evaluate_run_deepeval_handles_confident_api_key_failure(monkeypatch, tm
 
 def test_push_goldens_if_confident_graceful_no_file():
     """``push_goldens_if_confident()`` returns ``False`` when the file does not exist."""
-    from scripts.ops.confident_push import push_goldens_if_confident
+    from src.core.ops.confident_push import push_goldens_if_confident
 
     result = push_goldens_if_confident(
         "/nonexistent/path/goldens.jsonl",
@@ -808,7 +824,7 @@ def test_push_goldens_if_confident_graceful_no_file():
 
 def test_push_goldens_if_confident_graceful_no_key(tmp_path):
     """``push_goldens_if_confident()`` returns ``False`` when ``is_confident_enabled()`` is ``False``."""
-    from scripts.ops.confident_push import push_goldens_if_confident
+    from src.core.ops.confident_push import push_goldens_if_confident
 
     goldens_file = tmp_path / "goldens.jsonl"
     goldens_file.write_text(
@@ -816,19 +832,19 @@ def test_push_goldens_if_confident_graceful_no_key(tmp_path):
         encoding="utf-8",
     )
 
-    with patch("scripts.ops.confident_push.is_confident_enabled", return_value=False):
+    with patch("src.core.ops.confident_push.is_confident_enabled", return_value=False):
         result = push_goldens_if_confident(str(goldens_file), alias="test-alias")
     assert result is False
 
 
 def test_push_goldens_if_confident_graceful_empty_file(tmp_path):
     """``push_goldens_if_confident()`` returns ``False`` for an empty file."""
-    from scripts.ops.confident_push import push_goldens_if_confident
+    from src.core.ops.confident_push import push_goldens_if_confident
 
     goldens_file = tmp_path / "empty.jsonl"
     goldens_file.write_text("", encoding="utf-8")
 
-    with patch("scripts.ops.confident_push.is_confident_enabled", return_value=True):
+    with patch("src.core.ops.confident_push.is_confident_enabled", return_value=True):
         result = push_goldens_if_confident(str(goldens_file), alias="test-alias")
     assert result is False
 
@@ -840,7 +856,7 @@ def test_push_goldens_if_confident_graceful_empty_file(tmp_path):
 
 def test_confident_available_returns_true_when_env_set(monkeypatch):
     """``confident_available()`` returns ``True`` when ``CONFIDENT_API_KEY`` is set."""
-    from scripts.ops.env_loader import confident_available
+    from src.core.ops.env_loader import confident_available
 
     monkeypatch.setenv("CONFIDENT_API_KEY", "test-key-123")
     assert confident_available() is True
@@ -848,16 +864,16 @@ def test_confident_available_returns_true_when_env_set(monkeypatch):
 
 def test_confident_available_returns_false_when_env_unset(monkeypatch):
     """``confident_available()`` returns ``False`` when ``CONFIDENT_API_KEY`` is missing."""
-    from scripts.ops.env_loader import confident_available
+    from src.core.ops.env_loader import confident_available
 
     monkeypatch.delenv("CONFIDENT_API_KEY", raising=False)
-    with patch("scripts.ops.env_loader.load_env_local", return_value=False):
+    with patch("src.core.ops.env_loader.load_env_local", return_value=False):
         assert confident_available() is False
 
 
 def test_ensure_confident_api_key_returns_true_when_set(monkeypatch):
     """``ensure_confident_api_key()`` returns ``True`` when env var is present."""
-    from scripts.ops.env_loader import ensure_confident_api_key
+    from src.core.ops.env_loader import ensure_confident_api_key
 
     monkeypatch.setenv("CONFIDENT_API_KEY", "test-key-123")
     assert ensure_confident_api_key() is True
@@ -865,20 +881,20 @@ def test_ensure_confident_api_key_returns_true_when_set(monkeypatch):
 
 def test_ensure_confident_api_key_returns_false_when_not_set(monkeypatch):
     """``ensure_confident_api_key()`` returns ``False`` when env var is absent."""
-    from scripts.ops.env_loader import ensure_confident_api_key
+    from src.core.ops.env_loader import ensure_confident_api_key
 
     monkeypatch.delenv("CONFIDENT_API_KEY", raising=False)
-    with patch("scripts.ops.env_loader.load_env_local", return_value=False):
+    with patch("src.core.ops.env_loader.load_env_local", return_value=False):
         assert ensure_confident_api_key() is False
 
 
 def test_ensure_confident_api_key_strict_raises(monkeypatch):
     """``ensure_confident_api_key(strict=True)`` raises ``EnvironmentError`` when key is missing."""
-    from scripts.ops.env_loader import ensure_confident_api_key
+    from src.core.ops.env_loader import ensure_confident_api_key
 
     monkeypatch.delenv("CONFIDENT_API_KEY", raising=False)
     with (
-        patch("scripts.ops.env_loader.load_env_local", return_value=False),
+        patch("src.core.ops.env_loader.load_env_local", return_value=False),
         pytest.raises(EnvironmentError, match="CONFIDENT_API_KEY"),
     ):
         ensure_confident_api_key(strict=True)

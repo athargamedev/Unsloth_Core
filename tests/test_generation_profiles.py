@@ -4,7 +4,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.dataset.generation_profiles import (
+from src.core.dataset.generation_profiles import (
     DialogueGuardrail,
     _concept_anchor,
     _is_cooking_subject,
@@ -71,7 +71,7 @@ def test_cooking_kitchen_organization_anchor_is_specific():
 
 
 def test_cooking_teaching_mentions_safety_heat_and_texture(monkeypatch):
-    monkeypatch.setattr("scripts.dataset.generation_profiles.random.choice", lambda seq: seq[0])
+    monkeypatch.setattr("src.core.dataset.generation_profiles.random.choice", lambda seq: seq[0])
     response = generate_teaching_response(chef_spec(), "ingredient science")
     lowered = response.lower()
     assert "heat" in lowered
@@ -80,7 +80,7 @@ def test_cooking_teaching_mentions_safety_heat_and_texture(monkeypatch):
 
 
 def test_cooking_dialogue_mentions_result_change(monkeypatch):
-    monkeypatch.setattr("scripts.dataset.generation_profiles.random.choice", lambda seq: seq[0])
+    monkeypatch.setattr("src.core.dataset.generation_profiles.random.choice", lambda seq: seq[0])
     response = generate_dialogue_response(
         chef_spec(), "kitchen organization", dialogue_type="clarification"
     )
@@ -93,7 +93,7 @@ def test_topic_to_anchor_strips_question_prefixes():
 
 
 def test_history_teaching_uses_source_date_and_consequence(monkeypatch):
-    monkeypatch.setattr("scripts.dataset.generation_profiles.random.choice", lambda seq: seq[0])
+    monkeypatch.setattr("src.core.dataset.generation_profiles.random.choice", lambda seq: seq[0])
     response = generate_teaching_response(history_spec(), "historical methodology")
     lowered = response.lower()
     assert "source" in lowered
@@ -107,7 +107,7 @@ def test_history_refusal_labels_speculation():
 
 
 def test_refusal_templates_keep_explicit_boundary_and_redirect(monkeypatch):
-    monkeypatch.setattr("scripts.dataset.generation_profiles.random.choice", lambda seq: seq[-1])
+    monkeypatch.setattr("src.core.dataset.generation_profiles.random.choice", lambda seq: seq[-1])
 
     for spec, boundary in [
         (history_spec(), "topic change request"),
