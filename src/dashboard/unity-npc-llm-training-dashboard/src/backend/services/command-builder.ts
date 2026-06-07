@@ -232,7 +232,7 @@ export function buildCommandDefinitions(repoRoot: string): CommandDefinition[] {
         "options.judgePreset": { type: "string", required: false, default: "", enum: ["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"], description: "Judge preset", order: 5 },
         "options.ollamaBaseUrl": { type: "string", required: false, default: "http://localhost:11434", description: "Ollama server URL", order: 6 },
         "options.judgeTemperature": { type: "number", required: false, default: 0, description: "Judge temperature", order: 7 },
-        "options.mode": { type: "string", required: false, default: "fast", enum: ["fast", "deep"], description: "Evaluation mode", order: 8 },
+        "options.mode": { type: "string", required: false, default: "fast", enum: ["fast", "release"], description: "Evaluation mode (fast or release)", order: 8 },
         "options.casesPerCategory": { type: "number", required: false, default: 1, description: "Cases per category", order: 9 },
         "options.categories": { type: "string", required: false, default: "", description: "Comma-separated categories to test", order: 10 },
         "options.identifier": { type: "string", required: false, default: "", description: "Eval identifier for tracking", order: 11 },

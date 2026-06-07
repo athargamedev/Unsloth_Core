@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import * as assert from "node:assert/strict";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 
 import { buildCommandDefinitions } from "./src/backend/services/command-builder";
 import {
@@ -10,6 +11,13 @@ import {
 
 const repoRoot = path.resolve(process.cwd(), "../../..");
 const commandMap = new Map(buildCommandDefinitions(repoRoot).map((cmd) => [cmd.id, cmd]));
+
+const parseChoicesFromHelp = (helpText: string, option: string): string[] => {
+  const escaped = option.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = helpText.match(new RegExp(`${escaped} \\{([^}]+)\\}`));
+  assert.ok(match, `expected ${option} choices in help output`);
+  return match[1].split(",");
+};
 
 test("available command payload includes P5/P6 canonical CLI surfaces", () => {
   const payload = buildAvailableCommandPayloads(commandMap);
@@ -44,4 +52,16 @@ test("command schema payload exposes typed defaults/enums and resolved npcKey te
   assert.equal(schemas["promote"].fields["options.dryRun"].default, true);
   assert.equal(schemas["promote"].fields["options.candidateRunId"].required, true);
   assert.equal(schemas["dataset-generate"].fields.spec.default, "subjects/NPC_specs/chef_assistant.json");
+});
+
+test("dataset-eval dashboard mode enum matches ucore CLI choices", () => {
+  const helpText = execFileSync("./ucore", ["dataset-eval", "--help"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
+  const cliModeChoices = parseChoicesFromHelp(helpText, "--mode");
+
+  const dashboardModeChoices = commandMap.get("dataset-eval")?.schema?.["options.mode"]?.enum;
+  assert.deepEqual(dashboardModeChoices, cliModeChoices);
+  assert.deepEqual(dashboardModeChoices, ["fast", "release"]);
 });
