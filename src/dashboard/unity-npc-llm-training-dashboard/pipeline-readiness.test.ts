@@ -16,9 +16,9 @@ const artifact = (artifact_type: string, stage: string, path: string, technique 
 test("buildReadinessPlanFromRecords reports missing artifacts and next required stage", () => {
   const plan = buildReadinessPlanFromRecords(
     [
-      artifact("dataset_raw", "generate", "subjects/datasets/history_guide/notebooklm/train.jsonl"),
-      artifact("dataset_clean", "sanitize", "subjects/datasets/history_guide/notebooklm/train_clean.jsonl"),
-      artifact("quality_summary", "dataset_eval", "subjects/datasets/history_guide/notebooklm/quality_summary.json"),
+      artifact("dataset_raw", "generate", "data/datasets/history_guide/notebooklm/train.jsonl"),
+      artifact("dataset_clean", "sanitize", "data/datasets/history_guide/notebooklm/train_clean.jsonl"),
+      artifact("quality_summary", "dataset_eval", "data/datasets/history_guide/notebooklm/quality_summary.json"),
     ],
     "history_guide",
     "evaluate",

@@ -36,7 +36,7 @@ export function deterministicAssistantReply(message: string, context: AssistantC
 
   lines.push("## Current State");
   lines.push(`- Selected NPC: \`${context.selectedNpc || "unknown"}\``);
-  lines.push(`- Technique: \`${context.selectedTechnique || "template"}\``);
+  lines.push(`- Technique: \`${context.selectedTechnique || "ollama"}\``);
   lines.push(`- Active jobs: ${context.activeJobs.length}`);
   lines.push(`- Recent jobs tracked: ${context.recentJobs.length}`);
   if (context.exports.length) lines.push(`- Exports: ${context.exports.map((f) => `\`${f}\``).join(", ")}`);

@@ -11,9 +11,33 @@ const command = (id: string) => {
   return found;
 };
 
+
+test("dashboard dataset-generate defaults to canonical Ollama command and spec path", () => {
+  const definition = command("dataset-generate");
+  assert.equal(definition.schema.spec.default, "data/npcs/specs/{npcKey}.json");
+  assert.equal(definition.schema["options.technique"].default, "ollama");
+  assert.deepEqual(definition.schema.spec.roots?.slice(0, 2), ["data", "subjects"]);
+
+  const args = definition.build({
+    spec: "data/npcs/specs/history_guide.json",
+    options: { technique: "ollama", model: "qwen2.5:7b" },
+  });
+
+  assert.deepEqual(args, ["./ucore", "generate-ollama", "data/npcs/specs/history_guide.json", "--model", "qwen2.5:7b"]);
+});
+
+test("dashboard dataset-generate preserves explicit template smoke command", () => {
+  const args = command("dataset-generate").build({
+    spec: "data/npcs/specs/history_guide.json",
+    options: { technique: "template" },
+  });
+
+  assert.deepEqual(args, ["./ucore", "generate", "data/npcs/specs/history_guide.json", "--technique", "template"]);
+});
+
 test("dashboard dataset-eval command exposes hosted W&B judge flags", () => {
   const args = command("dataset-eval").build({
-    spec: "subjects/NPC_specs/history_guide.json",
+    spec: "data/npcs/specs/history_guide.json",
     options: {
       technique: "ollama",
       judgeProvider: "wandb",
@@ -26,7 +50,7 @@ test("dashboard dataset-eval command exposes hosted W&B judge flags", () => {
     },
   });
 
-  assert.deepEqual(args.slice(0, 3), ["./ucore", "dataset-eval", "subjects/NPC_specs/history_guide.json"]);
+  assert.deepEqual(args.slice(0, 3), ["./ucore", "dataset-eval", "data/npcs/specs/history_guide.json"]);
   assert.ok(args.includes("--judge-provider"));
   assert.ok(args.includes("wandb"));
   assert.ok(args.includes("--judge-model"));
@@ -40,7 +64,7 @@ test("dashboard dataset-eval command exposes hosted W&B judge flags", () => {
 
 test("dashboard evaluate command exposes hosted W&B judge flags", () => {
   const args = command("evaluate").build({
-    spec: "subjects/NPC_specs/history_guide.json",
+    spec: "data/npcs/specs/history_guide.json",
     options: {
       baseline: ".models/base.gguf",
       candidate: "exports/history_guide/unity/history_guide-lora-f16.gguf",
@@ -128,7 +152,7 @@ test("dashboard target-run can run resume without invalid json flag", () => {
 
 test("dashboard pipeline command exposes dataset and eval judge selectors", () => {
   const args = command("pipeline").build({
-    spec: "subjects/NPC_specs/history_guide.json",
+    spec: "data/npcs/specs/history_guide.json",
     preset: "safe-any",
     options: {
       technique: "ollama",

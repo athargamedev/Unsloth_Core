@@ -121,7 +121,7 @@ export const FeedbackLoopPanel = () => {
     trainPreset: 'fast-3b',
     spec: '',
     candidate: '',
-    regenerationTechnique: 'template',
+    regenerationTechnique: 'ollama',
     regenerationPreset: '',
     regenerationModel: '',
     regenerationUrl: '',
@@ -215,7 +215,7 @@ export const FeedbackLoopPanel = () => {
       }
 
       // Regeneration
-      if (fbConfig.regenerationTechnique && fbConfig.regenerationTechnique !== 'template') {
+      if (fbConfig.regenerationTechnique && fbConfig.regenerationTechnique !== 'ollama') {
         (payload.options as Record<string, unknown>).regenerationTechnique = fbConfig.regenerationTechnique;
       }
       if (fbConfig.regenerationPreset) {
@@ -562,7 +562,7 @@ export const FeedbackLoopPanel = () => {
                             type="text"
                             value={fbConfig.spec}
                             onChange={e => updateConfig('spec', e.target.value)}
-                            placeholder="subjects/NPC_specs/{npc}.json"
+                            placeholder="data/npcs/specs/{npc}.json"
                             className="w-full bg-bg border border-line rounded px-2 py-1.5 text-[11px] font-mono"
                           />
                         </div>
