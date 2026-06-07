@@ -31,7 +31,20 @@ from src.core.ops.run_registry import RunRegistry, make_pipeline_run_id
 from src.core.orchestration.workflow_spec import WorkflowContext, build_stage_command, repo_root
 
 UCORE_CLI = Path(__file__).resolve().parent.parent.parent / "cli" / "ucore"
-PROJECT_ROOT = repo_root()
+PROJECT_ROOT = UCORE_CLI.parents[2]
+
+# Map pipeline stages to the canonical top-level CLI command family.
+# Generate is finalized by _command_for_stage(): production Ollama uses
+# generate-ollama, while explicitly selected non-production techniques use generate.
+STAGE_COMMANDS: dict[str, list[str]] = {
+    "generate": [str(UCORE_CLI), "generate-ollama"],
+    "sanitize": [str(UCORE_CLI), "sanitize"],
+    "dataset_eval": [str(UCORE_CLI), "dataset-eval"],
+    "train": [str(UCORE_CLI), "train"],
+    "export": [str(UCORE_CLI), "export"],
+    "evaluate": [str(UCORE_CLI), "evaluate"],
+}
+NON_PRODUCTION_GENERATION_TECHNIQUES = {"docs", "template", "openai", "anthropic"}
 
 
 class TargetRunner:
@@ -349,14 +362,7 @@ class TargetRunner:
             if action == "skip" and step.get("status") == "cached":
                 continue  # Fully cached, nothing to do
 
-            command = build_stage_command(
-                WorkflowContext(
-                    npc_key=plan["npc_key"],
-                    technique=plan.get("technique") or "ollama",
-                    profile=plan.get("profile", "npc-production-grounded"),
-                ),
-                stage,
-            )
+            command = self._command_for_stage(stage, plan)
 
             entry: dict[str, Any] = {
                 "stage": stage,
@@ -376,3 +382,65 @@ class TargetRunner:
             commands.append(entry)
 
         return commands
+
+    def _command_for_stage(self, stage: str, plan: dict[str, Any]) -> list[str]:
+        """Return the concrete CLI vector for a pipeline stage."""
+        npc_key = plan["npc_key"]
+        technique = plan.get("technique") or "ollama"
+        spec_path = Path("data") / "npcs" / "specs" / f"{npc_key}.json"
+        dataset_dir = Path("data") / "datasets" / npc_key / technique
+        raw_dataset = dataset_dir / "train.jsonl"
+        clean_dataset = dataset_dir / "train_clean.jsonl"
+        adapter_path = Path("artifacts") / "exports" / npc_key / f"{npc_key}-lora-f16.gguf"
+
+        if stage == "generate":
+            if technique == "ollama":
+                return [*STAGE_COMMANDS[stage], str(spec_path)]
+            if technique in NON_PRODUCTION_GENERATION_TECHNIQUES:
+                return [str(UCORE_CLI), "generate", str(spec_path), "--technique", technique]
+            raise ValueError(
+                f"Unsupported generation technique for TargetRunner: {technique!r}. "
+                "Use 'ollama' for production or an explicit non-production technique."
+            )
+
+        if stage == "sanitize":
+            return [
+                *STAGE_COMMANDS[stage],
+                str(raw_dataset),
+                "--output",
+                str(clean_dataset),
+                "--spec",
+                str(spec_path),
+                "--strict-canonical",
+                "--require-complete-metadata",
+            ]
+
+        if stage == "dataset_eval":
+            return [*STAGE_COMMANDS[stage], str(spec_path), "--technique", technique]
+
+        if stage == "train":
+            return [
+                *STAGE_COMMANDS[stage],
+                str(spec_path),
+                "--from-spec",
+                "--technique",
+                technique,
+                "--preset",
+                "fast-3b",
+                "--export-gguf",
+            ]
+
+        if stage == "export":
+            return [*STAGE_COMMANDS[stage], npc_key]
+
+        if stage == "evaluate":
+            return [
+                *STAGE_COMMANDS[stage],
+                "--candidate",
+                str(adapter_path),
+                "--spec",
+                str(spec_path),
+                "--report-html",
+            ]
+
+        return list(STAGE_COMMANDS.get(stage, [str(UCORE_CLI), stage]))
