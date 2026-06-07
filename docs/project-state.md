@@ -23,8 +23,8 @@ If old docs mention other NPCs as active, treat that as deprecated unless the us
 - Template generation is smoke/dev only.
 - Never train production LoRA on template data.
 - Production data must use the approved grounded workflow. NotebookLM is deprecated — do not use for production.
-- **Use `./ucore generate-ollama` for production generation.** `./ucore generate --technique ollama` hits the legacy `generate_dataset.py` path (documented as fallback in its own header) and has known bugs fixed in the current commit.
-- The legacy `generate_dataset.py` module header states: *"Active production generation should use generate_dataset_ollama.py."*
+- **Use `./ucore generate-ollama` for production generation.** `./ucore generate --technique ollama` hits the legacy `_generate_shared.py` path (shared module, not production entry point).
+- The legacy `_generate_shared.py` module header states: 'NOT a standalone entry point. Use `./ucore generate-ollama` instead.'
 
 ## Canonical workflow
 

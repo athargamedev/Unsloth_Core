@@ -1,6 +1,6 @@
 import pytest
 
-from src.core.dataset.generate_dataset_ollama import OllamaDatasetGenerator
+from src.core.dataset.generate_dataset import OllamaDatasetGenerator
 
 
 class FakeGenerator:

@@ -132,3 +132,67 @@ def test_guardrail_rejects_disclaimers_and_markdown():
     ok, reason = guardrail.validate("## heading\n- item", [], history_spec())
     assert not ok
     assert "markdown" in reason.lower()
+
+
+def test_guardrail_resolves_category_min_max_aliases_and_density():
+    spec = chef_spec()
+    spec["guardrails"] = {
+        "verbosity": {
+            "refusal": {
+                "min": 1,
+                "max": 2,
+                "min_words": 20,
+                "max_words": 40,
+            }
+        }
+    }
+
+    constraints = DialogueGuardrail.resolve_constraints(spec, "refusal")
+    assert constraints == {
+        "min_sentences": 1,
+        "max_sentences": 2,
+        "max_characters": 200,
+        "min_words": 20,
+        "max_words": 40,
+    }
+
+    ok, reason = DialogueGuardrail().validate(
+        "First sentence. Second sentence. Third sentence.",
+        [],
+        spec,
+        category="refusal",
+    )
+    assert not ok
+    assert "1-2 short sentences" in reason
+
+
+def test_guardrail_enforces_category_word_density():
+    spec = chef_spec()
+    spec["guardrails"] = {
+        "verbosity": {
+            "teaching": {
+                "min": 1,
+                "max": 3,
+                "min_words": 8,
+                "max_words": 12,
+            }
+        }
+    }
+    guardrail = DialogueGuardrail()
+
+    ok, reason = guardrail.validate(
+        "Use a claw grip.",
+        [],
+        spec,
+        category="teaching",
+    )
+    assert not ok
+    assert "too sparse" in reason
+
+    ok, reason = guardrail.validate(
+        "Use a claw grip and keep the blade steady for even cuts.",
+        [],
+        spec,
+        category="teaching",
+    )
+    assert ok, reason

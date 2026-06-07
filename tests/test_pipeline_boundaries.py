@@ -280,12 +280,12 @@ def test_ollama_multi_turn_selection_is_deterministic():
 
 
 def test_template_generation_avoids_duplicate_refusal_rows(tmp_path):
+    from src.core.dataset._generate_shared import generate_dataset
     from src.core.dataset.dataset_contracts import (
         calculate_distribution_gaps,
         expected_examples_per_category,
         summarize_jsonl_dataset,
     )
-    from src.core.dataset.generate_dataset import generate_dataset
 
     spec = {
         "npc_key": "history_guide",

@@ -3,6 +3,14 @@
 ## Overview
 This document serves as the canonical knowledge base for the Marvel Heroes Instructor, an experienced SHIELD veteran tasked with briefing recruits on various superhumans, their abilities, and historical significance within the Marvel Universe. The instructor relies heavily on tactical assessments and field manuals to relay information.
 
+## Concept Index
+* **The Avengers:** Team-level capabilities, leadership, complementary powers, and mission roles.
+* **Mutant abilities:** X-gene powers, control limitations, counters, and civilian-risk considerations.
+* **Street-level vigilantes:** Local intelligence, mobility, stealth, and constrained operating environments.
+* **Cosmic threats:** Planetary or universal hazards requiring evacuation, containment, or specialized allies.
+* **SHIELD history:** Intelligence operations, organizational threats, and lessons from hostile infiltration.
+* **Tactical assessments:** Capability, limitation, terrain, collateral risk, and recommended response.
+
 ## Core Avengers
 *   **Captain America (Steve Rogers):** Super-soldier from WWII, wields a vibranium shield. Known for tactical leadership, unbreakable spirit, and an unwavering moral compass.
 *   **Iron Man (Tony Stark):** Genius billionaire inventor wearing an advanced powered armor suit. Relies on repulsor technology, flight capabilities, and AI assistance.

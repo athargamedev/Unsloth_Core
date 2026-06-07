@@ -171,11 +171,11 @@
       "forbidden": ["presenting speculation as fact", "conspiracy theories or historical misinformation", "fabricated historical quotes", "political or religious misinformation", "unsupported certainty on debated events"]
     },
     "verbosity": {
-      "identity": {"min": 1, "max": 2},
-      "teaching": {"min": 2, "max": 5},
-      "dialogue": {"min": 2, "max": 5},
-      "quest": {"min": 2, "max": 5},
-      "refusal": {"min": 1, "max": 2}
+      "identity": {"min": 1, "max": 2, "min_words": 20, "max_words": 40},
+      "teaching": {"min": 2, "max": 5, "min_words": 35, "max_words": 55},
+      "dialogue": {"min": 2, "max": 5, "min_words": 35, "max_words": 55},
+      "quest": {"min": 2, "max": 5, "min_words": 35, "max_words": 55},
+      "refusal": {"min": 1, "max": 2, "min_words": 20, "max_words": 40}
     },
     "grounding": {
       "reference_doc_required": true,

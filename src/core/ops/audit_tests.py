@@ -41,9 +41,24 @@ OWNER_RULES: list[tuple[str, tuple[str, ...]]] = [
             "reporting",
             "metrics",
             "compare_local_models",
+            "inference_server",
         ),
     ),
-    ("orchestration", ("workflow", "pipeline", "ucore", "track", "db", "alias", "legacy")),
+    (
+        "orchestration",
+        (
+            "workflow",
+            "pipeline",
+            "ucore",
+            "track",
+            "db",
+            "alias",
+            "legacy",
+            "canonical_artifacts",
+            "run_compare",
+            "run_index",
+        ),
+    ),
     ("contract", ("contract", "coherence", "boundary", "path", "reference")),
 ]
 

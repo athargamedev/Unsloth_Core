@@ -1,0 +1,896 @@
+{
+  "created_at": "2026-06-07T14:27:39.919220+00:00",
+  "npc_key": "chef_assistant",
+  "technique": "ollama",
+  "spec": {
+    "path": "/home/athar/Projects/Unsloth_Core/data/npcs/specs/chef_assistant.json",
+    "reference_doc": "data/npcs/reference_docs/chef_assistant_primer.md",
+    "system_prompt": "## IDENTITY\nName: ChefAssistant | Role: practical cooking guide\nSetting: A busy but tidy kitchen\nPlayer Relation: Helping a home cook or apprentice\n\n## VOICE\nDirect, calm, and practical | Use plain language and short steps | Speak 1-3 short sentences (under 800 characters) | Respond in natural, spoken conversational paragraphs. NEVER use markdown formatting, headers, lists, or bullets. NO `##` headers or `*` bullets allowed.\n\n## KNOWLEDGE\nKnife skills, cooking methods, flavor balance, food safety, kitchen organization\n\n## RULES\nNEVER suggest unsafe food handling or eating-disorder behavior\nPrefer clear steps, safe temperatures, and realistic substitutions"
+  },
+  "manifest": {
+    "npc_key": "chef_assistant",
+    "technique": "ollama",
+    "sanitized": true,
+    "sanitizer": {
+      "version": "v2",
+      "date": "2026-06-07T14:25:55Z",
+      "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/chef_assistant/ollama/train.jsonl --output data/datasets/chef_assistant/ollama/train_clean.jsonl --no-dedup",
+      "artifact_check_mode": "strict",
+      "strict_mode": false
+    },
+    "spec": {
+      "file": "/home/athar/Projects/Unsloth_Core/data/npcs/specs/chef_assistant.json",
+      "hash": "sha256:96ee7cce9634a3c722cd0fc088a3fec50412044e37638355e781ebc61eadd89d"
+    },
+    "input": {
+      "file": "data/datasets/chef_assistant/ollama/train.jsonl",
+      "hash": "sha256:46b8e90afec5f036a48a78e7728c5213962d1fe8b00574f2d2f4ad83d3044466",
+      "total_examples": 156
+    },
+    "statistics": {
+      "total_input": 156,
+      "total_output": 156,
+      "total_train": 156,
+      "total_validation": 19,
+      "by_category": {
+        "dialogue": 32,
+        "refusal": 16,
+        "teaching": 80,
+        "identity": 12,
+        "quest": 16
+      },
+      "by_difficulty": {
+        "beginner": 71,
+        "advanced": 28,
+        "intermediate": 57
+      },
+      "by_safety_tag": {
+        "boundary_enforcement": 16,
+        "specified_boundary": 11
+      },
+      "quality_scores": {
+        "mean": 79.1,
+        "median": 78.0,
+        "min": 74,
+        "max": 91,
+        "std_dev": 2.9,
+        "passed_threshold": 156,
+        "flagged_for_review": 0,
+        "distribution": {
+          "0-9": 0,
+          "10-19": 0,
+          "20-29": 0,
+          "30-39": 0,
+          "40-49": 0,
+          "50-59": 0,
+          "60-69": 0,
+          "70-79": 88,
+          "80-89": 66,
+          "90-99": 2,
+          "100+": 0
+        }
+      }
+    },
+    "discarded": {
+      "total": 0,
+      "by_reason": {}
+    },
+    "content_hashes": [
+      "99eabfea25f14ddbf33fd8277ad1ffbd5afbe543c0e019601eeb48ecdc50ea9f",
+      "6c474331e4a9eb27fde3ed7d44bf916c274d8593d8d014f06dd39c12237e3615",
+      "75188578c76de145e1eaa245a89b279da7ef0c97653ea54a150674720f62c9bb",
+      "7b58124cd2206be05c1921b14df3c5eb3f2eeeb957c677026db9a8c73abca805",
+      "a2457f7470f80bd62c1d2c19e630d4ab8900df70d8e5936b2775a48c21834eb8",
+      "adcbf1c97ba2f7dbc81951c2173cf859830fbc288ffc089b75681ce6c79861dd",
+      "d7aa1bcde9e64f4ab318561bb43f53f16de2748a24f8a5ac43cd13d3ffdafbb6",
+      "32e3405ece5122ea7bf9a0db8ea974c2cd58de198521f58a3fc6056dfbaec76e",
+      "b2a4eceecd832d89c87c65e31a8dbab3bfacb23ec0eb92f168246c264b4b189b",
+      "c8f41ef54493670d3b18951db987394cd73cf96132e7f0ff7161de6a88e7f3ee",
+      "65f65ca24ab02e514bbb042226c34dfbdd06c5bd530475f6fbae53e85228d023",
+      "d69b5e8e4f2604eaa09618d5b6a8865586002ea586addf6bad9b285c74152a05",
+      "68aaff0369cc2728997de0075daf581eecb9aed7a0e00bd502029b8d373d82c2",
+      "1cd7056df48cb14630662530d897dba66e691d2c00026f5f16ca0dbab271d88c",
+      "c8d4d57035d0bbcb626d6f6c99bbf36de559ac968eaa574b1477b15b1041b70e",
+      "9bf86b6261df246b525c47982a7f26bc08aa241dd4af64c1357102e7ad27c968",
+      "2403a0cb5f697e9ffdccd5da6bf815c24361d0434f29b19594a6e0ea63cc7ad4",
+      "8e601b6b8f22889894d12a971e3556c6b6b2db6c54df6358066e6ca7814e8262",
+      "6c474331e4a9eb27fde3ed7d44bf916c274d8593d8d014f06dd39c12237e3615",
+      "5d30d9dfe2527986ca49e76c4939b914eecb86ed7b9cc4e8ebb9e556bed01ddc",
+      "9100db71db06729ecf1779bd80756a00663ad20a3897e9e5fa039e0333c4c124",
+      "e72b94cf65ef28d77891f2eae79d8c1d19e9cd71550183ee6cd397bc799933ad",
+      "e2e8f31abbecbe00db6d945f75174702dcbfaebd823864d06dd68809feb9d43c",
+      "f96462a5ab8dde7339f0ac011efe0f5f16cbac527a06ccd220fe1a13ea17f9dd",
+      "8ec0efd13777b76ff956c861a3d59026829e04fbeb5bdea4be9e9e771292da8b",
+      "2eeec79aa71de821a0d415b8df9c291917f620aa28d4ccd4ae2425162f6af91f",
+      "e921acb6c902231adf6030efc6cc74ee5c441797898ccf2edab8a95032e1d58f",
+      "500be552ac507bc6722385eee9e013ccf7cb700c794934f926248cdba4f330d2",
+      "5ab318d70ad5368a78a7e4feb0e4593398c0abe91389a67af1b73e6d7fb6a84e",
+      "51a1bb2136d1ad2c348ab2a9d50a3d44452b987d6e9c12621da828a490d23a0d",
+      "1bba7ce2108cd0593542acb140791f735a56887fda3cfaf28ac2706def16c400",
+      "c4b8f9d7507787b101ad285766427089b8fc596134e171fbd4bbf4413af98fb6",
+      "cb164b5ca0df25677c4f03152c41ab94fa21ca4445f0ce1c5de2d344f861406b",
+      "f48a749b41b552498b907f7f84faee08911acfd119bd9c7af7cbb3dab2ac61c9",
+      "902d232d4e6450e4414c4c06dc8ae0fd53ef7ea001690b642bb7e4c58b1b15f7",
+      "5a365434846c232798d0cc726efcb4828e62eb3d56affb598db8605b762cd459",
+      "3e099fe6ae8ca8e073c59f2e0ec2d81e7f4effcc8fc30ee650ed96cf094fb330",
+      "c9f9e3c7537bf03f7e41ccc85db974b47fb619c73ac6b8028abafc87855d43d9",
+      "75188578c76de145e1eaa245a89b279da7ef0c97653ea54a150674720f62c9bb",
+      "ed375512669984e6cd4bc44266d600251a716d7287a709eaea3ee06459f53e97",
+      "048c5dc426c63208a0729f0f0d6158e92da4e4f1e44d3b6068e6e5b6cb99954d",
+      "c715542e15e04fbedc292611e2f0cb791d191a146ab0b309090af1d4a131ed6d",
+      "d21037158591a68b7f21a170ccd991b029f8751fe9a81d7f7c32e2bdc8c8629f",
+      "b59ce825134a06ec5c6adda3b454a974e5948268391277ef4447fe345ed81cc8",
+      "02959b4dbc7b328a80ef69371f1c1dac56bf3ccbf390ba8301c2a5867125d90f",
+      "6a797dcbff57ec3fc75d07028f58b200db462b9fdddcdd52cd28d6a07b5b474f",
+      "8d7f08b7e9b65651068575460c415dd21e2bf9527709579069345601720c5e3c",
+      "a55edf53a22bed3328913abb19989ff81d51697a48070a9243b6b5d663ff6432",
+      "822235eb0af57e67ca9928bb4a9222a0f67a767a7ae310c8d1082711705356d9",
+      "277450612bf3a04924ff6a43b8b5400376d7f50193ec0cc1fc0adf4e602399a1",
+      "55990875798b9218993cfa36bf0852a987f8e0477203ffb7d9624b52719d8a84",
+      "3d24a15a0dd8972216e2c50f9ab7c6eae8841c1aeed44083887c6e0b3f509fbf",
+      "9ea0f21f7fe59dcbe65bb9bc5526f68ce62d33dc6e70fda5837e637e64380f87",
+      "3abed2a445b31de00a6094a650b4f240e7c7a8590525de2c13c73ef4841b4be5",
+      "e6e6a094fb66b9834002c98584927353cc35948c041d9564f73879f5ebd38d07",
+      "991c171a5fc05b433fcbfc7c6c017ec489d7ba7e7426d1c21208652b8e5b49d1",
+      "113023a49b720fbb6ccf6bcd8b6e4901f7f1a41bc84dc968e82fc775b101cd3c",
+      "48c12c3adfb3f8f2e383394ea0ee68008b0e4f759148221fe9eb87e1d7012acf",
+      "57866baac8392e1a24b742d898b8071fa40a014e8a2f74a4aef5a23547625fef",
+      "f34b9a0611ed8b250ddf166e337bc59b59c619549007e539942e87412e871fe1",
+      "bdebc49953b64f6e41f86dba46b0f921db75ca653e13660725e3f989f92b6a12",
+      "b9449e60fdd3314da25bec3006a3d41cfe3005d5d019deb8118ce1c9697ded0b",
+      "6ed653d1338c446070e93090115238db86805cc584725e1b4bdf998fbd5714e0",
+      "10b6fff032ab40a5c8078adda567fb069bc351bb36c96e6a1af01d5e4f3721d8",
+      "dd321c29a6b76bdfccbe7ef471c374523d329b8c307cab717d3fb21299f58d45",
+      "33a98711c08019e8120e204db8ad9bfafc201c62f987436d2a25a7126c580591",
+      "590c811996ed46871fe5196f2c970b57b48a8ee7905ffcb7f1eae6d5924357c4",
+      "587f4380ff80899c6742b7b1e6eec9323af7d78b99c15f48412338055022a76b",
+      "fe3bb2ca9d3b0dcd646cade6278f702f69079e301a9af96d757c1631df1efa2f",
+      "9743b176dfc4f11dea63619becc7125125e980815dad59b34944028502fdbc8f",
+      "6809cf61b75f5240745fc7f9b9fa482f1ae1f20203804f88dcc83c620e7c0d8c",
+      "0c1bc3f60bbd8a35f50ac70f99af5591dbc54f768c8be4720e79a5c28467725c",
+      "981657c0791ab353d69cf2fa40dc455f13d54a6d19e3c5963353f2f9c8c27486",
+      "d1cf700dc9c4da58c55fa66daf7a81a0932a42c03a9c890ab3f386a93a5595de",
+      "9bbaab1cb5812082c613f21d1c6ac06d958b7f867aebf7910c0376a29d2a7980",
+      "40b91e0711b59dbf6728435af1360ec5f87ab455758b3115dc7174f266863286",
+      "8133d1666b97825c8d93bdc86266240f81a06148888209d0507aa039fe193f8c",
+      "471816332935269ad904497ac2d5e2e21a061b3ee143375f7284f0c1f727033b",
+      "a83324321f47af3538ec890b7db533ca460bac440616d636195cf9db3a947d43",
+      "2b8023a2d9bf1532afcc28e5cf55d67491469e4cd032753c616d3834eec3962e",
+      "dbe722be2bcfbfe60a7caccc03e1cfa5e7d1738b51ce811158be23ff678d33c3",
+      "8958ffcc81aa2321a27d2181737e04e63385cd9e80c2541bd947bf6b8e77a45b",
+      "beaa01e6e961bc2adb29b8abae4d47368421c2eef5a1af33c1fd7402d06d4ebe",
+      "fb0a197d7e341f6a57332815129a691627404caca267052a229b24c29c858f0e",
+      "5f9d8f0e68be0323561944f96f9814e765ff11e3093e2dc47d0947f763190067",
+      "2d8c5fdfa2e613ed6177351299d8ac29d99fa6a3c122ac8e576a8c54060d1401",
+      "1d678a571edaa6b91dd5d9df39f890a341d344e2418a8cf834f199a3656c8811",
+      "29fb4b3d5215cc9c3da8b5380a301a544ff8df156351a2daa99d03809a2ef38e",
+      "34a1eb8c7461beb69be7eb2ef07cb85a5e31cb6c89928f0b026fc500eadf1112",
+      "f39987778cda7d9d94b67d4da5811005c9d0924d890c74797930fa8417f95dd6",
+      "38dae99e9bf15a25d195ec4f1343e4aa70ab736751dd9becde61bb755574cbfd",
+      "2ef891fc7055e3f77e9c9ea2d278e6c02b1756341a01aa537872b64eb738dd2d",
+      "f3a96d6e82b9fece1475a3d1a2025d3b8db029e30cb17e51938115c9e664feee",
+      "79841111f24d435e57c10f7e42030be74439499c880aadace1fe69f2bc493607",
+      "899270510917c5bea940620650abe5cf8420aa3d3f65497786eb6cdc8600f41b",
+      "a55edf53a22bed3328913abb19989ff81d51697a48070a9243b6b5d663ff6432",
+      "fe06d3c3732a360a2826b5a9e4494607cc062a76375bd2fd59a40b9baefa6ee1",
+      "be017676f513c4773e000b42f08c53f9f6eefd35a972bcbcbbad1cfaa16eb66e",
+      "961f54b0fdfd354ea370646646ee82b52ce7197e3861ac48b8595b4933b638ec",
+      "296c79fe36b80e2128d4933f0049c192af6f86904a5341024756edaaf460f076",
+      "c2e688b66dcd295a943a364b34221e5dcc890a5ceb3d268502a65ed017f25cc1",
+      "9d5d537cb73acd400066cd0991b635011a250de3b211556698e8191e5eb3430f",
+      "2b7ffc3f723cb75662c5a2042cabdd85119b60fb336cee7b44b52af53bd03cc2",
+      "5a4d4750598e7904c8f673f6a0d01af7cb460696f649446966981c4eb3d318f8",
+      "8a95dcea369f3dfbc96d2c9d2157f5aff2329ad7970019a2e95bb873de96c29d",
+      "a9e32ffd2258bcadab93e3ccf1f01160f067194410f2c8d9f6a0218430ba8822",
+      "0928318e2144d2aae94c90fc611354500d5c61f3047dc68bce214cb8424acfa9",
+      "5ef4dfff48b32d8fd422fa521e9ebf08fadd3183ab994980863a89d48c50272a",
+      "ebc2c184f6cee664f6e1d7f16e23c0d3d8f89cb019bd56f93fa34e6377efc0c2",
+      "ad34e05dec628e697bc151deac72c5ba0e04e9e604ee61c77b43e8c041512353",
+      "f90f1cce1f913ee6d0151e1c28d69f8332c2353672074deda5bf08d3738cfde3",
+      "6153b73339f7d19d8308a50d553b87acabf72c50215b91b8e4e4d28f9d0c947c",
+      "92d1295289369daf250f648a27abfa76da61542f50e2b91bbc63d34e2d903060",
+      "937bc20c7e8f4d2d56de4d8a06be71373cac144cf7d4661a3347d5ce809ca979",
+      "3e52094fb961e60ff821e8dd785c6f8dc1127a351a60e553022e5519df71e71d",
+      "bf3e1b8658bd14026f8b6bc0676dc44d37ed1bece6c1edfd044cb77ef015a5d0",
+      "6c17ef475c469e62cc7f2b2f04a697cd4289493363201cbb0d0855e97f99bf0a",
+      "d6bf8cf42bef1a7d670b7b9b4d1ebdcc39b6a08bdb21ec6205d35c9ad6b7eb28",
+      "c80583d0e580c2d1b9136a2ce49354f4db45ab88769ac58753ac3911765ac4ed",
+      "2197e23da056d47491a68dc837132d03b324cf9215ed94d522ada111f4064f16",
+      "923e62e41d99ec7a5280611f83dcfc9cb41c172b6181f5e6960acafa25504676",
+      "da68fd75c6b834a1ca1ca643e9adc6bae9a5bf4b7e3a8f114512b64c92624fb9",
+      "6e881e64b13831143471f528f3bb6e43fa0717db72d5f54e6674ee0483e2034e",
+      "200232a2fa19cdeae02714de0b84befce35e386d12a7ff1e2da8e61a03c5cd59",
+      "00eac7a1b776de713f17c7fca48913d14eb897ee8cc81259474c0237248b420a",
+      "36f8d0cd1975a5d4c938e9a294f38c2fb940796b970e12e21eb4f2018c277721",
+      "7b58124cd2206be05c1921b14df3c5eb3f2eeeb957c677026db9a8c73abca805",
+      "52d7f1359a7052b3b61d2b1dad41f6ddcddd05e34461e8041ebd9206f393e98c",
+      "f2d33a827d722e1ec26a765d93d821a6c41695f409773456979f68d9013b5688",
+      "3191376845014faf38cb38e246d574649675a8479f804d9abb8d73e51a6de521",
+      "73fe32bc4c5a39f54aee5cff88d920f88b5c05eded92798badb539ee1352baad",
+      "8ceed74fcf5970d46f8422a86e915dce6433e54df57c95d36bcd5497b4baa3d6",
+      "cca0d8753ec2d76da38de7fc4f7e5077a5f1be553e7b2a39e40b3d2bdefb40bd",
+      "c764b5e7da539162306368ef7db308b602b68955edec42a8d5dae2095a7351d0",
+      "6b6669738c00db7a1c2e66b1f0ab814b9aab521094101f08508df28c9b6eec43",
+      "e797899d98d9467f8e82c3c0efefb80fd72dfd502d752acf928c71be553cfc1b",
+      "c6c15a84b1d6ce24b4dc69887947026d5a4612480a2483b377f8a612a8268ec4",
+      "89b8f22b6ed30cd60e67dfa8877a240eb5dd7b7ef302fc94a422aaafd4da13dd",
+      "72e914f49433c1ad51be201db164446d7d595934e2960476e59ebc3150709132",
+      "986c98e8bcffc2af19ef1555a28bd0e402a59b65285eb221709ec63368553668",
+      "7653ad632968e2e637e5adc334979bdccb9544cf2b4d1fb6e578683ad2cc011a",
+      "ddfe11e3a1a2386ef85e691c4a4e27e0fcff281ebf0aa206ec5dcd4e54979045",
+      "7da1361f99ad72112ef2604364ff9990882853d5a86cb17683d6767c371ad144",
+      "cfbe1905b3fbcdea15dd0dcba5c7910214805757c4b804d77f7bb10a990a04af",
+      "bdb78c0ebafb33e77a5114cc507937dd3e74c2f7b11ba9e10758da3382bd7be3",
+      "cdf27256f4ca25f26a5beaf54d0e39e5f9ae426d5e5e857a91e45aea586a7046",
+      "f739eab7459fa34f64afaa3df0a89b55f8910d3cd8a4320c8465667c48d77c87",
+      "6c474331e4a9eb27fde3ed7d44bf916c274d8593d8d014f06dd39c12237e3615",
+      "d560f2164d65a6c5135e9d0eec4767ca74037adcc5aff566293631aa5cc32dfc",
+      "da8d9956dec6f408d575e6a19b9a505fd9690c0a49b41e25a5d035d6d34eb01d",
+      "5802725ef2c527f746c23af86f936ff27e86b65b11df3b1b2d9e43a84658090d",
+      "768a5944e152d04d8f987a6cbc866206da1617855e7b94d65c6125efee7a4c7d",
+      "5e742fc899313258bb1359380f7eed0a0e3540b969a84cac4853771eb830c9b0",
+      "ee92e358e31cacab095f8dba94cde29f1dd663cfaf66cc8f4d4bee2b727df290",
+      "ec02c0d709b26d0aa206cfc389aebdbf7991108d05768c2d11718181d044ab13",
+      "0d08c65960a48a78d6092506262af3f83e2d1e7d21e7fd30dfae40a9701ce60c"
+    ],
+    "content_hash_prefix": "sha256:",
+    "generation": {
+      "date": "2026-06-07T14:19:23Z",
+      "seed": 42,
+      "temperature": 0.6,
+      "multi_turn_ratio": 0.25,
+      "version": "ollama-v2"
+    }
+  },
+  "sanitizer": {
+    "manifest": {
+      "version": "v2",
+      "date": "2026-06-07T14:25:55Z",
+      "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/chef_assistant/ollama/train.jsonl --output data/datasets/chef_assistant/ollama/train_clean.jsonl --no-dedup",
+      "artifact_check_mode": "strict",
+      "strict_mode": false
+    },
+    "input": {
+      "file": "data/datasets/chef_assistant/ollama/train.jsonl",
+      "hash": "sha256:46b8e90afec5f036a48a78e7728c5213962d1fe8b00574f2d2f4ad83d3044466",
+      "total_examples": 156
+    },
+    "statistics": {
+      "total_input": 156,
+      "total_output": 156,
+      "total_train": 156,
+      "total_validation": 19,
+      "by_category": {
+        "dialogue": 32,
+        "refusal": 16,
+        "teaching": 80,
+        "identity": 12,
+        "quest": 16
+      },
+      "by_difficulty": {
+        "beginner": 71,
+        "advanced": 28,
+        "intermediate": 57
+      },
+      "by_safety_tag": {
+        "boundary_enforcement": 16,
+        "specified_boundary": 11
+      },
+      "quality_scores": {
+        "mean": 79.1,
+        "median": 78.0,
+        "min": 74,
+        "max": 91,
+        "std_dev": 2.9,
+        "passed_threshold": 156,
+        "flagged_for_review": 0,
+        "distribution": {
+          "0-9": 0,
+          "10-19": 0,
+          "20-29": 0,
+          "30-39": 0,
+          "40-49": 0,
+          "50-59": 0,
+          "60-69": 0,
+          "70-79": 88,
+          "80-89": 66,
+          "90-99": 2,
+          "100+": 0
+        }
+      }
+    },
+    "discarded": {
+      "total": 0,
+      "by_reason": {}
+    }
+  },
+  "dataset": {
+    "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
+    "summary": {
+      "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
+      "exists": true,
+      "content_sha256": "sha256:b3dddcc598f9ed02b34bbb1032cc8c61a2509c75dbb321e4a87f4d4eb040b359",
+      "total": 156,
+      "by_category": {
+        "dialogue": 32,
+        "identity": 12,
+        "quest": 16,
+        "refusal": 16,
+        "teaching": 80
+      },
+      "by_difficulty": {
+        "advanced": 28,
+        "beginner": 71,
+        "intermediate": 57
+      },
+      "by_split": {
+        "train": 156
+      },
+      "by_concept": {
+        "cooking techniques": 22,
+        "kitchen organization": 22,
+        "knife skills": 22,
+        "food safety": 20,
+        "kitchen workflow": 18,
+        "flavor balance": 17,
+        "ingredient science": 17,
+        "Will not recommend unsafe shortcuts that ignore food safety": 7,
+        "chef_assistant": 7,
+        "Will not help with crash diets or eating-disorder advice": 4
+      },
+      "unknown_rows": 0,
+      "assistant_density": {
+        "words": {
+          "count": 156,
+          "avg": 28.26,
+          "min": 15,
+          "max": 52
+        },
+        "sentences": {
+          "count": 156,
+          "avg": 2.1,
+          "min": 1,
+          "max": 3
+        },
+        "chars": {
+          "count": 156,
+          "avg": 160.26,
+          "min": 89,
+          "max": 291
+        },
+        "by_category": {
+          "dialogue": {
+            "words": {
+              "count": 32,
+              "avg": 27.41,
+              "min": 20,
+              "max": 47
+            },
+            "sentences": {
+              "count": 32,
+              "avg": 2.03,
+              "min": 1,
+              "max": 3
+            },
+            "chars": {
+              "count": 32,
+              "avg": 156.0,
+              "min": 112,
+              "max": 262
+            }
+          },
+          "identity": {
+            "words": {
+              "count": 12,
+              "avg": 36.17,
+              "min": 17,
+              "max": 45
+            },
+            "sentences": {
+              "count": 12,
+              "avg": 2.5,
+              "min": 1,
+              "max": 3
+            },
+            "chars": {
+              "count": 12,
+              "avg": 207.5,
+              "min": 108,
+              "max": 258
+            }
+          },
+          "quest": {
+            "words": {
+              "count": 16,
+              "avg": 26.94,
+              "min": 18,
+              "max": 39
+            },
+            "sentences": {
+              "count": 16,
+              "avg": 2.12,
+              "min": 1,
+              "max": 3
+            },
+            "chars": {
+              "count": 16,
+              "avg": 145.62,
+              "min": 89,
+              "max": 217
+            }
+          },
+          "refusal": {
+            "words": {
+              "count": 16,
+              "avg": 26.94,
+              "min": 15,
+              "max": 37
+            },
+            "sentences": {
+              "count": 16,
+              "avg": 2.5,
+              "min": 2,
+              "max": 3
+            },
+            "chars": {
+              "count": 16,
+              "avg": 156.56,
+              "min": 89,
+              "max": 223
+            }
+          },
+          "teaching": {
+            "words": {
+              "count": 80,
+              "avg": 27.94,
+              "min": 20,
+              "max": 52
+            },
+            "sentences": {
+              "count": 80,
+              "avg": 1.98,
+              "min": 1,
+              "max": 3
+            },
+            "chars": {
+              "count": 80,
+              "avg": 158.54,
+              "min": 111,
+              "max": 291
+            }
+          }
+        }
+      }
+    },
+    "expected_distribution": {
+      "identity": 12,
+      "teaching": 80,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "distribution_gaps": []
+  },
+  "deepeval": {
+    "summary": {
+      "created_at": "2026-06-07T14:27:39.908659+00:00",
+      "npc_key": "chef_assistant",
+      "technique": "ollama",
+      "judge_provider": "ollama",
+      "judge_model": "qwen2.5:7b",
+      "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
+      "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
+      "command": [
+        "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+        "test",
+        "run",
+        "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+        "--identifier",
+        "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
+        "--display",
+        "all",
+        "--skip-on-missing-params"
+      ],
+      "total": 5,
+      "passed": 3,
+      "failed": 2,
+      "pass_rate": 0.6,
+      "metric_count": 15,
+      "null_metric_count": 0,
+      "null_metric_rate": 0.0,
+      "status": "ok",
+      "metrics": {
+        "Constraint Compliance [GEval]": {
+          "count": 5,
+          "average_score": 0.74,
+          "pass_rate": 0.6
+        },
+        "Persona and Category Fit [GEval]": {
+          "count": 5,
+          "average_score": 0.76,
+          "pass_rate": 0.8
+        },
+        "Training Usefulness and Specificity [GEval]": {
+          "count": 5,
+          "average_score": 0.74,
+          "pass_rate": 0.8
+        }
+      },
+      "categories": {
+        "dialogue": {
+          "total": 1,
+          "passed": 1,
+          "pass_rate": 1.0
+        },
+        "identity": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "quest": {
+          "total": 1,
+          "passed": 1,
+          "pass_rate": 1.0
+        },
+        "refusal": {
+          "total": 1,
+          "passed": 0,
+          "pass_rate": 0.0
+        },
+        "teaching": {
+          "total": 1,
+          "passed": 1,
+          "pass_rate": 1.0
+        }
+      },
+      "failures_path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/quality_failures.json",
+      "quality_gate_mode": "fast",
+      "cases_per_category": 1,
+      "dataset_summary": {
+        "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
+        "exists": true,
+        "content_sha256": "sha256:b3dddcc598f9ed02b34bbb1032cc8c61a2509c75dbb321e4a87f4d4eb040b359",
+        "total": 156,
+        "by_category": {
+          "dialogue": 32,
+          "identity": 12,
+          "quest": 16,
+          "refusal": 16,
+          "teaching": 80
+        },
+        "by_difficulty": {
+          "advanced": 28,
+          "beginner": 71,
+          "intermediate": 57
+        },
+        "by_split": {
+          "train": 156
+        },
+        "by_concept": {
+          "cooking techniques": 22,
+          "kitchen organization": 22,
+          "knife skills": 22,
+          "food safety": 20,
+          "kitchen workflow": 18,
+          "flavor balance": 17,
+          "ingredient science": 17,
+          "Will not recommend unsafe shortcuts that ignore food safety": 7,
+          "chef_assistant": 7,
+          "Will not help with crash diets or eating-disorder advice": 4
+        },
+        "unknown_rows": 0,
+        "assistant_density": {
+          "words": {
+            "count": 156,
+            "avg": 28.26,
+            "min": 15,
+            "max": 52
+          },
+          "sentences": {
+            "count": 156,
+            "avg": 2.1,
+            "min": 1,
+            "max": 3
+          },
+          "chars": {
+            "count": 156,
+            "avg": 160.26,
+            "min": 89,
+            "max": 291
+          },
+          "by_category": {
+            "dialogue": {
+              "words": {
+                "count": 32,
+                "avg": 27.41,
+                "min": 20,
+                "max": 47
+              },
+              "sentences": {
+                "count": 32,
+                "avg": 2.03,
+                "min": 1,
+                "max": 3
+              },
+              "chars": {
+                "count": 32,
+                "avg": 156.0,
+                "min": 112,
+                "max": 262
+              }
+            },
+            "identity": {
+              "words": {
+                "count": 12,
+                "avg": 36.17,
+                "min": 17,
+                "max": 45
+              },
+              "sentences": {
+                "count": 12,
+                "avg": 2.5,
+                "min": 1,
+                "max": 3
+              },
+              "chars": {
+                "count": 12,
+                "avg": 207.5,
+                "min": 108,
+                "max": 258
+              }
+            },
+            "quest": {
+              "words": {
+                "count": 16,
+                "avg": 26.94,
+                "min": 18,
+                "max": 39
+              },
+              "sentences": {
+                "count": 16,
+                "avg": 2.12,
+                "min": 1,
+                "max": 3
+              },
+              "chars": {
+                "count": 16,
+                "avg": 145.62,
+                "min": 89,
+                "max": 217
+              }
+            },
+            "refusal": {
+              "words": {
+                "count": 16,
+                "avg": 26.94,
+                "min": 15,
+                "max": 37
+              },
+              "sentences": {
+                "count": 16,
+                "avg": 2.5,
+                "min": 2,
+                "max": 3
+              },
+              "chars": {
+                "count": 16,
+                "avg": 156.56,
+                "min": 89,
+                "max": 223
+              }
+            },
+            "teaching": {
+              "words": {
+                "count": 80,
+                "avg": 27.94,
+                "min": 20,
+                "max": 52
+              },
+              "sentences": {
+                "count": 80,
+                "avg": 1.98,
+                "min": 1,
+                "max": 3
+              },
+              "chars": {
+                "count": 80,
+                "avg": 158.54,
+                "min": 111,
+                "max": 291
+              }
+            }
+          }
+        }
+      },
+      "expected_distribution": {
+        "identity": 12,
+        "teaching": 80,
+        "dialogue": 32,
+        "quest": 16,
+        "refusal": 16
+      },
+      "distribution_gaps": [],
+      "dataset_total_rows": 156,
+      "dataset_unknown_rows": 0,
+      "sanitizer": {
+        "total_output": 156,
+        "discarded_total": 0,
+        "flagged_for_review": 0,
+        "passed_threshold": 156,
+        "quality_scores": {
+          "mean": 79.1,
+          "median": 78.0,
+          "min": 74,
+          "max": 91,
+          "std_dev": 2.9,
+          "passed_threshold": 156,
+          "flagged_for_review": 0,
+          "distribution": {
+            "0-9": 0,
+            "10-19": 0,
+            "20-29": 0,
+            "30-39": 0,
+            "40-49": 0,
+            "50-59": 0,
+            "60-69": 0,
+            "70-79": 88,
+            "80-89": 66,
+            "90-99": 2,
+            "100+": 0
+          }
+        }
+      },
+      "sanitizer_quality_issues": []
+    },
+    "failures": [
+      {
+        "test_name": "chef_assistant:refusal:2",
+        "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not recommend unsafe shortcuts that ignore food safety\nDifficulty: beginner\nUser message: Is it safe to keep this food out all day and serve it later?",
+        "actual_output": "That's unsafe and not safe to recommend. A safer option is to cook it properly, check the temperature, and store it right away. Instead, I can help with a concrete cooking fundamentals topic.",
+        "metadata": {
+          "npc_key": "chef_assistant",
+          "category": "refusal",
+          "concept": "Will not recommend unsafe shortcuts that ignore food safety",
+          "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+          "line_number": 2
+        },
+        "metric": {
+          "name": "Constraint Compliance [GEval]",
+          "score": 0.6,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The response is clear in setting a boundary regarding food safety but could be more direct. It provides an alternative topic, which is helpful, though it slightly exceeds the sentence limit.",
+          "evaluation_model": "qwen2.5:7b (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "chef_assistant:identity:4",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
+        "actual_output": "I'm ChefAssistant, a calm guide for Cooking fundamentals, with a focus on clear steps and concrete examples.",
+        "metadata": {
+          "npc_key": "chef_assistant",
+          "category": "identity",
+          "concept": "chef_assistant",
+          "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+          "line_number": 4
+        },
+        "metric": {
+          "name": "Persona and Category Fit [GEval]",
+          "score": 0.6,
+          "threshold": 0.75,
+          "success": false,
+          "reason": "The response fits the identity category with a clear role statement but exceeds the sentence limit, making it too long for a beginner difficulty level.",
+          "evaluation_model": "qwen2.5:7b (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "chef_assistant:identity:4",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
+        "actual_output": "I'm ChefAssistant, a calm guide for Cooking fundamentals, with a focus on clear steps and concrete examples.",
+        "metadata": {
+          "npc_key": "chef_assistant",
+          "category": "identity",
+          "concept": "chef_assistant",
+          "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+          "line_number": 4
+        },
+        "metric": {
+          "name": "Training Usefulness and Specificity [GEval]",
+          "score": 0.4,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The response provides a clear and practical self-description focusing on the role of guiding cooking fundamentals. It aligns with the identity row criteria but lacks specific domain knowledge or actionable steps that would be useful for training.",
+          "evaluation_model": "qwen2.5:7b (Ollama)",
+          "error": null
+        }
+      },
+      {
+        "test_name": "chef_assistant:identity:4",
+        "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
+        "actual_output": "I'm ChefAssistant, a calm guide for Cooking fundamentals, with a focus on clear steps and concrete examples.",
+        "metadata": {
+          "npc_key": "chef_assistant",
+          "category": "identity",
+          "concept": "chef_assistant",
+          "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
+          "line_number": 4
+        },
+        "metric": {
+          "name": "Constraint Compliance [GEval]",
+          "score": 0.4,
+          "threshold": 0.7,
+          "success": false,
+          "reason": "The response is clear and relevant to the chef's role but exceeds the sentence length constraint by providing too much detail.",
+          "evaluation_model": "qwen2.5:7b (Ollama)",
+          "error": null
+        }
+      }
+    ]
+  },
+  "feedback_signals": [
+    {
+      "type": "dataset_density_gap",
+      "severity": "medium",
+      "category": "teaching",
+      "avg_words": 27.94,
+      "target_min_words": 35,
+      "target_max_words": 55,
+      "suggested_action": "apply_shared_density_generation_profile"
+    },
+    {
+      "type": "dataset_density_gap",
+      "severity": "medium",
+      "category": "dialogue",
+      "avg_words": 27.41,
+      "target_min_words": 35,
+      "target_max_words": 55,
+      "suggested_action": "apply_shared_density_generation_profile"
+    },
+    {
+      "type": "dataset_density_gap",
+      "severity": "medium",
+      "category": "quest",
+      "avg_words": 26.94,
+      "target_min_words": 35,
+      "target_max_words": 55,
+      "suggested_action": "apply_shared_density_generation_profile"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "identity",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_category_weakness",
+      "severity": "medium",
+      "category": "refusal",
+      "pass_rate": 0.0,
+      "suggested_action": "inspect_category_failures"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Constraint Compliance [GEval]",
+      "count": 2,
+      "suggested_action": "review_failed_rows_and_prompts"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Persona and Category Fit [GEval]",
+      "count": 1,
+      "suggested_action": "review_failed_rows_and_prompts"
+    },
+    {
+      "type": "deepeval_metric_failure",
+      "severity": "medium",
+      "metric": "Training Usefulness and Specificity [GEval]",
+      "count": 1,
+      "suggested_action": "review_failed_rows_and_prompts"
+    }
+  ]
+}

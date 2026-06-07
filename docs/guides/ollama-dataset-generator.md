@@ -1,4 +1,4 @@
-# Ollama Dataset Generator (generate_dataset_ollama.py)
+# Ollama Dataset Generator (generate_dataset.py)
 
 High-performance, Ollama-optimized NPC dataset generator for Unsloth_Core. Designed for fast, reliable local LLM-based generation with advanced retry logic, progress tracking, and Ollama health checks.
 
@@ -21,8 +21,8 @@ High-performance, Ollama-optimized NPC dataset generator for Unsloth_Core. Desig
 
 ### Direct Script Usage
 ```bash
-python scripts/dataset/generate_dataset_ollama.py data/npcs/specs/history_guide.json
-python scripts/dataset/generate_dataset_ollama.py data/npcs/specs/history_guide.json --model llama3.1 --batch-size 2
+python src/core/dataset/generate_dataset.py data/npcs/specs/history_guide.json
+python src/core/dataset/generate_dataset.py data/npcs/specs/history_guide.json --model llama3.1 --batch-size 2
 ```
 
 ## Features

@@ -443,14 +443,46 @@ class DialogueGuardrail:
         self.max_characters = max_characters
         self.allow_formatting = allow_formatting
 
-    def validate(self, response: str, messages, spec):
-        dialogue_conf = spec.get("dialogue", {}) if isinstance(spec, dict) else {}
-        max_sentences = self.max_sentences or dialogue_conf.get("max_sentences", 5)
-        max_characters = self.max_characters or dialogue_conf.get("max_characters", 500)
+    @staticmethod
+    def resolve_constraints(spec: dict, category: str | None = None) -> dict[str, int]:
+        dialogue = spec.get("dialogue", {}) if isinstance(spec, dict) else {}
+        guardrails = spec.get("guardrails", {}) if isinstance(spec, dict) else {}
+        verbosity = guardrails.get("verbosity", {}) if isinstance(guardrails, dict) else {}
+        cat_rules = verbosity.get(category, {}) if category and isinstance(verbosity, dict) else {}
+        if not isinstance(cat_rules, dict):
+            cat_rules = {}
+
+        return {
+            "min_sentences": int(cat_rules.get("min_sentences", cat_rules.get("min", 1)) or 1),
+            "max_sentences": int(
+                cat_rules.get("max_sentences", cat_rules.get("max"))
+                or dialogue.get("max_sentences")
+                or 5
+            ),
+            "max_characters": int(
+                cat_rules.get("max_characters") or dialogue.get("max_characters") or 500
+            ),
+            "min_words": int(cat_rules.get("min_words", 0) or 0),
+            "max_words": int(cat_rules.get("max_words", 0) or 0),
+        }
+
+    def validate(self, response: str, messages, spec, category: str | None = None):
+        resp_clean = str(response or "").strip()
+
+        constraints = self.resolve_constraints(spec, category)
+        min_sentences = constraints["min_sentences"]
+        max_sentences = self.max_sentences or constraints["max_sentences"]
+        max_characters = self.max_characters or constraints["max_characters"]
+        min_words = constraints["min_words"]
+        max_words = constraints["max_words"]
         allow_formatting = (
-            dialogue_conf.get("allow_formatting", True)
-            if self.allow_formatting is None
-            else self.allow_formatting
+            self.allow_formatting
+            if self.allow_formatting is not None
+            else (
+                spec.get("dialogue", {}).get("allow_formatting", True)
+                if isinstance(spec, dict)
+                else True
+            )
         )
 
         resp_clean = str(response or "").strip()
@@ -474,16 +506,33 @@ class DialogueGuardrail:
                 return False, f"Response broke character by including AI disclaimer: '{disclaimer}'"
 
         sentences = [s for s in re.split(r"[.!?]+", resp_clean) if s.strip()]
+        if len(sentences) < min_sentences:
+            return (
+                False,
+                f"Response is too brief ({len(sentences)} sentences). Must be {min_sentences}-{max_sentences} sentences.",
+            )
         if len(sentences) > max_sentences:
             return (
                 False,
-                f"Response is too verbose ({len(sentences)} sentences). Must be 1-{max_sentences} short sentences.",
+                f"Response is too verbose ({len(sentences)} sentences). Must be {min_sentences}-{max_sentences} short sentences.",
             )
 
         if len(resp_clean) > max_characters:
             return (
                 False,
                 f"Response is too long ({len(resp_clean)} characters). Must be under {max_characters} characters.",
+            )
+
+        word_count = len(re.findall(r"\b[\w'-]+\b", resp_clean))
+        if min_words and word_count < min_words:
+            return (
+                False,
+                f"Response is too sparse ({word_count} words). Must be {min_words}-{max_words or 'more'} words.",
+            )
+        if max_words and word_count > max_words:
+            return (
+                False,
+                f"Response is too dense ({word_count} words). Must be at most {max_words} words.",
             )
 
         if not allow_formatting:
@@ -557,7 +606,7 @@ def generate_teaching_response(
         else (_concept_anchor(concept_b, spec, retriever) if concept_b else None)
     )
     if "methodology" in concept_a.lower():
-        detail_a = "comparing primary sources, secondary analysis, chronology, context, bias, and cause and effect"
+        detail_a = "comparing primary sources, secondary analysis, date, chronology, context, bias, and cause and effect"
     _lower_first(detail_a)
 
     if _is_history_subject(spec):
@@ -589,6 +638,12 @@ def generate_teaching_response(
                     f"{lines[0]} It matters because it links a real source to a real consequence.",
                     f"{lines[0]} {lines[1]} That helps you see what changed, who was affected, and why the evidence matters.",
                 ]
+                if "methodology" in concept_a.lower():
+                    templates[0] = (
+                        "Historians compare primary sources with later secondary analysis before they trust a claim. "
+                        "They then check date, chronology, context, bias, and cause and effect so the explanation stays grounded. "
+                        "That consequence check shows how history turns on evidence, not guesswork."
+                    )
     elif _is_cooking_subject(spec):
         action_a, result_a = _cooking_practical_focus(concept_a, spec, retriever)
         action_b, result_b = (
@@ -779,8 +834,8 @@ def generate_quest_response(spec, concept, scenario_name=None, retriever=None):
                 f"Scenario: two notes disagree about {concept}. Pick the stronger one by naming the source type, the date, and the consequence it supports.",
             ],
             "primary_source": [
-                "Scenario: two sources date one event differently. Pick the stronger one by naming the source type, the date, and the consequence it supports.",
-                "Scenario: one source gives a date and another gives only a story. Choose the stronger source, then explain what changed next.",
+                "Scenario: two sources date one event differently. Cite one source, name the source type, the date, and the consequence it supports.",
+                "Scenario: one source gives a date and another gives only a story. Cite one source, choose the stronger record, then explain what changed next.",
             ],
             "technique_mastery": [
                 f"Task: apply {concept} to {lines[0].rstrip('.')}. Then explain one cause and one consequence with a date or source.",

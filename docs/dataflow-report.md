@@ -15,7 +15,7 @@ validate-spec → generate-ollama → sanitize → dataset-eval → train+export
 | Step | CLI | Script | Status |
 |---|---|---|---|
 | Spec validation | `validate-spec` | `src/core/dataset/validate_subject_spec.py` | ✅ |
-| Generation | `generate-ollama` | `src/core/dataset/generate_dataset_ollama.py` | ✅ qwen2.5:7b |
+| Generation | `generate-ollama` | `src/core/dataset/generate_dataset.py` | ✅ qwen2.5:7b |
 | Sanitize | `sanitize` | `src/core/dataset/sanitize_dataset.py` | ✅ |
 | Dataset eval | `dataset-eval` | `src/core/dataset/dataset_eval.py` | ✅ DeepEval 4.0.5 |
 | Training | `train` | `src/core/training/train.py` | ✅ (eval disabled for 6GB) |

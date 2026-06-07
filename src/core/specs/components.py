@@ -134,6 +134,8 @@ class VerbosityRule(BaseModel, extra="forbid"):
 
     min: int = Field(default=1, ge=0, le=20)
     max: int = Field(default=3, ge=1, le=20)
+    min_words: int = Field(default=0, ge=0, le=500)
+    max_words: int = Field(default=0, ge=0, le=500)
 
 
 class DomainRules(BaseModel, extra="forbid"):
@@ -275,6 +277,8 @@ def load_npc_components(path: str | Path) -> NpcComponents:
                     verbosity[cat] = VerbosityRule(
                         min=rule.get("min", 1),
                         max=rule.get("max", 3),
+                        min_words=rule.get("min_words", 0),
+                        max_words=rule.get("max_words", 0),
                     )
         domain_raw = guardrails_raw.get("domain", {})
         domain = (

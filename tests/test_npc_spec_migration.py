@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from src.core.dataset.validate_subject_spec import validate_spec
+from src.core.dataset.validate_subject_spec import validate_guardrails, validate_spec
 from src.core.specs.components import (
     load_npc_components,
 )
@@ -85,6 +85,19 @@ class TestExistingSpecValidation:
         result = validate_spec(spec_path)
         assert result.status != "error", f"{spec_path.name}: {result.errors}"
 
+    @pytest.mark.parametrize("spec_path", KNOWN_SPECS, ids=SPEC_NAMES)
+    def test_known_specs_are_generation_ready(self, spec_path: Path):
+        result = validate_spec(
+            spec_path,
+            require_reference_docs=True,
+            require_reference_contract=True,
+            require_all_categories=True,
+            require_dataset_minimums=True,
+        )
+        assert result.status == "ok", (
+            f"{spec_path.name}: errors={result.errors}, warnings={result.warnings}"
+        )
+
 
 # ── Round-trip: validate_spec enriched by components ──────────────────
 
@@ -123,3 +136,32 @@ class TestComponentEnhancedValidation:
         if "guardrails" in raw:
             assert components.guardrails is not None
             assert components.guardrails.domain is not None
+
+
+def test_generation_contract_rejects_domain_and_verbosity_drift():
+    spec = {
+        "teaching": {"expertise": ["knife skills", "food safety"]},
+        "dialogue": {"max_sentences": 3, "max_characters": 100},
+        "guardrails": {
+            "domain": {
+                "allowed": ["knife skills"],
+                "forbidden": ["unsafe cooking shortcuts"],
+            },
+            "verbosity": {
+                category: {"min": 1, "max": 2, "min_words": 30, "max_words": 40}
+                for category in ("identity", "teaching", "dialogue", "quest", "refusal")
+            },
+        },
+    }
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    validate_guardrails(
+        spec,
+        errors,
+        warnings,
+        require_generation_contract=True,
+    )
+
+    assert any("food safety" in error and "domain.allowed" in error for error in errors)
+    assert any("cannot reliably fit" in error for error in errors)

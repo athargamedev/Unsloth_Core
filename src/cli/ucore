@@ -1748,7 +1748,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "generate":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "_generate_shared.py"), args.spec]
         technique = "ollama" if args.ollama else args.technique
         cmd.extend(["--technique", technique])
         if technique == "ollama":
@@ -1765,7 +1765,7 @@ def main(argv: list[str] | None = None) -> int:
         run_cmd(cmd)
 
     elif args.command == "generate-ollama":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset_ollama.py"), args.spec]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec]
         if args.model:
             cmd.extend(["--model", args.model])
         if args.url and args.url != "http://localhost:11434":
@@ -2424,10 +2424,20 @@ def main(argv: list[str] | None = None) -> int:
         npc_key = Path(args.spec).stem
         workflow_id = uuid.uuid4().hex
         technique = "ollama" if args.ollama else args.technique
+        if technique == "template" and not args.smoke_template:
+            print(
+                "Error: pipeline cannot use template data unless --smoke-template is set.",
+                file=sys.stderr,
+            )
+            return 2
+        if args.skip_dataset_eval:
+            print(
+                "Warning: --skip-dataset-eval is DEV ONLY; training will use an ungated dataset.",
+                file=sys.stderr,
+            )
         if args.allow_metadata_repair and technique != "template":
             parser.error(
-                "--allow-metadata-repair is dev-only and may only be used "
-                "with --technique template"
+                "--allow-metadata-repair is dev-only and may only be used with --technique template"
             )
         wandb_group = f"pipeline-{npc_key}-{pipeline_timestamp}"
         pipeline_hooks = args.workflow_hooks or str(
@@ -2468,7 +2478,7 @@ def main(argv: list[str] | None = None) -> int:
                 if technique == "ollama":
                     gen_cmd = [
                         PYTHON,
-                        str(SCRIPTS_DIR / "dataset" / "generate_dataset_ollama.py"),
+                        str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"),
                         args.spec,
                     ]
                     if args.model:
@@ -2476,7 +2486,7 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     gen_cmd = [
                         PYTHON,
-                        str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"),
+                        str(SCRIPTS_DIR / "dataset" / "_generate_shared.py"),
                         args.spec,
                     ]
                     gen_cmd.extend(["--technique", technique])

@@ -48,10 +48,10 @@ Runs before expensive pipeline stages to check the local environment and apply s
 ### Stage 1: Generate Dataset
 
 **Production entry point:** `./ucore generate-ollama <spec>`
-**Script:** `src/core/dataset/generate_dataset_ollama.py`
+**Script:** `src/core/dataset/generate_dataset.py`
 
 **Legacy/smoke entry point:** `./ucore generate <spec>`
-**Legacy script:** `src/core/dataset/generate_dataset.py`
+**Legacy script:** `src/core/dataset/_generate_shared.py`
 
 Reads a subject spec JSON and produces a ChatML-format Q&A dataset.
 

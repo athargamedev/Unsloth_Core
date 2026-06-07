@@ -457,6 +457,122 @@ def validate_dataset(
         )
 
 
+def validate_guardrails(
+    spec: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+    *,
+    require_generation_contract: bool = False,
+) -> None:
+    guardrails = spec.get("guardrails")
+    if guardrails is None:
+        if require_generation_contract:
+            errors.append(
+                "Missing `guardrails`; generation-ready specs must define domain and per-category verbosity."
+            )
+        return
+    if not isinstance(guardrails, dict):
+        errors.append("`guardrails` must be an object.")
+        return
+
+    domain = guardrails.get("domain")
+    if not isinstance(domain, dict):
+        errors.append("Missing or invalid `guardrails.domain` object.")
+    else:
+        allowed = domain.get("allowed")
+        forbidden = domain.get("forbidden")
+        if not is_non_empty_list(allowed):
+            errors.append("`guardrails.domain.allowed` must be a non-empty list.")
+        if not is_non_empty_list(forbidden):
+            errors.append("`guardrails.domain.forbidden` must be a non-empty list.")
+
+        expertise = spec.get("teaching", {}).get("expertise", [])
+        allowed_normalized = {
+            str(item).strip().lower() for item in allowed or [] if is_non_empty_string(item)
+        }
+        for topic in expertise if isinstance(expertise, list) else []:
+            if is_non_empty_string(topic) and topic.strip().lower() not in allowed_normalized:
+                msg = (
+                    f'`teaching.expertise` topic "{topic}" is absent from '
+                    "`guardrails.domain.allowed`; grounding judges may reject valid answers."
+                )
+                if require_generation_contract:
+                    errors.append(msg)
+                else:
+                    warnings.append(msg)
+
+    verbosity = guardrails.get("verbosity")
+    if not isinstance(verbosity, dict):
+        errors.append("Missing or invalid `guardrails.verbosity` object.")
+        return
+
+    dialogue = spec.get("dialogue") if isinstance(spec.get("dialogue"), dict) else {}
+    dialogue_max_sentences = dialogue.get("max_sentences")
+    dialogue_max_characters = dialogue.get("max_characters")
+
+    for category in SUPPORTED_DATASET_CATEGORIES:
+        rule = verbosity.get(category)
+        if not isinstance(rule, dict):
+            msg = f"Missing `guardrails.verbosity.{category}` object."
+            if require_generation_contract:
+                errors.append(msg)
+            else:
+                warnings.append(msg)
+            continue
+
+        min_sentences = rule.get("min_sentences", rule.get("min", 1))
+        max_sentences = rule.get("max_sentences", rule.get("max"))
+        min_words = rule.get("min_words", 0)
+        max_words = rule.get("max_words", 0)
+        max_characters = rule.get("max_characters", dialogue_max_characters)
+
+        if (
+            not isinstance(min_sentences, int)
+            or isinstance(min_sentences, bool)
+            or min_sentences < 0
+        ):
+            errors.append(f"`guardrails.verbosity.{category}.min` must be a non-negative integer.")
+        if (
+            not isinstance(max_sentences, int)
+            or isinstance(max_sentences, bool)
+            or max_sentences < 1
+        ):
+            errors.append(f"`guardrails.verbosity.{category}.max` must be a positive integer.")
+        elif isinstance(min_sentences, int) and min_sentences > max_sentences:
+            errors.append(f"`guardrails.verbosity.{category}` has min sentences greater than max.")
+        elif isinstance(dialogue_max_sentences, int) and max_sentences > dialogue_max_sentences:
+            errors.append(
+                f"`guardrails.verbosity.{category}.max` ({max_sentences}) exceeds "
+                f"`dialogue.max_sentences` ({dialogue_max_sentences})."
+            )
+
+        for field_name, value in (("min_words", min_words), ("max_words", max_words)):
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                errors.append(
+                    f"`guardrails.verbosity.{category}.{field_name}` must be a non-negative integer."
+                )
+        if (
+            isinstance(min_words, int)
+            and isinstance(max_words, int)
+            and max_words
+            and min_words > max_words
+        ):
+            errors.append(
+                f"`guardrails.verbosity.{category}` has min_words greater than max_words."
+            )
+        if (
+            isinstance(min_words, int)
+            and min_words > 0
+            and isinstance(max_characters, int)
+            and max_characters > 0
+            and min_words * 4 > max_characters
+        ):
+            errors.append(
+                f"`guardrails.verbosity.{category}.min_words` ({min_words}) cannot "
+                f"reliably fit within {max_characters} characters."
+            )
+
+
 def validate_spec(
     spec_path: Path,
     *,
@@ -519,9 +635,9 @@ def validate_spec(
         value = dialogue.get("max_sentences")
         if isinstance(value, int) and not isinstance(value, bool) and value > 0:
             max_sentences = value
-            if value > 3:
+            if value > 8:
                 warnings.append(
-                    "`dialogue.max_sentences` is greater than 3; short NPC responses of 1-3 sentences are recommended."
+                    "`dialogue.max_sentences` is greater than 8; verify this is suitable for interactive NPC dialogue."
                 )
         else:
             errors.append("Missing or invalid `dialogue.max_sentences` positive integer.")
@@ -632,6 +748,14 @@ def validate_spec(
     )
     validate_difficulty_levels(spec, errors, warnings)
     validate_concepts(spec, errors, warnings)
+    validate_guardrails(
+        spec,
+        errors,
+        warnings,
+        require_generation_contract=(
+            require_reference_contract or require_all_categories or require_dataset_minimums
+        ),
+    )
     validate_dataset(
         spec,
         errors,

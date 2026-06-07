@@ -135,7 +135,7 @@ Then update in this order:
 
 - Deprecated inactive NPCs: `astronomy_guide`, `fitness_coach`.
 - Template datasets as production data.
-- **`./ucore generate --technique ollama` — this hits the legacy `generate_dataset.py` path. Use `./ucore generate-ollama` instead.**
+- **`./ucore generate --technique ollama` — this hits the legacy `_generate_shared.py` path. Use `./ucore generate-ollama` instead.**
 - Deprecated judge refs: do not use `qwen3:latest` as confirmed local default without re-verification.
 - Standalone evaluation of adapter GGUFs when base+LoRA is required.
 - `--allow-ungated-dataset` for production.

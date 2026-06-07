@@ -29,7 +29,7 @@ with open(logfile, "w") as log:
         [
             sys.executable,
             "-u",
-            "src/core/dataset/generate_dataset_ollama.py",
+            "src/core/dataset/generate_dataset.py",
             "data/npcs/specs/chef_assistant.json",
             "--model",
             "qwen2.5:7b",

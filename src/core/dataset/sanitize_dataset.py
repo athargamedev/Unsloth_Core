@@ -1378,7 +1378,7 @@ def build_sanitizer_manifest(
     *artifact_check*, *strict_mode*, and *argv_str*.
 
     When *generation_manifest_path* points to an existing generation manifest
-    (written by ``generate_dataset.py``), the ``generation`` and ``spec`` blocks
+    (written by ``_generate_shared.py``), the ``generation`` and ``spec`` blocks
     are carried forward for provenance chaining.
     """
     now_str = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")

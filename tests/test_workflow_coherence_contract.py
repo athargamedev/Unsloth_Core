@@ -96,7 +96,7 @@ def test_audit_tests_outputs_matrix(tmp_path):
     result = subprocess.run(
         [
             sys.executable,
-            "scripts/ops/audit_tests.py",
+            "src/core/ops/audit_tests.py",
             "--write",
             str(output_json),
             "--markdown",
@@ -117,7 +117,7 @@ def test_audit_tests_outputs_matrix(tmp_path):
 def test_suite_audit_has_no_unknown_owners(tmp_path):
     output_json = tmp_path / "matrix.json"
     subprocess.run(
-        [sys.executable, "scripts/ops/audit_tests.py", "--write", str(output_json)],
+        [sys.executable, "src/core/ops/audit_tests.py", "--write", str(output_json)],
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,
@@ -259,5 +259,5 @@ def test_ucore_pipeline_ollama_uses_optimized_generator(monkeypatch, capsys):
     assert "--skip-dataset-eval is DEV ONLY" in captured.err
     generate_commands = [cmd for cmd in commands if "generate_dataset" in " ".join(cmd)]
     assert generate_commands
-    assert "generate_dataset_ollama.py" in " ".join(generate_commands[0])
-    assert "generate_dataset.py" not in " ".join(generate_commands[0])
+    assert "generate_dataset.py" in " ".join(generate_commands[0])
+    assert "_generate_shared.py" not in " ".join(generate_commands[0])

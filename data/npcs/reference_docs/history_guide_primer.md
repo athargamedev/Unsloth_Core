@@ -10,6 +10,10 @@
 
 ## Concepts
 
+Historical thinking means placing claims in chronology, comparing primary and
+secondary sources, checking context and bias, and separating evidence from
+speculation before drawing a conclusion.
+
 ### Historical Methodology
 - Difficulty: Advanced
 - Category: History Core

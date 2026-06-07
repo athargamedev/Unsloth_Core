@@ -7,7 +7,7 @@ import logging
 import random
 from concurrent.futures import ThreadPoolExecutor
 
-from src.core.dataset.generate_dataset import (
+from src.core.dataset._generate_shared import (
     ConceptExtractor,
     LLMGroundingVerifier,
     ReferenceDocRetriever,
@@ -145,8 +145,12 @@ class OllamaDatasetGenerator:
         relationship = game_context.get("relationship_to_player", "")
 
         dialogue_conf = self.spec.get("dialogue") or {}
-        max_sentences = dialogue_conf.get("max_sentences", 3)
-        max_chars = dialogue_conf.get("max_characters", 200)
+        constraints = self.guardrail.resolve_constraints(self.spec, category)
+        min_sentences = constraints["min_sentences"]
+        max_sentences = constraints["max_sentences"]
+        max_chars = constraints["max_characters"]
+        min_words = constraints["min_words"]
+        max_words = constraints["max_words"]
         dialogue_conf.get("allow_formatting", True)
         player_archetypes = dialogue_conf.get("player_archetypes", ["player"])
         player_role = random.choice(player_archetypes) if player_archetypes else "player"
@@ -161,11 +165,17 @@ class OllamaDatasetGenerator:
         concepts = [c.get("name", "") for c in self.spec.get("concepts", [])]
         concepts_str = ", ".join(concepts[:3]) if concepts else f"topics related to {subject}"
 
+        density_instruction = ""
+        if min_words and max_words:
+            density_instruction = f" Target {min_words}-{max_words} words."
+        elif max_words:
+            density_instruction = f" Use at most {max_words} words."
+
         category_prompt = {
             "identity": f"Write a short self-introduction for {npc_name} in first person. Include one concrete topic you can help with related to {subject}, such as {concepts_str}.",
-            "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Include one concrete grounded example and one practical implication. Aim for 35-55 words when the NPC limits allow it; otherwise be as dense and specific as possible.",
-            "dialogue": f"Write a casual turn about '{concept_str}' with an in-character answer. Answer directly, include one grounded detail, and explain why it matters in play. Aim for 35-55 words when the NPC limits allow it; otherwise be as dense and specific as possible.",
-            "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character. Include one concrete action step, one example, and one decision-useful implication. Aim for 35-55 words when the NPC limits allow it; otherwise be as dense and specific as possible.",
+            "teaching": f"Write a question from a {player_role} about '{concept_str}' and a direct answer. Include one concrete grounded example and one practical implication.{density_instruction}",
+            "dialogue": f"Write a casual turn about '{concept_str}' with an in-character answer. Answer directly, include one grounded detail, and explain why it matters in play.{density_instruction}",
+            "quest": f"Write a challenge-style exchange about '{concept_str}' that stays practical and in character. Include one concrete action step, one example, and one decision-useful implication.{density_instruction}",
             "refusal": f"Write an out-of-scope question for {npc_name}, mention the boundary, and a polite in-character refusal that directly acknowledges the topic change and offers another in-scope topic related to {subject}. Include both an explicit boundary phrase and a redirect phrase such as 'Instead, I can help with...'.",
         }.get(category, f"Generate a concise educational dialogue about '{concept_str}'.")
         if difficulty:
@@ -200,6 +210,9 @@ class OllamaDatasetGenerator:
             player_role=player_role,
             max_sentences=max_sentences,
             max_chars=max_chars,
+            min_sentences=min_sentences,
+            min_words=min_words,
+            max_words=max_words,
             multi_turn=multi_turn,
             turn_instruction=turn_instruction,
             json_shape=json_shape,
@@ -330,13 +343,17 @@ class OllamaDatasetGenerator:
                 return await fallback_template_example("parse_or_missing_fields")
 
             # Validate with guardrail
-            is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
+            is_valid, reason = self.guardrail.validate(
+                asst_msg, [grounding], self.spec, category=category
+            )
             if not is_valid:
                 logger.warning(f"Guardrail rejection: {reason}")
                 if category == "refusal":
                     boundary_hint = self._infer_refusal_boundary(user_msg, concept_str)
                     asst_msg = generate_refusal_response(self.spec, boundary=boundary_hint)
-                    is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
+                    is_valid, reason = self.guardrail.validate(
+                        asst_msg, [grounding], self.spec, category=category
+                    )
                     if not is_valid:
                         logger.warning(f"Refusal fallback rejected: {reason}")
                         return await fallback_template_example("parse_or_missing_fields")
@@ -357,7 +374,9 @@ class OllamaDatasetGenerator:
                 asst_msg = generate_refusal_response(self.spec, boundary=boundary_hint)
                 user2_msg = ""
                 asst2_msg = ""
-                is_valid, reason = self.guardrail.validate(asst_msg, [grounding], self.spec)
+                is_valid, reason = self.guardrail.validate(
+                    asst_msg, [grounding], self.spec, category=category
+                )
                 if not is_valid:
                     logger.warning(f"Refusal fallback rejected: {reason}")
                     return await fallback_template_example("parse_or_missing_fields")
@@ -368,7 +387,9 @@ class OllamaDatasetGenerator:
                 {"role": "assistant", "content": asst_msg},
             ]
             if multi_turn and user2_msg and asst2_msg:
-                is_valid2, reason2 = self.guardrail.validate(asst2_msg, [grounding], self.spec)
+                is_valid2, reason2 = self.guardrail.validate(
+                    asst2_msg, [grounding], self.spec, category=category
+                )
                 if not is_valid2:
                     logger.warning(f"Guardrail rejection: {reason2}")
                     return await fallback_template_example("parse_or_missing_fields")
@@ -433,7 +454,7 @@ class OllamaDatasetGenerator:
         executor=None,
     ) -> list[dict]:
         """Generate dataset asynchronously."""
-        from src.core.dataset.generate_dataset_ollama import (
+        from src.core.dataset.generate_dataset import (
             ProgressTracker,
             should_generate_multi_turn,
         )

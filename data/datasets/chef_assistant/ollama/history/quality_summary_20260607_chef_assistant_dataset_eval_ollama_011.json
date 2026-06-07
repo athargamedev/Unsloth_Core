@@ -1,0 +1,270 @@
+{
+  "created_at": "2026-06-07T14:27:39.908659+00:00",
+  "npc_key": "chef_assistant",
+  "technique": "ollama",
+  "judge_provider": "ollama",
+  "judge_model": "qwen2.5:7b",
+  "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
+  "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
+  "command": [
+    "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+    "test",
+    "run",
+    "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+    "--identifier",
+    "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
+    "--display",
+    "all",
+    "--skip-on-missing-params"
+  ],
+  "total": 5,
+  "passed": 3,
+  "failed": 2,
+  "pass_rate": 0.6,
+  "metric_count": 15,
+  "null_metric_count": 0,
+  "null_metric_rate": 0.0,
+  "status": "ok",
+  "metrics": {
+    "Constraint Compliance [GEval]": {
+      "count": 5,
+      "average_score": 0.74,
+      "pass_rate": 0.6
+    },
+    "Persona and Category Fit [GEval]": {
+      "count": 5,
+      "average_score": 0.76,
+      "pass_rate": 0.8
+    },
+    "Training Usefulness and Specificity [GEval]": {
+      "count": 5,
+      "average_score": 0.74,
+      "pass_rate": 0.8
+    }
+  },
+  "categories": {
+    "dialogue": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 1.0
+    },
+    "identity": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
+    },
+    "quest": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 1.0
+    },
+    "refusal": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
+    },
+    "teaching": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 1.0
+    }
+  },
+  "failures_path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/quality_failures.json",
+  "quality_gate_mode": "fast",
+  "cases_per_category": 1,
+  "dataset_summary": {
+    "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
+    "exists": true,
+    "content_sha256": "sha256:b3dddcc598f9ed02b34bbb1032cc8c61a2509c75dbb321e4a87f4d4eb040b359",
+    "total": 156,
+    "by_category": {
+      "dialogue": 32,
+      "identity": 12,
+      "quest": 16,
+      "refusal": 16,
+      "teaching": 80
+    },
+    "by_difficulty": {
+      "advanced": 28,
+      "beginner": 71,
+      "intermediate": 57
+    },
+    "by_split": {
+      "train": 156
+    },
+    "by_concept": {
+      "cooking techniques": 22,
+      "kitchen organization": 22,
+      "knife skills": 22,
+      "food safety": 20,
+      "kitchen workflow": 18,
+      "flavor balance": 17,
+      "ingredient science": 17,
+      "Will not recommend unsafe shortcuts that ignore food safety": 7,
+      "chef_assistant": 7,
+      "Will not help with crash diets or eating-disorder advice": 4
+    },
+    "unknown_rows": 0,
+    "assistant_density": {
+      "words": {
+        "count": 156,
+        "avg": 28.26,
+        "min": 15,
+        "max": 52
+      },
+      "sentences": {
+        "count": 156,
+        "avg": 2.1,
+        "min": 1,
+        "max": 3
+      },
+      "chars": {
+        "count": 156,
+        "avg": 160.26,
+        "min": 89,
+        "max": 291
+      },
+      "by_category": {
+        "dialogue": {
+          "words": {
+            "count": 32,
+            "avg": 27.41,
+            "min": 20,
+            "max": 47
+          },
+          "sentences": {
+            "count": 32,
+            "avg": 2.03,
+            "min": 1,
+            "max": 3
+          },
+          "chars": {
+            "count": 32,
+            "avg": 156.0,
+            "min": 112,
+            "max": 262
+          }
+        },
+        "identity": {
+          "words": {
+            "count": 12,
+            "avg": 36.17,
+            "min": 17,
+            "max": 45
+          },
+          "sentences": {
+            "count": 12,
+            "avg": 2.5,
+            "min": 1,
+            "max": 3
+          },
+          "chars": {
+            "count": 12,
+            "avg": 207.5,
+            "min": 108,
+            "max": 258
+          }
+        },
+        "quest": {
+          "words": {
+            "count": 16,
+            "avg": 26.94,
+            "min": 18,
+            "max": 39
+          },
+          "sentences": {
+            "count": 16,
+            "avg": 2.12,
+            "min": 1,
+            "max": 3
+          },
+          "chars": {
+            "count": 16,
+            "avg": 145.62,
+            "min": 89,
+            "max": 217
+          }
+        },
+        "refusal": {
+          "words": {
+            "count": 16,
+            "avg": 26.94,
+            "min": 15,
+            "max": 37
+          },
+          "sentences": {
+            "count": 16,
+            "avg": 2.5,
+            "min": 2,
+            "max": 3
+          },
+          "chars": {
+            "count": 16,
+            "avg": 156.56,
+            "min": 89,
+            "max": 223
+          }
+        },
+        "teaching": {
+          "words": {
+            "count": 80,
+            "avg": 27.94,
+            "min": 20,
+            "max": 52
+          },
+          "sentences": {
+            "count": 80,
+            "avg": 1.98,
+            "min": 1,
+            "max": 3
+          },
+          "chars": {
+            "count": 80,
+            "avg": 158.54,
+            "min": 111,
+            "max": 291
+          }
+        }
+      }
+    }
+  },
+  "expected_distribution": {
+    "identity": 12,
+    "teaching": 80,
+    "dialogue": 32,
+    "quest": 16,
+    "refusal": 16
+  },
+  "distribution_gaps": [],
+  "dataset_total_rows": 156,
+  "dataset_unknown_rows": 0,
+  "sanitizer": {
+    "total_output": 156,
+    "discarded_total": 0,
+    "flagged_for_review": 0,
+    "passed_threshold": 156,
+    "quality_scores": {
+      "mean": 79.1,
+      "median": 78.0,
+      "min": 74,
+      "max": 91,
+      "std_dev": 2.9,
+      "passed_threshold": 156,
+      "flagged_for_review": 0,
+      "distribution": {
+        "0-9": 0,
+        "10-19": 0,
+        "20-29": 0,
+        "30-39": 0,
+        "40-49": 0,
+        "50-59": 0,
+        "60-69": 0,
+        "70-79": 88,
+        "80-89": 66,
+        "90-99": 2,
+        "100+": 0
+      }
+    }
+  },
+  "sanitizer_quality_issues": []
+}

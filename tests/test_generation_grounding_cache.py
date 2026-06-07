@@ -24,7 +24,7 @@ class _FakeResponse:
 
 
 def test_generation_grounding_verifier_reuses_local_judge_cache(tmp_path, monkeypatch):
-    from src.core.dataset.generate_dataset import LLMGroundingVerifier
+    from src.core.dataset._generate_shared import LLMGroundingVerifier
 
     calls = {"count": 0}
 
@@ -33,7 +33,7 @@ def test_generation_grounding_verifier_reuses_local_judge_cache(tmp_path, monkey
         return _FakeResponse(True, "cached")
 
     monkeypatch.setenv("UCORE_JUDGE_CACHE_PATH", str(tmp_path / "judge-cache.sqlite3"))
-    monkeypatch.setattr("src.core.dataset.generate_dataset.requests.post", fake_post)
+    monkeypatch.setattr("src.core.dataset._generate_shared.requests.post", fake_post)
 
     verifier = LLMGroundingVerifier(model="qwen2.5:7b")
     first = verifier.verify("A grounded answer", ["Reference context"])
@@ -46,7 +46,7 @@ def test_generation_grounding_verifier_reuses_local_judge_cache(tmp_path, monkey
 def test_generation_grounding_cache_key_uses_prompt_version_not_deepeval_entries(
     tmp_path, monkeypatch
 ):
-    from src.core.dataset.generate_dataset import LLMGroundingVerifier
+    from src.core.dataset._generate_shared import LLMGroundingVerifier
     from src.core.ops.judge_cache import JudgeCache, JudgeCacheInput
 
     cache_path = tmp_path / "judge-cache.sqlite3"
@@ -69,7 +69,7 @@ def test_generation_grounding_cache_key_uses_prompt_version_not_deepeval_entries
         return _FakeResponse(True, "fresh generation grounding")
 
     monkeypatch.setenv("UCORE_JUDGE_CACHE_PATH", str(cache_path))
-    monkeypatch.setattr("src.core.dataset.generate_dataset.requests.post", fake_post)
+    monkeypatch.setattr("src.core.dataset._generate_shared.requests.post", fake_post)
 
     verifier = LLMGroundingVerifier(model="qwen2.5:7b")
     assert verifier.verify("A grounded answer", ["Reference context"]) == (
@@ -77,3 +77,34 @@ def test_generation_grounding_cache_key_uses_prompt_version_not_deepeval_entries
         "fresh generation grounding",
     )
     assert calls["count"] == 1
+
+
+def test_grounding_prompt_treats_forbidden_items_as_intents(tmp_path, monkeypatch):
+    from src.core.dataset._generate_shared import LLMGroundingVerifier
+
+    captured = {}
+
+    def fake_post(_url, json, timeout):
+        captured["prompt"] = json["messages"][0]["content"]
+        return _FakeResponse(True, "grounded")
+
+    monkeypatch.setenv("UCORE_JUDGE_CACHE_PATH", str(tmp_path / "judge-cache.sqlite3"))
+    monkeypatch.setattr("src.core.dataset._generate_shared.requests.post", fake_post)
+
+    verifier = LLMGroundingVerifier(model="qwen2.5:7b")
+    result = verifier.verify(
+        "Add a spoonful of sour cream to smooth the sauce.",
+        ["Dairy can add fat and smoothness to a sauce."],
+        spec={
+            "guardrails": {
+                "domain": {
+                    "allowed": ["ingredient science"],
+                    "forbidden": ["weight-loss recommendations"],
+                }
+            }
+        },
+    )
+
+    assert result == (True, "grounded")
+    assert "prohibited request intents" in captured["prompt"]
+    assert "Ordinary ingredients" in captured["prompt"]

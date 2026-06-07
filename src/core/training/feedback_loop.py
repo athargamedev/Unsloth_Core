@@ -373,7 +373,7 @@ def generate_targeted_dataset(
         return False
 
     if technique == "ollama":
-        script_path = PROJECT_ROOT / "scripts" / "dataset" / "generate_dataset_ollama.py"
+        script_path = PROJECT_ROOT / "scripts" / "dataset" / "generate_dataset.py"
         cmd = [
             sys.executable,
             str(script_path),
@@ -386,7 +386,7 @@ def generate_targeted_dataset(
         if batch_size is not None:
             cmd.extend(["--batch-size", str(batch_size)])
     else:
-        script_path = PROJECT_ROOT / "scripts" / "dataset" / "generate_dataset.py"
+        script_path = PROJECT_ROOT / "scripts" / "dataset" / "_generate_shared.py"
         cmd = [
             sys.executable,
             str(script_path),

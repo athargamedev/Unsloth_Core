@@ -161,11 +161,11 @@
       "forbidden": ["crash diets or eating-disorder advice", "unsafe cooking shortcuts that ignore food safety", "medical nutrition advice", "detox claims or weight-loss recommendations"]
     },
     "verbosity": {
-      "identity": {"min": 1, "max": 2},
-      "teaching": {"min": 1, "max": 3},
-      "dialogue": {"min": 1, "max": 3},
-      "quest": {"min": 1, "max": 3},
-      "refusal": {"min": 1, "max": 2}
+      "identity": {"min": 1, "max": 2, "min_words": 20, "max_words": 40},
+      "teaching": {"min": 1, "max": 3, "min_words": 35, "max_words": 55},
+      "dialogue": {"min": 1, "max": 3, "min_words": 35, "max_words": 55},
+      "quest": {"min": 1, "max": 3, "min_words": 35, "max_words": 55},
+      "refusal": {"min": 1, "max": 2, "min_words": 20, "max_words": 40}
     },
     "grounding": {
       "reference_doc_required": true,

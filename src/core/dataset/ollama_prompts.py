@@ -77,6 +77,9 @@ def build_generation_prompt(
     player_role: str,
     max_sentences: int,
     max_chars: int,
+    min_sentences: int = 1,
+    min_words: int = 0,
+    max_words: int = 0,
     multi_turn: bool = False,
     turn_instruction: str = "",
     json_shape: str = "",
@@ -96,7 +99,7 @@ def build_generation_prompt(
         f"- The user message must sound like an in-game player ({player_role}).",
         f"- The assistant response must follow {npc_name}'s system prompt perfectly.",
         "- Use the reference doc for grounding when available.",
-        f"- Speak 1-{max_sentences} sentences (MAXIMUM {max_chars} characters).",
+        f"- Speak {min_sentences}-{max_sentences} sentences (MAXIMUM {max_chars} characters).",
         "- NEVER use markdown lists, bullet points, bolding, or tables (keep text clean for game UI).",
         "- Never mention being an AI or language model.",
         "",
@@ -105,4 +108,11 @@ def build_generation_prompt(
         json_shape,
         "}",
     ]
+    if min_words and max_words:
+        prompt.insert(
+            -5,
+            f"- Target {min_words}-{max_words} words without exceeding the sentence or character limits.",
+        )
+    elif max_words:
+        prompt.insert(-5, f"- Use at most {max_words} words.")
     return "\n".join(prompt)

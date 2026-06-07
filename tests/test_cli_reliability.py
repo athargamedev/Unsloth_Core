@@ -85,10 +85,10 @@ def test_ucore_pipeline_ollama_uses_optimized_generator(monkeypatch):
     )
 
     rendered = [" ".join(cmd) for cmd in captured]
-    assert any("generate_dataset_ollama.py" in cmd for cmd in rendered)
-    assert not any(
-        "generate_dataset.py" in cmd and "generate_dataset_ollama.py" not in cmd for cmd in rendered
+    assert any(
+        "generate_dataset.py" in cmd and "_generate_shared.py" not in cmd for cmd in rendered
     )
+    assert not any("_generate_shared.py" in cmd for cmd in rendered)
 
 
 def test_train_export_uses_src_core_export_after_scripts_symlink_removal():

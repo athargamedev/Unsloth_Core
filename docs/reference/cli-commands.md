@@ -1284,7 +1284,7 @@ Poem request, meaning of life, baking cake, other-subject homework, stock advice
 | ucore Command | Backend Script |
 |---------------|---------------|
 | `generate` | `scripts/dataset/generate_dataset.py` |
-| `generate-ollama` | `scripts/dataset/generate_dataset_ollama.py` |
+| `generate-ollama` | `src/core/dataset/generate_dataset.py` |
 | `sanitize` | `scripts/dataset/sanitize_dataset.py` |
 | `dataset-eval` | `scripts/dataset/dataset_eval.py` |
 | `train` | `scripts/training/train.py` |

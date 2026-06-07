@@ -21,6 +21,7 @@ def test_ollama_generate_uses_production_command_and_current_default():
     assert "--model" in cmd
     assert "qwen2.5:7b" in cmd
     assert "generate_dataset.py" not in " ".join(cmd)
+    assert "_generate_shared.py" not in " ".join(cmd)
 
 
 def test_sanitize_command_has_input_output_and_strict_flags():

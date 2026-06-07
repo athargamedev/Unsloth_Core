@@ -15,7 +15,7 @@ This plan: (1) purge contamination, (2) freeze what works, (3) wire the forgotte
 | CLI tool | File | Used? | Status |
 |---|---|---|---|
 | `validate-spec` | dataset/validate_subject_spec.py | Yes | Active |
-| `generate-ollama` | dataset/generate_dataset_ollama.py | Yes | Active |
+| `generate-ollama` | dataset/generate_dataset.py | Yes | Active |
 | `sanitize` | dataset/sanitize_dataset.py | Yes | Active |
 | `dataset-eval` | dataset/dataset_eval.py | Yes | Active |
 | `train` | training/train.py | Yes | Active |
