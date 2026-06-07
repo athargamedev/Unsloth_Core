@@ -321,7 +321,7 @@ export const EvalWorkflowPanel = ({
 
   const templateContext = useMemo(() => ({
     npcKey: config.npcKey || '',
-    technique: 'template',
+    technique: 'ollama',
   }), [config.npcKey]);
 
   const schemaPathToEvalConfig: Record<string, keyof EvalConfig | undefined> = {

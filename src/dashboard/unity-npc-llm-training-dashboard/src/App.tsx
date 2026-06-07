@@ -138,7 +138,7 @@ export default function App() {
   const [presetDesc, setPresetDesc] = useState<Record<string, string>>({});
 
   const [trainingConfig, setTrainingConfig] = useState<TrainingConfig>({
-    spec: 'subjects/NPC_specs/history_guide.json',
+    spec: 'data/npcs/specs/history_guide.json',
     preset: 'fast-3b',
     learningRate: '2e-4',
     scheduler: 'cosine',
@@ -150,7 +150,7 @@ export default function App() {
     modelId: 'unsloth/Llama-3.2-3B-Instruct-bnb-4bit',
     modelPreset: '',
     wandb: false,
-    technique: 'template',
+    technique: 'ollama',
     exportGguf: true,
     fullMergeExport: false,
     datasetEvalSkip: false,
@@ -808,7 +808,7 @@ export default function App() {
     if (!npcKey || !technique) return;
     setTrainingConfig((prev) => ({
       ...prev,
-      spec: `subjects/NPC_specs/${npcKey}.json`,
+      spec: `data/npcs/specs/${npcKey}.json`,
       technique,
     }));
     addToast(`Training Suite preselected for ${npcKey} using ${technique}.`, 'success');
@@ -1478,7 +1478,7 @@ export default function App() {
                       const payload: Record<string, unknown> = {
                         commandId: cmd.id,
                         type: cmd.type,
-                        spec: `subjects/NPC_specs/${npcKey}.json`,
+                        spec: `data/npcs/specs/${npcKey}.json`,
                       };
                       if (isOllama) {
                         payload.options = { model: 'llama3.2:3b' };
@@ -1560,7 +1560,7 @@ export default function App() {
                   await triggerCommand({
                     commandId: payload.commandId,
                     type: payload.type,
-                    spec: `subjects/NPC_specs/${colabNpcKey}.json`,
+                    spec: `data/npcs/specs/${colabNpcKey}.json`,
                     preset: 'fast-3b',
                     options: payload.options
                   });
