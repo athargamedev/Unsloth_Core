@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import type { PipelineState, PipelineNpcState, Subject, Dataset, RunArtifact, ExportArtifact, PipelineRunRecord, PipelineReadinessPlan } from '../api';
-import { usePipelineStateQuery, usePipelineRunsQuery, usePipelineRunDetailQuery, usePipelineReadinessQuery } from '../hooks/useReactQuery';
+import {
+  DEFAULT_PIPELINE_READINESS_TECHNIQUE,
+  DEPRECATED_NOTEBOOKLM_TECHNIQUE,
+  usePipelineStateQuery,
+  usePipelineRunsQuery,
+  usePipelineRunDetailQuery,
+  usePipelineReadinessQuery,
+} from '../hooks/useReactQuery';
 
 // Each stage in the pipeline lifecycle
 interface PipelineStage {
@@ -29,12 +36,13 @@ function computeStages(npcKey: string, state: PipelineNpcState | undefined, subj
   ];
 }
 
-function ReadinessSummary({ npcKey, technique = 'notebooklm' }: { npcKey: string; technique?: string }) {
+function ReadinessSummary({ npcKey, technique = DEFAULT_PIPELINE_READINESS_TECHNIQUE }: { npcKey: string; technique?: string }) {
   const { data: readiness, isLoading } = usePipelineReadinessQuery(npcKey, technique, 'evaluate');
   const plan = readiness as PipelineReadinessPlan | undefined;
   const nextStage = plan?.next_required_stage ?? plan?.steps.find((step) => Object.values(step.artifacts).some((artifact) => artifact === null))?.stage ?? null;
   const missing = plan?.steps.flatMap((step) => step.missing_artifacts.map((artifact) => `${step.stage}:${artifact}`)) ?? [];
   const produced = plan?.steps.reduce((count, step) => count + Object.values(step.artifacts).filter(Boolean).length, 0) ?? 0;
+  const isDeprecatedNotebooklm = plan?.technique === DEPRECATED_NOTEBOOKLM_TECHNIQUE;
 
   if (isLoading) {
     return <div className="text-[9px] text-ink/30 font-mono">Registry readiness: loading...</div>;
@@ -52,7 +60,7 @@ function ReadinessSummary({ npcKey, technique = 'notebooklm' }: { npcKey: string
         </span>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[9px] font-mono">
-        <div><span className="text-ink/40">Technique:</span> {plan.technique ?? 'any'}</div>
+        <div><span className="text-ink/40">Technique:</span> {plan.technique ?? 'any'}{isDeprecatedNotebooklm ? ' (deprecated)' : ''}</div>
         <div><span className="text-ink/40">Artifacts:</span> {produced}/{plan.steps.reduce((count, step) => count + step.produces.length, 0)}</div>
         <div><span className="text-ink/40">Registry rows:</span> {plan.artifact_count}</div>
         <div><span className="text-ink/40">Target:</span> {plan.target_stage}</div>
