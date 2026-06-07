@@ -187,7 +187,7 @@ EXPECTED_CLI_ONLY: dict[str, set[str]] = {
         "val-split",
     },
     "init": {"force", "skip-spec"},
-    "pipeline": {"confident", "remote-eval", "docs-manifest"},
+    "pipeline": {"confident", "remote-eval", "docs-manifest", "smoke-template"},
     "plan-batch": {
         "colab-output-dir",
         "drive-repo-dir",
