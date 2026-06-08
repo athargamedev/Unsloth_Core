@@ -5,7 +5,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from _config import paths
+from src.config import paths
 
 from src.core.evaluation.evaluate import (
     build_eval_report_index,
