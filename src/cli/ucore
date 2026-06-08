@@ -657,23 +657,6 @@ def create_parser():
     )
     smoke_p.add_argument("--track", action="store_true", help="Track results in Supabase")
 
-    # Validate config
-    val_p = subparsers.add_parser(
-        "validate-config", help="Resolve and validate effective training config"
-    )
-    val_p.add_argument("--spec", help="Path to subject spec JSON")
-    val_p.add_argument("--config", help="Path to YAML config")
-    val_p.add_argument("--preset", help="Training preset")
-    val_p.add_argument("--data", help="Training data path")
-    val_p.add_argument("--model", help="Model ID override")
-    val_p.add_argument("--output", help="Output dir override")
-    val_p.add_argument("--npc-key", help="npc_key when using --config")
-    val_p.add_argument("--format", default="yaml", choices=["yaml", "json"], help="Output format")
-    val_p.add_argument("--strict", action="store_true", help="Treat warnings as errors")
-    val_p.add_argument(
-        "--require-canonical", action="store_true", help="Require canonical dataset train path"
-    )
-
     # Validate subject spec
     spec_val_p = subparsers.add_parser(
         "validate-spec", help="Validate subject specs before generation/training"
@@ -710,12 +693,6 @@ def create_parser():
         help="Fail unless the spec is ready for fresh dataset generation",
     )
 
-    # Validate params
-    val_params_p = subparsers.add_parser(
-        "validate-params", help="Validate parameter-registry.yaml against codebase"
-    )
-    val_params_p.add_argument("--json", action="store_true", help="Output as JSON")
-
     # Export (adapter-only by default for Unity, --full-merge for standalone GGUF)
     export_p = subparsers.add_parser(
         "export", help="Export trained LoRA adapter to GGUF (adapter-only by default)"
@@ -749,16 +726,6 @@ def create_parser():
         "--resume", action="store_true", help="Resume: skip GGUFs that already exist"
     )
 
-    # Export resume
-    exr_p = subparsers.add_parser(
-        "export-resume", help="[DEPRECATED] Resume/continue GGUF export for an NPC (unused)"
-    )
-    exr_p.add_argument("npc_key", help="NPC key (e.g., chemistry_instructor)")
-    exr_p.add_argument("--model", "-m", help="Base model ID")
-    exr_p.add_argument("--quantization", default="q4_k_m", help="GGUF quantization")
-    exr_p.add_argument("--skip-f16", action="store_true", help="Skip exporting f16 variant")
-    exr_p.add_argument("--timeout-seconds", type=int, default=5400, help="Per-variant timeout")
-
     # Export adapter (LoRA-only for LLMUnity)
     ea_p = subparsers.add_parser(
         "export-adapter", help="[DEPRECATED] Use export (adapter-only by default)"
@@ -772,17 +739,6 @@ def create_parser():
         help="Output format (default: f16)",
     )
     ea_p.add_argument("--outfile", help="Explicit output file path")
-
-    # Deploy
-    deploy_p = subparsers.add_parser("deploy", help="Deploy exports to Unity project")
-    deploy_p.add_argument(
-        "--unity-project", "-u", help="Path to Unity project (auto-detected if omitted)"
-    )
-    deploy_p.add_argument(
-        "--dry-run", action="store_true", help="Show what would be done without copying"
-    )
-    deploy_p.add_argument("--skip-export", action="store_true", help="Skip GGUF export step")
-    deploy_p.add_argument("--export-only", action="store_true", help="Only export, skip Unity copy")
 
     # Evaluate
     eval_p = subparsers.add_parser("evaluate", help="Compare two GGUF models side-by-side")
@@ -932,22 +888,6 @@ def create_parser():
         help="NPC production strategy profile for anti-loop decisions",
     )
 
-    # Repair (Targeted Dataset Repair)
-    rp_p = subparsers.add_parser(
-        "repair", help="[DEPRECATED] Use dataset-eval + generate-ollama --repair instead"
-    )
-    rp_p.add_argument("npc_key", help="NPC key (e.g., chef_assistant)")
-    rp_p.add_argument(
-        "--technique", default="template", help="Dataset technique (default: template)"
-    )
-
-    # GRPO Training
-    gr_p = subparsers.add_parser(
-        "grpo-train",
-        help="[EXPERIMENTAL] GRPO training with DeepEval rewards — not production-ready",
-    )
-    gr_p.add_argument("npc_key", help="NPC key")
-    gr_p.add_argument("--steps", type=int, default=10, help="Max steps (default: 10)")
     fb_p.add_argument(
         "--auto-retrain",
         action="store_true",
@@ -1101,17 +1041,6 @@ def create_parser():
     )
     promote_p.add_argument("--json", action="store_true", help="Output JSON")
 
-    # Supabase integration check
-    sb_p = subparsers.add_parser(
-        "supabase-check", help="Verify NPC profile + dialogue memory path in Supabase"
-    )
-    sb_p.add_argument("--npc-key", required=True, help="NPC key")
-    sb_p.add_argument("--player-id", help="Probe player UUID")
-    sb_p.add_argument(
-        "--skip-probe", action="store_true", help="Only profile alignment, skip dialogue probe"
-    )
-
-    # Pipeline (Validate Spec + Generate + Sanitize + Dataset Eval + Train + Export + Evaluate)
     pipe_p = subparsers.add_parser(
         "pipeline",
         help="Run the full generate -> sanitize -> dataset-eval -> train -> export -> evaluate pipeline",
@@ -1248,62 +1177,6 @@ def create_parser():
     plan_p.add_argument("--local-vram-gb", type=float, help="Override detected local VRAM")
     plan_p.add_argument("--json", action="store_true", help="Output JSON")
 
-    # Batch execution planning + optional colab notebook generation
-    bp_p = subparsers.add_parser(
-        "plan-batch", help="Batch plan local vs remote_colab queues and generate Colab notebooks"
-    )
-    bp_p.add_argument(
-        "--spec-glob", default="subjects/NPC_specs/*.json", help="Spec glob under project root"
-    )
-    bp_p.add_argument(
-        "--spec", action="append", dest="specs", help="Explicit spec path (repeatable)"
-    )
-    bp_p.add_argument("--presets", default="fast-3b", help="Comma-separated presets")
-    bp_p.add_argument("--local-vram-gb", type=float, help="Override detected local VRAM")
-    bp_p.add_argument("--json", action="store_true", help="Output JSON")
-    bp_p.add_argument("--write-plan", help="Write plan JSON to file")
-    bp_p.add_argument(
-        "--generate-colab-notebooks",
-        action="store_true",
-        help="Generate notebooks for remote_colab queue",
-    )
-    bp_p.add_argument(
-        "--colab-output-dir", default="colab/outputs", help="Notebook output directory"
-    )
-    bp_p.add_argument(
-        "--drive-repo-dir",
-        default="/content/drive/MyDrive/Unsloth_Core",
-        help="Drive path where repo is cloned",
-    )
-
-    # Batch export (reuse base model for all NPCs)
-    be_p = subparsers.add_parser(
-        "batch-export", help="Export all NPCs to GGUF without reloading base model between NPCs"
-    )
-    be_p.add_argument("--npc", help="Comma-separated NPC keys (default: auto-detect from outputs/)")
-    be_p.add_argument(
-        "--quantization", default="q4_k_m", help="GGUF quantization (default: q4_k_m)"
-    )
-    be_p.add_argument("--model", help="Base model ID (auto-detected if omitted)")
-    be_p.add_argument("--skip-f16", action="store_true", help="Skip f16 variants")
-
-    # TensorBoard reader
-    tb_p = subparsers.add_parser("tb-reader", help="Read TensorBoard event files as JSON")
-    tb_p.add_argument("--run-dir", required=True, help="Path to TensorBoard event directory")
-    tb_p.add_argument("--indent", type=int, default=2, help="JSON indent (default: 2)")
-
-    # Init/Scaffold
-    init_p = subparsers.add_parser(
-        "init", aliases=["new-npc"], help="Scaffold a new NPC (folders + spec)"
-    )
-    init_p.add_argument("npc_key", help="NPC key (snake_case)")
-    init_p.add_argument("--subject", help="Subject description")
-    init_p.add_argument("--name", help="NPC display name")
-    init_p.add_argument("--force", action="store_true", help="Overwrite existing spec")
-    init_p.add_argument(
-        "--skip-spec", action="store_true", help="Only create folders, skip spec file"
-    )
-
     checklist_p = subparsers.add_parser(
         "new-npc-checklist", help="Print the recommended checklist for creating a new NPC"
     )
@@ -1311,25 +1184,6 @@ def create_parser():
     checklist_p.add_argument("--subject", help="Subject description")
     checklist_p.add_argument("--name", help="NPC display name")
     checklist_p.add_argument("--json", action="store_true", help="Output JSON")
-
-    bootstrap_p = subparsers.add_parser(
-        "new-npc-bootstrap", help="Scaffold a new NPC and print a canonical setup checklist"
-    )
-    bootstrap_p.add_argument("npc_key", help="NPC key (snake_case)")
-    bootstrap_p.add_argument("--subject", help="Subject description")
-    bootstrap_p.add_argument("--name", help="NPC display name")
-    bootstrap_p.add_argument(
-        "--force", action="store_true", help="Overwrite existing spec and stubs"
-    )
-    bootstrap_p.add_argument(
-        "--skip-spec", action="store_true", help="Only create folders, skip spec file"
-    )
-    bootstrap_p.add_argument("--json", action="store_true", help="Output JSON")
-    bootstrap_p.add_argument(
-        "--print-plan",
-        action="store_true",
-        help="Print the recommended pipeline plan after scaffolding",
-    )
 
     # Audit
     audit_p = subparsers.add_parser("audit", help="Health check and context audit")
@@ -1560,19 +1414,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.watch:
         os.environ["UCORE_WATCH"] = "1"
 
-    if args.command in ["init", "new-npc"]:
-        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "scaffold_npc.py"), args.npc_key]
-        if args.subject is not None:
-            cmd.extend(["--subject", args.subject])
-        if args.name is not None:
-            cmd.extend(["--name", args.name])
-        if args.force:
-            cmd.append("--force")
-        if args.skip_spec:
-            cmd.append("--skip-spec")
-        run_cmd(cmd)
-        return 0
-
     if args.command == "new-npc-checklist":
         payload = _new_npc_checklist_payload(args.npc_key, args.subject, args.name)
         if args.json:
@@ -1589,37 +1430,6 @@ def main(argv: list[str] | None = None) -> int:
             print("- avoid a bunch of loose JSON files")
             print("- use .pipeline/runs/<run_id>/artifacts.json as the canonical run record")
             print("- archive legacy scattered outputs")
-        return 0
-
-    if args.command == "new-npc-bootstrap":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "scaffold_npc.py"), args.npc_key]
-        if args.subject is not None:
-            cmd.extend(["--subject", args.subject])
-        if args.name is not None:
-            cmd.extend(["--name", args.name])
-        if args.force:
-            cmd.append("--force")
-        if args.skip_spec:
-            cmd.append("--skip-spec")
-        if args.json:
-            result = subprocess.run(
-                cmd, cwd=PROJECT_ROOT, check=True, capture_output=True, text=True
-            )
-        else:
-            run_cmd(cmd)
-            result = None
-        payload = _new_npc_checklist_payload(args.npc_key, args.subject, args.name)
-        if args.json:
-            print(json.dumps(payload, indent=2, ensure_ascii=False))
-        else:
-            print(f"Bootstrapped NPC: {args.npc_key}")
-            if args.print_plan:
-                print("Recommended next steps:")
-                for step in payload["steps"]:
-                    print(f"- {step}")
-            print("Canonical JSON policy:")
-            print("- use .pipeline/runs/<run_id>/artifacts.json")
-            print("- avoid ad hoc JSON scatter for decisions")
         return 0
 
     if args.command == "target":
@@ -2086,48 +1896,6 @@ def main(argv: list[str] | None = None) -> int:
             cmd.append("--track")
         run_cmd(cmd)
 
-    elif args.command == "batch-export":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "batch_export.py")]
-        if args.npc:
-            cmd.extend(["--npc", args.npc])
-        if args.quantization:
-            cmd.extend(["--quantization", args.quantization])
-        if args.model:
-            cmd.extend(["--model", args.model])
-        if args.skip_f16:
-            cmd.append("--skip-f16")
-        run_cmd(cmd)
-
-    elif args.command == "tb-reader":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "evaluation" / "tb_reader.py"), "--run-dir", args.run_dir]
-        if args.indent:
-            cmd.extend(["--indent", str(args.indent)])
-        run_cmd(cmd)
-
-    elif args.command == "validate-config":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "validate_config.py")]
-        if args.spec:
-            cmd.extend(["--spec", args.spec])
-        if args.config:
-            cmd.extend(["--config", args.config])
-        if args.preset:
-            cmd.extend(["--preset", args.preset])
-        if args.data:
-            cmd.extend(["--data", args.data])
-        if args.model:
-            cmd.extend(["--model", args.model])
-        if args.output:
-            cmd.extend(["--output", args.output])
-        if args.npc_key:
-            cmd.extend(["--npc-key", args.npc_key])
-        if args.format:
-            cmd.extend(["--format", args.format])
-        if args.strict:
-            cmd.append("--strict")
-        if args.require_canonical:
-            cmd.append("--require-canonical")
-        run_cmd(cmd)
-
     elif args.command == "validate-spec":
         cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "validate_subject_spec.py")]
         if args.spec:
@@ -2150,12 +1918,6 @@ def main(argv: list[str] | None = None) -> int:
             cmd.append("--generation-ready")
         run_cmd(cmd, announce=not args.json)
 
-    elif args.command == "validate-params":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "validate_params.py")]
-        if args.json:
-            cmd.append("--json")
-        run_cmd(cmd)
-
     elif args.command == "export":
         cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "export.py"), args.npc_key]
         if args.model:
@@ -2174,18 +1936,6 @@ def main(argv: list[str] | None = None) -> int:
             cmd.append("--resume")
         run_cmd(cmd)
 
-    elif args.command == "export-resume":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "export_resume.py"), args.npc_key]
-        if args.model:
-            cmd.extend(["--model", args.model])
-        if args.quantization:
-            cmd.extend(["--quantization", args.quantization])
-        if args.skip_f16:
-            cmd.append("--skip-f16")
-        if args.timeout_seconds is not None:
-            cmd.extend(["--timeout-seconds", str(args.timeout_seconds)])
-        run_cmd(cmd)
-
     elif args.command == "export-adapter":
         cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "export_adapter.py")]
         if args.all:
@@ -2198,18 +1948,6 @@ def main(argv: list[str] | None = None) -> int:
         cmd.extend(["--outtype", args.outtype])
         if args.outfile:
             cmd.extend(["--outfile", args.outfile])
-        run_cmd(cmd)
-
-    elif args.command == "deploy":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "export" / "deploy_to_unity.py")]
-        if args.unity_project:
-            cmd.extend(["--unity-project", args.unity_project])
-        if args.dry_run:
-            cmd.append("--dry-run")
-        if args.skip_export:
-            cmd.append("--skip-export")
-        if args.export_only:
-            cmd.append("--export-only")
         run_cmd(cmd)
 
     elif args.command == "evaluate":
@@ -2415,19 +2153,6 @@ def main(argv: list[str] | None = None) -> int:
             cmd.append("--dry-run")
         run_cmd(cmd)
 
-    elif args.command == "supabase-check":
-        cmd = [
-            PYTHON,
-            str(SCRIPTS_DIR / "ops" / "supabase_integration_check.py"),
-            "--npc-key",
-            args.npc_key,
-        ]
-        if args.player_id:
-            cmd.extend(["--player-id", args.player_id])
-        if args.skip_probe:
-            cmd.append("--skip-probe")
-        run_cmd(cmd)
-
     elif args.command == "feedback":
         cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "feedback_loop.py"), args.feedback_json]
         if args.win_rate_threshold is not None:
@@ -2486,21 +2211,6 @@ def main(argv: list[str] | None = None) -> int:
             cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
         if args.wandb_inference_entity:
             cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
-        run_cmd(cmd)
-
-    elif args.command == "repair":
-        cmd = [
-            PYTHON,
-            str(SCRIPTS_DIR / "training" / "feedback_loop_deepeval.py"),
-            args.npc_key,
-            args.technique,
-        ]
-        run_cmd(cmd)
-
-    elif args.command == "grpo-train":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "train_grpo_deepeval.py"), args.npc_key]
-        if args.steps is not None:
-            cmd.extend(["--steps", str(args.steps)])
         run_cmd(cmd)
 
     elif args.command == "pipeline":
@@ -2782,33 +2492,6 @@ def main(argv: list[str] | None = None) -> int:
             cmd.extend(["--local-vram-gb", str(args.local_vram_gb)])
         if args.json:
             cmd.append("--json")
-        run_cmd(cmd)
-
-    elif args.command == "plan-batch":
-        cmd = [
-            PYTHON,
-            str(SCRIPTS_DIR / "orchestration" / "plan_batch_execution.py"),
-            "--spec-glob",
-            args.spec_glob,
-            "--presets",
-            args.presets,
-        ]
-        if args.specs:
-            for s in args.specs:
-                cmd.extend(["--spec", s])
-        if args.local_vram_gb is not None:
-            cmd.extend(["--local-vram-gb", str(args.local_vram_gb)])
-        if args.json:
-            cmd.append("--json")
-        if args.write_plan:
-            cmd.extend(["--write-plan", args.write_plan])
-        if args.generate_colab_notebooks:
-            cmd.append("--generate-colab-notebooks")
-        if args.colab_output_dir:
-            cmd.extend(["--colab-output-dir", args.colab_output_dir])
-        if args.drive_repo_dir:
-            cmd.extend(["--drive-repo-dir", args.drive_repo_dir])
-
         run_cmd(cmd)
 
     elif args.command == "history":
