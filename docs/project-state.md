@@ -37,8 +37,8 @@ Verified 2026-06-08:
 - Template generation is smoke/dev only.
 - Never train production LoRA on template data.
 - Production data must use the approved grounded workflow. NotebookLM is deprecated — do not use for production.
-- **Use `./ucore generate-ollama` for production generation.** `./ucore generate --technique ollama` hits the legacy `_generate_shared.py` path (shared module, not production entry point).
-- The legacy `_generate_shared.py` module header states: 'NOT a standalone entry point. Use `./ucore generate-ollama` instead.'
+- **Use `./ucore generate-ollama` for production generation.** `./ucore generate --technique ollama` is deprecated (hits legacy path via `_generate_shared.py`).
+- Feedback loop: `./ucore feedback --auto` now uses `generate-ollama --concept-focus` + `sanitize` + `dataset-eval` — the actively-maintained CLI pipeline. The old 1305-line feedback loop was refactored to ~350 lines.
 
 ## Canonical workflow
 

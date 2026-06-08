@@ -49,10 +49,6 @@ from src.core.dataset.dataset_contracts import (
     dataset_contract_from_spec,
     generation_request_counts_for_training_targets,
 )
-from src.core.dataset.generate_workflow_dataset import (
-    default_manifest_path,
-    generate_workflow_dataset_from_manifest,
-)
 from src.core.ops.canonical_artifacts import record_canonical_bundle
 from src.core.ops.env_loader import ensure_confident_api_key
 from src.core.ops.judge_cache import JudgeCache, JudgeCacheInput
@@ -2524,6 +2520,7 @@ def run_dataset_generation(
                     )
 
             if technique == "docs":
+                from src.core.dataset.generate_workflow_dataset import default_manifest_path, generate_workflow_dataset_from_manifest
                 manifest_path = (
                     docs_manifest
                     or spec.get("dataset", {}).get("corpus_manifest")

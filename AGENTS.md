@@ -138,9 +138,9 @@ Then update in this order:
 
 - Deprecated inactive NPCs: `astronomy_guide`, `fitness_coach`.
 - Template datasets as production data.
-- **`./ucore generate --technique ollama` — this hits the legacy `_generate_shared.py` path. Use `./ucore generate-ollama` instead.**
-- Deprecated judge refs: do not use `qwen3:latest` as confirmed local default without re-verification.
-- Standalone evaluation of adapter GGUFs when base+LoRA is required.
+- **`./ucore generate --technique ollama`** — DEPRECATED. Use `generate-ollama` instead. The import alias in `__init__.py` was fixed to point `generate_dataset` → `generate_dataset.py` (production entry point) instead of `_generate_shared.py` (legacy backend).
+- **Feedback loop:** NOW WORKING. `./ucore feedback --auto` uses `generate-ollama --concept-focus` + `sanitize` + `dataset-eval`. The old 1305-line non-functional feedback loop was refactored to a ~350-line working orchestrator that calls the established CLI pipeline.
+- **Standalone evaluation of adapter GGUFs when base+LoRA is required.**
 - `--allow-ungated-dataset` for production.
 - Long historical status dumps in `AGENTS.md`.
 - Root compatibility symlinks — all removed as of cleanups in June 2026. Use canonical paths only.

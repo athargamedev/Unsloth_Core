@@ -860,34 +860,12 @@ def create_parser():
 
     # Feedback (Self-Improving Dataset Factory)
     fb_p = subparsers.add_parser(
-        "feedback", help="[DEPRECATED] Use dataset-eval + generate-ollama --repair instead"
+        "feedback", help="Feedback loop: identify weak concepts, regenerate, re-evaluate"
     )
     fb_p.add_argument("feedback_json", help="Path to feedback JSON from evaluate --feedback-json")
-    fb_p.add_argument(
-        "--win-rate-threshold", type=float, default=0.5, help="Min win rate (default: 0.5)"
-    )
-    fb_p.add_argument(
-        "--quality-threshold",
-        type=float,
-        default=25.0,
-        help="Max quality score, lower=better (default: 25)",
-    )
-    fb_p.add_argument(
-        "--violation-threshold", type=int, default=1, help="Max constraint violations (default: 1)"
-    )
     fb_p.add_argument("--dry-run", action="store_true", help="Analyze without regenerating")
-    fb_p.add_argument("--auto", "-y", action="store_true", help="Auto-accept all suggestions")
-    fb_p.add_argument(
-        "--skip-gap-detection", action="store_true", help="Skip knowledge coverage check"
-    )
-    fb_p.add_argument("--save-gaps", help="Save knowledge gap report to JSON file")
+    fb_p.add_argument("--auto", "-y", action="store_true", help="Execute the full loop")
     fb_p.add_argument("--json", action="store_true", help="Output machine-readable JSON summary")
-    fb_p.add_argument(
-        "--strategy-profile",
-        default="npc-production-grounded",
-        help="NPC production strategy profile for anti-loop decisions",
-    )
-
     fb_p.add_argument(
         "--auto-retrain",
         action="store_true",
@@ -900,82 +878,12 @@ def create_parser():
     )
     fb_p.add_argument("--baseline", help="Baseline GGUF for auto-evaluation after retrain")
     fb_p.add_argument(
-        "--regeneration-technique",
-        default="template",
-        choices=["template", "ollama"],
-        help="Regeneration technique to use (default: template)",
+        "--concept-focus", nargs="*", help="Categories to regenerate (default: auto-detect from feedback)"
     )
     fb_p.add_argument(
-        "--regeneration-preset",
-        default=None,
-        choices=[
-            "generate-qwen25",
-            "generate-llama31",
-            "generate-qwen35-exp",
-            "generate-qwen3-exp",
-        ],
-        help="Named Ollama regeneration preset (default: generate-qwen25)",
-    )
-    fb_p.add_argument(
-        "--regeneration-model",
-        default="qwen2.5:7b",
-        help="Exact Ollama regeneration model (wins over --regeneration-preset)",
-    )
-    fb_p.add_argument(
-        "--regeneration-url",
-        default="http://localhost:11434",
-        help="Ollama base URL for regeneration",
-    )
-    fb_p.add_argument(
-        "--regeneration-batch-size", type=int, default=4, help="Ollama batch size for regeneration"
-    )
-    fb_p.add_argument(
-        "--deepeval-judge-provider",
-        default="ollama",
-        choices=["ollama", "wandb"],
-        help="Judge backend for DeepEval",
-    )
-    fb_p.add_argument(
-        "--deepeval-judge-preset",
-        default=None,
-        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
-        help="Named Ollama judge preset (default: judge-qwen25)",
-    )
-    fb_p.add_argument(
-        "--deepeval-judge-model",
-        default=None,
-        help="Exact Ollama judge model (wins over --deepeval-judge-preset)",
-    )
-    fb_p.add_argument(
-        "--deepeval-ollama-url",
-        default="http://localhost:11434",
-        help="Ollama base URL for DeepEval",
-    )
-    fb_p.add_argument(
-        "--deepeval-cases-per-category",
-        type=int,
-        default=1,
-        help="Cases per category for fast DeepEval",
-    )
-    fb_p.add_argument(
-        "--deepeval-soft-fail",
-        action="store_true",
-        help="Do not abort dataset evaluation on metric failure; continue training",
-    )
-    fb_p.add_argument("--wandb", action="store_true", help="Enable W&B logging")
-    fb_p.add_argument(
-        "--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)"
-    )
-    fb_p.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
-    fb_p.add_argument(
-        "--wandb-inference-project",
-        default=None,
-        help="W&B project used for hosted DeepEval judge inference",
-    )
-    fb_p.add_argument(
-        "--wandb-inference-entity",
-        default=None,
-        help="W&B entity/team used for hosted DeepEval judge inference",
+        "--strategy-profile",
+        default="npc-production-grounded",
+        help="NPC production strategy profile for anti-loop decisions",
     )
 
     # Strategy profiles
@@ -2155,62 +2063,22 @@ def main(argv: list[str] | None = None) -> int:
 
     elif args.command == "feedback":
         cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "feedback_loop.py"), args.feedback_json]
-        if args.win_rate_threshold is not None:
-            cmd.extend(["--win-rate-threshold", str(args.win_rate_threshold)])
-        if args.quality_threshold is not None:
-            cmd.extend(["--quality-threshold", str(args.quality_threshold)])
-        if args.violation_threshold is not None:
-            cmd.extend(["--violation-threshold", str(args.violation_threshold)])
         if args.dry_run:
             cmd.append("--dry-run")
         if args.auto:
             cmd.append("--auto")
-        if args.skip_gap_detection:
-            cmd.append("--skip-gap-detection")
-        if args.save_gaps:
-            cmd.extend(["--save-gaps", args.save_gaps])
         if args.json:
             cmd.append("--json")
-        if args.strategy_profile:
-            cmd.extend(["--strategy-profile", args.strategy_profile])
         if args.auto_retrain:
             cmd.append("--auto-retrain")
         if args.train_preset:
             cmd.extend(["--train-preset", args.train_preset])
         if args.baseline:
             cmd.extend(["--baseline", args.baseline])
-        if args.regeneration_technique:
-            cmd.extend(["--regeneration-technique", args.regeneration_technique])
-        if args.regeneration_preset:
-            cmd.extend(["--regeneration-preset", args.regeneration_preset])
-        if args.regeneration_model:
-            cmd.extend(["--regeneration-model", args.regeneration_model])
-        if args.regeneration_url:
-            cmd.extend(["--regeneration-url", args.regeneration_url])
-        if args.regeneration_batch_size is not None:
-            cmd.extend(["--regeneration-batch-size", str(args.regeneration_batch_size)])
-        if args.deepeval_judge_provider != "ollama":
-            cmd.extend(["--deepeval-judge-provider", args.deepeval_judge_provider])
-        if args.deepeval_judge_preset:
-            cmd.extend(["--deepeval-judge-preset", args.deepeval_judge_preset])
-        if args.deepeval_judge_model:
-            cmd.extend(["--deepeval-judge-model", args.deepeval_judge_model])
-        if args.deepeval_ollama_url:
-            cmd.extend(["--deepeval-ollama-url", args.deepeval_ollama_url])
-        if args.deepeval_cases_per_category is not None:
-            cmd.extend(["--deepeval-cases-per-category", str(args.deepeval_cases_per_category)])
-        if args.deepeval_soft_fail:
-            cmd.append("--deepeval-soft-fail")
-        if args.wandb:
-            cmd.append("--wandb")
-        if args.wandb_project:
-            cmd.extend(["--wandb-project", args.wandb_project])
-        if args.wandb_entity:
-            cmd.extend(["--wandb-entity", args.wandb_entity])
-        if args.wandb_inference_project:
-            cmd.extend(["--wandb-inference-project", args.wandb_inference_project])
-        if args.wandb_inference_entity:
-            cmd.extend(["--wandb-inference-entity", args.wandb_inference_entity])
+        if args.concept_focus:
+            cmd.extend(["--concept-focus"] + args.concept_focus)
+        if args.strategy_profile:
+            cmd.extend(["--strategy-profile", args.strategy_profile])
         run_cmd(cmd)
 
     elif args.command == "pipeline":

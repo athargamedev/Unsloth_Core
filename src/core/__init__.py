@@ -90,7 +90,7 @@ _LEGACY_MODULES = {
     "export": "src.core.export.export",
     "export_adapter": "src.core.export.export_adapter",
     "feedback_loop": "src.core.training.feedback_loop",
-    "generate_dataset": "src.core.dataset._generate_shared",
+    "generate_dataset": "src.core.dataset.generate_dataset",
     "generate_dataset_ollama": "src.core.dataset.generate_dataset",
     "generate_workflow_dataset": "src.core.dataset.generate_workflow_dataset",
     "plan_execution": "src.core.orchestration.plan_execution",

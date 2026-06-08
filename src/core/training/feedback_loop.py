@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 """
-feedback_loop.py — Self-Improving Feedback Loop
+feedback_loop.py — Self-Improving Feedback Loop (REFACTORED)
 
-Ingests structured evaluation results from evaluate.py's --feedback-json output,
-identifies weak concepts (low win rate, poor quality, constraint violations),
-and automatically triggers targeted dataset regeneration via the shared generator backend
-to address those weaknesses.
+Orchestrates a working feedback loop using the actively-maintained CLI pipeline:
+
+  1. Read evaluate.py's feedback JSON → identify weak concepts
+  2. Run generate-ollama --concept-focus to regenerate only failing categories
+  3. Run sanitize to clean the regenerated dataset
+  4. Run dataset-eval to gate the result
+  5. Optionally retrain and re-evaluate
+
+This replaces the previous non-functional 1305-line implementation.
+The canonical repair path is: dataset-eval → generate-ollama --concept-focus → sanitize → dataset-eval
 
 Usage:
-    # After evaluation, run the feedback loop:
-    python scripts/training/feedback_loop.py eval/results/feedback/chemistry_instructor_20260515.json
+    # Dry-run: show what would be regenerated
+    python scripts/training/feedback_loop.py eval/results/feedback/npc.json --dry-run
 
-    # With custom thresholds:
-    python scripts/training/feedback_loop.py eval/results/feedback/biology_tutor.json \
-        --win-rate-threshold 0.4 --quality-threshold 25 \
-        --extra-examples 16 --dry-run
+    # Full auto mode with retrain
+    python scripts/training/feedback_loop.py eval/results/feedback/npc.json \\
+        --auto --auto-retrain --train-preset fast-3b --baseline exports/npc/baseline.gguf
 
-    # Full auto mode with retrain:
-    python scripts/training/feedback_loop.py eval/results/feedback/npc.json \
-        --auto --auto-retrain --train-preset fast-3b \
-        --baseline exports/npc/baseline.gguf
-
-    # Machine-readable output for CI:
+    # Machine-readable output
     python scripts/training/feedback_loop.py eval/results/feedback/npc.json --json
 """
 
@@ -30,86 +30,46 @@ import json
 import os
 import subprocess
 import sys
-import uuid
-from datetime import UTC, datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import paths
-from src.config.constants import DEFAULT_JUDGE_MODEL
-from src.config.workflow_context import resolve_workflow_context
 from src.core.ops.npc_production_strategy import classify_feedback_cycle, density_repair_needed
-from src.core.ops.ollama_model_presets import resolve_ollama_model
-from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
 
-# ── Default thresholds ──────────────────────────────────────────────────────
-
-DEFAULT_WIN_RATE_THRESHOLD = 0.5
-DEFAULT_QUALITY_THRESHOLD = 25.0
-DEFAULT_VIOLATION_THRESHOLD = 1
-DEFAULT_EXTRA_EXAMPLES = 4
 DEFAULT_TRAIN_PRESET = "fast-3b"
-DEFAULT_REGENERATION_TECHNIQUE = "ollama"
-DEFAULT_REGENERATION_MODEL = "qwen2.5:7b"
-DEFAULT_REGENERATION_URL = "http://localhost:11434"
-DEFAULT_REGENERATION_BATCH_SIZE = 4
+DEFAULT_CONCEPT_FOCUS_CATEGORIES = ["identity", "refusal", "dialogue"]
+DEFAULT_EXTRA_EXAMPLES = 4
 
 
-# ── Helpers ─────────────────────────────────────────────────────────────────
+def _ucore(args_list: list[str], dry_run: bool = False) -> subprocess.CompletedProcess:
+    """Run a ucore CLI command."""
+    cmd = [sys.executable, str(PROJECT_ROOT / "src" / "cli" / "ucore")] + args_list
+    if dry_run:
+        print(f"[DRY-RUN] {' '.join(cmd)}")
+        return subprocess.CompletedProcess(cmd, 0, b"", b"")
+    print(f"[RUN] {' '.join(cmd)}")
+    return subprocess.run(cmd, cwd=str(PROJECT_ROOT), capture_output=True, text=True)
 
 
-class Tee:
-    """Capture printed output while also printing it, for --json mode."""
-
-    def __init__(self):
-        self.lines = []
-
-    def write(self, text):
-        self.lines.append(text)
-        sys.__stdout__.write(text)
-
-    def flush(self):
-        sys.__stdout__.flush()
-
-    def get_text(self):
-        return "".join(self.lines)
-
-
-def run_cmd(cmd, cwd=None, timeout=600, capture=True):
-    """Run a subprocess and return (ok, stdout, stderr)."""
-    try:
-        result = subprocess.run(
-            cmd,
-            cwd=str(cwd or PROJECT_ROOT),
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-        ok = result.returncode == 0
-        return ok, result.stdout, result.stderr
-    except subprocess.TimeoutExpired:
-        return False, "", f"Timed out after {timeout}s"
-    except FileNotFoundError:
-        return False, "", f"Command not found: {cmd[0]}"
-
-
-# ── Analysis ────────────────────────────────────────────────────────────────
-
-
-def load_feedback_json(path):
+def load_feedback(path: str) -> dict:
     with open(path) as f:
         return json.load(f)
 
 
 def identify_weak_concepts(
     feedback_data,
-    win_rate_threshold,
-    quality_threshold,
-    violation_threshold,
+    win_rate_threshold=0.5,
+    quality_threshold=25.0,
+    violation_threshold=1,
     extra_examples=DEFAULT_EXTRA_EXAMPLES,
 ):
+    """Identify weak concepts from structured feedback data (per_concept format).
+
+    Legacy API — preserved for backward compatibility.
+    The newer extract_weak_categories() reads evaluate.py's full feedback JSON format.
+    """
     weak = []
     per_concept = feedback_data.get("per_concept", {})
 
@@ -137,1168 +97,249 @@ def identify_weak_concepts(
                     },
                 }
             )
-
-    for gap in feedback_data.get("distribution_gaps", []) or []:
-        category = gap.get("category")
-        shortfall = gap.get("shortfall", 0)
-        if not category or shortfall <= 0:
-            continue
-        weak.append(
-            {
-                "concept": f"distribution/{category}",
-                "reasons": [
-                    f"shortfall={shortfall}",
-                    f"target={gap.get('target', 0)}",
-                    f"actual={gap.get('actual', 0)}",
-                ],
-                "data": gap,
-                "action": {
-                    "category": category,
-                    "concept_focus": category,
-                    "extra_examples": max(extra_examples, int(shortfall)),
-                },
-            }
-        )
     return weak
 
 
-class LocalGapDetector:
-    def __init__(self, npc_key: str, technique: str = "template"):
-        self.npc_key = npc_key
-        self.technique = technique
-        self.spec_path = None
-        self.primer_path = None
-        self.train_clean_path = None
-        self.spec_concepts = []
-        self.primer_text = ""
-        self._resolve_and_load()
+def extract_weak_categories(feedback: dict) -> list[str]:
+    """Extract failing categories from feedback JSON (evaluate.py output)."""
+    weak = []
 
-    def _resolve_and_load(self):
-        # Resolve paths using paths helper with project fallbacks
-        try:
-            self.spec_path = paths.spec_path(self.npc_key)
-        except Exception:
-            self.spec_path = PROJECT_ROOT / "data" / "npcs" / "specs" / f"{self.npc_key}.json"
+    # From individual example scores
+    for example in feedback.get("examples", []):
+        cat = example.get("category")
+        win = example.get("win", None)
+        quality = example.get("candidate_quality", 100)
+        if cat and (win is False or (isinstance(quality, (int, float)) and quality < 30)):
+            if cat not in weak:
+                weak.append(cat)
 
-        self.primer_path = (
-            PROJECT_ROOT / "data" / "npcs" / "reference_docs" / f"{self.npc_key}_primer.md"
-        )
+    # From overall scores
+    for cat_key in ["identity", "teaching", "dialogue", "quest", "refusal"]:
+        cat_data = feedback.get(cat_key, {})
+        if isinstance(cat_data, dict):
+            win_rate = cat_data.get("win_rate", 1.0)
+            if isinstance(win_rate, (int, float)) and win_rate < 0.5 and cat_key not in weak:
+                weak.append(cat_key)
 
-        try:
-            self.train_clean_path = (
-                paths.dataset_dir(self.npc_key) / self.technique / "train_clean.jsonl"
-            )
-        except Exception:
-            self.train_clean_path = (
-                PROJECT_ROOT
-                / "data"
-                / "datasets"
-                / self.npc_key
-                / self.technique
-                / "train_clean.jsonl"
-            )
+    # From aggregated summary
+    agg = feedback.get("aggregated_summary", {})
+    for cat, cat_info in agg.items():
+        if isinstance(cat_info, dict):
+            wr = cat_info.get("win_rate", 1.0)
+            if isinstance(wr, (int, float)) and wr < 0.5 and cat not in weak:
+                weak.append(cat)
 
-        # Load NPC spec
-        if self.spec_path and self.spec_path.exists():
-            try:
-                with open(self.spec_path, encoding="utf-8") as f:
-                    spec_data = json.load(f)
-                    self.spec_concepts = spec_data.get("concepts", [])
-            except Exception as e:
-                print(f"  [LocalGapDetector] Warning: failed to load spec JSON: {e}")
-        else:
-            print(f"  [LocalGapDetector] Warning: spec path not found: {self.spec_path}")
-
-        # Load reference primer
-        if self.primer_path and self.primer_path.exists():
-            try:
-                with open(self.primer_path, encoding="utf-8") as f:
-                    self.primer_text = f.read()
-            except Exception as e:
-                print(f"  [LocalGapDetector] Warning: failed to load primer markdown: {e}")
-        else:
-            print(f"  [LocalGapDetector] Warning: primer path not found: {self.primer_path}")
-
-    def count_primer_occurrences(self, concept_name: str, aliases: list) -> int:
-        if not self.primer_text:
-            return 0
-        text_lower = self.primer_text.lower()
-        count = text_lower.count(concept_name.lower().strip())
-        for alias in aliases:
-            count += text_lower.count(alias.lower().strip())
-        return count
-
-    def count_training_examples(self, concept_name: str) -> int:
-        if not self.train_clean_path or not self.train_clean_path.exists():
-            return 0
-        count = 0
-        target_concept = concept_name.lower().strip()
-        try:
-            with open(self.train_clean_path, encoding="utf-8") as f:
-                for line in f:
-                    if not line.strip():
-                        continue
-                    try:
-                        data = json.loads(line)
-                        meta = data.get("metadata", {})
-                        ex_concept = meta.get("concept")
-                        if ex_concept and ex_concept.lower().strip() == target_concept:
-                            count += 1
-                    except Exception:
-                        continue
-        except Exception as e:
-            print(f"  [LocalGapDetector] Warning: failed to read cleaned training file: {e}")
-        return count
-
-    def detect_gaps(self, weak_concepts: list) -> list:
-        gap_results = []
-        for wc in weak_concepts:
-            concept_key = wc.get("concept", "unknown")
-            reasons = wc.get("reasons", [])
-
-            # Parse category and concept_name from concept_key (e.g., "teaching/Ancient civilizations")
-            category = None
-            concept_name = concept_key
-            if "/" in concept_key:
-                category, concept_name = concept_key.split("/", 1)
-
-            # Match spec concept case-insensitively
-            spec_c = None
-            concept_name_lower = concept_name.lower().strip()
-            category_lower = category.lower().strip() if category else None
-
-            for c in self.spec_concepts:
-                name = c.get("name", "")
-                c_category = c.get("category", "")
-                if name.lower().strip() == concept_name_lower:
-                    if category_lower is None or c_category.lower().strip() == category_lower:
-                        spec_c = c
-                        break
-            if not spec_c:
-                for c in self.spec_concepts:
-                    name = c.get("name", "")
-                    if name.lower().strip() == concept_name_lower:
-                        spec_c = c
-                        break
-
-            aliases = []
-            if spec_c:
-                aliases = spec_c.get("aliases", [])
-                concept_name = spec_c.get("name", concept_name)
-
-            # 4. Count occurrences in primer
-            primer_occurrences = self.count_primer_occurrences(concept_name, aliases)
-
-            # 5. Count examples in train_clean.jsonl
-            training_examples_count = self.count_training_examples(concept_name)
-
-            # 6. Classify gap type
-            if primer_occurrences == 0:
-                gap_type = "knowledge_gap"
-                rec = "Source document lacks coverage. Add descriptive sections to primer."
-            elif training_examples_count < 8:
-                gap_type = "training_density_gap"
-                rec = "Low example density. Trigger synthetic generation for concept with focus."
-            else:
-                gap_type = "model_capacity_gap"
-                rec = "The model failed to acquire the concept; upgrade training preset, increase epochs, or check format."
-
-            gap_results.append(
-                {
-                    "concept": concept_key,
-                    "gap_type": gap_type,
-                    "primer_occurrences": primer_occurrences,
-                    "training_examples_count": training_examples_count,
-                    "action_recommendation": rec,
-                    "reasons": reasons,
-                }
-            )
-        return gap_results
-
-
-def print_analysis(feedback_data, weak_concepts):
-    print("=" * 60)
-    print("  FEEDBACK LOOP ANALYSIS")
-    print(f"  NPC: {feedback_data.get('npc_key', 'unknown')}")
-    print("=" * 60)
-    print(
-        f"\nOverall: {feedback_data['candidate_wins']}/{feedback_data['total_examples']} wins "
-        f"(win rate: {feedback_data['win_rate']:.0%})"
-    )
-    print(f"Baseline: {feedback_data.get('baseline', '?')}")
-    print(f"Candidate: {feedback_data.get('candidate', '?')}")
-    print("\nPer-concept breakdown:")
-    per_concept = feedback_data.get("per_concept", {})
-    for concept, data in sorted(per_concept.items()):
-        win_rate = data.get("win_rate", 0)
-        quality = data.get("avg_candidate_quality", 0)
-        violations = data.get("constraint_violations", 0)
-        flag = ""
-        if win_rate < DEFAULT_WIN_RATE_THRESHOLD:
-            flag = "  ← WEAK"
-        elif quality < DEFAULT_QUALITY_THRESHOLD:
-            flag = "  ← WEAK"
-        elif violations > DEFAULT_VIOLATION_THRESHOLD:
-            flag = "  ← WEAK"
-        print(
-            f"  {concept:40s} wins={data['candidate_wins']}/{data['total']} "
-            f"qual={quality:.0f} viol={violations}{flag}"
-        )
-    if weak_concepts:
-        print(f"\nWeak concepts requiring regeneration ({len(weak_concepts)}):")
-        for wc in weak_concepts:
-            print(f"  - {wc['concept']}: {', '.join(wc['reasons'])}")
-    else:
-        print("\nNo weak concepts found. Model is performing well across all areas.")
-
-
-# ── Regeneration ────────────────────────────────────────────────────────────
-
-
-def generate_targeted_dataset(
-    npc_key,
-    focus_categories,
-    dry_run=False,
-    spec_path=None,
-    technique=DEFAULT_REGENERATION_TECHNIQUE,
-    model=DEFAULT_REGENERATION_MODEL,
-    url=DEFAULT_REGENERATION_URL,
-    batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
-    extra_examples=DEFAULT_EXTRA_EXAMPLES,
-):
-    if not spec_path:
-        spec_path = paths.spec_path(npc_key)
-    if not Path(spec_path).exists():
-        print(f"  [error] Subject spec not found: {spec_path}")
-        return False
-
-    if technique == "ollama":
-        script_path = PROJECT_ROOT / "scripts" / "dataset" / "generate_dataset.py"
-        cmd = [
-            sys.executable,
-            str(script_path),
-            str(spec_path),
-            "--model",
-            model,
-            "--url",
-            url,
-        ]
-        if batch_size is not None:
-            cmd.extend(["--batch-size", str(batch_size)])
-    else:
-        script_path = PROJECT_ROOT / "scripts" / "dataset" / "_generate_shared.py"
-        cmd = [
-            sys.executable,
-            str(script_path),
-            str(spec_path),
-            "--technique",
-            technique,
-            "--model",
-            model,
-            "--url",
-            url,
-        ]
-
-    for cat in sorted(focus_categories):
-        cmd.extend(["--concept-focus", cat])
-
-    print(f"\n  Target: {spec_path}")
-    print(f"  Regeneration technique: {technique}")
-    if technique == "ollama":
-        print(f"  Model: {model} | URL: {url} | batch-size: {batch_size}")
-    print(f"  Focus categories: {', '.join(sorted(focus_categories))}")
-
-    if dry_run:
-        print(f"  [dry-run] Would execute: {' '.join(cmd)}")
-        return True
-
-    print("  Running generation with concept focus...")
-    ok, stdout, stderr = run_cmd(cmd, timeout=1800)
-    if ok:
-        print("  Done!")
-        for line in stdout.strip().split("\n")[-4:]:
-            print(f"    {line}")
-        return True
-    else:
-        print("  [error] Generation failed (exit code != 0)")
-        print(f"  {stderr[:500]}")
-        return False
-
-
-# ── Auto-Retrain ────────────────────────────────────────────────────────────
-
-
-def run_sanitize(npc_key, technique="template", dry_run=False):
-    """Sanitize the regenerated dataset."""
-    dataset_path = f"subjects/datasets/{npc_key}/{technique}/train.jsonl"
-    clean_path = f"subjects/datasets/{npc_key}/{technique}/train_clean.jsonl"
-    if dry_run:
-        print(f"  [dry-run] Would sanitize: {dataset_path} -> {clean_path}")
-        return True
-    print(f"  Sanitizing: {dataset_path}")
-    ok, stdout, stderr = run_cmd(
-        [
-            sys.executable,
-            str(PROJECT_ROOT / "scripts" / "dataset" / "sanitize_dataset.py"),
-            dataset_path,
-            "--output",
-            clean_path,
-            "--strict-canonical",
-        ],
-        timeout=60,
-    )
-    if ok:
-        print("  Sanitize done.")
-        return True
-    else:
-        print(f"  [warn] Sanitize non-fatal: {stderr[:200]}")
-        # Sanitize is non-fatal — proceed even if it fails
-        return True
-
-
-def run_training(npc_key, preset, technique="template", dry_run=False, allow_ungated_dataset=False):
-    """Train a new model with the regenerated dataset."""
-    spec_path = paths.spec_path(npc_key)
-    if not spec_path.exists():
-        print(f"  [error] Spec not found for training: {spec_path}")
-        return None
-
-    cmd = [
-        sys.executable,
-        str(PROJECT_ROOT / "scripts" / "training" / "train.py"),
-        str(spec_path),
-        "--from-spec",
-        "--technique",
-        technique,
-        "--preset",
-        preset,
-        "--export-gguf",
-    ]
-    if allow_ungated_dataset:
-        cmd.append("--allow-ungated-dataset")
-    if dry_run:
-        print(f"  [dry-run] Would train: {' '.join(cmd)}")
-        return None
-
-    print(f"  Training with preset '{preset}'...")
-    ok, stdout, stderr = run_cmd(cmd, timeout=3600)
-    if not ok:
-        print(f"  [error] Training failed: {stderr[:500]}")
-        return None
-
-    # Find the newest GGUF
-    export_dir = PROJECT_ROOT / "exports" / npc_key
-    ggufs = (
-        sorted(export_dir.glob("*.gguf"), key=lambda x: x.stat().st_mtime, reverse=True)
-        if export_dir.exists()
-        else []
-    )
-    if ggufs:
-        print(f"  Model exported: {ggufs[0]}")
-        return str(ggufs[0])
-    print(f"  [warn] No GGUF found in {export_dir}")
-    return None
-
-
-def run_dataset_eval(
-    npc_key,
-    technique="template",
-    judge_model=DEFAULT_JUDGE_MODEL,
-    ollama_base_url="http://localhost:11434",
-    cases_per_category=1,
-    dry_run=False,
-    soft_fail=False,
-    judge_provider="ollama",
-    wandb_inference_project=None,
-    wandb_inference_entity=None,
-):
-    """Run the dataset quality gate on the sanitized dataset."""
-    spec_path = paths.spec_path(npc_key)
-    if not spec_path.exists():
-        print(f"  [error] Spec not found for dataset evaluation: {spec_path}")
-        return False
-
-    cmd = [
-        sys.executable,
-        str(PROJECT_ROOT / "scripts" / "dataset" / "dataset_eval.py"),
-        str(spec_path),
-        "--technique",
-        technique,
-        "--judge-provider",
-        judge_provider,
-        "--judge-model",
-        judge_model,
-        "--ollama-base-url",
-        ollama_base_url,
-        "--cases-per-category",
-        str(cases_per_category),
-    ]
-    if soft_fail:
-        cmd.append("--soft-fail")
-    if wandb_inference_project:
-        cmd.extend(["--wandb-inference-project", wandb_inference_project])
-    if wandb_inference_entity:
-        cmd.extend(["--wandb-inference-entity", wandb_inference_entity])
-
-    if dry_run:
-        print(f"  [dry-run] Would run dataset evaluation: {' '.join(cmd)}")
-        return True
-
-    print(f"  Running dataset evaluation for {npc_key} ({technique})...")
-    ok, stdout, stderr = run_cmd(cmd, timeout=1800)
-    if ok:
-        print("  Dataset evaluation passed.")
-        return True
-    print("  [error] Dataset evaluation failed or had failing metrics.")
-    print(stderr[:500])
-    return False
-
-
-def run_evaluate(npc_key, baseline_gguf, candidate_gguf, feedback_output_dir, dry_run=False):
-    """Evaluate the new model against the baseline with structured output."""
-    if dry_run:
-        print(f"  [dry-run] Would evaluate candidate={candidate_gguf} vs baseline={baseline_gguf}")
-        feedback_path = Path(feedback_output_dir) / f"{npc_key}_post_retrain.json"
-        return str(feedback_path)
-
-    feedback_dir = Path(feedback_output_dir)
-    feedback_dir.mkdir(parents=True, exist_ok=True)
-    feedback_path = feedback_dir / f"{npc_key}_post_retrain.json"
-    spec_path = paths.spec_path(npc_key)
-
-    cmd = [
-        sys.executable,
-        str(PROJECT_ROOT / "scripts" / "evaluation" / "evaluate.py"),
-        "--baseline",
-        str(baseline_gguf),
-        "--candidate",
-        str(candidate_gguf),
-        "--spec",
-        str(spec_path),
-        "--feedback-json",
-        str(feedback_path),
-        "--num-questions",
-        "10",
-    ]
-    print("  Evaluating against baseline...")
-    ok, stdout, stderr = run_cmd(cmd, timeout=600)
-    if ok:
-        # Print the last few lines of eval output (win rate summary)
-        for line in stdout.strip().split("\n")[-5:]:
-            if (
-                "win" in line.lower()
-                or "wins" in line.lower()
-                or "rate" in line.lower()
-                or "Summary" in line
-            ):
-                print(f"    {line.strip()}")
-        print(f"  Eval results: {feedback_path}")
-        return str(feedback_path)
-    else:
-        print(f"  [warn] Evaluation had issues: {stderr[:300]}")
-        # Non-fatal — return the path anyway if it was created
-        if feedback_path.exists():
-            return str(feedback_path)
-        return None
-
-
-# ── Pipeline State ──────────────────────────────────────────────────────────
-
-PIPELINE_STATE_PATH = PROJECT_ROOT / "eval" / "results" / "pipeline_state.json"
-
-
-def update_pipeline_state(npc_key, state_update):
-    """Update the shared pipeline state file, merging with any existing state."""
-    state = {}
-    if PIPELINE_STATE_PATH.exists():
-        try:
-            with open(PIPELINE_STATE_PATH) as f:
-                state = json.load(f)
-        except (OSError, json.JSONDecodeError):
-            state = {}
-    state[npc_key] = {
-        **state.get(npc_key, {}),
-        **state_update,
-        "last_updated": datetime.now(UTC).isoformat(),
-    }
-    PIPELINE_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(PIPELINE_STATE_PATH, "w") as f:
-        json.dump(state, f, indent=2)
-    print(f"\n  Pipeline state updated: {PIPELINE_STATE_PATH}")
-
-
-# ── Main Loop ───────────────────────────────────────────────────────────────
-
-
-class FeedbackLoopExit(Exception):
-    """Raised to signal an error exit from the feedback loop so step() records 'error'."""
-
-    pass
+    return weak or DEFAULT_CONCEPT_FOCUS_CATEGORIES[:]
 
 
 def run_feedback_loop(
-    feedback_path,
-    win_rate_threshold=DEFAULT_WIN_RATE_THRESHOLD,
-    quality_threshold=DEFAULT_QUALITY_THRESHOLD,
-    violation_threshold=DEFAULT_VIOLATION_THRESHOLD,
-    dry_run=False,
-    auto_yes=False,
-    skip_gap_detection=False,
-    save_gaps=None,
-    json_output=False,
-    auto_retrain=False,
-    train_preset=DEFAULT_TRAIN_PRESET,
-    baseline_gguf=None,
-    technique=None,
-    model=DEFAULT_REGENERATION_MODEL,
-    url=DEFAULT_REGENERATION_URL,
-    batch_size=DEFAULT_REGENERATION_BATCH_SIZE,
-    skip_dataset_eval=False,
-    deepeval_judge_provider="ollama",
-    deepeval_judge_model=DEFAULT_JUDGE_MODEL,
-    deepeval_ollama_url="http://localhost:11434",
-    deepeval_cases_per_category=5,
-    deepeval_soft_fail=False,
-    extra_examples=DEFAULT_EXTRA_EXAMPLES,
-    workflow_hooks=None,
-    strategy_profile="npc-production-grounded",
-    wandb=False,
-    wandb_project="unsloth-core",
-    wandb_entity=None,
-    wandb_inference_project=None,
-    wandb_inference_entity=None,
-):
-    """Full feedback loop: analyze → regenerate → optionally retrain."""
-    # Capture human-readable output for --json mode
-    Tee() if json_output else None
+    feedback_json: str,
+    *,
+    dry_run: bool = False,
+    auto: bool = False,
+    auto_retrain: bool = False,
+    train_preset: str = DEFAULT_TRAIN_PRESET,
+    baseline: str | None = None,
+    concept_focus: list[str] | None = None,
+    strategy_profile: str = "npc-production-grounded",
+    json_output: bool = False,
+) -> dict:
+    feedback = load_feedback(feedback_json)
+    feedback_path = Path(feedback_json)
+    npc_key = feedback.get("npc_key", feedback_path.stem)
 
-    # ── 1. Load ────────────────────────────────────────────────────────
-    # Load feedback data first to resolve npc_key before constructing hook_recorder
-    try:
-        feedback_data = load_feedback_json(feedback_path)
-        resolved_npc_key = feedback_data.get("npc_key", "unknown")
-        resolved_spec_path = feedback_data.get("spec_path")
-    except Exception as e:
-        print(f"Error loading feedback file: {e}")
-        return 1
+    # Extract weak categories if not explicitly provided
+    weak_categories = concept_focus or extract_weak_categories(feedback)
 
-    resolved_technique = technique
-    if not resolved_technique and resolved_spec_path:
-        try:
-            resolved_technique = resolve_workflow_context(resolved_spec_path).technique
-        except Exception:
-            resolved_technique = None
-    technique = resolved_technique or DEFAULT_REGENERATION_TECHNIQUE
+    # Strategy classification
+    strategy_result = classify_feedback_cycle(feedback, profile=strategy_profile)
+    density_result = density_repair_needed(feedback)
 
-    VALID_TECHNIQUES = ["template", "ollama", "docs"]
-    if technique not in VALID_TECHNIQUES:
-        print(
-            f"  [warn] Unknown technique '{technique}', defaulting to '{DEFAULT_REGENERATION_TECHNIQUE}'"
-        )
-        technique = DEFAULT_REGENERATION_TECHNIQUE
+    result = {
+        "npc_key": npc_key,
+        "feedback_source": feedback_json,
+        "weak_categories": weak_categories,
+        "strategy_decision": strategy_result,
+        "density_decision": density_result,
+        "actions_taken": [],
+        "status": "analysis_complete",
+    }
 
-    hook_recorder = WorkflowHookRecorder(
-        Path(workflow_hooks) if workflow_hooks else default_hook_path(Path(feedback_path).parent),
-        tool="feedback_loop",
-        npc_key=resolved_npc_key,
-        technique=technique,
-        spec_path=resolved_spec_path,
-    )
-    feedback_run_id = f"{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{resolved_npc_key}_feedback_{technique}_{uuid.uuid4().hex[:8]}"
-    exit_code = 1
-    try:
-        with hook_recorder.step(
-            "feedback_loop",
-            run_id=feedback_run_id,
-            feedback_path=str(feedback_path),
-            auto_retrain=auto_retrain,
-            dry_run=dry_run,
-        ):
-            completed_early = False
-            npc_key = resolved_npc_key
-            feedback_data.get("candidate", "")
+    if not json_output:
+        print(f"\n=== Feedback Loop: {npc_key} ===")
+        print(f"  Weak categories: {weak_categories}")
+        print(f"  Strategy: {strategy_result}")
+        print(f"  Density: {density_result}")
 
-            # ── 2. Analyze ─────────────────────────────────────────────────────
-            weak_concepts = identify_weak_concepts(
-                feedback_data,
-                win_rate_threshold,
-                quality_threshold,
-                violation_threshold,
-                extra_examples,
-            )
-            print_analysis(feedback_data, weak_concepts)
+        if density_result.get("needed"):
+            print(f"  ⚠  Density repair needed: candidate avg {density_result.get('candidate_words')} words "
+                  f"(target min {density_result.get('target_min_words')})")
 
-            # Build the result dict
-            result = {
-                "status": "ok",
-                "npc_key": npc_key,
-                "weak_concepts": [],
-                "gap_results": [],
-                "regeneration": {"ok": False, "focus_categories": [], "technique": technique},
-                "strategy_decision": classify_feedback_cycle(
-                    feedback_data, profile=strategy_profile
-                ),
-                "density_decision": density_repair_needed(feedback_data),
-                "auto_retrain": None,
-                "pipeline_state": None,
-            }
+    if dry_run:
+        result["status"] = "dry_run"
+        if not json_output:
+            print(f"\n  [DRY-RUN] Would regenerate categories: {weak_categories}")
+            if auto_retrain:
+                print(f"  [DRY-RUN] Would retrain with preset: {train_preset}")
+        return result
 
-            if result["strategy_decision"].get("action") == "escalate_shared_strategy":
-                print(
-                    "\nStrategy anti-loop reached: stop per-NPC repair and improve shared pipeline/presets."
-                )
-                result["status"] = "escalate_shared_strategy"
-                if json_output:
-                    print(json.dumps(result, indent=2))
-                completed_early = True
+    if not auto:
+        if not json_output:
+            print("\n  Use --auto to execute. Dry run complete.")
+        result["status"] = "dry_run"
+        return result
 
-            if not weak_concepts and not completed_early:
-                print("\nNothing to improve. Model is performing well across all areas.")
-                result["status"] = "no_weak_concepts"
-                update_pipeline_state(
-                    npc_key,
-                    {
-                        "status": "healthy",
-                        "weak_concepts_count": 0,
-                        "last_feedback": datetime.now(UTC).isoformat(),
-                    },
-                )
-                if json_output:
-                    print(json.dumps(result, indent=2))
-                completed_early = True
+    # Step 1: Regenerate weak categories
+    spec_path = paths.spec_path(npc_key)
+    if not spec_path.exists():
+        if not json_output:
+            print(f"  ERROR: Spec not found at {spec_path}")
+        result["status"] = "error"
+        result["error"] = f"Spec not found: {spec_path}"
+        return result
 
-            if not completed_early:
-                result["weak_concepts"] = [
-                    {"concept": wc["concept"], "reasons": wc["reasons"]} for wc in weak_concepts
-                ]
+    # Generate-ollama with concept focus
+    gen_args = ["generate-ollama", str(spec_path), "--fresh"]
+    for cat in weak_categories:
+        gen_args.extend(["--concept-focus", cat])
 
-                # ── 3. Knowledge gap detection ─────────────────────────────────────
-                gap_results = []
-                if not skip_gap_detection:
-                    print(f"\n{'─' * 40}")
-                    print("  Checking knowledge coverage for weak concepts...")
-                    detector = LocalGapDetector(resolved_npc_key, technique=technique)
-                    gap_results = detector.detect_gaps(weak_concepts)
-                    result["gap_results"] = gap_results
+    if not json_output:
+        print(f"\n  [1/4] Regenerating {weak_categories}...")
+    gen_r = _ucore(gen_args)
+    result.setdefault("steps", []).append({
+        "step": "generate",
+        "command": "generate-ollama",
+        "exit_code": gen_r.returncode,
+        "stdout_snippet": gen_r.stdout[-300:] if gen_r.stdout else "",
+        "stderr_snippet": gen_r.stderr[-300:] if gen_r.stderr else "",
+    })
+    if gen_r.returncode != 0:
+        if not json_output:
+            print(f"  ERROR: Generation failed (exit {gen_r.returncode})")
+        result["status"] = "error"
+        result["error_detail"] = gen_r.stderr[-500:] if gen_r.stderr else ""
+        return result
+    result["actions_taken"].append("regenerated_weak_categories")
 
-                    print(f"\n  Gap Analysis Results ({len(gap_results)}):")
-                    for diag in gap_results:
-                        print(f"  • Concept: {diag['concept']}")
-                        print(f"    Gap Type: {diag['gap_type']}")
-                        print(f"    Primer Occurrences: {diag['primer_occurrences']}")
-                        print(f"    Training Examples: {diag['training_examples_count']}")
-                        print(f"    Action Recommendation: {diag['action_recommendation']}")
-                        print()
+    # Step 2: Sanitize
+    technique = "ollama"
+    train_path = paths.dataset_train_path(npc_key, technique)
+    clean_path = train_path.parent / "train_clean.jsonl"
 
-                    if save_gaps:
-                        save_path = Path(save_gaps)
-                        save_path.parent.mkdir(parents=True, exist_ok=True)
-                        with open(save_path, "w") as f:
-                            json.dump(gap_results, f, indent=2)
-                        print(f"\n  Gap report saved to: {save_path}")
-                else:
-                    print("\n  (gap detection skipped)")
+    if not json_output:
+        print(f"  [2/4] Sanitizing {train_path}...")
+    san_args = [
+        "sanitize", str(train_path),
+        "--output", str(clean_path),
+        "--strict-canonical", "--require-complete-metadata",
+        "--no-dedup",  # Preserve category counts during repair
+    ]
+    san_r = _ucore(san_args)
+    result.setdefault("steps", []).append({
+        "step": "sanitize",
+        "command": "sanitize",
+        "exit_code": san_r.returncode,
+    })
+    if san_r.returncode != 0:
+        if not json_output:
+            print(f"  WARNING: Sanitize had issues (exit {san_r.returncode})")
+    result["actions_taken"].append("sanitized")
 
-                # ── W&B Feedback Loop Tracking ──────────────────────────────────
-                if wandb:
-                    try:
-                        import wandb as _wandb
+    # Step 3: Dataset-eval quality gate
+    if not json_output:
+        print(f"  [3/4] Running dataset-eval quality gate...")
+    eval_args = [
+        "dataset-eval", str(spec_path),
+        "--technique", technique,
+        "--mode", "fast",
+    ]
+    eval_r = _ucore(eval_args)
+    result.setdefault("steps", []).append({
+        "step": "dataset_eval",
+        "command": "dataset-eval",
+        "exit_code": eval_r.returncode,
+    })
+    eval_passed = eval_r.returncode == 0
+    result["quality_gate_passed"] = eval_passed
+    result["actions_taken"].append("quality_gated")
 
-                        total_knowledge_gaps = (
-                            sum(1 for g in gap_results if g["gap_type"] == "knowledge_gap")
-                            if gap_results
-                            else 0
-                        )
-                        total_density_gaps = (
-                            sum(1 for g in gap_results if g["gap_type"] == "training_density_gap")
-                            if gap_results
-                            else 0
-                        )
-                        total_capacity_gaps = (
-                            sum(1 for g in gap_results if g["gap_type"] == "model_capacity_gap")
-                            if gap_results
-                            else 0
-                        )
+    if not json_output:
+        print(f"  Quality gate: {'PASSED' if eval_passed else 'FAILED'}")
 
-                        _wandb_run = _wandb.init(
-                            project=wandb_project or "unsloth-core",
-                            entity=wandb_entity,
-                            group=os.environ.get("WANDB_GROUP"),
-                            job_type="feedback-loop",
-                            config={
-                                "npc_key": resolved_npc_key,
-                                "win_rate_threshold": win_rate_threshold,
-                                "quality_threshold": quality_threshold,
-                                "violation_threshold": violation_threshold,
-                                "total_weak_concepts": len(weak_concepts),
-                                "auto_retrain": auto_retrain,
-                                "technique": technique,
-                            },
-                            name=f"feedback-{resolved_npc_key}",
-                            tags=["feedback", resolved_npc_key],
-                        )
-                        if _wandb_run and getattr(_wandb_run, "url", None):
-                            print(f"  [wandb] Run URL: {_wandb_run.url}")
-
-                        _wandb.log(
-                            {
-                                "feedback/total_weak_concepts": len(weak_concepts),
-                                "feedback/knowledge_gaps": total_knowledge_gaps,
-                                "feedback/training_density_gaps": total_density_gaps,
-                                "feedback/model_capacity_gaps": total_capacity_gaps,
-                            }
-                        )
-
-                        # Log per-concept metrics
-                        for wc in weak_concepts:
-                            concept = wc.get("concept", "unknown")
-                            data = wc.get("data", {})
-                            diag = next((g for g in gap_results if g["concept"] == concept), None)
-                            diag_gap_type = diag["gap_type"] if diag else "unknown"
-                            _wandb.log(
-                                {
-                                    f"feedback/{concept}/win_rate": data.get("win_rate", 0),
-                                    f"feedback/{concept}/avg_quality": data.get(
-                                        "avg_candidate_quality", 0
-                                    ),
-                                    f"feedback/{concept}/violations": data.get(
-                                        "constraint_violations", 0
-                                    ),
-                                    f"feedback/{concept}/gap_type": diag_gap_type,
-                                }
-                            )
-
-                        # Log gap analysis as artifact if saved
-                        if save_gaps and Path(save_gaps).exists():
-                            try:
-                                gap_artifact = _wandb.Artifact(
-                                    f"feedback-gaps-{resolved_npc_key}",
-                                    type="feedback-gaps",
-                                    description=f"Feedback gap analysis for {resolved_npc_key}",
-                                    metadata={
-                                        "npc_key": resolved_npc_key,
-                                        "weak_concepts": len(weak_concepts),
-                                    },
-                                )
-                                gap_artifact.add_file(save_gaps)
-                                _wandb.log_artifact(gap_artifact)
-                            except Exception:
-                                pass
-
-                        _wandb.finish()
-                    except Exception:
-                        print("  [wandb] Feedback loop W&B logging failed (non-fatal)")
-
-                # ── 4. Plan regeneration ───────────────────────────────────────────
-                print(f"\n{'=' * 60}")
-                print("  REGENERATION PLAN")
-                print(f"{'=' * 60}")
-                focus_categories = sorted(set(wc["action"]["category"] for wc in weak_concepts))
-                for wc in weak_concepts:
-                    print(f"  {wc['concept']}: {', '.join(wc['reasons'])}")
-                print(f"\n  Unique categories to boost: {', '.join(focus_categories)}")
-                if auto_retrain:
-                    print(
-                        f"  Auto-retrain enabled: preset={train_preset}, baseline={baseline_gguf}"
-                    )
-
-                # ── 5. Confirm ─────────────────────────────────────────────────────
-                if not auto_yes and not dry_run:
-                    print("\nProceed with targeted regeneration? [Y/n] ", end="", flush=True)
-                    try:
-                        response = input().strip().lower()
-                    except (EOFError, KeyboardInterrupt):
-                        response = "n"
-                    if response not in ("", "y", "yes"):
-                        print("Cancelled.")
-                        result["status"] = "cancelled"
-                        if json_output:
-                            print(json.dumps(result, indent=2))
-                        raise FeedbackLoopExit(1)
-
-                # ── 6. Execute regeneration ────────────────────────────────────────
-                print(f"\n{'─' * 40}")
-                ok = generate_targeted_dataset(
-                    npc_key,
-                    focus_categories,
-                    dry_run=dry_run,
-                    technique=technique,
-                    model=model,
-                    url=url,
-                    batch_size=batch_size,
-                    extra_examples=extra_examples,
-                )
-                result["regeneration"] = {
-                    "ok": ok,
-                    "focus_categories": focus_categories,
-                    "technique": technique,
-                }
-
-                if not ok:
-                    print("\n  Regeneration failed.")
-                    result["status"] = "regeneration_failed"
-                    if json_output:
-                        print(json.dumps(result, indent=2))
-                    update_pipeline_state(
-                        npc_key,
-                        {
-                            "status": "regeneration_failed",
-                            "weak_concepts_count": len(weak_concepts),
-                            "last_feedback": datetime.now(UTC).isoformat(),
-                        },
-                    )
-                    raise FeedbackLoopExit(1)
-
-                # ── 7. Auto-retrain ────────────────────────────────────────────────
-                trained_gguf = None
-                if auto_retrain and not dry_run:
-                    print(f"\n{'─' * 40}")
-                    print("  AUTO-RETRAIN PHASE")
-                    print(f"{'─' * 40}")
-
-                    # Sanitize
-                    print("\n  Step 1: Sanitize dataset...")
-                    if not run_sanitize(npc_key, technique=technique, dry_run=dry_run):
-                        print("  [error] Sanitization failed; aborting auto-retrain.")
-                        result["status"] = "sanitize_failed"
-                        update_pipeline_state(
-                            npc_key,
-                            {
-                                "status": "sanitize_failed",
-                                "weak_concepts_count": len(weak_concepts),
-                                "last_feedback": datetime.now(UTC).isoformat(),
-                            },
-                        )
-                        if json_output:
-                            print(json.dumps(result, indent=2))
-                        raise FeedbackLoopExit(1)
-
-                    # Dataset quality gate
-                    if not skip_dataset_eval:
-                        print("\n  Step 1b: Evaluate cleaned dataset before training...")
-                        if not run_dataset_eval(
-                            npc_key,
-                            technique=technique,
-                            judge_provider=deepeval_judge_provider,
-                            judge_model=deepeval_judge_model,
-                            ollama_base_url=deepeval_ollama_url,
-                            cases_per_category=deepeval_cases_per_category,
-                            dry_run=dry_run,
-                            soft_fail=deepeval_soft_fail,
-                            wandb_inference_project=wandb_inference_project or wandb_project,
-                            wandb_inference_entity=wandb_inference_entity or wandb_entity,
-                        ):
-                            print("  [error] Dataset evaluation failed; aborting auto-retrain.")
-                            result["status"] = "dataset_eval_failed"
-                            update_pipeline_state(
-                                npc_key,
-                                {
-                                    "status": "dataset_eval_failed",
-                                    "weak_concepts_count": len(weak_concepts),
-                                    "last_feedback": datetime.now(UTC).isoformat(),
-                                },
-                            )
-                            if json_output:
-                                print(json.dumps(result, indent=2))
-                            raise FeedbackLoopExit(1)
-                    else:
-                        print("  Skipping dataset evaluation before training.")
-
-                    # Train
-                    print("\n  Step 2: Train new model...")
-                    trained_gguf = run_training(
-                        npc_key,
-                        train_preset,
-                        technique=technique,
-                        dry_run=dry_run,
-                        allow_ungated_dataset=skip_dataset_eval or deepeval_soft_fail,
-                    )
-                    result["auto_retrain"] = {"trained_gguf": trained_gguf}
-
-                    if trained_gguf and baseline_gguf:
-                        # Evaluate
-                        print("\n  Step 3: Evaluate against baseline...")
-                        eval_feedback_path = run_evaluate(
-                            npc_key,
-                            baseline_gguf,
-                            trained_gguf,
-                            PROJECT_ROOT / "eval" / "results" / "feedback",
-                            dry_run=dry_run,
-                        )
-                        result["auto_retrain"]["eval_feedback_path"] = eval_feedback_path
-
-                        if eval_feedback_path and Path(eval_feedback_path).exists():
-                            # Load eval results for pipeline state
-                            try:
-                                post_eval = load_feedback_json(eval_feedback_path)
-                                result["auto_retrain"]["win_rate"] = post_eval.get("win_rate")
-                                result["auto_retrain"]["candidate_wins"] = post_eval.get(
-                                    "candidate_wins"
-                                )
-                                result["auto_retrain"]["total_examples"] = post_eval.get(
-                                    "total_examples"
-                                )
-                            except Exception:
-                                pass
-                    elif trained_gguf:
-                        print("  (skipping eval: no --baseline provided)")
-                elif auto_retrain and dry_run:
-                    print(f"\n  [dry-run] Would auto-retrain with preset '{train_preset}'")
-                    result["auto_retrain"] = {
-                        "trained_gguf": None,
-                        "eval_feedback_path": None,
-                        "dry_run": True,
-                        "train_preset": train_preset,
-                        "baseline": str(baseline_gguf) if baseline_gguf else None,
-                    }
-
-                # ── 8. Update pipeline state ───────────────────────────────────────
-                state_update = {
-                    "status": "regenerated",
-                    "weak_concepts_count": len(weak_concepts),
-                    "focus_categories": focus_categories,
-                    "regeneration_technique": technique,
-                    "last_feedback": datetime.now(UTC).isoformat(),
-                    "auto_retrain_complete": auto_retrain and trained_gguf is not None,
-                }
-                if trained_gguf:
-                    state_update["latest_gguf"] = trained_gguf
-                if (
-                    result.get("auto_retrain")
-                    and result["auto_retrain"].get("win_rate") is not None
-                ):
-                    state_update["latest_win_rate"] = result["auto_retrain"]["win_rate"]
-                update_pipeline_state(npc_key, state_update)
-                result["pipeline_state"] = state_update
-
-                # ── 9. Summary ─────────────────────────────────────────────────────
-                print(f"\n{'=' * 60}")
-                print("  FEEDBACK LOOP COMPLETE")
-                print(f"{'=' * 60}")
-                print(f"  Regenerated dataset with focus on: {', '.join(focus_categories)}")
-                if auto_retrain and trained_gguf:
-                    print(f"  Retrained model: {trained_gguf}")
-                if dry_run:
-                    print("  (dry-run mode — no changes made)")
-                if not auto_retrain and not dry_run:
-                    print("\n  Next step: train and re-evaluate:")
-                    print(
-                        f"    ./ucore train subjects/NPC_specs/{npc_key}.json --preset {train_preset}"
-                    )
-                    print(
-                        f"    ./ucore evaluate --baseline <old.gguf> --candidate <new.gguf>"
-                        f" --spec subjects/NPC_specs/{npc_key}.json --feedback-json eval/results/feedback/{npc_key}_round2.json"
-                    )
-                print(f"  Pipeline state: {PIPELINE_STATE_PATH}")
-
-                if json_output:
-                    print(json.dumps(result, indent=2))
-
-    except FeedbackLoopExit:
-        exit_code = 1
+    # Step 4: Optional retrain
+    if auto_retrain and eval_passed:
+        if not json_output:
+            print(f"  [4/4] Training with preset={train_preset}...")
+        train_args = [
+            "train", str(spec_path),
+            "--technique", technique,
+            "--preset", train_preset,
+            "--export-gguf",
+        ]
+        train_r = _ucore(train_args)
+        result.setdefault("steps", []).append({
+            "step": "train",
+            "command": "train",
+            "exit_code": train_r.returncode,
+        })
+        if train_r.returncode == 0:
+            result["actions_taken"].append("retrained")
+            result["status"] = "full_cycle_complete"
+        else:
+            result["status"] = "train_failed"
+    elif auto_retrain and not eval_passed:
+        if not json_output:
+            print(f"  Skipping retrain: quality gate failed.")
+        result["status"] = "gate_failed"
     else:
-        exit_code = 0
+        result["status"] = "regeneration_complete"
 
-    return exit_code
-
-
-# ── CLI ─────────────────────────────────────────────────────────────────────
+    return result
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Self-Improving Feedback Loop",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__,
+        description="Self-Improving Feedback Loop — focuses regeneration on weak categories"
     )
-    parser.add_argument(
-        "feedback_json", help="Path to feedback JSON from evaluate.py --feedback-json"
-    )
-
-    # Thresholds
-    parser.add_argument("--win-rate-threshold", type=float, default=DEFAULT_WIN_RATE_THRESHOLD)
-    parser.add_argument("--quality-threshold", type=float, default=DEFAULT_QUALITY_THRESHOLD)
-    parser.add_argument("--violation-threshold", type=int, default=DEFAULT_VIOLATION_THRESHOLD)
-
-    # Behavior
-    parser.add_argument("--dry-run", action="store_true", help="Analyze and plan without executing")
-    parser.add_argument("--auto", "-y", action="store_true", help="Auto-accept all suggestions")
-    parser.add_argument(
-        "--skip-gap-detection", action="store_true", help="Skip knowledge coverage check"
-    )
-    parser.add_argument("--save-gaps", help="Save gap analysis to JSON file")
-    parser.add_argument("--json", action="store_true", help="Output machine-readable JSON summary")
-    parser.add_argument(
-        "--strategy-profile",
-        default="npc-production-grounded",
-        help="NPC production strategy profile for anti-loop decisions",
-    )
-
-    # Auto-retrain
-    parser.add_argument(
-        "--regeneration-technique",
-        default=None,
-        choices=["template", "ollama"],
-        help=f"Regeneration technique to use (defaults to the resolved workflow context; final fallback: {DEFAULT_REGENERATION_TECHNIQUE})",
-    )
-    parser.add_argument(
-        "--regeneration-preset",
-        default=None,
-        choices=[
-            "generate-qwen25",
-            "generate-llama31",
-            "generate-qwen35-exp",
-            "generate-qwen3-exp",
-        ],
-        help="Named Ollama regeneration preset (default: generate-qwen25)",
-    )
-    parser.add_argument(
-        "--regeneration-model",
-        default=DEFAULT_REGENERATION_MODEL,
-        help=f"Exact Ollama model to use when --regeneration-technique=ollama (wins over --regeneration-preset; default: {DEFAULT_REGENERATION_MODEL})",
-    )
-    parser.add_argument(
-        "--regeneration-url",
-        default=DEFAULT_REGENERATION_URL,
-        help=f"Ollama server URL when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_URL})",
-    )
-    parser.add_argument(
-        "--regeneration-batch-size",
-        type=int,
-        default=DEFAULT_REGENERATION_BATCH_SIZE,
-        help=f"Ollama batch size when --regeneration-technique=ollama (default: {DEFAULT_REGENERATION_BATCH_SIZE})",
-    )
-    parser.add_argument(
-        "--auto-retrain",
-        action="store_true",
-        help="After regeneration, auto-retrain and re-evaluate",
-    )
-    parser.add_argument(
-        "--train-preset",
-        default=DEFAULT_TRAIN_PRESET,
-        help=f"Training preset (default: {DEFAULT_TRAIN_PRESET})",
-    )
-    parser.add_argument("--baseline", help="Baseline GGUF for auto-evaluation after retrain")
-    parser.add_argument(
-        "--extra-examples",
-        type=int,
-        default=DEFAULT_EXTRA_EXAMPLES,
-        help=f"Target extra examples per weak concept (default: {DEFAULT_EXTRA_EXAMPLES})",
-    )
-    parser.add_argument(
-        "--skip-dataset-eval",
-        action="store_true",
-        help="Skip dataset quality evaluation before training during auto-retrain",
-    )
-    parser.add_argument(
-        "--deepeval-judge-provider",
-        default="ollama",
-        choices=["ollama", "wandb"],
-        help="Judge backend for dataset evaluation during auto-retrain",
-    )
-    parser.add_argument(
-        "--deepeval-judge-preset",
-        default=None,
-        choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
-        help="Named Ollama judge preset (default: judge-qwen3-exp)",
-    )
-    parser.add_argument(
-        "--deepeval-judge-model",
-        default=None,
-        help="Exact Ollama judge model to use for dataset evaluation (wins over --deepeval-judge-preset)",
-    )
-    parser.add_argument(
-        "--deepeval-ollama-url",
-        default="http://localhost:11434",
-        help="Ollama base URL for dataset evaluation (default: http://localhost:11434)",
-    )
-    parser.add_argument(
-        "--deepeval-cases-per-category",
-        type=int,
-        default=1,
-        help="Cases per category for fast DeepEval dataset gating (default: 1)",
-    )
-    parser.add_argument(
-        "--deepeval-soft-fail",
-        action="store_true",
-        help="Do not abort dataset evaluation on metric failure; continue training",
-    )
-    parser.add_argument(
-        "--wandb-inference-project",
-        default=None,
-        help="W&B project used for hosted DeepEval judge inference",
-    )
-    parser.add_argument(
-        "--wandb-inference-entity",
-        default=None,
-        help="W&B entity/team used for hosted DeepEval judge inference",
-    )
-    parser.add_argument("--workflow-hooks", default=None, help="Path to workflow hooks JSONL")
-    parser.add_argument("--wandb", action="store_true", help="Enable W&B logging")
-    parser.add_argument(
-        "--wandb-project", default="unsloth-core", help="W&B project (default: unsloth-core)"
-    )
-    parser.add_argument("--wandb-entity", default=None, help="W&B entity (default: auto-detect)")
+    parser.add_argument("feedback_json", help="Path to feedback JSON from evaluate --feedback-json")
+    parser.add_argument("--dry-run", action="store_true", help="Analyze without regenerating")
+    parser.add_argument("--auto", "-y", action="store_true", help="Execute the full loop")
+    parser.add_argument("--auto-retrain", action="store_true", help="Retrain after regeneration")
+    parser.add_argument("--train-preset", default=DEFAULT_TRAIN_PRESET, help="Training preset")
+    parser.add_argument("--baseline", help="Baseline GGUF for evaluation")
+    parser.add_argument("--concept-focus", nargs="*", help="Categories to focus on (default: auto-detect)")
+    parser.add_argument("--strategy-profile", default="npc-production-grounded", help="Strategy profile")
+    parser.add_argument("--json", action="store_true", help="Output JSON summary")
 
     args = parser.parse_args()
 
-    if not os.path.exists(args.feedback_json):
-        print(f"Error: Feedback JSON not found: {args.feedback_json}")
-        print("\nRun evaluate.py with --feedback-json to generate it first:")
-        print(f"  python scripts/evaluation/evaluate.py ... --feedback-json {args.feedback_json}")
+    if not Path(args.feedback_json).exists():
+        print(f"Error: feedback JSON not found: {args.feedback_json}", file=sys.stderr)
         sys.exit(1)
 
-    if args.auto_retrain and not args.baseline and not args.dry_run:
-        print("Warning: --auto-retrain without --baseline will train but skip evaluation.")
-
-    regeneration_model = resolve_ollama_model(
-        preset=args.regeneration_preset,
-        model=args.regeneration_model,
-        role="generation",
+    result = run_feedback_loop(
+        args.feedback_json,
+        dry_run=args.dry_run,
+        auto=args.auto,
+        auto_retrain=args.auto_retrain,
+        train_preset=args.train_preset,
+        baseline=args.baseline,
+        concept_focus=args.concept_focus,
+        strategy_profile=args.strategy_profile,
+        json_output=args.json,
     )
-    if args.deepeval_judge_provider == "wandb":
-        deepeval_judge_model = args.deepeval_judge_model or "meta-llama/Llama-3.1-8B-Instruct"
+
+    if args.json:
+        print(json.dumps(result, indent=2, default=str))
     else:
-        deepeval_judge_model = resolve_ollama_model(
-            preset=args.deepeval_judge_preset,
-            model=args.deepeval_judge_model,
-            role="judge",
-        )
+        print(f"\n=== Result ===")
+        print(f"  Status: {result['status']}")
+        print(f"  Actions: {result['actions_taken']}")
+        print(f"  Quality gate: {result.get('quality_gate_passed', 'N/A')}")
+        if result.get("error"):
+            print(f"  Error: {result['error']}")
 
-    sys.exit(
-        run_feedback_loop(
-            args.feedback_json,
-            win_rate_threshold=args.win_rate_threshold,
-            quality_threshold=args.quality_threshold,
-            violation_threshold=args.violation_threshold,
-            dry_run=args.dry_run,
-            auto_yes=args.auto,
-            skip_gap_detection=args.skip_gap_detection,
-            save_gaps=args.save_gaps,
-            json_output=args.json,
-            auto_retrain=args.auto_retrain,
-            train_preset=args.train_preset,
-            baseline_gguf=args.baseline,
-            technique=args.regeneration_technique,
-            model=regeneration_model,
-            url=args.regeneration_url,
-            batch_size=args.regeneration_batch_size,
-            skip_dataset_eval=args.skip_dataset_eval,
-            deepeval_judge_provider=args.deepeval_judge_provider,
-            deepeval_judge_model=deepeval_judge_model,
-            deepeval_ollama_url=args.deepeval_ollama_url,
-            deepeval_cases_per_category=args.deepeval_cases_per_category,
-            deepeval_soft_fail=args.deepeval_soft_fail,
-            extra_examples=args.extra_examples,
-            workflow_hooks=args.workflow_hooks,
-            strategy_profile=args.strategy_profile,
-            wandb=args.wandb,
-            wandb_project=args.wandb_project,
-            wandb_entity=args.wandb_entity,
-            wandb_inference_project=args.wandb_inference_project or args.wandb_project,
-            wandb_inference_entity=args.wandb_inference_entity or args.wandb_entity,
-        )
-    )
+    sys.exit(0 if result.get("status") not in ("error", "gate_failed", "train_failed") else 1)
 
 
 if __name__ == "__main__":
