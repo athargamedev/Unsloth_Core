@@ -78,12 +78,9 @@ build/
 subjects/
 
 # Frontend
-frontend_control/**/node_modules/
-frontend_control/**/dist/
-frontend_control/**/.next/
-src/dashboard/unity-npc-llm-training-dashboard/node_modules/
-src/dashboard/unity-npc-llm-training-dashboard/dist/
-src/dashboard/unity-npc-llm-training-dashboard/.next/
+src/dashboard/unity-npc-llm-training-dashboard/**/node_modules/
+src/dashboard/unity-npc-llm-training-dashboard/**/dist/
+src/dashboard/unity-npc-llm-training-dashboard/**/.next/
 
 # Secrets
 .env

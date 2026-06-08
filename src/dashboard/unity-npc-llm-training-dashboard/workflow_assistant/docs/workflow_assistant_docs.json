@@ -78,7 +78,7 @@
       ]
     },
     {
-      "path": "frontend_control/unity-npc-llm-training-dashboard/README.md",
+      "path": "src/dashboard/unity-npc-llm-training-dashboard/README.md",
       "kind": "doc",
       "section_hints": ["Dashboard", "Features", "Setup", "Run", "Configuration"],
       "questions": [

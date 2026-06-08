@@ -69,7 +69,7 @@ include = ["src.*", "cli.*", "config.*", "core.*"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 cache_dir = "var/.cache/pytest"
-norecursedirs = [".agents", ".codex", ".gemini", ".hermes", ".opencode", ".pipeline", ".pi", "CLI-Anything", "frontend_control", "node_modules", "subjects", "unsloth_env", "archive"]
+norecursedirs = [".agents", ".codex", ".gemini", ".hermes", ".opencode", ".pipeline", ".pi", "CLI-Anything", "src/dashboard/unity-npc-llm-training-dashboard", "node_modules", "subjects", "unsloth_env", "archive"]
 markers = [
     "unit: pure unit tests",
     "contract: path, CLI, schema, and naming invariant tests",
@@ -91,7 +91,7 @@ markers = [
 target-version = "py312"
 line-length = 100
 src = ["src", "scripts", "tests"]
-exclude = ["CLI-Anything", ".agents", ".codex", "frontend_control", "node_modules", "unsloth_env"]
+exclude = ["CLI-Anything", ".agents", ".codex", "src/dashboard/unity-npc-llm-training-dashboard", "node_modules", "unsloth_env"]
 
 [tool.ruff.format]
 quote-style = "double"
