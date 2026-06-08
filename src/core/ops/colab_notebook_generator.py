@@ -367,7 +367,7 @@ from google.colab import files
 import os, glob
 
 # Find and download the exported GGUF
-gguf_dir = 'exports/{npc_key}'
+gguf_dir = 'artifacts/exports/{npc_key}'
 ggufs = glob.glob(os.path.join(gguf_dir, '*.gguf'))
 if ggufs:
     # Download the most recent one

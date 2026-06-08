@@ -344,7 +344,7 @@ def sweep_dir(npc_key: str) -> Path:
 
 
 def log_root() -> Path:
-    """Return artifacts/logs/ or logs/."""
+    """Return artifacts/logs/."""
     new_path = PROJECT_ROOT / "artifacts" / "logs"
     return new_path if new_path.exists() else PROJECT_ROOT / "logs"
 
@@ -383,13 +383,13 @@ def npc_pipeline_runs_path(npc_key: str) -> Path:
 
 
 def output_root() -> Path:
-    """Return artifacts/models/ or outputs/."""
+    """Return artifacts/models/."""
     new_path = PROJECT_ROOT / "artifacts" / "models"
     return new_path if new_path.exists() else PROJECT_ROOT / "outputs"
 
 
 def output_dir(npc_key: str) -> Path:
-    """Return outputs/{npc_key}/"""
+    """Return artifacts/models/{npc_key}/"""
     return output_root() / npc_key
 
 
@@ -397,44 +397,44 @@ def output_dir(npc_key: str) -> Path:
 
 
 def export_root() -> Path:
-    """Return artifacts/exports/ or exports/."""
+    """Return artifacts/exports/."""
     new_path = PROJECT_ROOT / "artifacts" / "exports"
     return new_path if new_path.exists() else PROJECT_ROOT / "exports"
 
 
 def export_dir(npc_key: str) -> Path:
-    """Return exports/{npc_key}/"""
+    """Return artifacts/exports/{npc_key}/"""
     return export_root() / npc_key
 
 
 def export_adapter_dir(npc_key: str) -> Path:
-    """Return exports/{npc_key}/adapters/."""
+    """Return artifacts/exports/{npc_key}/adapters/."""
     return export_dir(npc_key) / "adapters"
 
 
 def export_unity_dir(npc_key: str) -> Path:
-    """Return exports/{npc_key}/unity/."""
+    """Return artifacts/exports/{npc_key}/unity/."""
     return export_dir(npc_key) / "unity"
 
 
 def export_unity_alias_path(npc_key: str, outtype: str = "f16") -> Path:
-    """Return exports/{npc_key}/unity/{npc_key}-lora-{outtype}.gguf."""
+    """Return artifacts/exports/{npc_key}/unity/{npc_key}-lora-{outtype}.gguf."""
     return export_unity_dir(npc_key) / f"{npc_key}-lora-{outtype}.gguf"
 
 
 def npc_workflow_manifest_path(npc_key: str) -> Path:
-    """Return outputs/{npc_key}/workflow_manifest.json."""
+    """Return artifacts/models/{npc_key}/workflow_manifest.json."""
     return output_dir(npc_key) / "workflow_manifest.json"
 
 
 def export_gguf_path(npc_key: str, model_id: str, quant: str = "q4_k_m") -> Path:
-    """Return exports/{npc_key}/{npc_key}-{model_short}-{quant}.gguf"""
+    """Return artifacts/exports/{npc_key}/{npc_key}-{model_short}-{quant}.gguf"""
     short = model_short_name(model_id)
     return export_dir(npc_key) / f"{npc_key}-{short}-{quant}.gguf"
 
 
 def export_manifest_path(npc_key: str) -> Path:
-    """Return exports/{npc_key}/manifest.json"""
+    """Return artifacts/exports/{npc_key}/manifest.json"""
     return export_dir(npc_key) / "manifest.json"
 
 
@@ -442,7 +442,7 @@ def export_manifest_path(npc_key: str) -> Path:
 
 
 def eval_root() -> Path:
-    """Return artifacts/eval/ or eval/."""
+    """Return artifacts/eval/."""
     new_path = PROJECT_ROOT / "artifacts" / "eval"
     return new_path if new_path.exists() else PROJECT_ROOT / "eval"
 
