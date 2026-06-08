@@ -5,7 +5,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.core.dataset_eval import build_combined_quality_report, summarize_jsonl_dataset
+from src.core.dataset.dataset_eval import (
+    build_combined_quality_report,
+    summarize_jsonl_dataset,
+)
 
 
 def test_combined_quality_report_merges_manifest_sanitize_and_deepeval(tmp_path: Path):
