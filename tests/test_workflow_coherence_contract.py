@@ -130,7 +130,7 @@ def test_suite_audit_has_no_unknown_owners(tmp_path):
 
 def test_ucore_exposes_current_core_commands():
     result = subprocess.run(
-        [sys.executable, "./ucore", "--help"],
+        ["./ucore", "--help"],
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,

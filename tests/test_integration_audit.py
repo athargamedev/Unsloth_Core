@@ -33,7 +33,6 @@ def test_integration_audit_cli_json_shape(monkeypatch):
     monkeypatch.setenv("CONFIDENT_API_KEY", "confident_cli_secret")
     result = subprocess.run(
         [
-            sys.executable,
             "./ucore",
             "audit",
             "integrations",

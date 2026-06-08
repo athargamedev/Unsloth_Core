@@ -72,7 +72,7 @@ def test_config_coherence_flags_template_production_profile(tmp_path):
 
 def test_ucore_audit_config_coherence_json_is_green():
     result = subprocess.run(
-        [sys.executable, "./ucore", "audit", "config-coherence", "--json"],
+        ["./ucore", "audit", "config-coherence", "--json"],
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,

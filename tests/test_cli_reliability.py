@@ -10,7 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def load_ucore():
-    ucore_path = PROJECT_ROOT / "ucore"
+    ucore_path = PROJECT_ROOT / "src/cli/ucore"
     loader = importlib.machinery.SourceFileLoader("ucore_cli_reliability", str(ucore_path))
     spec = importlib.util.spec_from_loader("ucore_cli_reliability", loader, origin=str(ucore_path))
     module = importlib.util.module_from_spec(spec)
@@ -21,8 +21,7 @@ def load_ucore():
 
 
 def test_ucore_requires_a_command():
-    result = subprocess.run(
-        [sys.executable, "./ucore"],
+    result = subprocess.run(["./ucore"],
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,
@@ -34,7 +33,6 @@ def test_ucore_requires_a_command():
 def test_ucore_rejects_conflicting_generate_modes():
     result = subprocess.run(
         [
-            sys.executable,
             "./ucore",
             "generate",
             "data/npcs/specs/history_guide.json",
@@ -52,7 +50,7 @@ def test_ucore_rejects_conflicting_generate_modes():
 
 def test_ucore_generate_ollama_default_model_is_current_project_default():
     result = subprocess.run(
-        [sys.executable, "./ucore", "generate-ollama", "--help"],
+        ["./ucore", "generate-ollama", "--help"],
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,

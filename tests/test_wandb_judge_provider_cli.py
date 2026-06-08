@@ -11,7 +11,7 @@ def test_ucore_exposes_wandb_judge_provider_flags():
     help_by_command = {}
     for command in ["dataset-eval", "evaluate", "feedback", "pipeline"]:
         result = subprocess.run(
-            [sys.executable, "./ucore", command, "--help"],
+            ["./ucore", command, "--help"],
             cwd=PROJECT_ROOT,
             text=True,
             capture_output=True,

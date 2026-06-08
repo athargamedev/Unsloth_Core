@@ -60,7 +60,7 @@ def test_feedback_cycle_escalates_after_bounded_repairs():
 
 def test_ucore_strategy_command_exposes_profile_summary():
     result = subprocess.run(
-        [sys.executable, "./ucore", "strategy", "--profile", "npc-production-grounded", "--json"],
+        ["./ucore", "strategy", "--profile", "npc-production-grounded", "--json"],
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,
