@@ -95,7 +95,7 @@ def move_recursively(src_dir_name, dest_dir_name):
 configs_dir = repo_dir / "configs"
 if configs_dir.exists() and not configs_dir.is_symlink():
     shutil.rmtree(configs_dir)
-    print("Removed old configs/ directory on disk")
+    print("Removed old configs/ symlink (canonical path is etc/) on disk")
 os.symlink("etc", configs_dir)
 run_cmd(["git", "add", "configs"])
 print("Created symlink configs -> etc and staged in Git")

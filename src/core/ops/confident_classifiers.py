@@ -271,7 +271,7 @@ def _parse_args() -> argparse.Namespace:
         description="Print/write Confident AI classifier manual setup specs"
     )
     parser.add_argument(
-        "--write", action="store_true", help="Write configs/confident/classifiers_setup.{json,md}"
+        "--write", action="store_true", help="Write etc/confident/classifiers_setup.{json,md}"
     )
     parser.add_argument("--json-path", help="Override JSON output path")
     parser.add_argument("--markdown-path", help="Override Markdown output path")

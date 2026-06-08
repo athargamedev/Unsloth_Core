@@ -1,4 +1,4 @@
-# configs/promotion-rules.yaml
+# etc/promotion-rules.yaml
 # A model must pass ALL thresholds before being promoted to "best".
 # These prevent garbage models from being promoted due to NaN loss or bad config.
 

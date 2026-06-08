@@ -47,7 +47,7 @@ LEGACY_PATTERNS: list[tuple[str, str, str]] = [
     (
         r"\bconfigs/presets\b|\bconfigs/base_configs\b",
         "warn",
-        "legacy configs preset/base path mentioned; should be etc/presets/ or etc/base_models/",
+        "legacy configs/ path removed; use etc/presets/ or etc/base_models/",
     ),
     (
         r"\bsubjects/NPC_specs\b",

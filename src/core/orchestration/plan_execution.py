@@ -216,7 +216,7 @@ def main() -> int:
         description="Plan local vs remote execution for dataset generation + training"
     )
     ap.add_argument("--spec", required=True, help="Path to subject spec JSON")
-    ap.add_argument("--preset", help="Preset name from configs/presets")
+    ap.add_argument("--preset", help="Preset name from etc/presets")
     ap.add_argument(
         "--local-vram-gb",
         type=float,

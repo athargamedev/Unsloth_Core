@@ -2,7 +2,7 @@
 """
 validate_params.py — Validate parameter-registry.yaml against actual code usage.
 
-Reads configs/parameter-registry.yaml and checks that all referenced params
+Reads etc/parameter-registry.yaml and checks that all referenced params
 exist in some form in the codebase. This is a best-effort validation since
 params can be referenced in many ways (argparse, env vars, YAML config keys).
 """

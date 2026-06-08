@@ -305,38 +305,38 @@ def spec_path(npc_key: str) -> Path:
 
 
 def npc_config_root() -> Path:
-    """Return etc/npcs/ or configs/npcs/."""
+    """Return etc/npcs/."""
     new_path = PROJECT_ROOT / "etc" / "npcs"
     return new_path if new_path.exists() else PROJECT_ROOT / "configs" / "npcs"
 
 
 def npc_config_dir(npc_key: str) -> Path:
-    """Return configs/npcs/{npc_key}/."""
+    """Return etc/npcs/{npc_key}/."""
     return npc_config_root() / npc_key
 
 
 def npc_workflow_config_path(npc_key: str) -> Path:
-    """Return configs/npcs/{npc_key}/workflow.yaml."""
+    """Return etc/npcs/{npc_key}/workflow.yaml."""
     return npc_config_dir(npc_key) / "workflow.yaml"
 
 
 def training_config_path(npc_key: str) -> Path:
-    """Return configs/npcs/{npc_key}/training.yaml."""
+    """Return etc/npcs/{npc_key}/training.yaml."""
     return npc_config_dir(npc_key) / "training.yaml"
 
 
 def evaluation_config_path(npc_key: str) -> Path:
-    """Return configs/npcs/{npc_key}/evaluation.yaml."""
+    """Return etc/npcs/{npc_key}/evaluation.yaml."""
     return npc_config_dir(npc_key) / "evaluation.yaml"
 
 
 def npc_generation_config_path(npc_key: str) -> Path:
-    """Return configs/npcs/{npc_key}/generation.yaml."""
+    """Return etc/npcs/{npc_key}/generation.yaml."""
     return npc_config_dir(npc_key) / "generation.yaml"
 
 
 def sweep_dir(npc_key: str) -> Path:
-    """Return configs/npcs/{npc_key}/sweeps/."""
+    """Return etc/npcs/{npc_key}/sweeps/."""
     return npc_config_dir(npc_key) / "sweeps"
 
 

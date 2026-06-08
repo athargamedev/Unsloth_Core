@@ -288,7 +288,7 @@ def check_promotion_rules(
 ) -> tuple[bool, list[str]]:
     """Check if the model meets minimum quality thresholds for promotion to 'best'.
 
-    Reads thresholds from configs/promotion-rules.yaml.
+    Reads thresholds from etc/promotion-rules.yaml.
     Returns (passed, failure_reasons). Returns (True, []) if no rules file exists.
     """
     rules_path = PROJECT_ROOT / "configs" / "promotion-rules.yaml"

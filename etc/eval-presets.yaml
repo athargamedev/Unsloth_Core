@@ -1,4 +1,4 @@
-# configs/eval-presets.yaml
+# etc/eval-presets.yaml
 # Eval profiles define standard flag combinations for ./ucore evaluate.
 
 smoke:

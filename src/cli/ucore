@@ -457,7 +457,7 @@ def create_parser():
         "--judge-preset",
         default=None,
         choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
-        help="Named Ollama judge preset (default: auto — resolves from configs/ollama-model-presets.yaml)",
+        help="Named Ollama judge preset (default: auto — resolves from etc/ollama-model-presets.yaml)",
     )
     de_p.add_argument(
         "--ollama-base-url", default="http://localhost:11434", help="Ollama server URL"
@@ -574,7 +574,7 @@ def create_parser():
         help="Print/write Confident AI classifier setup specs for manual UI entry",
     )
     cc_p.add_argument(
-        "--write", action="store_true", help="Write configs/confident/classifiers_setup.{json,md}"
+        "--write", action="store_true", help="Write etc/confident/classifiers_setup.{json,md}"
     )
     cc_p.add_argument("--json-path", help="Override JSON output path")
     cc_p.add_argument("--markdown-path", help="Override Markdown output path")
