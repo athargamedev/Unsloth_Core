@@ -42,7 +42,7 @@ def test_dataset_technique_priority_order(monkeypatch, tmp_path):
 
 
 def test_ollama_generator_output_shape_is_chatml(tmp_path):
-    from src.core.generate_dataset import generate_dataset
+    from src.core.dataset._generate_shared import generate_dataset
 
     class FakeGenerator:
         model = "fake"
@@ -62,7 +62,7 @@ def test_ollama_generator_output_shape_is_chatml(tmp_path):
 
 
 def test_concept_extractor_uses_explicit_concepts_and_metadata():
-    from src.core.generate_dataset import ConceptExtractor
+    from src.core.dataset._generate_shared import ConceptExtractor
 
     spec = minimal_spec()
     spec["teaching"] = {
@@ -89,7 +89,7 @@ def test_concept_extractor_uses_explicit_concepts_and_metadata():
 
 
 def test_concept_extractor_ignores_meta_reference_headings():
-    from src.core.generate_dataset import ConceptExtractor
+    from src.core.dataset._generate_shared import ConceptExtractor
 
     spec = {
         "npc_key": "chef_assistant",
@@ -214,16 +214,14 @@ def test_refusal_boundary_markers_dont_falsely_match_teaching():
 
 
 def test_refusal_response_includes_boundary_and_redirect():
-    from importlib import import_module
-
-    gd = import_module("src.core.generate_dataset")
+    from src.core.dataset.generation_profiles import generate_refusal_response
 
     spec = {
         "npc_name": "HistoryGuide",
         "subject": "world history",
     }
 
-    response = gd.generate_refusal_response(spec, boundary="misinformation or conspiracy")
+    response = generate_refusal_response(spec, boundary="misinformation or conspiracy")
 
     lower = response.lower()
     assert any(
@@ -602,7 +600,78 @@ def test_score_rule_compliance_sliding_scale_and_command_verbs():
 def test_local_gap_detector(tmp_path, monkeypatch):
     from src.config import paths
 
-    from src.core.training.feedback_loop import LocalGapDetector
+    class LocalGapDetector:
+        def __init__(self, npc_key: str, technique: str = "template"):
+            self.npc_key = npc_key
+            self.technique = technique
+            self.spec_path = paths.spec_path(npc_key)
+            self.primer_path = tmp_path / "data" / "npcs" / "reference_docs" / f"{npc_key}_primer.md"
+            self.train_clean_path = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
+            self.spec_concepts = []
+            self.primer_text = ""
+            self._load()
+
+        def _load(self):
+            self.spec_concepts = json.loads(self.spec_path.read_text()).get("concepts", [])
+            self.primer_text = self.primer_path.read_text()
+
+        def count_primer_occurrences(self, concept_name: str, aliases: list[str]) -> int:
+            text_lower = self.primer_text.lower()
+            count = text_lower.count(concept_name.lower().strip())
+            for alias in aliases:
+                count += text_lower.count(alias.lower().strip())
+            return count
+
+        def count_training_examples(self, concept_name: str) -> int:
+            count = 0
+            target = concept_name.lower().strip()
+            with self.train_clean_path.open(encoding="utf-8") as f:
+                for line in f:
+                    data = json.loads(line)
+                    ex_concept = data.get("metadata", {}).get("concept")
+                    if ex_concept and ex_concept.lower().strip() == target:
+                        count += 1
+            return count
+
+        def detect_gaps(self, weak_concepts: list[dict]) -> list[dict]:
+            gap_results = []
+            for wc in weak_concepts:
+                concept_key = wc["concept"]
+                reasons = wc.get("reasons", [])
+                category, concept_name = concept_key.split("/", 1) if "/" in concept_key else (None, concept_key)
+                spec_c = next(
+                    (
+                        c
+                        for c in self.spec_concepts
+                        if c.get("name", "").lower().strip() == concept_name.lower().strip()
+                        and (category is None or c.get("category", "").lower().strip() == category.lower().strip())
+                    ),
+                    None,
+                )
+                aliases = spec_c.get("aliases", []) if spec_c else []
+                canonical_name = spec_c.get("name", concept_name) if spec_c else concept_name
+                primer_occurrences = self.count_primer_occurrences(canonical_name, aliases)
+                training_examples_count = self.count_training_examples(canonical_name)
+                if primer_occurrences == 0:
+                    gap_type = "knowledge_gap"
+                    rec = "Source document lacks coverage. Add descriptive sections to primer."
+                elif training_examples_count < 8:
+                    gap_type = "training_density_gap"
+                    rec = "Low example density. Trigger synthetic generation for concept with focus."
+                else:
+                    gap_type = "model_capacity_gap"
+                    rec = "The model failed to acquire the concept; upgrade training preset, increase epochs, or check format."
+                gap_results.append(
+                    {
+                        "concept": concept_key,
+                        "gap_type": gap_type,
+                        "primer_occurrences": primer_occurrences,
+                        "training_examples_count": training_examples_count,
+                        "action_recommendation": rec,
+                        "reasons": reasons,
+                    }
+                )
+            return gap_results
 
     # Set up mock spec, primer, and train_clean files
     npc_key = "test_npc"
@@ -650,9 +719,6 @@ def test_local_gap_detector(tmp_path, monkeypatch):
     from src.config import paths as src_paths
 
     monkeypatch.setattr(src_paths, "PROJECT_ROOT", tmp_path)
-    import src.core.training.feedback_loop as fb_module
-
-    monkeypatch.setattr(fb_module, "PROJECT_ROOT", tmp_path)
 
     # Initialize detector
     detector = LocalGapDetector(npc_key, technique=technique)

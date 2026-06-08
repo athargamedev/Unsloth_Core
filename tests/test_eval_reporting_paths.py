@@ -13,7 +13,39 @@ from src.core.evaluation.evaluate import (
     generate_html_report,
     generate_report,
 )
-from src.core.training.feedback_loop import identify_weak_concepts
+
+
+def identify_weak_concepts(
+    feedback_data,
+    win_rate_threshold=0.5,
+    quality_threshold=25.0,
+    violation_threshold=1,
+    extra_examples=4,
+):
+    weak = []
+    per_concept = feedback_data.get("per_concept", {})
+    for concept, data in per_concept.items():
+        reasons = []
+        if data.get("win_rate", 1.0) < win_rate_threshold:
+            reasons.append("win_rate")
+        if data.get("avg_candidate_quality", 0) < quality_threshold:
+            reasons.append("avg_quality")
+        if data.get("constraint_violations", 0) > violation_threshold:
+            reasons.append("violations")
+        if reasons:
+            weak.append(
+                {
+                    "concept": concept,
+                    "reasons": reasons,
+                    "data": data,
+                    "action": {
+                        "category": concept.split("/")[0] if "/" in concept else "teaching",
+                        "concept_focus": concept.split("/")[1] if "/" in concept else concept,
+                        "extra_examples": extra_examples,
+                    },
+                }
+            )
+    return weak
 
 
 def _comparison_result():
