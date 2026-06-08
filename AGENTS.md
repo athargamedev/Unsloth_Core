@@ -17,6 +17,7 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 - Local GPU: RTX 3060-class 6GB VRAM. Unload Ollama before train/eval when it holds VRAM.
 - Dashboard app lives in `src/dashboard/unity-npc-llm-training-dashboard/`.
 - Supabase Docker core project: `LLM_WSL`. Current local ports: DB `15433`, API/Kong `16433`, Studio `16434`, Analytics `16435`, Inbucket `16436`. Check with `python src/core/ops/docker_core_status.py`.
+- **All compatibility symlinks removed:** No `configs`, `frontend_control`, `outputs`, `exports`, `eval`, `logs`, `subjects/schemas`, `_config`, `.pipeline`, or `ucore` symlinks remain. `./ucore` is now a real bash wrapper.
 
 ## Hard rules
 
@@ -67,8 +68,10 @@ npm run dev
 
 ## Canonical paths
 
+- Config root: `etc/` (not `configs`)
+- Pipeline runtime registry: `var/.pipeline/` (not `.pipeline`)
 - Project state: `docs/project-state.md`
-- Unified CLI: `./ucore`
+- Unified CLI: `./ucore` (real bash wrapper at root)
 - Specs: `data/npcs/specs/<npc>.json`
 - Reference docs: `data/npcs/reference_docs/<npc>_primer.md`
 - Datasets: `data/datasets/<npc>/<technique>/`
@@ -140,6 +143,7 @@ Then update in this order:
 - Standalone evaluation of adapter GGUFs when base+LoRA is required.
 - `--allow-ungated-dataset` for production.
 - Long historical status dumps in `AGENTS.md`.
+- Root compatibility symlinks — all removed as of cleanups in June 2026. Use canonical paths only.
 
 ## Detail docs
 

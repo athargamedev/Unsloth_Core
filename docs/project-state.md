@@ -153,7 +153,7 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
 **Rules:**
 - Every skill/agent brief MUST have `last_verified: YYYY-MM-DD` in YAML frontmatter
 - Skills reference canonical files (T0/T2), never copy their content
-- Stale paths (`subjects/`, `outputs/`, `exports/`) are deprecated — use `data/`, `artifacts/` everywhere
+- **Compatibility symlinks removed** (June 2026 cleanup): `configs`, `frontend_control`, `outputs`, `exports`, `eval`, `logs`, `_config`, `.pipeline`, `subjects/schemas`, `ucore`. All replaced by canonical paths (`etc/`, `artifacts/`, `var/.pipeline/`, `src.cli.ucore`).
 - Shared knowledge (e.g. context maintenance) lives in one skill, not duplicated across `.hermes` and `.codex`
 
 **Baseline cleanup (Phase 1 complete 2026-06-05):**
