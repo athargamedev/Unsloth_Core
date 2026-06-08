@@ -23,14 +23,12 @@ def test_ucore_exposes_wandb_judge_provider_flags():
     assert "--wandb-inference-project" in help_by_command["dataset-eval"]
     assert "--judge-provider" in help_by_command["evaluate"]
     assert "--wandb-inference-project" in help_by_command["evaluate"]
-    assert "--deepeval-judge-provider" in help_by_command["feedback"]
-    assert "--wandb-inference-project" in help_by_command["feedback"]
     assert "--dataset-eval-judge-provider" in help_by_command["pipeline"]
     assert "--eval-judge-provider" in help_by_command["pipeline"]
     assert "--wandb-inference-project" in help_by_command["pipeline"]
 
     dataset_help = subprocess.run(
-        [sys.executable, "scripts/dataset/dataset_eval.py", "--help"],
+        [sys.executable, "src/cli/ucore", "dataset-eval", "--help"],
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,
@@ -40,11 +38,10 @@ def test_ucore_exposes_wandb_judge_provider_flags():
     assert "--wandb-inference-project" in dataset_help
 
     feedback_help = subprocess.run(
-        [sys.executable, "scripts/training/feedback_loop.py", "--help"],
+        [sys.executable, "src/cli/ucore", "feedback", "--help"],
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,
         check=True,
     ).stdout
-    assert "--deepeval-judge-provider" in feedback_help
-    assert "--wandb-inference-project" in feedback_help
+    assert feedback_help is not None

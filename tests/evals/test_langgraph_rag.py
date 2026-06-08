@@ -1,5 +1,6 @@
 import os
 import sys
+import urllib.request
 from pathlib import Path
 
 # Add project root and tests/evals to path
@@ -31,8 +32,19 @@ except ImportError:
     DEEPEVAL_TRACING_AVAILABLE = False
 
 
+def _require_live_ollama():
+    try:
+        with urllib.request.urlopen(f"{_DEEPEVAL_LIVE_URL}/api/tags", timeout=2) as resp:
+            if resp.status < 400:
+                return
+    except Exception:
+        pass
+    pytest.skip(f"Ollama not reachable at {_DEEPEVAL_LIVE_URL}")
+
+
 def test_history_guide_rag_single_turn():
     """Test single-turn RAG evaluation with targeted snippet context."""
+    _require_live_ollama()
     query = "What impact did the printing press have on Europe?"
 
     # Run our LangGraph agent
@@ -59,6 +71,7 @@ def test_history_guide_rag_single_turn():
 
 def test_history_guide_rag_multi_turn():
     """Test multi-turn conversational RAG evaluation."""
+    _require_live_ollama()
     queries = [
         "Tell me about Julius Caesar.",
         "What were his greatest military achievements?",
@@ -92,6 +105,7 @@ def test_history_guide_rag_multi_turn():
 
 def test_history_guide_rag_with_tracing():
     """Test RAG with DeepEval tracing enabled for observability."""
+    _require_live_ollama()
     if not DEEPEVAL_TRACING_AVAILABLE:
         pytest.skip("DeepEval tracing not available")
 

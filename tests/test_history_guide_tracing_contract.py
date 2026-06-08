@@ -33,7 +33,6 @@ def test_runtime_query_accepts_dialogue_id(monkeypatch):
         assert inputs["messages"][0].content == "Why did Rome fall?"
         return {"messages": [Message()]}
 
-    monkeypatch.setattr(agent, "configure_tracing", lambda: None)
     monkeypatch.setattr(agent.app, "invoke", fake_invoke)
 
     result = agent.run_history_guide("Why did Rome fall?", dialogue_id="dialogue-1")

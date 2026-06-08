@@ -231,8 +231,8 @@ def test_dataset_eval_remote_eval_requires_confident(monkeypatch, tmp_path, caps
         patch("src.core.dataset.dataset_eval.effective_cases_per_category", return_value=1),
         patch("src.core.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
         patch("src.core.ops.run_registry.archive_quality_artifact"),
-        patch("_config.log_setup.set_active_run"),
-        patch("_config.log_setup.clear_active_run"),
+        patch("src.config.log_setup.set_active_run"),
+        patch("src.config.log_setup.clear_active_run"),
         patch(
             "src.core.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder
         ),
@@ -286,8 +286,8 @@ def test_dataset_eval_confident_without_api_key(monkeypatch, tmp_path, capsys):
         patch("src.core.dataset.dataset_eval.effective_cases_per_category", return_value=1),
         patch("src.core.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
         patch("src.core.ops.run_registry.archive_quality_artifact"),
-        patch("_config.log_setup.set_active_run"),
-        patch("_config.log_setup.clear_active_run"),
+        patch("src.config.log_setup.set_active_run"),
+        patch("src.config.log_setup.clear_active_run"),
         patch(
             "src.core.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder
         ),
@@ -358,8 +358,8 @@ def test_dataset_eval_remote_eval_sets_judge_provider_confident(monkeypatch, tmp
         patch("src.core.dataset.dataset_eval.effective_cases_per_category", return_value=1),
         patch("src.core.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
         patch("src.core.ops.run_registry.archive_quality_artifact"),
-        patch("_config.log_setup.set_active_run"),
-        patch("_config.log_setup.clear_active_run"),
+        patch("src.config.log_setup.set_active_run"),
+        patch("src.config.log_setup.clear_active_run"),
         patch(
             "src.core.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder
         ),
@@ -445,8 +445,8 @@ def test_dataset_eval_remote_eval_skips_preflight(monkeypatch, tmp_path):
         patch("src.core.dataset.dataset_eval.effective_cases_per_category", return_value=1),
         patch("src.core.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
         patch("src.core.ops.run_registry.archive_quality_artifact"),
-        patch("_config.log_setup.set_active_run"),
-        patch("_config.log_setup.clear_active_run"),
+        patch("src.config.log_setup.set_active_run"),
+        patch("src.config.log_setup.clear_active_run"),
         patch(
             "src.core.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder
         ),
@@ -517,8 +517,8 @@ def test_dataset_eval_remote_eval_calls_confident_api(monkeypatch, tmp_path):
         patch("src.core.dataset.dataset_eval.effective_cases_per_category", return_value=1),
         patch("src.core.ops.run_registry.PipelineRun", return_value=mock_pipeline_run),
         patch("src.core.ops.run_registry.archive_quality_artifact"),
-        patch("_config.log_setup.set_active_run"),
-        patch("_config.log_setup.clear_active_run"),
+        patch("src.config.log_setup.set_active_run"),
+        patch("src.config.log_setup.clear_active_run"),
         patch(
             "src.core.dataset.dataset_eval.WorkflowHookRecorder", return_value=mock_hook_recorder
         ),

@@ -13,7 +13,7 @@ def test_ucore_judge_cache_stats_json_for_empty_cache(tmp_path):
     result = subprocess.run(
         [
             sys.executable,
-            "./ucore",
+            "src/cli/ucore",
             "judge-cache",
             "stats",
             "--db-path",
@@ -37,7 +37,7 @@ def test_ucore_judge_cache_stats_table_for_empty_cache(tmp_path):
     result = subprocess.run(
         [
             sys.executable,
-            "./ucore",
+            "src/cli/ucore",
             "judge-cache",
             "stats",
             "--db-path",

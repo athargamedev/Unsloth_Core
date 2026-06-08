@@ -15,7 +15,7 @@ def test_audit_pipeline_plan_uses_target_plan_semantics(tmp_path):
     target = subprocess.run(
         [
             sys.executable,
-            "./ucore",
+            "src/cli/ucore",
             "target",
             "plan",
             "--npc-key",
@@ -37,7 +37,7 @@ def test_audit_pipeline_plan_uses_target_plan_semantics(tmp_path):
     audit = subprocess.run(
         [
             sys.executable,
-            "./ucore",
+            "src/cli/ucore",
             "audit",
             "pipeline-plan",
             "--npc-key",

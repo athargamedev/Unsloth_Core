@@ -91,8 +91,8 @@
         "generator_params": {
           "type": "object",
           "properties": {
-            "seed": { "type": "integer" },
-            "temperature": { "type": "number" },
+            "seed": { "type": ["integer", "null"] },
+            "temperature": { "type": ["number", "null"] },
             "multi_turn": { "type": "boolean" },
             "turn_count": {
               "type": "integer",

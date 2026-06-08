@@ -23,7 +23,7 @@ def minimal_spec():
 
 
 def test_dataset_technique_priority_order(monkeypatch, tmp_path):
-    from _config import paths
+    from src.config import paths
 
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     # Create datasets for two techniques; ollama has higher priority than template
@@ -140,7 +140,7 @@ def test_tracking_local_fallback_shape(tmp_path):
 
 
 def test_sanitizer_infers_relative_technique_and_counts_sibling_validation(monkeypatch, tmp_path):
-    from _config import paths
+    from src.config import paths
 
     from src.config import paths as src_paths
     from src.core import sanitize_dataset
@@ -353,7 +353,7 @@ def test_template_generation_avoids_duplicate_refusal_rows(tmp_path):
 
 
 def test_export_resolution_keeps_npc_key(monkeypatch, tmp_path):
-    from _config import paths
+    from src.config import paths
 
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     run_dir = paths.run_dir("demo_npc", "20260512_fast_001")
@@ -371,7 +371,7 @@ def test_export_resolution_keeps_npc_key(monkeypatch, tmp_path):
 
 
 def test_export_resolution_falls_back_to_newest_run_without_symlinks(monkeypatch, tmp_path):
-    from _config import paths
+    from src.config import paths
 
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     older = paths.run_dir("demo_npc", "20260512_fast_001")
@@ -600,7 +600,7 @@ def test_score_rule_compliance_sliding_scale_and_command_verbs():
 
 
 def test_local_gap_detector(tmp_path, monkeypatch):
-    from _config import paths
+    from src.config import paths
 
     from src.core.training.feedback_loop import LocalGapDetector
 

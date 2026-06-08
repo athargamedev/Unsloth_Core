@@ -203,7 +203,7 @@ def test_ucore_audit_pipeline_plan_writes_json(tmp_path):
     result = __import__("subprocess").run(
         [
             sys.executable,
-            "./ucore",
+            "src/cli/ucore",
             "audit",
             "pipeline-plan",
             "--npc-key",

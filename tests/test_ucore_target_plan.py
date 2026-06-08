@@ -12,7 +12,7 @@ def test_ucore_target_plan_outputs_cache_aware_json(tmp_path):
     result = subprocess.run(
         [
             sys.executable,
-            "./ucore",
+            "src/cli/ucore",
             "target",
             "plan",
             "--npc-key",
@@ -49,7 +49,7 @@ def test_ucore_target_plan_table_mentions_next_action(tmp_path):
     result = subprocess.run(
         [
             sys.executable,
-            "./ucore",
+            "src/cli/ucore",
             "target",
             "plan",
             "--npc-key",

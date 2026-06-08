@@ -101,27 +101,32 @@ EXPECTED_SCHEMA_ONLY: dict[str, dict[str, str]] = {
         "model-id": "CLI --model",
     },
     "feedback": {
-        # feedback takes a JSON positional; all these fields live in that JSON
-        "auto-retrain": "passed via feedback JSON positional, not CLI flag",
-        "baseline": "passed via feedback JSON positional",
-        "deepeval-cases-per-category": "passed via feedback JSON positional",
+        # feedback CLI was simplified; these legacy schema fields remain for older frontend payloads
+        "auto-retrain": "legacy schema field; current CLI still exposes it",
+        "baseline": "legacy schema field; current CLI still exposes it",
+        "deepeval-cases-per-category": "legacy schema field from old feedback loop",
         "deevel-judge-model": "schema typo: deepeval-judge-model",
-        "deepeval-judge-model": "passed via feedback JSON positional",
-        "deepeval-judge-preset": "passed via feedback JSON positional",
-        "deepeval-judge-provider": "passed via feedback JSON positional",
-        "deepeval-ollama-url": "passed via feedback JSON positional",
-        "deepeval-soft-fail": "passed via feedback JSON positional",
-        "regeneration-batch-size": "passed via feedback JSON positional",
-        "regeneration-model": "passed via feedback JSON positional",
-        "regeneration-preset": "passed via feedback JSON positional",
-        "regeneration-technique": "passed via feedback JSON positional",
-        "regeneration-url": "passed via feedback JSON positional",
-        "train-preset": "passed via feedback JSON positional",
-        "wandb": "CLI --wandb",
-        "wandb-project": "CLI --wandb-project",
-        "wandb-entity": "CLI --wandb-entity",
-        "wandb-inference-project": "CLI --wandb-inference-project",
-        "wandb-inference-entity": "CLI --wandb-inference-entity",
+        "deepeval-judge-model": "legacy schema field from old feedback loop",
+        "deepeval-judge-preset": "legacy schema field from old feedback loop",
+        "deepeval-judge-provider": "legacy schema field from old feedback loop",
+        "deepeval-ollama-url": "legacy schema field from old feedback loop",
+        "deepeval-soft-fail": "legacy schema field from old feedback loop",
+        "quality-threshold": "legacy schema field from old feedback loop",
+        "regeneration-batch-size": "legacy schema field from old feedback loop",
+        "regeneration-model": "legacy schema field from old feedback loop",
+        "regeneration-preset": "legacy schema field from old feedback loop",
+        "regeneration-technique": "legacy schema field from old feedback loop",
+        "regeneration-url": "legacy schema field from old feedback loop",
+        "save-gaps": "legacy schema field from old feedback loop",
+        "skip-gap-detection": "legacy schema field from old feedback loop",
+        "train-preset": "legacy schema field; current CLI still exposes it",
+        "violation-threshold": "legacy schema field from old feedback loop",
+        "wandb": "legacy schema field from old feedback loop",
+        "wandb-project": "legacy schema field from old feedback loop",
+        "wandb-entity": "legacy schema field from old feedback loop",
+        "wandb-inference-project": "legacy schema field from old feedback loop",
+        "wandb-inference-entity": "legacy schema field from old feedback loop",
+        "win-rate-threshold": "legacy schema field from old feedback loop",
     },
     "pipeline": {
         "manifest": "CLI --docs-manifest",
@@ -169,18 +174,14 @@ EXPECTED_CLI_ONLY: dict[str, set[str]] = {
         "remote-eval",
     },
     "deploy": set(),
-    "evaluate": {"confident", "remote-eval"},
+    "evaluate": {"confident", "remote-eval", "runtime-sentence-guard"},
     "export": {"maximum-memory", "outtype", "resume", "skip-f16", "model"},
     "export-adapter": {"all", "outfile", "outtype", "adapter-path"},
     "export-resume": {"skip-f16", "timeout-seconds", "model"},
     "feedback": {
         "dry-run",
         "auto",
-        "skip-gap-detection",
-        "save-gaps",
-        "win-rate-threshold",
-        "quality-threshold",
-        "violation-threshold",
+        "concept-focus",
     },
     "generate": {"ollama", "concept-focus", "docs-manifest", "fresh"},
     "generate-ollama": {
@@ -195,7 +196,7 @@ EXPECTED_CLI_ONLY: dict[str, set[str]] = {
         "val-split",
     },
     "init": {"force", "skip-spec"},
-    "pipeline": {"confident", "remote-eval", "docs-manifest", "allow-metadata-repair"},
+    "pipeline": {"confident", "remote-eval", "docs-manifest", "allow-metadata-repair", "smoke-template"},
     "plan-batch": {
         "colab-output-dir",
         "drive-repo-dir",
@@ -293,7 +294,7 @@ def schema_key_to_canonical(field_key: str) -> str:
 
 def load_ucore():
     """Dynamically import the ``ucore`` script (no ``.py`` extension)."""
-    ucore_path = PROJECT_ROOT / "ucore"
+    ucore_path = PROJECT_ROOT / "src" / "cli" / "ucore"
     loader = importlib.machinery.SourceFileLoader("ucore", str(ucore_path))
     spec = importlib.util.spec_from_loader("ucore", loader, origin=str(ucore_path))
     mod = importlib.util.module_from_spec(spec)
@@ -304,7 +305,7 @@ def load_ucore():
 
 def get_ts_schemas() -> dict[str, Any]:
     """Run the Node.js schema exporter and return parsed JSON."""
-    script_path = PROJECT_ROOT / "scripts" / "export-ts-schemas.mjs"
+    script_path = PROJECT_ROOT / "src" / "core" / "export-ts-schemas.mjs"
     result = subprocess.run(
         ["node", str(script_path)],
         capture_output=True,

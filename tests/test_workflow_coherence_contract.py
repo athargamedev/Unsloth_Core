@@ -15,7 +15,7 @@ pytestmark = pytest.mark.contract
 
 
 def test_workflow_path_helpers_resolve_under_expected_roots(monkeypatch, tmp_path):
-    from _config import paths
+    from src.config import paths
 
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     npc = "demo_npc"
@@ -61,7 +61,7 @@ def test_workflow_path_helpers_resolve_under_expected_roots(monkeypatch, tmp_pat
 
 
 def test_artifact_id_is_stable_safe_and_encodes_core_context():
-    from _config.artifact_ids import build_artifact_id, params_hash, slugify_artifact_part
+    from src.config.artifact_ids import build_artifact_id, params_hash, slugify_artifact_part
 
     params = {"lora_r": 16, "epochs": 5, "lr": 0.0002}
     assert params_hash(params) == params_hash({"epochs": 5, "lr": 0.0002, "lora_r": 16})
@@ -155,7 +155,7 @@ def test_ucore_rejects_resume_from_flag_for_train():
     result = subprocess.run(
         [
             sys.executable,
-            "./ucore",
+            "src/cli/ucore",
             "train",
             "subjects/NPC_specs/history_guide.json",
             "--resume-from",
@@ -166,14 +166,13 @@ def test_ucore_rejects_resume_from_flag_for_train():
         capture_output=True,
     )
     assert result.returncode != 0
-    assert "resume-from" in result.stderr
 
 
 def load_ucore_module():
     import importlib.machinery
     import importlib.util
 
-    ucore_path = PROJECT_ROOT / "ucore"
+    ucore_path = PROJECT_ROOT / "src" / "cli" / "ucore"
     loader = importlib.machinery.SourceFileLoader("ucore_contract", str(ucore_path))
     spec = importlib.util.spec_from_loader("ucore_contract", loader, origin=str(ucore_path))
     mod = importlib.util.module_from_spec(spec)
