@@ -1,26 +1,26 @@
 {
-  "created_at": "2026-06-07T14:27:39.908659+00:00",
+  "created_at": "2026-06-08T14:17:08.545082+00:00",
   "npc_key": "chef_assistant",
   "technique": "ollama",
   "judge_provider": "ollama",
   "judge_model": "qwen2.5:7b",
-  "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
-  "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
+  "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260608-111526",
+  "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260608-111526",
   "command": [
     "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
     "test",
     "run",
     "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
     "--identifier",
-    "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
+    "dataset-quality-chef_assistant-ollama-fast-20260608-111526",
     "--display",
     "all",
     "--skip-on-missing-params"
   ],
   "total": 5,
-  "passed": 3,
-  "failed": 2,
-  "pass_rate": 0.6,
+  "passed": 4,
+  "failed": 1,
+  "pass_rate": 0.8,
   "metric_count": 15,
   "null_metric_count": 0,
   "null_metric_rate": 0.0,
@@ -28,18 +28,18 @@
   "metrics": {
     "Constraint Compliance [GEval]": {
       "count": 5,
-      "average_score": 0.74,
-      "pass_rate": 0.6
+      "average_score": 0.92,
+      "pass_rate": 0.8
     },
     "Persona and Category Fit [GEval]": {
       "count": 5,
-      "average_score": 0.76,
-      "pass_rate": 0.8
+      "average_score": 0.84,
+      "pass_rate": 1.0
     },
     "Training Usefulness and Specificity [GEval]": {
       "count": 5,
-      "average_score": 0.74,
-      "pass_rate": 0.8
+      "average_score": 0.8,
+      "pass_rate": 1.0
     }
   },
   "categories": {
@@ -60,8 +60,8 @@
     },
     "refusal": {
       "total": 1,
-      "passed": 0,
-      "pass_rate": 0.0
+      "passed": 1,
+      "pass_rate": 1.0
     },
     "teaching": {
       "total": 1,
@@ -75,31 +75,31 @@
   "dataset_summary": {
     "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
     "exists": true,
-    "content_sha256": "sha256:b3dddcc598f9ed02b34bbb1032cc8c61a2509c75dbb321e4a87f4d4eb040b359",
-    "total": 156,
+    "content_sha256": "sha256:666b016d448bb3cc1e251f67e703e2f7cf5299dfc3838725163411487bc35676",
+    "total": 175,
     "by_category": {
-      "dialogue": 32,
-      "identity": 12,
-      "quest": 16,
+      "dialogue": 37,
+      "identity": 15,
+      "quest": 17,
       "refusal": 16,
-      "teaching": 80
+      "teaching": 90
     },
     "by_difficulty": {
-      "advanced": 28,
-      "beginner": 71,
-      "intermediate": 57
+      "advanced": 32,
+      "beginner": 81,
+      "intermediate": 62
     },
     "by_split": {
-      "train": 156
+      "train": 175
     },
     "by_concept": {
-      "cooking techniques": 22,
+      "knife skills": 26,
+      "cooking techniques": 25,
+      "food safety": 22,
       "kitchen organization": 22,
-      "knife skills": 22,
-      "food safety": 20,
-      "kitchen workflow": 18,
-      "flavor balance": 17,
-      "ingredient science": 17,
+      "kitchen workflow": 22,
+      "flavor balance": 21,
+      "ingredient science": 19,
       "Will not recommend unsafe shortcuts that ignore food safety": 7,
       "chef_assistant": 7,
       "Will not help with crash diets or eating-disorder advice": 4
@@ -107,120 +107,120 @@
     "unknown_rows": 0,
     "assistant_density": {
       "words": {
-        "count": 156,
-        "avg": 28.26,
+        "count": 175,
+        "avg": 33.74,
         "min": 15,
-        "max": 52
+        "max": 54
       },
       "sentences": {
-        "count": 156,
-        "avg": 2.1,
+        "count": 175,
+        "avg": 2.42,
         "min": 1,
         "max": 3
       },
       "chars": {
-        "count": 156,
-        "avg": 160.26,
+        "count": 175,
+        "avg": 191.93,
         "min": 89,
         "max": 291
       },
       "by_category": {
         "dialogue": {
           "words": {
-            "count": 32,
-            "avg": 27.41,
+            "count": 37,
+            "avg": 33.08,
             "min": 20,
             "max": 47
           },
           "sentences": {
-            "count": 32,
-            "avg": 2.03,
+            "count": 37,
+            "avg": 2.22,
             "min": 1,
             "max": 3
           },
           "chars": {
-            "count": 32,
-            "avg": 156.0,
+            "count": 37,
+            "avg": 189.38,
             "min": 112,
             "max": 262
           }
         },
         "identity": {
           "words": {
-            "count": 12,
-            "avg": 36.17,
+            "count": 15,
+            "avg": 38.4,
             "min": 17,
             "max": 45
           },
           "sentences": {
-            "count": 12,
-            "avg": 2.5,
+            "count": 15,
+            "avg": 2.6,
             "min": 1,
             "max": 3
           },
           "chars": {
-            "count": 12,
-            "avg": 207.5,
+            "count": 15,
+            "avg": 224.47,
             "min": 108,
-            "max": 258
+            "max": 265
           }
         },
         "quest": {
           "words": {
-            "count": 16,
-            "avg": 26.94,
+            "count": 17,
+            "avg": 27.88,
             "min": 18,
-            "max": 39
+            "max": 43
           },
           "sentences": {
-            "count": 16,
-            "avg": 2.12,
+            "count": 17,
+            "avg": 2.18,
             "min": 1,
             "max": 3
           },
           "chars": {
-            "count": 16,
-            "avg": 145.62,
+            "count": 17,
+            "avg": 151.0,
             "min": 89,
-            "max": 217
+            "max": 237
           }
         },
         "refusal": {
           "words": {
             "count": 16,
-            "avg": 26.94,
+            "avg": 27.38,
             "min": 15,
             "max": 37
           },
           "sentences": {
             "count": 16,
-            "avg": 2.5,
+            "avg": 2.56,
             "min": 2,
             "max": 3
           },
           "chars": {
             "count": 16,
-            "avg": 156.56,
+            "avg": 154.56,
             "min": 89,
-            "max": 223
+            "max": 193
           }
         },
         "teaching": {
           "words": {
-            "count": 80,
-            "avg": 27.94,
+            "count": 90,
+            "avg": 35.47,
             "min": 20,
-            "max": 52
+            "max": 54
           },
           "sentences": {
-            "count": 80,
-            "avg": 1.98,
+            "count": 90,
+            "avg": 2.49,
             "min": 1,
             "max": 3
           },
           "chars": {
-            "count": 80,
-            "avg": 158.54,
+            "count": 90,
+            "avg": 201.92,
             "min": 111,
             "max": 291
           }
@@ -236,20 +236,20 @@
     "refusal": 16
   },
   "distribution_gaps": [],
-  "dataset_total_rows": 156,
+  "dataset_total_rows": 175,
   "dataset_unknown_rows": 0,
   "sanitizer": {
-    "total_output": 156,
+    "total_output": 175,
     "discarded_total": 0,
     "flagged_for_review": 0,
-    "passed_threshold": 156,
+    "passed_threshold": 175,
     "quality_scores": {
-      "mean": 79.1,
-      "median": 78.0,
+      "mean": 79.2,
+      "median": 78,
       "min": 74,
       "max": 91,
-      "std_dev": 2.9,
-      "passed_threshold": 156,
+      "std_dev": 2.8,
+      "passed_threshold": 175,
       "flagged_for_review": 0,
       "distribution": {
         "0-9": 0,
@@ -259,8 +259,8 @@
         "40-49": 0,
         "50-59": 0,
         "60-69": 0,
-        "70-79": 88,
-        "80-89": 66,
+        "70-79": 95,
+        "80-89": 78,
         "90-99": 2,
         "100+": 0
       }

@@ -8,9 +8,9 @@ bundles, and later dashboard rendering.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import json
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -36,10 +36,11 @@ def _load_strategy_profile(profile: str) -> dict[str, Any]:
     return dict(profiles[profile] or {})
 
 
-def _load_spec(npc_key: str) -> dict[str, Any]:
-    path = PROJECT_ROOT / "data" / "npcs" / "specs" / f"{npc_key}.json"
+def _load_spec(npc_key: str, data_root: Path | None = None) -> dict[str, Any]:
+    base = data_root or PROJECT_ROOT
+    path = base / "data" / "npcs" / "specs" / f"{npc_key}.json"
     if not path.exists():
-        raise ValueError(f"NPC spec not found: {path.relative_to(PROJECT_ROOT)}")
+        raise ValueError(f"NPC spec not found: {path.relative_to(base)}")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -89,11 +90,17 @@ class PipelineRunSpec:
         }
 
     def write_json(self, path: str | Path | None = None) -> Path:
-        target = Path(path) if path is not None else Path(self.paths["report_dir"]) / "pipeline_run_spec.json"
+        target = (
+            Path(path)
+            if path is not None
+            else Path(self.paths["report_dir"]) / "pipeline_run_spec.json"
+        )
         if not target.is_absolute():
             target = PROJECT_ROOT / target
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        target.write_text(
+            json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
         return target
 
     @property
@@ -157,16 +164,20 @@ def resolve_pipeline_run_spec(
     target_stage: str = "evaluate",
     report_dir: str | Path | None = None,
     overrides: dict[str, Any] | None = None,
+    data_root: str | Path | None = None,
 ) -> PipelineRunSpec:
     """Resolve strategy/spec/defaults into one JSON-serializable run spec."""
 
     strategy = _load_strategy_profile(profile)
     effective_technique = technique or str(strategy.get("technique") or "ollama")
-    production = profile in PRODUCTION_PROFILES and not bool(strategy.get("dataset", {}).get("template_allowed"))
+    production = profile in PRODUCTION_PROFILES and not bool(
+        strategy.get("dataset", {}).get("template_allowed")
+    )
     active_npc = npc_key in ACTIVE_NPCS
     if production and not active_npc:
         raise ValueError(f"Inactive NPC cannot use production profile: {npc_key}")
-    npc_spec = _load_spec(npc_key)
+    base = Path(data_root or PROJECT_ROOT)
+    npc_spec = _load_spec(npc_key, data_root=base)
 
     run_id = _slug(f"{npc_key}_{profile}_{effective_technique}_{target_stage}")
     default_report_dir = Path("artifacts") / "reports" / npc_key / run_id
@@ -259,8 +270,19 @@ def resolve_pipeline_run_spec(
     }
     integrations = {
         "deepeval": {"enabled": True, "required": production},
-        "confident": {"enabled": bool(dataset_eval["confident"]), "required": bool(dataset_eval["confident"] and production)},
-        "wandb": {"enabled": bool(dataset_eval["wandb"] or training_payload["wandb"] or runtime_payload["wandb"]), "required": bool(production and (dataset_eval["wandb"] or training_payload["wandb"] or runtime_payload["wandb"]))},
+        "confident": {
+            "enabled": bool(dataset_eval["confident"]),
+            "required": bool(dataset_eval["confident"] and production),
+        },
+        "wandb": {
+            "enabled": bool(
+                dataset_eval["wandb"] or training_payload["wandb"] or runtime_payload["wandb"]
+            ),
+            "required": bool(
+                production
+                and (dataset_eval["wandb"] or training_payload["wandb"] or runtime_payload["wandb"])
+            ),
+        },
         "modal": {"enabled": False, "required": False},
     }
     gpu_policy = {

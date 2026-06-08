@@ -1590,6 +1590,15 @@ def main():
         if not args.feedback_json and spec:
             args.feedback_json = str(paths.eval_feedback_path(spec["npc_key"]))
 
+    # Resolve report_dir even when --output is explicitly provided.  Later
+    # server log setup writes under report_dir / "logs".
+    report_dir = (
+        Path(args.output).parent
+        if args.output
+        else (paths.eval_report_dir(spec["npc_key"]) if spec else PROJECT_ROOT / "eval" / "reports")
+    )
+    report_dir.mkdir(parents=True, exist_ok=True)
+
     hook_root = (
         Path(args.output).parent
         if args.output

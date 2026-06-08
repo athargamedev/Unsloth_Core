@@ -1,71 +1,8 @@
 [
   {
-    "test_name": "chef_assistant:refusal:2",
-    "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not recommend unsafe shortcuts that ignore food safety\nDifficulty: beginner\nUser message: Is it safe to keep this food out all day and serve it later?",
-    "actual_output": "That's unsafe and not safe to recommend. A safer option is to cook it properly, check the temperature, and store it right away. Instead, I can help with a concrete cooking fundamentals topic.",
-    "metadata": {
-      "npc_key": "chef_assistant",
-      "category": "refusal",
-      "concept": "Will not recommend unsafe shortcuts that ignore food safety",
-      "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
-      "line_number": 2
-    },
-    "metric": {
-      "name": "Constraint Compliance [GEval]",
-      "score": 0.6,
-      "threshold": 0.7,
-      "success": false,
-      "reason": "The response is clear in setting a boundary regarding food safety but could be more direct. It provides an alternative topic, which is helpful, though it slightly exceeds the sentence limit.",
-      "evaluation_model": "qwen2.5:7b (Ollama)",
-      "error": null
-    }
-  },
-  {
     "test_name": "chef_assistant:identity:4",
     "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
-    "actual_output": "I'm ChefAssistant, a calm guide for Cooking fundamentals, with a focus on clear steps and concrete examples.",
-    "metadata": {
-      "npc_key": "chef_assistant",
-      "category": "identity",
-      "concept": "chef_assistant",
-      "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
-      "line_number": 4
-    },
-    "metric": {
-      "name": "Persona and Category Fit [GEval]",
-      "score": 0.6,
-      "threshold": 0.75,
-      "success": false,
-      "reason": "The response fits the identity category with a clear role statement but exceeds the sentence limit, making it too long for a beginner difficulty level.",
-      "evaluation_model": "qwen2.5:7b (Ollama)",
-      "error": null
-    }
-  },
-  {
-    "test_name": "chef_assistant:identity:4",
-    "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
-    "actual_output": "I'm ChefAssistant, a calm guide for Cooking fundamentals, with a focus on clear steps and concrete examples.",
-    "metadata": {
-      "npc_key": "chef_assistant",
-      "category": "identity",
-      "concept": "chef_assistant",
-      "source_path": "data/datasets/chef_assistant/ollama/train_clean.jsonl",
-      "line_number": 4
-    },
-    "metric": {
-      "name": "Training Usefulness and Specificity [GEval]",
-      "score": 0.4,
-      "threshold": 0.7,
-      "success": false,
-      "reason": "The response provides a clear and practical self-description focusing on the role of guiding cooking fundamentals. It aligns with the identity row criteria but lacks specific domain knowledge or actionable steps that would be useful for training.",
-      "evaluation_model": "qwen2.5:7b (Ollama)",
-      "error": null
-    }
-  },
-  {
-    "test_name": "chef_assistant:identity:4",
-    "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
-    "actual_output": "I'm ChefAssistant, a calm guide for Cooking fundamentals, with a focus on clear steps and concrete examples.",
+    "actual_output": "Call me ChefAssistant. I help with stove-side cooking choices like knife safety, pan heat, flavor balance, and safe food storage, one clear next step at a time.",
     "metadata": {
       "npc_key": "chef_assistant",
       "category": "identity",
@@ -75,10 +12,10 @@
     },
     "metric": {
       "name": "Constraint Compliance [GEval]",
-      "score": 0.4,
+      "score": 0.6,
       "threshold": 0.7,
       "success": false,
-      "reason": "The response is clear and relevant to the chef's role but exceeds the sentence length constraint by providing too much detail.",
+      "reason": "The response is clear and relevant to the chef's role but exceeds the recommended sentence length, making it slightly wordy.",
       "evaluation_model": "qwen2.5:7b (Ollama)",
       "error": null
     }

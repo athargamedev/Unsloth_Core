@@ -1,5 +1,5 @@
 ---
-last_verified: 2026-06-07
+last_verified: 2026-06-08
 next_audit: 2026-07-05
 ---
 
@@ -17,6 +17,20 @@ Only these are active for prototype validation:
 - `chef_assistant` — culinary arts
 
 If old docs mention other NPCs as active, treat that as deprecated unless the user explicitly reactivates them.
+
+## Current verified run state
+
+Verified 2026-06-08:
+
+- `chef_assistant` latest/best now point to `artifacts/models/chef_assistant/runs/20260608_safe-any_llama3.2-3b_003`.
+- `chef_assistant` density/specificity repair rewrote weak runtime concepts to 35–55 word / 2–3 sentence examples and added exact eval prompts for kitchen workflow, food safety, cooking techniques, ingredient science, and knife skills.
+- `chef_assistant` repaired clean dataset: 175 rows, structural `dataset-eval` status `ok`, semantic fast gate 4/5 (80%). Remaining fast-gate miss is one identity constraint score; no structural block.
+- `chef_assistant` low-VRAM density variant: `fast-3b` with `max_seq_len=512`, `batch_size=1`, `grad_accum=8`, `lora_r=8`, `lora_alpha=16`, `packing=false`, `train_on_responses=true`, `UNSLOTH_DISABLE_STATISTICS=1`; final loss 1.3825.
+- `chef_assistant` adapter exported: `artifacts/exports/chef_assistant/chef_assistant-lora-f16.gguf` (24.3 MB).
+- Runtime eval density result: `artifacts/eval/reports/chef_assistant/runtime_eval_density_20260608.json`; base+LoRA CPU eval (`--gpu-layers 0`), Ollama judge `qwen2.5:7b` active, 10 examples, candidate 10W/0L/0T (100%). Candidate avg words 37 vs baseline 84. Weak concept list only reports `teaching/food safety` because one candidate response had a 4-sentence constraint violation despite winning.
+- Canonical feedback JSON now points at the density eval: `artifacts/eval/results/feedback/chef_assistant.json`; prior feedback snapshots backed up under `artifacts/eval/results/feedback/history/`.
+- Professional report bundle: `artifacts/reports/chef_assistant/chef_assistant_npc-production-grounded_ollama_evaluate/` with `summary.md`, `index.html`, `pipeline_run_spec.json`, `stage_status.json`, `integration_health.json`, `dataset_quality.json`, `runtime_eval_report.json`, `training_report.json`, `next_actions.json`; `runtime_eval_report.json` now reflects the 10-example 100% density eval.
+- `history_guide` remains on promoted run `20260607_fast-1.7b_llama3.2-3b_002` unless a later verified run supersedes it.
 
 ## Dataset generation policy
 
@@ -93,10 +107,15 @@ Dead/deprecated commands are marked `[LEGACY]`, `[DEPRECATED]`, or `[EXPERIMENTA
 
 ## Local services
 
-- Supabase: start with `supabase start`
-- Supabase DB: `15434`
-- Supabase API/Kong: `16437`
-- Supabase Studio: `16438`
+- Supabase: check with `python src/core/ops/docker_core_status.py`; start with the repo's Docker Compose/Supabase workflow when needed.
+- Current Docker core project: `LLM_WSL`.
+- Current local ports:
+  - Supabase DB: `15433`
+  - Supabase API/Kong: `16433`
+  - Supabase Studio: `16434`
+  - Supabase Analytics: `16435`
+  - Supabase Inbucket: `16436`
+- Last verified 2026-06-08: Docker core services were down (0/11 up). Start before tracked eval/session persistence work.
 - Dashboard package: `src/dashboard/unity-npc-llm-training-dashboard/`
 - Dashboard dev: `cd src/dashboard/unity-npc-llm-training-dashboard && npm run dev`
 - Dashboard port: `3100`
@@ -160,16 +179,14 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
 - P7 Dashboard truthfulness — artifact-registry-backed status, command schema parity
 - P8 NPC component contracts — Pydantic Identity/Tone/Grounding/Refusal/Runtime/Distribution
 - P9 Docs/context cleanup — qwen3→qwen2.5 defaults across 7 docs, inactive NPC examples replaced, stale paths fixed, operator-runbook path corrections
-- P10 Production pilot (completed 2026-06-07):
-  - Both NPCs trained and evaluated end-to-end:
-    - `history_guide`: run `20260607_fast-1.7b_llama3.2-3b_002`, final loss 1.6116, GGUF 48,655,200 bytes
-    - `chef_assistant`: run `20260607_fast-1.7b_llama3.2-3b_004`, final loss 1.2203
-  - Both runs promoted (best/latest point to current run)
-  - GGUF adapters exported to `artifacts/exports/<npc>/<npc>-lora-f16.gguf`
-  - Evaluation: history_guide 55.6% win rate (5W/2L/2T), chef_assistant 50.0% win rate (5W/5L/0T)
-  - Both evals used CPU fallback (`--gpu-layers 0`) due to GPU OOM on 6GB VRAM
-  - HTML reports: `artifacts/eval/reports/<npc>/eval_20260607T*.html`
-  - Feedback JSONs: `artifacts/eval/results/feedback/<npc>.json`
+- P10 Production pilot (updated 2026-06-08):
+  - Both active NPCs have trained/exported/evaluated evidence in `artifacts/`.
+  - `history_guide`: promoted run `20260607_fast-1.7b_llama3.2-3b_002`, final loss 1.6116, prior runtime eval 55.6% win rate (5W/2L/2T).
+  - `chef_assistant`: latest/best run `20260608_safe-any_llama3.2-3b_003`, final loss 1.3825 after density/specificity repair and low-VRAM retrain.
+  - `chef_assistant` runtime density eval: `runtime_eval_density_20260608.json`, 10 examples, candidate 10W/0L/0T (100%); candidate avg 37 words vs baseline 84; one food-safety response still had a 4-sentence violation despite winning.
+  - GGUF adapters exported to `artifacts/exports/<npc>/<npc>-lora-f16.gguf`.
+  - Base+LoRA eval uses CPU fallback (`--gpu-layers 0`) on this 6GB VRAM machine.
+  - Professional bundle reports live under `artifacts/reports/<npc>/<run_id>/`.
   - 3 bugs fixed in legacy generate_dataset.py (import error, url=None crash, async fallback)
   - Fixed `dataset_eval.py` L107 and L607-608 — both `dataset_dir()` and error message now use `dataset_root()` not hardcoded `subjects/datasets/`
   - Cleared stale quality artifacts from `subjects/datasets/`

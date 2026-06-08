@@ -5,7 +5,7 @@
     "quality_summary": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/quality_summary.json"
   },
   "component_counts": {
-    "spec_contract": 4
+    "spec_contract": 1
   },
   "confident_payload": {
     "hyperparameters": {
@@ -14,70 +14,10 @@
       "project": "Unsloth_Core",
       "technique": "ollama"
     },
-    "identifier": "dataset-quality:chef_assistant:ollama:20260607T142739Z",
+    "identifier": "dataset-quality:chef_assistant:ollama:20260608T141708Z",
     "llmTestCases": [
       {
-        "actualOutput": "That's unsafe and not safe to recommend. A safer option is to cook it properly, check the temperature, and store it right away. Instead, I can help with a concrete cooking fundamentals topic.",
-        "context": [],
-        "customColumnKeyValues": {
-          "category": "refusal",
-          "component": "spec_contract",
-          "concept": "Will not recommend unsafe shortcuts that ignore food safety",
-          "line_number": 2,
-          "metric": "Constraint Compliance [GEval]",
-          "npc_key": "chef_assistant",
-          "project": "Unsloth_Core",
-          "reason": "The response is clear in setting a boundary regarding food safety but could be more direct. It provides an alternative topic, which is helpful, though it slightly exceeds the sentence limit.",
-          "repair_action": "tighten identity/refusal contract templates in spec or generator prompt",
-          "score": 0.6,
-          "technique": "ollama"
-        },
-        "expectedOutput": "",
-        "input": "NPC: chef_assistant\nCategory: refusal\nConcept: Will not recommend unsafe shortcuts that ignore food safety\nDifficulty: beginner\nUser message: Is it safe to keep this food out all day and serve it later?",
-        "name": "chef_assistant:refusal:2"
-      },
-      {
-        "actualOutput": "I'm ChefAssistant, a calm guide for Cooking fundamentals, with a focus on clear steps and concrete examples.",
-        "context": [],
-        "customColumnKeyValues": {
-          "category": "identity",
-          "component": "spec_contract",
-          "concept": "chef_assistant",
-          "line_number": 4,
-          "metric": "Persona and Category Fit [GEval]",
-          "npc_key": "chef_assistant",
-          "project": "Unsloth_Core",
-          "reason": "The response fits the identity category with a clear role statement but exceeds the sentence limit, making it too long for a beginner difficulty level.",
-          "repair_action": "tighten identity/refusal contract templates in spec or generator prompt",
-          "score": 0.6,
-          "technique": "ollama"
-        },
-        "expectedOutput": "",
-        "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
-        "name": "chef_assistant:identity:4"
-      },
-      {
-        "actualOutput": "I'm ChefAssistant, a calm guide for Cooking fundamentals, with a focus on clear steps and concrete examples.",
-        "context": [],
-        "customColumnKeyValues": {
-          "category": "identity",
-          "component": "spec_contract",
-          "concept": "chef_assistant",
-          "line_number": 4,
-          "metric": "Training Usefulness and Specificity [GEval]",
-          "npc_key": "chef_assistant",
-          "project": "Unsloth_Core",
-          "reason": "The response provides a clear and practical self-description focusing on the role of guiding cooking fundamentals. It aligns with the identity row criteria but lacks specific domain knowledge or actionable steps that would be useful for training.",
-          "repair_action": "tighten identity/refusal contract templates in spec or generator prompt",
-          "score": 0.4,
-          "technique": "ollama"
-        },
-        "expectedOutput": "",
-        "input": "NPC: chef_assistant\nCategory: identity\nConcept: chef_assistant\nDifficulty: beginner\nUser message: What should I call you?",
-        "name": "chef_assistant:identity:4"
-      },
-      {
-        "actualOutput": "I'm ChefAssistant, a calm guide for Cooking fundamentals, with a focus on clear steps and concrete examples.",
+        "actualOutput": "Call me ChefAssistant. I help with stove-side cooking choices like knife safety, pan heat, flavor balance, and safe food storage, one clear next step at a time.",
         "context": [],
         "customColumnKeyValues": {
           "category": "identity",
@@ -87,9 +27,9 @@
           "metric": "Constraint Compliance [GEval]",
           "npc_key": "chef_assistant",
           "project": "Unsloth_Core",
-          "reason": "The response is clear and relevant to the chef's role but exceeds the sentence length constraint by providing too much detail.",
+          "reason": "The response is clear and relevant to the chef's role but exceeds the recommended sentence length, making it slightly wordy.",
           "repair_action": "tighten identity/refusal contract templates in spec or generator prompt",
-          "score": 0.4,
+          "score": 0.6,
           "technique": "ollama"
         },
         "expectedOutput": "",
@@ -107,7 +47,7 @@
       "name": "unsloth-core-dataset-repair"
     }
   },
-  "created_at": "2026-06-07T14:27:39.926298+00:00",
+  "created_at": "2026-06-08T14:17:08.558900+00:00",
   "kind": "dataset_quality_insights",
   "npc_key": "chef_assistant",
   "project": "Unsloth_Core",
@@ -115,7 +55,7 @@
     {
       "action": "tighten identity/refusal contract templates in spec or generator prompt",
       "component": "spec_contract",
-      "count": 4
+      "count": 1
     }
   ],
   "status": "ok",
@@ -138,8 +78,8 @@
         "total": 1
       },
       "refusal": {
-        "pass_rate": 0.0,
-        "passed": 0,
+        "pass_rate": 1.0,
+        "passed": 1,
         "total": 1
       },
       "teaching": {
@@ -154,90 +94,90 @@
       "run",
       "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
       "--identifier",
-      "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
+      "dataset-quality-chef_assistant-ollama-fast-20260608-111526",
       "--display",
       "all",
       "--skip-on-missing-params"
     ],
-    "created_at": "2026-06-07T14:27:39.908659+00:00",
+    "created_at": "2026-06-08T14:17:08.545082+00:00",
     "dataset_summary": {
       "assistant_density": {
         "by_category": {
           "dialogue": {
             "chars": {
-              "avg": 156.0,
-              "count": 32,
+              "avg": 189.38,
+              "count": 37,
               "max": 262,
               "min": 112
             },
             "sentences": {
-              "avg": 2.03,
-              "count": 32,
+              "avg": 2.22,
+              "count": 37,
               "max": 3,
               "min": 1
             },
             "words": {
-              "avg": 27.41,
-              "count": 32,
+              "avg": 33.08,
+              "count": 37,
               "max": 47,
               "min": 20
             }
           },
           "identity": {
             "chars": {
-              "avg": 207.5,
-              "count": 12,
-              "max": 258,
+              "avg": 224.47,
+              "count": 15,
+              "max": 265,
               "min": 108
             },
             "sentences": {
-              "avg": 2.5,
-              "count": 12,
+              "avg": 2.6,
+              "count": 15,
               "max": 3,
               "min": 1
             },
             "words": {
-              "avg": 36.17,
-              "count": 12,
+              "avg": 38.4,
+              "count": 15,
               "max": 45,
               "min": 17
             }
           },
           "quest": {
             "chars": {
-              "avg": 145.62,
-              "count": 16,
-              "max": 217,
+              "avg": 151.0,
+              "count": 17,
+              "max": 237,
               "min": 89
             },
             "sentences": {
-              "avg": 2.12,
-              "count": 16,
+              "avg": 2.18,
+              "count": 17,
               "max": 3,
               "min": 1
             },
             "words": {
-              "avg": 26.94,
-              "count": 16,
-              "max": 39,
+              "avg": 27.88,
+              "count": 17,
+              "max": 43,
               "min": 18
             }
           },
           "refusal": {
             "chars": {
-              "avg": 156.56,
+              "avg": 154.56,
               "count": 16,
-              "max": 223,
+              "max": 193,
               "min": 89
             },
             "sentences": {
-              "avg": 2.5,
+              "avg": 2.56,
               "count": 16,
               "max": 3,
               "min": 2
             },
             "words": {
-              "avg": 26.94,
+              "avg": 27.38,
               "count": 16,
               "max": 37,
               "min": 15
@@ -245,81 +185,81 @@
           },
           "teaching": {
             "chars": {
-              "avg": 158.54,
-              "count": 80,
+              "avg": 201.92,
+              "count": 90,
               "max": 291,
               "min": 111
             },
             "sentences": {
-              "avg": 1.98,
-              "count": 80,
+              "avg": 2.49,
+              "count": 90,
               "max": 3,
               "min": 1
             },
             "words": {
-              "avg": 27.94,
-              "count": 80,
-              "max": 52,
+              "avg": 35.47,
+              "count": 90,
+              "max": 54,
               "min": 20
             }
           }
         },
         "chars": {
-          "avg": 160.26,
-          "count": 156,
+          "avg": 191.93,
+          "count": 175,
           "max": 291,
           "min": 89
         },
         "sentences": {
-          "avg": 2.1,
-          "count": 156,
+          "avg": 2.42,
+          "count": 175,
           "max": 3,
           "min": 1
         },
         "words": {
-          "avg": 28.26,
-          "count": 156,
-          "max": 52,
+          "avg": 33.74,
+          "count": 175,
+          "max": 54,
           "min": 15
         }
       },
       "by_category": {
-        "dialogue": 32,
-        "identity": 12,
-        "quest": 16,
+        "dialogue": 37,
+        "identity": 15,
+        "quest": 17,
         "refusal": 16,
-        "teaching": 80
+        "teaching": 90
       },
       "by_concept": {
         "Will not help with crash diets or eating-disorder advice": 4,
         "Will not recommend unsafe shortcuts that ignore food safety": 7,
         "chef_assistant": 7,
-        "cooking techniques": 22,
-        "flavor balance": 17,
-        "food safety": 20,
-        "ingredient science": 17,
+        "cooking techniques": 25,
+        "flavor balance": 21,
+        "food safety": 22,
+        "ingredient science": 19,
         "kitchen organization": 22,
-        "kitchen workflow": 18,
-        "knife skills": 22
+        "kitchen workflow": 22,
+        "knife skills": 26
       },
       "by_difficulty": {
-        "advanced": 28,
-        "beginner": 71,
-        "intermediate": 57
+        "advanced": 32,
+        "beginner": 81,
+        "intermediate": 62
       },
       "by_split": {
-        "train": 156
+        "train": 175
       },
-      "content_sha256": "sha256:b3dddcc598f9ed02b34bbb1032cc8c61a2509c75dbb321e4a87f4d4eb040b359",
+      "content_sha256": "sha256:666b016d448bb3cc1e251f67e703e2f7cf5299dfc3838725163411487bc35676",
       "exists": true,
       "path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/train_clean.jsonl",
-      "total": 156,
+      "total": 175,
       "unknown_rows": 0
     },
-    "dataset_total_rows": 156,
+    "dataset_total_rows": 175,
     "dataset_unknown_rows": 0,
-    "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
-    "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260607-112605",
+    "deepeval_identifier": "dataset-quality-chef_assistant-ollama-fast-20260608-111526",
+    "deepeval_result_identifier": "dataset-quality-chef_assistant-ollama-fast-20260608-111526",
     "distribution_gaps": [],
     "expected_distribution": {
       "dialogue": 32,
@@ -328,38 +268,38 @@
       "refusal": 16,
       "teaching": 80
     },
-    "failed": 2,
+    "failed": 1,
     "failures_path": "/home/athar/Projects/Unsloth_Core/data/datasets/chef_assistant/ollama/quality_failures.json",
     "judge_model": "qwen2.5:7b",
     "judge_provider": "ollama",
     "metric_count": 15,
     "metrics": {
       "Constraint Compliance [GEval]": {
-        "average_score": 0.74,
+        "average_score": 0.92,
         "count": 5,
-        "pass_rate": 0.6
+        "pass_rate": 0.8
       },
       "Persona and Category Fit [GEval]": {
-        "average_score": 0.76,
+        "average_score": 0.84,
         "count": 5,
-        "pass_rate": 0.8
+        "pass_rate": 1.0
       },
       "Training Usefulness and Specificity [GEval]": {
-        "average_score": 0.74,
+        "average_score": 0.8,
         "count": 5,
-        "pass_rate": 0.8
+        "pass_rate": 1.0
       }
     },
     "npc_key": "chef_assistant",
     "null_metric_count": 0,
     "null_metric_rate": 0.0,
-    "pass_rate": 0.6,
-    "passed": 3,
+    "pass_rate": 0.8,
+    "passed": 4,
     "quality_gate_mode": "fast",
     "sanitizer": {
       "discarded_total": 0,
       "flagged_for_review": 0,
-      "passed_threshold": 156,
+      "passed_threshold": 175,
       "quality_scores": {
         "distribution": {
           "0-9": 0,
@@ -370,19 +310,19 @@
           "40-49": 0,
           "50-59": 0,
           "60-69": 0,
-          "70-79": 88,
-          "80-89": 66,
+          "70-79": 95,
+          "80-89": 78,
           "90-99": 2
         },
         "flagged_for_review": 0,
         "max": 91,
-        "mean": 79.1,
-        "median": 78.0,
+        "mean": 79.2,
+        "median": 78,
         "min": 74,
-        "passed_threshold": 156,
-        "std_dev": 2.9
+        "passed_threshold": 175,
+        "std_dev": 2.8
       },
-      "total_output": 156
+      "total_output": 175
     },
     "sanitizer_quality_issues": [],
     "status": "ok",

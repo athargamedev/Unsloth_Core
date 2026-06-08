@@ -1421,6 +1421,27 @@ def create_parser():
     )
     judge_cache_stats.add_argument("--json", action="store_true", help="Output JSON")
 
+    # Report bundle
+    report_p = subparsers.add_parser("report", help="Pipeline report bundle operations")
+    report_sub = report_p.add_subparsers(
+        dest="report_command", help="Report subcommand", required=True
+    )
+    report_bundle = report_sub.add_parser("bundle", help="Build pipeline report bundle")
+    report_bundle.add_argument("--npc-key", required=True, help="NPC key")
+    report_bundle.add_argument("--technique", default=None, help="Dataset technique")
+    report_bundle.add_argument(
+        "--target-stage",
+        default="evaluate",
+        choices=["generate", "sanitize", "dataset_eval", "train", "export", "evaluate"],
+        help="Target stage",
+    )
+    report_bundle.add_argument(
+        "--profile", default="npc-production-grounded", help="Strategy profile"
+    )
+    report_bundle.add_argument(
+        "--report-dir", default=None, help="Override report output directory"
+    )
+
     # Inference server
     infer_p = subparsers.add_parser("inference-server", help="Local Ollama inference control plane")
     infer_sub = infer_p.add_subparsers(
@@ -1694,6 +1715,42 @@ def main(argv: list[str] | None = None) -> int:
                 for judge, count in stats["by_judge"].items():
                     print(f"    {judge}: {count}")
         return 0
+
+    if args.command == "report":
+        if args.report_command == "bundle":
+            from src.core.reports.pipeline_bundle import build_pipeline_bundle
+
+            result = build_pipeline_bundle(
+                npc_key=args.npc_key,
+                profile=args.profile,
+                technique=args.technique,
+                target_stage=args.target_stage,
+                report_dir=args.report_dir if hasattr(args, "report_dir") else None,
+            )
+            report_dir = result.get("report_dir", "?")
+            summary = result.get("summary", "")
+            print(f"Report bundle built for {result['npc_key']} ({result['target_stage']})")
+            print(f"  Report dir: {report_dir}")
+            print(
+                f"  Integration health: {'OK' if result.get('integration_audit', {}).get('ok') else 'BLOCKERS'}"
+            )
+            print(f"  Summary: {summary[:120]}...")
+            print("  Files written:")
+            for fname in [
+                "pipeline_run_spec.json",
+                "stage_status.json",
+                "integration_health.json",
+                "dataset_quality.json",
+                "runtime_eval_report.json",
+                "training_report.json",
+                "summary.md",
+                "index.html",
+                "next_actions.json",
+            ]:
+                fp = Path(report_dir) / fname
+                exists = "✓" if fp.exists() else "✗"
+                print(f"    {exists} {fname}")
+            return 0
 
     if args.command == "inference-server":
         cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "inference_server.py"), args.inference_command]
