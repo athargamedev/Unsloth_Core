@@ -60,6 +60,11 @@ LEGACY_PATTERNS: list[tuple[str, str, str]] = [
         "legacy alias path used; should use artifacts/{models,exports,eval,logs}/",
     ),
     (
+        r"\.pipeline/",
+        "warn",
+        "legacy .pipeline/ alias path used; should use var/.pipeline/",
+    ),
+    (
         r"\bsubjects/reference_docs\b",
         "warn",
         "legacy reference docs path subjects/reference_docs mentioned; should be data/npcs/reference_docs/",

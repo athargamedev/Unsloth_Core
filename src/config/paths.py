@@ -37,23 +37,23 @@ CONFIG_DIR = _new_config_dir if _new_config_dir.exists() else _old_config_dir
 
 
 def pipeline_root() -> Path:
-    """Return var/.pipeline/ or .pipeline/ — unified runtime registry root."""
+    """Return var/.pipeline/ — unified runtime registry root."""
     new_path = PROJECT_ROOT / "var" / ".pipeline"
     return new_path if new_path.exists() else PROJECT_ROOT / ".pipeline"
 
 
 def pipeline_index_path() -> Path:
-    """Return .pipeline/runs.jsonl — append-only pipeline index."""
+    """Return var/.pipeline/runs.jsonl — append-only pipeline index."""
     return pipeline_root() / "runs.jsonl"
 
 
 def pipeline_runs_root() -> Path:
-    """Return .pipeline/runs/ — per-run directories."""
+    """Return var/.pipeline/runs/ — per-run directories."""
     return pipeline_root() / "runs"
 
 
 def pipeline_run_dir(run_id: str) -> Path:
-    """Return .pipeline/runs/{run_id}/."""
+    """Return var/.pipeline/runs/{run_id}/."""
     return pipeline_runs_root() / run_id
 
 
@@ -360,22 +360,22 @@ def npc_log_dir(npc_key: str, stage: str) -> Path:
 
 
 def pipeline_npcs_root() -> Path:
-    """Return .pipeline/npcs/."""
+    """Return var/.pipeline/npcs/."""
     return pipeline_root() / "npcs"
 
 
 def npc_pipeline_root(npc_key: str) -> Path:
-    """Return .pipeline/npcs/{npc_key}/."""
+    """Return var/.pipeline/npcs/{npc_key}/."""
     return pipeline_npcs_root() / npc_key
 
 
 def npc_pipeline_index_path(npc_key: str) -> Path:
-    """Return .pipeline/npcs/{npc_key}/index.json."""
+    """Return var/.pipeline/npcs/{npc_key}/index.json."""
     return npc_pipeline_root(npc_key) / "index.json"
 
 
 def npc_pipeline_runs_path(npc_key: str) -> Path:
-    """Return .pipeline/npcs/{npc_key}/runs.jsonl."""
+    """Return var/.pipeline/npcs/{npc_key}/runs.jsonl."""
     return npc_pipeline_root(npc_key) / "runs.jsonl"
 
 

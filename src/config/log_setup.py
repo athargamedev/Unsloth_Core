@@ -4,7 +4,7 @@ _config/log_setup.py — Structured logging for Unsloth_Core src.core.
 Provides a consistent logging setup across all pipeline scripts:
 - Timestamped, leveled output to stderr
 - JSON state lines to stdout for frontend/machine consumption
-- Persistent JSON events to .pipeline/runs/{run_id}/log_state.jsonl
+- Persistent JSON events to var/.pipeline/runs/{run_id}/log_state.jsonl
   when a pipeline run is active (see set_active_run()).
 
 Usage:
@@ -71,7 +71,7 @@ def log_state(event: str, **kwargs) -> None:
     The frontend dashboard consumes these lines for progress tracking.
 
     When a pipeline run is active (registered via set_active_run()), the same
-    payload is also appended to .pipeline/runs/{run_id}/log_state.jsonl for
+    payload is also appended to var/.pipeline/runs/{run_id}/log_state.jsonl for
     permanent structured storage — the unified source of truth for run events.
     """
     payload = {
@@ -116,7 +116,7 @@ def set_active_run(run_id: str, run_dir: Path) -> None:
     Args:
         run_id:  The canonical pipeline run ID
                  (e.g. '20260520_history_guide_train_fast-3b_001').
-        run_dir: Path to .pipeline/runs/{run_id}/ returned by
+        run_dir: Path to var/.pipeline/runs/{run_id}/ returned by
                  RunRegistry.start_run().
     """
     global _active_run_id, _active_run_dir
