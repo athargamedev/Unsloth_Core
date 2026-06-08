@@ -1,73 +1,70 @@
 # Unsloth_Core Dataflow & Simplification Report
 
-## 1. The `scripts/` illusion
+Last verified: 2026-06-08
 
-The `scripts/` directory was a **symlink → `src/core/`** since June 1. Every file
-was accessible through two paths but lived on disk once. This created the
-appearance of duplication. **Removed.** All code lives in `src/core/`.
+## 1. The old `scripts/` illusion
+
+The old `scripts/` path was a compatibility symlink to `src/core/`. It has been removed.
+All pipeline code now lives only in `src/core/`.
 
 ## 2. Canonical dataflow
 
-```
+```text
 validate-spec → generate-ollama → sanitize → dataset-eval → train+export → evaluate
 ```
 
 | Step | CLI | Script | Status |
 |---|---|---|---|
-| Spec validation | `validate-spec` | `src/core/dataset/validate_subject_spec.py` | ✅ |
-| Generation | `generate-ollama` | `src/core/dataset/generate_dataset.py` | ✅ qwen2.5:7b |
-| Sanitize | `sanitize` | `src/core/dataset/sanitize_dataset.py` | ✅ |
-| Dataset eval | `dataset-eval` | `src/core/dataset/dataset_eval.py` | ✅ DeepEval 4.0.5 |
-| Training | `train` | `src/core/training/train.py` | ✅ (eval disabled for 6GB) |
-| GGUF export | `--export-gguf` (train flag) | `src/core/export/export.py` + `convert_lora_to_gguf.py` | ✅ adapter-only |
-| Evaluation | `evaluate` | `src/core/evaluation/evaluate.py` | ✅ needs `--base-model` |
+| Spec validation | `validate-spec` | `src/core/dataset/validate_subject_spec.py` | active |
+| Generation | `generate-ollama` | `src/core/dataset/generate_dataset.py` | active |
+| Sanitize | `sanitize` | `src/core/dataset/sanitize_dataset.py` | active |
+| Dataset eval | `dataset-eval` | `src/core/dataset/dataset_eval.py` | active |
+| Training | `train` | `src/core/training/train.py` | active |
+| GGUF export | `train --export-gguf` or `export` | `src/core/export/` | active |
+| Evaluation | `evaluate` | `src/core/evaluation/evaluate.py` | active |
 
-## 3. DeepEval — is it working?
+## 3. Feedback loop
 
-**Yes.** DeepEval 4.0.5 runs via `dataset-eval`. It:
-- Judges generated dataset rows via Ollama (`qwen2.5:7b`)
-- Produces `quality_summary.json` (pass rate) + `quality_failures.json` (failures)
-- Is part of the canonical pipeline (step 4)
-- Writes structured feedback that `generate-ollama --repair` can read
+The feedback loop is no longer dead code.
 
-What is NOT working:
-- Confident AI upload (API key scope issue — logs show warnings)
-- The standalone `feedback` command (1229 lines, never proven)
-- The standalone `repair` command (uses deprecated deepeval API)
+Current working path:
+1. `./ucore feedback --auto` or `./ucore feedback --json`
+2. Internally orchestrates maintained CLI stages:
+   - `generate-ollama --concept-focus ...`
+   - `sanitize`
+   - `dataset-eval`
+   - optional retrain path
 
-## 4. Feedback loop — the real working path
+The old broken monolith was replaced by a working orchestrator in `src/core/training/feedback_loop.py`.
 
-The working feedback loop is **dataset-eval → generate-ollama --repair**:
-1. `./ucore dataset-eval <spec>` → writes `quality_failures.json`
-2. `./ucore generate-ollama <spec> --repair` → re-generates failed rows with context
+## 4. Import surface simplification
 
-The separate `./ucore feedback` and `./ucore repair` CLIs are dead code.
+Retired:
+- top-level `src.core` compatibility aliases like `src.core.dataset_eval` and `src.core.evaluate`
+- Python-via-wrapper usage like `python ./ucore`
 
-## 5. CLI cleanup
+Current rule:
+- use canonical imports from subpackages only
+- use `./ucore` for shell execution
+- use `src/cli/ucore` for Python subprocess tests/tooling
 
-Commands marked `[LEGACY]`, `[DEPRECATED]`, or `[EXPERIMENTAL]` in help text:
+## 5. What was actually removed
 
-| Command | Tag | Reason |
-|---|---|---|
-| `generate` | LEGACY | Use `generate-ollama` instead |
-| `export-resume` | DEPRECATED | Never proven |
-| `export-adapter` | DEPRECATED | `export` already does adapter-only |
-| `quick-eval` | DEPRECATED | Use `evaluate` instead |
-| `feedback` | DEPRECATED | Use `dataset-eval` → `generate-ollama --repair` |
-| `repair` | DEPRECATED | Same path as feedback |
-| `grpo-train` | EXPERIMENTAL | Not production-ready |
+- orphan `src/core` files with no importers/tests/CLI route
+- dead CLI routes tied to those orphan files
+- test-only production shims added during stabilization
+- final `src/core/__init__.py` lazy alias shim
 
-## 6. What to delete next (if you want to)
+## 6. Current simplification state
 
-These scripts are untested / unreferenced by the canonical pipeline:
+- `src/core` Python files: 85 total
+- non-`__init__` Python files: 74
+- canonical CLI commands: 30 top-level commands
+- active production NPCs: `history_guide`, `chef_assistant`
 
-- `src/core/training/feedback_loop.py` (1229 lines, dead)
-- `src/core/training/feedback_loop_deepeval.py` (dead API)
-- `src/core/training/train_grpo_deepeval.py` (experimental)
-- `src/core/export/export_resume.py` (never used)
-- `src/core/export/export_adapter.py` (redundant with `export.py`)
-- `src/core/evaluation/quick_eval.py` (redundant with `evaluate.py`)
-- `src/core/evaluation/tb_reader.py` (developer utility)
-- `src/core/evaluation/wb_report.py` (dev utility)
-- `src/core/evaluation/compare_runs.py` (not in pipeline)
-- `src/core/ops/compare_local_models.py` (not pipeline)
+## 7. Remaining simplification targets
+
+- stale `subjects/` path references still left in source/docs
+- train-gate lineage hardening
+- live eval timeout/runtime cleanup for DeepEval/Ollama-heavy suites
+- eventual deeper cleanup of optional/legacy modules that are still intentionally kept

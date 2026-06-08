@@ -18,6 +18,7 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 - Dashboard app lives in `src/dashboard/unity-npc-llm-training-dashboard/`.
 - Supabase Docker core project: `LLM_WSL`. Current local ports: DB `15433`, API/Kong `16433`, Studio `16434`, Analytics `16435`, Inbucket `16436`. Check with `python src/core/ops/docker_core_status.py`.
 - **All compatibility symlinks removed:** No `configs`, `frontend_control`, `outputs`, `exports`, `eval`, `logs`, `subjects/schemas`, `_config`, `.pipeline`, or `ucore` symlinks remain. `./ucore` is now a real bash wrapper.
+- **Legacy Python import shim removed:** `src/core/__init__.py` no longer exposes top-level compatibility aliases like `src.core.dataset_eval` or `src.core.smoke_test`. Use canonical subpackages only (`src.core.dataset.*`, `src.core.evaluation.*`, `src.core.ops.*`, `src.core.training.*`).
 
 ## Hard rules
 
@@ -138,12 +139,13 @@ Then update in this order:
 
 - Deprecated inactive NPCs: `astronomy_guide`, `fitness_coach`.
 - Template datasets as production data.
-- **`./ucore generate --technique ollama`** — DEPRECATED. Use `generate-ollama` instead. The import alias in `__init__.py` was fixed to point `generate_dataset` → `generate_dataset.py` (production entry point) instead of `_generate_shared.py` (legacy backend).
+- **`./ucore generate --technique ollama`** — DEPRECATED. Use `generate-ollama` instead.
 - **Feedback loop:** NOW WORKING. `./ucore feedback --auto` uses `generate-ollama --concept-focus` + `sanitize` + `dataset-eval`. The old 1305-line non-functional feedback loop was refactored to a ~350-line working orchestrator that calls the established CLI pipeline.
 - **Standalone evaluation of adapter GGUFs when base+LoRA is required.**
 - `--allow-ungated-dataset` for production.
 - Long historical status dumps in `AGENTS.md`.
 - Root compatibility symlinks — all removed as of cleanups in June 2026. Use canonical paths only.
+- Top-level `src.core.<module>` compatibility imports. Use canonical package paths instead.
 
 ## Detail docs
 

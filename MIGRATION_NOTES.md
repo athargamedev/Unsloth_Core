@@ -1,104 +1,87 @@
-# Folder Reorganization Migration (2026-06-01)
+# Migration Notes
 
-## What Changed
+Last verified: 2026-06-08
 
-The project structure has been reorganized for clarity, modularity, and maintainability. Phases 1 through 5 have been fully completed as of 2026-06-01.
+This file is now a historical summary plus current migration status.
 
-### Mapping Table
+## Canonical layout
 
-| Old Path | New Canonical Path | Phase | Status (As of 2026-06-01) |
-|----------|--------------------|-------|---------------------------|
-| `scripts/` | `src/core/` | Phase 1 | Completed |
-| `_config/` | `src/config/` | Phase 1 | Completed |
-| `ucore` | `src/cli/ucore` | Phase 2 | Completed |
-| `frontend_control/` | `src/dashboard/` | Phase 2 | Completed |
-| `configs/` or `_config/` (yaml templates) | `etc/` | Phase 3 | Completed |
-| `subjects/NPC_specs/` | `data/npcs/specs/` | Phase 4 | Completed |
-| `subjects/datasets/` | `data/datasets/` | Phase 4 | Completed |
-| `subjects/reference_docs/` | `data/npcs/reference_docs/` | Phase 4 | Completed |
-| `subjects/schemas/` | `data/npcs/schemas/` | Phase 4 | Completed |
-| `outputs/` | `artifacts/models/` | Phase 5 | Completed |
-| `exports/` | `artifacts/exports/` | Phase 5 | Completed |
-| `eval/` | `artifacts/eval/` | Phase 5 | Completed |
-| `logs/` | `artifacts/logs/` | Phase 5 | Completed |
+- CLI shell entry: `./ucore`
+- CLI Python entry for subprocess tests/tooling: `src/cli/ucore`
+- Config: `etc/`
+- Python config helpers: `src/config/`
+- Core pipeline code: `src/core/`
+- Dashboard: `src/dashboard/`
+- Data: `data/`
+- Artifacts: `artifacts/`
+- Pipeline registry: `var/.pipeline/`
 
----
+## Historical path moves
 
-## Backward Compatibility
+| Old path | Canonical path | Current status |
+|---|---|---|
+| `scripts/` | `src/core/` | legacy symlink removed |
+| `_config/` | `src/config/` | legacy symlink removed |
+| `configs/` | `etc/` | legacy symlink removed |
+| `frontend_control/` | `src/dashboard/` | legacy symlink removed |
+| `subjects/NPC_specs/` | `data/npcs/specs/` | migrated |
+| `subjects/datasets/` | `data/datasets/` | migrated |
+| `subjects/reference_docs/` | `data/npcs/reference_docs/` | migrated |
+| `subjects/schemas/` | `data/npcs/schemas/` | legacy symlink removed |
+| `outputs/` | `artifacts/models/` | legacy symlink removed |
+| `exports/` | `artifacts/exports/` | legacy symlink removed |
+| `eval/` | `artifacts/eval/` | legacy symlink removed |
+| `logs/` | `artifacts/logs/` | legacy symlink removed |
+| `.pipeline/` | `var/.pipeline/` | legacy symlink removed |
 
-To maintain flawless operation of existing tools, legacy scripts, and third-party integrations, we have implemented backward-compatibility at two levels:
+## Compatibility status
 
-1. **Root Symlinks**: Root-level symlinks have been set up so that older path schemas still resolve perfectly on disk.
-   - `./ucore` → `src/cli/ucore`
-   - `_config/` → `src/config/`
-   - `scripts/` → `src/core/`
-   - `frontend_control/` → `src/dashboard/`
-   - `subjects/` → `data/` (with internal maps/symlinks)
-   - `outputs/` → `artifacts/models/`
-   - `exports/` → `artifacts/exports/`
-   - `eval/` → `artifacts/eval/`
-   - `logs/` → `artifacts/logs/`
+Retired:
+- Root compatibility symlinks listed above
+- `./ucore` as a Python-importable symlink target
+- Top-level `src.core` compatibility aliases such as:
+  - `src.core.dataset_eval`
+  - `src.core.evaluate`
+  - `src.core.generate_dataset_ollama`
+  - `src.core.sanitize_dataset`
+  - `src.core.smoke_test`
+  - `src.core.track_eval_results`
+  - `src.core.validate_subject_spec`
 
-2. **Python Path Helper Fallbacks**: We implemented robust Python fallback helpers in `src/config/paths.py`. If a script attempts to look up or construct paths using old constants, the helpers automatically detect and map them to their new canonical locations, preventing breaking changes at runtime.
+Current rule:
+- Use canonical package imports only:
+  - `src.core.dataset.*`
+  - `src.core.evaluation.*`
+  - `src.core.ops.*`
+  - `src.core.training.*`
 
----
+## Command usage
 
-## New Directory Structure
-
-The canonical project workspace is structured as follows:
-
-```
-Unsloth_Core/
-├── artifacts/             # Outputs, exports, logs, evaluation reports
-│   ├── eval/              # Evaluation output files and summaries
-│   ├── exports/           # Exported GGUF adapters and merges
-│   ├── logs/              # Training and preflight logs
-│   └── models/            # Fine-tuned model adapters and runs
-├── data/                  # NPC specification files, datasets, primers, schemas
-│   ├── datasets/          # Processed, clean datasets per NPC
-│   └── npcs/
-│       ├── reference_docs/ # Primer files and reference documents
-│       ├── schemas/       # NPC spec validation schemas
-│       └── specs/         # Subject specifications in JSON format
-├── etc/                   # Shared templates and CLI configurations
-├── src/                   # Source code
-│   ├── cli/               # CLI tools, including the canonical `./ucore` entrypoint
-│   ├── config/            # Configuration management, including `paths.py`
-│   ├── core/              # Training, dataset generation, sanitation, and evaluation logic
-│   └── dashboard/         # Visual web dashboard and frontend code
-```
-
----
-
-## For Developers
-
-### Running Commands
-All commands can be run canonical or legacy:
+Preferred:
 ```bash
-# Still works (via symlink)
-./ucore generate history_guide
-
-# Also works (canonical path)
-./src/cli/ucore generate history_guide
+./ucore <command>
 ```
 
-### Python Imports
-New code should transition to preferred import patterns:
-```python
-# NEW (preferred)
-from src.core.dataset import generate_dataset
-from src.config.paths import DATASET_ROOT
-
-# OLD (still works via symlinks and path mapping, but deprecated)
-from scripts.dataset import generate_dataset
-from _config.paths import DATASET_ROOT
+For Python subprocess tests/tooling:
+```bash
+python src/cli/ucore <command>
 ```
 
----
+Do not do this:
+```bash
+python ./ucore <command>
+```
 
-## Next Steps
+## Notes for developers
 
-We are entering the cleanup and documentation phases (Phases 6-8). Please report any broken paths, import errors, or script issues to the maintenance team.
+- `src/core/__init__.py` is now a minimal package marker, not a compatibility router.
+- `./ucore generate --technique ollama` is deprecated; use `./ucore generate-ollama`.
+- `./ucore feedback` now routes to the working maintained pipeline orchestration, not the old dead monolith.
 
-## Questions?
-See `AGENTS.md` and `docs/project-state.md` for updated paths and pipeline descriptions.
+## Verification snapshot
+
+Verified during the June 2026 cleanup:
+- in-repo tests/imports migrated off legacy `src.core` aliases
+- `src/core/__init__.py` alias shim removed
+- canonical CLI/test path contract stabilized
+- full non-live suite remained green after the compatibility-layer retirement

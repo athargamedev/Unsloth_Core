@@ -39,6 +39,7 @@ Verified 2026-06-08:
 - Production data must use the approved grounded workflow. NotebookLM is deprecated — do not use for production.
 - **Use `./ucore generate-ollama` for production generation.** `./ucore generate --technique ollama` is deprecated (hits legacy path via `_generate_shared.py`).
 - Feedback loop: `./ucore feedback --auto` now uses `generate-ollama --concept-focus` + `sanitize` + `dataset-eval` — the actively-maintained CLI pipeline. The old 1305-line feedback loop was refactored to ~350 lines.
+- Top-level compatibility imports like `src.core.dataset_eval`, `src.core.evaluate`, `src.core.smoke_test`, and `src.core.validate_subject_spec` were removed. Use canonical subpackages instead.
 
 ## Canonical workflow
 
@@ -76,9 +77,15 @@ source unsloth_env/bin/activate
 
 All pipeline scripts live in `src/core/` (organized by function: `dataset/`, `training/`, `evaluation/`, `export/`, `ops/`). The old `scripts/` was a symlink to `src/core/` — removed to eliminate confusion. Use `./ucore` to run all pipeline commands.
 
+### Python import surface
+
+- Canonical imports live under subpackages such as `src.core.dataset`, `src.core.evaluation`, `src.core.ops`, and `src.core.training`.
+- `src/core/__init__.py` is now a minimal package marker only.
+- Do not write new code against top-level aliases like `src.core.dataset_eval` or `src.core.smoke_test`; they were removed in the June 2026 cleanup.
+
 ### CLI structure
 
-The CLI (`src/cli/ucore`) exposes ~38 commands. The canonical pipeline uses only 6:
+The CLI (`src/cli/ucore`) currently exposes 30 top-level commands. The canonical pipeline uses only 6:
 
 1. `validate-spec` → 2. `generate-ollama` → 3. `sanitize` → 4. `dataset-eval` → 5. `train` (+ `--export-gguf`) → 6. `evaluate`
 
@@ -153,7 +160,8 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
 **Rules:**
 - Every skill/agent brief MUST have `last_verified: YYYY-MM-DD` in YAML frontmatter
 - Skills reference canonical files (T0/T2), never copy their content
-- **Compatibility symlinks removed** (June 2026 cleanup): `configs`, `frontend_control`, `outputs`, `exports`, `eval`, `logs`, `_config`, `.pipeline`, `subjects/schemas`, `ucore`. All replaced by canonical paths (`etc/`, `artifacts/`, `var/.pipeline/`, `src.cli.ucore`).
+- **Compatibility symlinks removed** (June 2026 cleanup): `configs`, `frontend_control`, `outputs`, `exports`, `eval`, `logs`, `_config`, `.pipeline`, `subjects/schemas`, `ucore`. All replaced by canonical paths (`etc/`, `artifacts/`, `var/.pipeline/`, `./ucore` bash wrapper plus `src/cli/ucore` Python entrypoint for subprocess tests).
+- **Legacy alias shim removed** (2026-06-08): `src/core/__init__.py` no longer re-exports top-level compatibility modules.
 - Shared knowledge (e.g. context maintenance) lives in one skill, not duplicated across `.hermes` and `.codex`
 
 **Baseline cleanup (Phase 1 complete 2026-06-05):**
@@ -188,6 +196,8 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
   - GGUF adapters exported to `artifacts/exports/<npc>/<npc>-lora-f16.gguf`.
   - Base+LoRA eval uses CPU fallback (`--gpu-layers 0`) on this 6GB VRAM machine.
   - Professional bundle reports live under `artifacts/reports/<npc>/<run_id>/`.
+- `src/core` audit cleanup is complete through compatibility-layer retirement: orphan files removed, `feedback_loop.py` replaced with working CLI orchestration, `_generate_shared.py` kept as internal shared backend, and `src/core/__init__.py` no longer exposes top-level legacy alias modules.
+- In-repo imports/tests now use canonical packages only: `src.core.dataset.*`, `src.core.evaluation.*`, `src.core.ops.*`, `src.core.training.*`.
   - 3 bugs fixed in legacy generate_dataset.py (import error, url=None crash, async fallback)
   - Fixed `dataset_eval.py` L107 and L607-608 — both `dataset_dir()` and error message now use `dataset_root()` not hardcoded `subjects/datasets/`
   - Cleared stale quality artifacts from `subjects/datasets/`
@@ -204,3 +214,10 @@ A 5-tier hierarchy ensures single-fact-single-place knowledge with automated fre
 - Regenerate history_guide dataset via proper `./ucore generate-ollama` path (currently forced to template due to `_is_history_subject()` in ollama_orchestrator.py)
 - GPU eval OOM — investigate running llama-server with partial offload (`--gpu-layers` < 99) to fit both base + LoRA on 6GB
 - Address 104+ stale `subjects/` path references across source code (tech debt)
+
+## Latest repo-cleanup commits
+
+- `6fba619` — remove `src.core` legacy alias shim
+- `3fedb4a` — move tests off `src.core` legacy aliases
+- `217f932` — remove test-only feedback helpers from production
+- `906de65` — align tests with canonical CLI and working feedback loop
