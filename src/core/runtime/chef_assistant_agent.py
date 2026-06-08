@@ -3,6 +3,7 @@ from typing import Any
 
 from langchain_ollama import ChatOllama
 
+from src.core.runtime.response_shape import apply_runtime_sentence_guard
 from src.core.tracing.confident_observatory import build_npc_trace_metadata, build_npc_trace_tags
 from src.core.tracing.deepeval_tracing import configure_tracing
 
@@ -90,7 +91,11 @@ def _run_chef_assistant_traced(query: str, dialogue_id: str | None = None) -> st
     ]
     model = ChatOllama(model=model_name, base_url=base_url, temperature=0.2)
     response = model.invoke(messages)
-    output = str(getattr(response, "content", response))
+    raw_output = str(getattr(response, "content", response))
+    output, guard_meta = apply_runtime_sentence_guard(
+        raw_output,
+        max_sentences=3,
+    )
     if update_current_span is not None:
         update_current_span(
             input=messages,
@@ -101,6 +106,7 @@ def _run_chef_assistant_traced(query: str, dialogue_id: str | None = None) -> st
                 "model": model_name,
                 "base_url": base_url,
                 "dialogue_id": dialogue_id,
+                **guard_meta,
             },
             provider="ollama",
             name="ollama_chat_model",

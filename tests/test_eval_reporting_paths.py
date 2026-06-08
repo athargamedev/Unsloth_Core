@@ -9,6 +9,7 @@ from _config import paths
 
 from src.core.evaluation.evaluate import (
     build_eval_report_index,
+    evaluate_model,
     generate_html_report,
     generate_report,
 )
@@ -63,6 +64,32 @@ def test_eval_paths_resolve_under_project_eval_root():
         / "history_guide_vs_baseline_vs_candidate_20260521T123456_123456Z.md"
     )
     assert feedback_path == paths.eval_root() / "results" / "feedback" / "history_guide.json"
+
+
+def test_eval_model_can_apply_runtime_sentence_guard():
+    class FakeServer:
+        def query(self, messages):
+            assert messages[-1]["content"] == "How long can cooked rice sit out?"
+            return (
+                "Use the two-hour rule. Chill cooked rice quickly. Reheat until steaming. Discard it if it sat out too long.",
+                0.25,
+            )
+
+    results = evaluate_model(
+        FakeServer(),
+        [{"question": "How long can cooked rice sit out?", "metadata": {"category": "teaching"}}],
+        spec={"npc_key": "chef_assistant", "dialogue": {"max_sentences": 3}},
+        apply_runtime_guard=True,
+    )
+
+    assert (
+        results[0]["response"]
+        == "Use the two-hour rule. Chill cooked rice quickly. Reheat until steaming."
+    )
+    assert results[0]["raw_response"].endswith("Discard it if it sat out too long.")
+    assert results[0]["metrics"]["sentences_ok"] is True
+    assert results[0]["metrics"]["runtime_guard_applied"] is True
+    assert results[0]["metrics"]["runtime_guard_raw_sentences"] == 4
 
 
 def test_feedback_loop_flags_low_quality_not_high_quality():

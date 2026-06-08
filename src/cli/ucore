@@ -818,6 +818,11 @@ def create_parser():
         "--max-tokens", type=int, default=256, help="Max generated tokens per eval answer"
     )
     eval_p.add_argument(
+        "--runtime-sentence-guard",
+        action="store_true",
+        help="Apply the NPC dialogue sentence cap before scoring, matching Unity runtime response shaping",
+    )
+    eval_p.add_argument(
         "--feedback-json", help="Save structured per-concept eval results for the feedback loop"
     )
     eval_p.add_argument(
@@ -2245,6 +2250,8 @@ def main(argv: list[str] | None = None) -> int:
             cmd.extend(["--gpu-layers", str(args.gpu_layers)])
         if args.max_tokens is not None:
             cmd.extend(["--max-tokens", str(args.max_tokens)])
+        if args.runtime_sentence_guard:
+            cmd.append("--runtime-sentence-guard")
         if args.feedback_json:
             cmd.extend(["--feedback-json", args.feedback_json])
         if args.base_model:

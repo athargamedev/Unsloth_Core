@@ -45,6 +45,10 @@ from src.core.ops.wandb_inference import (
     extract_json_object,
 )
 from src.core.ops.workflow_hooks import WorkflowHookRecorder, default_hook_path
+from src.core.runtime.response_shape import (
+    apply_runtime_sentence_guard,
+    spec_max_sentences,
+)
 from src.core.tracing.deepeval_tracing import configure_tracing, trace_type
 
 
@@ -580,7 +584,7 @@ def generic_eval_questions(spec=None):
     ]
 
 
-def evaluate_model(server, questions, spec=None):
+def evaluate_model(server, questions, spec=None, apply_runtime_guard=False):
     """Run a model through a set of eval questions and score the responses."""
     results = []
     npc_key = spec.get("npc_key", "unknown") if spec else "unknown"
@@ -600,12 +604,19 @@ def evaluate_model(server, questions, spec=None):
             with trace_type("llm", name=f"Eval Question {i + 1}", input=question):
                 response, latency = server.query(messages)
 
+            raw_response = response
+            guard_meta = None
+            if apply_runtime_guard:
+                response, guard_meta = apply_runtime_sentence_guard(response, spec=spec)
+
             metrics = diversity_score(response)
             metrics["latency"] = round(latency, 2)
             metrics["quality"] = quality_estimate(response)
+            if guard_meta:
+                metrics.update(guard_meta)
 
             # Constraint checks
-            sent_ok, sent_count = check_sentence_count(response)
+            sent_ok, sent_count = check_sentence_count(response, spec_max_sentences(spec))
             metrics["sentences"] = sent_count
             metrics["sentences_ok"] = sent_ok
 
@@ -628,6 +639,7 @@ def evaluate_model(server, questions, spec=None):
                     "question": question,
                     "expected": expected,
                     "response": response,
+                    "raw_response": raw_response,
                     "metrics": metrics,
                     "metadata": q.get("metadata", {}) if isinstance(q, dict) else {},
                 }
@@ -1450,6 +1462,11 @@ def main():
         default=256,
         help="Maximum generated tokens per eval answer (default: 256)",
     )
+    parser.add_argument(
+        "--runtime-sentence-guard",
+        action="store_true",
+        help="Apply the NPC dialogue sentence cap before scoring, matching Unity runtime response shaping",
+    )
 
     # Judge
     parser.add_argument("--judge", action="store_true", help="Use an LLM judge")
@@ -1665,7 +1682,12 @@ def main():
 
         print("[2/4] Evaluating baseline...")
         with hook_recorder.step("evaluate_baseline", questions=len(questions)):
-            baseline_results = evaluate_model(baseline_server, questions, spec)
+            baseline_results = evaluate_model(
+                baseline_server,
+                questions,
+                spec,
+                apply_runtime_guard=args.runtime_sentence_guard,
+            )
         baseline_server.stop()
 
         # Start candidate server
@@ -1697,7 +1719,12 @@ def main():
 
         print("[4/4] Evaluating candidate...")
         with hook_recorder.step("evaluate_candidate", questions=len(questions)):
-            candidate_results = evaluate_model(candidate_server, questions, spec)
+            candidate_results = evaluate_model(
+                candidate_server,
+                questions,
+                spec,
+                apply_runtime_guard=args.runtime_sentence_guard,
+            )
         candidate_server.stop()
 
         # Compare and report
@@ -1747,6 +1774,7 @@ def main():
                 "lora_weight": args.lora_weight,
                 "gpu_layers": args.gpu_layers,
                 "max_tokens": args.max_tokens,
+                "runtime_sentence_guard": args.runtime_sentence_guard,
                 "num_questions": args.num_questions,
             },
             "logic_version": "heuristic+optional-judge-v1",
@@ -2015,6 +2043,7 @@ def main():
                 "lora_weight": args.lora_weight,
                 "gpu_layers": args.gpu_layers,
                 "max_tokens": args.max_tokens,
+                "runtime_sentence_guard": args.runtime_sentence_guard,
                 "report_html": args.report_html,
                 "categories": list(
                     set(q.get("metadata", {}).get("category", "general") for q in questions)

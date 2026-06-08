@@ -21,7 +21,9 @@ def test_run_chef_assistant_updates_trace_and_invokes_model(monkeypatch):
     calls = {}
 
     class FakeResponse:
-        content = "Use a claw grip, keep the knife tip steady, and cut slowly."
+        content = (
+            "Use a claw grip. Keep the knife tip steady. Cut slowly. Save the speed for later."
+        )
 
     class FakeModel:
         def __init__(self, **kwargs):
@@ -42,7 +44,10 @@ def test_run_chef_assistant_updates_trace_and_invokes_model(monkeypatch):
 
     result = agent.run_chef_assistant("How do I dice an onion safely?", dialogue_id="chef-thread-1")
 
-    assert result == FakeResponse.content
+    assert result == "Use a claw grip. Keep the knife tip steady. Cut slowly."
     assert calls["configured"] is True
+    assert calls["span"]["metadata"]["runtime_guard_applied"] is True
+    assert calls["span"]["metadata"]["runtime_guard_raw_sentences"] == 4
     assert calls["trace"]["thread_id"] == "chef-thread-1"
+    assert calls["trace"]["output"] == result
     assert "safe, practical cooking assistant" in calls["messages"][0]["content"]
