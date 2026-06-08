@@ -1,1 +1,3 @@
-src/cli/ucore
+#!/usr/bin/env bash
+# Real wrapper for ucore CLI (replaces symlink)
+exec "$(dirname "$0")/src/cli/ucore" "$@"
