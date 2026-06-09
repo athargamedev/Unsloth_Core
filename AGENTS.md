@@ -10,16 +10,16 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 
 - Active NPCs: `history_guide`, `chef_assistant`, `marvel_heroes_instructor`.
 - **Latest runs:** `history_guide` run `20260607_fast-1.7b_llama3.2-3b_002` (loss 1.61), `chef_assistant` run `20260607_fast-1.7b_llama3.2-3b_004` (loss 1.22). Both promoted. GGUF exports at `artifacts/exports/<npc>/`. `marvel_heroes_instructor` run `20260609_safe-any_llama3.2-3b_003` (loss 2.95) — Ollama dataset (150 clean rows). GGUF adapter at `artifacts/exports/marvel_heroes_instructor/`.
-- **Eval results:** chef_assistant has eval reports in `artifacts/eval/reports/chef_assistant/`. history_guide has no eval reports yet (blocked by missing base GGUF download). marvel_heroes_instructor has dataset quality report and training report.
 - **Eval results:** history_guide 5/9 wins (55.6%), chef_assistant 5/10 wins (50.0%). GPU OOM forced CPU fallback (`--gpu-layers 0`).
 - **Bug fixed:** `dataset_eval.py` both `dataset_dir()` function and error message now use canonical `dataset_root()` instead of hardcoded `subjects/datasets/`.
 - Production dataset rule: use the current approved grounded workflow. NotebookLM is no longer used. Template generation is smoke/dev only.
 - Local tested Ollama judge/default: `qwen2.5:7b` unless a fresh benchmark says otherwise.
 - Local GPU: RTX 3060-class 6GB VRAM. Use `~/llama-servers.sh killall` to free VRAM before train/eval. Stale llama-server processes accumulate.
 - Process control: `~/llama-servers.sh` manages Cognee's llama.cpp servers (:18080 chat, :18081 embed). Commands: `start|stop|killall|preflight|status`. A cron watchdog auto-cleans stale llama-server processes every 10min.
-- For generation with direct llama.cpp (more control, no Ollama overhead): `./ucore generate-local --model <gguf_path> --port 18082 data/npcs/specs/<npc>.json`
-  - Starts llama.cpp with tuned params, runs generation, tears down server
-  - Or manually: `~/llama-servers.sh serve [model.gguf] [port]` then `./ucore generate-ollama --url http://127.0.0.1:<port>/v1/chat/completions`
+- **Generation via direct llama.cpp** (more control, no Ollama overhead):
+  - `./ucore generate-local --model <gguf> data/npcs/specs/<npc>.json` — auto starts llama.cpp, generates, stops
+  - Or two-step: `~/llama-servers.sh serve` then `./ucore generate-ollama --url http://127.0.0.1:<port>/v1/chat/completions`
+  - Uses tuned params: gpu-layers 24, ctx-size 8192, batch-size 512, parallel 4
 - Dashboard app lives in `src/dashboard/unity-npc-llm-training-dashboard/`.
 - Supabase Docker core project: `LLM_WSL`. Current local ports: DB `15433`, API/Kong `16433`, Studio `16434`, Analytics `16435`, Inbucket `16436`.
 - **All compatibility symlinks removed:** No `configs`, `frontend_control`, `outputs`, `exports`, `eval`, `logs`, `subjects/schemas`, `_config`, `.pipeline`, or `ucore` symlinks remain. `./ucore` is now a real bash wrapper.
@@ -51,18 +51,36 @@ Use `--strategy-profile` on `./ucore feedback` to set the profile.
 
 ```bash
 source unsloth_env/bin/activate
-./ucore target plan --npc-key history_guide --technique ollama \
-  --profile npc-production-grounded --target-stage evaluate
-./ucore target plan --npc-key chef_assistant --technique ollama \
+
+# Health check
+./ucore audit check
+~/llama-servers.sh preflight   # process/port/VRAM check
+
+# Generation (two options):
+#   A) Via Ollama (default)
+./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b --fresh
+#   B) Via direct llama.cpp (more control)
+./ucore generate-local --model ~/.ollama/models/blobs/sha256-2bada8a7450... \
+    data/npcs/specs/<npc>.json --fresh
+
+# Sanitize + gate + train
+./ucore sanitize data/datasets/<npc>/<technique>/train.jsonl \
+  --output data/datasets/<npc>/<technique>/train_clean.jsonl \
+  --strict-canonical --require-complete-metadata
+./ucore dataset-eval data/npcs/specs/<npc>.json \
+  --technique <technique> --mode fast --judge-model qwen2.5:7b
+./ucore train data/npcs/specs/<npc>.json \
+  --technique <technique> --preset fast-3b --export-gguf
+
+# Target-based pipeline (preferred for multi-stage runs)
+./ucore target plan --npc-key <npc> --technique ollama \
   --profile npc-production-grounded --target-stage evaluate
 ```
 
 Manual health/spec checks:
 
 ```bash
-./ucore audit check
-./ucore validate-spec data/npcs/specs/history_guide.json --generation-ready
-./ucore validate-spec data/npcs/specs/chef_assistant.json --generation-ready
+./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
 ```
 
 Dashboard:
@@ -93,32 +111,35 @@ npm run dev
 ## Current pipeline shape
 
 ```bash
-# 1. preflight / health
+# 0. preflight / process control
+~/llama-servers.sh killall                              # free VRAM
 ./ucore audit check
 
-# 2. spec validation
+# 1. spec validation
 ./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
 
-# 3. generation
-# Production: use generate-ollama (NOT generate --technique ollama — legacy path)
+# 2. generation (pick one)
+# Production via Ollama:
 ./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b --fresh
+# Production via direct llama.cpp (more GPU control):
+./ucore generate-local --model ~/models/qwen2.5-7b.gguf data/npcs/specs/<npc>.json --fresh
 # Smoke/dev only (template):
 # ./ucore generate data/npcs/specs/<npc>.json --technique template
 
-# 4. sanitize
+# 3. sanitize
 ./ucore sanitize data/datasets/<npc>/<technique>/train.jsonl \
   --output data/datasets/<npc>/<technique>/train_clean.jsonl \
   --strict-canonical --require-complete-metadata
 
-# 5. gate
+# 4. gate
 ./ucore dataset-eval data/npcs/specs/<npc>.json \
   --technique <technique> --mode fast --judge-model qwen2.5:7b
 
-# 6. train/export
+# 5. train/export
 ./ucore train data/npcs/specs/<npc>.json \
   --technique <technique> --preset fast-3b --export-gguf
 
-# 7. evaluate adapter with base + LoRA when applicable
+# 6. evaluate adapter with base + LoRA when applicable
 ./ucore evaluate --baseline <baseline> --candidate <candidate> \
   --base-model <base-gguf> --spec data/npcs/specs/<npc>.json --report-html
 ```
@@ -144,7 +165,7 @@ Then update in this order:
 
 - Deprecated inactive NPCs: `astronomy_guide`, `fitness_coach`.
 - Template datasets as production data.
-- **`./ucore generate --technique ollama`** — DEPRECATED. Use `generate-ollama` instead.
+- **`./ucore generate --technique ollama`** — DEPRECATED. Use `generate-ollama` or `generate-local` instead.
 - **Feedback loop:** NOW WORKING. `./ucore feedback --auto` uses `generate-ollama --concept-focus` + `sanitize` + `dataset-eval`. The old 1305-line non-functional feedback loop was refactored to a ~350-line working orchestrator that calls the established CLI pipeline.
 - **Standalone evaluation of adapter GGUFs when base+LoRA is required.**
 - `--allow-ungated-dataset` for production.
@@ -166,5 +187,4 @@ Then update in this order:
 - `.hermes/skills/unsloth-core-operator/SKILL.md` — operator runbook.
 - `.hermes/skills/unsloth-core-low-vram-training/SKILL.md` — 6GB VRAM training/eval survival.
 - `.hermes/skills/llmunity-runtime-deploy/SKILL.md` — Unity deployment checks.
-- `.hermes/skills/unsloth-core-generation-workflow/SKILL.md` — production generation workflow
 - `AGENTS.md` (this file) — project-level agent context
