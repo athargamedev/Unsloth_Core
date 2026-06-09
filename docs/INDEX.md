@@ -53,6 +53,7 @@ docs/
 | Document | What it covers | Last verified |
 |:---------|:---------------|:--------------|
 | [`training-workflow.md`](training-workflow.md) | Primary AI-agent context: full pipeline, presets, flags, data flow, evaluation patterns, common pitfalls | 2026-06-01 |
+| [`platform-integration.md`](platform-integration.md) | Platform roles (Ollama, W&B, Confident AI, HuggingFace, Modal, llama.cpp): what runs work vs logs results, credential requirements, naming conventions, decision matrix | 2026-06-09 |
 | [`cli-commands.md`](reference/cli-commands.md) | Exhaustive, auto-verified `./ucore` command and flag reference | 2026-06-01 |
 | [`architecture/pipeline-flow.md`](architecture/pipeline-flow.md) | 7-stage pipeline flow: Generation → Sanitization → Dataset Quality Gate → Training → Export & Smoke Test → Model Evaluation → Feedback Loop | 2026-06-01 |
 | [`architecture/supabase-schema.md`](architecture/supabase-schema.md) | All database tables: runtime (npc_profiles, dialogue_sessions, npc_memories) and pipeline (jobs, runs, artifacts, quality gates, eval, configs, api_keys, audit_log) | 2026-06-01 |
