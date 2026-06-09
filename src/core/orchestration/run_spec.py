@@ -17,7 +17,7 @@ from typing import Any
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-ACTIVE_NPCS = {"history_guide", "chef_assistant"}
+ACTIVE_NPCS = {"history_guide", "chef_assistant", "marvel_heroes_instructor"}
 PRODUCTION_PROFILES = {"npc-production-grounded", "npc-density-repair"}
 DEFAULT_GENERATION_MODEL = "qwen2.5:7b"
 DEFAULT_BASE_GGUF = ".models/llama-3.2-3b-instruct-q4_k_m.gguf"

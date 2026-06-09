@@ -4,8 +4,8 @@
   "sanitized": true,
   "sanitizer": {
     "version": "v2",
-    "date": "2026-06-07T12:44:06Z",
-    "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/history_guide/ollama/train.jsonl --output data/datasets/history_guide/ollama/train_clean.jsonl --dedup",
+    "date": "2026-06-09T05:41:18Z",
+    "argv": "/home/athar/Projects/Unsloth_Core/src/core/dataset/sanitize_dataset.py data/datasets/history_guide/ollama/train.jsonl --output data/datasets/history_guide/ollama/train_clean.jsonl --strict-canonical --dedup",
     "artifact_check_mode": "strict",
     "strict_mode": false
   },
