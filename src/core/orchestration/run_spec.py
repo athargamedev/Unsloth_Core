@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date, datetime
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -179,15 +180,31 @@ def resolve_pipeline_run_spec(
     base = Path(data_root or PROJECT_ROOT)
     npc_spec = _load_spec(npc_key, data_root=base)
 
-    run_id = _slug(f"{npc_key}_{profile}_{effective_technique}_{target_stage}")
-    default_report_dir = Path("artifacts") / "reports" / npc_key / run_id
+    # Make run_id date-scoped so report dirs don't collide across days
+    _today = date.today().strftime("%Y%m%d")
+    run_id = _slug(f"{_today}_{npc_key}_{profile}_{effective_technique}_{target_stage}")
+    from src.config.paths import report_bundle_dir
+
+    default_report_dir = report_bundle_dir(
+        npc_key=npc_key,
+        profile=profile,
+        technique=effective_technique,
+        target_stage=target_stage,
+    )
+    # Store as relative to PROJECT_ROOT for portability
+    try:
+        default_report_dir = default_report_dir.relative_to(PROJECT_ROOT)
+    except ValueError:
+        pass
     report_path = Path(report_dir) if report_dir is not None else default_report_dir
 
     spec_path = Path("data") / "npcs" / "specs" / f"{npc_key}.json"
     reference_doc = npc_spec.get("reference_doc") or f"data/npcs/reference_docs/{npc_key}_primer.md"
     dataset_dir = Path("data") / "datasets" / npc_key / effective_technique
     adapter_gguf = Path("artifacts") / "exports" / npc_key / f"{npc_key}-lora-f16.gguf"
-    feedback_json = Path("artifacts") / "eval" / "results" / "feedback" / f"{npc_key}.json"
+    from src.config.paths import eval_feedback_timestamped_path
+
+    feedback_json = eval_feedback_timestamped_path(npc_key)
 
     dataset_cfg = dict(strategy.get("dataset") or {})
     quality_gate = dict(strategy.get("quality_gate") or {})

@@ -433,6 +433,30 @@ def export_manifest_path(npc_key: str) -> Path:
 # ── Evaluation ───────────────────────────────────────────────────────────────
 
 
+def system_suffix(systems: frozenset[str] | None = None) -> str:
+    """Return a compact system signature suffix.
+
+    Encodes which external systems were involved in producing an artifact.
+    Empty string for local-only (most common case — omit noise).
+
+    Examples:
+        {} or None            →  ""  (local — default, omit)
+        {"confident"}         →  "_C"
+        {"wandb"}             →  "_Wb"
+        {"modal"}             →  "_Md"
+        {"confident","wandb"} →  "_CWb"
+    """
+    if not systems:
+        return ""
+    parts = []
+    sig_map = {"confident": "C", "wandb": "Wb", "modal": "Md"}
+    for sys_name in sorted(systems, key=lambda s: s.lower()):
+        sig = sig_map.get(sys_name.lower())
+        if sig:
+            parts.append(sig)
+    return "_" + "".join(parts) if parts else ""
+
+
 def eval_root() -> Path:
     """Return artifacts/eval/."""
     return PROJECT_ROOT / "artifacts" / "eval"
@@ -449,8 +473,24 @@ def eval_report_dir(npc_key: str) -> Path:
 
 
 def eval_feedback_path(npc_key: str) -> Path:
-    """Return artifacts/eval/results/feedback/{npc_key}.json"""
+    """Return artifacts/eval/results/feedback/{npc_key}.json
+
+    Note: this is the *latest* pointer path.  Writers should prefer
+    eval_feedback_timestamped_path() and update the {npc_key}.json symlink
+    so history is never silently overwritten.
+    """
     return eval_root() / "results" / "feedback" / f"{npc_key}.json"
+
+
+def eval_feedback_timestamped_path(npc_key: str, timestamp: str | None = None) -> Path:
+    """Return artifacts/eval/results/feedback/{npc_key}_{timestamp}.json
+
+    Use this when WRITING feedback — it preserves history.
+    Update eval_feedback_path() (the bare {npc_key}.json) as a symlink
+    pointing here so readers always find the latest.
+    """
+    ts = timestamp or eval_timestamp()
+    return eval_root() / "results" / "feedback" / f"{npc_key}_{ts}.json"
 
 
 def eval_gaps_dir(npc_key: str) -> Path:
@@ -463,10 +503,27 @@ def eval_timestamp() -> str:
     return datetime.now(UTC).strftime("%Y%m%dT%H%M%S_%fZ")
 
 
-def eval_report_path(npc_key: str, fmt: str = "md", timestamp: str | None = None) -> Path:
-    """Return artifacts/eval/reports/{npc_key}/eval_{timestamp}.{fmt}"""
+def eval_report_path(
+    npc_key: str,
+    fmt: str = "md",
+    timestamp: str | None = None,
+    technique: str | None = None,
+    judge_model: str | None = None,
+) -> Path:
+    """Return artifacts/eval/reports/{npc_key}/[{technique}_]{judge_}_eval_{timestamp}.{fmt}
+
+    technique and judge_model are optional but strongly recommended — they
+    make filenames self-describing when browsing artifact directories.
+    """
     ts = timestamp or eval_timestamp()
-    return eval_report_dir(npc_key) / f"eval_{ts}.{fmt}"
+    prefix = ""
+    if technique:
+        prefix += f"{technique}_"
+    if judge_model:
+        # qwen2.5:7b -> qwen2.5-7b
+        short = judge_model.replace(":", "-").replace("/", "-")
+        prefix += f"{short}_"
+    return eval_report_dir(npc_key) / f"{prefix}eval_{ts}.{fmt}"
 
 
 def eval_comparison_dir() -> Path:
@@ -483,6 +540,47 @@ def eval_comparison_path(npc_key: str, baseline_label: str, timestamp: str | Non
 def eval_results_path() -> Path:
     """Return artifacts/eval/results/eval_results.jsonl"""
     return eval_root() / "results" / "eval_results.jsonl"
+
+
+# ── Report bundles ──────────────────────────────────────────────────────────
+
+
+def report_bundle_dir(
+    npc_key: str,
+    profile: str = "npc-production-grounded",
+    technique: str = "ollama",
+    target_stage: str = "evaluate",
+    timestamp: str | None = None,
+) -> Path:
+    """Return artifacts/reports/{npc_key}/{slug}_{ts}/
+
+    Example: artifacts/reports/chef_assistant/npc-production-grounded_ollama_evaluate_20260609T120000Z/
+    """
+    from datetime import datetime
+
+    ts = timestamp or datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    slug = f"{profile}_{technique}_{target_stage}_{ts}"
+    return PROJECT_ROOT / "artifacts" / "reports" / npc_key / slug
+
+
+def report_bundle_path(
+    npc_key: str,
+    profile: str = "npc-production-grounded",
+    technique: str = "ollama",
+    target_stage: str = "evaluate",
+    timestamp: str | None = None,
+) -> Path:
+    """Return artifacts/reports/{npc_key}/{slug}_{ts}/pipeline_run_spec.json
+
+    The canonical location for a pipeline_run_spec.json.
+    """
+    return report_bundle_dir(
+        npc_key=npc_key,
+        profile=profile,
+        technique=technique,
+        target_stage=target_stage,
+        timestamp=timestamp,
+    ) / "pipeline_run_spec.json"
 
 
 # ── Subdir initialisation ────────────────────────────────────────────────────
@@ -507,6 +605,7 @@ def ensure_all() -> None:
         eval_root() / "results",
         eval_root() / "results" / "feedback",
         eval_root() / "results" / "gaps",
+        PROJECT_ROOT / "artifacts" / "reports",
         npc_config_root(),
         log_root(),
         pipeline_root(),

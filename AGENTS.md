@@ -90,7 +90,25 @@ cd src/dashboard/unity-npc-llm-training-dashboard
 npm run dev
 ```
 
-## Canonical paths
+## Artifact naming conventions
+
+All artifacts follow a self-describing naming standard. Every filename should tell you what it is without opening it:
+
+| Artifact | Pattern | Example |
+|----------|---------|---------|
+| Training run dir | `{date}_{preset}_{model_short}_{seq}` | `20260607_safe-any_llama3.2-3b_001` |
+| Eval report file | `[{technique}_][{judge_}]eval_{timestamp}.{fmt}` | `qwen2.5-7b_eval_20260609T120000Z.html` |
+| Feedback JSON | `{npc}_{timestamp}.json` + `{npc}.json` → symlink | `chef_assistant_20260609T120000Z.json` → `chef_assistant.json` |
+| Report bundle dir | `{profile}_{technique}_{stage}_{timestamp}` | `npc-production-grounded_ollama_evaluate_20260609T120000Z/` |
+| GGUF export | `{npc}_lora-{outtype}.gguf` | `chef_assistant_lora-f16.gguf` |
+| Dataset quality | `quality_summary.json` (at `data/datasets/{npc}/{technique}/`) | — |
+
+**system_suffix()** — encode external systems in filenames:
+- `_C` = Confident AI, `_Wb` = W&B, `_Md` = Modal
+- Local-only (most common): no suffix
+- Combine: `_CWb`, `_CWbMd`
+
+**Key rule:** writers always use timestamped/versioned paths. Readers find the latest via symlinks (`{npc}.json` → `{npc}_20260609T120000Z.json`). History is never silently overwritten.
 
 - Config root: `etc/` (not `configs`)
 - Pipeline runtime registry: `var/.pipeline/` (not `.pipeline`)

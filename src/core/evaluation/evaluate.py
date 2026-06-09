@@ -1602,10 +1602,15 @@ def main():
             report_dir = paths.eval_report_dir(spec["npc_key"])
             report_dir.mkdir(parents=True, exist_ok=True)
             report_stamp = paths.eval_timestamp()
-            args.output = str(paths.eval_report_path(spec["npc_key"], timestamp=report_stamp))
+            # Include judge model in filename for self-describing reports
+            _judge = args.judge_model if hasattr(args, "judge_model") and args.judge_model else None
+            args.output = str(paths.eval_report_path(
+                spec["npc_key"], timestamp=report_stamp, judge_model=_judge,
+            ))
             args._report_stamp = report_stamp
         if not args.feedback_json and spec:
-            args.feedback_json = str(paths.eval_feedback_path(spec["npc_key"]))
+            # Use timestamped path so history is preserved
+            args.feedback_json = str(paths.eval_feedback_timestamped_path(spec["npc_key"]))
 
     # Resolve report_dir even when --output is explicitly provided.  Later
     # server log setup writes under report_dir / "logs".
@@ -2009,7 +2014,16 @@ def main():
 
             with open(feedback_path, "w") as f:
                 json.dump(feedback_data, f, indent=2)
+            # Update the {npc}.json symlink so readers always find the latest
+            latest_path = paths.eval_feedback_path(npc_key)
+            try:
+                if latest_path.exists() or latest_path.is_symlink():
+                    latest_path.unlink()
+                latest_path.symlink_to(feedback_path.name)
+            except Exception:
+                pass  # non-critical — the timestamped file is the real artifact
             print(f"\n[feedback] Structured eval results saved to: {feedback_path}")
+            print(f"  Latest pointer: {latest_path}")
             print(f"[feedback] Weak concepts identified: {len(feedback_data['weak_concepts'])}")
             for wc in feedback_data["weak_concepts"]:
                 info = per_concept[wc]

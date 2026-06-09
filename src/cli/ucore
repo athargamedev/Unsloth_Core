@@ -1627,7 +1627,7 @@ def main(argv: list[str] | None = None) -> int:
         run_cmd(cmd)
 
     elif args.command == "generate-local":
-        import os, signal, subprocess as sp, time, sys
+        import signal, time
 
         model_path = os.path.abspath(args.model)
         if not os.path.isfile(model_path):
@@ -1642,7 +1642,7 @@ def main(argv: list[str] | None = None) -> int:
             sys.exit(1)
 
         print(f"Starting llama.cpp server on :{port} ...")
-        ret = sp.run(["bash", scripts, "serve", model_path, str(port)], capture_output=True, text=True)
+        ret = subprocess.run(["bash", scripts, "serve", model_path, str(port)], capture_output=True, text=True)
         print(ret.stdout)
         if ret.returncode != 0:
             print(ret.stderr, file=sys.stderr)
@@ -1675,13 +1675,13 @@ def main(argv: list[str] | None = None) -> int:
                 gen_cmd.extend(["--concept-focus", cf])
 
         print(f"Generating against llama.cpp at {url} ...")
-        gen_ret = sp.run(gen_cmd)
+        gen_ret = subprocess.run(gen_cmd)
         gen_ok = gen_ret.returncode == 0
 
         # 3. Stop the server
         server_pid = None
         try:
-            out = sp.check_output(
+            out = subprocess.check_output(
                 f"pgrep -f 'llama-server.*port {port}'", shell=True, executable="/usr/bin/bash",
                 text=True,
             ).strip()
