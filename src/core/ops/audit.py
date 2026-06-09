@@ -95,6 +95,72 @@ class ProjectAudit:
 
         return result
 
+    def check_processes(self):
+        """Check for model server processes (llama-server, Ollama) and VRAM."""
+        result = {}
+        import subprocess
+        # llama-server count
+        try:
+            out = subprocess.check_output(
+                "pgrep -x 'llama-server' 2>/dev/null | wc -l",
+                shell=True, text=True, executable="/usr/bin/bash",
+            ).strip()
+            result["llama_server_count"] = int(out) if out else 0
+        except Exception:
+            result["llama_server_count"] = 0
+
+        # Ollama daemon
+        try:
+            out = subprocess.check_output(
+                "pgrep -xf 'ollama serve' 2>/dev/null || true",
+                shell=True, text=True, executable="/usr/bin/bash",
+            ).strip()
+            result["ollama_serve_running"] = bool(out)
+        except Exception:
+            result["ollama_serve_running"] = False
+
+        # Ollama inference engines
+        try:
+            out = subprocess.check_output(
+                "pgrep -f '/usr/local/lib/ollama/llama-server' 2>/dev/null | wc -l",
+                shell=True, text=True, executable="/usr/bin/bash",
+            ).strip()
+            result["ollama_engines"] = int(out) if out else 0
+        except Exception:
+            result["ollama_engines"] = 0
+
+        # VRAM
+        try:
+            out = subprocess.check_output(
+                "nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null",
+                shell=True, text=True,
+            ).strip()
+            parts = out.split(",")
+            if len(parts) == 2:
+                result["vram_used_mb"] = int(parts[0].strip())
+                result["vram_total_mb"] = int(parts[1].strip())
+                result["vram_pct"] = round(
+                    int(parts[0].strip()) * 100 / int(parts[1].strip()), 1
+                )
+        except Exception:
+            pass
+
+        # Flag stale orphan llama-server processes (> managed ones)
+        managed = 0
+        for port in [18080, 18081]:
+            try:
+                subprocess.check_output(
+                    f"pgrep -f 'llama-server.*port {port}' 2>/dev/null",
+                    shell=True, executable="/usr/bin/bash",
+                )
+                managed += 1
+            except Exception:
+                pass
+        stale = result.get("llama_server_count", 0) - managed - result.get("ollama_engines", 0)
+        result["stale_llama_server_count"] = max(0, stale)
+
+        return result
+
     def audit_npc_state(self):
         """Read pipeline_state.json and show NPC status."""
         state = {}

@@ -15,7 +15,8 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 - **Bug fixed:** `dataset_eval.py` both `dataset_dir()` function and error message now use canonical `dataset_root()` instead of hardcoded `subjects/datasets/`.
 - Production dataset rule: use the current approved grounded workflow. NotebookLM is no longer used. Template generation is smoke/dev only.
 - Local tested Ollama judge/default: `qwen2.5:7b` unless a fresh benchmark says otherwise.
-- Local GPU: RTX 3060-class 6GB VRAM. Unload Ollama before train/eval when it holds VRAM.
+- Local GPU: RTX 3060-class 6GB VRAM. Use `~/llama-servers.sh killall` to free VRAM before train/eval. Stale llama-server processes accumulate.
+- Process control: `~/llama-servers.sh` manages Cognee's llama.cpp servers (:18080 chat, :18081 embed). Commands: `start|stop|killall|preflight|status`. A cron watchdog auto-cleans stale llama-server processes every 10min.
 - Dashboard app lives in `src/dashboard/unity-npc-llm-training-dashboard/`.
 - Supabase Docker core project: `LLM_WSL`. Current local ports: DB `15433`, API/Kong `16433`, Studio `16434`, Analytics `16435`, Inbucket `16436`. Check with `python src/core/ops/docker_core_status.py`.
 - **All compatibility symlinks removed:** No `configs`, `frontend_control`, `outputs`, `exports`, `eval`, `logs`, `subjects/schemas`, `_config`, `.pipeline`, or `ucore` symlinks remain. `./ucore` is now a real bash wrapper.
