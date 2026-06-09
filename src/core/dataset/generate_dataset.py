@@ -316,25 +316,42 @@ def stratified_train_val_split(
 
 
 class OllamaHealthCheck:
-    """Verify Ollama is running and model is available."""
+    """Health check for Ollama or OpenAI-compatible server."""
 
     def __init__(self, url="http://localhost:11434", timeout=5):
-        self.url = url
+        # Store original URL and detect API type
+        self.base_url = url.rstrip("/")
         self.timeout = timeout
+        if "/v1/" in self.base_url:
+            self.api_type = "openai"
+            # For OpenAI, use the server root (strip /v1/... path)
+            self.server_url = self.base_url.split("/v1/")[0]
+        else:
+            self.api_type = "ollama"
+            self.server_url = self.base_url
 
     def is_running(self) -> bool:
-        """Check if Ollama service is responding."""
+        """Check if server is responding."""
         try:
-            response = requests.get(f"{self.url}/api/tags", timeout=self.timeout)
+            if self.api_type == "openai":
+                response = requests.get(f"{self.server_url}/v1/models", timeout=self.timeout)
+            else:
+                response = requests.get(f"{self.server_url}/api/tags", timeout=self.timeout)
             return response.status_code == 200
         except Exception as e:
-            logger.error(f"Ollama service not responding: {e}")
+            logger.error(f"Server not responding: {e}")
             return False
 
     def get_available_models(self) -> list[str]:
         """List all available local models."""
         try:
-            response = requests.get(f"{self.url}/api/tags", timeout=self.timeout)
+            if self.api_type == "openai":
+                response = requests.get(f"{self.server_url}/v1/models", timeout=self.timeout)
+                if response.status_code == 200:
+                    data = response.json()
+                    return [m["id"] for m in data.get("data", [])]
+                return []
+            response = requests.get(f"{self.server_url}/api/tags", timeout=self.timeout)
             if response.status_code == 200:
                 data = response.json()
                 return [m["name"].split(":")[0] for m in data.get("models", [])]
@@ -349,10 +366,13 @@ class OllamaHealthCheck:
 
     def pull_model(self, model_name: str) -> bool:
         """Attempt to pull model from Ollama registry."""
+        if self.api_type == "openai":
+            logger.warning(f"Cannot pull model '{model_name}' from llama.cpp — download manually")
+            return False
         logger.info(f"Pulling model: {model_name} (this may take a few minutes)...")
         try:
             response = requests.post(
-                f"{self.url}/api/pull", json={"name": model_name, "stream": False}, timeout=600
+                f"{self.server_url}/api/pull", json={"name": model_name, "stream": False}, timeout=600
             )
             return response.status_code == 200
         except Exception as e:
@@ -380,6 +400,7 @@ class OllamaGeneratorV2:
     ):
         self.model = model
         self.url = url
+        self.api_type = self._detect_api_type(url)
         self.inference_server_url = _normalize_inference_server_url(
             inference_server_url or os.getenv("UCORE_INFERENCE_SERVER_URL")
         )
@@ -408,6 +429,22 @@ class OllamaGeneratorV2:
         json_format: bool,
         stream: bool,
     ) -> dict:
+        if self.api_type == "openai":
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "stream": stream,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "top_p": 0.9,
+            }
+            if json_format:
+                payload["response_format"] = {"type": "json_object"}
+            return payload
+
         payload = {
             "model": self.model,
             "messages": [
@@ -427,8 +464,19 @@ class OllamaGeneratorV2:
         return payload
 
     @staticmethod
-    def _extract_content(data: dict) -> str:
+    def _extract_content(data: dict, api_type: str = "ollama") -> str:
+        """Extract assistant content from response, supporting Ollama and OpenAI formats."""
+        if api_type == "openai":
+            return data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
         return data.get("message", {}).get("content", "").strip()
+
+    @staticmethod
+    def _detect_api_type(url: str) -> str:
+        """Detect whether url points at Ollama or OpenAI-compatible API."""
+        path = urlparse(url).path
+        if "/v1/" in path:
+            return "openai"
+        return "ollama"
 
     @staticmethod
     def _retry_delay(attempt: int) -> float:
@@ -481,7 +529,7 @@ class OllamaGeneratorV2:
 
         for attempt in range(1, self.max_retries + 1):
             try:
-                content = self._extract_content(self._post_chat(payload))
+                content = self._extract_content(self._post_chat(payload), self.api_type)
                 if content:
                     return self._record_success(content)
                 self._log_retry(attempt, "Empty response from Ollama")
@@ -515,7 +563,7 @@ class OllamaGeneratorV2:
             )
             for attempt in range(1, self.max_retries + 1):
                 try:
-                    content = self._extract_content(await self._post_chat_async(payload, session))
+                    content = self._extract_content(await self._post_chat_async(payload, session), self.api_type)
                     if content:
                         return self._record_success(content)
                     self._log_retry(attempt, "Empty response from Ollama")

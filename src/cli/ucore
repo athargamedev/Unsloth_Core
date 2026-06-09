@@ -334,6 +334,30 @@ def create_parser():
         "--dry-run", action="store_true", help="Dry-run: show plan without generating"
     )
 
+    # Generate using local llama.cpp (not Ollama)
+    gen_local_p = subparsers.add_parser(
+        "generate-local",
+        help="Generate dataset using local llama.cpp (more control over GPU/params)",
+    )
+    gen_local_p.add_argument("spec", help="Path to subject spec JSON")
+    gen_local_p.add_argument(
+        "--model", required=True, help="Path to GGUF model file",
+    )
+    gen_local_p.add_argument(
+        "--port", type=int, default=18082,
+        help="Local llama.cpp server port (default: 18082)",
+    )
+    gen_local_p.add_argument("--temperature", type=float, default=0.6)
+    gen_local_p.add_argument("--batch-size", type=int, default=4)
+    gen_local_p.add_argument("--max-retries", type=int, default=3)
+    gen_local_p.add_argument("--seed", type=int, default=42)
+    gen_local_p.add_argument("--output", "-o", help="Output JSONL path")
+    gen_local_p.add_argument("--fresh", action="store_true")
+    gen_local_p.add_argument("--no-validation", action="store_true")
+    gen_local_p.add_argument("--val-split", type=float, default=0.12)
+    gen_local_p.add_argument("--multi-turn-ratio", type=float, default=0.25)
+    gen_local_p.add_argument("--concept-focus", action="append", dest="concept_focus")
+
     # Sanitize
     san_p = subparsers.add_parser("sanitize", help="Sanitize a dataset")
     san_p.add_argument("input", help="Path to input JSONL")
@@ -1601,6 +1625,84 @@ def main(argv: list[str] | None = None) -> int:
         if args.dry_run:
             cmd.append("--dry-run")
         run_cmd(cmd)
+
+    elif args.command == "generate-local":
+        import os, signal, subprocess as sp, time, sys
+
+        model_path = os.path.abspath(args.model)
+        if not os.path.isfile(model_path):
+            print(f"Error: model not found: {model_path}", file=sys.stderr)
+            sys.exit(1)
+
+        # 1. Start llama.cpp server via llama-servers.sh
+        port = args.port
+        scripts = os.path.expanduser("~/llama-servers.sh")
+        if not os.path.isfile(scripts):
+            print("Error: ~/llama-servers.sh not found", file=sys.stderr)
+            sys.exit(1)
+
+        print(f"Starting llama.cpp server on :{port} ...")
+        ret = sp.run(["bash", scripts, "serve", model_path, str(port)], capture_output=True, text=True)
+        print(ret.stdout)
+        if ret.returncode != 0:
+            print(ret.stderr, file=sys.stderr)
+            sys.exit(1)
+
+        # 2. Run generation against local server
+        url = f"http://127.0.0.1:{port}/v1/chat/completions"
+        gen_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec,
+                   "--url", url, "--model", os.path.basename(model_path)]
+        if args.temperature != 0.6:
+            gen_cmd.extend(["--temperature", str(args.temperature)])
+        if args.batch_size != 4:
+            gen_cmd.extend(["--batch-size", str(args.batch_size)])
+        if args.max_retries != 3:
+            gen_cmd.extend(["--max-retries", str(args.max_retries)])
+        if args.seed != 42:
+            gen_cmd.extend(["--seed", str(args.seed)])
+        if args.output:
+            gen_cmd.extend(["--output", args.output])
+        if args.fresh:
+            gen_cmd.append("--fresh")
+        if args.no_validation:
+            gen_cmd.append("--no-validation")
+        if args.val_split != 0.12:
+            gen_cmd.extend(["--val-split", str(args.val_split)])
+        if args.multi_turn_ratio != 0.25:
+            gen_cmd.extend(["--multi-turn-ratio", str(args.multi_turn_ratio)])
+        if args.concept_focus:
+            for cf in args.concept_focus:
+                gen_cmd.extend(["--concept-focus", cf])
+
+        print(f"Generating against llama.cpp at {url} ...")
+        gen_ret = sp.run(gen_cmd)
+        gen_ok = gen_ret.returncode == 0
+
+        # 3. Stop the server
+        server_pid = None
+        try:
+            out = sp.check_output(
+                f"pgrep -f 'llama-server.*port {port}'", shell=True, executable="/usr/bin/bash",
+                text=True,
+            ).strip()
+            if out:
+                server_pid = out.splitlines()[0]
+                os.kill(int(server_pid), signal.SIGTERM)
+                # Wait up to 5s
+                for _ in range(5):
+                    try:
+                        os.kill(int(server_pid), 0)
+                        time.sleep(1)
+                    except ProcessLookupError:
+                        break
+                else:
+                    os.kill(int(server_pid), signal.SIGKILL)
+                print(f"Stopped llama.cpp server (PID {server_pid})")
+        except Exception:
+            pass
+
+        if not gen_ok:
+            sys.exit(gen_ret.returncode)
 
     elif args.command == "sanitize":
         cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "sanitize_dataset.py"), args.input]

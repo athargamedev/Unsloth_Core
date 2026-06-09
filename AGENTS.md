@@ -17,8 +17,11 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 - Local tested Ollama judge/default: `qwen2.5:7b` unless a fresh benchmark says otherwise.
 - Local GPU: RTX 3060-class 6GB VRAM. Use `~/llama-servers.sh killall` to free VRAM before train/eval. Stale llama-server processes accumulate.
 - Process control: `~/llama-servers.sh` manages Cognee's llama.cpp servers (:18080 chat, :18081 embed). Commands: `start|stop|killall|preflight|status`. A cron watchdog auto-cleans stale llama-server processes every 10min.
+- For generation with direct llama.cpp (more control, no Ollama overhead): `./ucore generate-local --model <gguf_path> --port 18082 data/npcs/specs/<npc>.json`
+  - Starts llama.cpp with tuned params, runs generation, tears down server
+  - Or manually: `~/llama-servers.sh serve [model.gguf] [port]` then `./ucore generate-ollama --url http://127.0.0.1:<port>/v1/chat/completions`
 - Dashboard app lives in `src/dashboard/unity-npc-llm-training-dashboard/`.
-- Supabase Docker core project: `LLM_WSL`. Current local ports: DB `15433`, API/Kong `16433`, Studio `16434`, Analytics `16435`, Inbucket `16436`. Check with `python src/core/ops/docker_core_status.py`.
+- Supabase Docker core project: `LLM_WSL`. Current local ports: DB `15433`, API/Kong `16433`, Studio `16434`, Analytics `16435`, Inbucket `16436`.
 - **All compatibility symlinks removed:** No `configs`, `frontend_control`, `outputs`, `exports`, `eval`, `logs`, `subjects/schemas`, `_config`, `.pipeline`, or `ucore` symlinks remain. `./ucore` is now a real bash wrapper.
 - **Legacy Python import shim removed:** `src/core/__init__.py` no longer exposes top-level compatibility aliases like `src.core.dataset_eval` or `src.core.smoke_test`. Use canonical subpackages only (`src.core.dataset.*`, `src.core.evaluation.*`, `src.core.ops.*`, `src.core.training.*`).
 
