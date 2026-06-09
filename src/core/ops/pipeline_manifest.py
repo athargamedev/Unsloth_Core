@@ -3,7 +3,7 @@
 scripts/ops/pipeline_manifest.py — Centralized Pipeline Run Manifest
 
 Tracks every pipeline stage (generate, sanitize, dataset-eval, train, export,
-evaluate, feedback) in a single JSON manifest file at ``.pipeline/run_manifest.json``.
+evaluate, feedback) in a single JSON manifest file at ``var/.pipeline/run_manifest.json``.
 Replaces ad-hoc artifact tracking with a unified, queryable record.
 
 Usage (simple one-shot integration from any pipeline script)::
@@ -41,6 +41,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from src.config.paths import pipeline_root
+
 logger = logging.getLogger(__name__)
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -49,9 +51,7 @@ MANIFEST_VERSION = "1.0"
 MANIFEST_FILENAME = "run_manifest.json"
 MANIFEST_TEMP_SUFFIX = ".tmp"
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-
-_DEFAULT_MANIFEST_PATH = PROJECT_ROOT / ".pipeline" / MANIFEST_FILENAME
+_DEFAULT_MANIFEST_PATH = pipeline_root() / MANIFEST_FILENAME
 
 # Canonical pipeline stage order
 _PIPELINE_ORDER: list[str] = [

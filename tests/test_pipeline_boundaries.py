@@ -141,7 +141,6 @@ def test_tracking_local_fallback_shape(tmp_path):
 
 def test_sanitizer_infers_relative_technique_and_counts_sibling_validation(monkeypatch, tmp_path):
     from src.config import paths
-
     from src.config import paths as src_paths
     from src.core.dataset import sanitize_dataset
 
@@ -153,7 +152,7 @@ def test_sanitizer_infers_relative_technique_and_counts_sibling_validation(monke
     write_jsonl(train_path, [{"messages": []}, {"messages": []}])
     write_jsonl(val_path, [{"messages": []}, {"messages": []}, {"messages": []}])
 
-    relative_train_path = Path("subjects/datasets/demo_npc/ollama/train.jsonl")
+    relative_train_path = Path("data/datasets/demo_npc/ollama/train.jsonl")
 
     assert sanitize_dataset.infer_technique_from_path(relative_train_path) == "ollama"
     assert sanitize_dataset.count_sibling_validation_examples(relative_train_path) == 3
@@ -605,7 +604,9 @@ def test_local_gap_detector(tmp_path, monkeypatch):
             self.npc_key = npc_key
             self.technique = technique
             self.spec_path = paths.spec_path(npc_key)
-            self.primer_path = tmp_path / "data" / "npcs" / "reference_docs" / f"{npc_key}_primer.md"
+            self.primer_path = (
+                tmp_path / "data" / "npcs" / "reference_docs" / f"{npc_key}_primer.md"
+            )
             self.train_clean_path = paths.dataset_dir(npc_key) / technique / "train_clean.jsonl"
             self.spec_concepts = []
             self.primer_text = ""
@@ -638,13 +639,18 @@ def test_local_gap_detector(tmp_path, monkeypatch):
             for wc in weak_concepts:
                 concept_key = wc["concept"]
                 reasons = wc.get("reasons", [])
-                category, concept_name = concept_key.split("/", 1) if "/" in concept_key else (None, concept_key)
+                category, concept_name = (
+                    concept_key.split("/", 1) if "/" in concept_key else (None, concept_key)
+                )
                 spec_c = next(
                     (
                         c
                         for c in self.spec_concepts
                         if c.get("name", "").lower().strip() == concept_name.lower().strip()
-                        and (category is None or c.get("category", "").lower().strip() == category.lower().strip())
+                        and (
+                            category is None
+                            or c.get("category", "").lower().strip() == category.lower().strip()
+                        )
                     ),
                     None,
                 )
@@ -657,7 +663,9 @@ def test_local_gap_detector(tmp_path, monkeypatch):
                     rec = "Source document lacks coverage. Add descriptive sections to primer."
                 elif training_examples_count < 8:
                     gap_type = "training_density_gap"
-                    rec = "Low example density. Trigger synthetic generation for concept with focus."
+                    rec = (
+                        "Low example density. Trigger synthetic generation for concept with focus."
+                    )
                 else:
                     gap_type = "model_capacity_gap"
                     rec = "The model failed to acquire the concept; upgrade training preset, increase epochs, or check format."

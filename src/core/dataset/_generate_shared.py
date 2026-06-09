@@ -2520,7 +2520,11 @@ def run_dataset_generation(
                     )
 
             if technique == "docs":
-                from src.core.dataset.generate_workflow_dataset import default_manifest_path, generate_workflow_dataset_from_manifest
+                from src.core.dataset.generate_workflow_dataset import (
+                    default_manifest_path,
+                    generate_workflow_dataset_from_manifest,
+                )
+
                 manifest_path = (
                     docs_manifest
                     or spec.get("dataset", {}).get("corpus_manifest")
@@ -2692,3 +2696,7 @@ def main() -> None:
         push_to_confident=args.push_to_confident,
         docs_manifest=args.docs_manifest,
     )
+
+
+if __name__ == "__main__":
+    main()

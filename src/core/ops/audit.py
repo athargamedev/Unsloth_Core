@@ -21,8 +21,8 @@ class ProjectAudit:
         if project_root is None:
             project_root = Path.cwd()
         self.root = Path(project_root)
-        self.state_file = self.root / "eval/results/pipeline_state.json"
-        self.supabase_db_url = "postgresql://postgres:postgres@127.0.0.1:15434/postgres"
+        self.state_file = self.root / "artifacts/eval/results/pipeline_state.json"
+        self.supabase_db_url = "postgresql://postgres:postgres@127.0.0.1:15433/postgres"
 
     def check_environment(self):
         """Verify Docker, Supabase, ports, disk space."""
@@ -55,7 +55,7 @@ class ProjectAudit:
         try:
             health = (
                 subprocess.run(
-                    ["curl", "-s", "-m", "5", "http://127.0.0.1:16437/rest/v1/"],
+                    ["curl", "-s", "-m", "5", "http://127.0.0.1:16433/"],
                     capture_output=True,
                     timeout=6,
                 ).returncode
@@ -66,7 +66,7 @@ class ProjectAudit:
             result["checks"]["supabase_ok"] = False
 
         # Port availability (key ports)
-        ports = {16437: "Supabase API", 16438: "Studio", 15434: "Postgres", 5432: "Postgres Alt"}
+        ports = {16433: "Supabase API", 16434: "Studio", 15433: "Postgres", 5432: "Postgres Alt"}
         port_status = {}
         for port, label in ports.items():
             try:
@@ -108,7 +108,7 @@ class ProjectAudit:
 
     def audit_datasets(self):
         """Check all datasets for consistency and quality."""
-        dataset_dir = self.root / "subjects/datasets"
+        dataset_dir = self.root / "data/datasets"
         audit = {"datasets": {}, "issues": []}
 
         if not dataset_dir.exists():
@@ -160,7 +160,7 @@ class ProjectAudit:
 
     def audit_training_outputs(self):
         """Check training outputs and recent runs."""
-        outputs_dir = self.root / "outputs"
+        outputs_dir = self.root / "artifacts/models"
         audit = {"models": {}, "issues": []}
 
         if not outputs_dir.exists():
@@ -194,7 +194,7 @@ class ProjectAudit:
 
     def audit_eval_results(self):
         """Check evaluation results."""
-        eval_dir = self.root / "eval/results"
+        eval_dir = self.root / "artifacts/eval/results"
         audit = {"results": {}, "issues": []}
 
         if not eval_dir.exists():
@@ -348,7 +348,7 @@ class ProjectAudit:
             print("   2. Re-run pipeline with feedback: ./ucore feedback <feedback_file>")
         else:
             print(
-                f"   1. Run a training cycle: ./ucore train subjects/NPC_specs/{npc_key}.json --preset fast-3b"
+                f"   1. Run a training cycle: ./ucore train data/npcs/specs/{npc_key}.json --preset fast-3b"
             )
 
         print(f"\n{'=' * 70}\n")

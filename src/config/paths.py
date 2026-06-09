@@ -8,10 +8,10 @@ naming and directory conventions. Import this instead of hardcoding paths.
 Naming conventions:
   - GGUF filename: {npc_key}-{model_short}-{quant}.gguf
   - Model short:   unsloth/Llama-3.2-3B-Instruct-bnb-4bit → llama3.2-3b
-  - Output dir:    outputs/{npc_key}/
-  - Export dir:    exports/{npc_key}/
-  - Dataset dir:   subjects/datasets/{npc_key}/{technique}/
-  - Eval reports:  eval/reports/{npc_key}/
+  - Output dir:    artifacts/models/{npc_key}/
+  - Export dir:    artifacts/exports/{npc_key}/
+  - Dataset dir:   data/datasets/{npc_key}/{technique}/
+  - Eval reports:  artifacts/eval/reports/{npc_key}/
 """
 
 import re
@@ -38,8 +38,7 @@ CONFIG_DIR = _new_config_dir if _new_config_dir.exists() else _old_config_dir
 
 def pipeline_root() -> Path:
     """Return var/.pipeline/ — unified runtime registry root."""
-    new_path = PROJECT_ROOT / "var" / ".pipeline"
-    return new_path if new_path.exists() else PROJECT_ROOT / ".pipeline"
+    return PROJECT_ROOT / "var" / ".pipeline"
 
 
 def pipeline_index_path() -> Path:
@@ -104,58 +103,57 @@ DATASET_TECHNIQUES = ("docs", "ollama", "openai", "anthropic", "template")
 
 
 def dataset_root() -> Path:
-    """Return data/datasets/ or subjects/datasets/."""
-    new_path = PROJECT_ROOT / "data" / "datasets"
-    return new_path if new_path.exists() else PROJECT_ROOT / "subjects" / "datasets"
+    """Return data/datasets/."""
+    return PROJECT_ROOT / "data" / "datasets"
 
 
 def dataset_dir(npc_key: str) -> Path:
-    """Return subjects/datasets/{npc_key}/"""
+    """Return data/datasets/{npc_key}/"""
     return dataset_root() / npc_key
 
 
 def dataset_train_path(npc_key: str, technique: str) -> Path:
-    """Return subjects/datasets/{npc_key}/{technique}/train.jsonl"""
+    """Return data/datasets/{npc_key}/{technique}/train.jsonl"""
     return dataset_dir(npc_key) / technique / "train.jsonl"
 
 
 def dataset_val_path(npc_key: str, technique: str) -> Path:
-    """Return subjects/datasets/{npc_key}/{technique}/validation.jsonl"""
+    """Return data/datasets/{npc_key}/{technique}/validation.jsonl"""
     return dataset_dir(npc_key) / technique / "validation.jsonl"
 
 
 def dataset_reference_dir(npc_key: str, technique: str = "template") -> Path:
-    """Return subjects/datasets/{npc_key}/{technique}/reference_doc/"""
+    """Return data/datasets/{npc_key}/{technique}/reference_doc/"""
     return dataset_dir(npc_key) / technique / "reference_doc"
 
 
 def dataset_manifest_path(npc_key: str, technique: str) -> Path:
-    """Return subjects/datasets/{npc_key}/{technique}/manifests/dataset_manifest.json."""
+    """Return data/datasets/{npc_key}/{technique}/manifests/dataset_manifest.json."""
     return dataset_dir(npc_key) / technique / "manifests" / "dataset_manifest.json"
 
 
 def generation_config_path(npc_key: str, technique: str) -> Path:
-    """Return subjects/datasets/{npc_key}/{technique}/generation_config.json."""
+    """Return data/datasets/{npc_key}/{technique}/generation_config.json."""
     return dataset_dir(npc_key) / technique / "generation_config.json"
 
 
 def dataset_log_dir(npc_key: str, technique: str) -> Path:
-    """Return subjects/datasets/{npc_key}/{technique}/logs/."""
+    """Return data/datasets/{npc_key}/{technique}/logs/."""
     return dataset_dir(npc_key) / technique / "logs"
 
 
 def dataset_raw_dir(npc_key: str, technique: str) -> Path:
-    """Return subjects/datasets/{npc_key}/{technique}/raw/."""
+    """Return data/datasets/{npc_key}/{technique}/raw/."""
     return dataset_dir(npc_key) / technique / "raw"
 
 
 def dataset_clean_dir(npc_key: str, technique: str) -> Path:
-    """Return subjects/datasets/{npc_key}/{technique}/clean/."""
+    """Return data/datasets/{npc_key}/{technique}/clean/."""
     return dataset_dir(npc_key) / technique / "clean"
 
 
 def dataset_eval_dir(npc_key: str, technique: str) -> Path:
-    """Return subjects/datasets/{npc_key}/{technique}/eval/."""
+    """Return data/datasets/{npc_key}/{technique}/eval/."""
     return dataset_dir(npc_key) / technique / "eval"
 
 
@@ -211,7 +209,7 @@ def resolve_dataset_context(
 
 
 def is_canonical_train_path(path: str | Path) -> bool:
-    """Return True if path matches subjects/datasets/{npc_key}/{technique}/train.jsonl."""
+    """Return True if path matches data/datasets/{npc_key}/{technique}/train.jsonl."""
     p = Path(path)
     if not p.is_absolute():
         p = (PROJECT_ROOT / p).resolve()
@@ -226,7 +224,7 @@ def is_canonical_train_path(path: str | Path) -> bool:
 def infer_validation_path(train_path: str | Path) -> Path:
     """Infer validation path from a train path.
 
-    Canonical path is subjects/datasets/{npc_key}/{technique}/train.jsonl -> validation.jsonl.
+    Canonical path is data/datasets/{npc_key}/{technique}/train.jsonl -> validation.jsonl.
     For non-canonical paths, this returns a best-effort sibling filename.
     """
     p = Path(train_path)
@@ -246,12 +244,12 @@ def infer_validation_path(train_path: str | Path) -> Path:
 
 
 def dataset_version_dir(npc_key: str, technique: str, version: str) -> Path:
-    """Return Path to versioned dataset dir: subjects/datasets/{npc}/{technique}/v{version}/"""
+    """Return Path to versioned dataset dir: data/datasets/{npc}/{technique}/v{version}/"""
     return dataset_dir(npc_key) / technique / f"v{version}"
 
 
 def dataset_latest_symlink(npc_key: str, technique: str) -> Path:
-    """Return Path to latest symlink: subjects/datasets/{npc}/{technique}/latest"""
+    """Return Path to latest symlink: data/datasets/{npc}/{technique}/latest"""
     return dataset_dir(npc_key) / technique / "latest"
 
 
@@ -285,19 +283,17 @@ def generate_version_timestamp() -> str:
 
 
 def subjects_root() -> Path:
-    """Return data/npcs/ or subjects/ directory root."""
-    new_path = PROJECT_ROOT / "data" / "npcs"
-    return new_path if new_path.exists() else PROJECT_ROOT / "subjects"
+    """Return data/npcs/."""
+    return PROJECT_ROOT / "data" / "npcs"
 
 
 def spec_dir() -> Path:
-    """Return data/npcs/specs/ or subjects/NPC_specs/."""
-    new_path = PROJECT_ROOT / "data" / "npcs" / "specs"
-    return new_path if new_path.exists() else subjects_root() / "NPC_specs"
+    """Return data/npcs/specs/."""
+    return PROJECT_ROOT / "data" / "npcs" / "specs"
 
 
 def spec_path(npc_key: str) -> Path:
-    """Return subjects/NPC_specs/{npc_key}.json."""
+    """Return data/npcs/specs/{npc_key}.json."""
     return spec_dir() / f"{npc_key}.json"
 
 
@@ -306,8 +302,7 @@ def spec_path(npc_key: str) -> Path:
 
 def npc_config_root() -> Path:
     """Return etc/npcs/."""
-    new_path = PROJECT_ROOT / "etc" / "npcs"
-    return new_path if new_path.exists() else PROJECT_ROOT / "configs" / "npcs"
+    return PROJECT_ROOT / "etc" / "npcs"
 
 
 def npc_config_dir(npc_key: str) -> Path:
@@ -345,17 +340,16 @@ def sweep_dir(npc_key: str) -> Path:
 
 def log_root() -> Path:
     """Return artifacts/logs/."""
-    new_path = PROJECT_ROOT / "artifacts" / "logs"
-    return new_path if new_path.exists() else PROJECT_ROOT / "logs"
+    return PROJECT_ROOT / "artifacts" / "logs"
 
 
 def npc_log_root(npc_key: str) -> Path:
-    """Return logs/{npc_key}/."""
+    """Return artifacts/logs/{npc_key}/."""
     return log_root() / npc_key
 
 
 def npc_log_dir(npc_key: str, stage: str) -> Path:
-    """Return logs/{npc_key}/{stage}/."""
+    """Return artifacts/logs/{npc_key}/{stage}/."""
     return npc_log_root(npc_key) / stage
 
 
@@ -384,8 +378,7 @@ def npc_pipeline_runs_path(npc_key: str) -> Path:
 
 def output_root() -> Path:
     """Return artifacts/models/."""
-    new_path = PROJECT_ROOT / "artifacts" / "models"
-    return new_path if new_path.exists() else PROJECT_ROOT / "outputs"
+    return PROJECT_ROOT / "artifacts" / "models"
 
 
 def output_dir(npc_key: str) -> Path:
@@ -398,8 +391,7 @@ def output_dir(npc_key: str) -> Path:
 
 def export_root() -> Path:
     """Return artifacts/exports/."""
-    new_path = PROJECT_ROOT / "artifacts" / "exports"
-    return new_path if new_path.exists() else PROJECT_ROOT / "exports"
+    return PROJECT_ROOT / "artifacts" / "exports"
 
 
 def export_dir(npc_key: str) -> Path:
@@ -443,27 +435,26 @@ def export_manifest_path(npc_key: str) -> Path:
 
 def eval_root() -> Path:
     """Return artifacts/eval/."""
-    new_path = PROJECT_ROOT / "artifacts" / "eval"
-    return new_path if new_path.exists() else PROJECT_ROOT / "eval"
+    return PROJECT_ROOT / "artifacts" / "eval"
 
 
 def eval_training_metrics_path(npc_key: str) -> Path:
-    """Return eval/training-metrics/{npc_key}.yaml"""
+    """Return artifacts/eval/training-metrics/{npc_key}.yaml"""
     return eval_root() / "training-metrics" / f"{npc_key}.yaml"
 
 
 def eval_report_dir(npc_key: str) -> Path:
-    """Return eval/reports/{npc_key}/"""
+    """Return artifacts/eval/reports/{npc_key}/"""
     return eval_root() / "reports" / npc_key
 
 
 def eval_feedback_path(npc_key: str) -> Path:
-    """Return eval/results/feedback/{npc_key}.json"""
+    """Return artifacts/eval/results/feedback/{npc_key}.json"""
     return eval_root() / "results" / "feedback" / f"{npc_key}.json"
 
 
 def eval_gaps_dir(npc_key: str) -> Path:
-    """Return eval/results/gaps/{npc_key}/"""
+    """Return artifacts/eval/results/gaps/{npc_key}/"""
     return eval_root() / "results" / "gaps" / npc_key
 
 
@@ -473,24 +464,24 @@ def eval_timestamp() -> str:
 
 
 def eval_report_path(npc_key: str, fmt: str = "md", timestamp: str | None = None) -> Path:
-    """Return eval/reports/{npc_key}/eval_{timestamp}.{fmt}"""
+    """Return artifacts/eval/reports/{npc_key}/eval_{timestamp}.{fmt}"""
     ts = timestamp or eval_timestamp()
     return eval_report_dir(npc_key) / f"eval_{ts}.{fmt}"
 
 
 def eval_comparison_dir() -> Path:
-    """Return eval/comparisons/"""
+    """Return artifacts/eval/comparisons/"""
     return eval_root() / "comparisons"
 
 
 def eval_comparison_path(npc_key: str, baseline_label: str, timestamp: str | None = None) -> Path:
-    """Return eval/comparisons/{npc_key}_vs_{baseline}_{timestamp}.md"""
+    """Return artifacts/eval/comparisons/{npc_key}_vs_{baseline}_{timestamp}.md"""
     ts = timestamp or eval_timestamp()
     return eval_comparison_dir() / f"{npc_key}_vs_{baseline_label}_{ts}.md"
 
 
 def eval_results_path() -> Path:
-    """Return eval/results/eval_results.jsonl"""
+    """Return artifacts/eval/results/eval_results.jsonl"""
     return eval_root() / "results" / "eval_results.jsonl"
 
 
@@ -545,7 +536,7 @@ def generate_run_id(npc_key: str, preset_name: str = "default") -> str:
 
 
 def run_dir(npc_key: str, run_id: str) -> Path:
-    """Return outputs/{npc_key}/runs/{run_id}/"""
+    """Return artifacts/models/{npc_key}/runs/{run_id}/"""
     return output_dir(npc_key) / "runs" / run_id
 
 

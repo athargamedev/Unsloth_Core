@@ -291,9 +291,12 @@ def check_promotion_rules(
     Reads thresholds from etc/promotion-rules.yaml.
     Returns (passed, failure_reasons). Returns (True, []) if no rules file exists.
     """
-    rules_path = PROJECT_ROOT / "configs" / "promotion-rules.yaml"
+    rules_path = PROJECT_ROOT / "etc" / "promotion-rules.yaml"
     if not rules_path.exists():
-        return True, []
+        print(
+            "[warn] No promotion-rules.yaml found at etc/promotion-rules.yaml — promotion disabled"
+        )
+        return True, ["No rules file"]
 
     with open(rules_path) as f:
         rules = yaml.safe_load(f) or {}

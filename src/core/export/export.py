@@ -150,7 +150,7 @@ def _get_clean_config(adapter_path) -> str | None:
     print(f"  Adapter base model: {base_model}")
 
     # Try cached config first
-    configs_dir = PROJECT_ROOT / "configs" / "base_configs"
+    configs_dir = PROJECT_ROOT / "etc" / "base_configs"
     if configs_dir.exists():
         cached_name = base_model.replace("/", "-").replace("_", "-")
         cached_path = configs_dir / f"{cached_name}.json"

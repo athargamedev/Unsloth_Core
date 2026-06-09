@@ -16,20 +16,20 @@ import json
 import subprocess
 from pathlib import Path
 
-PROJECT = "LLM_WSL"
+PROJECT = "Unsloth_Core"
 STATE_FILE = Path.home() / ".cache" / "unsloth_core_docker_core_status.json"
 EXPECTED = [
-    "supabase_db_LLM_WSL",
-    "supabase_kong_LLM_WSL",
-    "supabase_studio_LLM_WSL",
-    "supabase_auth_LLM_WSL",
-    "supabase_rest_LLM_WSL",
-    "supabase_realtime_LLM_WSL",
-    "supabase_storage_LLM_WSL",
-    "supabase_pg_meta_LLM_WSL",
-    "supabase_analytics_LLM_WSL",
-    "supabase_inbucket_LLM_WSL",
-    "supabase_vector_LLM_WSL",
+    "supabase_db_Unsloth_Core",
+    "supabase_kong_Unsloth_Core",
+    "supabase_studio_Unsloth_Core",
+    "supabase_auth_Unsloth_Core",
+    "supabase_rest_Unsloth_Core",
+    "supabase_realtime_Unsloth_Core",
+    "supabase_storage_Unsloth_Core",
+    "supabase_pg_meta_Unsloth_Core",
+    "supabase_analytics_Unsloth_Core",
+    "supabase_inbucket_Unsloth_Core",
+    "supabase_vector_Unsloth_Core",
 ]
 PORTS = {
     "API/Kong": "http://127.0.0.1:16433",

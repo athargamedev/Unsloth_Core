@@ -16,8 +16,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-DEFAULT_JUDGE_CACHE = PROJECT_ROOT / ".pipeline" / "judge_cache.sqlite3"
+from src.config.paths import pipeline_root
+
+DEFAULT_JUDGE_CACHE = pipeline_root() / "judge_cache.sqlite3"
 SCHEMA_VERSION = 1
 
 

@@ -20,43 +20,39 @@ def test_workflow_path_helpers_resolve_under_expected_roots(monkeypatch, tmp_pat
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
     npc = "demo_npc"
 
-    assert paths.npc_config_dir(npc) == tmp_path / "configs" / "npcs" / npc
-    assert (
-        paths.npc_workflow_config_path(npc) == tmp_path / "configs" / "npcs" / npc / "workflow.yaml"
-    )
+    assert paths.npc_config_dir(npc) == tmp_path / "etc" / "npcs" / npc
+    assert paths.npc_workflow_config_path(npc) == tmp_path / "etc" / "npcs" / npc / "workflow.yaml"
     assert (
         paths.npc_workflow_manifest_path(npc)
-        == tmp_path / "outputs" / npc / "workflow_manifest.json"
+        == tmp_path / "artifacts" / "models" / npc / "workflow_manifest.json"
     )
-    assert paths.npc_log_root(npc) == tmp_path / "logs" / npc
-    assert paths.npc_log_dir(npc, "training") == tmp_path / "logs" / npc / "training"
-    assert paths.npc_pipeline_root(npc) == tmp_path / ".pipeline" / "npcs" / npc
+    assert paths.npc_log_root(npc) == tmp_path / "artifacts" / "logs" / npc
+    assert paths.npc_log_dir(npc, "training") == tmp_path / "artifacts" / "logs" / npc / "training"
+    assert paths.npc_pipeline_root(npc) == tmp_path / "var" / ".pipeline" / "npcs" / npc
     assert (
-        paths.npc_pipeline_index_path(npc) == tmp_path / ".pipeline" / "npcs" / npc / "index.json"
+        paths.npc_pipeline_index_path(npc)
+        == tmp_path / "var" / ".pipeline" / "npcs" / npc / "index.json"
     )
 
     assert (
         paths.dataset_manifest_path(npc, "docs")
-        == tmp_path / "subjects" / "datasets" / npc / "docs" / "manifests" / "dataset_manifest.json"
+        == tmp_path / "data" / "datasets" / npc / "docs" / "manifests" / "dataset_manifest.json"
     )
     assert (
         paths.generation_config_path(npc, "docs")
-        == tmp_path / "subjects" / "datasets" / npc / "docs" / "generation_config.json"
+        == tmp_path / "data" / "datasets" / npc / "docs" / "generation_config.json"
     )
     assert (
-        paths.dataset_log_dir(npc, "docs")
-        == tmp_path / "subjects" / "datasets" / npc / "docs" / "logs"
+        paths.dataset_log_dir(npc, "docs") == tmp_path / "data" / "datasets" / npc / "docs" / "logs"
     )
 
-    assert paths.training_config_path(npc) == tmp_path / "configs" / "npcs" / npc / "training.yaml"
-    assert (
-        paths.evaluation_config_path(npc) == tmp_path / "configs" / "npcs" / npc / "evaluation.yaml"
-    )
-    assert paths.sweep_dir(npc) == tmp_path / "configs" / "npcs" / npc / "sweeps"
-    assert paths.export_adapter_dir(npc) == tmp_path / "exports" / npc / "adapters"
+    assert paths.training_config_path(npc) == tmp_path / "etc" / "npcs" / npc / "training.yaml"
+    assert paths.evaluation_config_path(npc) == tmp_path / "etc" / "npcs" / npc / "evaluation.yaml"
+    assert paths.sweep_dir(npc) == tmp_path / "etc" / "npcs" / npc / "sweeps"
+    assert paths.export_adapter_dir(npc) == tmp_path / "artifacts" / "exports" / npc / "adapters"
     assert (
         paths.export_unity_alias_path(npc)
-        == tmp_path / "exports" / npc / "unity" / f"{npc}-lora-f16.gguf"
+        == tmp_path / "artifacts" / "exports" / npc / "unity" / f"{npc}-lora-f16.gguf"
     )
 
 

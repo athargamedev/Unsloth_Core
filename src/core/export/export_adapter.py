@@ -105,8 +105,8 @@ def _get_clean_config(adapter_path):
 
     print(f"[export] Base model: {base_model}")
 
-    # Try cached config first
-    configs_dir = Path(__file__).resolve().parent.parent / "configs" / "base_configs"
+    # Try cached config first — canonical location
+    configs_dir = Path(__file__).resolve().parent.parent.parent.parent / "etc" / "base_configs"
     if configs_dir.exists():
         # Match by pattern: e.g. "unsloth/Llama-3.2-3B-Instruct-bnb-4bit" -> "unsloth-Llama-3.2-3B-Instruct-bnb-4bit.json"
         cached_name = base_model.replace("/", "-").replace("_", "-")
