@@ -9,8 +9,8 @@ Build high-quality GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads
 ## Active project state
 
 - Active NPCs: `history_guide`, `chef_assistant`, `marvel_heroes_instructor`.
-- **Latest runs:** `history_guide` run `20260607_fast-1.7b_llama3.2-3b_002` (loss 1.61), `chef_assistant` run `20260607_fast-1.7b_llama3.2-3b_004` (loss 1.22). Both promoted. GGUF exports at `artifacts/exports/<npc>/`. `marvel_heroes_instructor` has template dataset (155 clean rows) but no training yet.
-- **Eval results:** chef_assistant has eval reports in `artifacts/eval/reports/chef_assistant/`. history_guide has no eval reports yet (blocked by missing base GGUF download).
+- **Latest runs:** `history_guide` run `20260607_fast-1.7b_llama3.2-3b_002` (loss 1.61), `chef_assistant` run `20260607_fast-1.7b_llama3.2-3b_004` (loss 1.22). Both promoted. GGUF exports at `artifacts/exports/<npc>/`. `marvel_heroes_instructor` run `20260609_safe-any_llama3.2-3b_003` (loss 2.95) — Ollama dataset (150 clean rows). GGUF adapter at `artifacts/exports/marvel_heroes_instructor/`.
+- **Eval results:** chef_assistant has eval reports in `artifacts/eval/reports/chef_assistant/`. history_guide has no eval reports yet (blocked by missing base GGUF download). marvel_heroes_instructor has dataset quality report and training report.
 - **Eval results:** history_guide 5/9 wins (55.6%), chef_assistant 5/10 wins (50.0%). GPU OOM forced CPU fallback (`--gpu-layers 0`).
 - **Bug fixed:** `dataset_eval.py` both `dataset_dir()` function and error message now use canonical `dataset_root()` instead of hardcoded `subjects/datasets/`.
 - Production dataset rule: use the current approved grounded workflow. NotebookLM is no longer used. Template generation is smoke/dev only.

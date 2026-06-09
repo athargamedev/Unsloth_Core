@@ -1,0 +1,276 @@
+{
+  "created_at": "2026-06-09T18:09:50.002711+00:00",
+  "npc_key": "marvel_heroes_instructor",
+  "technique": "ollama",
+  "judge_provider": "ollama",
+  "judge_model": "qwen2.5:7b",
+  "deepeval_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260609-150840",
+  "deepeval_result_identifier": "dataset-quality-marvel_heroes_instructor-ollama-fast-20260609-150840",
+  "command": [
+    "/home/athar/Projects/Unsloth_Core/unsloth_env/bin/deepeval",
+    "test",
+    "run",
+    "/home/athar/Projects/Unsloth_Core/tests/evals/test_dataset_generation_quality.py",
+    "--identifier",
+    "dataset-quality-marvel_heroes_instructor-ollama-fast-20260609-150840",
+    "--display",
+    "all",
+    "--skip-on-missing-params"
+  ],
+  "total": 5,
+  "passed": 1,
+  "failed": 4,
+  "pass_rate": 0.2,
+  "metric_count": 15,
+  "null_metric_count": 0,
+  "null_metric_rate": 0.0,
+  "status": "structural_failure",
+  "metrics": {
+    "Constraint Compliance [GEval]": {
+      "count": 5,
+      "average_score": 0.76,
+      "pass_rate": 0.6
+    },
+    "Persona and Category Fit [GEval]": {
+      "count": 5,
+      "average_score": 0.62,
+      "pass_rate": 0.4
+    },
+    "Training Usefulness and Specificity [GEval]": {
+      "count": 5,
+      "average_score": 0.6,
+      "pass_rate": 0.6
+    }
+  },
+  "categories": {
+    "dialogue": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
+    },
+    "identity": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
+    },
+    "quest": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
+    },
+    "refusal": {
+      "total": 1,
+      "passed": 0,
+      "pass_rate": 0.0
+    },
+    "teaching": {
+      "total": 1,
+      "passed": 1,
+      "pass_rate": 1.0
+    }
+  },
+  "failures_path": "/home/athar/Projects/Unsloth_Core/data/datasets/marvel_heroes_instructor/ollama/quality_failures.json",
+  "quality_gate_mode": "fast",
+  "cases_per_category": 1,
+  "dataset_summary": {
+    "path": "/home/athar/Projects/Unsloth_Core/data/datasets/marvel_heroes_instructor/ollama/train_clean.jsonl",
+    "exists": true,
+    "content_sha256": "sha256:a672ecf3e3e0c9098d729e466c69dcf8d934c28ba664fad202863ed1d2a03a7c",
+    "total": 150,
+    "by_category": {
+      "dialogue": 32,
+      "identity": 12,
+      "quest": 16,
+      "refusal": 16,
+      "teaching": 74
+    },
+    "by_difficulty": {
+      "advanced": 29,
+      "beginner": 68,
+      "intermediate": 53
+    },
+    "by_split": {
+      "train": 150
+    },
+    "by_concept": {
+      "tactical assessments": 29,
+      "street-level vigilantes": 28,
+      "cosmic threats": 26,
+      "shield history": 26,
+      "mutant abilities": 24,
+      "Will not engage in speculative 'who would win' debates without emphasizing tactics.": 6,
+      "Will not disclose personal civilian identities or addresses if highly classified.": 5,
+      "Will not reveal classified SHIELD protocols or current mission details.": 5,
+      "marvel_heroes_instructor": 1
+    },
+    "unknown_rows": 0,
+    "assistant_density": {
+      "words": {
+        "count": 150,
+        "avg": 26.44,
+        "min": 15,
+        "max": 55
+      },
+      "sentences": {
+        "count": 150,
+        "avg": 2.32,
+        "min": 1,
+        "max": 3
+      },
+      "chars": {
+        "count": 150,
+        "avg": 176.89,
+        "min": 96,
+        "max": 336
+      },
+      "by_category": {
+        "dialogue": {
+          "words": {
+            "count": 32,
+            "avg": 26.12,
+            "min": 17,
+            "max": 51
+          },
+          "sentences": {
+            "count": 32,
+            "avg": 2.28,
+            "min": 1,
+            "max": 3
+          },
+          "chars": {
+            "count": 32,
+            "avg": 173.0,
+            "min": 117,
+            "max": 336
+          }
+        },
+        "identity": {
+          "words": {
+            "count": 12,
+            "avg": 19.58,
+            "min": 18,
+            "max": 23
+          },
+          "sentences": {
+            "count": 12,
+            "avg": 1.58,
+            "min": 1,
+            "max": 2
+          },
+          "chars": {
+            "count": 12,
+            "avg": 128.58,
+            "min": 121,
+            "max": 136
+          }
+        },
+        "quest": {
+          "words": {
+            "count": 16,
+            "avg": 23.31,
+            "min": 15,
+            "max": 46
+          },
+          "sentences": {
+            "count": 16,
+            "avg": 2.31,
+            "min": 1,
+            "max": 3
+          },
+          "chars": {
+            "count": 16,
+            "avg": 159.12,
+            "min": 96,
+            "max": 328
+          }
+        },
+        "refusal": {
+          "words": {
+            "count": 16,
+            "avg": 35.06,
+            "min": 31,
+            "max": 39
+          },
+          "sentences": {
+            "count": 16,
+            "avg": 3.0,
+            "min": 3,
+            "max": 3
+          },
+          "chars": {
+            "count": 16,
+            "avg": 226.94,
+            "min": 195,
+            "max": 249
+          }
+        },
+        "teaching": {
+          "words": {
+            "count": 74,
+            "avg": 26.5,
+            "min": 16,
+            "max": 55
+          },
+          "sentences": {
+            "count": 74,
+            "avg": 2.31,
+            "min": 1,
+            "max": 3
+          },
+          "chars": {
+            "count": 74,
+            "avg": 179.43,
+            "min": 98,
+            "max": 315
+          }
+        }
+      }
+    }
+  },
+  "expected_distribution": {
+    "identity": 12,
+    "teaching": 80,
+    "dialogue": 32,
+    "quest": 16,
+    "refusal": 16
+  },
+  "distribution_gaps": [
+    {
+      "category": "teaching",
+      "target": 80,
+      "actual": 74,
+      "shortfall": 6
+    }
+  ],
+  "dataset_total_rows": 150,
+  "dataset_unknown_rows": 0,
+  "sanitizer": {
+    "total_output": 150,
+    "discarded_total": 6,
+    "flagged_for_review": 0,
+    "passed_threshold": 150,
+    "quality_scores": {
+      "mean": 81.7,
+      "median": 81.0,
+      "min": 76,
+      "max": 91,
+      "std_dev": 3.5,
+      "passed_threshold": 150,
+      "flagged_for_review": 0,
+      "distribution": {
+        "0-9": 0,
+        "10-19": 0,
+        "20-29": 0,
+        "30-39": 0,
+        "40-49": 0,
+        "50-59": 0,
+        "60-69": 0,
+        "70-79": 36,
+        "80-89": 110,
+        "90-99": 4,
+        "100+": 0
+      }
+    }
+  },
+  "sanitizer_quality_issues": []
+}

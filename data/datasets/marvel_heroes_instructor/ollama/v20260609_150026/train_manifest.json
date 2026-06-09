@@ -1,0 +1,105 @@
+{
+  "npc_key": "marvel_heroes_instructor",
+  "technique": "ollama",
+  "model": "qwen2.5:7b",
+  "generation": {
+    "date": "2026-06-09T18:00:26Z",
+    "seed": 42,
+    "temperature": 0.7,
+    "multi_turn_ratio": 0.25,
+    "version": "ollama-v2"
+  },
+  "spec": {
+    "file": "/home/athar/Projects/Unsloth_Core/data/npcs/specs/marvel_heroes_instructor.json",
+    "hash": "sha256:86a7b48863b099daf0974b92f1b79e505daf9bb365e027a5aedd7baef789ee0c"
+  },
+  "contract": {
+    "supported_categories": [
+      "identity",
+      "teaching",
+      "dialogue",
+      "quest",
+      "refusal"
+    ],
+    "minimum_examples_per_category": {
+      "identity": 8,
+      "teaching": 32,
+      "dialogue": 16,
+      "quest": 8,
+      "refusal": 8
+    },
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 80,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "valid_difficulty_levels": [
+      "beginner",
+      "intermediate",
+      "advanced"
+    ],
+    "spec_npc_key": "marvel_heroes_instructor",
+    "reference_doc": "data/npcs/reference_docs/marvel_heroes_instructor_primer.md",
+    "technique": null
+  },
+  "distribution": {
+    "expected_examples_per_category": {
+      "identity": 12,
+      "teaching": 80,
+      "dialogue": 32,
+      "quest": 16,
+      "refusal": 16
+    },
+    "generation_request_examples_per_category": {
+      "identity": 13,
+      "teaching": 90,
+      "dialogue": 36,
+      "quest": 18,
+      "refusal": 18
+    },
+    "observed_examples_per_category": {
+      "identity": 13,
+      "teaching": 90,
+      "dialogue": 36,
+      "quest": 18,
+      "refusal": 18
+    },
+    "distribution_gaps": []
+  },
+  "statistics": {
+    "total": 175,
+    "train": 156,
+    "validation": 19,
+    "by_category": {
+      "identity": 13,
+      "teaching": 90,
+      "dialogue": 36,
+      "quest": 18,
+      "refusal": 18
+    },
+    "by_difficulty": {
+      "beginner": 81,
+      "intermediate": 61,
+      "advanced": 33
+    },
+    "by_concept": {
+      "shield history": 32,
+      "tactical assessments": 31,
+      "mutant abilities": 31,
+      "cosmic threats": 31,
+      "street-level vigilantes": 31,
+      "Will not disclose personal civilian identities or addresses if highly classified.": 6,
+      "Will not engage in speculative 'who would win' debates without emphasizing tactics.": 6,
+      "Will not reveal classified SHIELD protocols or current mission details.": 6,
+      "marvel_heroes_instructor": 1
+    },
+    "generator_stats": {
+      "requests": 175,
+      "successes": 175,
+      "errors": 0,
+      "success_rate": 1.0
+    }
+  }
+}
