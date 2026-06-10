@@ -1,0 +1,51 @@
+# ── llama.cpp ── Local Inference Server ──────────────────────────────────────
+# Platform role: Local GGUF inference server (Ollama alternative)
+# Credentials:   None (local process)
+# Requires:      llama-server binary (from llama.cpp build)
+# Managed by:    ~/llama-servers.sh
+
+# ── Server defaults ────────────────────────────────────────────────────────
+server:
+  port: 18080                         # default port (overridable)
+  host: 127.0.0.1
+  ctx_size: 8192
+  batch_size: 512
+  parallel: 4
+  gpu_layers: 24
+  model_path: ~/models/qwen2.5-7b.gguf   # default model path
+  serve_script: ~/llama-servers.sh        # lifecycle management
+
+# ── Inference parameters ───────────────────────────────────────────────────
+inference:
+  temperature: 0.6
+  max_tokens: 2048
+  repeat_penalty: 1.1
+  api_format: openai                  # /v1/chat/completions OpenAI-compatible
+
+# ── Process management ─────────────────────────────────────────────────────
+# Managed by ~/llama-servers.sh
+# Commands:
+#   serve [model] [port]   — start server on port
+#   killall                — kill all llama-server processes
+#   status                 — check running processes
+#   preflight              — health check (ports, VRAM)
+process:
+  lifecycle_script: ~/llama-servers.sh
+  stale_watchdog_cron: "*/10 * * * *"     # auto-clean every 10 min
+
+# ── Naming conventions ─────────────────────────────────────────────────────
+# Model files are GGUF format:
+#   ~/models/{model_name}-{quant}.gguf
+naming:
+  model_format: "{model_name}-{quant}.gguf"
+  examples:
+    - qwen2.5-7b-q4_k_m.gguf
+    - llama-3.2-3b-instruct-q4_k_m.gguf
+  location: ~/models/
+
+# ── Workflow participation ─────────────────────────────────────────────────
+#   generate-local:  PRIMARY — starts server, generates, stops
+#   evaluate:        ALTERNATIVE — used as evaluation backend
+workflow:
+  generate: true
+  evaluate_judge: true     # when Ollama is not available

@@ -1,0 +1,59 @@
+# ── Ollama ── Local LLM Inference ──────────────────────────────────────────────
+# Platform role: Dataset generation + local LLM judge
+# Credentials:    None (local service, runs on localhost)
+# Requires:       Ollama server running, model pulled (qwen2.5:7b)
+#
+# Env vars read at runtime:
+#   OLLAMA_HOST                  Server URL (default http://localhost:11434)
+#   OLLAMA_CONTEXT_LENGTH        Context window size (default 8192)
+#   OLLAMA_KEEP_ALIVE            Model keep-alive duration (default 5m)
+#   OLLAMA_NUM_PARALLEL          Parallel requests (default 4)
+#   OLLAMA_FLASH_ATTENTION       Flash attention on/off (default true)
+#   OLLAMA_KV_CACHE_TYPE         KV cache quantization (default q8_0)
+#   OLLAMA_GPU_OVERHEAD          GPU memory overhead fraction (default 0.4)
+#   OLLAMA_MAX_LOADED_MODELS     Max loaded models (default 1)
+#   OLLAMA_MAX_QUEUE             Max queued requests (default 512)
+#   OLLAMA_NO_CLOUD              Disable cloud features (default true)
+
+# ── Default generation model ───────────────────────────────────────────────
+# Used when --model is not passed to generate-ollama
+default_model: qwen2.5:7b
+
+# ── Generation defaults ────────────────────────────────────────────────────
+generation:
+  temperature: 0.6
+  batch_size: 4
+  max_retries: 3
+  seed: 42
+  multi_turn_ratio: 0.25
+  val_split: 0.12
+  url: http://localhost:11434
+
+# ── Judge defaults ─────────────────────────────────────────────────────────
+# Used by dataset-eval and evaluate when judge_provider=ollama
+judge:
+  model: qwen2.5:7b
+  temperature: 0.0
+  provider: ollama
+  mode: fast
+
+# ── Naming conventions ─────────────────────────────────────────────────────
+# Model names use Ollama's "name:tag" format
+#   qwen2.5:7b      – primary judge model
+#   llama3.2:3b     – alternative / test model
+#   qwen3:latest    – experimental model
+naming:
+  model_format: "{name}:{tag}"
+  convention: |
+    All Ollama model references use the standard "model:tag" format.
+    The tag is optional and defaults to "latest".
+    Examples: qwen2.5:7b, llama3.2:3b, qwen3:latest
+
+# ── Workflow participation ──────────────────────────────────────────────────
+#   generate-ollama:   PRIMARY — dataset generation via Ollama API
+#   dataset-eval:      LOCAL JUDGE — fast quality gate (judge_provider=ollama)
+#   evaluate:          LOCAL JUDGE — runtime eval (--judge --judge-model)
+workflow:
+  generate: true
+  dataset_eval_judge: true
+  runtime_eval_judge: true

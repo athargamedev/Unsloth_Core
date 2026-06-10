@@ -1,0 +1,57 @@
+# ── HuggingFace Hub ── Base Model Config Downloader ──────────────────────────
+# Platform role: Base model config.json download for GGUF export
+# Credentials:   ~/.cache/huggingface/token
+# Requires:      huggingface_hub Python package
+#
+# This platform is a utility — it downloads configs, never pushes models.
+# It participates ONLY in the export stage.
+
+# ── Credentials ────────────────────────────────────────────────────────────
+token:
+  file: ~/.cache/huggingface/token         # canonical location
+  env_var: HF_TOKEN                        # optional fallback
+  description: |
+    Token must have read access to the model repositories you use
+    (e.g., unsloth/Llama-3.2-3B-Instruct-bnb-4bit).
+
+# ── Model short-name mapping ───────────────────────────────────────────────
+# Derived by model_short_name() in src/config/paths.py
+# Rules applied in order:
+#   1. Drop org prefix: unsloth/Llama-3.2-3B-Instruct-bnb-4bit → Llama-3.2-3B-Instruct-bnb-4bit
+#   2. Strip known suffixes in order: -Instruct-bnb-4bit, -bnb-4bit, -Instruct, -GGUF
+#   3. Remove dashes between letters and numbers: Llama-3.2-3B → llama3.2-3b
+#   4. Lowercase the result
+naming:
+  model_short_name_rules:
+    - strip_org_prefix: true
+    - strip_suffixes:
+        - -Instruct-bnb-4bit
+        - -bnb-4bit
+        - -Instruct
+        - -GGUF
+    - collapse_dashes_between_alpha_numeric: true
+    - lowercase: true
+  examples:
+    full_id: unsloth/Llama-3.2-3B-Instruct-bnb-4bit
+    short_name: llama3.2-3b
+
+# ── Base config files ──────────────────────────────────────────────────────
+# Cached config.json files for models used in export.
+# Path: etc/base_models/{model_short_name}.json
+base_configs:
+  directory: etc/base_models
+  files:
+    - unsloth-Llama-3.2-3B-Instruct-bnb-4bit.json   → llama3.2-3b
+  fallback_order:
+    - etc/base_models/{model_short_name}.json         # local cache
+    - hf_hub_download(model_id, "config.json")        # HuggingFace Hub
+    - AutoConfig.from_pretrained(model_id)             # transformers fallback
+
+# ── Workflow participation ──────────────────────────────────────────────────
+#   export:  PRIMARY — downloads config.json for convert_lora_to_gguf.py
+#   export-adapter:  PRIMARY — same config fetch for lightweight adapter export
+workflow:
+  export_config_download: true
+  export_adapter_config_download: true
+  push_to_hub: false       # no model uploads — never push
+  training_logging: false  # no HF integration for training

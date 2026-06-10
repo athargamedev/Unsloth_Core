@@ -1,0 +1,53 @@
+# ── Weights & Biases ── Experiment Tracking + Hosted Inference ───────────────
+# Platform role:
+#   A) LOGGING — training loss curves, hyperparameters, eval comparison tables
+#   B) INFERENCE — W&B Serverless Inference as LLM judge (70B model)
+# Credentials:
+#   WANDB_API_KEY (env var) or ~/.netrc (machine api.wandb.ai)
+#   Entity: andreabenathar-twl-games
+#   Project: unsloth-core
+
+# ── Project identity ───────────────────────────────────────────────────────
+project: unsloth-core
+entity: andreabenathar-twl-games
+
+# ── Run naming conventions ─────────────────────────────────────────────────
+# All W&B runs follow these patterns for consistent grouping and filtering
+naming:
+  training_run: "train-{npc_key}-{technique}-{preset}-{run_id}"
+  eval_run: "eval-{npc_key}-{baseline_name}-vs-{candidate_name}"
+  quick_eval_run: "quick-eval-{npc_key}"
+  report_artifact: "eval-report-{npc_key}"
+  tags:
+    template: ["{stage}", "{npc_key}", "{technique}", "{preset}"]
+    example: ["train", "chef_assistant", "ollama", "fast-3b"]
+  group: "{npc_key}"     # default; overridable via WANDB_RUN_GROUP
+  job_type:
+    train: "train"
+    evaluate: "eval"
+    quick_eval: "quick-eval"
+
+# ── Serverless Inference (judge) ────────────────────────────────────────────
+# When judge_provider=wandb, uses W&B's hosted model API.
+# This RUNS REAL WORK on W&B infrastructure — not just logging.
+inference:
+  base_url: https://api.inference.wandb.ai/v1
+  default_model: meta-llama/Llama-3.1-70B-Instruct
+  temperature: 0.0
+  max_tokens: 1024
+
+# ── Presets ─────────────────────────────────────────────────────────────────
+presets:
+  - etc/wandb/presets/default.yaml
+  - etc/wandb/presets/compare.yaml
+
+# ── Workflow participation ─────────────────────────────────────────────────
+#   dataset-eval:  LOG + optional INFERENCE — quality gate metrics + judge
+#   train:         LOG — hyperparameters + loss curves
+#   evaluate:      LOG + optional INFERENCE — comparison tables + judge
+workflow:
+  dataset_eval_logging: true
+  dataset_eval_judge: true      # via judge_provider=wandb in production profile
+  training_logging: true
+  runtime_eval_logging: true
+  runtime_eval_judge: true      # via --judge-provider wandb

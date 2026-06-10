@@ -1,0 +1,103 @@
+# ── Confident AI ── Evaluation Orchestration + Trace Observatory ────────────
+# Platform role:
+#   A) REMOTE EVAL — runs evaluation on Confident AI cloud infrastructure
+#   B) OBSERVATORY — auto-uploads LangGraph agent traces (spans, metrics)
+#   C) DATASET MANAGEMENT — push/pull golden datasets as named aliases
+# Credentials:
+#   CONFIDENT_API_KEY (env var) — project-scoped key preferred
+#   Org-scoped keys (containing "_org_") are rejected for dataset eval
+# Requires: deepeval Python package (v4.x)
+
+# ── API identity ───────────────────────────────────────────────────────────
+api:
+  base_url: https://api.confident-ai.com/v1
+  key_env_var: CONFIDENT_API_KEY
+  key_type: project      # project-scoped recommended; org-scoped rejected for eval
+
+# ── Metric collections ─────────────────────────────────────────────────────
+# These must exist in Confident AI project. Created via API or UI.
+metric_collections:
+  npc-dataset-quality:
+    description: Single-turn dataset quality evaluation
+    metrics:
+      - answer_relevancy
+      - faithfulness
+      - hallucination
+    used_by: dataset_eval.py (--confident --remote-eval)
+
+  npc-conversation-quality:
+    description: Multi-turn conversational evaluation
+    metrics:
+      - role_adherence
+      - knowledge_retention
+      - conversation_completeness
+    used_by: dataset_eval.py (conversational mode)
+
+  npc-model-quality:
+    description: Model quality evaluation (GGUF comparison)
+    metrics:
+      - answer_relevancy
+      - faithfulness
+    used_by: evaluate.py (--deepeval)
+
+  unsloth-core-dataset-repair:
+    description: Dataset repair/remediation insights
+    metrics:
+      - Persona and Category Fit
+      - Training Usefulness and Specificity
+      - Grounding and Specificity
+      - Runtime Constraint Fit
+    used_by: confident_insights.py
+
+# ── Dataset alias naming ───────────────────────────────────────────────────
+# Used when pushing/pulling goldens to/from Confident AI
+dataset_aliases:
+  standard_prefix: ucore          # modern standard
+  legacy_prefix: npc-goldens      # legacy (kept for backward compat)
+  format:
+    modern: "ucore-{npc_slug}-{technique}-{suffix}v1"
+    legacy: "npc-goldens-{npc_key}-{technique}"
+  suffixes:
+    single_turn: single-v1
+    conversation: conversation-v1
+  examples:
+    - "ucore-chef-assistant-ollama-single-v1"
+    - "npc-goldens-history_guide-template"
+
+# ── Test run identifiers ───────────────────────────────────────────────────
+# Used to name evaluation runs on Confident AI
+run_id_format:
+  dataset_eval: "dataset-quality-{npc_key}-{technique}-{mode}-{timestamp}"
+  model_eval: "npc-model-eval-{npc_key}-{timestamp}"
+  insights: "dataset-quality:{npc_key}:{technique}:{timestamp}"
+
+# ── Classifiers ────────────────────────────────────────────────────────────
+# Configured manually in Confident AI UI (Project Settings -> Classifiers)
+# Reference files: etc/confident/classifiers_setup.{md,json}
+classifiers:
+  trace:
+    - NPC Dataset Failure Mode
+    - NPC Dataset Strength
+    - NPC Repair Priority
+  thread:
+    - NPC Conversation Outcome
+    - NPC Conversation Weakness
+
+# ── Tracing ────────────────────────────────────────────────────────────────
+# Auto-uploads instrumented traces to Confident AI when CONFIDENT_API_KEY is set
+tracing:
+  dev_sample_rate: 1.0
+  production_sample_rate: 0.25
+  auto_classify: false    # use fixed labels for reproducible dashboards
+  flush_on_exit: true     # set CONFIDENT_TRACE_FLUSH=1
+
+# ── Workflow participation ─────────────────────────────────────────────────
+#   dataset-eval:  LOCAL eval (deepeval) + optional REMOTE eval (--remote-eval)
+#   evaluate:      LOCAL eval (--deepeval) + optional REMOTE eval (--remote-eval)
+#   tracing:       LangGraph agent decorators auto-upload spans
+workflow:
+  dataset_eval_local: true
+  dataset_eval_remote: true
+  runtime_eval_local: true
+  runtime_eval_remote: true
+  tracing: true

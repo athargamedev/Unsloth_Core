@@ -1,0 +1,63 @@
+# ── Modal ── Remote GPU Execution (Scaffolded / Inactive) ────────────────────
+# Platform role: Remote GPU pipeline execution (training, eval, generation)
+# Status:        SCAFFOLDED — NOT ACTIVE
+# Credentials:   MODAL_TOKEN_ID + MODAL_TOKEN_SECRET (both required)
+# Requires:      modal Python package (v1.4.3+ installed)
+#
+# CURRENT STATUS: enabled=false, required=false everywhere.
+# This config defines the TARGET architecture for when Modal is activated.
+
+# ── Status ─────────────────────────────────────────────────────────────────
+enabled: false
+required: false
+activation_gate: "Pending — requires pipeline integration work (Gate 4)"
+target_milestone: "Q3 2026"
+
+# ── Credentials ────────────────────────────────────────────────────────────
+credentials:
+  token_id_env: MODAL_TOKEN_ID
+  token_secret_env: MODAL_TOKEN_SECRET
+  type: "token_id + token_secret (both required)"
+
+# ── App identity ───────────────────────────────────────────────────────────
+app:
+  name: unsloth-core-pipeline
+  environment: production       # Modal environment name
+  region: us-east               # preferred region
+  timeout_seconds: 3600         # max run duration
+
+# ── GPU profiles ──────────────────────────────────────────────────────────
+# Target GPU specs for each pipeline stage
+gpu_profiles:
+  training:
+    type: H100                   # or A100-80GB
+    count: 1
+    memory_gb: 80
+    description: "Training — full fine-tune or LoRA with large context"
+  dataset_eval:
+    type: A10G                   # or L4
+    count: 1
+    memory_gb: 24
+    description: "Dataset quality evaluation with 70B judge"
+  runtime_eval:
+    type: A10G
+    count: 1
+    memory_gb: 24
+    description: "Model evaluation with LLM judge"
+
+# ── Naming conventions ─────────────────────────────────────────────────────
+naming:
+  function_prefix: "ucore-{stage}-{npc_key}"
+  run_id_format: "modal-{npc_key}-{stage}-{timestamp}"
+  artifact_sync:
+    input: "remote:artifacts/{npc_key}/inputs/"
+    output: "local:artifacts/{npc_key}/outputs/"
+  system_suffix: "_Md"          # used by system_suffix() helper
+
+# ── Workflow participation ─────────────────────────────────────────────────
+# FUTURE — currently no workflow steps use Modal
+workflow:
+  dataset_eval_remote: false     # future
+  training_remote: false         # future
+  runtime_eval_remote: false     # future
+  generation_remote: false       # future

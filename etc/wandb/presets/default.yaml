@@ -1,0 +1,7 @@
+# W&B platform preset — default logging configuration
+# Inherits from: etc/wandb/config.yaml
+# Used when: --wandb is passed to train, evaluate, or dataset-eval
+
+wandb:
+  enabled: true
+  mode: online

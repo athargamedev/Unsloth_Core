@@ -1,0 +1,131 @@
+# ── Environment Variables Reference ─────────────────────────────────────────
+# Maps every .env variable to the platform config that uses it.
+# Source: /home/athar/Projects/Unsloth_Core/.env
+#
+# Each entry: {VAR_NAME} → {platform: field, purpose, required}
+
+variables:
+  # ── W&B ──────────────────────────────────────────────────────────────────
+  WANDB_API_KEY:
+    platform: wandb
+    field: credentials.api_key
+    purpose: W&B experiment tracking + Serverless Inference auth
+    required: true
+    source: .env
+
+  # ── Confident AI / DeepEval ──────────────────────────────────────────────
+  CONFIDENT_API_KEY:
+    platform: confident
+    field: api.key
+    purpose: Confident AI trace upload + remote evaluation auth
+    required: false
+    source: .env
+
+  DEEPEVAL_OLLAMA_BASE_URL:
+    platform: confident
+    field: deepeval.ollama_base_url
+    purpose: DeepEval local Ollama endpoint
+    required: false
+    default: http://localhost:11434
+    source: .env
+
+  DEEPEVAL_OLLAMA_MODEL:
+    platform: confident
+    field: deepeval.ollama_model
+    purpose: DeepEval local judge model name
+    required: false
+    default: qwen2.5:7b
+    source: .env
+
+  DEEPEVAL_OLLAMA_TEMPERATURE:
+    platform: confident
+    field: deepeval.ollama_temperature
+    purpose: DeepEval judge temperature
+    required: false
+    default: "0"
+    source: .env
+
+  DEEPEVAL_TELEMETRY_OPT_OUT:
+    platform: confident
+    field: deepeval.telemetry_opt_out
+    purpose: Disable DeepEval telemetry
+    required: false
+    default: "1"
+    source: .env
+
+  # ── Ollama ───────────────────────────────────────────────────────────────
+  OLLAMA_HOST:
+    platform: ollama
+    field: server.host
+    purpose: Ollama server URL
+    required: false
+    default: http://localhost:11434
+    source: .env
+
+  OLLAMA_CONTEXT_LENGTH:
+    platform: ollama
+    field: server.context_length
+    purpose: Context window size
+    required: false
+    default: "8192"
+    source: .env
+
+  OLLAMA_KEEP_ALIVE:
+    platform: ollama
+    field: server.keep_alive
+    purpose: Model keep-alive duration
+    required: false
+    default: 5m
+    source: .env
+
+  OLLAMA_NUM_PARALLEL:
+    platform: ollama
+    field: server.num_parallel
+    purpose: Parallel request count
+    required: false
+    default: "4"
+    source: .env
+
+  # ── Modal ────────────────────────────────────────────────────────────────
+  MODAL_TOKEN_ID:
+    platform: modal
+    field: credentials.token_id
+    purpose: Modal authentication (NOT currently used — scaffolded)
+    required: false
+    source: .env
+
+  MODAL_TOKEN_SECRET:
+    platform: modal
+    field: credentials.token_secret
+    purpose: Modal authentication (NOT currently used — scaffolded)
+    required: false
+    source: .env
+
+  MODAL_API_KEY:
+    platform: modal
+    field: credentials.api_key
+    purpose: Modal API key (alternative auth — NOT currently used)
+    required: false
+    source: .env
+
+  # ── Local model (for Hermes agent, not Unsloth pipeline) ────────────────
+  LOCAL_MODEL_API_KEY:
+    platform: agent
+    field: local_model.api_key
+    purpose: Local model API key (Hermes agent, NOT Unsloth pipeline)
+    required: false
+    source: .env
+
+  LOCAL_MODEL_BASE_URL:
+    platform: agent
+    field: local_model.base_url
+    purpose: Local model base URL (Hermes agent, NOT Unsloth pipeline)
+    required: false
+    source: .env
+
+  LOCAL_MODEL_NAME:
+    platform: agent
+    field: local_model.name
+    purpose: Local model name (Hermes agent, NOT Unsloth pipeline)
+    required: false
+    source: .env

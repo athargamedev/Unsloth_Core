@@ -112,23 +112,26 @@ All artifacts follow a self-describing naming standard. Every filename should te
 
 ## Platform roles
 
-Every platform in this project has a specific job. Understand the distinction between **platforms that run work** and **platforms that log results**:
+Every platform in this project has a dedicated config folder under `etc/`.
+See `etc/README.md` for the full directory layout.
 
-| Platform | Why it's here | Runs work? | When |
-|----------|--------------|------------|------|
-| Ollama | Dataset generation + local LLM judge | Yes | generate, dataset-eval (fast mode) |
-| W&B | Experiment tracking + hosted 70B judge | Yes (judge) | dataset-eval (release mode), train, evaluate |
-| Confident AI | Eval orchestration + trace observability | Yes (remote eval) | dataset-eval (--confident), evaluate (--deepeval) |
-| HuggingFace | Base model config downloads | Yes (config fetch) | export stage only |
-| llama.cpp | Local inference server | Yes (serve) | generate-local |
-| Modal | Remote GPU (scaffolded, NOT active) | No | — |
+| Platform | Config folder | Purpose | Runs work? |
+|----------|--------------|---------|------------|
+| Ollama | `etc/ollama/` | Dataset generation + local LLM judge | Yes |
+| W&B | `etc/wandb/` | Experiment tracking + hosted 70B judge | Yes (judge) |
+| Confident AI | `etc/confident/` | Eval orchestration + trace observability | Yes (remote eval) |
+| HuggingFace | `etc/huggingface/` | Base model config downloads | Yes (config fetch) |
+| llama.cpp | `etc/llama.cpp/` | Local inference server | Yes (serve) |
+| Modal | `etc/modal/` | Remote GPU (scaffolded, NOT active) | No |
 
 **Key distinction — local vs production judge:**
 - **Local (dev):** Ollama judge `qwen2.5:7b` — fast, runs on your GPU
 - **Production:** W&B Inference judge `meta-llama/Llama-3.1-70B-Instruct` — deeper quality gate, runs on W&B servers
-- The `--judge-model qwen2.5:7b` in quickstart commands below is for local dev. Production uses `npc-production-grounded` profile settings.
+- The `--judge-model qwen2.5:7b` in quickstart commands is for local dev. Production uses `npc-production-grounded` profile settings.
 
-Full platform reference: `docs/platform-integration.md` (includes credential requirements, naming conventions, and decision matrix).
+**Env reference:** `etc/env-reference.yaml` maps every `.env` variable to its platform config.
+
+Full platform reference: `docs/platform-integration.md`.
 
 - Config root: `etc/` (not `configs`)
 - Pipeline runtime registry: `var/.pipeline/` (not `.pipeline`)
