@@ -1,6 +1,6 @@
 ---
-last_verified: 2026-06-09
-next_audit: 2026-07-05
+last_verified: 2026-06-10
+next_audit: 2026-07-10
 ---
 
 # Unsloth_Core Project State

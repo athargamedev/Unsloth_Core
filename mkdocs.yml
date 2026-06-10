@@ -1,0 +1,28 @@
+site_name: Unsloth_Core
+site_description: Agent-first pipeline for building GGUF LoRA adapters for Unity NPCs.
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - Home: INDEX.md
+  - 1. Getting Started:
+    - Quick Start: 1_getting_started/quick_start.md
+  - 2. Guides:
+    - Training Workflow: training-workflow.md
+    - Dataset Evaluation: 2_guides/02_dataset_evaluation.md
+  - 3. Reference:
+    - CLI Commands: 3_reference/cli-commands.md
+  - 4. Explanation:
+    - Project State: project-state.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences

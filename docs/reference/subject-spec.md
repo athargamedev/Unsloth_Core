@@ -8,14 +8,14 @@ The `data/npcs/specs/` directory contains JSON files that define the identity, k
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| `npc_key` | `string` | A unique `snake_case` identifier (e.g., `alchemy_master`). |
-| `npc_name` | `string` | The display name in `PascalCase` (e.g., `AlchemyMaster`). |
+| `npc_key` | `string` | A unique `snake_case` identifier (e.g., `history_guide`). |
+| `npc_name` | `string` | The display name in `PascalCase` (e.g., `HistoryGuide`). |
 | `identity` | `object` | Core personality and background details. |
 | `teaching` | `object` | Domain expertise and pedagogical style. |
 | `dialogue` | `object` | Conversational rules and styles. |
 | `quest` | `object` | Interactive scenarios for the NPC. |
 | `refusal` | `object` | Safety boundaries and redirect policies. |
-| `research_queries` | `array` | Queries used by Onyx to retrieve grounded context from the knowledge index. |
+| `research_queries` | `array` | Queries used by the generation stage to construct concept-specific prompts. |
 | `system_prompt` | `string` | The final system message used during inference (4-section IDENTITY|VOICE|KNOWLEDGE|RULES format). |
 | `concepts` | `array` | Optional structured concepts with category and difficulty metadata for dataset generation. |
 | `dataset` | `object` | Configuration for dataset balancing. Optional `corpus_manifest` may point to a curated corpus file. |
@@ -60,8 +60,8 @@ Each item may be either a string concept name or an object with metadata:
 
 When present, explicit `concepts` are used first to seed dataset examples, and category-specific concepts are preferred for `teaching`, `dialogue`, and `quest` examples.
 
-## �🔍 `research_queries` Array
-Used by Onyx generation stage to retrieve grounded context from the knowledge index.
+## `research_queries` Array
+Used by the generation stage to construct concept-specific prompts for dataset creation.
 ```json
 {
   "query": "The history of alchemy in the 16th century",

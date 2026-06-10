@@ -50,7 +50,7 @@ The `eval/results/run_comparison_table.json` file is the single source of truth 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Preset name from `configs/` (e.g. `safe-any`, `fast-1.7b`, `smoke`). |
+|| `name` | string | Preset name from `etc/presets/` (e.g. `safe-any`, `fast-1.7b`, `smoke`). |
 | `lora_r` | int | LoRA rank dimension. |
 | `lora_alpha` | int | LoRA alpha scaling factor. |
 | `max_seq_length` | int | Maximum sequence length in tokens. |
@@ -258,7 +258,7 @@ When running hyperparameter sweeps:
 1. Generate candidate configs from `--preset` variations.
 2. After each run, append results to this table.
 3. Use the table to identify diminishing returns: does increasing `lora_r` beyond 16 still improve loss for this model size?
-4. Feed the best row into the next iteration's preset config via `configs/`.
+4. Feed the best row into the next iteration's preset config via `etc/presets/`.
 
 ### Automatic Promotion Gate
 

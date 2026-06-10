@@ -29,6 +29,7 @@ outputs/
 exports/
 eval/
 logs/
+gclod/*/*
 
 # Heavy local/vendor caches
 unsloth_compiled_cache/

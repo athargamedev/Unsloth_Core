@@ -1,78 +1,69 @@
+# Unsloth_Core Documentation
+
+> **Documentation navigation hub.** Last verified: 2026-06-10.
+> Each doc has a `last_verified` date. If stale, update from live repo/tool state, then bump the date.
+
+Build GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads one shared base GGUF and swaps lightweight LoRA adapter GGUFs plus NPC system prompts.
+
 ---
-last_verified: 2026-06-05
----
-
-# Documentation Map: Unsloth_Core
-
-This directory contains the structured documentation for the Unsloth_Core project. Use this map to navigate.
-
-## Directory Layout
-
-```text
-docs/
-├── INDEX.md                               ← This map
-├── project-state.md                       ← Canonical project state tracking
-├── training-workflow.md                   ← End-to-end pipeline reference (AI context)
-├── architecture/                          ← System diagrams and backend design docs
-│   ├── auth-system.md
-│   ├── job-queue.md
-│   ├── modular-backend.md
-│   ├── pipeline-db.md
-│   ├── pipeline-flow.md
-│   └── supabase-schema.md
-├── guides/                                ← Runbooks, cheat sheets, and operation guides
-│   ├── deepeval-cheat-sheet.md
-│   ├── npc-training-evolution.md
-│   ├── ollama-dataset-generator.md
-│   ├── ollama-local-performance.md
-│   └── operator-runbook.md
-├── integration/                           ← End-user or UI integration docs
-│   └── frontend-dashboard.md
-├── planning/                              ← Past reviews and architecture plans
-│   ├── code-review-report.md
-│   ├── workflow-assistant-architecture.md
-│   └── workflow-assistant-rag.md
-├── reference/                             ← Schemas, CLI commands, and contracts
-│   ├── agent-brief-template.md            ← Standard template for all Hermes/Codex agent briefs
-│   ├── cli-commands.md
-│   ├── legacy-cli-reference.md
-│   ├── npc-data-rl-execution-contract.md
-│   ├── run-comparison-schema.md
-│   └── subject-spec.md
-└── visuals/                               ← Output graphs, HTML pipelines, and PDFs
-    ├── 12-ai-visuals.pdf
-    ├── legacy-dataflow-graph.html
-    ├── npc-best-practices.html
-    ├── npc-math-and-balancing.html
-    ├── npc-pipeline-visuals.html
-    └── workflow-dataflow-graph.html
-```
-
-## Document Quick Reference
-
-| Document | What it covers | Last verified |
-|:---------|:---------------|:--------------|
-| [`training-workflow.md`](training-workflow.md) | Primary AI-agent context: full pipeline, presets, flags, data flow, evaluation patterns, common pitfalls | 2026-06-01 |
-| [`platform-integration.md`](platform-integration.md) | Platform roles (Ollama, W&B, Confident AI, HuggingFace, Modal, llama.cpp): what runs work vs logs results, credential requirements, naming conventions, decision matrix | 2026-06-09 |
-| [`cli-commands.md`](reference/cli-commands.md) | Exhaustive, auto-verified `./ucore` command and flag reference | 2026-06-01 |
-| [`architecture/pipeline-flow.md`](architecture/pipeline-flow.md) | 7-stage pipeline flow: Generation → Sanitization → Dataset Quality Gate → Training → Export & Smoke Test → Model Evaluation → Feedback Loop | 2026-06-01 |
-| [`architecture/supabase-schema.md`](architecture/supabase-schema.md) | All database tables: runtime (npc_profiles, dialogue_sessions, npc_memories) and pipeline (jobs, runs, artifacts, quality gates, eval, configs, api_keys, audit_log) | 2026-06-01 |
-| [`architecture/modular-backend.md`](architecture/modular-backend.md) | 27-file modular Express backend: route map, middleware pipeline, design decisions | 2026-06-01 |
-| [`architecture/auth-system.md`](architecture/auth-system.md) | Bearer token auth: key format, bcrypt hashing, RBAC (admin/operator/viewer), audit logging, bootstrapping | 2026-06-01 |
-| [`architecture/job-queue.md`](architecture/job-queue.md) | PostgreSQL-backed job queue: FOR UPDATE SKIP LOCKED polling, PID tracking, exponential backoff, restart recovery | 2026-06-01 |
-| [`architecture/pipeline-db.md`](architecture/pipeline-db.md) | Python-side PipelineDB class: 20 methods, dual-mode (psycopg2 + REST API), auto-detection, column allowlist | 2026-06-01 |
-| [`integration/frontend-dashboard.md`](integration/frontend-dashboard.md) | React dashboard: modular backend, auth-protected APIs, job queue integration, Zustand + React Query state management | 2026-06-01 |
-| [`reference/agent-brief-template.md`](reference/agent-brief-template.md) | Standard template for all Hermes/Codex agent briefs | 2026-06-05 |
-| [`reference/legacy-cli-reference.md`](reference/legacy-cli-reference.md) | Full `./ucore` command reference with examples | 2026-06-01 |
-| [`reference/subject-spec.md`](reference/subject-spec.md) | JSON schema for `data/npcs/specs/*.json` — identity, teaching, dialogue, quest, refusal | 2026-06-01 |
 
 ## Getting Started
 
-1. Start with the [README.md](../README.md) for the quick start guide and infrastructure overview.
-2. Read [AGENTS.md](../AGENTS.md) if you are an AI assistant.
-3. Read [training-workflow.md](training-workflow.md) for concise training-workflow context before making code or pipeline changes.
-4. For new architecture additions, read [modular-backend.md](architecture/modular-backend.md) and [pipeline-db.md](architecture/pipeline-db.md) first.
-5. [CONTRIBUTING.md](../CONTRIBUTING.md) — how to contribute, PR process, agent context guidelines.
-6. [SETUP.md](../SETUP.md) — full dev environment setup.
-7. Generate a dataset with `./ucore generate data/npcs/specs/<npc>.json --technique docs`.
-8. Train with `./ucore train data/npcs/specs/<npc>.json --preset fast-3b --export-gguf`.
+| Doc | Last verified | Purpose |
+|-----|:------------:|---------|
+| [`../AGENTS.md`](../AGENTS.md) | 2026-06-10 | **Primary entry point** — project context, hard rules, quickstart, canonical paths |
+| [`./project-state.md`](project-state.md) | 2026-06-10 | Current NPC run state, process control, local services |
+| [`./training-workflow.md`](training-workflow.md) | 2026-06-10 | Full pipeline detail — every stage with CLI commands |
+| [`./platform-integration.md`](platform-integration.md) | 2026-06-10 | Platform roles, credentials, naming conventions |
+
+## How-To Guides
+
+| Doc | Purpose |
+|-----|---------|
+| [`./guides/operator-runbook.md`](guides/operator-runbook.md) | Quick human reference — canonical commands, output layout, debugging order |
+| [`./guides/ollama-dataset-generator.md`](guides/ollama-dataset-generator.md) | Ollama generation setup, performance tuning, troubleshooting |
+| [`./guides/deepeval-cheat-sheet.md`](guides/deepeval-cheat-sheet.md) | DeepEval 4.x metrics, config objects, env vars reference |
+
+## Reference
+
+| Doc | Purpose |
+|-----|---------|
+| [`./reference/cli-commands.md`](reference/cli-commands.md) | Every `./ucore` command, flag, and config key |
+| [`./reference/subject-spec.md`](reference/subject-spec.md) | NPC spec JSON schema (`data/npcs/specs/*.json`) |
+| [`./reference/agent-brief-template.md`](reference/agent-brief-template.md) | Template for creating new agent briefs |
+
+## Integration Docs
+
+| Doc | Purpose |
+|-----|---------|
+| [`./integration/confident-ai-integration.md`](integration/confident-ai-integration.md) | Confident AI dataset management, goldens, classifier setup |
+| [`./integration/frontend-dashboard.md`](integration/frontend-dashboard.md) | Dashboard architecture, API endpoints, job queue |
+| [`./integration/llmunity-integration.md`](integration/llmunity-integration.md) | Unity/LLMUnity dual-GGUF strategy, folder structure |
+
+## Historical / Background
+
+| Doc | Last verified | Purpose |
+|-----|:------------:|---------|
+| [`./dataflow-report.md`](dataflow-report.md) | 2026-06-08 | Simplification progress report (historical record of what was cleaned) |
+| [`./archive/`](archive/) | — | Deprecated plans, reports, and legacy references |
+
+## Quick reference — canonical pipeline
+
+```bash
+source unsloth_env/bin/activate
+./ucore validate-spec data/npcs/specs/<npc>.json --generation-ready
+./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b --fresh
+./ucore sanitize data/datasets/<npc>/<technique>/train.jsonl \
+  --output data/datasets/<npc>/<technique>/train_clean.jsonl \
+  --strict-canonical --require-complete-metadata
+./ucore dataset-eval data/npcs/specs/<npc>.json --technique <technique> --mode fast
+./ucore train data/npcs/specs/<npc>.json --technique <technique> --preset fast-3b --export-gguf
+./ucore evaluate --baseline <baseline> --candidate <adapter> \
+  --base-model <base-gguf> --spec data/npcs/specs/<npc>.json --report-html
+```
+
+> **Target workflow (preferred for multi-stage runs):**
+> ```
+> ./ucore target plan --npc-key <npc> --technique ollama --profile npc-production-grounded --target-stage evaluate
+> ./ucore target run --npc-key <npc> --technique ollama --profile npc-production-grounded --target-stage evaluate --resume
+> ```

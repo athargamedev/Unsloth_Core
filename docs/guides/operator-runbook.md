@@ -7,7 +7,7 @@ Use it when you are about to touch dataset generation, training, export, evaluat
 
 ## Canonical facts
 
-- **Active NPCs (2 total):** `history_guide` and `chef_assistant`. Previously active NPCs
+- **Active NPCs (3 total):** `history_guide`, `chef_assistant`, and `marvel_heroes_instructor`. Previously active NPCs
   (`astronomy_guide`, `fitness_coach`) have been removed — their specs and datasets no
   longer exist in the repository.
 - NPC specs live at `data/npcs/specs/{npc_key}.json`
@@ -28,7 +28,12 @@ Use it when you are about to touch dataset generation, training, export, evaluat
 
 2. Generate the dataset
    ```bash
-   ./ucore generate data/npcs/specs/<npc>.json --technique <technique>
+   # Production (Ollama):
+   ./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b --fresh
+   # Or direct llama.cpp:
+   ./ucore generate-local --model <gguf> data/npcs/specs/<npc>.json --fresh
+   # Smoke/dev only:
+   # ./ucore generate data/npcs/specs/<npc>.json --technique template
    ```
 
 3. Sanitize the dataset
@@ -51,10 +56,11 @@ Use it when you are about to touch dataset generation, training, export, evaluat
 6. Evaluate
    ```bash
    ./ucore evaluate \
-     --baseline /path/to/base.gguf \
-     --candidate /path/to/outputs/<npc>/runs/<run_id> \
+     --baseline artifacts/exports/<npc>/<npc>-lora-f16.gguf \
+     --candidate artifacts/models/<npc>/runs/<run_id> \
+     --base-model /path/to/llama-3.2-3b-instruct-q4_k_m.gguf \
      --spec data/npcs/specs/<npc>.json \
-     --report-html --track --judge --judge-model qwen2.5:7b
+     --report-html --judge --judge-model qwen2.5:7b
    ```
 
 ## Output layout
@@ -69,10 +75,10 @@ Use it when you are about to touch dataset generation, training, export, evaluat
 
 When a workflow looks wrong:
 
-1. Check `_config/paths.py` first
-2. Then check `scripts/training/train.py`
-3. Then check `scripts/export/export.py`
-4. Then check `scripts/evaluation/evaluate.py`
+1. Check `src/core/ops/env_loader.py` first
+2. Then check `src/core/training/train.py`
+3. Then check `src/core/export/export.py`
+4. Then check `src/core/evaluation/evaluate.py`
 5. Then check `src/dashboard/unity-npc-llm-training-dashboard/server.ts`
 6. Then verify the filesystem, API, and browser in that order
 
@@ -88,7 +94,7 @@ When a workflow looks wrong:
 ## Useful verification commands
 
 ```bash
-python -m py_compile scripts/training/train.py scripts/export/export.py scripts/evaluation/evaluate.py
+python -m py_compile src/core/training/train.py src/core/export/export.py src/core/evaluation/evaluate.py
 pytest -q tests/test_pipeline_boundaries.py
 npm run build --prefix src/dashboard/unity-npc-llm-training-dashboard
 ```
@@ -97,7 +103,7 @@ npm run build --prefix src/dashboard/unity-npc-llm-training-dashboard
 
 ```bash
 python - <<'PY'
-from _config import paths
+from src.core.ops.env_loader import load_env
 npc = "<npc>"
 print("output:", paths.output_dir(npc))
 print("export:", paths.export_dir(npc))

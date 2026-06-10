@@ -6,11 +6,11 @@ High-performance, Ollama-optimized NPC dataset generator for Unsloth_Core. Desig
 
 ### Basic Usage
 ```bash
-# Generate dataset for history_guide with default Ollama model (llama2)
+# Generate dataset for history_guide with default Ollama model (qwen2.5:7b)
 ./ucore generate-ollama data/npcs/specs/history_guide.json
 
 # With custom model
-./ucore generate-ollama data/npcs/specs/chemistry_instructor.json --model llama3.1
+./ucore generate-ollama data/npcs/specs/chef_assistant.json --model llama3.1
 
 # Dry-run: see generation plan without generating
 ./ucore generate-ollama data/npcs/specs/chef_assistant.json --dry-run
@@ -54,8 +54,8 @@ python src/core/dataset/generate_dataset.py data/npcs/specs/history_guide.json -
 - `spec`: Path to subject spec JSON (e.g., `data/npcs/specs/history_guide.json`)
 
 #### Optional - Model Selection
-- `--model MODEL`: Ollama model name (default: `llama2`)
-  - Common options: `llama2`, `llama3.1`, `mistral`, `neural-chat`, `qwen`
+- `--model MODEL`: Ollama model name (default: `qwen2.5:7b`)
+  - Common options: `qwen2.5:7b`, `llama3.1`, `mistral`, `neural-chat`, `qwen`
   - Use `ollama list` to see available models
 
 - `--url URL`: Ollama server URL (default: `http://localhost:11434`)
@@ -94,7 +94,7 @@ python src/core/dataset/generate_dataset.py data/npcs/specs/history_guide.json -
 
 ### Example 1: Quick Generation with Local Model
 ```bash
-# Generate with fastest local model (llama2)
+# Generate with fastest local model (qwen2.5:7b)
 ./ucore generate-ollama data/npcs/specs/history_guide.json --temperature 0.6
 
 # Results in: data/datasets/history_guide/ollama/train.jsonl
@@ -104,7 +104,7 @@ python src/core/dataset/generate_dataset.py data/npcs/specs/history_guide.json -
 ### Example 2: Generation with Health Check & Auto-Pull
 ```bash
 # Ensure Ollama is running and model is available
-./ucore generate-ollama data/npcs/specs/chemistry_instructor.json \
+./ucore generate-ollama data/npcs/specs/chef_assistant.json \
   --model llama3.1 \
   --check-health \
   --pull-model
@@ -116,7 +116,7 @@ python src/core/dataset/generate_dataset.py data/npcs/specs/history_guide.json -
 ```bash
 # For 6GB VRAM systems, use smaller batches
 ./ucore generate-ollama data/npcs/specs/history_guide.json \
-  --model llama2 \
+  --model qwen2.5:7b \
   --batch-size 2 \
 ```
 
@@ -150,7 +150,7 @@ CUDA_VISIBLE_DEVICES=-1 ollama serve
 `OLLAMA_NUM_PARALLEL` controls how many concurrent requests a single loaded model will accept. On a 6GB GPU, `1` is safest; increase to `2` or `4` only if memory allows.
 
 ---
-  --temperature 0.7
+  --temperature 0.6
 
 # Reduced concurrency prevents OOM
 ```
@@ -198,11 +198,11 @@ data/datasets/{npc_key}/ollama/
 {
   "npc_key": "history_guide",
   "technique": "ollama",
-  "model": "llama2",
+  "model": "qwen2.5:7b",
   "generation": {
-    "date": "2025-05-18T16:58:29Z",
+    "date": "2026-06-10T16:58:29Z",
     "seed": 42,
-    "temperature": 0.7,
+    "temperature": 0.6,
     "version": "ollama-v2"
   },
   "statistics": {
@@ -238,7 +238,7 @@ data/datasets/{npc_key}/ollama/
 #### RTX 3060 (6GB VRAM)
 ```bash
 ./ucore generate-ollama data/npcs/specs/history_guide.json \
-  --model llama2 \
+  --model qwen2.5:7b \
   --batch-size 2 \
   --temperature 0.6
 ```
@@ -250,7 +250,7 @@ data/datasets/{npc_key}/ollama/
 ./ucore generate-ollama data/npcs/specs/history_guide.json \
   --model llama3.1 \
   --batch-size 8 \
-  --temperature 0.7
+  --temperature 0.6
 ```
 - **Expected**: ~30-60 seconds for 72 examples
 - **Recommended**: Increase batch-size for parallelization
@@ -269,7 +269,7 @@ data/datasets/{npc_key}/ollama/
 
 | Model | VRAM | Speed | Quality | Recommended For |
 |-------|------|-------|---------|-----------------|
-| llama2 | 4GB | Fast | Good | Default, RTX 3060 |
+| qwen2.5:7b | 4GB | Fast | Good | Default, RTX 3060 |
 | mistral | 7GB | Medium | Good | Balanced speed/quality |
 | llama3.1 | 8GB | Medium | Very Good | Quality-first |
 | neural-chat | 4GB | Fast | Good | Fast generation |
@@ -287,13 +287,13 @@ ollama serve
 curl http://localhost:11434/api/tags
 ```
 
-### Error: "Model 'llama2' not found"
+### Error: "Model 'qwen2.5:7b' not found"
 ```bash
 # Option 1: Auto-pull during generation
 ./ucore generate-ollama data/npcs/specs/history_guide.json --pull-model
 
 # Option 2: Pull manually
-ollama pull llama2
+ollama pull qwen2.5:7b
 
 # Option 3: Use --check-health to verify
 ./ucore generate-ollama data/npcs/specs/history_guide.json --check-health
@@ -303,7 +303,7 @@ ollama pull llama2
 ```bash
 # Try smaller model or reduce batch size
 ./ucore generate-ollama data/npcs/specs/history_guide.json \
-  --model llama2 \
+  --model qwen2.5:7b \
   --batch-size 1
 
 # Or lower temperature for simpler generation
@@ -352,7 +352,7 @@ tail -50 data/datasets/{npc_key}/ollama/generation_errors.json
 
 # 5. Evaluate
 ./ucore evaluate \
-  --baseline exports/history_guide/history_guide-lora-f16.gguf \
+  --baseline artifacts/exports/history_guide/history_guide-lora-f16.gguf \
   --spec data/npcs/specs/history_guide.json
 ```
 
@@ -417,4 +417,4 @@ A: This script is optimized for local Ollama with better health checks, retry lo
 
 **Version**: ollama-v2
 **Author**: Unsloth_Core Team
-**Last Updated**: 2025-05-18
+**Last Updated**: 2026-06-10

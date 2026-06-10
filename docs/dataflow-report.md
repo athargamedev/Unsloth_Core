@@ -1,6 +1,11 @@
 # Unsloth_Core Dataflow & Simplification Report
 
-Last verified: 2026-06-08
+> **⚠️ HISTORICAL DOCUMENT.** This was written during the June 2026 project cleanup.
+> The simplification described here has been completed. For current pipeline details,
+> see [`docs/training-workflow.md`](training-workflow.md), [`docs/project-state.md`](project-state.md),
+> and [`docs/INDEX.md`](INDEX.md).
+>
+> Last verified: 2026-06-10 (historical record, no further updates expected)
 
 ## 1. The old `scripts/` illusion
 
@@ -60,7 +65,7 @@ Current rule:
 - `src/core` Python files: 85 total
 - non-`__init__` Python files: 74
 - canonical CLI commands: 30 top-level commands
-- active production NPCs: `history_guide`, `chef_assistant`
+- active production NPCs: `history_guide`, `chef_assistant`, `marvel_heroes_instructor`
 
 ## 7. Remaining simplification targets
 
