@@ -8,9 +8,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-CANONICAL_RUNS_ROOT = PROJECT_ROOT / ".pipeline" / "runs"
-CANONICAL_INDEX_PATH = PROJECT_ROOT / ".pipeline" / "runs_index.jsonl"
+from src.config import paths
+
+CANONICAL_RUNS_ROOT = paths.pipeline_runs_root()
+CANONICAL_INDEX_PATH = paths.pipeline_root() / "runs_index.jsonl"
 
 
 @dataclass(frozen=True)

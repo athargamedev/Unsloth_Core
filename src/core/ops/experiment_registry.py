@@ -25,6 +25,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
+from src.config import paths
+
 # ═══════════════════════════════════════════════════════════════
 # 1. MODEL REGISTRY
 # ═══════════════════════════════════════════════════════════════
@@ -294,7 +296,7 @@ class ExperimentRegistry:
     here instead of guessing from latest artifact pointers.
     """
 
-    DEFAULT_PATH = Path(".pipeline") / "experiments.jsonl"
+    DEFAULT_PATH = paths.pipeline_root() / "experiments.jsonl"
 
     def __init__(self, path: str | Path | None = None) -> None:
         self.path = Path(path) if path else self.DEFAULT_PATH

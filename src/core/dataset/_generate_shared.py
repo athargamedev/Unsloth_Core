@@ -31,6 +31,8 @@ from pathlib import Path
 
 import requests
 
+from src.config import paths
+
 try:
     import aiohttp
 except ImportError:
@@ -2253,7 +2255,7 @@ def generate_dataset(
             try:
                 from src.core.ops import stage_gate
 
-                manifest = Path.cwd() / ".pipeline" / "run_manifest.json"
+                manifest = paths.pipeline_root() / "run_manifest.json"
                 stage_gate.record_stage(
                     "generate",
                     [output_path / "train.jsonl", output_path / "validation.jsonl"],

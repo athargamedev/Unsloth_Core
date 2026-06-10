@@ -7,10 +7,12 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from src.config import paths
+
 from src.core.ops.run_index import load_bundle
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-COMPARISON_ROOT = PROJECT_ROOT / ".pipeline" / "comparisons"
+COMPARISON_ROOT = paths.pipeline_root() / "comparisons"
 
 
 @dataclass(frozen=True)

@@ -15,10 +15,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from src.config import paths
 from src.core.ops.artifact_registry import record_stage_artifacts_best_effort
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-CANONICAL_RUNS_ROOT = PROJECT_ROOT / ".pipeline" / "runs"
+CANONICAL_RUNS_ROOT = paths.pipeline_runs_root()
 
 
 @dataclass(frozen=True)

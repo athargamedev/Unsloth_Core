@@ -49,10 +49,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+from src.config import paths
 
 # Append-only index path. Runtime state — not version-controlled.
-_DEFAULT_INDEX = PROJECT_ROOT / ".pipeline" / "runs.jsonl"
+_DEFAULT_INDEX = paths.pipeline_root() / "runs.jsonl"
 
 # Pipeline stages (canonical labels)
 STAGES = frozenset(
@@ -87,7 +87,7 @@ def make_pipeline_run_id(
         20260520_history_guide_dataset_eval_template_002
     """
     today = datetime.now(UTC).strftime("%Y%m%d")
-    runs_dir = PROJECT_ROOT / ".pipeline" / "runs"
+    runs_dir = paths.pipeline_runs_root()
     runs_dir.mkdir(parents=True, exist_ok=True)
 
     prefix = f"{today}_{npc_key}_{stage}_{preset_or_technique}_"
@@ -306,7 +306,7 @@ class RunRegistry:
     # ── Private helpers ────────────────────────────────────────────────────
 
     def _run_dir(self, run_id: str) -> Path:
-        return PROJECT_ROOT / ".pipeline" / "runs" / run_id
+        return paths.pipeline_run_dir(run_id)
 
     def _append(self, event: str, **fields: Any) -> None:
         """Best-effort atomic JSONL append."""
@@ -384,7 +384,7 @@ class PipelineRun:
             stage=stage,
             preset_or_technique=preset or technique or "default",
         )
-        self.run_dir: Path = PROJECT_ROOT / ".pipeline" / "runs" / self.run_id
+        self.run_dir: Path = paths.pipeline_run_dir(self.run_id)
         self._artifacts: dict[str, Any] = {}
         self._metrics: dict[str, Any] = {}
 

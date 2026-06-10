@@ -13,6 +13,8 @@ import shutil
 import sys
 from pathlib import Path
 
+from src.config import paths
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 
@@ -52,7 +54,7 @@ def run_cleanup(project_root: Path, retain: int = 10, dry_run: bool = False) -> 
     Returns summary dict with counts.
     """
     candidates = find_backup_candidates(project_root)
-    backups_base = project_root / ".pipeline" / "backups"
+    backups_base = paths.pipeline_root() / "backups"
 
     moved = 0
     errors = 0

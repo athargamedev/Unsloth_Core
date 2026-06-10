@@ -29,6 +29,10 @@ outputs/
 exports/
 eval/
 logs/
+# Runtime pipeline registry at var/.pipeline/
+var/.pipeline/*
+!var/.pipeline/.gitkeep
+
 gclod/*/*
 
 # Heavy local/vendor caches

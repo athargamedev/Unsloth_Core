@@ -10,8 +10,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-DEFAULT_ARTIFACT_INDEX = PROJECT_ROOT / ".pipeline" / "artifacts.jsonl"
+from src.config import paths
+
+DEFAULT_ARTIFACT_INDEX = paths.pipeline_root() / "artifacts.jsonl"
 
 
 def _iso_now() -> str:
