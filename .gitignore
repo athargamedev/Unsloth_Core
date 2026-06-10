@@ -13,6 +13,8 @@ unsloth_env/
 .hermes/
 .opencode/
 .pipeline/
+.agents/
+.pi/
 skills-lock.json
 
 # Generated data (regenerable)
