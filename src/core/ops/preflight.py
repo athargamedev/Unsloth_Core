@@ -365,6 +365,59 @@ def run_preflight(
     return report
 
 
+def check_modal() -> dict[str, Any]:
+    """Check if Modal is configured and ready.
+
+    Returns a dict with:
+        - available: bool — whether modal package is installed
+        - enabled: bool — whether etc/modal/config.yaml has enabled: true
+        - credentials_ok: bool — whether MODAL_TOKEN_ID + MODAL_TOKEN_SECRET are set
+        - reason: str — human-readable status
+    """
+    result: dict[str, Any] = {
+        "available": False,
+        "enabled": False,
+        "credentials_ok": False,
+        "reason": "",
+    }
+
+    # Check package
+    try:
+        import modal  # noqa: F401
+
+        result["available"] = True
+    except ImportError:
+        result["reason"] = "modal package not installed"
+        return result
+
+    # Check config
+    try:
+        from src.core.modal.config import get_config
+
+        cfg = get_config()
+        result["enabled"] = cfg.get("enabled", False)
+        if not result["enabled"]:
+            gate = cfg.get("activation_gate", "Modal is disabled in config")
+            result["reason"] = gate
+            return result
+    except Exception as exc:
+        result["reason"] = f"Modal config error: {exc}"
+        return result
+
+    # Check credentials
+    import os
+
+    token_id = os.getenv("MODAL_TOKEN_ID")
+    token_secret = os.getenv("MODAL_TOKEN_SECRET")
+    if token_id and token_secret:
+        result["credentials_ok"] = True
+        result["reason"] = "Modal configured and ready"
+    else:
+        result["reason"] = "MODAL_TOKEN_ID or MODAL_TOKEN_SECRET not set"
+
+    return result
+
+
 def _format_text_report(report: PreflightReport) -> str:
     lines = [
         f"Preflight status: {report.status}",
@@ -420,6 +473,7 @@ def main() -> int:
         "--no-lease", action="store_false", dest="lease", help="Skip GPU lease acquisition"
     )
     parser.add_argument("--json", action="store_true", help="Print JSON only")
+    parser.add_argument("--check-modal", action="store_true", help="Also check Modal readiness")
     args = parser.parse_args()
 
     import src.core.ops.gpu_lease as gl
@@ -438,9 +492,15 @@ def main() -> int:
     )
 
     if args.json:
-        print(json.dumps(report.as_dict(), indent=2, ensure_ascii=False))
+        output = report.as_dict()
+        if args.check_modal:
+            output["modal"] = check_modal()
+        print(json.dumps(output, indent=2, ensure_ascii=False))
     else:
         print(_format_text_report(report))
+        if args.check_modal:
+            modal_result = check_modal()
+            print(f"\n── Modal ──\n{json.dumps(modal_result, indent=2)}")
 
     return 1 if report.errors else 0
 

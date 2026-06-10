@@ -4,12 +4,12 @@
 #   B) INFERENCE — W&B Serverless Inference as LLM judge (70B model)
 # Credentials:
 #   WANDB_API_KEY (env var) or ~/.netrc (machine api.wandb.ai)
-#   Entity: andreabenathar-twl-games
-#   Project: unsloth-core
+#   Entity: twlgames-twl-games
+#   Project: Unsloth_Core
 
 # ── Project identity ───────────────────────────────────────────────────────
-project: unsloth-core
-entity: andreabenathar-twl-games
+project: Unsloth_Core
+entity: twlgames-twl-games
 
 # ── Run naming conventions ─────────────────────────────────────────────────
 # All W&B runs follow these patterns for consistent grouping and filtering

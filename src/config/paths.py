@@ -394,7 +394,7 @@ def export_root() -> Path:
     return PROJECT_ROOT / "artifacts" / "exports"
 
 
-def export_dir(npc_key: str) -> Path:
+def export_dir(npc_key: str, systems: frozenset[str] | None = None) -> Path:
     """Return artifacts/exports/{npc_key}/"""
     return export_root() / npc_key
 
@@ -419,10 +419,13 @@ def npc_workflow_manifest_path(npc_key: str) -> Path:
     return output_dir(npc_key) / "workflow_manifest.json"
 
 
-def export_gguf_path(npc_key: str, model_id: str, quant: str = "q4_k_m") -> Path:
-    """Return artifacts/exports/{npc_key}/{npc_key}-{model_short}-{quant}.gguf"""
+def export_gguf_path(
+    npc_key: str, model_id: str, quant: str = "q4_k_m", systems: frozenset[str] | None = None
+) -> Path:
+    """Return artifacts/exports/{npc_key}/{npc_key}-{model_short}[{systems}]-{quant}.gguf"""
     short = model_short_name(model_id)
-    return export_dir(npc_key) / f"{npc_key}-{short}-{quant}.gguf"
+    suffix = system_suffix(systems)
+    return export_dir(npc_key) / f"{npc_key}-{short}{suffix}-{quant}.gguf"
 
 
 def export_manifest_path(npc_key: str) -> Path:
@@ -467,30 +470,34 @@ def eval_training_metrics_path(npc_key: str) -> Path:
     return eval_root() / "training-metrics" / f"{npc_key}.yaml"
 
 
-def eval_report_dir(npc_key: str) -> Path:
+def eval_report_dir(npc_key: str, systems: frozenset[str] | None = None) -> Path:
     """Return artifacts/eval/reports/{npc_key}/"""
     return eval_root() / "reports" / npc_key
 
 
-def eval_feedback_path(npc_key: str) -> Path:
-    """Return artifacts/eval/results/feedback/{npc_key}.json
+def eval_feedback_path(npc_key: str, systems: frozenset[str] | None = None) -> Path:
+    """Return artifacts/eval/results/feedback/{npc_key}[{systems}].json
 
     Note: this is the *latest* pointer path.  Writers should prefer
     eval_feedback_timestamped_path() and update the {npc_key}.json symlink
     so history is never silently overwritten.
     """
-    return eval_root() / "results" / "feedback" / f"{npc_key}.json"
+    suffix = system_suffix(systems)
+    return eval_root() / "results" / "feedback" / f"{npc_key}{suffix}.json"
 
 
-def eval_feedback_timestamped_path(npc_key: str, timestamp: str | None = None) -> Path:
-    """Return artifacts/eval/results/feedback/{npc_key}_{timestamp}.json
+def eval_feedback_timestamped_path(
+    npc_key: str, timestamp: str | None = None, systems: frozenset[str] | None = None
+) -> Path:
+    """Return artifacts/eval/results/feedback/{npc_key}[{systems}]_{timestamp}.json
 
     Use this when WRITING feedback — it preserves history.
     Update eval_feedback_path() (the bare {npc_key}.json) as a symlink
     pointing here so readers always find the latest.
     """
     ts = timestamp or eval_timestamp()
-    return eval_root() / "results" / "feedback" / f"{npc_key}_{ts}.json"
+    suffix = system_suffix(systems)
+    return eval_root() / "results" / "feedback" / f"{npc_key}{suffix}_{ts}.json"
 
 
 def eval_gaps_dir(npc_key: str) -> Path:
@@ -509,13 +516,15 @@ def eval_report_path(
     timestamp: str | None = None,
     technique: str | None = None,
     judge_model: str | None = None,
+    systems: frozenset[str] | None = None,
 ) -> Path:
-    """Return artifacts/eval/reports/{npc_key}/[{technique}_]{judge_}_eval_{timestamp}.{fmt}
+    """Return artifacts/eval/reports/{npc_key}/[{technique}_][{judge_}]eval[{systems}]_{timestamp}.{fmt}
 
     technique and judge_model are optional but strongly recommended — they
     make filenames self-describing when browsing artifact directories.
     """
     ts = timestamp or eval_timestamp()
+    suffix = system_suffix(systems)
     prefix = ""
     if technique:
         prefix += f"{technique}_"
@@ -523,7 +532,7 @@ def eval_report_path(
         # qwen2.5:7b -> qwen2.5-7b
         short = judge_model.replace(":", "-").replace("/", "-")
         prefix += f"{short}_"
-    return eval_report_dir(npc_key) / f"{prefix}eval_{ts}.{fmt}"
+    return eval_report_dir(npc_key) / f"{prefix}eval{suffix}_{ts}.{fmt}"
 
 
 def eval_comparison_dir() -> Path:
@@ -574,13 +583,16 @@ def report_bundle_path(
 
     The canonical location for a pipeline_run_spec.json.
     """
-    return report_bundle_dir(
-        npc_key=npc_key,
-        profile=profile,
-        technique=technique,
-        target_stage=target_stage,
-        timestamp=timestamp,
-    ) / "pipeline_run_spec.json"
+    return (
+        report_bundle_dir(
+            npc_key=npc_key,
+            profile=profile,
+            technique=technique,
+            target_stage=target_stage,
+            timestamp=timestamp,
+        )
+        / "pipeline_run_spec.json"
+    )
 
 
 # ── Subdir initialisation ────────────────────────────────────────────────────

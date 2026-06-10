@@ -1,0 +1,11 @@
+# ── Confident AI Remote Evaluation Preset ──
+# Used when running evaluation on Confident AI cloud infrastructure.
+evaluation:
+  local: false
+  remote: true
+  metric_collection: npc-dataset-quality
+tracing:
+  enabled: true
+  sample_rate: 0.25
+metadata:
+  environment: production

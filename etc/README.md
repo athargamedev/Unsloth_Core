@@ -29,8 +29,8 @@ etc/
 │   └── wandb_compare.yaml           ← W&B compare sweep config
 │
 ├── ollama/                          ← Local generation + judge
-│   └── config.yaml
-├── ollama-model-presets.yaml        ← Legacy (content moved to ollama/)
+│   ├── config.yaml
+│   └── model-presets.yaml           ← Ollama model presets
 │
 ├── wandb/                           ← Experiment tracking + hosted judge
 │   ├── config.yaml

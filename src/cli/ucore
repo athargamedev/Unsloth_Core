@@ -341,10 +341,14 @@ def create_parser():
     )
     gen_local_p.add_argument("spec", help="Path to subject spec JSON")
     gen_local_p.add_argument(
-        "--model", required=True, help="Path to GGUF model file",
+        "--model",
+        required=True,
+        help="Path to GGUF model file",
     )
     gen_local_p.add_argument(
-        "--port", type=int, default=18082,
+        "--port",
+        type=int,
+        default=18082,
         help="Local llama.cpp server port (default: 18082)",
     )
     gen_local_p.add_argument("--temperature", type=float, default=0.6)
@@ -481,7 +485,7 @@ def create_parser():
         "--judge-preset",
         default=None,
         choices=["judge-qwen25", "judge-llama31-exp", "judge-qwen35-exp", "judge-qwen3-exp"],
-        help="Named Ollama judge preset (default: auto — resolves from etc/ollama-model-presets.yaml)",
+        help="Named Ollama judge preset (default: auto — resolves from etc/ollama/model-presets.yaml)",
     )
     de_p.add_argument(
         "--ollama-base-url", default="http://localhost:11434", help="Ollama server URL"
@@ -902,7 +906,9 @@ def create_parser():
     )
     fb_p.add_argument("--baseline", help="Baseline GGUF for auto-evaluation after retrain")
     fb_p.add_argument(
-        "--concept-focus", nargs="*", help="Categories to regenerate (default: auto-detect from feedback)"
+        "--concept-focus",
+        nargs="*",
+        help="Categories to regenerate (default: auto-detect from feedback)",
     )
     fb_p.add_argument(
         "--strategy-profile",
@@ -1627,7 +1633,8 @@ def main(argv: list[str] | None = None) -> int:
         run_cmd(cmd)
 
     elif args.command == "generate-local":
-        import signal, time
+        import signal
+        import time
 
         model_path = os.path.abspath(args.model)
         if not os.path.isfile(model_path):
@@ -1642,7 +1649,9 @@ def main(argv: list[str] | None = None) -> int:
             sys.exit(1)
 
         print(f"Starting llama.cpp server on :{port} ...")
-        ret = subprocess.run(["bash", scripts, "serve", model_path, str(port)], capture_output=True, text=True)
+        ret = subprocess.run(
+            ["bash", scripts, "serve", model_path, str(port)], capture_output=True, text=True
+        )
         print(ret.stdout)
         if ret.returncode != 0:
             print(ret.stderr, file=sys.stderr)
@@ -1650,8 +1659,15 @@ def main(argv: list[str] | None = None) -> int:
 
         # 2. Run generation against local server
         url = f"http://127.0.0.1:{port}/v1/chat/completions"
-        gen_cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"), args.spec,
-                   "--url", url, "--model", os.path.basename(model_path)]
+        gen_cmd = [
+            PYTHON,
+            str(SCRIPTS_DIR / "dataset" / "generate_dataset.py"),
+            args.spec,
+            "--url",
+            url,
+            "--model",
+            os.path.basename(model_path),
+        ]
         if args.temperature != 0.6:
             gen_cmd.extend(["--temperature", str(args.temperature)])
         if args.batch_size != 4:
@@ -1682,7 +1698,9 @@ def main(argv: list[str] | None = None) -> int:
         server_pid = None
         try:
             out = subprocess.check_output(
-                f"pgrep -f 'llama-server.*port {port}'", shell=True, executable="/usr/bin/bash",
+                f"pgrep -f 'llama-server.*port {port}'",
+                shell=True,
+                executable="/usr/bin/bash",
                 text=True,
             ).strip()
             if out:
@@ -1815,7 +1833,7 @@ def main(argv: list[str] | None = None) -> int:
         run_cmd(cmd)
 
     elif args.command == "confident-goldens":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "dataset" / "confident_goldens.py"), args.dataset]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "confident_goldens.py"), args.dataset]
         if args.spec:
             cmd.extend(["--spec", args.spec])
         if args.output_dir:
@@ -2164,7 +2182,7 @@ def main(argv: list[str] | None = None) -> int:
         run_cmd(cmd)
 
     elif args.command == "feedback":
-        cmd = [PYTHON, str(SCRIPTS_DIR / "training" / "feedback_loop.py"), args.feedback_json]
+        cmd = [PYTHON, str(SCRIPTS_DIR / "orchestration" / "feedback_loop.py"), args.feedback_json]
         if args.dry_run:
             cmd.append("--dry-run")
         if args.auto:

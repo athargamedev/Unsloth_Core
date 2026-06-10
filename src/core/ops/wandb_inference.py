@@ -1,4 +1,7 @@
-"""Small OpenAI-compatible client helpers for W&B Serverless Inference."""
+"""Small OpenAI-compatible client helpers for W&B Serverless Inference.
+
+Now reads defaults from etc/wandb/config.yaml as the canonical source.
+"""
 
 from __future__ import annotations
 
@@ -12,10 +15,35 @@ from typing import Any
 
 import requests
 
-WANDB_INFERENCE_BASE_URL = "https://api.inference.wandb.ai/v1"
-DEFAULT_WANDB_INFERENCE_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
-DEFAULT_WANDB_ENTITY = "andreabenathar-twl-games"
-DEFAULT_WANDB_PROJECT = "unsloth-core"
+# ── Config-driven defaults ──────────────────────────────────────────────────
+
+_WANDB_CONFIG_PATH = Path(__file__).resolve().parents[3] / "etc" / "wandb" / "config.yaml"
+
+
+def _load_wandb_config() -> dict:
+    """Load the authoritative W&B config YAML."""
+    try:
+        import yaml
+
+        if _WANDB_CONFIG_PATH.exists():
+            return yaml.safe_load(_WANDB_CONFIG_PATH.read_text(encoding="utf-8")) or {}
+    except Exception:
+        pass
+    return {}
+
+
+_wandb_config = _load_wandb_config()
+
+# ── Constants (fallback defaults when config is absent) ─────────────────────
+
+WANDB_INFERENCE_BASE_URL = _wandb_config.get("inference", {}).get(
+    "base_url", "https://api.inference.wandb.ai/v1"
+)
+DEFAULT_WANDB_INFERENCE_MODEL = _wandb_config.get("inference", {}).get(
+    "default_model", "meta-llama/Llama-3.1-70B-Instruct"
+)
+DEFAULT_WANDB_ENTITY = _wandb_config.get("entity", "andreabenathar-twl-games")
+DEFAULT_WANDB_PROJECT = _wandb_config.get("project", "unsloth-core")
 
 
 def wandb_api_key() -> str | None:
@@ -33,18 +61,9 @@ def wandb_api_key() -> str | None:
 
 
 def wandb_inference_project(entity: str | None = None, project: str | None = None) -> str:
-    entity = (
-        entity
-        or os.getenv("WANDB_ENTITY")
-        or os.getenv("DEEPEVAL_WANDB_ENTITY")
-        or DEFAULT_WANDB_ENTITY
-    )
-    project = (
-        project
-        or os.getenv("WANDB_PROJECT")
-        or os.getenv("DEEPEVAL_WANDB_PROJECT")
-        or DEFAULT_WANDB_PROJECT
-    )
+    """Resolve entity/project — canonical priority: explicit > env > config > fallback."""
+    entity = entity or os.getenv("WANDB_ENTITY") or DEFAULT_WANDB_ENTITY
+    project = project or os.getenv("WANDB_PROJECT") or DEFAULT_WANDB_PROJECT
     return f"{entity}/{project}"
 
 
@@ -64,7 +83,7 @@ class WandbInferenceClient:
     def __init__(
         self,
         *,
-        model: str = DEFAULT_WANDB_INFERENCE_MODEL,
+        model: str | None = None,
         entity: str | None = None,
         project: str | None = None,
         base_url: str | None = None,
@@ -72,7 +91,7 @@ class WandbInferenceClient:
         timeout: int = 120,
         temperature: float = 0.0,
     ) -> None:
-        self.model = model
+        self.model = model or os.getenv("WANDB_INFERENCE_MODEL") or DEFAULT_WANDB_INFERENCE_MODEL
         self.base_url = (
             base_url or os.getenv("WANDB_INFERENCE_BASE_URL") or WANDB_INFERENCE_BASE_URL
         ).rstrip("/")

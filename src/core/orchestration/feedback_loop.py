@@ -15,19 +15,18 @@ The canonical repair path is: dataset-eval → generate-ollama --concept-focus �
 
 Usage:
     # Dry-run: show what would be regenerated
-    python scripts/training/feedback_loop.py eval/results/feedback/npc.json --dry-run
+    ./ucore feedback eval/results/feedback/npc.json --dry-run
 
     # Full auto mode with retrain
-    python scripts/training/feedback_loop.py eval/results/feedback/npc.json \\
-        --auto --auto-retrain --train-preset fast-3b --baseline exports/npc/baseline.gguf
+    ./ucore feedback eval/results/feedback/npc.json --auto --auto-retrain \
+        --train-preset fast-3b --baseline exports/npc/baseline.gguf
 
     # Machine-readable output
-    python scripts/training/feedback_loop.py eval/results/feedback/npc.json --json
+    ./ucore feedback eval/results/feedback/npc.json --json
 """
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -129,8 +128,10 @@ def run_feedback_loop(
         print(f"  Density: {density_result}")
 
         if density_result.get("needed"):
-            print(f"  ⚠  Density repair needed: candidate avg {density_result.get('candidate_words')} words "
-                  f"(target min {density_result.get('target_min_words')})")
+            print(
+                f"  ⚠  Density repair needed: candidate avg {density_result.get('candidate_words')} words "
+                f"(target min {density_result.get('target_min_words')})"
+            )
 
     if dry_run:
         result["status"] = "dry_run"
@@ -163,13 +164,15 @@ def run_feedback_loop(
     if not json_output:
         print(f"\n  [1/4] Regenerating {weak_categories}...")
     gen_r = _ucore(gen_args)
-    result.setdefault("steps", []).append({
-        "step": "generate",
-        "command": "generate-ollama",
-        "exit_code": gen_r.returncode,
-        "stdout_snippet": gen_r.stdout[-300:] if gen_r.stdout else "",
-        "stderr_snippet": gen_r.stderr[-300:] if gen_r.stderr else "",
-    })
+    result.setdefault("steps", []).append(
+        {
+            "step": "generate",
+            "command": "generate-ollama",
+            "exit_code": gen_r.returncode,
+            "stdout_snippet": gen_r.stdout[-300:] if gen_r.stdout else "",
+            "stderr_snippet": gen_r.stderr[-300:] if gen_r.stderr else "",
+        }
+    )
     if gen_r.returncode != 0:
         if not json_output:
             print(f"  ERROR: Generation failed (exit {gen_r.returncode})")
@@ -186,17 +189,22 @@ def run_feedback_loop(
     if not json_output:
         print(f"  [2/4] Sanitizing {train_path}...")
     san_args = [
-        "sanitize", str(train_path),
-        "--output", str(clean_path),
-        "--strict-canonical", "--require-complete-metadata",
+        "sanitize",
+        str(train_path),
+        "--output",
+        str(clean_path),
+        "--strict-canonical",
+        "--require-complete-metadata",
         "--no-dedup",  # Preserve category counts during repair
     ]
     san_r = _ucore(san_args)
-    result.setdefault("steps", []).append({
-        "step": "sanitize",
-        "command": "sanitize",
-        "exit_code": san_r.returncode,
-    })
+    result.setdefault("steps", []).append(
+        {
+            "step": "sanitize",
+            "command": "sanitize",
+            "exit_code": san_r.returncode,
+        }
+    )
     if san_r.returncode != 0:
         if not json_output:
             print(f"  WARNING: Sanitize had issues (exit {san_r.returncode})")
@@ -204,18 +212,23 @@ def run_feedback_loop(
 
     # Step 3: Dataset-eval quality gate
     if not json_output:
-        print(f"  [3/4] Running dataset-eval quality gate...")
+        print("  [3/4] Running dataset-eval quality gate...")
     eval_args = [
-        "dataset-eval", str(spec_path),
-        "--technique", technique,
-        "--mode", "fast",
+        "dataset-eval",
+        str(spec_path),
+        "--technique",
+        technique,
+        "--mode",
+        "fast",
     ]
     eval_r = _ucore(eval_args)
-    result.setdefault("steps", []).append({
-        "step": "dataset_eval",
-        "command": "dataset-eval",
-        "exit_code": eval_r.returncode,
-    })
+    result.setdefault("steps", []).append(
+        {
+            "step": "dataset_eval",
+            "command": "dataset-eval",
+            "exit_code": eval_r.returncode,
+        }
+    )
     eval_passed = eval_r.returncode == 0
     result["quality_gate_passed"] = eval_passed
     result["actions_taken"].append("quality_gated")
@@ -228,17 +241,22 @@ def run_feedback_loop(
         if not json_output:
             print(f"  [4/4] Training with preset={train_preset}...")
         train_args = [
-            "train", str(spec_path),
-            "--technique", technique,
-            "--preset", train_preset,
+            "train",
+            str(spec_path),
+            "--technique",
+            technique,
+            "--preset",
+            train_preset,
             "--export-gguf",
         ]
         train_r = _ucore(train_args)
-        result.setdefault("steps", []).append({
-            "step": "train",
-            "command": "train",
-            "exit_code": train_r.returncode,
-        })
+        result.setdefault("steps", []).append(
+            {
+                "step": "train",
+                "command": "train",
+                "exit_code": train_r.returncode,
+            }
+        )
         if train_r.returncode == 0:
             result["actions_taken"].append("retrained")
             result["status"] = "full_cycle_complete"
@@ -246,7 +264,7 @@ def run_feedback_loop(
             result["status"] = "train_failed"
     elif auto_retrain and not eval_passed:
         if not json_output:
-            print(f"  Skipping retrain: quality gate failed.")
+            print("  Skipping retrain: quality gate failed.")
         result["status"] = "gate_failed"
     else:
         result["status"] = "regeneration_complete"
@@ -264,8 +282,12 @@ def main():
     parser.add_argument("--auto-retrain", action="store_true", help="Retrain after regeneration")
     parser.add_argument("--train-preset", default=DEFAULT_TRAIN_PRESET, help="Training preset")
     parser.add_argument("--baseline", help="Baseline GGUF for evaluation")
-    parser.add_argument("--concept-focus", nargs="*", help="Categories to focus on (default: auto-detect)")
-    parser.add_argument("--strategy-profile", default="npc-production-grounded", help="Strategy profile")
+    parser.add_argument(
+        "--concept-focus", nargs="*", help="Categories to focus on (default: auto-detect)"
+    )
+    parser.add_argument(
+        "--strategy-profile", default="npc-production-grounded", help="Strategy profile"
+    )
     parser.add_argument("--json", action="store_true", help="Output JSON summary")
 
     args = parser.parse_args()
@@ -289,7 +311,7 @@ def main():
     if args.json:
         print(json.dumps(result, indent=2, default=str))
     else:
-        print(f"\n=== Result ===")
+        print("\n=== Result ===")
         print(f"  Status: {result['status']}")
         print(f"  Actions: {result['actions_taken']}")
         print(f"  Quality gate: {result.get('quality_gate_passed', 'N/A')}")

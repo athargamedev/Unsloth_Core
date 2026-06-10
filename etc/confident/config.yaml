@@ -9,6 +9,8 @@
 # Requires: deepeval Python package (v4.x)
 
 # ── API identity ───────────────────────────────────────────────────────────
+project:
+  name: Unsloth_Core
 api:
   base_url: https://api.confident-ai.com/v1
   key_env_var: CONFIDENT_API_KEY

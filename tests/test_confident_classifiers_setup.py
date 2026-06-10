@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from src.core.dataset.confident_goldens import project_chatml_rows_to_confident
 from src.core.ops.confident_classifiers import build_classifier_setup, write_classifier_setup
+from src.core.ops.confident_goldens import project_chatml_rows_to_confident
 
 
 def _write_jsonl(path: Path, rows: list[dict]) -> None:

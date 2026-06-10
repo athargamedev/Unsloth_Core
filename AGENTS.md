@@ -97,10 +97,10 @@ All artifacts follow a self-describing naming standard. Every filename should te
 | Artifact | Pattern | Example |
 |----------|---------|---------|
 | Training run dir | `{date}_{preset}_{model_short}_{seq}` | `20260607_safe-any_llama3.2-3b_001` |
-| Eval report file | `[{technique}_][{judge_}]eval_{timestamp}.{fmt}` | `qwen2.5-7b_eval_20260609T120000Z.html` |
-| Feedback JSON | `{npc}_{timestamp}.json` + `{npc}.json` → symlink | `chef_assistant_20260609T120000Z.json` → `chef_assistant.json` |
+| Eval report file | `[{technique}_][{judge_}]eval[{systems}]_{timestamp}.{fmt}` | `ollama_qwen2.5-7b_eval_20260609T120000Z.html` |
+| Feedback JSON | `{npc}[{systems}]_{timestamp}.json` + `{npc}.json` → symlink | `chef_assistant_C_20260609T120000Z.json` → `chef_assistant.json` |
 | Report bundle dir | `{profile}_{technique}_{stage}_{timestamp}` | `npc-production-grounded_ollama_evaluate_20260609T120000Z/` |
-| GGUF export | `{npc}_lora-{outtype}.gguf` | `chef_assistant_lora-f16.gguf` |
+| GGUF export | `{npc}-{model_short}[{systems}]-{quant}.gguf` | `chef_assistant-llama3.2-3b_CWb-q4_k_m.gguf` |
 | Dataset quality | `quality_summary.json` (at `data/datasets/{npc}/{technique}/`) | — |
 
 **system_suffix()** — encode external systems in filenames:

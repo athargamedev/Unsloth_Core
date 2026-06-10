@@ -11,7 +11,7 @@ Usage:
         push_goldens_if_confident("goldens.jsonl", alias="npc-goldens-history_guide-template")
 
     # CLI
-    python scripts/ops/confident_push.py push goldens.jsonl --alias "npc-goldens-template"
+    python -m src.core.ops.confident_push push goldens.jsonl --alias "npc-goldens-template"
 """
 
 from __future__ import annotations

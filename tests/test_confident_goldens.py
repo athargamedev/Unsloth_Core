@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from src.core.dataset.confident_goldens import (
+from src.core.ops.confident_goldens import (
     build_confident_artifacts,
     project_chatml_rows_to_confident,
 )

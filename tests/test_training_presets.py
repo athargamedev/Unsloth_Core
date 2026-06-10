@@ -81,7 +81,7 @@ def test_model_and_ollama_preset_maps_resolve_from_canonical_etc_files():
     assert model_presets.resolve_model_presets_path() == PROJECT_ROOT / "etc" / "model-presets.yaml"
     assert (
         ollama_model_presets.resolve_ollama_model_presets_path()
-        == PROJECT_ROOT / "etc" / "ollama-model-presets.yaml"
+        == PROJECT_ROOT / "etc" / "ollama" / "model-presets.yaml"
     )
     assert (
         model_presets.resolve_training_preset("unsloth/Llama-3.2-3B-Instruct-bnb-4bit") == "fast-3b"

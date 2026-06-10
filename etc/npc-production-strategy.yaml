@@ -118,3 +118,57 @@ profiles:
       max_exact_confident_failure_repairs: 0
       max_density_repairs: 1
       max_training_preset_variants: 0
+
+  npc-modal-remote:
+    description: Remote GPU pipeline via Modal (gated — Q3 2026). Enabled=false by default.
+    technique: ollama
+    dataset:
+      target_total_rows: 120
+      category_targets:
+        identity: 12
+        teaching: 80
+        dialogue: 32
+        quest: 16
+        refusal: 16
+      density:
+        identity: {min_words: 20, max_words: 40}
+        teaching: {min_words: 35, max_words: 55}
+        dialogue: {min_words: 35, max_words: 55}
+        quest: {min_words: 35, max_words: 55}
+        refusal: {min_words: 20, max_words: 40}
+      require_grounding: true
+      template_allowed: false
+    quality_gate:
+      mode: release
+      cases_per_category: 3
+      judge_provider: wandb
+      judge_model: meta-llama/Llama-3.1-70B-Instruct
+      confident: true
+      wandb: true
+      disable_cache: true
+      display: failing
+      ignore_errors: true
+      soft_fail: true
+    training:
+      remote: true
+      modal: true
+      preset: remote-3b-quality
+      max_seq_len: 512
+      batch_size: 1
+      grad_accum: 8
+      lora_r: 16
+      lora_alpha: 16
+      packing: false
+      train_on_responses_only: true
+      export_gguf: true
+      wandb: true
+    runtime_eval:
+      requires_base_model: true
+      report_html: true
+      wandb: true
+      candidate_win_rate_ready: 0.70
+      candidate_win_rate_inspect: 0.50
+    anti_loop:
+      max_exact_confident_failure_repairs: 1
+      max_density_repairs: 1
+      max_training_preset_variants: 1

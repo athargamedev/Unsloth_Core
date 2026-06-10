@@ -255,7 +255,7 @@ def write_classifier_setup(
     json_path: str | Path | None = None,
     markdown_path: str | Path | None = None,
 ) -> dict[str, Path]:
-    base = paths.PROJECT_ROOT / "configs" / "confident"
+    base = paths.PROJECT_ROOT / "etc" / "confident"
     json_out = Path(json_path) if json_path else base / "classifiers_setup.json"
     md_out = Path(markdown_path) if markdown_path else base / "classifiers_setup.md"
     setup = build_classifier_setup()
@@ -264,6 +264,75 @@ def write_classifier_setup(
     json_out.write_text(json.dumps(setup, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     md_out.write_text(render_markdown(setup) + "\n", encoding="utf-8")
     return {"json": json_out, "markdown": md_out}
+
+
+def setup_classifiers_via_api(
+    api_key: str | None = None,
+    dry_run: bool = False,
+    classifier_filter: list[str] | None = None,
+) -> dict[str, Any]:
+    """Attempt to create classifiers via the Confident AI REST API.
+
+    Falls back gracefully when the API endpoint is not available
+    (classifiers may be UI-only in some deployment tiers).
+
+    Parameters
+    ----------
+    api_key
+        Confident AI API key.  Defaults to CONFIDENT_API_KEY env var.
+    dry_run
+        If True, print what would be done without making API calls.
+    classifier_filter
+        Optional list of classifier names to restrict which to create.
+
+    Returns
+    -------
+    dict with keys:
+        - created: list of classifier names successfully created
+        - skipped: list of classifier names matching filter that were skipped
+        - errors: list of error messages
+        - dry_run: whether it was a dry run
+    """
+    result: dict[str, Any] = {"created": [], "skipped": [], "errors": [], "dry_run": dry_run}
+    from src.core.ops.confident_api import ConfidentAPIClient
+    from src.core.ops.confident_api import confident_available as ca
+
+    if not ca():
+        result["errors"].append("Confident AI not available: no API key or connection")
+        return result
+
+    client = ConfidentAPIClient(api_key)
+    setup = build_classifier_setup()
+
+    all_classifiers = setup.get("trace_classifiers", []) + setup.get("thread_classifiers", [])
+
+    for classifier in all_classifiers:
+        name = classifier["name"]
+        if classifier_filter and name not in classifier_filter:
+            result["skipped"].append(name)
+            continue
+
+        payload = {
+            "name": name,
+            "type": classifier.get("type", "trace"),
+            "description": classifier.get("description", ""),
+            "labels": [label["name"] for label in classifier.get("labels", [])],
+        }
+
+        if dry_run:
+            result["created"].append(f"[DRY RUN] {name}")
+            continue
+
+        try:
+            response = client._request("POST", "/classifiers", payload)
+            if response and response.get("id"):
+                result["created"].append(name)
+            else:
+                result["errors"].append(f"Failed to create '{name}': {response}")
+        except Exception as exc:
+            result["errors"].append(f"Error creating '{name}': {exc}")
+
+    return result
 
 
 def _parse_args() -> argparse.Namespace:

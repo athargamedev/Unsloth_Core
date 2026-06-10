@@ -1,18 +1,21 @@
 # Platform Integration Reference
 
+> **Last updated:** 2026-06-10 — post project-org initiative.
+> Each platform now has its config read at runtime (not just documentation).
+
 Each integrated platform plays a distinct role. This document clarifies **what each platform does**, **what credentials it needs**, **when it runs work vs just logs results**, and **what naming conventions it expects**.
 
 ## Quick Reference
 
-| Platform | Role | Runs Work? | Logs Results? | Credentials | Stages |
-|----------|------|-----------|---------------|-------------|--------|
-| Ollama | Local generation + local judge | Yes (gen, judge) | No | None (local) | generate, dataset-eval |
-| W&B | Experiment tracking + hosted judge | Yes (judge) | Yes (train, eval) | `WANDB_API_KEY` | dataset-eval, train, evaluate |
-| Confident AI | Eval orchestration + trace observability | Yes (remote eval) | Yes (traces, results) | `CONFIDENT_API_KEY` | dataset-eval, evaluate |
-| DeepEval | Evaluation framework (local) | Yes (eval) | Yes (local files) | Optional (`CONFIDENT_API_KEY`) | dataset-eval, evaluate |
-| HuggingFace Hub | Base model config downloads | Yes (config fetch) | No | `~/.cache/huggingface/token` | export |
-| llama.cpp | Local inference server | Yes (serve) | No | None (local) | generate-local, evaluate |
-| Modal | Remote GPU (scaffolded, NOT active) | No | No | `MODAL_TOKEN_ID+SECRET` | — |
+| Platform | Role | Runs Work? | Logs Results? | Credentials | Stages | Status |
+|----------|------|-----------|---------------|-------------|--------|--------|
+| Ollama | Local generation + local judge | Yes (gen, judge) | No | None (local) | generate, dataset-eval | ✅ Active |
+| W&B | Experiment tracking + hosted judge | Yes (judge) | Yes (train, eval) | `WANDB_API_KEY` | dataset-eval, train, evaluate | ✅ Active, config-driven |
+| Confident AI | Eval orchestration + trace observability | Yes (remote eval) | Yes (traces, results) | `CONFIDENT_API_KEY` | dataset-eval, evaluate | ✅ Active, config-driven |
+| DeepEval | Evaluation framework (local) | Yes (eval) | Yes (local files) | Optional (`CONFIDENT_API_KEY`) | dataset-eval, evaluate | ✅ Active |
+| HuggingFace Hub | Base model config downloads | Yes (config fetch) | No | `~/.cache/huggingface/token` | export | ✅ Active |
+| llama.cpp | Local inference server | Yes (serve) | No | None (local) | generate-local, evaluate | ✅ Active |
+| Modal | Remote GPU (scaffolded) | No | No | `MODAL_TOKEN_ID+SECRET` | — | ⚠️ Gated (Q3 2026) |
 
 ---
 
@@ -32,6 +35,7 @@ Each integrated platform plays a distinct role. This document clarifies **what e
 **Naming conventions it expects:**
 - Model names: `qwen2.5:7b`, `qwen3:latest`, `llama3.2:3b` (Ollama's `model:tag` convention)
 - Model IDs are used directly in CLI flags (`--model qwen2.5:7b`)
+- Preset-to-model mapping: `etc/ollama/model-presets.yaml` (moved from legacy root location)
 
 **Workflow participation:**
 - `./ucore generate-ollama data/npcs/specs/<npc>.json --model qwen2.5:7b` — dataset generation
@@ -59,8 +63,10 @@ W&B Serverless Inference runs the judge LLM (`meta-llama/Llama-3.1-70B-Instruct`
 
 **What it needs:**
 - `WANDB_API_KEY` env var (or `~/.netrc` for `api.wandb.ai`)
-- Entity: `andreabenathar-twl-games` (set in presets + wandb_inference.py)
-- Project: `unsloth-core` (default, overridable with `--wandb-project`)
+- Entity: `andreabenathar-twl-games` (from `etc/wandb/config.yaml`)
+- Project: `unsloth-core` (from `etc/wandb/config.yaml`)
+- **Config-driven:** Defaults now read from `etc/wandb/config.yaml` at runtime
+  (model, project, entity, base URL). Env vars override config. Explicit CLI flags override everything.
 
 **Naming conventions it expects:**
 
@@ -113,7 +119,7 @@ Push/pull golden datasets (JSONL) as named datasets for versioned evaluation.
 | Test Run ID | `{type}-{npc_key}-{technique}-{mode}-{timestamp}` | `dataset-quality-chef_assistant-ollama-release-20260609T120000Z` |
 | Classifier set | Defined in Confident UI | `NPC Dataset Failure Mode`, `NPC Dataset Strength`, `NPC Repair Priority` |
 
-**Metric collections (hardcoded in code):**
+**Metric collections (defined in `etc/confident/config.yaml`):**
 
 | Collection Name | Used By | Metrics |
 |----------------|---------|---------|
@@ -121,6 +127,11 @@ Push/pull golden datasets (JSONL) as named datasets for versioned evaluation.
 | `npc-conversation-quality` | `dataset_eval.py` | role_adherence, knowledge_retention, conversation_completeness |
 | `npc-model-quality` | `evaluate.py` | answer_relevancy, faithfulness |
 | `unsloth-core-dataset-repair` | `confident_insights.py` | Persona and Category Fit, Training Usefulness, Grounding, Runtime Constraint |
+
+**Classifier setup:** Manual UI setup specs at `etc/confident/classifiers_setup.{json,md}`.
+API-based setup available via `setup_classifiers_via_api()` in `src/core/ops/confident_classifiers.py`.
+
+**Presets:** `etc/confident/presets/{default,remote-eval}.yaml`
 
 **Workflow participation:**
 - `dataset-eval` stage: `--confident` → uploads results; `--remote-eval` → runs eval on Confident infra
@@ -148,14 +159,22 @@ Push/pull golden datasets (JSONL) as named datasets for versioned evaluation.
 
 ## 5. Modal
 
-**Role:** **Scaffolded, NOT active.** Intended for remote GPU pipeline execution.
+**Role:** **Scaffolded, gated.** Intended for remote GPU pipeline execution.
 
-- `enabled: false, required: false` in every integration check
-- `MODAL_TOKEN_ID` + `MODAL_TOKEN_SECRET` credentials exist in `.env` but no code uses them
-- No Modal profile in `npc-production-strategy.yaml`
-- `system_suffix()` has `_Md` ready for when it's activated
+Current status:
+- ⚠️ Gated (Q3 2026 target). `enabled: false` in `etc/modal/config.yaml`.
+- Code stubs exist at `src/core/modal/app.py` + config at `src/core/modal/config.py`.
+- `--check-modal` flag available in `./ucore preflight`.
+- `npc-modal-remote` profile added to `npc-production-strategy.yaml`.
+- `MODAL_TOKEN_ID` + `MODAL_TOKEN_SECRET` credentials exist in `.env` but no code actively uses them.
+- `system_suffix()` has `_Md` ready for when it's activated.
 
 **When activated, would run:** Training, dataset eval, and runtime eval remotely on GPU instances.
+
+Activation steps:
+1. Set `enabled: true` in `etc/modal/config.yaml`
+2. Run `modal deploy src/core/modal/app.py`
+3. Use `--profile npc-modal-remote` on `./ucore target`
 
 ---
 
@@ -188,7 +207,18 @@ Push/pull golden datasets (JSONL) as named datasets for versioned evaluation.
 ## `system_suffix()` — Platform Encoding in Filenames
 
 The `system_suffix()` helper in `src/config/paths.py` encodes which external systems
-produced an artifact. Use this when an artifact involves a non-local system:
+produced an artifact. Use this when an artifact involves a non-local system.
+
+**NEW:** As of the June 2026 project-org initiative, `system_suffix()` is now wired
+into the following path functions (backward-compatible — passing `systems=None` or
+omitting it preserves current behavior):
+
+| Function | Accepts `systems=` | Added |
+|----------|-------------------|-------|
+| `eval_feedback_path(npc_key, systems)` | ✅ | 2026-06-10 |
+| `eval_feedback_timestamped_path(npc_key, ts, systems)` | ✅ | 2026-06-10 |
+| `export_gguf_path(npc_key, model_id, quant, systems)` | ✅ | 2026-06-10 |
+| `eval_report_path(npc_key, ..., systems)` | ✅ | 2026-06-10 |
 
 | System | Suffix | When to use |
 |--------|--------|-------------|

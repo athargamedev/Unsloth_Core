@@ -9,13 +9,45 @@ cloud upload; it is root-cause routing for the NPC LoRA workflow.
 from __future__ import annotations
 
 import json
+import os
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-PROJECT_NAME = "Unsloth_Core"
-DATASET_REPAIR_METRIC_COLLECTION = {
+# ── Config-driven constants ─────────────────────────────────────────────────
+_CONFIDENT_CONFIG_PATH = (
+    Path(__file__).resolve().parent.parent.parent.parent / "etc" / "confident" / "config.yaml"
+)
+
+
+def _load_confident_config() -> dict:
+    """Load the authoritative Confident AI config YAML."""
+    try:
+        import yaml
+
+        if _CONFIDENT_CONFIG_PATH.exists():
+            return yaml.safe_load(_CONFIDENT_CONFIG_PATH.read_text(encoding="utf-8")) or {}
+    except Exception:
+        pass
+    return {}
+
+
+_confident_config = _load_confident_config()
+
+# Allow override via env var for testing
+PROJECT_NAME = os.getenv("UCORE_CONFIDENT_PROJECT_NAME") or _confident_config.get(
+    "project", {}
+).get("name", "Unsloth_Core")
+
+# Metric collection read from config or hardcoded fallback
+_reported_collection = None
+if _confident_config:
+    mc = _confident_config.get("metric_collections", {})
+    repair_key = "unsloth-core-dataset-repair"
+    if repair_key in mc:
+        _reported_collection = {"name": repair_key, "include": mc[repair_key].get("metrics", [])}
+DATASET_REPAIR_METRIC_COLLECTION = _reported_collection or {
     "name": "unsloth-core-dataset-repair",
     "include": [
         "Persona and Category Fit",
