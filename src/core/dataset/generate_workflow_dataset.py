@@ -280,7 +280,7 @@ def build_manual_examples(spec: dict) -> list[dict]:
                 "npc_key": npc_key,
                 "category": "identity",
                 "source": "docs_manifest",
-                "source_path": "subjects/NPC_specs/workflow_assistant.json",
+                "source_path": f"data/npcs/specs/{npc_key}.json",
             },
         },
         {
@@ -299,7 +299,7 @@ def build_manual_examples(spec: dict) -> list[dict]:
                 "npc_key": npc_key,
                 "category": "refusal",
                 "source": "docs_manifest",
-                "source_path": "subjects/NPC_specs/workflow_assistant.json",
+                "source_path": f"data/npcs/specs/{npc_key}.json",
             },
         },
         {

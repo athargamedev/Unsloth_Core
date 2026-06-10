@@ -2388,7 +2388,7 @@ def main():
         "--output",
         "-o",
         default=None,
-        help="Output JSONL path (default: subjects/datasets/<npc_key>/<technique>/train.jsonl)",
+        help="Output JSONL path (default: data/datasets/<npc_key>/<technique>/train.jsonl)",
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--no-validation", action="store_true", help="Skip validation split")

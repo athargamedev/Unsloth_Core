@@ -33,7 +33,7 @@ def find_backup_candidates(project_root: Path) -> list[tuple[Path, str, str]]:
                 for f in tech_dir.glob("*pre_*"):
                     if f.is_file():
                         candidates.append((f, npc_dir.name, tech_dir.name))
-    # Search subjects/datasets/ too (legacy pattern)
+    # Search data/datasets/ too (canonical pattern)
     subjects_dir = project_root / "subjects" / "datasets"
     if subjects_dir.exists():
         for npc_dir in sorted(subjects_dir.iterdir()):

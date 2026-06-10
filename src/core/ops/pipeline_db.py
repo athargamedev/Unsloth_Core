@@ -1862,10 +1862,10 @@ class PipelineDB:
         """Scan the filesystem for datasets, outputs, and exports, syncing to DB.
 
         This is a best-effort operation. It walks the standard directory layout:
-            subjects/datasets/{npc_key}/{technique}/train.jsonl
-            subjects/datasets/{npc_key}/{technique}/train_clean.jsonl
-            subjects/datasets/{npc_key}/{technique}/quality_summary.json
-            subjects/datasets/{npc_key}/{technique}/quality_failures.json
+            data/datasets/{npc_key}/{technique}/train.jsonl
+            data/datasets/{npc_key}/{technique}/train_clean.jsonl
+            data/datasets/{npc_key}/{technique}/quality_summary.json
+            data/datasets/{npc_key}/{technique}/quality_failures.json
             outputs/{npc_key}/runs/*/
             exports/{npc_key}/*.gguf
 

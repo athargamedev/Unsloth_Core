@@ -666,9 +666,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  ./ucore generate-ollama subjects/NPC_specs/history_guide.json
-  ./ucore generate-ollama subjects/NPC_specs/chemistry_instructor.json --model llama2 --batch-size 2
-  ./ucore generate-ollama subjects/NPC_specs/fitness_coach.json --temperature 0.6 --check-health
+  ./ucore generate-ollama data/npcs/specs/history_guide.json
+  ./ucore generate-ollama data/npcs/specs/chemistry_instructor.json --model llama2 --batch-size 2
+  ./ucore generate-ollama data/npcs/specs/fitness_coach.json --temperature 0.6 --check-health
         """,
     )
 

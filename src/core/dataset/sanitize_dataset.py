@@ -6,9 +6,9 @@ Performs strict structural validation, AI artifact filtering, quality scoring,
 and metadata enrichment on ChatML training datasets.
 
 Usage:
-    python scripts/dataset/sanitize_dataset.py subjects/datasets/my_npc/template/train.jsonl
-    python scripts/dataset/sanitize_dataset.py subjects/datasets/my_npc/template/train.jsonl --quality-report
-    python scripts/dataset/sanitize_dataset.py subjects/datasets/my_npc/template/train.jsonl --strict-mode --artifact-check warn
+    python scripts/dataset/sanitize_dataset.py data/datasets/my_npc/template/train.jsonl
+    python scripts/dataset/sanitize_dataset.py data/datasets/my_npc/template/train.jsonl --quality-report
+    python scripts/dataset/sanitize_dataset.py data/datasets/my_npc/template/train.jsonl --strict-mode --artifact-check warn
 
 Output: A clean, scored, metadata-complete JSONL file at *_clean.jsonl.
 """
@@ -858,7 +858,7 @@ def score_example(
 
 
 def infer_npc_key_from_path(input_path):
-    """Infer NPC key from a path like subjects/datasets/{npc_key}/..."""
+    """Infer NPC key from a path like data/datasets/{npc_key}/..."""
     path = Path(input_path)
     try:
         rel = path.relative_to(paths.dataset_root().resolve())
@@ -874,7 +874,7 @@ def infer_npc_key_from_path(input_path):
 
 
 def infer_technique_from_path(input_path):
-    """Infer technique from a path like subjects/datasets/.../{technique}/..."""
+    """Infer technique from a path like data/datasets/.../{technique}/..."""
     path = Path(input_path)
     if not path.is_absolute():
         path = (paths.PROJECT_ROOT / path).resolve()
@@ -1629,7 +1629,7 @@ def main():
     parser.add_argument(
         "--strict-canonical",
         action="store_true",
-        help="Error unless input is canonical subjects/datasets/{key}/{tech}/train.jsonl",
+        help="Error unless input is canonical data/datasets/{key}/{tech}/train.jsonl",
     )
     parser.add_argument(
         "--workflow-hooks",
@@ -1646,7 +1646,7 @@ def main():
 
     if args.strict_canonical and not paths.is_canonical_train_path(input_path):
         print("Error: Non-canonical dataset path.")
-        print("Expected: subjects/datasets/{npc_key}/{technique}/train.jsonl")
+        print("Expected: data/datasets/{npc_key}/{technique}/train.jsonl")
         print(f"Got:      {input_path}")
         return
 

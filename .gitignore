@@ -37,6 +37,8 @@ gclod/*/*
 
 # Heavy local/vendor caches
 unsloth_compiled_cache/
+__pycache__/
+*.pyc
 _unsloth_sentencepiece_temp/
 .kaggle-outputs/
 

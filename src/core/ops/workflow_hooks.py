@@ -341,7 +341,7 @@ class WorkflowHookRecorder:
             from pathlib import Path as _Path
 
             qa_path = (
-                _Path(f"subjects/datasets/{npc_key}/{technique_val}/quality_summary.json")
+                _Path(f"data/datasets/{npc_key}/{technique_val}/quality_summary.json")
                 if npc_key and technique_val
                 else None
             )

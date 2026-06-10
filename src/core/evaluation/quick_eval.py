@@ -159,7 +159,8 @@ def main():
             "results": results,
         }
 
-        output_path = args.output or f"eval/results/{npc_key}_eval_report.json"
+        from src.config import paths
+        output_path = args.output or str(paths.eval_feedback_path(npc_key))
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, "w") as f:
             json.dump(report, f, indent=2)

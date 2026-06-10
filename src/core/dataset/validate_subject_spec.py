@@ -825,9 +825,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Validate subject specs before generation/training."
     )
-    parser.add_argument("spec", nargs="?", help="Path to one subjects/NPC_specs/*.json spec")
+    parser.add_argument("spec", nargs="?", help="Path to one data/npcs/specs/*.json spec")
     parser.add_argument(
-        "--all", action="store_true", help="Validate every subjects/NPC_specs/*.json spec"
+        "--all", action="store_true", help="Validate every data/npcs/specs/*.json spec"
     )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     parser.add_argument(

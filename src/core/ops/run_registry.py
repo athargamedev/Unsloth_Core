@@ -24,7 +24,7 @@ Usage (in a pipeline script main()):
         npc_key="history_guide",
         stage="train",
         technique="ollama",
-        spec_path="subjects/NPC_specs/history_guide.json",
+        spec_path="data/npcs/specs/history_guide.json",
         preset="fast-3b",
     )
 
@@ -452,7 +452,7 @@ def archive_quality_artifact(src: Path, run_id: str) -> Path | None:
 
     Usage:
         archive_quality_artifact(
-            Path("subjects/datasets/history_guide/template/quality_summary.json"),
+            Path("data/datasets/history_guide/template/quality_summary.json"),
             run_id="20260520_history_guide_dataset_eval_template_001",
         )
 

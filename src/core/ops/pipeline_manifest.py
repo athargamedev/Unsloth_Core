@@ -11,7 +11,7 @@ Usage (simple one-shot integration from any pipeline script)::
     from src.core.ops.pipeline_manifest import record_pipeline_stage
 
     record_pipeline_stage("generate", "completed",
-        artifacts={"dataset": "subjects/datasets/history_guide/template/train.jsonl"},
+        artifacts={"dataset": "data/datasets/history_guide/template/train.jsonl"},
         metadata={"num_examples": 72},
     )
 
@@ -21,7 +21,7 @@ Usage (long-lived manifest for coordinated pipelines)::
 
     m = PipelineManifest("run_20260531_110000", "history_guide", "template", "fast-3b")
     m.record_stage("generate", "completed",
-        artifacts={"dataset": "subjects/datasets/history_guide/template/train.jsonl"})
+        artifacts={"dataset": "data/datasets/history_guide/template/train.jsonl"})
     m.save()
 
     # Later — load and inspect
