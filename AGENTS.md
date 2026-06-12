@@ -122,6 +122,7 @@ See `etc/README.md` for the full directory layout.
 | Confident AI | `etc/confident/` | Eval orchestration + trace observability | Yes (remote eval) |
 | HuggingFace | `etc/huggingface/` | Base model config downloads | Yes (config fetch) |
 | llama.cpp | `etc/llama.cpp/` | Local inference server | Yes (serve) |
+| dltHub | `docs/dlt_hub/` | Doc ingestion pipeline + MCP server for workspace tools | Yes (MCP) |
 | Modal | `etc/modal/` | Remote GPU (scaffolded, NOT active) | No |
 
 **Key distinction — local vs production judge:**
@@ -132,6 +133,27 @@ See `etc/README.md` for the full directory layout.
 **Env reference:** `etc/env-reference.yaml` maps every `.env` variable to its platform config.
 
 Full platform reference: `docs/platform-integration.md`.
+
+## dltHub doc ingestion workspace
+
+`docs/dlt_hub/` is a dltHub workspace that ingests project documentation into a local DuckDB warehouse for AI querying.
+
+- Pipeline: `docs/dlt_hub/unsloth_docs_pipeline.py` — loads all `docs/*.md` files as document rows
+- MCP server: `dlt-workspace-mcp` registered in Hermes config (17 tools for workspace/pipeline/secrets/table inspection)
+- Start fresh Hermes session after config changes to pick up `mcp_dlt_workspace_mcp_*` tools
+- Server command: `uv run --no-sync dlthub ai mcp --stdio` (uses project .venv, `--no-sync` avoids broken project build)
+- Dependencies: `dlt[hub]`, `fastmcp` installed in project .venv
+
+Workspace files:
+
+| File | Purpose |
+|------|---------|
+| `.mcp.json` | MCP server definition (installed in Hermes config) |
+| `unsloth_docs_pipeline.py` | Ingests all `docs/*.md` into DuckDB |
+| `pipeline.py` | Sample shop REST API pipeline (template) |
+| `custom_api_pipeline.py` | Custom API source example |
+| `__deployment__.py` | dltHub Platform deployment config |
+| `pyproject.toml` | dltHub project deps |
 
 - Config root: `etc/` (not `configs`)
 - Pipeline runtime registry: `var/.pipeline/` (not `.pipeline`)
@@ -190,7 +212,7 @@ Full platform reference: `docs/platform-integration.md`.
 When project context looks stale:
 
 ```bash
-python src/core/ops/context_audit.py
+./ucore audit context
 ```
 
 Then update in this order:
@@ -219,6 +241,8 @@ Then update in this order:
 - `docs/project-state.md` — current canonical state.
 - `docs/training-workflow.md` — detailed pipeline details.
 - `docs/INDEX.md` — full documentation navigation hub with staleness map.
+- `docs/dlt_hub/README.md` — dltHub workspace overview and usage.
+- `docs/dlt_hub/.mcp.json` — MCP server definition for dlt-workspace-mcp.
 - `CONTRIBUTING.md` — contribution guide, PR process, agent context guidelines.
 - `SETUP.md` — full dev environment setup.
 - `.codex/skills/unsloth-core-pipeline-agent/SKILL.md` — Codex pipeline orchestrator and subagent router.

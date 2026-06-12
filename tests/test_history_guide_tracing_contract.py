@@ -4,9 +4,11 @@ from src.core.runtime import history_guide_agent as agent
 
 
 def test_history_guide_primer_path_points_to_existing_reference_doc():
-    assert agent.HISTORY_GUIDE_PRIMER_PATH == Path(
-        "/home/athar/Projects/Unsloth_Core/data/npcs/reference_docs/history_guide_primer.md"
+    project_root = Path(__file__).resolve().parents[1]
+    assert agent.HISTORY_GUIDE_PRIMER_PATH == (
+        project_root / "data" / "npcs" / "reference_docs" / "history_guide_primer.md"
     )
+    assert agent.HISTORY_GUIDE_PRIMER_PATH.exists()
 
 
 def test_build_trace_metadata_includes_thread_and_classifier_dimensions():

@@ -36,6 +36,7 @@ Build GGUF LoRA adapters for llama3.2 3B NPCs. Unity/LLMUnity loads one shared b
 
 | Doc | Purpose |
 |-----|---------|
+| [`./dlt_hub/README.md`](dlt_hub/README.md) | dltHub workspace — docs ingestion pipeline, MCP server, workspace tools |
 | [`./integration/confident-ai-integration.md`](integration/confident-ai-integration.md) | Confident AI dataset management, goldens, classifier setup |
 | [`./integration/frontend-dashboard.md`](integration/frontend-dashboard.md) | Dashboard architecture, API endpoints, job queue |
 | [`./integration/llmunity-integration.md`](integration/llmunity-integration.md) | Unity/LLMUnity dual-GGUF strategy, folder structure |

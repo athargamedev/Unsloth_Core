@@ -21,6 +21,9 @@ Known drift (expected, documented here):
 
 from __future__ import annotations
 
+# This test intentionally shells out to local tooling and prints a human drift report.
+# ruff: noqa: I001,S603,S607,T201
+
 import importlib.machinery
 import importlib.util
 import json
@@ -65,6 +68,27 @@ CLI_TO_TS: dict[str, str] = {
     "train": "train",
     "validate-config": "validate-config",
     "validate-spec": "validate-spec",
+}
+
+# Commands intentionally not represented in dashboard TypeScript schemas.
+# These are operator-only/control-plane commands, local service commands, or
+# registry/report helpers that do not have a command form in the dashboard UI.
+CLI_ONLY_COMMANDS: set[str] = {
+    "compare-canonical-runs",
+    "compare-local-models",
+    "confident-classifiers",
+    "confident-goldens",
+    "generate-local",
+    "history",
+    "inference-server",
+    "judge-cache",
+    "new-npc-checklist",
+    "preflight",
+    "promote",
+    "registry",
+    "report",
+    "strategy",
+    "target",
 }
 
 # argparse internal dests to ignore (they're not real flags)
@@ -196,7 +220,13 @@ EXPECTED_CLI_ONLY: dict[str, set[str]] = {
         "val-split",
     },
     "init": {"force", "skip-spec"},
-    "pipeline": {"confident", "remote-eval", "docs-manifest", "allow-metadata-repair", "smoke-template"},
+    "pipeline": {
+        "confident",
+        "remote-eval",
+        "docs-manifest",
+        "allow-metadata-repair",
+        "smoke-template",
+    },
     "plan-batch": {
         "colab-output-dir",
         "drive-repo-dir",
@@ -336,6 +366,8 @@ def test_cli_schema_drift(capsys):
     all_entries: list[dict[str, Any]] = []
     cli_only_unexpected: list[tuple[str, str]] = []
     schema_only_unexpected: list[tuple[str, str]] = []
+    unmapped_cli_commands = sorted(set(cli_commands) - set(CLI_TO_TS))
+    unexpected_unmapped_cli_commands = sorted(set(unmapped_cli_commands) - CLI_ONLY_COMMANDS)
 
     for cli_cmd in sorted(cli_commands):
         ts_cmd = CLI_TO_TS.get(cli_cmd)
@@ -405,10 +437,18 @@ def test_cli_schema_drift(capsys):
         print(f"{'=' * 68}")
         print(f"   CLI commands found:         {len(cli_commands)}")
         print(f"   Matched to TS schemas:      {matched}")
+        print(f"   CLI-only commands:         {len(unmapped_cli_commands)}")
         print(f"   Commands with any drift:    {len(all_entries)}")
         print(f"   Unexpected CLI-only flags:  {len(cli_only_unexpected)}")
         print(f"   Unexpected schema-only flds:{len(schema_only_unexpected)}")
         print()
+
+        if unmapped_cli_commands:
+            print("   ── CLI-only commands ──")
+            for cmd in unmapped_cli_commands:
+                marker = "✓" if cmd in CLI_ONLY_COMMANDS else "⚠"
+                print(f"      {marker} {cmd}")
+            print()
 
         if not all_entries:
             print("   ✓ No drift detected.\n")
@@ -464,6 +504,11 @@ def test_cli_schema_drift(capsys):
         msg_parts.append(
             f"Schema-only ({len(schema_only_unexpected)}):\n"
             + "\n".join(f"  {c}: {f}" for c, f in schema_only_unexpected)
+        )
+    if unexpected_unmapped_cli_commands:
+        msg_parts.append(
+            f"Unmapped CLI commands ({len(unexpected_unmapped_cli_commands)}):\n"
+            + "\n".join(f"  {c}" for c in unexpected_unmapped_cli_commands)
         )
 
     if msg_parts:

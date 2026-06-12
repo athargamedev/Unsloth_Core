@@ -14,9 +14,12 @@ def test_deprecated_ollama_generate_pattern_flags_unlabelled_command() -> None:
 def test_deprecated_ollama_generate_pattern_allows_legacy_or_avoid_label() -> None:
     pattern = context_audit.DEPRECATED_OLLAMA_GENERATE_PATTERN
 
+    deprecated_line = "deprecated ./ucore generate --technique ollama path"
     legacy_line = "legacy ./ucore generate --technique ollama path"
     avoid_line = "avoid ./ucore generate --technique ollama; use generate-ollama"
 
+    assert re.search(pattern, deprecated_line, flags=re.IGNORECASE)
+    assert context_audit.is_allowed(deprecated_line, pattern)
     assert re.search(pattern, legacy_line, flags=re.IGNORECASE)
     assert context_audit.is_allowed(legacy_line, pattern)
     assert context_audit.is_allowed(avoid_line, pattern)

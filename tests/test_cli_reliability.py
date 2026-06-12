@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+# ruff: noqa: I001,S603
+
 import importlib.machinery
+import importlib.resources as resources
 import importlib.util
+import json
 import subprocess
-import sys
+import tomllib
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -21,7 +25,8 @@ def load_ucore():
 
 
 def test_ucore_requires_a_command():
-    result = subprocess.run(["./ucore"],
+    result = subprocess.run(
+        ["./ucore"],
         cwd=PROJECT_ROOT,
         text=True,
         capture_output=True,
@@ -59,6 +64,63 @@ def test_ucore_generate_ollama_default_model_is_current_project_default():
 
     assert "qwen2.5:7b" in result.stdout
     assert "llama3.1-3060-chat" not in result.stdout
+
+
+def test_packaged_ucore_entrypoint_is_importable():
+    from src.cli.main import main
+
+    assert callable(main)
+    assert (resources.files("src.cli") / "ucore").is_file()
+
+
+def test_packaged_ucore_entrypoint_matches_setuptools_layout():
+    from setuptools import find_packages
+
+    pyproject = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+
+    assert pyproject["build-system"]["build-backend"] == "setuptools.build_meta"
+    assert pyproject["project"]["scripts"]["ucore"] == "src.cli.main:main"
+    assert pyproject["tool"]["setuptools"]["packages"]["find"] == {
+        "where": ["."],
+        "include": ["src*"],
+    }
+    assert "ucore" in pyproject["tool"]["setuptools"]["package-data"]["src.cli"]
+
+    discovered = find_packages(where=".", include=["src*"])
+    assert "src.cli" in discovered
+    assert "cli" not in discovered
+
+
+def test_ucore_exposes_production_audit_and_preflight_commands():
+    commands = [
+        ["preflight"],
+        ["audit", "context"],
+        ["audit", "docker-core"],
+    ]
+
+    for command in commands:
+        result = subprocess.run(  # noqa: S603 - fixed local CLI command variants under test
+            ["./ucore", *command, "--help"],
+            cwd=PROJECT_ROOT,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        assert "usage:" in result.stdout.lower()
+
+
+def test_ucore_audit_context_json_is_machine_parseable():
+    result = subprocess.run(
+        ["./ucore", "audit", "context", "--json", "README.md"],
+        cwd=PROJECT_ROOT,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    payload = json.loads(result.stdout)
+    assert "findings" in payload
+    assert "summary" in payload
 
 
 def test_ucore_pipeline_ollama_uses_optimized_generator(monkeypatch):

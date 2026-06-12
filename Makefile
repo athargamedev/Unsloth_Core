@@ -44,10 +44,10 @@ test-contract:
 # ── Audits ───────────────────────────────────────────────────────────────────
 
 audit:
-	$(ACTIVATE) && python src/core/ops/context_audit.py
+	$(ACTIVATE) && ./ucore audit context
 
 audit-instructions:
-	$(ACTIVATE) && python src/core/ops/context_audit.py --instructions-audit .hermes .codex docs AGENTS.md
+	$(ACTIVATE) && ./ucore audit context --instructions-audit .hermes .codex docs AGENTS.md
 
 # ── Pipeline ─────────────────────────────────────────────────────────────────
 
@@ -86,7 +86,7 @@ help:
 	@echo "  test-all          — Full test suite"
 	@echo "  test-fast         — Unit tests only"
 	@echo "  test-contract     — Contract/invariant tests"
-	@echo "  audit             — Run context stale-path audit"
+	@echo "  audit             — Run ./ucore audit context stale-path audit"
 	@echo "  audit-instructions— Full instructions file freshness audit"
 	@echo "  preflight         — Run ucore health check"
 	@echo "  clean             — Remove cache dirs"

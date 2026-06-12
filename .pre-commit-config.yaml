@@ -29,7 +29,7 @@ repos:
     hooks:
       - id: pyproject-deps-sync
         name: pyproject deps in sync
-        entry: python -c "import tomllib; d=tomllib.load(open('pyproject.toml')); deps=d['project']['dependencies']; print(f'{len(deps)} deps in pyproject.toml OK')"
+        entry: python -c "import tomllib; d=tomllib.load(open('pyproject.toml', 'rb')); deps=d['project']['dependencies']; print(f'{len(deps)} deps in pyproject.toml OK')"
         language: python
         pass_filenames: false
         always_run: true

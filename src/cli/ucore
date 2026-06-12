@@ -6,7 +6,10 @@ Canonical workflow:
   validate-spec -> generate -> sanitize -> dataset-eval -> train -> export -> evaluate -> feedback
 """
 
+# ruff: noqa: E402,S110,S602,S603,S607
+
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -17,13 +20,10 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-is_colab = False
 try:
-    import google.colab
-
-    is_colab = True
-except ImportError:
-    pass
+    is_colab = importlib.util.find_spec("google.colab") is not None
+except ModuleNotFoundError:
+    is_colab = False
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _new_scripts_dir = PROJECT_ROOT / "src" / "core"
@@ -1115,6 +1115,33 @@ def create_parser():
     plan_p.add_argument("--local-vram-gb", type=float, help="Override detected local VRAM")
     plan_p.add_argument("--json", action="store_true", help="Output JSON")
 
+    preflight_p = subparsers.add_parser(
+        "preflight", help="Run phase-aware production preflight checks"
+    )
+    preflight_p.add_argument(
+        "--phase",
+        default="train",
+        choices=["train", "dataset_eval", "export"],
+        help="Pipeline phase",
+    )
+    preflight_p.add_argument("--preset", help="Requested training preset")
+    preflight_p.add_argument("--spec", help="Subject spec JSON path")
+    preflight_p.add_argument("--technique", help="Dataset technique name")
+    preflight_p.add_argument(
+        "--ollama-url", default="http://localhost:11434", help="Ollama server URL"
+    )
+    preflight_p.add_argument(
+        "--no-auto-unload-ollama", action="store_true", help="Do not stop running Ollama models"
+    )
+    preflight_p.add_argument(
+        "--no-gcc-check", action="store_true", help="Skip gcc validation even for training"
+    )
+    preflight_p.add_argument("--no-lease", action="store_true", help="Skip GPU lease acquisition")
+    preflight_p.add_argument("--json", action="store_true", help="Print JSON only")
+    preflight_p.add_argument(
+        "--check-modal", action="store_true", help="Also check Modal readiness"
+    )
+
     checklist_p = subparsers.add_parser(
         "new-npc-checklist", help="Print the recommended checklist for creating a new NPC"
     )
@@ -1160,6 +1187,22 @@ def create_parser():
         "--profile", default="npc-production-grounded", help="Strategy profile to audit"
     )
     audit_integrations.add_argument("--json", action="store_true", help="Output JSON")
+    audit_context = audit_subcmd.add_parser(
+        "context", help="Audit context/docs for stale references"
+    )
+    audit_context.add_argument(
+        "paths", nargs="*", help="Files or directories to audit (defaults to core context files)"
+    )
+    audit_context.add_argument("--json", action="store_true", help="Output JSON")
+    audit_context.add_argument(
+        "--instructions-audit",
+        action="store_true",
+        help="Run extended instruction freshness/completeness audit",
+    )
+    audit_docker = audit_subcmd.add_parser("docker-core", help="Report Docker/Supabase core status")
+    audit_docker.add_argument(
+        "--watchdog", action="store_true", help="Silent when healthy and unchanged"
+    )
     audit_subcmd.add_parser("resume", help="Recover session context (full audit)")
 
     # Target DAG runner
@@ -1351,6 +1394,29 @@ def main(argv: list[str] | None = None) -> int:
         os.environ["WORKFLOW_HOOKS_PATH"] = args.workflow_hooks
     if args.watch:
         os.environ["UCORE_WATCH"] = "1"
+
+    if args.command == "preflight":
+        cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "preflight.py"), "--phase", args.phase]
+        if args.preset:
+            cmd.extend(["--preset", args.preset])
+        if args.spec:
+            cmd.extend(["--spec", args.spec])
+        if args.technique:
+            cmd.extend(["--technique", args.technique])
+        if args.ollama_url != "http://localhost:11434":
+            cmd.extend(["--ollama-url", args.ollama_url])
+        if args.no_auto_unload_ollama:
+            cmd.append("--no-auto-unload-ollama")
+        if args.no_gcc_check:
+            cmd.append("--no-gcc-check")
+        if args.no_lease:
+            cmd.append("--no-lease")
+        if args.json:
+            cmd.append("--json")
+        if args.check_modal:
+            cmd.append("--check-modal")
+        run_cmd(cmd, announce=not args.json)
+        return 0
 
     if args.command == "new-npc-checklist":
         payload = _new_npc_checklist_payload(args.npc_key, args.subject, args.name)
@@ -1563,6 +1629,23 @@ def main(argv: list[str] | None = None) -> int:
                 print(json.dumps(result, indent=2, ensure_ascii=False))
             else:
                 print(format_integration_audit(result))
+            return 0
+
+        if args.audit_command == "context":
+            cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "context_audit.py")]
+            cmd.extend(args.paths or [])
+            if args.json:
+                cmd.append("--json")
+            if args.instructions_audit:
+                cmd.append("--instructions-audit")
+            run_cmd(cmd, announce=not args.json)
+            return 0
+
+        if args.audit_command == "docker-core":
+            cmd = [PYTHON, str(SCRIPTS_DIR / "ops" / "docker_core_status.py")]
+            if args.watchdog:
+                cmd.append("--watchdog")
+            run_cmd(cmd)
             return 0
 
         from src.core.ops.audit import ProjectAudit

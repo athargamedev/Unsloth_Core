@@ -1,6 +1,6 @@
 ---
-last_verified: 2026-06-10
-next_audit: 2026-07-10
+last_verified: 2026-06-11
+next_audit: 2026-07-11
 ---
 
 # Unsloth_Core Project State
@@ -170,6 +170,30 @@ Dead/deprecated commands are marked `[LEGACY]`, `[DEPRECATED]`, or `[EXPERIMENTA
 - Dashboard: `src/dashboard/unity-npc-llm-training-dashboard/`, dev at `npm run dev`, port `3100`.
 - Cognee chat server: `127.0.0.1:18080`
 - Cognee embed server: `127.0.0.1:18081`
+
+## dltHub doc ingestion workspace
+
+A dltHub workspace at `docs/dlt_hub/` ingests project docs into local DuckDB for AI querying via MCP.
+
+| File | Purpose |
+|------|---------|
+| `unsloth_docs_pipeline.py` | Ingests all `docs/*.md` as document rows into DuckDB |
+| `pipeline.py` | Sample shop REST API pipeline (dltHub template) |
+| `custom_api_pipeline.py` | Custom API source example |
+| `__deployment__.py` | dltHub Platform deployment config |
+
+**MCP server:** `dlt-workspace-mcp` registered in `~/.hermes/config.yaml`:
+- Command: `uv run --no-sync dlthub ai mcp --stdio`
+- 17 tools: workspace info, pipeline list, secrets management, table inspection, SQL queries, dltHub source search
+- Enable after restart: `mcp_dlt_workspace_mcp_*` tools appear in agent toolset
+- Dependencies: `dlt[hub]`, `fastmcp` installed in project `.venv`
+
+**Pipeline run:**
+```bash
+cd docs/dlt_hub
+uv run dlthub run unsloth_docs_pipeline
+uv run dlthub job runs show pipeline.unsloth_docs_pipeline
+```
 
 ## Local machine constraints
 

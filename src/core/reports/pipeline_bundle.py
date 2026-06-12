@@ -27,8 +27,6 @@ from html import escape as html_escape
 from pathlib import Path
 from typing import Any
 
-from src.config import paths
-
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -111,11 +109,16 @@ def _artifact_path_exists(path_value: str | None, data_root: Path) -> bool:
     return (data_root / path).exists()
 
 
+def _pipeline_root_for(data_root: Path) -> Path:
+    """Return the pipeline registry root under the selected data root."""
+    return data_root / "var" / ".pipeline"
+
+
 def _collect_artifact_stages(
     npc_key: str, artifact_index: Path | None, data_root: Path
 ) -> dict[str, Any]:
     """Collect per-stage artifact summaries from the ArtifactRegistry."""
-    index_path = artifact_index or paths.pipeline_root() / "artifacts.jsonl"
+    index_path = artifact_index or _pipeline_root_for(data_root) / "artifacts.jsonl"
     stages: dict[str, dict[str, Any]] = {}
     if not index_path.exists():
         return {"available": False, "reason": "artifact index not found"}
@@ -225,7 +228,7 @@ def _collect_training_fragment(
     runs = []
 
     # Primary current evidence: ArtifactRegistry train adapter checkpoints.
-    artifact_path = artifact_index or paths.pipeline_root() / "artifacts.jsonl"
+    artifact_path = artifact_index or _pipeline_root_for(data_root) / "artifacts.jsonl"
     if artifact_path.exists():
         try:
             for line in artifact_path.read_text(encoding="utf-8").strip().split("\n"):
@@ -255,8 +258,8 @@ def _collect_training_fragment(
         [run_index]
         if run_index
         else [
-            paths.pipeline_root() / "runs.jsonl",
-            paths.pipeline_root() / "experiments.jsonl",
+            _pipeline_root_for(data_root) / "runs.jsonl",
+            _pipeline_root_for(data_root) / "experiments.jsonl",
         ]
     )
     for run_index_path in [p for p in run_indexes if p is not None]:

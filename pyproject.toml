@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=70.0"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "unsloth-core"
@@ -58,18 +58,19 @@ Source = "https://github.com/andreathar/Unsloth_Core"
 ucore = "src.cli.main:main"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-include = ["src.*", "cli.*", "config.*", "core.*"]
+where = ["."]
+include = ["src*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml", "*.json", "*.md"]
+"src.cli" = ["ucore"]
 
 # ── Testing ──────────────────────────────────────────────────────────────────
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 cache_dir = "var/.cache/pytest"
-norecursedirs = [".agents", ".codex", ".gemini", ".hermes", ".opencode", ".pipeline", ".pi", "CLI-Anything", "src/dashboard/unity-npc-llm-training-dashboard", "node_modules", "subjects", "unsloth_env", "archive"]
+norecursedirs = [".agents", ".codex", ".gemini", ".hermes", ".opencode", ".pipeline", ".pi", "build", "dist", "CLI-Anything", "src/dashboard/unity-npc-llm-training-dashboard", "node_modules", "subjects", "unsloth_env", "archive"]
 markers = [
     "unit: pure unit tests",
     "contract: path, CLI, schema, and naming invariant tests",

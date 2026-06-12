@@ -155,7 +155,7 @@ artifacts/eval/results/feedback/<npc>.json  feedback
 Run stale-reference audit:
 
 ```bash
-python src/core/ops/context_audit.py
+./ucore audit context
 ```
 
 Do not put long historical status dumps in `AGENTS.md`. Put current facts in `docs/project-state.md`; put procedures in `.hermes/skills/`; keep memory compact.

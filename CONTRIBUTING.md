@@ -63,7 +63,7 @@ When updating context files (skills, agent briefs, docs):
 5. **Run stale-reference audit** after context changes:
 
 ```bash
-python src/core/ops/context_audit.py
+./ucore audit context
 ```
 
 ## Questions?
